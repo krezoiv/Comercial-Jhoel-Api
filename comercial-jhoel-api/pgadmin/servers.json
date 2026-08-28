@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Comercial Jhoel (docker)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "comercial_jhoel",
+      "Username": "kzi",
+      "SSLMode": "prefer"
+    }
+  }
+}

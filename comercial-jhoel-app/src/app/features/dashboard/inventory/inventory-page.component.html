@@ -1,0 +1,47 @@
+<div class="inventory">
+  <header class="inventory__header">
+    <div>
+      <h1 class="inventory__title">Inventario</h1>
+      <p class="inventory__subtitle">Gestiona y controla los productos disponibles en tu negocio.</p>
+    </div>
+  </header>
+
+  <app-inventory-summary [data]="products()" />
+
+  <app-inventory-toolbar
+    [categories]="categories()"
+    [searchTerm]="searchTerm()"
+    [selectedCategory]="selectedCategory()"
+    [stockFilter]="stockFilter()"
+    (searchTermChange)="searchTerm.set($event)"
+    (selectedCategoryChange)="selectedCategory.set($event)"
+    (stockFilterChange)="stockFilter.set($event)"
+    (addProduct)="openCreateForm()"
+  />
+
+  <app-product-table
+    [products]="filteredProducts()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (edit)="openEditForm($event)"
+    (delete)="requestDelete($event)"
+    (clearFilters)="clearFilters()"
+    (addProduct)="openCreateForm()"
+  />
+</div>
+
+<app-product-form-modal
+  [open]="isFormOpen()"
+  [product]="editingProduct()"
+  [categories]="categories()"
+  (closed)="closeForm()"
+  (saved)="onProductSaved($event)"
+/>
+
+<app-delete-confirm-modal
+  [open]="isDeleteOpen()"
+  [product]="deletingProduct()"
+  [isDeleting]="isDeleting()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

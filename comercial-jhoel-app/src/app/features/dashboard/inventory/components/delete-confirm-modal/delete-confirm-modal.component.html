@@ -1,0 +1,21 @@
+@if (open && product) {
+  <div class="modal-backdrop" (click)="cancelled.emit()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__icon">
+        <app-icon name="alert-triangle" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">¿Estás seguro de eliminar este producto?</h2>
+      <p class="modal__description">
+        Esta acción eliminará <strong>{{ product.name }}</strong> del inventario de forma permanente.
+      </p>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isDeleting" (click)="cancelled.emit()">Cancelar</app-button>
+        <app-button variant="danger" [disabled]="isDeleting" (click)="confirmed.emit()">
+          {{ isDeleting ? 'Eliminando…' : 'Sí, eliminar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

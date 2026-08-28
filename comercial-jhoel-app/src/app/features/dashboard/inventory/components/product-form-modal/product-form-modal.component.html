@@ -1,0 +1,109 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">{{ isEditMode ? 'Editar producto' : 'Agregar producto' }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="product-name">Nombre del producto</label>
+          <input id="product-name" type="text" formControlName="name" placeholder="Ej. Coca Cola 2L" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <span class="field__error">Ingresa un nombre de al menos 2 caracteres.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="product-category">Categoría</label>
+          <input
+            id="product-category"
+            type="text"
+            formControlName="category"
+            placeholder="Ej. Bebidas"
+            list="product-category-options"
+          />
+          <datalist id="product-category-options">
+            @for (category of categories; track category) {
+              <option [value]="category"></option>
+            }
+          </datalist>
+          @if (form.controls.category.invalid && form.controls.category.touched) {
+            <span class="field__error">La categoría es obligatoria.</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="product-cost-price">Precio de costo</label>
+            <input
+              id="product-cost-price"
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="costPrice"
+              placeholder="0.00"
+            />
+            @if (form.controls.costPrice.invalid && form.controls.costPrice.touched) {
+              <span class="field__error">Ingresa un valor mayor a 0.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="product-public-price">Precio público</label>
+            <input
+              id="product-public-price"
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="publicPrice"
+              placeholder="0.00"
+            />
+            @if (form.controls.publicPrice.invalid && form.controls.publicPrice.touched) {
+              <span class="field__error">Ingresa un valor mayor a 0.</span>
+            }
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="product-wholesale-price">Precio por mayor</label>
+            <input
+              id="product-wholesale-price"
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="wholesalePrice"
+              placeholder="0.00"
+            />
+            @if (form.controls.wholesalePrice.invalid && form.controls.wholesalePrice.touched) {
+              <span class="field__error">Ingresa un valor mayor a 0.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="product-stock">Stock</label>
+            <input id="product-stock" type="number" step="1" min="0" formControlName="stock" placeholder="0" />
+            @if (form.controls.stock.invalid && form.controls.stock.touched) {
+              <span class="field__error">Ingresa una cantidad válida (0 o más).</span>
+            }
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <p class="modal__error">{{ errorMessage() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" type="button" [disabled]="isSubmitting()" (click)="close()">Cancelar</app-button>
+          <app-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Guardando…' : isEditMode ? 'Guardar cambios' : 'Agregar producto' }}
+          </app-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

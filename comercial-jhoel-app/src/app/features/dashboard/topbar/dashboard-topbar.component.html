@@ -1,0 +1,42 @@
+<header class="topbar">
+  <button type="button" class="topbar__menu-btn" (click)="menuToggled.emit()" aria-label="Abrir menú del panel">
+    <app-icon name="menu" [size]="22" />
+  </button>
+
+  <div class="topbar__datetime">
+    <app-icon name="clock" [size]="16" />
+    <span>{{ now() | date: "EEEE d 'de' MMMM · h:mm:ss a" }}</span>
+  </div>
+
+  <div class="topbar__user">
+    <button type="button" class="topbar__user-trigger" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen()">
+      <span class="topbar__avatar">
+        <app-icon name="user" [size]="18" />
+      </span>
+      <span class="topbar__user-info">
+        <strong>{{ currentUser()?.username }}</strong>
+        <span>{{ currentUser()?.phone }}</span>
+      </span>
+      <app-icon name="chevron-down" [size]="16" />
+    </button>
+
+    @if (isUserMenuOpen()) {
+      <button type="button" class="topbar__backdrop" (click)="closeUserMenu()" aria-hidden="true" tabindex="-1"></button>
+
+      <div class="topbar__menu">
+        <button type="button" class="topbar__menu-item" (click)="requestChangePassword()">
+          <app-icon name="lock" [size]="16" />
+          Cambiar contraseña
+        </button>
+        <a class="topbar__menu-item" routerLink="/" (click)="closeUserMenu()">
+          <app-icon name="arrow-right" [size]="16" />
+          Ir a la página principal
+        </a>
+        <button type="button" class="topbar__menu-item topbar__menu-item--danger" (click)="requestLogout()">
+          <app-icon name="log-out" [size]="16" />
+          Cerrar sesión
+        </button>
+      </div>
+    }
+  </div>
+</header>
