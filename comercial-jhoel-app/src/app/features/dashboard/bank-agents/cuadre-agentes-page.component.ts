@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import {
+  BankBalancesValidation,
   CASH_DENOMINATIONS,
   CashDenomination,
   CuadreAgentesSummary,
@@ -15,6 +17,7 @@ import {
 } from '../../../core/models';
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
 import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes-state.service';
+import { DayStatusService } from '../../../core/services/day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
@@ -59,6 +62,7 @@ const STATUS_TEXT: Record<CuadreResultStatus, string> = {
     ButtonComponent,
     DecimalInputDirective,
     AgentReconciliationConfirmModalComponent,
+    RouterLink,
   ],
   templateUrl: './cuadre-agentes-page.component.html',
   styleUrl: './cuadre-agentes-page.component.scss',
@@ -67,6 +71,7 @@ const STATUS_TEXT: Record<CuadreResultStatus, string> = {
 export class CuadreAgentesPageComponent {
   private readonly cuadreAgentesService = inject(CuadreAgentesService);
   private readonly state = inject(CuadreAgentesStateService);
+  protected readonly dayStatusService = inject(DayStatusService);
   private readonly notificationService = inject(NotificationService);
 
   readonly denominations = CASH_DENOMINATIONS;
@@ -79,6 +84,24 @@ export class CuadreAgentesPageComponent {
   readonly isConfirmModalOpen = signal(false);
   readonly isSaving = signal(false);
   readonly isRefreshingBanks = signal(false);
+
+  /**
+   * "¿Se guardaron los saldos bancarios de esta fecha?" — la regla que
+   * bloquea "Guardar Cuadre" hasta que exista un cuadre diario en
+   * Agentes Bancarios → Bancos para la misma fecha (siempre "hoy" en
+   * este módulo, que no tiene selector de fecha propio). `null` mientras
+   * no se conoce la respuesta todavía (carga inicial); en ese estado el
+   * botón de guardar también permanece deshabilitado — nunca se asume
+   * "sí se puede" por defecto.
+   */
+  readonly bankBalancesValidation = signal<BankBalancesValidation | null>(null);
+  readonly isValidatingBankBalances = signal(true);
+
+  /** "Apertura del Día" — `DayStatusService` es el singleton compartido con Bancos/Sidebar; refleja si HOY ya está aperturado. */
+  readonly dayOpened = computed(() => this.dayStatusService.status()?.isOpened === true);
+
+  /** "Cierre del Día" — una vez guardado el cuadre, HOY queda cerrado y bloqueado para un nuevo ciclo hasta que cambie la fecha. */
+  readonly dayClosed = computed(() => this.dayStatusService.status()?.isClosed === true);
 
   /** `denominación × cantidad`, sumado en todas las filas — se recalcula solo, sin botón, cada vez que `cashCounts` cambia. */
   readonly totalCash = computed(() => calculateTotalCash(this.cashCounts()));
@@ -106,6 +129,30 @@ export class CuadreAgentesPageComponent {
 
   constructor() {
     this.fetchSummary();
+    this.validateBankBalances();
+  }
+
+  /**
+   * Corre automáticamente al entrar al módulo (constructor) — Angular
+   * destruye y vuelve a crear este componente en cada navegación a esta
+   * ruta, así que un "Ir a registrar saldos" → guardar en Bancos → volver
+   * aquí ya dispara esta misma llamada de nuevo sin ningún código extra
+   * ("no requerir recarga manual del navegador").
+   */
+  private validateBankBalances(): void {
+    this.isValidatingBankBalances.set(true);
+    this.cuadreAgentesService.validateBankBalances().subscribe({
+      next: (validation) => {
+        this.bankBalancesValidation.set(validation);
+        this.isValidatingBankBalances.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isValidatingBankBalances.set(false);
+        this.notificationService.error(
+          extractErrorMessage(error, 'No se pudo verificar si los saldos bancarios ya fueron registrados.')
+        );
+      },
+    });
   }
 
   private fetchSummary(): void {
@@ -186,12 +233,48 @@ export class CuadreAgentesPageComponent {
     this.state.setCount(denomination, rounded);
   }
 
+  /** Nunca abre el modal de confirmación si el pre-chequeo del backend aún no confirma que la fecha puede cuadrarse — ver `canSaveCuadre`. */
   openConfirmModal(): void {
-    if (!this.summary() || this.isSaving() || this.isRefreshingBanks()) {
+    if (!this.canSaveCuadre()) {
       return;
     }
     this.isConfirmModalOpen.set(true);
   }
+
+  /**
+   * Reúne todas las razones por las que "Guardar Cuadre" debe permanecer
+   * deshabilitado, incluyendo la nueva regla obligatoria: no se puede
+   * cuadrar sin saldos bancarios guardados para esta fecha. El backend
+   * (`CreateAgentReconciliationUseCase`) vuelve a exigir exactamente esto
+   * de forma independiente — este computed es solo la mejora de
+   * experiencia de usuario, nunca la barrera real.
+   */
+  readonly canSaveCuadre = computed(
+    () =>
+      !!this.summary() &&
+      !this.isSaving() &&
+      !this.isRefreshingBanks() &&
+      !this.isValidatingBankBalances() &&
+      !this.dayStatusService.loading() &&
+      this.dayOpened() &&
+      !this.dayClosed() &&
+      this.bankBalancesValidation()?.canReconcile === true,
+  );
+
+  /** Página completa habilitada — mismas condiciones que `canSaveCuadre` salvo `isSaving`/`isRefreshingBanks`, que no impiden VER el contenido, solo guardarlo. */
+  readonly canAccessReconciliation = computed(
+    () =>
+      !this.loading() &&
+      !this.isValidatingBankBalances() &&
+      !this.dayStatusService.loading() &&
+      this.dayOpened() &&
+      !this.dayClosed() &&
+      this.bankBalancesValidation()?.canReconcile === true,
+  );
+
+  readonly isCheckingAccess = computed(
+    () => this.loading() || this.isValidatingBankBalances() || this.dayStatusService.loading(),
+  );
 
   cancelConfirm(): void {
     if (this.isSaving()) {
@@ -200,6 +283,14 @@ export class CuadreAgentesPageComponent {
     this.isConfirmModalOpen.set(false);
   }
 
+  /**
+   * "Guardar Cuadre" ahora también cierra el día — una sola llamada
+   * atómica en el backend (`CloseAgentDayUseCase`/`close_agent_day`).
+   * `dayStatusService.refresh()` es lo que hace que el Sidebar y esta
+   * misma página reaccionen de inmediato: el próximo `computed` de
+   * `dayClosed()` pasa a `true` sin recargar el navegador, y la página
+   * cae sola en la rama "Día Cerrado" del template.
+   */
   confirmSaveCuadre(): void {
     if (this.isSaving()) {
       return;
@@ -212,7 +303,10 @@ export class CuadreAgentesPageComponent {
         // Solo se limpia el conteo de efectivo temporal en memoria — el
         // registro histórico ya quedó guardado en `agent_reconciliations`.
         this.state.reset();
-        this.notificationService.success('Cuadre Agentes guardado correctamente.');
+        this.notificationService.success(
+          'El cuadre fue guardado y el día fue cerrado exitosamente. El sistema está listo para iniciar el siguiente ciclo de cuadre.',
+        );
+        this.dayStatusService.refresh();
         this.fetchSummary();
       },
       error: (error: HttpErrorResponse) => {

@@ -24,10 +24,16 @@ import { DeactivateBankUseCase } from '../../application/use-cases/deactivate-ba
 import { GetBankBalancesViewUseCase } from '../../application/use-cases/get-bank-balances-view.use-case';
 import { SaveBankBalancesUseCase } from '../../application/use-cases/save-bank-balances.use-case';
 import { GetCuadreAgentesSummaryUseCase } from '../../application/use-cases/get-cuadre-agentes-summary.use-case';
+import { ValidateBankBalancesForDateUseCase } from '../../application/use-cases/validate-bank-balances-for-date.use-case';
+import { GetDayStatusUseCase } from '../../application/use-cases/get-day-status.use-case';
+import { OpenDayUseCase } from '../../application/use-cases/open-day.use-case';
 import { CreateBankRequestDto } from '../dtos/create-bank.request.dto';
 import { UpdateBankRequestDto } from '../dtos/update-bank.request.dto';
 import { ListBanksQueryDto } from '../dtos/list-banks.query.dto';
 import { BankBalancesViewQueryDto } from '../dtos/bank-balances-view.query.dto';
+import { BankBalancesValidationQueryDto } from '../dtos/bank-balances-validation.query.dto';
+import { DayStatusQueryDto } from '../dtos/day-status.query.dto';
+import { OpenDayRequestDto } from '../dtos/open-day.request.dto';
 import { SaveBankBalancesRequestDto } from '../dtos/save-bank-balances.request.dto';
 import { BankResponseDto } from '../dtos/bank.response.dto';
 import {
@@ -35,6 +41,9 @@ import {
   SaveBankBalancesResponseDto,
 } from '../dtos/bank-balance-view.response.dto';
 import { CuadreAgentesSummaryOutput } from '../../application/dtos/cuadre-agentes-summary-output';
+import { BankBalancesValidationOutput } from '../../application/dtos/bank-balances-validation-output';
+import { DayStatusOutput } from '../../application/dtos/day-status-output';
+import { todayIsoDate } from '../../application/utils/today-iso-date';
 
 /**
  * CRUD (create/update/deactivate) is admin-only, same policy as
@@ -61,7 +70,36 @@ export class BanksController {
     private readonly getBankBalancesViewUseCase: GetBankBalancesViewUseCase,
     private readonly saveBankBalancesUseCase: SaveBankBalancesUseCase,
     private readonly getCuadreAgentesSummaryUseCase: GetCuadreAgentesSummaryUseCase,
+    private readonly validateBankBalancesForDateUseCase: ValidateBankBalancesForDateUseCase,
+    private readonly getDayStatusUseCase: GetDayStatusUseCase,
+    private readonly openDayUseCase: OpenDayUseCase,
   ) {}
+
+  /**
+   * "¿Está aperturado el día? ¿Ya se guardaron los saldos? ¿Se puede
+   * entrar a Cuadre Agentes? ¿Ya se hizo el cuadre?" — una sola llamada
+   * para las cuatro preguntas de la secuencia obligatoria. Cualquier
+   * usuario autenticado, misma política que `balances`/`cuadre-agentes-summary`.
+   */
+  @Get('day-status')
+  getDayStatus(@Query() query: DayStatusQueryDto): Promise<DayStatusOutput> {
+    return this.getDayStatusUseCase.execute(query.date ?? todayIsoDate());
+  }
+
+  /**
+   * "Confirmar Apertura" — idempotente (ver `DayOpeningRepository.open`),
+   * así que un doble clic o un reintento nunca crea una segunda apertura
+   * ni falla. Cualquier usuario autenticado puede aperturar el día, misma
+   * política operacional que registrar saldos o hacer el cuadre.
+   */
+  @Post('day-status/open')
+  @HttpCode(HttpStatus.OK)
+  openDay(
+    @Body() dto: OpenDayRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<DayStatusOutput> {
+    return this.openDayUseCase.execute({ date: dto.date ?? todayIsoDate(), userId });
+  }
 
   @Get('balances')
   getBalancesView(
@@ -82,6 +120,22 @@ export class BanksController {
   @Get('cuadre-agentes-summary')
   getCuadreAgentesSummary(): Promise<CuadreAgentesSummaryOutput> {
     return this.getCuadreAgentesSummaryUseCase.execute();
+  }
+
+  /**
+   * "¿Se guardaron los saldos bancarios de esta fecha?" — el pre-chequeo
+   * que Cuadre Agentes usa para habilitar/bloquear "Guardar Cuadre" en la
+   * UI. Esto es solo experiencia de usuario: `CloseAgentDayUseCase`
+   * vuelve a correr exactamente esta misma validación server-side antes
+   * de guardar, así que un cliente que se salte esta llamada (o mienta
+   * sobre su resultado) no logra nada — el guardado real la exige de
+   * todas formas. Declarada antes de `:id` por la misma razón de siempre.
+   */
+  @Get('balances/validation')
+  validateBankBalances(
+    @Query() query: BankBalancesValidationQueryDto,
+  ): Promise<BankBalancesValidationOutput> {
+    return this.validateBankBalancesForDateUseCase.execute(query.date ?? todayIsoDate());
   }
 
   @Post('balances')

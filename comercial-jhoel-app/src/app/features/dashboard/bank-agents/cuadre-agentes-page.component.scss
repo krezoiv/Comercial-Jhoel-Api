@@ -56,6 +56,73 @@
   color: var(--color-text-on-light-subtle);
 }
 
+// ---- Acceso bloqueado: "Día no aperturado" / "Saldos pendientes" -----------
+// Reemplaza TODO el contenido normal de la página (no un modal ni un banner
+// encima) mientras la secuencia obligatoria de "Apertura del Día" no se
+// haya completado — ver `CuadreAgentesPageComponent.canAccessReconciliation`.
+
+.cuadre-agentes__access-card {
+  display: block;
+}
+
+.access-blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-10) var(--space-6);
+}
+
+.access-blocked__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-full);
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--color-accent-gold);
+  margin-bottom: var(--space-2);
+}
+
+.access-blocked__title {
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+}
+
+.access-blocked__description {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  max-width: 28rem;
+}
+
+.access-blocked__missing {
+  text-align: left;
+  background: var(--color-bg-light-muted);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  max-width: 22rem;
+  width: 100%;
+}
+
+.access-blocked__missing-title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light-muted);
+  margin-bottom: var(--space-2);
+}
+
+.access-blocked__missing ul {
+  list-style: disc;
+  padding-left: var(--space-5);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 // Same compact, dark-navy ledger style as Conteo de Efectivo (Sección 3) —
 // not capped to a narrow width here, though: with a real bank list this
 // can run to a couple dozen rows, so it uses the card's full width rather
@@ -414,4 +481,32 @@
   display: flex;
   justify-content: flex-end;
   margin-top: var(--space-6);
+}
+
+.info-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+}
+
+.info-banner--warning {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--color-text-on-light);
+}
+
+.info-banner__link {
+  margin-left: auto;
+  font-weight: var(--fw-medium);
+  color: var(--color-primary-600);
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--color-primary-700);
+  }
 }

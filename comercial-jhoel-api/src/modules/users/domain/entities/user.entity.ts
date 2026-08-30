@@ -1,5 +1,8 @@
 import { RoleName } from '../../../roles/domain/entities/role.entity';
 
+/** "Modo Claro / Modo Oscuro" — preferencia individual del usuario, persistida en `users.theme`. */
+export type ThemePreference = 'LIGHT' | 'DARK';
+
 export interface UserProps {
   id: string;
   name: string | null;
@@ -10,6 +13,7 @@ export interface UserProps {
   roleId: string;
   roleName: RoleName;
   isActive: boolean;
+  theme: ThemePreference;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +59,10 @@ export class User {
 
   get isActive(): boolean {
     return this.props.isActive;
+  }
+
+  get theme(): ThemePreference {
+    return this.props.theme;
   }
 
   get createdAt(): Date {

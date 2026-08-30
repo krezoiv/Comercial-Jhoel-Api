@@ -22,15 +22,19 @@ import { ListUsersUseCase } from '../../application/use-cases/list-users.use-cas
 import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
 import { DeactivateUserUseCase } from '../../application/use-cases/deactivate-user.use-case';
+import { GetUserPreferencesUseCase } from '../../application/use-cases/get-user-preferences.use-case';
+import { UpdateUserThemeUseCase } from '../../application/use-cases/update-user-theme.use-case';
 import { RegisterUserRequestDto } from '../dtos/register-user.request.dto';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { UpdateUserRequestDto } from '../dtos/update-user.request.dto';
+import { UpdateThemeRequestDto } from '../dtos/update-theme.request.dto';
 import { ListUsersQueryDto } from '../dtos/list-users.query.dto';
 import {
   PaginatedUsersResponseDto,
   RegisterUserResponseDto,
   UserResponseDto,
 } from '../dtos/user.response.dto';
+import { UserPreferencesResponseDto } from '../dtos/user-preferences.response.dto';
 
 /**
  * No class-level guard: `register` is intentionally public (self-registration),
@@ -46,6 +50,8 @@ export class UsersController {
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly deactivateUserUseCase: DeactivateUserUseCase,
+    private readonly getUserPreferencesUseCase: GetUserPreferencesUseCase,
+    private readonly updateUserThemeUseCase: UpdateUserThemeUseCase,
   ) {}
 
   /** Public self-registration — always assigns the USER role, never a caller-supplied one. */
@@ -63,6 +69,34 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateUserRequestDto): Promise<UserResponseDto> {
     return this.createUserUseCase.execute(dto);
+  }
+
+  /**
+   * "Modo Claro / Modo Oscuro por usuario" — cualquier cuenta autenticada
+   * (sin `@Roles`, a diferencia de las rutas de administración de abajo):
+   * el tema es una preferencia personal, no una acción administrativa.
+   * `userId` sale siempre de `@CurrentUser` (JWT), nunca de un parámetro
+   * de ruta, así que no existe forma de leer/escribir la preferencia de
+   * otra cuenta a través de este endpoint. Declaradas antes de `:id`
+   * (mismo motivo de siempre en esta base de código: un segmento literal
+   * debe registrarse antes que uno dinámico o Nest intentaría matchear
+   * "me" como `:id` y fallaría `ParseUUIDPipe`).
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('me/preferences')
+  getMyPreferences(
+    @CurrentUser('userId') userId: string,
+  ): Promise<UserPreferencesResponseDto> {
+    return this.getUserPreferencesUseCase.execute(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/preferences/theme')
+  updateMyTheme(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: UpdateThemeRequestDto,
+  ): Promise<UserPreferencesResponseDto> {
+    return this.updateUserThemeUseCase.execute(userId, dto.theme);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

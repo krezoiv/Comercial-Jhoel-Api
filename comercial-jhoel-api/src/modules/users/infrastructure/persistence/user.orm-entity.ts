@@ -42,6 +42,9 @@ export class UserOrmEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  @Column({ type: 'varchar', length: 10, default: 'LIGHT' })
+  theme: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

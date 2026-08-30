@@ -1,4 +1,4 @@
-import { User } from '../entities/user.entity';
+import { ThemePreference, User } from '../entities/user.entity';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
@@ -35,6 +35,7 @@ export interface UpdateUserData {
   passwordHash?: string;
   roleId?: string;
   isActive?: boolean;
+  theme?: ThemePreference;
 }
 
 export interface UserRepository {

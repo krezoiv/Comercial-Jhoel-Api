@@ -99,3 +99,53 @@ export function calculateCuadreResult(
 ): number {
   return totalCash + totalBanks + totalAccountsReceivable - totalAssets;
 }
+
+export interface MissingBankInfo {
+  id: string;
+  name: string;
+}
+
+/**
+ * Responde "¿se guardaron los saldos bancarios de esta fecha [en Agentes
+ * Bancarios → Bancos]?" — nunca "¿el banco tiene un saldo actual?". Esta
+ * es la regla que bloquea "Guardar Cuadre" hasta que exista un cuadre
+ * diario guardado para la misma fecha; el backend (`CreateAgentReconciliationUseCase`)
+ * vuelve a exigir esto de forma independiente al guardar, así que este
+ * chequeo del frontend es solo para la experiencia del usuario.
+ */
+export interface BankBalancesValidation {
+  date: string;
+  canReconcile: boolean;
+  totalActiveBanks: number;
+  banksWithBalance: number;
+  missingBanks: MissingBankInfo[];
+}
+
+/**
+ * Las preguntas de la secuencia obligatoria "Apertura → Saldos → Cuadre → Cierre":
+ * 1. ¿Está aperturado? → `isOpened`.
+ * 2. ¿Ya se guardaron los saldos bancarios? → `bankBalancesSaved`.
+ * 3. ¿Se puede entrar a Cuadre Agentes? → `canAccessReconciliation`.
+ * 4. ¿El cuadre ya se realizó? → `reconciliationCompleted` (informativo — ver `status`).
+ * 5. ¿El día ya fue cerrado? → `isClosed`.
+ *
+ * `canAccessReconciliation` es lo único que gatea el sidebar y el
+ * contenido real de Cuadre Agentes; el backend (`CloseAgentDayUseCase`)
+ * vuelve a exigir `isOpened`/`bankBalancesSaved`/`!isClosed` de forma
+ * independiente al guardar, así que este chequeo del frontend es solo
+ * para la experiencia del usuario. `canAccessReconciliation` ya vale
+ * `false` una vez `isClosed` es `true` — "Guardar Cuadre" cierra el día
+ * en la misma operación, así que no hace falta comprobar `isClosed` por
+ * separado para bloquear un segundo cuadre.
+ */
+export type DayWorkStatus = 'NOT_OPENED' | 'OPENED' | 'BANK_BALANCES_SAVED' | 'RECONCILIATION_COMPLETED' | 'CLOSED';
+
+export interface DayStatus {
+  date: string;
+  status: DayWorkStatus;
+  isOpened: boolean;
+  bankBalancesSaved: boolean;
+  canAccessReconciliation: boolean;
+  reconciliationCompleted: boolean;
+  isClosed: boolean;
+}

@@ -1,5 +1,5 @@
 import { RoleName } from '../../../roles/domain/entities/role.entity';
-import { User } from '../../domain/entities/user.entity';
+import { ThemePreference, User } from '../../domain/entities/user.entity';
 import { UserOrmEntity } from './user.orm-entity';
 
 export class UserMapper {
@@ -14,6 +14,7 @@ export class UserMapper {
       roleId: orm.roleId,
       roleName: orm.role.name as RoleName,
       isActive: orm.isActive,
+      theme: orm.theme as ThemePreference,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     });

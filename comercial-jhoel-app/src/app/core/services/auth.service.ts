@@ -5,6 +5,7 @@ import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { ApiSuccessResponse } from '../models';
+import { ThemeService } from './theme.service';
 
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'USER';
 
@@ -38,17 +39,33 @@ const SESSION_KEY = 'cj_auth_session';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly themeService = inject(ThemeService);
 
   readonly currentUser = signal<AuthUser | null>(this.restoreSession());
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   /** ADMIN/SUPER_ADMIN can manage inventory; USER is read-only. Hides UI only — the backend re-checks on every request. */
   readonly isAdmin = computed(() => ADMIN_ROLES.includes(this.currentUser()?.role as UserRole));
 
+  constructor() {
+    // "El backend debe tener prioridad" — una sesión restaurada (recarga
+    // del navegador) siempre vuelve a confirmar el tema real contra
+    // `GET /users/me/preferences`, nunca se conforma con el caché de
+    // `ThemeService` (que ya pintó *algo* de inmediato para evitar el
+    // parpadeo, pero puede estar desactualizado si el usuario cambió de
+    // tema desde otro dispositivo/pestaña).
+    if (this.currentUser()) {
+      this.themeService.loadUserTheme();
+    }
+  }
+
   login(identifier: string, password: string): Observable<AuthResult> {
     return this.http
       .post<ApiSuccessResponse<LoginResponse>>(`${environment.apiUrl}/auth/login`, { identifier, password })
       .pipe(
-        tap(({ data }) => this.setSession(data.accessToken, data.user)),
+        tap(({ data }) => {
+          this.setSession(data.accessToken, data.user);
+          this.themeService.loadUserTheme();
+        }),
         map(() => ({ success: true }) as AuthResult),
         catchError((error: HttpErrorResponse) =>
           of({ success: false, error: extractErrorMessage(error, 'No se pudo iniciar sesión. Inténtalo de nuevo.') })
@@ -74,6 +91,7 @@ export class AuthService {
     this.currentUser.set(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(SESSION_KEY);
+    this.themeService.reset();
   }
 
   getToken(): string | null {

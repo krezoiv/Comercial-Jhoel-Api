@@ -14,21 +14,29 @@
           [attr.aria-expanded]="isExpanded(item.path)"
           (click)="toggleGroup(item.path)"
         >
-          <app-icon [name]="item.icon" [size]="20" />
+          <app-icon [name]="item.icon" [size]="20" class="sidebar__icon" />
           {{ item.label }}
           <app-icon name="chevron-down" [size]="16" class="sidebar__chevron" />
         </button>
 
         <div class="sidebar__submenu-wrapper" [class.sidebar__submenu-wrapper--expanded]="isExpanded(item.path)">
           <div class="sidebar__submenu">
-            @for (child of item.children; track child.path) {
+            @for (child of item.children; track child.path; let i = $index) {
               <a
                 class="sidebar__link sidebar__link--sub"
-                [routerLink]="['/dashboard', child.path]"
+                [class.sidebar__link--disabled]="isLinkDisabled(child.path)"
+                [routerLink]="isLinkDisabled(child.path) ? null : ['/dashboard', child.path]"
+                [attr.aria-disabled]="isLinkDisabled(child.path)"
+                [title]="linkTooltipFor(child.path)"
+                [style.transition-delay]="isExpanded(item.path) ? (i * 35) + 'ms' : '0ms'"
                 routerLinkActive="sidebar__link--active"
-                (click)="closeRequested.emit()"
+                (click)="onLinkClick(child.path)"
               >
-                <app-icon [name]="child.icon" [size]="18" />
+                @if (isLinkDisabled(child.path)) {
+                  <app-icon name="lock" [size]="18" />
+                } @else {
+                  <app-icon [name]="child.icon" [size]="18" />
+                }
                 {{ child.label }}
                 @if (hasDraftFor(child.path)) {
                   <span

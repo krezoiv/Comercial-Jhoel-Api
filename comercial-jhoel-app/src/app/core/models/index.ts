@@ -29,3 +29,4 @@ export * from './account-receivable.model';
 export * from './asset.model';
 export * from './api-response.model';
 export * from './toast.model';
+export * from './theme.model';

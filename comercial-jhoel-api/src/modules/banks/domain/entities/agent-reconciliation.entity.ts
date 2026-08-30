@@ -18,7 +18,7 @@ export interface AgentReconciliationProps {
  * live from this row later), same "frozen snapshot, not a live view"
  * reasoning `recharge_sales_closures` already established for its own
  * `total_sales`/`total_collected`. Only `totalCash` genuinely originates
- * from the caller — see `CreateAgentReconciliationUseCase`.
+ * from the caller — see `CloseAgentDayUseCase`.
  */
 export class AgentReconciliation {
   private constructor(private readonly props: AgentReconciliationProps) {}

@@ -7,7 +7,11 @@
 .dashboard {
   display: flex;
   min-height: 100vh;
-  background: var(--color-bg-light-muted);
+  // `--color-page-bg` — token propio (ver `_tokens.scss`), un paso más
+  // oscuro que `--color-bg-light-muted` en modo claro y redefinido a la
+  // paleta oscura completa bajo `[data-theme="dark"]`.
+  background: var(--color-page-bg);
+  transition: background-color var(--duration-base) var(--ease-out);
 }
 
 .dashboard__backdrop {

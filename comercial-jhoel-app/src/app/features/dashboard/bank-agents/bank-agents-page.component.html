@@ -54,6 +54,29 @@
       <p>Agrega bancos desde <strong>Sistema → Bancos</strong> para comenzar a registrar el cuadre diario.</p>
     </div>
   } @else {
+    @if (effectiveDayClosed()) {
+      <p class="info-banner info-banner--locked">
+        <app-icon name="lock" [size]="16" />
+        Este día ya fue cerrado y no puede ser modificado.
+      </p>
+    } @else if (!isEditingUnlocked()) {
+      <p class="info-banner info-banner--locked">
+        <app-icon name="lock" [size]="16" />
+        Debe aperturar el día antes de registrar los saldos bancarios.
+        <button type="button" class="info-banner__link" (click)="reopenEntryModal()">Aperturar el día</button>
+      </p>
+    } @else if (hasExistingRecordsForDate()) {
+      <p class="info-banner">
+        <app-icon name="alert-circle" [size]="16" />
+        Ya existen saldos registrados para esta fecha. Puede modificar los registros existentes.
+      </p>
+    } @else {
+      <p class="info-banner">
+        <app-icon name="alert-circle" [size]="16" />
+        No existen registros para esta fecha. Puede ingresar nuevos saldos.
+      </p>
+    }
+
     <div class="table-wrapper">
       <table class="bank-agents-table">
         <thead>
@@ -82,6 +105,7 @@
                     [value]="displayFinalBalance(row)"
                     (change)="onFinalBalanceInput(row.bankId, $any($event.target).value)"
                     [attr.aria-label]="'Saldo final de ' + row.bankName"
+                    [disabled]="!isEditingUnlocked()"
                     placeholder="0.00"
                   />
                 </div>
@@ -93,15 +117,35 @@
     </div>
 
     <div class="bank-agents__actions">
-      <app-button variant="ghost" size="lg" [disabled]="isSaving()" (click)="openZeroConfirmModal()">
+      <app-button
+        variant="ghost"
+        size="lg"
+        [disabled]="isSaving() || !isEditingUnlocked()"
+        (click)="openZeroConfirmModal()"
+      >
         Poner Saldos en Cero
       </app-button>
-      <app-button variant="primary" size="lg" [disabled]="!canSave" (click)="saveChanges()">
-        {{ isSaving() ? 'Guardando…' : 'Guardar Cambios' }}
+      <app-button variant="primary" size="lg" [disabled]="!canSave" (click)="openSaveConfirmModal()">
+        Guardar Cambios
       </app-button>
     </div>
   }
 </div>
+
+<app-entry-confirm-modal
+  [open]="isEntryConfirmModalOpen()"
+  [isOpening]="isOpeningDay()"
+  (confirmed)="confirmEntryModal()"
+  (cancelled)="cancelEntryModal()"
+/>
+
+<app-save-balances-confirm-modal
+  [open]="isSaveConfirmModalOpen()"
+  [date]="draft.operationDate()"
+  [isSaving]="isSaving()"
+  (confirmed)="confirmSaveChanges()"
+  (cancelled)="cancelSaveConfirm()"
+/>
 
 <app-zero-balances-confirm-modal
   [open]="isZeroConfirmModalOpen()"

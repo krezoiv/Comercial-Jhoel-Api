@@ -68,6 +68,24 @@
 
   --color-focus-ring: var(--color-accent-cyan-soft);
 
+  // Fondo de página del dashboard y "vidrio" del topbar — tokens propios
+  // (no reutilizan `--color-bg-light-muted`/`--color-surface-light`
+  // directamente) porque necesitan valores distintos a esos dos usos ya
+  // establecidos: el fondo de página es un tono más oscuro que
+  // `--color-bg-light-muted` (que sigue siendo el "panel apagado" de
+  // zebra-striping/resúmenes en toda la app), y el topbar necesita
+  // transparencia (rgba) para su efecto de vidrio esmerilado, algo que
+  // ningún token sólido existente puede dar sin `color-mix()`.
+  --color-page-bg: var(--color-ink-100);
+  --color-topbar-bg: rgba(255, 255, 255, 0.78);
+  // Encabezado "azul pastel" que casi todas las tablas del dashboard ya
+  // comparten (antes escrito directamente como `var(--color-primary-100)`
+  // en cada una) — centralizado aquí específicamente para que el modo
+  // oscuro pueda darle un valor distinto sin heredar el resto de usos de
+  // `--color-primary-100` (badges, resaltados puntuales) que sí deben
+  // seguir siendo ese azul de marca en ambos modos.
+  --color-table-header-bg: var(--color-primary-100);
+
   --gradient-brand: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-accent-cyan) 100%);
   --gradient-brand-soft: linear-gradient(135deg, rgba(47, 131, 224, 0.16) 0%, rgba(23, 195, 214, 0.12) 100%);
   --gradient-gold: linear-gradient(135deg, var(--color-accent-gold) 0%, var(--color-accent-gold-soft) 100%);
@@ -145,4 +163,49 @@
   @media (min-width: 768px) {
     --container-pad: var(--space-8);
   }
+}
+
+// ---------------------------------------------------------------------------
+// MODO OSCURO — [data-theme="dark"] en <html>, controlado por `ThemeService`.
+//
+// Estrategia deliberada: esta app ya tenía DOS familias de tokens de
+// superficie conviviendo — "-light" (usado por prácticamente todo el
+// contenido: cards, tablas, modales, inputs, el Topbar) y "-dark" (usado
+// únicamente por el Sidebar, que ya es oscuro a propósito en ambos modos,
+// como en la mayoría de paneles admin — Vercel, Linear, Notion). En vez
+// de inventar una tercera paleta, el modo oscuro simplemente REDEFINE los
+// tokens "-light" para que apunten a los mismos valores que ya usan los
+// tokens "-dark" — ningún componente necesita tocarse: cada uno ya
+// consume `var(--color-surface-light)`/`var(--color-text-on-light)`/etc.
+// (confirmado antes de escribir esto: 100+ archivos ya siguen esta
+// convención), así que heredan el modo oscuro automáticamente. El
+// Sidebar, al usar sus propios tokens "-dark" directamente, se mantiene
+// visualmente igual en ambos modos — comportamiento intencional, no un
+// hueco de la implementación.
+// ---------------------------------------------------------------------------
+[data-theme='dark'] {
+  --color-bg-light: var(--color-bg-dark);
+  --color-bg-light-muted: var(--color-bg-dark-elevated);
+
+  --color-surface-light: var(--color-surface-dark);
+  --color-surface-light-hover: var(--color-surface-dark-hover);
+
+  --color-border-light: var(--color-border-dark);
+
+  --color-text-on-light: var(--color-text-on-dark);
+  --color-text-on-light-muted: var(--color-text-on-dark-muted);
+  --color-text-on-light-subtle: var(--color-text-on-dark-subtle);
+
+  --color-page-bg: var(--color-bg-dark);
+  --color-topbar-bg: rgba(15, 20, 32, 0.72);
+  --color-table-header-bg: var(--color-surface-dark-hover);
+
+  // Sombras algo más marcadas — sobre un fondo oscuro, las sombras suaves
+  // calibradas para blanco (rgba negro muy claro) casi no se notan; estas
+  // mismas variables las consume toda la app (`--shadow-sm/md/lg`), así
+  // que oscurecer/agrandar su alpha aquí basta para que cards/modales/
+  // dropdowns sigan leyéndose "elevados" en modo oscuro.
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.4);
 }

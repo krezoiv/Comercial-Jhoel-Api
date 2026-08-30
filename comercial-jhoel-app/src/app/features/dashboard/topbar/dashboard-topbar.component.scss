@@ -15,15 +15,25 @@
   gap: var(--space-4);
   height: 4.5rem;
   padding-inline: var(--space-4);
-  // A soft brand-tinted wash (not flat white) plus a real shadow instead of
-  // a 1px border — gives the bar depth/separation from the content below
-  // without competing with it.
-  background: linear-gradient(90deg, var(--color-bg-light) 0%, var(--color-primary-100) 145%);
-  box-shadow: var(--shadow-sm);
+  // Vidrio esmerilado semitransparente + blur, en vez del degradado casi
+  // opaco anterior — ahora que `.dashboard` (ver ese archivo) es un tono
+  // más oscuro, esto es lo que hace que la barra se lea como una
+  // superficie propia "flotando" sobre la página, no solo un tono
+  // ligeramente distinto pegado al contenido.
+  background: var(--color-topbar-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-md);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
 
-  // Thin brand-gradient strip along the very top edge — the same accent
-  // treatment used for "this is a primary surface" elsewhere in the app,
-  // scaled down to a hairline so it reads as polish, not a banner.
+  // Franja de acento en degradado de marca sobre el borde superior — mismo
+  // tratamiento que ya usaba esta barra, ligeramente más gruesa para que
+  // siga leyéndose como detalle de marca y no se pierda contra el nuevo
+  // fondo semitransparente.
   &::before {
     content: '';
     position: absolute;
@@ -47,11 +57,22 @@
   height: 2.5rem;
   border-radius: var(--radius-md);
   color: var(--color-text-on-light);
-  transition: background-color var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
   @include focus-ring;
 
   &:hover {
-    background: var(--color-bg-light-muted);
+    // Traslúcido (no un color sólido) a propósito — se ve bien tanto
+    // sobre el vidrio claro como sobre el oscuro del topbar, sin
+    // necesitar una variante por tema.
+    background: var(--gradient-brand-soft);
+    color: var(--color-primary-600);
+    transform: scale(1.06);
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 
   @include bp.respond(lg) {
@@ -70,7 +91,7 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   color: var(--color-text-on-light-muted);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
   span::first-letter {
     text-transform: uppercase;
@@ -93,9 +114,84 @@
   flex-shrink: 0;
 }
 
+// "Modo Claro / Modo Oscuro" — un toggle deslizante, no dos botones
+// separados, para que el estado activo sea inequívoco de un solo vistazo
+// (posición del thumb) además del ícono que muestra — nunca depende
+// únicamente del color, por accesibilidad. `margin-left: auto` empuja
+// tanto este botón como `.topbar__user` (ver más abajo, ya sin su propio
+// `margin-left: auto`) hacia el borde derecho de la barra.
+.topbar__theme-toggle {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  border-radius: var(--radius-full);
+  @include focus-ring;
+}
+
+.topbar__theme-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 3.5rem;
+  height: 1.875rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light-muted);
+  border: 1px solid var(--color-border-light);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.topbar__theme-icon {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-on-light-subtle);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.topbar__theme-icon--sun {
+  opacity: 1;
+}
+
+.topbar__theme-icon--moon {
+  opacity: 0.4;
+}
+
+.topbar__theme-track--dark .topbar__theme-icon--sun {
+  opacity: 0.4;
+}
+
+.topbar__theme-track--dark .topbar__theme-icon--moon {
+  opacity: 1;
+}
+
+.topbar__theme-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+}
+
+.topbar__theme-track--dark .topbar__theme-thumb {
+  transform: translateX(1.625rem);
+  background: linear-gradient(135deg, var(--color-ink-600) 0%, var(--color-ink-500) 100%);
+}
+
 .topbar__user {
   position: relative;
-  margin-left: auto;
 }
 
 .topbar__user-trigger {
@@ -110,20 +206,30 @@
   box-shadow: var(--shadow-sm);
   transition:
     background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
   @include focus-ring;
 
   app-icon:last-child {
     color: var(--color-text-on-light-subtle);
+    transition: transform var(--duration-fast) var(--ease-out);
   }
 
   &:hover {
-    background: var(--color-primary-100);
+    background: var(--gradient-brand-soft);
     border-color: var(--color-primary-300);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  &[aria-expanded='true'] app-icon:last-child {
+    transform: rotate(180deg);
   }
 }
 
 .topbar__avatar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,6 +242,22 @@
   // as a blur blob at this size, this keeps it a subtle "lit" ring instead.
   box-shadow: 0 2px 10px -2px rgba(47, 131, 224, 0.5);
   flex-shrink: 0;
+
+  // Punto "sesión activa" — un detalle pequeño y habitual en paneles
+  // profesionales, con un doble borde (blanco + el mismo tono translúcido
+  // del vidrio esmerilado de la barra) para que se despegue tanto del
+  // avatar como del fondo detrás de él.
+  &::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-green);
+    border: 2px solid var(--color-surface-light);
+  }
 }
 
 .topbar__user-info {
@@ -205,7 +327,9 @@
   font-weight: var(--fw-medium);
   color: var(--color-text-on-light);
   text-align: left;
-  transition: background-color var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 
   app-icon {
     color: var(--color-text-on-light-subtle);
@@ -214,6 +338,7 @@
 
   &:hover {
     background: var(--color-bg-light-muted);
+    transform: translateX(2px);
   }
 }
 

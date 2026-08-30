@@ -9,6 +9,8 @@ import { ListUsersUseCase } from './application/use-cases/list-users.use-case';
 import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case';
 import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
 import { DeactivateUserUseCase } from './application/use-cases/deactivate-user.use-case';
+import { GetUserPreferencesUseCase } from './application/use-cases/get-user-preferences.use-case';
+import { UpdateUserThemeUseCase } from './application/use-cases/update-user-theme.use-case';
 import { UsersController } from './presentation/controllers/users.controller';
 import { SharedModule } from '../../shared/shared.module';
 import { RolesModule } from '../roles/roles.module';
@@ -28,6 +30,8 @@ import { RolesModule } from '../roles/roles.module';
     GetUserByIdUseCase,
     UpdateUserUseCase,
     DeactivateUserUseCase,
+    GetUserPreferencesUseCase,
+    UpdateUserThemeUseCase,
   ],
   exports: [USER_REPOSITORY],
 })

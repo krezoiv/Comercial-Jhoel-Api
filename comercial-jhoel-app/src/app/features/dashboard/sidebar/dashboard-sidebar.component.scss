@@ -111,7 +111,8 @@
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 
   app-icon {
     color: var(--color-text-on-dark-subtle);
@@ -121,12 +122,25 @@
   &:hover {
     background: var(--color-surface-dark-hover);
     color: var(--color-text-on-dark);
+    transform: translateX(3px);
+  }
+
+  &:active {
+    transform: translateX(3px) scale(0.98);
   }
 }
 
 /** A group's own row is a toggle button, not a link — see the template's `@if (item.children)` branch. */
 .sidebar__link--group {
   justify-content: flex-start;
+}
+
+.sidebar__icon {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.sidebar__link--group:hover .sidebar__icon {
+  transform: scale(1.12);
 }
 
 .sidebar__chevron {
@@ -137,6 +151,16 @@
 
 .sidebar__link--expanded .sidebar__chevron {
   transform: rotate(0deg);
+}
+
+/** Resalta cuál es el grupo actualmente abierto — junto con el acordeón exclusivo, deja clarísimo que solo uno puede estar así a la vez. */
+.sidebar__link--expanded {
+  background: var(--color-surface-dark-hover);
+  color: var(--color-text-on-dark);
+
+  &:hover {
+    transform: none;
+  }
 }
 
 .sidebar__link--active {
@@ -179,6 +203,48 @@
 .sidebar__link--sub {
   padding: var(--space-2) var(--space-3);
   font-size: var(--fs-xs);
+  // Entran con un pequeño fade + deslizamiento, escalonado por fila (ver el
+  // `transition-delay` inline en el template) — solo al abrir el grupo; al
+  // cerrarlo, `.sidebar__submenu-wrapper` ya las oculta de golpe vía su
+  // propio `overflow: hidden`, así que no hace falta una transición de
+  // salida independiente aquí.
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+  border-left: 2px solid transparent;
+
+  &:hover {
+    transform: translateX(1px);
+  }
+}
+
+.sidebar__submenu-wrapper--expanded .sidebar__link--sub {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar__link--sub.sidebar__link--active {
+  border-left-color: var(--color-accent-cyan);
+}
+
+/**
+ * "Apertura del Día" — Cuadre Agentes hasta que el día esté aperturado y
+ * los saldos guardados. Selector compuesto con `.sidebar__submenu-wrapper
+ * --expanded .sidebar__link--sub` (misma especificidad, 0-2-0) para que
+ * esta opacidad "apagada" siga ganando sobre el fade-in a opacidad 1 de
+ * ese estado — sin el segundo selector, un enlace deshabilitado dentro de
+ * un grupo ya expandido se vería con opacidad completa en vez de atenuada.
+ */
+.sidebar__link--disabled,
+.sidebar__submenu-wrapper--expanded .sidebar__link--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /** Small "borrador en progreso" nudge — a dot, not a badge with text, so it stays out of the way of the label. */

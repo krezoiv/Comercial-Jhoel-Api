@@ -11,6 +11,8 @@ import { SalesDraftStore } from '../../../core/services/sales-draft.store';
 import { IceCreamPurchaseDraftStore } from '../../../core/services/ice-cream-purchase-draft.store';
 import { IceCreamSaleDraftStore } from '../../../core/services/ice-cream-sale-draft.store';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
+import { DayStatusService } from '../../../core/services/day-status.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { IconComponent } from '../../../shared/ui';
 
 @Component({
@@ -33,11 +35,17 @@ export class DashboardSidebarComponent {
   private readonly iceCreamPurchaseDraftStore = inject(IceCreamPurchaseDraftStore);
   private readonly iceCreamSaleDraftStore = inject(IceCreamSaleDraftStore);
   private readonly bankBalanceDraftStore = inject(BankBalanceDraftStore);
+  private readonly dayStatusService = inject(DayStatusService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly site = SITE;
 
-  /** Which top-level groups (by `item.path`) currently have their submenu expanded — an accordion, not a single-open-at-a-time affair, so opening one doesn't yank another shut on the user. */
-  private readonly expandedGroups = signal<Set<string>>(new Set());
+  /**
+   * Acordeón exclusivo: a lo sumo un grupo expandido a la vez — abrir uno
+   * cierra automáticamente cualquier otro que estuviera abierto. `null`
+   * significa "ninguno expandido".
+   */
+  private readonly expandedGroup = signal<string | null>(null);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -51,22 +59,16 @@ export class DashboardSidebarComponent {
     // Whenever navigation lands inside a group's own children, make sure that
     // group is (auto-)expanded — covers first load/refresh on a deep link,
     // and any navigation that didn't originate from clicking inside this
-    // sidebar (e.g. a dashboard home-card shortcut). Never auto-collapses a
-    // group the user already opened by hand.
+    // sidebar (e.g. a dashboard home-card shortcut). Con el acordeón
+    // exclusivo, esto también cierra cualquier otro grupo que estuviera
+    // abierto — es exactamente el mismo `.set()` que usa `toggleGroup`.
     effect(() => {
       const url = this.currentUrl();
       const activeItem = this.navItems().find((item) =>
         item.children?.some((child) => url.includes(`/${child.path}`)),
       );
       if (activeItem) {
-        this.expandedGroups.update((current) => {
-          if (current.has(activeItem.path)) {
-            return current;
-          }
-          const next = new Set(current);
-          next.add(activeItem.path);
-          return next;
-        });
+        this.expandedGroup.set(activeItem.path);
       }
     });
   }
@@ -114,19 +116,66 @@ export class DashboardSidebarComponent {
     return path === 'ventas' || path === 'heladeria-ventas' ? 'Venta en progreso' : 'Compra en progreso';
   }
 
-  isExpanded(path: string): boolean {
-    return this.expandedGroups().has(path);
+  /**
+   * "Apertura del Día" — Cuadre Agentes permanece deshabilitado en el
+   * Sidebar hasta que el día de hoy esté aperturado Y sus saldos
+   * bancarios estén guardados (`DayStatusService`, el mismo singleton que
+   * la página de Bancos actualiza al aperturar/guardar, así que este
+   * enlace se habilita de inmediato sin recargar nada). Mientras el
+   * estado todavía no se conoce (`loading`), se trata como deshabilitado
+   * — nunca se asume "sí se puede" por defecto.
+   *
+   * "Cierre del Día" — Bancos también se bloquea, una vez que HOY quedó
+   * cerrado (`isClosed`). Se vuelve a habilitar solo, sin ningún código
+   * extra, al llegar la medianoche: `DayStatusService` siempre representa
+   * "hoy", así que en cuanto la fecha real cambia (con una recarga normal
+   * del día siguiente), el estado consultado ya corresponde a la nueva
+   * fecha — no cerrada — y este mismo chequeo vuelve a devolver `false`.
+   */
+  isLinkDisabled(path: string): boolean {
+    if (path === 'agentes-bancarios-cuadre') {
+      return this.dayStatusService.loading() || this.dayStatusService.status()?.canAccessReconciliation !== true;
+    }
+    if (path === 'agentes-bancarios-bancos') {
+      return this.dayStatusService.loading() || this.dayStatusService.status()?.isClosed === true;
+    }
+    return false;
   }
 
+  linkTooltipFor(path: string): string | null {
+    if (!this.isLinkDisabled(path)) {
+      return null;
+    }
+    if (path === 'agentes-bancarios-bancos') {
+      return 'El día de hoy ya fue operado y cerrado. Podrá continuar con un nuevo ciclo a partir de mañana.';
+    }
+    return 'Debe aperturar el día y guardar los saldos bancarios primero';
+  }
+
+  /**
+   * Clicar un enlace deshabilitado nunca navega (`[routerLink]` ya es
+   * `null` en ese estado) — esto solo añade la alerta explícita que pide
+   * el ticket para Bancos ya cerrado, en vez de dejar que el único
+   * indicio sea el tooltip pasivo del atributo `title`.
+   */
+  onLinkClick(path: string): void {
+    if (!this.isLinkDisabled(path)) {
+      this.closeRequested.emit();
+      return;
+    }
+    if (path === 'agentes-bancarios-bancos' && this.dayStatusService.status()?.isClosed === true) {
+      this.notificationService.info(
+        'El día de hoy ya fue operado y cerrado. Podrá continuar con un nuevo ciclo a partir de mañana.',
+      );
+    }
+  }
+
+  isExpanded(path: string): boolean {
+    return this.expandedGroup() === path;
+  }
+
+  /** Acordeón exclusivo: clicar el grupo ya abierto lo cierra; clicar cualquier otro lo abre y cierra el anterior. */
   toggleGroup(path: string): void {
-    this.expandedGroups.update((current) => {
-      const next = new Set(current);
-      if (next.has(path)) {
-        next.delete(path);
-      } else {
-        next.add(path);
-      }
-      return next;
-    });
+    this.expandedGroup.update((current) => (current === path ? null : path));
   }
 }

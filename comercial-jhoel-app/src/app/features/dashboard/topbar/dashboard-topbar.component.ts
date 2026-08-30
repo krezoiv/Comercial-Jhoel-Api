@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, Output, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { IconComponent } from '../../../shared/ui';
 
 @Component({
@@ -19,10 +20,18 @@ export class DashboardTopbarComponent {
   @Output() logoutRequested = new EventEmitter<void>();
 
   private readonly authService = inject(AuthService);
+  private readonly themeService = inject(ThemeService);
 
   readonly currentUser = this.authService.currentUser;
   readonly now = signal(new Date());
   readonly isUserMenuOpen = signal(false);
+
+  /** "Modo Claro / Modo Oscuro" — `ThemeService` es la única fuente; este componente solo lee su signal y le pide cambiar. */
+  readonly isDarkTheme = computed(() => this.themeService.theme() === 'DARK');
+
+  toggleTheme(): void {
+    this.themeService.setTheme(this.isDarkTheme() ? 'LIGHT' : 'DARK');
+  }
 
   constructor() {
     const intervalId = setInterval(() => this.now.set(new Date()), 1000);

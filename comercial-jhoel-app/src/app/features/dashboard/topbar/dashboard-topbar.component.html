@@ -10,6 +10,24 @@
     <span>{{ now() | date: "EEEE d 'de' MMMM · h:mm:ss a" }}</span>
   </div>
 
+  <button
+    type="button"
+    class="topbar__theme-toggle"
+    role="switch"
+    [attr.aria-checked]="isDarkTheme()"
+    [attr.aria-label]="isDarkTheme() ? 'Activar modo claro' : 'Activar modo oscuro'"
+    [title]="isDarkTheme() ? 'Activar modo claro' : 'Activar modo oscuro'"
+    (click)="toggleTheme()"
+  >
+    <span class="topbar__theme-track" [class.topbar__theme-track--dark]="isDarkTheme()">
+      <app-icon name="sun" [size]="12" class="topbar__theme-icon topbar__theme-icon--sun" />
+      <app-icon name="moon" [size]="12" class="topbar__theme-icon topbar__theme-icon--moon" />
+      <span class="topbar__theme-thumb">
+        <app-icon [name]="isDarkTheme() ? 'moon' : 'sun'" [size]="12" />
+      </span>
+    </span>
+  </button>
+
   <div class="topbar__user">
     <button type="button" class="topbar__user-trigger" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen()">
       <span class="topbar__avatar">

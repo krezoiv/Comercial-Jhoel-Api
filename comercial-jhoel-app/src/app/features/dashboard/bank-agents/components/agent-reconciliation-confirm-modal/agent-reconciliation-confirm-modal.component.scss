@@ -39,6 +39,12 @@
   margin-bottom: var(--space-6);
 }
 
+.modal__description {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  margin-bottom: var(--space-5);
+}
+
 .modal__summary {
   display: flex;
   flex-direction: column;
@@ -88,12 +94,6 @@
 
 .modal__summary-row--negative dd {
   color: #dc4444;
-}
-
-.modal__hint {
-  font-size: var(--fs-xs);
-  color: var(--color-text-on-light-subtle);
-  margin-bottom: var(--space-6);
 }
 
 .modal__actions {
