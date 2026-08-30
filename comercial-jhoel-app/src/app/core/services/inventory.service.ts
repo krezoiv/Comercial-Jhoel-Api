@@ -1,63 +1,99 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
 
-import { Product, ProductInput } from '../models';
-import { PRODUCTS } from '../data';
+import { environment } from '../../../environments/environment';
+import { ApiSuccessResponse, PaginatedResponse, Product, ProductInput } from '../models';
 
-const SIMULATED_LATENCY_MS = 400;
+/** Raw shape the API returns for a product — `category` maps this to the flat `Product` the UI uses. */
+interface ProductApiModel {
+  id: string;
+  name: string;
+  sku: string | null;
+  categoryId: string;
+  categoryName: string;
+  businessId: string;
+  businessName: string;
+  costPrice: number;
+  publicPrice: number;
+  wholesalePrice: number;
+  stock: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toProduct(api: ProductApiModel): Product {
+  return {
+    id: api.id,
+    name: api.name,
+    sku: api.sku,
+    category: api.categoryName,
+    categoryId: api.categoryId,
+    business: api.businessName,
+    businessId: api.businessId,
+    costPrice: api.costPrice,
+    publicPrice: api.publicPrice,
+    wholesalePrice: api.wholesalePrice,
+    stock: api.stock,
+    isActive: api.isActive,
+    createdAt: api.createdAt,
+    updatedAt: api.updatedAt,
+  };
+}
 
 /**
- * Phase 2: back this with real HTTP calls against
- * `${environment.apiUrl}/inventory/products` (GET/POST/PATCH/DELETE) instead
- * of the in-memory array — every method's signature and Observable return
- * type are already what `HttpClient` would give you, so callers
- * (InventoryPageComponent, ProductFormModalComponent) shouldn't need to
- * change. Reads always return a fresh snapshot rather than a live stream, on
- * purpose: that's how a real GET behaves too, so callers already re-fetch
- * after a mutation instead of relying on this service to push updates.
+ * Talks to `${environment.apiUrl}/products` — no more mock data. `getProducts()`
+ * asks for a generous page size since the inventory screen still does its own
+ * client-side search/filter/sort over the full active list (see
+ * InventoryPageComponent); swapping this for real server-side pagination
+ * later only means changing this one method.
  */
+const LIST_LIMIT = 100;
+/** Small on purpose — this is a live-search dropdown (Ventas), not a management list. */
+const SEARCH_LIMIT = 8;
+
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
-  private products: Product[] = structuredClone(PRODUCTS);
+  private readonly http = inject(HttpClient);
 
   getProducts(): Observable<Product[]> {
-    return of(structuredClone(this.products)).pipe(delay(SIMULATED_LATENCY_MS));
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResponse<ProductApiModel>>>(`${environment.apiUrl}/products`, {
+        params: { limit: LIST_LIMIT },
+      })
+      .pipe(map((response) => response.data.items.map(toProduct)));
   }
 
-  getProductById(id: string): Observable<Product | undefined> {
-    const product = this.products.find((p) => p.id === id);
-    return of(product ? structuredClone(product) : undefined).pipe(delay(SIMULATED_LATENCY_MS));
+  /** Server-side search by name or SKU — active products only (the backend's default). Used by the Ventas product picker. */
+  searchProducts(query: string): Observable<Product[]> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResponse<ProductApiModel>>>(`${environment.apiUrl}/products`, {
+        params: { search: query, limit: SEARCH_LIMIT },
+      })
+      .pipe(map((response) => response.data.items.map(toProduct)));
+  }
+
+  getProductById(id: string): Observable<Product> {
+    return this.http
+      .get<ApiSuccessResponse<ProductApiModel>>(`${environment.apiUrl}/products/${id}`)
+      .pipe(map((response) => toProduct(response.data)));
   }
 
   createProduct(input: ProductInput): Observable<Product> {
-    const now = new Date().toISOString();
-    const product: Product = {
-      ...input,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.products = [product, ...this.products];
-    return of(structuredClone(product)).pipe(delay(SIMULATED_LATENCY_MS));
+    return this.http
+      .post<ApiSuccessResponse<ProductApiModel>>(`${environment.apiUrl}/products`, input)
+      .pipe(map((response) => toProduct(response.data)));
   }
 
   updateProduct(id: string, input: ProductInput): Observable<Product> {
-    const index = this.products.findIndex((p) => p.id === id);
-    if (index === -1) {
-      return throwError(() => new Error('Producto no encontrado.')).pipe(delay(SIMULATED_LATENCY_MS));
-    }
-
-    const updated: Product = {
-      ...this.products[index],
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
-    this.products = [...this.products.slice(0, index), updated, ...this.products.slice(index + 1)];
-    return of(structuredClone(updated)).pipe(delay(SIMULATED_LATENCY_MS));
+    return this.http
+      .patch<ApiSuccessResponse<ProductApiModel>>(`${environment.apiUrl}/products/${id}`, input)
+      .pipe(map((response) => toProduct(response.data)));
   }
 
+  /** Soft delete — the backend deactivates the product, it never deletes the row. */
   deleteProduct(id: string): Observable<void> {
-    this.products = this.products.filter((p) => p.id !== id);
-    return of(undefined).pipe(delay(SIMULATED_LATENCY_MS));
+    return this.http.delete<void>(`${environment.apiUrl}/products/${id}`);
   }
 }

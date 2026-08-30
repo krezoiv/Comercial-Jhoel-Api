@@ -1,3 +1,4 @@
+import { RoleName } from '../../../roles/domain/entities/role.entity';
 import { User } from '../../domain/entities/user.entity';
 import { UserOrmEntity } from './user.orm-entity';
 
@@ -10,21 +11,11 @@ export class UserMapper {
       username: orm.username,
       phone: orm.phone,
       passwordHash: orm.passwordHash,
+      roleId: orm.roleId,
+      roleName: orm.role.name as RoleName,
+      isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     });
-  }
-
-  static toPersistence(user: User): UserOrmEntity {
-    const orm = new UserOrmEntity();
-    orm.id = user.id;
-    orm.name = user.name;
-    orm.email = user.email;
-    orm.username = user.username;
-    orm.phone = user.phone;
-    orm.passwordHash = user.passwordHash;
-    orm.createdAt = user.createdAt;
-    orm.updatedAt = user.updatedAt;
-    return orm;
   }
 }

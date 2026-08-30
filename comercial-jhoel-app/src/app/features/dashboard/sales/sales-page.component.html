@@ -1,0 +1,38 @@
+<div class="sales">
+  <header class="sales__header">
+    <div>
+      <h1 class="sales__title">Ventas</h1>
+      <p class="sales__subtitle">Registra y administra las ventas de tu negocio.</p>
+    </div>
+    <div class="sales__date">
+      <span class="sales__date-label">Fecha</span>
+      <span class="sales__date-value">{{ today() | date: 'dd/MM/yyyy' }}</span>
+    </div>
+  </header>
+
+  <app-product-search (productSelected)="onProductSelected($event)" />
+
+  <div class="sales__receipt">
+    <app-sale-items-table
+      [items]="draft.items()"
+      [pendingProductIds]="draft.pendingProductIds()"
+      (quantityChange)="onQuantityChange($event)"
+      (removeItem)="onRemoveItem($event)"
+    />
+
+    <app-sale-summary
+      [itemCount]="draft.items().length"
+      [total]="draft.total()"
+      [isSaving]="draft.isSaving()"
+      [isCancelling]="draft.isCancelling()"
+      (save)="saveSale()"
+      (cancel)="requestCancel()"
+    />
+  </div>
+</div>
+
+<app-sale-cancel-confirm-modal
+  [open]="isCancelConfirmOpen()"
+  (confirmed)="confirmCancel()"
+  (cancelled)="dismissCancel()"
+/>

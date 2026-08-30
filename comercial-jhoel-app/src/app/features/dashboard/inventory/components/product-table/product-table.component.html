@@ -4,7 +4,9 @@
       <thead>
         <tr>
           <th>Producto</th>
+          <th>SKU</th>
           <th>Categoría</th>
+          <th>Negocio</th>
           <th class="align-right">Precio costo</th>
           <th class="align-right">Precio público</th>
           <th class="align-right">Precio mayor</th>
@@ -16,6 +18,8 @@
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
             <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td class="align-right"><span class="skeleton skeleton--sm"></span></td>
             <td class="align-right"><span class="skeleton skeleton--sm"></span></td>
@@ -43,7 +47,7 @@
   >
     @if (hasActiveFilters) {
       <app-button variant="ghost" (click)="clearFilters.emit()">Limpiar filtros</app-button>
-    } @else {
+    } @else if (canManage) {
       <app-button variant="primary" (click)="addProduct.emit()">
         <app-icon name="plus" [size]="16" />
         Agregar producto
@@ -62,9 +66,21 @@
             </button>
           </th>
           <th>
+            <button type="button" class="sort-btn" (click)="toggleSort('sku')">
+              SKU
+              <app-icon [name]="sortIcon('sku')" [size]="14" />
+            </button>
+          </th>
+          <th>
             <button type="button" class="sort-btn" (click)="toggleSort('category')">
               Categoría
               <app-icon [name]="sortIcon('category')" [size]="14" />
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-btn" (click)="toggleSort('business')">
+              Negocio
+              <app-icon [name]="sortIcon('business')" [size]="14" />
             </button>
           </th>
           <th class="align-right">
@@ -91,38 +107,44 @@
               <app-icon [name]="sortIcon('stock')" [size]="14" />
             </button>
           </th>
-          <th class="align-right">Acciones</th>
+          @if (canManage) {
+            <th class="align-right">Acciones</th>
+          }
         </tr>
       </thead>
       <tbody>
         @for (product of sortedProducts(); track product.id) {
           <tr>
             <td class="product-table__name">{{ product.name }}</td>
+            <td class="product-table__sku">{{ product.sku || '—' }}</td>
             <td>{{ product.category }}</td>
+            <td>{{ product.business }}</td>
             <td class="align-right">{{ formatCurrency(product.costPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.publicPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.wholesalePrice) }}</td>
             <td class="align-right">
               <div class="stock-cell">
-                <span>{{ product.stock }}</span>
+                <span>{{ formatQuantity(product.stock) }}</span>
                 <app-badge [tone]="statusTone(product)">{{ statusLabel(product) }}</app-badge>
               </div>
             </td>
-            <td class="align-right">
-              <div class="actions">
-                <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
-                  <app-icon name="edit-2" [size]="16" />
-                </button>
-                <button
-                  type="button"
-                  class="action-btn action-btn--danger"
-                  (click)="delete.emit(product)"
-                  [attr.aria-label]="'Eliminar ' + product.name"
-                >
-                  <app-icon name="trash-2" [size]="16" />
-                </button>
-              </div>
-            </td>
+            @if (canManage) {
+              <td class="align-right">
+                <div class="actions">
+                  <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
+                    <app-icon name="edit-2" [size]="16" />
+                  </button>
+                  <button
+                    type="button"
+                    class="action-btn action-btn--danger"
+                    (click)="delete.emit(product)"
+                    [attr.aria-label]="'Eliminar ' + product.name"
+                  >
+                    <app-icon name="trash-2" [size]="16" />
+                  </button>
+                </div>
+              </td>
+            }
           </tr>
         }
       </tbody>
@@ -135,7 +157,10 @@
         <div class="product-card__header">
           <div>
             <p class="product-card__name">{{ product.name }}</p>
-            <p class="product-card__category">{{ product.category }}</p>
+            <p class="product-card__category">{{ product.category }} · {{ product.business }}</p>
+            @if (product.sku) {
+              <p class="product-card__sku">SKU: {{ product.sku }}</p>
+            }
           </div>
           <app-badge [tone]="statusTone(product)">{{ statusLabel(product) }}</app-badge>
         </div>
@@ -156,20 +181,22 @@
         </div>
 
         <div class="product-card__footer">
-          <span class="product-card__stock">Stock: <strong>{{ product.stock }}</strong></span>
-          <div class="actions">
-            <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
-              <app-icon name="edit-2" [size]="16" />
-            </button>
-            <button
-              type="button"
-              class="action-btn action-btn--danger"
-              (click)="delete.emit(product)"
-              [attr.aria-label]="'Eliminar ' + product.name"
-            >
-              <app-icon name="trash-2" [size]="16" />
-            </button>
-          </div>
+          <span class="product-card__stock">Stock: <strong>{{ formatQuantity(product.stock) }}</strong></span>
+          @if (canManage) {
+            <div class="actions">
+              <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
+                <app-icon name="edit-2" [size]="16" />
+              </button>
+              <button
+                type="button"
+                class="action-btn action-btn--danger"
+                (click)="delete.emit(product)"
+                [attr.aria-label]="'Eliminar ' + product.name"
+              >
+                <app-icon name="trash-2" [size]="16" />
+              </button>
+            </div>
+          }
         </div>
       </div>
     }

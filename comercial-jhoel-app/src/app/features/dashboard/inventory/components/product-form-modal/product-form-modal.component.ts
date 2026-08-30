@@ -9,16 +9,19 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { Product } from '../../../../../core/models';
+import { Business, Category, Product } from '../../../../../core/models';
 import { InventoryService } from '../../../../../core/services/inventory.service';
+import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 
 @Component({
   selector: 'app-product-form-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, IconComponent],
+  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective],
   templateUrl: './product-form-modal.component.html',
   styleUrl: './product-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,7 +30,10 @@ export class ProductFormModalComponent implements OnChanges {
   @Input() open = false;
   /** null = create mode, a Product = edit mode (form is pre-filled from it). */
   @Input() product: Product | null = null;
-  @Input() categories: string[] = [];
+  /** Real, active categories from the backend — never hardcoded. */
+  @Input() categories: Category[] = [];
+  /** Real, active businesses (líneas de negocio) from the backend — never hardcoded. */
+  @Input() businesses: Business[] = [];
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<Product>();
@@ -39,8 +45,10 @@ export class ProductFormModalComponent implements OnChanges {
   readonly errorMessage = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    category: ['', [Validators.required, Validators.maxLength(40)]],
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
+    sku: ['', [Validators.maxLength(64), Validators.pattern(/^[a-zA-Z0-9-]+$/)]],
+    categoryId: ['', Validators.required],
+    businessId: ['', Validators.required],
     costPrice: [0, [Validators.required, Validators.min(0.01)]],
     publicPrice: [0, [Validators.required, Validators.min(0.01)]],
     wholesalePrice: [0, [Validators.required, Validators.min(0.01)]],
@@ -60,10 +68,28 @@ export class ProductFormModalComponent implements OnChanges {
     this.isSubmitting.set(false);
 
     if (this.product) {
-      const { name, category, costPrice, publicPrice, wholesalePrice, stock } = this.product;
-      this.form.reset({ name, category, costPrice, publicPrice, wholesalePrice, stock });
+      const { name, sku, categoryId, businessId, costPrice, publicPrice, wholesalePrice, stock } = this.product;
+      this.form.reset({
+        name,
+        sku: sku ?? '',
+        categoryId,
+        businessId,
+        costPrice,
+        publicPrice,
+        wholesalePrice,
+        stock,
+      });
     } else {
-      this.form.reset({ name: '', category: '', costPrice: 0, publicPrice: 0, wholesalePrice: 0, stock: 0 });
+      this.form.reset({
+        name: '',
+        sku: '',
+        categoryId: '',
+        businessId: '',
+        costPrice: 0,
+        publicPrice: 0,
+        wholesalePrice: 0,
+        stock: 0,
+      });
     }
   }
 
@@ -75,7 +101,8 @@ export class ProductFormModalComponent implements OnChanges {
       return;
     }
 
-    const input = this.form.getRawValue();
+    const { sku, ...rest } = this.form.getRawValue();
+    const input = { ...rest, sku: sku.trim() || null };
     this.isSubmitting.set(true);
 
     const request$ = this.isEditMode
@@ -87,9 +114,9 @@ export class ProductFormModalComponent implements OnChanges {
         this.isSubmitting.set(false);
         this.saved.emit(product);
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);
-        this.errorMessage.set('No se pudo guardar el producto. Inténtalo de nuevo.');
+        this.errorMessage.set(extractErrorMessage(error, 'No se pudo guardar el producto. Inténtalo de nuevo.'));
       },
     });
   }

@@ -1,0 +1,38 @@
+<form class="purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2 class="purchase-form__title">
+    <app-icon name="plus" [size]="18" />
+    Registrar compra
+  </h2>
+  <p class="purchase-form__subtitle">Suma saldo comprado al total del día — puedes registrar varias compras.</p>
+
+  <div class="field">
+    <label for="recharge-purchase-type">Tipo de recarga</label>
+    <select id="recharge-purchase-type" formControlName="rechargeTypeId">
+      @for (type of types; track type.id) {
+        <option [value]="type.id">{{ type.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="recharge-purchase-amount">Monto</label>
+    <div class="price-input">
+      <span>Q</span>
+      <input
+        id="recharge-purchase-amount"
+        type="text"
+        inputmode="decimal"
+        appDecimalInput
+        formControlName="amount"
+        placeholder="0.00"
+      />
+    </div>
+    @if (form.controls.amount.invalid && form.controls.amount.touched) {
+      <span class="field__error">Ingresa un monto mayor que cero.</span>
+    }
+  </div>
+
+  <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting()">
+    {{ isSubmitting() ? 'Registrando…' : 'Registrar compra' }}
+  </app-button>
+</form>

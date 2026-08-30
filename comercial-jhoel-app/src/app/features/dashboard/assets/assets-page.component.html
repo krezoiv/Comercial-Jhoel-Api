@@ -1,0 +1,53 @@
+<div class="assets">
+  <header class="assets__header">
+    <div>
+      <h1 class="assets__title">Activos</h1>
+      <p class="assets__subtitle">Administra los activos registrados por cliente.</p>
+    </div>
+  </header>
+
+  <app-asset-toolbar
+    [searchTerm]="searchTerm()"
+    [statusFilter]="statusFilter()"
+    [clientFilter]="clientFilter()"
+    [dateFrom]="dateFrom()"
+    [dateTo]="dateTo()"
+    [hasActiveFilters]="hasActiveFilters()"
+    [canManage]="isAdmin()"
+    (searchTermChange)="onSearchTermChange($event)"
+    (statusFilterChange)="onStatusFilterChange($event)"
+    (clientFilterChange)="onClientFilterChange($event)"
+    (dateFromChange)="onDateFromChange($event)"
+    (dateToChange)="onDateToChange($event)"
+    (clearFilters)="clearFilters()"
+    (addRecord)="openCreateForm()"
+  />
+
+  <app-asset-table
+    [records]="records()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    [canManage]="isAdmin()"
+    (edit)="openEditForm($event)"
+    (delete)="requestDelete($event)"
+    (clearFilters)="clearFilters()"
+    (addRecord)="openCreateForm()"
+  />
+
+  <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+</div>
+
+<app-asset-form-modal
+  [open]="isFormOpen()"
+  [record]="editingRecord()"
+  (closed)="closeForm()"
+  (saved)="onRecordSaved($event)"
+/>
+
+<app-asset-delete-confirm-modal
+  [open]="isDeleteOpen()"
+  [record]="deletingRecord()"
+  [isDeleting]="isDeleting()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

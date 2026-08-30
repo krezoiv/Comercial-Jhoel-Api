@@ -5,7 +5,7 @@
       <input
         id="inventory-search"
         type="text"
-        placeholder="Buscar por nombre o categoría…"
+        placeholder="Buscar por nombre, SKU, categoría o negocio…"
         [ngModel]="searchTerm"
         (ngModelChange)="searchTermChange.emit($event)"
       />
@@ -25,10 +25,26 @@
       </select>
     </label>
 
-    <app-button variant="primary" (click)="addProduct.emit()">
-      <app-icon name="plus" [size]="16" />
-      Agregar producto
-    </app-button>
+    <label class="category-select" for="inventory-business">
+      <span class="visually-hidden">Filtrar por negocio</span>
+      <select
+        id="inventory-business"
+        [ngModel]="selectedBusiness"
+        (ngModelChange)="selectedBusinessChange.emit($event)"
+      >
+        <option value="">Todos los negocios</option>
+        @for (business of businesses; track business) {
+          <option [value]="business">{{ business }}</option>
+        }
+      </select>
+    </label>
+
+    @if (canManage) {
+      <app-button variant="primary" (click)="addProduct.emit()">
+        <app-icon name="plus" [size]="16" />
+        Agregar producto
+      </app-button>
+    }
   </div>
 
   <div class="toolbar__filters" role="group" aria-label="Filtrar por estado de stock">

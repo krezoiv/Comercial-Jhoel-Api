@@ -4,8 +4,9 @@ import { NotificationService } from '../../../core/services/notification.service
 import { IconComponent } from '../icon/icon.component';
 
 const ICON_BY_TYPE: Record<string, string> = {
-  success: 'check',
+  success: 'check-circle',
   error: 'x-circle',
+  warning: 'alert-triangle',
   info: 'alert-circle',
 };
 

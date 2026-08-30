@@ -1,0 +1,69 @@
+<div class="purchases">
+  <header class="purchases__header">
+    <div>
+      <h1 class="purchases__title">Compras</h1>
+      <p class="purchases__subtitle">Registra las facturas de compra a tus proveedores.</p>
+    </div>
+  </header>
+
+  <div class="purchases__form-row">
+    <div class="field">
+      <label for="purchase-supplier">Proveedor</label>
+      <select id="purchase-supplier" [ngModel]="draft.supplierId()" (ngModelChange)="onSupplierChange($event)">
+        <option value="" disabled>Seleccionar proveedor</option>
+        @for (supplier of suppliers(); track supplier.id) {
+          <option [value]="supplier.id">{{ supplier.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="purchase-date">Fecha de compra</label>
+      <input
+        id="purchase-date"
+        type="date"
+        [ngModel]="draft.purchaseDate()"
+        (ngModelChange)="onDateChange($event)"
+        [max]="draft.purchaseDate()"
+      />
+    </div>
+  </div>
+
+  <app-purchase-product-search (productSelected)="onProductSelected($event)" />
+
+  <div class="purchases__receipt">
+    <app-purchase-items-table
+      [items]="draft.items()"
+      (quantityChange)="onQuantityChange($event)"
+      (costPriceChange)="onCostPriceChange($event)"
+      (publicPriceChange)="onPublicPriceChange($event)"
+      (removeItem)="onRemoveItem($event)"
+    />
+
+    <app-purchase-summary
+      [itemCount]="draft.items().length"
+      [total]="draft.total()"
+      [isSaving]="isSaving()"
+      [supplierSelected]="!!draft.supplierId()"
+      (cancel)="requestCancel()"
+      (save)="requestSave()"
+    />
+  </div>
+</div>
+
+<app-purchase-cancel-confirm-modal
+  [open]="isCancelConfirmOpen()"
+  (confirmed)="confirmCancel()"
+  (cancelled)="dismissCancel()"
+/>
+
+<app-purchase-save-confirm-modal
+  [open]="isSaveConfirmOpen()"
+  [supplierName]="selectedSupplierName()"
+  [purchaseDate]="purchaseDateAsDate()"
+  [itemCount]="draft.items().length"
+  [total]="draft.total()"
+  [isSaving]="isSaving()"
+  (confirmed)="confirmSave()"
+  (cancelled)="dismissSaveConfirm()"
+/>

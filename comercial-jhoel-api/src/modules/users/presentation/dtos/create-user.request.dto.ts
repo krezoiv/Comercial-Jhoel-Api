@@ -1,6 +1,7 @@
 import {
   IsNotEmpty,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
   MinLength,
@@ -30,4 +31,7 @@ export class CreateUserRequestDto {
   @MinLength(8)
   @MaxLength(72) // bcrypt ignora silenciosamente los bytes que excedan 72
   password: string;
+
+  @IsUUID()
+  roleId: string;
 }

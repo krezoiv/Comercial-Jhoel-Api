@@ -18,6 +18,7 @@ export interface LoginOutput {
     id: string;
     username: string;
     phone: string;
+    role: string;
   };
 }
 
@@ -46,11 +47,26 @@ export class LoginUseCase {
       throw new InvalidCredentialsError();
     }
 
+    if (!user.isActive) {
+      // Same generic error as "unknown user"/"wrong password" — don't reveal
+      // that the account exists but was deactivated.
+      throw new InvalidCredentialsError();
+    }
+
     const username = user.username ?? '';
-    const accessToken = this.tokenService.sign({ sub: user.id, username });
+    const accessToken = this.tokenService.sign({
+      sub: user.id,
+      username,
+      role: user.roleName,
+    });
     return {
       accessToken,
-      user: { id: user.id, username, phone: user.phone ?? '' },
+      user: {
+        id: user.id,
+        username,
+        phone: user.phone ?? '',
+        role: user.roleName,
+      },
     };
   }
 }

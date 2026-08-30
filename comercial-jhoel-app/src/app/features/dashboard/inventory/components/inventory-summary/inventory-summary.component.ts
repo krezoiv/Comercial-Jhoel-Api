@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 
-import { Product, formatCurrency, getStockStatus } from '../../../../../core/models';
+import { Product, formatCurrency, formatQuantity, getStockStatus } from '../../../../../core/models';
 import { CardComponent, IconComponent } from '../../../../../shared/ui';
 
 interface SummaryTile {
@@ -37,19 +37,19 @@ export class InventorySummaryComponent {
       {
         icon: 'package',
         title: 'Total de productos',
-        value: `${products.length}`,
+        value: formatQuantity(products.length),
         description: 'productos registrados',
       },
       {
         icon: 'layers',
         title: 'Stock total',
-        value: `${totalStock}`,
+        value: formatQuantity(totalStock),
         description: 'unidades disponibles',
       },
       {
         icon: 'alert-triangle',
         title: 'Stock bajo',
-        value: `${lowStock}`,
+        value: formatQuantity(lowStock),
         description: outOfStock > 0 ? `+ ${outOfStock} sin stock` : 'productos por reabastecer',
       },
       {

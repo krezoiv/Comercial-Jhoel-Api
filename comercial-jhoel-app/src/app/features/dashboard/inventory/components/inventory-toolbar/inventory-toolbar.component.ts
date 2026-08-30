@@ -28,12 +28,17 @@ const STOCK_FILTER_OPTIONS: StockFilterOption[] = [
 })
 export class InventoryToolbarComponent {
   @Input() categories: string[] = [];
+  @Input() businesses: string[] = [];
   @Input() searchTerm = '';
   @Input() selectedCategory = '';
+  @Input() selectedBusiness = '';
   @Input() stockFilter: StockFilterValue = 'all';
+  /** USER role doesn't get to create products — hides the button, the backend still enforces this. */
+  @Input() canManage = true;
 
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() selectedCategoryChange = new EventEmitter<string>();
+  @Output() selectedBusinessChange = new EventEmitter<string>();
   @Output() stockFilterChange = new EventEmitter<StockFilterValue>();
   @Output() addProduct = new EventEmitter<void>();
 

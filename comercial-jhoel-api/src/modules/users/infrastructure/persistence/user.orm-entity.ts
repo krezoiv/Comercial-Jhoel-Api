@@ -2,10 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
+import { RoleOrmEntity } from '../../../roles/infrastructure/persistence/role.orm-entity';
 
 @Entity('users')
 @Unique('UQ_users_username', ['username'])
@@ -28,6 +31,16 @@ export class UserOrmEntity {
 
   @Column({ name: 'password_hash' })
   passwordHash: string;
+
+  @Column({ name: 'role_id' })
+  roleId: string;
+
+  @ManyToOne(() => RoleOrmEntity, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'role_id' })
+  role: RoleOrmEntity;
+
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

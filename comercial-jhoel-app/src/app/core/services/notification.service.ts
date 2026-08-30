@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 
 import { Toast, ToastType } from '../models';
 
+/** Kept in sync with the `toast-progress` animation duration in `toast-container.component.scss` — the countdown bar must finish exactly when the toast auto-dismisses. */
 const AUTO_DISMISS_MS = 4000;
 
 /** Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent. */
@@ -15,6 +16,11 @@ export class NotificationService {
 
   error(message: string): void {
     this.push('error', message);
+  }
+
+  /** Amarillo — para acciones canceladas/anuladas, distinto de un error real. */
+  warning(message: string): void {
+    this.push('warning', message);
   }
 
   info(message: string): void {

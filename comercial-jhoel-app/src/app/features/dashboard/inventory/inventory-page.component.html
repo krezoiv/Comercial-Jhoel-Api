@@ -10,11 +10,15 @@
 
   <app-inventory-toolbar
     [categories]="categories()"
+    [businesses]="businesses()"
     [searchTerm]="searchTerm()"
     [selectedCategory]="selectedCategory()"
+    [selectedBusiness]="selectedBusiness()"
     [stockFilter]="stockFilter()"
+    [canManage]="isAdmin()"
     (searchTermChange)="searchTerm.set($event)"
     (selectedCategoryChange)="selectedCategory.set($event)"
+    (selectedBusinessChange)="selectedBusiness.set($event)"
     (stockFilterChange)="stockFilter.set($event)"
     (addProduct)="openCreateForm()"
   />
@@ -23,6 +27,7 @@
     [products]="filteredProducts()"
     [loading]="loading()"
     [hasActiveFilters]="hasActiveFilters()"
+    [canManage]="isAdmin()"
     (edit)="openEditForm($event)"
     (delete)="requestDelete($event)"
     (clearFilters)="clearFilters()"
@@ -33,7 +38,8 @@
 <app-product-form-modal
   [open]="isFormOpen()"
   [product]="editingProduct()"
-  [categories]="categories()"
+  [categories]="categoryOptions()"
+  [businesses]="businessOptions()"
   (closed)="closeForm()"
   (saved)="onProductSaved($event)"
 />

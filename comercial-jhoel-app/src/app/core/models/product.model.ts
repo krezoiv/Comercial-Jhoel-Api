@@ -1,17 +1,35 @@
 export interface Product {
   id: string;
   name: string;
+  /** Barcode. Unique among active products — null if the product doesn't have one assigned. */
+  sku: string | null;
+  /** Category display name — categoryId is what create/update actually send. */
   category: string;
+  categoryId: string;
+  /** Business/line-of-business display name (Librería, Tienda, Heladería...) — businessId is what create/update actually send. */
+  business: string;
+  businessId: string;
   costPrice: number;
   publicPrice: number;
   wholesalePrice: number;
   stock: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-/** Payload for create/update — server/mock assigns id and timestamps. */
-export type ProductInput = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
+/** Payload for create/update — the backend assigns id/timestamps/category name. */
+export interface ProductInput {
+  name: string;
+  /** Optional — omit or send null to leave/clear it. */
+  sku?: string | null;
+  categoryId: string;
+  businessId: string;
+  costPrice: number;
+  publicPrice: number;
+  wholesalePrice: number;
+  stock: number;
+}
 
 export type StockStatus = 'in-stock' | 'low-stock' | 'out-of-stock';
 
@@ -35,7 +53,4 @@ export function getStockStatus(stock: number): StockStatus {
   return 'in-stock';
 }
 
-/** Formats a price the way this module's UI needs it — e.g. `Q15.00`. */
-export function formatCurrency(value: number): string {
-  return `Q${value.toFixed(2)}`;
-}
+export { formatCurrency, formatQuantity, parseNumericValue } from '../utils/number-format.util';

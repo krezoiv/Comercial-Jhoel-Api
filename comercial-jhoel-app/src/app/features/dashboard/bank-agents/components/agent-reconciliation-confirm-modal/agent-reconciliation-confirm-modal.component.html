@@ -1,0 +1,46 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="!isSaving && cancelled.emit()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__icon">
+        <app-icon name="file-check" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">¿Confirmas guardar este Cuadre Agentes?</h2>
+
+      <dl class="modal__summary">
+        <div class="modal__summary-row">
+          <dt>Total Efectivo</dt>
+          <dd>{{ formatCurrency(totalCash) }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Total Bancos</dt>
+          <dd>{{ formatCurrency(totalBanks) }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Total Cuentas por Cobrar</dt>
+          <dd>{{ formatCurrency(totalAccountsReceivable) }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Total Activos</dt>
+          <dd>{{ formatCurrency(totalAssets) }}</dd>
+        </div>
+        <div
+          class="modal__summary-row modal__summary-row--total"
+          [class]="'modal__summary-row--' + resultStatus"
+        >
+          <dt>Resultado del Cuadre</dt>
+          <dd>{{ formatCurrency(result) }}</dd>
+        </div>
+      </dl>
+
+      <p class="modal__hint">Este registro quedará guardado como parte del historial de Cuadre Agentes y no podrá modificarse después.</p>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="cancelled.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="isSaving" (click)="confirmed.emit()">
+          {{ isSaving ? 'Guardando…' : 'Confirmar y Guardar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

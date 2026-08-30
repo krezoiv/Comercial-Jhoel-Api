@@ -5,32 +5,53 @@
   </div>
 
   <nav class="sidebar__nav" aria-label="Navegación del panel">
-    @for (item of navItems; track item.path) {
-      <a
-        class="sidebar__link"
-        [routerLink]="item.path ? ['/dashboard', item.path] : ['/dashboard']"
-        [routerLinkActiveOptions]="{ exact: true }"
-        routerLinkActive="sidebar__link--active"
-        (click)="closeRequested.emit()"
-      >
-        <app-icon [name]="item.icon" [size]="20" />
-        {{ item.label }}
-      </a>
-
+    @for (item of navItems(); track item.path) {
       @if (item.children) {
-        <div class="sidebar__submenu">
-          @for (child of item.children; track child.path) {
-            <a
-              class="sidebar__link sidebar__link--sub"
-              [routerLink]="['/dashboard', child.path]"
-              routerLinkActive="sidebar__link--active"
-              (click)="closeRequested.emit()"
-            >
-              <app-icon [name]="child.icon" [size]="18" />
-              {{ child.label }}
-            </a>
-          }
+        <button
+          type="button"
+          class="sidebar__link sidebar__link--group"
+          [class.sidebar__link--expanded]="isExpanded(item.path)"
+          [attr.aria-expanded]="isExpanded(item.path)"
+          (click)="toggleGroup(item.path)"
+        >
+          <app-icon [name]="item.icon" [size]="20" />
+          {{ item.label }}
+          <app-icon name="chevron-down" [size]="16" class="sidebar__chevron" />
+        </button>
+
+        <div class="sidebar__submenu-wrapper" [class.sidebar__submenu-wrapper--expanded]="isExpanded(item.path)">
+          <div class="sidebar__submenu">
+            @for (child of item.children; track child.path) {
+              <a
+                class="sidebar__link sidebar__link--sub"
+                [routerLink]="['/dashboard', child.path]"
+                routerLinkActive="sidebar__link--active"
+                (click)="closeRequested.emit()"
+              >
+                <app-icon [name]="child.icon" [size]="18" />
+                {{ child.label }}
+                @if (hasDraftFor(child.path)) {
+                  <span
+                    class="sidebar__draft-dot"
+                    [title]="draftLabelFor(child.path)"
+                    [attr.aria-label]="draftLabelFor(child.path)"
+                  ></span>
+                }
+              </a>
+            }
+          </div>
         </div>
+      } @else {
+        <a
+          class="sidebar__link"
+          [routerLink]="item.path ? ['/dashboard', item.path] : ['/dashboard']"
+          [routerLinkActiveOptions]="{ exact: true }"
+          routerLinkActive="sidebar__link--active"
+          (click)="closeRequested.emit()"
+        >
+          <app-icon [name]="item.icon" [size]="20" />
+          {{ item.label }}
+        </a>
       }
     }
   </nav>

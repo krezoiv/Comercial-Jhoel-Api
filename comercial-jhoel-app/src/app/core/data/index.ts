@@ -8,4 +8,3 @@ export * from './testimonials.data';
 export * from './contact-channels.data';
 export * from './dashboard-nav.data';
 export * from './dashboard-summary.data';
-export * from './products.data';

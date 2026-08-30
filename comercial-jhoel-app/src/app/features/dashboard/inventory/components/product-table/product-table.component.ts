@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 
-import { Product, STOCK_STATUS_LABEL, StockStatus, formatCurrency, getStockStatus } from '../../../../../core/models';
+import { Product, STOCK_STATUS_LABEL, StockStatus, formatCurrency, formatQuantity, getStockStatus } from '../../../../../core/models';
 import {
   BadgeComponent,
   BadgeTone,
@@ -18,7 +18,16 @@ const STOCK_BADGE_TONE: Record<StockStatus, BadgeTone> = {
 /** Rows to render while `loading` is true — just enough to fill the fold without looking sparse. */
 const SKELETON_ROWS = 5;
 
-export type ProductSortColumn = 'name' | 'category' | 'costPrice' | 'publicPrice' | 'wholesalePrice' | 'stock';
+export type ProductSortColumn =
+  | 'name'
+  | 'sku'
+  | 'category'
+  | 'business'
+  | 'costPrice'
+  | 'publicPrice'
+  | 'wholesalePrice'
+  | 'stock'
+  | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
@@ -39,6 +48,8 @@ export class ProductTableComponent {
 
   @Input() loading = false;
   @Input() hasActiveFilters = false;
+  /** USER role is read-only — hides the Acciones column and edit/delete buttons. The backend still enforces this. */
+  @Input() canManage = true;
 
   @Output() edit = new EventEmitter<Product>();
   @Output() delete = new EventEmitter<Product>();
@@ -48,9 +59,10 @@ export class ProductTableComponent {
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
 
   formatCurrency = formatCurrency;
+  formatQuantity = formatQuantity;
 
-  readonly sortColumn = signal<ProductSortColumn>('name');
-  readonly sortDirection = signal<SortDirection>('asc');
+  readonly sortColumn = signal<ProductSortColumn>('createdAt');
+  readonly sortDirection = signal<SortDirection>('desc');
 
   readonly sortedProducts = computed(() => {
     const column = this.sortColumn();
@@ -59,10 +71,10 @@ export class ProductTableComponent {
     return [...this.productsInput()].sort((a, b) => {
       const aValue = a[column];
       const bValue = b[column];
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return aValue.localeCompare(bValue) * direction;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return (aValue - bValue) * direction;
       }
-      return ((aValue as number) - (bValue as number)) * direction;
+      return String(aValue ?? '').localeCompare(String(bValue ?? '')) * direction;
     });
   });
 

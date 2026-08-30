@@ -9,6 +9,21 @@ import { ResponseInterceptor } from './shared/interceptors/response.interceptor'
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { BusinessesModule } from './modules/businesses/businesses.module';
+import { ProductsModule } from './modules/products/products.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { PurchasesModule } from './modules/purchases/purchases.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { RechargesModule } from './modules/recharges/recharges.module';
+import { IceCreamsModule } from './modules/ice-creams/ice-creams.module';
+import { AccountTypesModule } from './modules/account-types/account-types.module';
+import { BanksModule } from './modules/banks/banks.module';
+import { ClientsModule } from './modules/clients/clients.module';
+import { AccountsReceivableModule } from './modules/accounts-receivable/accounts-receivable.module';
+import { AssetsModule } from './modules/assets/assets.module';
 
 @Module({
   imports: [
@@ -29,8 +44,23 @@ import { AuthModule } from './modules/auth/auth.module';
       }),
     }),
     HealthModule,
+    RolesModule,
     UsersModule,
     AuthModule,
+    CategoriesModule,
+    BusinessesModule,
+    ProductsModule,
+    SalesModule,
+    SuppliersModule,
+    PurchasesModule,
+    IceCreamsModule,
+    AccountTypesModule,
+    BanksModule,
+    ClientsModule,
+    AccountsReceivableModule,
+    AssetsModule,
+    ReportsModule,
+    RechargesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

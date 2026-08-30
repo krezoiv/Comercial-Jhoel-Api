@@ -1,3 +1,5 @@
+import { RoleName } from '../../../roles/domain/entities/role.entity';
+
 export interface UserProps {
   id: string;
   name: string | null;
@@ -5,6 +7,9 @@ export interface UserProps {
   username: string | null;
   phone: string | null;
   passwordHash: string;
+  roleId: string;
+  roleName: RoleName;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +43,18 @@ export class User {
 
   get passwordHash(): string {
     return this.props.passwordHash;
+  }
+
+  get roleId(): string {
+    return this.props.roleId;
+  }
+
+  get roleName(): RoleName {
+    return this.props.roleName;
+  }
+
+  get isActive(): boolean {
+    return this.props.isActive;
   }
 
   get createdAt(): Date {

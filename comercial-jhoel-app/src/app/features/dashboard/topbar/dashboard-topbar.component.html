@@ -4,7 +4,9 @@
   </button>
 
   <div class="topbar__datetime">
-    <app-icon name="clock" [size]="16" />
+    <span class="topbar__datetime-icon">
+      <app-icon name="clock" [size]="14" />
+    </span>
     <span>{{ now() | date: "EEEE d 'de' MMMM · h:mm:ss a" }}</span>
   </div>
 

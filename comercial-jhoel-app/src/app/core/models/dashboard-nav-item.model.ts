@@ -5,4 +5,6 @@ export interface DashboardNavItem {
   path: string;
   /** Sub-items rendered nested under this one, e.g. Inventario under Librería. */
   children?: DashboardNavItem[];
+  /** Restricts visibility to these roles. Omit for "visible to every authenticated role". UI-only — the backend re-checks on every request. */
+  roles?: string[];
 }

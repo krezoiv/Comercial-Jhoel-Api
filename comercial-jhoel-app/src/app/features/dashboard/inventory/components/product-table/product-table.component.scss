@@ -22,7 +22,7 @@
 .product-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 46rem;
+  min-width: 58rem;
 
   th,
   td {
@@ -91,6 +91,11 @@
   color: var(--color-text-on-light);
   font-weight: var(--fw-medium);
   white-space: normal;
+}
+
+.product-table__sku {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-on-light-subtle);
 }
 
 .align-right {
@@ -171,6 +176,12 @@
 .product-card__category {
   font-size: var(--fs-xs);
   color: var(--color-text-on-light-subtle);
+}
+
+.product-card__sku {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  font-variant-numeric: tabular-nums;
 }
 
 .product-card__prices {

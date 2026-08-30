@@ -1,0 +1,88 @@
+<div class="recharges">
+  <header class="recharges__header">
+    <div>
+      <h1 class="recharges__title">Recargas Electrónicas</h1>
+      <p class="recharges__subtitle">Controla el saldo diario de cada operadora: compras, saldo del día y cierre.</p>
+    </div>
+
+    <label class="recharges__date-field">
+      <span>Fecha de operación</span>
+      <input
+        type="date"
+        [value]="operationDate()"
+        [max]="maxSelectableDate"
+        (change)="onDateChange($any($event.target).value)"
+        aria-label="Fecha de operación"
+      />
+    </label>
+  </header>
+
+  <section class="recharges__sales-section">
+    <div class="recharges__sales-header">
+      <h2 class="recharges__sales-title">Recargas Vendidas</h2>
+      <app-button variant="primary" (click)="openAddSaleModal()">
+        <app-icon name="plus" [size]="16" />
+        Agregar Recarga
+      </app-button>
+    </div>
+
+    <app-recharge-sales-table
+      [sales]="sales()"
+      [loading]="salesLoading()"
+      (editRequested)="openEditSaleModal($event)"
+      (deleteRequested)="requestDeleteSale($event)"
+    />
+  </section>
+
+  <app-recharge-table
+    [balances]="balances()"
+    [loading]="loading()"
+    [isAdmin]="isAdmin()"
+    (requestFinalBalance)="onRequestFinalBalance($event)"
+  />
+
+  <div class="recharges__cards-row">
+    <app-card [hoverable]="false" class="recharges__purchase-card">
+      <app-register-purchase-form
+        [types]="types()"
+        [operationDate]="operationDate()"
+        (registered)="onPurchaseRegistered($event)"
+      />
+    </app-card>
+
+    <app-card [hoverable]="false" class="recharges__summary-card">
+      <app-recharge-sales-summary-card
+        [operationDate]="operationDate()"
+        [refreshTrigger]="salesSummaryRefreshTick()"
+        (closureSaved)="onClosureSaved()"
+      />
+    </app-card>
+  </div>
+</div>
+
+<app-final-balance-confirm-modal
+  [open]="isFinalBalanceModalOpen()"
+  [rechargeTypeName]="finalBalanceTarget()?.rechargeTypeName ?? ''"
+  [dailyBalance]="finalBalanceTarget()?.dailyBalance ?? 0"
+  [finalBalance]="finalBalanceDraft()"
+  [isSaving]="isSavingFinalBalance()"
+  (confirmed)="confirmFinalBalance()"
+  (cancelled)="cancelFinalBalance()"
+/>
+
+<app-recharge-sale-form-modal
+  [open]="isSaleModalOpen()"
+  [types]="types()"
+  [operationDate]="operationDate()"
+  [sale]="saleModalTarget()"
+  (saved)="onSaleSaved($event)"
+  (closed)="closeSaleModal()"
+/>
+
+<app-recharge-sale-delete-confirm-modal
+  [open]="isDeleteSaleModalOpen()"
+  [sale]="deleteSaleTarget()"
+  [isDeleting]="isDeletingSale()"
+  (confirmed)="confirmDeleteSale()"
+  (cancelled)="cancelDeleteSale()"
+/>

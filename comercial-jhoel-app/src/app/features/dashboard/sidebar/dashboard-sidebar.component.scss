@@ -12,6 +12,12 @@
   z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
+  // Bounds the sidebar to the viewport so a long nav list scrolls *inside*
+  // it (see .sidebar__nav) instead of pushing "Cerrar sesión" off-screen —
+  // without this the flex column just grows past the fixed/sticky box and
+  // nothing here ever reflows on page scroll, which is what looked like
+  // "the sidebar doesn't adjust" once enough nav items were added.
+  overflow: hidden;
   background: var(--color-bg-dark);
   border-right: 1px solid var(--color-border-dark);
   padding: var(--space-6) var(--space-4);
@@ -32,6 +38,7 @@
 }
 
 .sidebar__brand {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -57,17 +64,51 @@
   flex-direction: column;
   gap: var(--space-1);
   flex: 1;
+  // `min-height: 0` overrides flex's default `min-height: auto` on a
+  // `flex: 1` child, which otherwise refuses to shrink below its content
+  // size — without it `overflow-y: auto` below has nothing to ever kick in.
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: var(--space-1);
+  margin-right: calc(var(--space-1) * -1);
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-dark-strong) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark-strong);
+    border-radius: var(--radius-full);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-on-dark-subtle);
+  }
 }
 
 .sidebar__link {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
   padding: var(--space-3);
   border-radius: var(--radius-md);
+  font: inherit;
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   color: var(--color-text-on-dark-muted);
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
@@ -83,6 +124,21 @@
   }
 }
 
+/** A group's own row is a toggle button, not a link — see the template's `@if (item.children)` branch. */
+.sidebar__link--group {
+  justify-content: flex-start;
+}
+
+.sidebar__chevron {
+  margin-left: auto;
+  transform: rotate(-90deg);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.sidebar__link--expanded .sidebar__chevron {
+  transform: rotate(0deg);
+}
+
 .sidebar__link--active {
   background: var(--gradient-brand-soft);
   color: var(--color-text-on-dark);
@@ -92,10 +148,29 @@
   }
 }
 
+// Pure-CSS accordion: the wrapper is a single-row grid animating between
+// `0fr` (collapsed) and `1fr` (expanded) — `grid-template-rows` is
+// animatable, unlike `height`/`max-height`, without needing to know the
+// submenu's real height up front. `.sidebar__submenu` (the grid's one
+// child) needs `min-height: 0` for the same reason `.sidebar__nav` does
+// above: a grid/flex child otherwise refuses to shrink below its content
+// size, which would keep the collapsed row from ever reaching 0.
+.sidebar__submenu-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-base) var(--ease-out);
+}
+
+.sidebar__submenu-wrapper--expanded {
+  grid-template-rows: 1fr;
+}
+
 .sidebar__submenu {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-height: 0;
+  overflow: hidden;
   margin: var(--space-1) 0 var(--space-1) var(--space-5);
   padding-left: var(--space-4);
   border-left: 1px solid var(--color-border-dark-strong);
@@ -106,11 +181,24 @@
   font-size: var(--fs-xs);
 }
 
+/** Small "borrador en progreso" nudge — a dot, not a badge with text, so it stays out of the way of the label. */
+.sidebar__draft-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-gold);
+}
+
 .sidebar__logout {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  margin-top: var(--space-2);
   padding: var(--space-3);
+  border-top: 1px solid var(--color-border-dark);
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);

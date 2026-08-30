@@ -1,0 +1,64 @@
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  PRODUCT_REPOSITORY,
+  ProductSortField,
+  SortDirection,
+} from '../../domain/repositories/product.repository';
+import type { ProductRepository } from '../../domain/repositories/product.repository';
+import { ProductOutput, toProductOutput } from '../dtos/product-output';
+
+export interface ListProductsInput {
+  search?: string;
+  categoryId?: string;
+  businessId?: string;
+  sortBy?: ProductSortField;
+  sortDirection?: SortDirection;
+  page?: number;
+  limit?: number;
+  includeInactive?: boolean;
+}
+
+export interface ListProductsOutput {
+  items: ProductOutput[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 200;
+
+@Injectable()
+export class ListProductsUseCase {
+  constructor(
+    @Inject(PRODUCT_REPOSITORY)
+    private readonly productRepository: ProductRepository,
+  ) {}
+
+  async execute(input: ListProductsInput = {}): Promise<ListProductsOutput> {
+    const page = input.page && input.page > 0 ? input.page : DEFAULT_PAGE;
+    const limit =
+      input.limit && input.limit > 0
+        ? Math.min(input.limit, MAX_LIMIT)
+        : DEFAULT_LIMIT;
+
+    const result = await this.productRepository.findAll({
+      activeOnly: !input.includeInactive,
+      search: input.search?.trim() || undefined,
+      categoryId: input.categoryId,
+      businessId: input.businessId,
+      sortBy: input.sortBy ?? 'createdAt',
+      sortDirection: input.sortDirection ?? 'desc',
+      page,
+      limit,
+    });
+
+    return {
+      items: result.items.map(toProductOutput),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+}

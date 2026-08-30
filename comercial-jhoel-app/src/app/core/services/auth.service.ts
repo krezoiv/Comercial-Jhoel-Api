@@ -3,11 +3,18 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { extractErrorMessage } from '../utils/extract-error-message';
+import { ApiSuccessResponse } from '../models';
+
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+
+const ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'ADMIN'];
 
 export interface AuthUser {
   id: string;
   username: string;
   phone: string;
+  role: UserRole;
 }
 
 export interface AuthResult {
@@ -18,15 +25,6 @@ export interface AuthResult {
 interface LoginResponse {
   accessToken: string;
   user: AuthUser;
-}
-
-// Every successful NestJS response is wrapped by the API's global
-// ResponseInterceptor as { success: true, data: T } — error responses are
-// NOT wrapped this way (GlobalExceptionFilter returns a flat
-// { success: false, statusCode, message } shape instead), so only success
-// bodies need unwrapping.
-interface ApiSuccessResponse<T> {
-  data: T;
 }
 
 const TOKEN_KEY = 'cj_auth_token';
@@ -43,6 +41,8 @@ export class AuthService {
 
   readonly currentUser = signal<AuthUser | null>(this.restoreSession());
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
+  /** ADMIN/SUPER_ADMIN can manage inventory; USER is read-only. Hides UI only — the backend re-checks on every request. */
+  readonly isAdmin = computed(() => ADMIN_ROLES.includes(this.currentUser()?.role as UserRole));
 
   login(identifier: string, password: string): Observable<AuthResult> {
     return this.http
@@ -50,7 +50,9 @@ export class AuthService {
       .pipe(
         tap(({ data }) => this.setSession(data.accessToken, data.user)),
         map(() => ({ success: true }) as AuthResult),
-        catchError((error: HttpErrorResponse) => of({ success: false, error: this.extractErrorMessage(error) })),
+        catchError((error: HttpErrorResponse) =>
+          of({ success: false, error: extractErrorMessage(error, 'No se pudo iniciar sesión. Inténtalo de nuevo.') })
+        ),
       );
   }
 
@@ -59,7 +61,12 @@ export class AuthService {
       .post(`${environment.apiUrl}/auth/change-password`, { currentPassword, newPassword })
       .pipe(
         map(() => ({ success: true }) as AuthResult),
-        catchError((error: HttpErrorResponse) => of({ success: false, error: this.extractErrorMessage(error) })),
+        catchError((error: HttpErrorResponse) =>
+          of({
+            success: false,
+            error: extractErrorMessage(error, 'No se pudo completar la solicitud. Inténtalo de nuevo.'),
+          })
+        ),
       );
   }
 
@@ -77,17 +84,6 @@ export class AuthService {
     localStorage.setItem(TOKEN_KEY, accessToken);
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     this.currentUser.set(user);
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    const message = (error.error as { message?: string | string[] } | null)?.message;
-    if (Array.isArray(message)) {
-      return message.join(' ');
-    }
-    if (typeof message === 'string') {
-      return message;
-    }
-    return 'No se pudo completar la solicitud. Inténtalo de nuevo.';
   }
 
   private restoreSession(): AuthUser | null {
