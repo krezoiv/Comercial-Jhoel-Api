@@ -12,6 +12,15 @@ export class DayOpeningMapper {
       closedAt: orm.closedAt,
       closedBy: orm.closedBy,
       closedByUsername: orm.closedByUser?.username ?? '',
+      reopenedAt: orm.reopenedAt,
+      reopenedBy: orm.reopenedBy,
+      reopenedByUsername: orm.reopenedByUser?.username ?? '',
+      reopenReason: orm.reopenReason,
+      isCancelled: orm.isCancelled,
+      cancelledAt: orm.cancelledAt,
+      cancelledBy: orm.cancelledBy,
+      cancelledByUsername: orm.cancelledByUser?.username ?? '',
+      cancelReason: orm.cancelReason,
     });
   }
 }

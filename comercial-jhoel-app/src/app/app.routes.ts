@@ -78,6 +78,15 @@ export const routes: Routes = [
         title: 'Roles — Panel',
       },
       {
+        path: 'gestion-dias-cerrados',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/closed-days/closed-days-page.component').then(
+            (m) => m.ClosedDaysPageComponent,
+          ),
+        title: 'Gestión de Días Cerrados — Panel',
+      },
+      {
         path: 'bancos',
         loadComponent: () =>
           import('./features/dashboard/banks/banks-page.component').then((m) => m.BanksPageComponent),

@@ -15,6 +15,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Clientes', icon: 'users', path: 'clientes' },
       { label: 'Usuarios', icon: 'users', path: 'usuarios', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Roles', icon: 'shield-check', path: 'roles', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      {
+        label: 'Gestión de Días Cerrados',
+        icon: 'lock',
+        path: 'gestion-dias-cerrados',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
     ],
   },
   {

@@ -61,6 +61,11 @@ export class TypeOrmAgentReconciliationRepository
     return count > 0;
   }
 
+  async findLatestByDate(date: string): Promise<AgentReconciliation | null> {
+    const orm = await this.repository.findOne({ where: { date }, order: { createdAt: 'DESC' } });
+    return orm ? AgentReconciliationMapper.toDomain(orm) : null;
+  }
+
   private translateCloseError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

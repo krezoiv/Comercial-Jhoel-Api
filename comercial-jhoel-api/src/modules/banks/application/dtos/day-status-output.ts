@@ -14,13 +14,23 @@
  *   este estado nunca se produce para un cuadre nuevo).
  * - `CLOSED`: el ciclo de esta fecha terminó — bloqueado para nuevas
  *   operaciones por el flujo normal.
+ * - `REOPENED`: fue `CLOSED` y un ADMIN/SUPER_ADMIN lo reabrió desde
+ *   "Gestión de Días Cerrados" — vuelve a admitir edición de saldos y un
+ *   nuevo cierre, exactamente como `OPENED`/`BANK_BALANCES_SAVED`
+ *   (`isClosed` es `false` en este estado a propósito, ver `DayOpening.
+ *   isReopened`), pero se etiqueta distinto para que la UI lo distinga de
+ *   un día que nunca fue cerrado.
+ * - `CANCELLED`: el ciclo fue anulado (soft delete) desde "Gestión de
+ *   Días Cerrados" — estado terminal, bloqueado igual que `CLOSED`.
  */
 export type DayWorkStatus =
   | 'NOT_OPENED'
   | 'OPENED'
   | 'BANK_BALANCES_SAVED'
   | 'RECONCILIATION_COMPLETED'
-  | 'CLOSED';
+  | 'CLOSED'
+  | 'REOPENED'
+  | 'CANCELLED';
 
 export interface DayStatusOutput {
   date: string;
@@ -30,4 +40,5 @@ export interface DayStatusOutput {
   canAccessReconciliation: boolean;
   reconciliationCompleted: boolean;
   isClosed: boolean;
+  isCancelled: boolean;
 }

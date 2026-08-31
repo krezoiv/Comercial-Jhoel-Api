@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DAY_OPENING_REPOSITORY } from '../../domain/repositories/day-opening.repository';
 import type { DayOpeningRepository } from '../../domain/repositories/day-opening.repository';
+import { DAY_AUDIT_LOG_REPOSITORY } from '../../domain/repositories/day-audit-log.repository';
+import type { DayAuditLogRepository } from '../../domain/repositories/day-audit-log.repository';
 import { InvalidBankBalanceDateError } from '../../domain/errors/invalid-bank-balance.error';
 import { GetDayStatusUseCase } from './get-day-status.use-case';
 import { DayStatusOutput } from '../dtos/day-status-output';
@@ -24,6 +26,8 @@ export class OpenDayUseCase {
   constructor(
     @Inject(DAY_OPENING_REPOSITORY)
     private readonly dayOpeningRepository: DayOpeningRepository,
+    @Inject(DAY_AUDIT_LOG_REPOSITORY)
+    private readonly dayAuditLogRepository: DayAuditLogRepository,
     private readonly getDayStatusUseCase: GetDayStatusUseCase,
   ) {}
 
@@ -32,7 +36,19 @@ export class OpenDayUseCase {
       throw new InvalidBankBalanceDateError();
     }
 
+    // Solo registra 'OPENED' en la primera apertura real — `open()` es
+    // idempotente y un doble clic/reintento no debe duplicar el evento en
+    // el historial del día.
+    const existing = await this.dayOpeningRepository.findByDate(input.date);
     await this.dayOpeningRepository.open(input.date, input.userId);
+    if (!existing) {
+      await this.dayAuditLogRepository.record({
+        date: input.date,
+        action: 'OPENED',
+        performedBy: input.userId,
+        newStatus: 'OPENED',
+      });
+    }
     return this.getDayStatusUseCase.execute(input.date);
   }
 }

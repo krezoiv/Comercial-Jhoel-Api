@@ -35,15 +35,23 @@ export class GetDayStatusUseCase {
     const isOpened = dayOpening !== null;
     const bankBalancesSaved = balancesValidation.canReconcile;
     const isClosed = dayOpening?.isClosed ?? false;
+    const isCancelled = dayOpening?.isCancelled ?? false;
+    const isReopened = dayOpening?.isReopened ?? false;
 
     // "Cierre del Día" bloquea un nuevo cuadre por el flujo normal — una
     // vez cerrada la fecha, Cuadre Agentes vuelve a estar inaccesible,
-    // igual que si nunca se hubiera aperturado.
+    // igual que si nunca se hubiera aperturado. Una reapertura ("Gestión
+    // de Días Cerrados") pone `closed_at` de nuevo en NULL, así que este
+    // mismo cálculo vuelve a habilitar todo sin ningún caso especial.
     const canAccessReconciliation = isOpened && bankBalancesSaved && !isClosed;
 
     let status: DayWorkStatus;
-    if (isClosed) {
+    if (isCancelled) {
+      status = 'CANCELLED';
+    } else if (isClosed) {
       status = 'CLOSED';
+    } else if (isReopened) {
+      status = 'REOPENED';
     } else if (reconciliationCompleted) {
       status = 'RECONCILIATION_COMPLETED';
     } else if (bankBalancesSaved) {
@@ -62,6 +70,7 @@ export class GetDayStatusUseCase {
       canAccessReconciliation,
       reconciliationCompleted,
       isClosed,
+      isCancelled,
     };
   }
 }

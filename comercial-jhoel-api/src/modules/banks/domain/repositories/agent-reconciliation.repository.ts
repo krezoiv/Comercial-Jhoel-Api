@@ -25,4 +25,6 @@ export interface AgentReconciliationRepository {
   closeDayWithReconciliation(data: CloseAgentDayData): Promise<AgentReconciliation>;
   /** ¿Ya existe un cuadre guardado para esta fecha? — usado por `GetDayStatusUseCase`, informativo (ver también `DayOpening.isClosed` para el bloqueo real). */
   existsForDate(date: string): Promise<boolean>;
+  /** El cuadre VIGENTE de una fecha — puede haber más de uno histórico si el día fue reabierto y vuelto a cerrar; este es siempre el más reciente. Usado por "Gestión de Días Cerrados" para el detalle. */
+  findLatestByDate(date: string): Promise<AgentReconciliation | null>;
 }

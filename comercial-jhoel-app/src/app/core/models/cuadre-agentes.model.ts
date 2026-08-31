@@ -138,7 +138,14 @@ export interface BankBalancesValidation {
  * en la misma operación, así que no hace falta comprobar `isClosed` por
  * separado para bloquear un segundo cuadre.
  */
-export type DayWorkStatus = 'NOT_OPENED' | 'OPENED' | 'BANK_BALANCES_SAVED' | 'RECONCILIATION_COMPLETED' | 'CLOSED';
+export type DayWorkStatus =
+  | 'NOT_OPENED'
+  | 'OPENED'
+  | 'BANK_BALANCES_SAVED'
+  | 'RECONCILIATION_COMPLETED'
+  | 'CLOSED'
+  | 'REOPENED'
+  | 'CANCELLED';
 
 export interface DayStatus {
   date: string;
@@ -148,4 +155,5 @@ export interface DayStatus {
   canAccessReconciliation: boolean;
   reconciliationCompleted: boolean;
   isClosed: boolean;
+  isCancelled: boolean;
 }

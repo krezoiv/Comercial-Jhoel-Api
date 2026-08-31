@@ -4,14 +4,17 @@ import { BankOrmEntity } from './infrastructure/persistence/bank.orm-entity';
 import { BankBalanceOrmEntity } from './infrastructure/persistence/bank-balance.orm-entity';
 import { AgentReconciliationOrmEntity } from './infrastructure/persistence/agent-reconciliation.orm-entity';
 import { DayOpeningOrmEntity } from './infrastructure/persistence/day-opening.orm-entity';
+import { DayAuditLogOrmEntity } from './infrastructure/persistence/day-audit-log.orm-entity';
 import { TypeOrmBankRepository } from './infrastructure/persistence/typeorm-bank.repository';
 import { TypeOrmBankBalanceRepository } from './infrastructure/persistence/typeorm-bank-balance.repository';
 import { TypeOrmAgentReconciliationRepository } from './infrastructure/persistence/typeorm-agent-reconciliation.repository';
 import { TypeOrmDayOpeningRepository } from './infrastructure/persistence/typeorm-day-opening.repository';
+import { TypeOrmDayAuditLogRepository } from './infrastructure/persistence/typeorm-day-audit-log.repository';
 import { BANK_REPOSITORY } from './domain/repositories/bank.repository';
 import { BANK_BALANCE_REPOSITORY } from './domain/repositories/bank-balance.repository';
 import { AGENT_RECONCILIATION_REPOSITORY } from './domain/repositories/agent-reconciliation.repository';
 import { DAY_OPENING_REPOSITORY } from './domain/repositories/day-opening.repository';
+import { DAY_AUDIT_LOG_REPOSITORY } from './domain/repositories/day-audit-log.repository';
 import { CreateBankUseCase } from './application/use-cases/create-bank.use-case';
 import { ListBanksUseCase } from './application/use-cases/list-banks.use-case';
 import { GetBankByIdUseCase } from './application/use-cases/get-bank-by-id.use-case';
@@ -24,8 +27,13 @@ import { ValidateBankBalancesForDateUseCase } from './application/use-cases/vali
 import { GetDayStatusUseCase } from './application/use-cases/get-day-status.use-case';
 import { OpenDayUseCase } from './application/use-cases/open-day.use-case';
 import { CloseAgentDayUseCase } from './application/use-cases/close-agent-day.use-case';
+import { ListClosedDaysUseCase } from './application/use-cases/list-closed-days.use-case';
+import { GetDayDetailUseCase } from './application/use-cases/get-day-detail.use-case';
+import { ReopenDayUseCase } from './application/use-cases/reopen-day.use-case';
+import { CancelDayUseCase } from './application/use-cases/cancel-day.use-case';
 import { BanksController } from './presentation/controllers/banks.controller';
 import { AgentReconciliationsController } from './presentation/controllers/agent-reconciliations.controller';
+import { ClosedDaysController } from './presentation/controllers/closed-days.controller';
 import { AccountTypesModule } from '../account-types/account-types.module';
 import { AssetsModule } from '../assets/assets.module';
 import { AccountsReceivableModule } from '../accounts-receivable/accounts-receivable.module';
@@ -37,6 +45,7 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
       BankBalanceOrmEntity,
       AgentReconciliationOrmEntity,
       DayOpeningOrmEntity,
+      DayAuditLogOrmEntity,
     ]),
     AccountTypesModule,
     // Cuadre Agentes (primera etapa) reads each module's own repository
@@ -45,7 +54,7 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     AssetsModule,
     AccountsReceivableModule,
   ],
-  controllers: [BanksController, AgentReconciliationsController],
+  controllers: [BanksController, AgentReconciliationsController, ClosedDaysController],
   providers: [
     { provide: BANK_REPOSITORY, useClass: TypeOrmBankRepository },
     {
@@ -60,6 +69,10 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
       provide: DAY_OPENING_REPOSITORY,
       useClass: TypeOrmDayOpeningRepository,
     },
+    {
+      provide: DAY_AUDIT_LOG_REPOSITORY,
+      useClass: TypeOrmDayAuditLogRepository,
+    },
     CreateBankUseCase,
     ListBanksUseCase,
     GetBankByIdUseCase,
@@ -72,6 +85,10 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     GetDayStatusUseCase,
     OpenDayUseCase,
     CloseAgentDayUseCase,
+    ListClosedDaysUseCase,
+    GetDayDetailUseCase,
+    ReopenDayUseCase,
+    CancelDayUseCase,
   ],
   exports: [BANK_REPOSITORY],
 })
