@@ -63,6 +63,13 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
     await this.repository.update({ id }, { isActive: false });
   }
 
+  /**
+   * The use case already checks `findByName` before calling `create`/
+   * `update` — this is the safety net for the race that pre-check can't
+   * close (two requests creating the same name at nearly the same time),
+   * backed by the DB's own `UQ_categories_name` constraint rather than an
+   * application-level lock.
+   */
   private translateUniqueViolation(error: unknown, name: string): unknown {
     if (error instanceof QueryFailedError) {
       const constraint = (

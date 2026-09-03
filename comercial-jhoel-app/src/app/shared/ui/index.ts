@@ -8,3 +8,4 @@ export * from './section-heading/section-heading.component';
 export * from './stat-card/stat-card.component';
 export * from './empty-state/empty-state.component';
 export * from './toast/toast-container.component';
+export * from './confirm-dialog/confirm-dialog.component';

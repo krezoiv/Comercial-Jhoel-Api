@@ -25,7 +25,7 @@ export class CuadreAgentesService {
       .pipe(map((response) => response.data));
   }
 
-  /** Segunda etapa — "Guardar Cuadre". Solo `totalCash` viaja al backend; los demás totales y el resultado siempre los recalcula el servidor. */
+  /** Second stage — "Guardar Cuadre". Only `totalCash` travels to the backend; every other total and the result are always recomputed by the server. */
   registerReconciliation(input: RegisterAgentReconciliationInput): Observable<AgentReconciliation> {
     return this.http
       .post<ApiSuccessResponse<AgentReconciliation>>(RECONCILIATIONS_URL, input)
@@ -33,10 +33,10 @@ export class CuadreAgentesService {
   }
 
   /**
-   * "¿Se guardaron los saldos bancarios de esta fecha?" — el pre-chequeo
-   * que habilita/bloquea "Guardar Cuadre" en pantalla. Es solo
-   * experiencia de usuario: `registerReconciliation` vuelve a exigir esto
-   * de forma independiente en el backend antes de guardar.
+   * "Were this date's bank balances saved?" — the pre-check that
+   * enables/blocks "Guardar Cuadre" on screen. UX only:
+   * `registerReconciliation` enforces this again independently on the
+   * backend before saving.
    */
   validateBankBalances(date?: string): Observable<BankBalancesValidation> {
     return this.http
@@ -46,14 +46,14 @@ export class CuadreAgentesService {
       .pipe(map((response) => response.data));
   }
 
-  /** "¿Está aperturado el día? ¿Se guardaron los saldos? ¿Se puede entrar a Cuadre Agentes?" — las cuatro preguntas de la secuencia obligatoria en una sola llamada. */
+  /** "Is the day open? Were balances saved? Can Cuadre Agentes be entered?" — the four questions of the mandatory sequence in one call. */
   getDayStatus(date?: string): Observable<DayStatus> {
     return this.http
       .get<ApiSuccessResponse<DayStatus>>(`${BASE_URL}/day-status`, { params: date ? { date } : {} })
       .pipe(map((response) => response.data));
   }
 
-  /** "Confirmar Apertura" — idempotente en el backend, así que llamarlo dos veces nunca falla ni duplica nada. */
+  /** "Confirmar Apertura" — idempotent on the backend, so calling it twice never fails or duplicates anything. */
   openDay(date?: string): Observable<DayStatus> {
     return this.http
       .post<ApiSuccessResponse<DayStatus>>(`${BASE_URL}/day-status/open`, date ? { date } : {})

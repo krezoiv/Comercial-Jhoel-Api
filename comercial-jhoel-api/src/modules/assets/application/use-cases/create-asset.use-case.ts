@@ -17,6 +17,7 @@ export interface CreateAssetInput {
   createdBy: string;
 }
 
+/** Validates the referenced client exists and is active, same pattern `CreateProductUseCase` uses for `categoryId`/`businessId`. `CreateAccountReceivableUseCase` and both modules' `Update*`/`List*`/`Deactivate*`/`GetById` use cases are the identical clone relationship. */
 @Injectable()
 export class CreateAssetUseCase {
   constructor(

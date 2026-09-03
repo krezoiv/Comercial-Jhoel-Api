@@ -26,6 +26,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './suppliers-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A structural clone of `CategoriesPageComponent` — see that component's own doc comment. One real difference: uniqueness is on `taxId`, not `name` (see the backend's `SuppliersController`), so this screen's search/filter never assumes `name` is unique. */
 export class SuppliersPageComponent {
   private readonly supplierService = inject(SupplierService);
   private readonly notificationService = inject(NotificationService);

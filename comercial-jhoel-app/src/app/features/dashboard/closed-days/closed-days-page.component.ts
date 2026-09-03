@@ -33,19 +33,19 @@ const STATUS_ICON: Record<ClosedDayStatus, string> = {
 };
 
 /**
- * "Sistema → Gestión de Días Cerrados" — administra el ciclo de un día
- * YA cerrado (reapertura controlada, recierre, anulación). Nunca toca la
- * lógica de apertura/registro-de-saldos/cuadre del día EN CURSO (Agentes
- * Bancarios → Bancos/Cuadre Agentes) — reutiliza sus mismos endpoints
- * (`POST /banks/balances`, `POST /agent-reconciliations`) para editar y
- * volver a cerrar un día reabierto, sin ningún caso de uso nuevo para
- * eso. Ver `ClosedDaysService`/`ReopenConfirmModalComponent`/
+ * "Sistema → Gestión de Días Cerrados" — manages the cycle of a day that
+ * is ALREADY closed (controlled reopening, re-closing, cancellation).
+ * Never touches the opening/balance-registration/cuadre logic of the day
+ * IN PROGRESS (Agentes Bancarios → Bancos/Cuadre Agentes) — it reuses
+ * those same endpoints (`POST /banks/balances`, `POST /agent-reconciliations`)
+ * to edit and re-close a reopened day, with no new use case built for
+ * that. See `ClosedDaysService`/`ReopenConfirmModalComponent`/
  * `CancelConfirmModalComponent`.
  *
- * Ruta y menú ya protegidos por `adminGuard`/`roles` (mismo mecanismo que
- * Usuarios/Roles) — la protección real está en el backend
- * (`ClosedDaysController`, `@Roles('ADMIN','SUPER_ADMIN')` a nivel de
- * clase, incluidos los `GET`).
+ * Route and menu already protected by `adminGuard`/`roles` (the same
+ * mechanism Usuarios/Roles use) — the real protection is on the backend
+ * (`ClosedDaysController`, a class-level `@Roles('ADMIN','SUPER_ADMIN')`,
+ * including the `GET`s).
  */
 @Component({
   selector: 'app-closed-days-page',
@@ -210,7 +210,7 @@ export class ClosedDaysPageComponent {
     });
   }
 
-  /** Solo un día CLOSED admite reapertura/anulación — uno ya REOPENED debe recerrarse primero (desde Agentes Bancarios), y uno CANCELLED es terminal. */
+  /** Only a CLOSED day accepts reopening/cancellation — one already REOPENED must be re-closed first (from Agentes Bancarios), and a CANCELLED one is terminal. */
   canReopen(row: ClosedDayRow): boolean {
     return row.status === 'CLOSED';
   }

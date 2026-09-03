@@ -14,6 +14,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Role, User } from '../../../../../core/models';
 import { UserService } from '../../../../../core/services/user.service';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
@@ -37,6 +38,7 @@ export class UserFormModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly userService = inject(UserService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -61,6 +63,9 @@ export class UserFormModalComponent implements OnChanges {
     this.errorMessage.set(null);
     this.isSubmitting.set(false);
 
+    // Password is required on create but optional on edit (blank = keep the current password) —
+    // the validators are swapped imperatively here rather than declared statically on the form
+    // group, since which set applies depends on `this.user` at the moment the modal opens.
     const passwordControl = this.form.controls.password;
     if (this.user) {
       passwordControl.clearValidators();
@@ -79,11 +84,18 @@ export class UserFormModalComponent implements OnChanges {
     passwordControl.updateValueAndValidity();
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.errorMessage.set(null);
 
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.confirm({
+      type: this.isEditMode ? 'UPDATE' : 'SAVE',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -96,6 +108,8 @@ export class UserFormModalComponent implements OnChanges {
           phone,
           roleId,
           isActive,
+          // Only sent when the admin actually typed one — an empty string here would otherwise
+          // overwrite the user's real password with a blank on every unrelated edit.
           ...(password ? { password } : {}),
         })
       : this.userService.createUser({ username, phone, password, roleId });
@@ -112,9 +126,15 @@ export class UserFormModalComponent implements OnChanges {
     });
   }
 
-  close(): void {
+  async close(): Promise<void> {
     if (this.isSubmitting()) {
       return;
+    }
+    if (this.form.dirty) {
+      const discard = await this.confirmDialogService.confirm({ type: 'CANCEL' });
+      if (!discard) {
+        return;
+      }
     }
     this.closed.emit();
   }

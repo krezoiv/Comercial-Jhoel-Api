@@ -1,6 +1,6 @@
 import { ThemePreference, User } from '../../domain/entities/user.entity';
 
-/** Deliberadamente solo `theme` — la única preferencia que existe hoy; no reutiliza `UserOutput` para no filtrar campos administrativos (rol, estado, teléfono) a un endpoint pensado para "mi propia configuración". */
+/** Deliberately just `theme` — the only preference that exists today; doesn't reuse `UserOutput` so as not to leak administrative fields (role, status, phone) into an endpoint meant for "my own settings". */
 export interface UserPreferencesOutput {
   theme: ThemePreference;
 }

@@ -1,8 +1,20 @@
 <div class="cuadre-agentes">
   <header class="cuadre-agentes__header">
     <h1 class="cuadre-agentes__title">Cuadre Agentes</h1>
-    <p class="cuadre-agentes__subtitle">Resumen financiero y conteo de efectivo.</p>
+    <p class="cuadre-agentes__subtitle">
+      Resumen financiero y conteo de efectivo — fecha de operación: {{ draft.operationDate() | date: 'dd/MM/yyyy' }}
+    </p>
   </header>
+
+  @if (!isTodayOperationDate()) {
+    <p class="info-banner info-banner--warning">
+      <app-icon name="alert-triangle" [size]="16" />
+      Cuadre Agentes trabaja sobre la fecha seleccionada actualmente en Bancos ({{
+        draft.operationDate() | date: 'dd/MM/yyyy'
+      }}), no necesariamente hoy.
+      <button type="button" class="info-banner__link" (click)="resetToToday()">Volver a hoy</button>
+    </p>
+  }
 
   @if (isCheckingAccess()) {
     <app-card [hoverable]="false" class="cuadre-agentes__access-card">

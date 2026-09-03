@@ -26,6 +26,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './account-types-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A structural clone of `CategoriesPageComponent` — see that component's own doc comment. */
 export class AccountTypesPageComponent {
   private readonly accountTypeService = inject(AccountTypeService);
   private readonly notificationService = inject(NotificationService);

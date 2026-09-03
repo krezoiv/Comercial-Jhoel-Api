@@ -12,8 +12,8 @@ export interface CreateDayAuditLogData {
 }
 
 export interface DayAuditLogRepository {
-  /** Orden cronológico ascendente — el historial de un día se lee como una línea de tiempo. */
+  /** Ascending chronological order — a day's history reads like a timeline. */
   findByDate(date: string): Promise<DayAuditLog[]>;
-  /** Usado únicamente por `OpenDayUseCase` — reapertura/cierre/anulación insertan su propia fila dentro de la misma función SQL (ver la migración), nunca a través de este método. */
+  /** Used only by `OpenDayUseCase` — reopening/closing/cancelling insert their own row inside the same SQL function (see the migration), never through this method. */
   record(data: CreateDayAuditLogData): Promise<DayAuditLog>;
 }

@@ -40,6 +40,7 @@ export interface UpdateUserData {
 
 export interface UserRepository {
   findAll(options: FindUsersOptions): Promise<PaginatedResult<User>>;
+  /** A general-purpose lookup kept for the legacy `email` column (see `User`'s own doc comment) — nothing currently calls it, since login and uniqueness checks both work off `username`/`phone` instead. */
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;

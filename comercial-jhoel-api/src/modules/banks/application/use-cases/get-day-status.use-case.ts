@@ -7,13 +7,13 @@ import { ValidateBankBalancesForDateUseCase } from './validate-bank-balances-for
 import { DayStatusOutput, DayWorkStatus } from '../dtos/day-status-output';
 
 /**
- * Combina tres fuentes independientes en una sola respuesta — nunca
- * duplica su lógica: `DayOpeningRepository` (¿aperturado? ¿cerrado?),
- * `ValidateBankBalancesForDateUseCase` (¿saldos guardados? — el mismo
- * use case que ya usa el endpoint de Cuadre Agentes y que
- * `CloseAgentDayUseCase` ya exige al guardar), y
- * `AgentReconciliationRepository` (¿cuadre ya realizado? — informativo,
- * ver `DayWorkStatus`).
+ * Combines three independent sources into a single response — never
+ * duplicates their logic: `DayOpeningRepository` (is it open? is it
+ * closed?), `ValidateBankBalancesForDateUseCase` (are balances saved? —
+ * the same use case the Cuadre Agentes endpoint already uses and that
+ * `CloseAgentDayUseCase` already enforces on save), and
+ * `AgentReconciliationRepository` (was the cuadre already done? —
+ * informational, see `DayWorkStatus`).
  */
 @Injectable()
 export class GetDayStatusUseCase {
@@ -38,11 +38,11 @@ export class GetDayStatusUseCase {
     const isCancelled = dayOpening?.isCancelled ?? false;
     const isReopened = dayOpening?.isReopened ?? false;
 
-    // "Cierre del Día" bloquea un nuevo cuadre por el flujo normal — una
-    // vez cerrada la fecha, Cuadre Agentes vuelve a estar inaccesible,
-    // igual que si nunca se hubiera aperturado. Una reapertura ("Gestión
-    // de Días Cerrados") pone `closed_at` de nuevo en NULL, así que este
-    // mismo cálculo vuelve a habilitar todo sin ningún caso especial.
+    // "Cierre del Día" blocks a new cuadre through the normal flow — once
+    // a date is closed, Cuadre Agentes becomes inaccessible again, the
+    // same as if it had never been opened. A reopening ("Gestión de Días
+    // Cerrados") sets `closed_at` back to NULL, so this same computation
+    // re-enables everything with no special case needed.
     const canAccessReconciliation = isOpened && bankBalancesSaved && !isClosed;
 
     let status: DayWorkStatus;

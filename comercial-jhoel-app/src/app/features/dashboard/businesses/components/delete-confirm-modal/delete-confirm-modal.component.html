@@ -1,5 +1,5 @@
 @if (open && business) {
-  <div class="modal-backdrop" (click)="cancelled.emit()">
+  <div class="modal-backdrop">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal__icon">
         <app-icon name="alert-triangle" [size]="24" />

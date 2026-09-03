@@ -24,6 +24,23 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
     private readonly bankBalanceRepository: Repository<BankBalanceOrmEntity>,
   ) {}
 
+  /**
+   * Resolves the same two values `save_bank_balance()` (migration
+   * `1757900000000-CreateBankAgentsModule`, refined by
+   * `1758500000000-OnlySyncBanksFinalBalanceForLatestDate`) computes on the
+   * write side, but as a read-only projection — kept in sync by hand rather
+   * than calling the function, since this is a `SELECT`, not a mutation:
+   * `previousBalance` is the most recent `bank_balances.finalBalance`
+   * strictly before `operationDate`, falling back to the bank's own
+   * `banks.previousBalance` (its configured opening balance) when this bank
+   * has no `bank_balances` history before that date yet; `finalBalance` is
+   * `null` unless a row already exists for *exactly* this date (nothing
+   * saved yet for that bank/date pair renders as an empty input, not a
+   * stale one). Uses `getRawMany()` (a query-builder join across two
+   * subqueries, not `find()`), so the numeric columns come back as strings
+   * with no `DecimalColumnTransformer` applied — `parseFloat` below is what
+   * that transformer would otherwise have done automatically.
+   */
   async findBalancesView(operationDate: string): Promise<BankBalanceView[]> {
     const qb = this.bankRepository
       .createQueryBuilder('bank')
@@ -83,6 +100,7 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
     }));
   }
 
+  /** One outer TypeORM transaction wrapping one `save_bank_balance()` call per entry — the whole "Guardar Cambios" batch commits or rolls back together, per `SaveBankBalancesUseCase`'s own doc comment. */
   async saveBalances(data: SaveBankBalancesData): Promise<number> {
     try {
       await this.bankBalanceRepository.manager.transaction(async (manager) => {
@@ -101,6 +119,7 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
     }
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>:<bankId>'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translateBalanceError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

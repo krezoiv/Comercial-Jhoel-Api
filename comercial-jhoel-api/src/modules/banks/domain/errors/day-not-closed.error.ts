@@ -1,6 +1,6 @@
 import { DomainError } from '../../../../shared/domain/domain-error';
 
-/** Reabrir o anular solo tiene sentido sobre un día que realmente está CLOSED. */
+/** Reopening or cancelling only makes sense for a day that's actually CLOSED. */
 export class DayNotClosedError extends DomainError {
   readonly status = 400;
 

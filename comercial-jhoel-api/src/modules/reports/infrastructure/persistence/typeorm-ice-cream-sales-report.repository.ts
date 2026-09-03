@@ -10,6 +10,15 @@ import {
   PaginatedReportResult,
 } from '../../domain/repositories/ice-cream-sales-report.repository';
 
+/**
+ * Deliberately rooted on `IceCreamSaleDetailOrmEntity` (one row per line
+ * item sold), unlike `TypeOrmSalesReportRepository` (rooted on the sale
+ * header, one row per sale, specifically to avoid a `sale.items` join
+ * fanning out the row count/pagination — see that repository's own doc
+ * comment). This report's own ticket asked for one row per product
+ * movement, not per sale, so there's no fan-out to guard against here —
+ * `detail` already is the row granularity this report wants.
+ */
 @Injectable()
 export class TypeOrmIceCreamSalesReportRepository implements IceCreamSalesReportRepository {
   constructor(

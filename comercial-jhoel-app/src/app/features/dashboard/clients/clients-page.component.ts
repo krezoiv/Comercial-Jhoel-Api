@@ -26,6 +26,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './clients-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A structural clone of `CategoriesPageComponent` — see that component's own doc comment. */
 export class ClientsPageComponent {
   private readonly clientService = inject(ClientService);
   private readonly notificationService = inject(NotificationService);

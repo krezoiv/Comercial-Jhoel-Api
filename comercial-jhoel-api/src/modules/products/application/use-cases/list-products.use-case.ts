@@ -26,6 +26,12 @@ export interface ListProductsOutput {
 }
 
 const DEFAULT_PAGE = 1;
+// The Inventario screen's own toolbar filters/sorts client-side over one
+// fetched page rather than driving these query params directly (see the
+// frontend's own notes) — a generous default limit is what makes that
+// still work today without the frontend needing to paginate through
+// multiple requests. `MAX_LIMIT` exists purely as a ceiling against an
+// abusive/mistaken client request, not because 100 is otherwise special.
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 200;
 

@@ -36,6 +36,8 @@ export class RegisterPurchaseFormComponent implements OnChanges {
   @Input() types: RechargeType[] = [];
   /** `yyyy-MM-dd` — the page's operation-date picker value; every purchase is credited to this date, not necessarily today. */
   @Input() operationDate = '';
+  /** The active date's Recargas day is CLOSED (via "Cerrar Día") or, for today, not yet opened — mirrors the backend's day-lifecycle gate. `null` means editing is unlocked. */
+  @Input() lockReason: 'closed' | 'not_opened' | null = null;
 
   @Output() registered = new EventEmitter<RechargeDailyBalance>();
 
@@ -57,7 +59,7 @@ export class RegisterPurchaseFormComponent implements OnChanges {
   }
 
   submit(): void {
-    if (this.form.invalid || this.isSubmitting()) {
+    if (this.form.invalid || this.isSubmitting() || this.lockReason !== null) {
       this.form.markAllAsTouched();
       return;
     }

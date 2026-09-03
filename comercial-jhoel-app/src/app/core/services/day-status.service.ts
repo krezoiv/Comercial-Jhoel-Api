@@ -5,19 +5,18 @@ import { DayStatus } from '../models';
 import { CuadreAgentesService } from './cuadre-agentes.service';
 
 /**
- * Estado compartido de "¿está aperturado el día de hoy?" — un singleton
- * `providedIn: 'root'`, mismo patrón que `PurchaseDraftStore`/
- * `SalesDraftStore` (ver esos archivos), para que el Sidebar (montado una
- * sola vez para todo `/dashboard/*`) y la página de Bancos (que se
- * destruye y recrea en cada navegación) lean y escriban exactamente el
- * mismo signal. Así, guardar saldos o aperturar el día en Bancos
- * actualiza el enlace de Cuadre Agentes en el Sidebar de inmediato, sin
- * recargar la página — el mismo mecanismo que ya usan los "puntos de
- * borrador en progreso" de Ventas/Compras.
+ * Shared "is today's day open?" state — a `providedIn: 'root'` singleton,
+ * same pattern as `PurchaseDraftStore`/`SalesDraftStore` (see those
+ * files), so the Sidebar (mounted once for all of `/dashboard/*`) and
+ * the Bancos page (destroyed and recreated on every navigation) read and
+ * write exactly the same signal. This is what makes saving balances or
+ * opening the day in Bancos update the Cuadre Agentes sidebar link
+ * immediately, with no page reload — the same mechanism Ventas/Compras'
+ * own "draft in progress" indicator dots already use.
  *
- * Siempre representa el día de HOY — Cuadre Agentes no tiene selector de
- * fecha propio, y la secuencia obligatoria de este ticket es
- * explícitamente sobre "el día actual", no sobre una fecha arbitraria.
+ * Always represents TODAY — Cuadre Agentes has no date selector of its
+ * own, and this ticket's mandatory sequence is explicitly about "the
+ * current day", not an arbitrary date.
  */
 @Injectable({ providedIn: 'root' })
 export class DayStatusService {
@@ -38,10 +37,10 @@ export class DayStatusService {
         this.loading.set(false);
       },
       error: () => {
-        // Un fallo de red no debe dejar el estado anterior mintiendo — sin
-        // dato confiable, todo lo que depende de esto (Sidebar, gates)
-        // debe tratarlo como "no disponible todavía", nunca como "sí se
-        // puede".
+        // A network failure must not leave the previous state lying
+        // around — with no reliable data, everything that depends on
+        // this (Sidebar, gates) must treat it as "not available yet",
+        // never as "yes, allowed".
         this.status.set(null);
         this.loading.set(false);
       },

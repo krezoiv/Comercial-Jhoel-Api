@@ -1,6 +1,6 @@
 import { IsDateString, IsOptional } from 'class-validator';
 
-/** Omitida = hoy, resuelta en el controlador. */
+/** Omitted = today, resolved in the controller. */
 export class DayStatusQueryDto {
   @IsOptional()
   @IsDateString()

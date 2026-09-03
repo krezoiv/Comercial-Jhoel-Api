@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
-/** Compartido por "Reabrir Día" y "Anular Día" — ambos exigen un motivo obligatorio, no vacío. */
+/** Shared by "Reabrir Día" and "Anular Día" — both require a mandatory, non-empty reason. */
 export class DayActionReasonRequestDto {
   @IsString()
   @IsNotEmpty({ message: 'Debe indicar un motivo.' })

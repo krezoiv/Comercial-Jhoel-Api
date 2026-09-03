@@ -56,7 +56,17 @@
             <td class="align-right sales-table__amount">{{ formatCurrency(sale.amount) }}</td>
             <td>{{ sale.date | date: 'dd/MM/yyyy' }}</td>
             <td class="align-center">
-              @if (sale.locked) {
+              @if (dayLockReason === 'closed') {
+                <span class="locked-hint">
+                  <app-icon name="lock" [size]="14" />
+                  Día cerrado
+                </span>
+              } @else if (dayLockReason === 'not_opened') {
+                <span class="locked-hint">
+                  <app-icon name="lock" [size]="14" />
+                  Sin aperturar
+                </span>
+              } @else if (sale.locked) {
                 <span class="locked-hint">
                   <app-icon name="lock" [size]="14" />
                   Cerrada
@@ -107,7 +117,17 @@
           </div>
         </dl>
 
-        @if (sale.locked) {
+        @if (dayLockReason === 'closed') {
+          <span class="locked-hint">
+            <app-icon name="lock" [size]="14" />
+            Día de recargas cerrado.
+          </span>
+        } @else if (dayLockReason === 'not_opened') {
+          <span class="locked-hint">
+            <app-icon name="lock" [size]="14" />
+            Día de recargas sin aperturar.
+          </span>
+        } @else if (sale.locked) {
           <span class="locked-hint">
             <app-icon name="lock" [size]="14" />
             Cerrada — el cuadre de este operador ya fue guardado.

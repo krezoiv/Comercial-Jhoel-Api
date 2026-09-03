@@ -1,5 +1,13 @@
 import { IceCreamSaleDetail } from './ice-cream-sale-detail.entity';
 
+/**
+ * Structural clone of `Sale`, but bulk one-shot only — no `status`
+ * (OPEN/CONFIRMED) field and no real-time draft/reservation flow like the
+ * main Sales module's `adjust_sale_item`/`cancel_open_sale`. Every ice
+ * cream sale is built and confirmed in a single `POST` via
+ * `confirm_ice_cream_sale`, the same shape Sales itself used before the
+ * draft-cart feature was added.
+ */
 export interface IceCreamSaleProps {
   id: string;
   userId: string;

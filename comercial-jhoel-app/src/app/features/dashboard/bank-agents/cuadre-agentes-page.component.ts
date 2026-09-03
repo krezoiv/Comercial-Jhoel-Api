@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -18,6 +19,7 @@ import {
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
 import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes-state.service';
 import { DayStatusService } from '../../../core/services/day-status.service';
+import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
@@ -36,27 +38,47 @@ const STATUS_TEXT: Record<CuadreResultStatus, string> = {
   positive: 'Resultado positivo',
 };
 
+/** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique every other date-driven page in this app already uses (Recargas, Reports, Bancos). */
+function todayIsoDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /**
- * "Cuadre Agentes" — segunda etapa: añade el Resumen del Cuadre (con el
- * resultado en vivo, coloreado según su signo) y "Guardar Cuadre", que
- * persiste un registro histórico en `agent_reconciliations` vía
- * `POST /agent-reconciliations`. El backend recalcula
- * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` de forma
- * independiente al guardar — solo `totalCash` viaja realmente como
- * decisión de este frontend (ver `CreateAgentReconciliationUseCase`); el
- * valor mostrado aquí antes de guardar es solo una vista previa en vivo,
- * igual que el patrón ya establecido en `SalesSummaryCardComponent`.
+ * "Cuadre Agentes" — second stage: adds the Resumen del Cuadre (with the
+ * live result, colored by its sign) and "Guardar Cuadre", which persists
+ * a historical record to `agent_reconciliations` via
+ * `POST /agent-reconciliations`. The backend recomputes
+ * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result`
+ * independently on save — only `totalCash` actually travels as this
+ * frontend's own decision (see `CreateAgentReconciliationUseCase`); the
+ * value shown here before saving is just a live preview, the same
+ * pattern already established in `SalesSummaryCardComponent`.
  *
- * El conteo de efectivo se guarda en `CuadreAgentesStateService` (un
- * singleton `providedIn: 'root'`, el mismo patrón que `PurchaseDraftStore`/
- * los servicios de estado de Reportería) para que sobreviva la navegación
- * dentro del dashboard sin necesitar `sessionStorage` todavía — ver el
- * propio comentario de ese servicio.
+ * The cash count is held in `CuadreAgentesStateService` (a
+ * `providedIn: 'root'` singleton, the same pattern as `PurchaseDraftStore`/
+ * Reportería's own state services) so it survives navigation within the
+ * dashboard without needing `sessionStorage` yet — see that service's
+ * own comment.
+ *
+ * **Operation date**: this screen has no date picker of its own — it reads
+ * `BankBalanceDraftStore.operationDate()`, the exact same signal Bancos'
+ * own date picker writes, so both screens always work the same date. This
+ * fixes a real bug: before this, every call here silently omitted a date
+ * and let the backend default to server "today", completely disconnected
+ * from whatever date Bancos had actually saved balances for. `getSummary()`
+ * deliberately stays date-agnostic — `GetCuadreAgentesSummaryUseCase` is
+ * wired to each bank's static `banks.final_balance` column, not to a
+ * specific date's `bank_balances` row, by an earlier, separate ticket.
  */
 @Component({
   selector: 'app-cuadre-agentes-page',
   standalone: true,
   imports: [
+    DatePipe,
     CardComponent,
     IconComponent,
     ButtonComponent,
@@ -72,7 +94,12 @@ export class CuadreAgentesPageComponent {
   private readonly cuadreAgentesService = inject(CuadreAgentesService);
   private readonly state = inject(CuadreAgentesStateService);
   protected readonly dayStatusService = inject(DayStatusService);
+  protected readonly draft = inject(BankBalanceDraftStore);
   private readonly notificationService = inject(NotificationService);
+
+  readonly maxSelectableDate = todayIsoDate();
+  /** Whether the shared operation date (set from Bancos) is today — drives the "not working on today" warning banner. */
+  readonly isTodayOperationDate = computed(() => this.draft.operationDate() === this.maxSelectableDate);
 
   readonly denominations = CASH_DENOMINATIONS;
   readonly cashCounts = this.state.cashCounts;
@@ -86,27 +113,26 @@ export class CuadreAgentesPageComponent {
   readonly isRefreshingBanks = signal(false);
 
   /**
-   * "¿Se guardaron los saldos bancarios de esta fecha?" — la regla que
-   * bloquea "Guardar Cuadre" hasta que exista un cuadre diario en
-   * Agentes Bancarios → Bancos para la misma fecha (siempre "hoy" en
-   * este módulo, que no tiene selector de fecha propio). `null` mientras
-   * no se conoce la respuesta todavía (carga inicial); en ese estado el
-   * botón de guardar también permanece deshabilitado — nunca se asume
-   * "sí se puede" por defecto.
+   * "Were this date's bank balances saved?" — the rule that blocks
+   * "Guardar Cuadre" until a daily cuadre exists in Agentes Bancarios →
+   * Bancos for the same date (always "today" in this module, which has
+   * no date selector of its own). `null` while the answer isn't known
+   * yet (initial load); in that state the save button also stays
+   * disabled — never defaults to "yes, allowed".
    */
   readonly bankBalancesValidation = signal<BankBalancesValidation | null>(null);
   readonly isValidatingBankBalances = signal(true);
 
-  /** "Apertura del Día" — `DayStatusService` es el singleton compartido con Bancos/Sidebar; refleja si HOY ya está aperturado. */
+  /** "Apertura del Día" — `DayStatusService` is the singleton shared with Bancos/Sidebar; reflects whether TODAY is already open. */
   readonly dayOpened = computed(() => this.dayStatusService.status()?.isOpened === true);
 
-  /** "Cierre del Día" — una vez guardado el cuadre, HOY queda cerrado y bloqueado para un nuevo ciclo hasta que cambie la fecha. */
+  /** "Cierre del Día" — once the cuadre is saved, TODAY is closed and blocked for a new cycle until the date changes. */
   readonly dayClosed = computed(() => this.dayStatusService.status()?.isClosed === true);
 
-  /** `denominación × cantidad`, sumado en todas las filas — se recalcula solo, sin botón, cada vez que `cashCounts` cambia. */
+  /** `denomination × count`, summed across every row — recomputes on its own, no button needed, every time `cashCounts` changes. */
   readonly totalCash = computed(() => calculateTotalCash(this.cashCounts()));
 
-  /** Efectivo + Bancos + CuentasPorCobrar − Activos — en vivo, sin necesidad de un botón, igual que el previo de Recargas. */
+  /** Cash + Banks + AccountsReceivable − Assets — live, no button needed, same as Recargas' own preview. */
   readonly resultCuadre = computed(() => {
     const summary = this.summary();
     if (!summary) {
@@ -133,15 +159,15 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * Corre automáticamente al entrar al módulo (constructor) — Angular
-   * destruye y vuelve a crear este componente en cada navegación a esta
-   * ruta, así que un "Ir a registrar saldos" → guardar en Bancos → volver
-   * aquí ya dispara esta misma llamada de nuevo sin ningún código extra
-   * ("no requerir recarga manual del navegador").
+   * Runs automatically on entering the module (constructor) — Angular
+   * destroys and recreates this component on every navigation to this
+   * route, so "Ir a registrar saldos" → save in Bancos → come back here
+   * already triggers this same call again with no extra code needed
+   * ("no manual browser reload required").
    */
   private validateBankBalances(): void {
     this.isValidatingBankBalances.set(true);
-    this.cuadreAgentesService.validateBankBalances().subscribe({
+    this.cuadreAgentesService.validateBankBalances(this.draft.operationDate()).subscribe({
       next: (validation) => {
         this.bankBalancesValidation.set(validation);
         this.isValidatingBankBalances.set(false);
@@ -172,20 +198,20 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * "Actualizar Saldos" — vuelve a leer el mismo endpoint de solo lectura
-   * (`GET /banks/cuadre-agentes-summary`) que ya usa `fetchSummary`, sin
-   * tocar el signal `loading` que controla el esqueleto de carga inicial:
-   * los bancos/totales previamente mostrados permanecen visibles mientras
-   * la solicitud está en curso, y se mantienen intactos si falla. Nunca
-   * lee ni escribe `CuadreAgentesStateService` — el conteo de efectivo es
-   * un estado completamente aparte que este refresco no tiene motivo para
-   * tocar.
+   * "Actualizar Saldos" — re-reads the same read-only endpoint
+   * (`GET /banks/cuadre-agentes-summary`) `fetchSummary` already uses,
+   * without touching the `loading` signal that controls the initial
+   * loading skeleton: the previously shown banks/totals stay visible
+   * while the request is in flight, and remain intact if it fails. Never
+   * reads or writes `CuadreAgentesStateService` — the cash count is a
+   * completely separate piece of state this refresh has no reason to
+   * touch.
    *
-   * También se bloquea mientras `isSaving()` está en curso — sin esto, un
-   * refresco disparado justo antes o durante "Guardar Cuadre" podía
-   * responder *después* del propio refetch de `confirmSaveCuadre()` y
-   * dejar en pantalla el resumen anterior, dando la falsa impresión de
-   * que el guardado no surtió efecto.
+   * Also blocked while `isSaving()` is in progress — without this, a
+   * refresh triggered right before or during "Guardar Cuadre" could
+   * respond *after* `confirmSaveCuadre()`'s own refetch and leave the
+   * previous summary on screen, giving the false impression that the
+   * save had no effect.
    */
   refreshBankSummary(): void {
     if (this.isRefreshingBanks() || this.isSaving()) {
@@ -211,11 +237,11 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * El directive `appDecimalInput` ya rechaza a nivel de tecla lo que no
-   * corresponda a la cantidad de decimales de cada fila (0 para Q200–Q5,
-   * 2 para Q1) — esto solo da forma al string final al mismo número de
-   * decimales antes de guardarlo, para que un valor pegado (paste) no se
-   * cuele con más precisión de la permitida.
+   * The `appDecimalInput` directive already rejects at the keystroke
+   * level whatever doesn't match each row's allowed decimal places (0
+   * for Q200–Q5, 2 for Q1) — this only shapes the final string to that
+   * same decimal count before saving it, so a pasted value can't sneak
+   * in with more precision than allowed.
    */
   onQuantityInput(denomination: CashDenomination, value: string): void {
     const trimmed = value.trim();
@@ -233,7 +259,7 @@ export class CuadreAgentesPageComponent {
     this.state.setCount(denomination, rounded);
   }
 
-  /** Nunca abre el modal de confirmación si el pre-chequeo del backend aún no confirma que la fecha puede cuadrarse — ver `canSaveCuadre`. */
+  /** Never opens the confirmation modal if the backend's pre-check hasn't yet confirmed this date can be reconciled — see `canSaveCuadre`. */
   openConfirmModal(): void {
     if (!this.canSaveCuadre()) {
       return;
@@ -242,12 +268,11 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * Reúne todas las razones por las que "Guardar Cuadre" debe permanecer
-   * deshabilitado, incluyendo la nueva regla obligatoria: no se puede
-   * cuadrar sin saldos bancarios guardados para esta fecha. El backend
-   * (`CreateAgentReconciliationUseCase`) vuelve a exigir exactamente esto
-   * de forma independiente — este computed es solo la mejora de
-   * experiencia de usuario, nunca la barrera real.
+   * Combines every reason "Guardar Cuadre" must stay disabled, including
+   * the mandatory rule: no reconciling without bank balances saved for
+   * this date. The backend (`CreateAgentReconciliationUseCase`) enforces
+   * exactly this again independently — this computed is UX only, never
+   * the real barrier.
    */
   readonly canSaveCuadre = computed(
     () =>
@@ -261,7 +286,7 @@ export class CuadreAgentesPageComponent {
       this.bankBalancesValidation()?.canReconcile === true,
   );
 
-  /** Página completa habilitada — mismas condiciones que `canSaveCuadre` salvo `isSaving`/`isRefreshingBanks`, que no impiden VER el contenido, solo guardarlo. */
+  /** The whole page enabled — same conditions as `canSaveCuadre` minus `isSaving`/`isRefreshingBanks`, which don't prevent VIEWING the content, only saving it. */
   readonly canAccessReconciliation = computed(
     () =>
       !this.loading() &&
@@ -276,6 +301,13 @@ export class CuadreAgentesPageComponent {
     () => this.loading() || this.isValidatingBankBalances() || this.dayStatusService.loading(),
   );
 
+  /** Resets the SHARED operation date back to today — also clears Bancos' own in-progress saldo-final drafts (`BankBalanceDraftStore.setOperationDate`'s own rule: switching dates is always a clean slate, never a merge). */
+  resetToToday(): void {
+    this.draft.setOperationDate(this.maxSelectableDate);
+    this.fetchSummary();
+    this.validateBankBalances();
+  }
+
   cancelConfirm(): void {
     if (this.isSaving()) {
       return;
@@ -284,35 +316,37 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * "Guardar Cuadre" ahora también cierra el día — una sola llamada
-   * atómica en el backend (`CloseAgentDayUseCase`/`close_agent_day`).
-   * `dayStatusService.refresh()` es lo que hace que el Sidebar y esta
-   * misma página reaccionen de inmediato: el próximo `computed` de
-   * `dayClosed()` pasa a `true` sin recargar el navegador, y la página
-   * cae sola en la rama "Día Cerrado" del template.
+   * "Guardar Cuadre" now also closes the day — a single atomic call on
+   * the backend (`CloseAgentDayUseCase`/`close_agent_day`).
+   * `dayStatusService.refresh()` is what makes the Sidebar and this same
+   * page react immediately: `dayClosed()`'s next `computed` turns `true`
+   * with no browser reload, and the page falls into the "Día Cerrado"
+   * branch of the template on its own.
    */
   confirmSaveCuadre(): void {
     if (this.isSaving()) {
       return;
     }
     this.isSaving.set(true);
-    this.cuadreAgentesService.registerReconciliation({ totalCash: this.totalCash() }).subscribe({
-      next: () => {
-        this.isSaving.set(false);
-        this.isConfirmModalOpen.set(false);
-        // Solo se limpia el conteo de efectivo temporal en memoria — el
-        // registro histórico ya quedó guardado en `agent_reconciliations`.
-        this.state.reset();
-        this.notificationService.success(
-          'El cuadre fue guardado y el día fue cerrado exitosamente. El sistema está listo para iniciar el siguiente ciclo de cuadre.',
-        );
-        this.dayStatusService.refresh();
-        this.fetchSummary();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isSaving.set(false);
-        this.notificationService.error(extractErrorMessage(error, 'No se pudo guardar el Cuadre Agentes.'));
-      },
-    });
+    this.cuadreAgentesService
+      .registerReconciliation({ totalCash: this.totalCash(), date: this.draft.operationDate() })
+      .subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.isConfirmModalOpen.set(false);
+          // Only clears the temporary in-memory cash count — the
+          // historical record is already saved in `agent_reconciliations`.
+          this.state.reset();
+          this.notificationService.success(
+            'El cuadre fue guardado y el día fue cerrado exitosamente. El sistema está listo para iniciar el siguiente ciclo de cuadre.',
+          );
+          this.dayStatusService.refresh();
+          this.fetchSummary();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isSaving.set(false);
+          this.notificationService.error(extractErrorMessage(error, 'No se pudo guardar el Cuadre Agentes.'));
+        },
+      });
   }
 }

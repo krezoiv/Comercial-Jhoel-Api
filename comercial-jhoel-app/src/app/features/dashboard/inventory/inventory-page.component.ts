@@ -28,6 +28,22 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './inventory-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Same summary/toolbar/table/form-modal/delete-modal split as
+ * `CategoriesPageComponent`, with two real additions: two dependent
+ * reference-data dropdowns (`categoryOptions`/`businessOptions`, both
+ * fetched once from their own services) and filtering that also matches
+ * SKU, not just name.
+ *
+ * Filtering/sorting/searching all happen client-side over one fetched
+ * page (`InventoryService.getProducts()` asks for `limit=100`), even
+ * though the backend's `GET /products` already supports `search`/
+ * `categoryId`/`businessId`/`sortBy`/`page` as real query params. This
+ * was a deliberate "swap the data source, don't rearchitect an
+ * already-working filter UI" call, not an oversight — wiring the
+ * toolbar to drive those params directly instead is a legitimate future
+ * improvement if the catalog grows past what one page comfortably holds.
+ */
 export class InventoryPageComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly categoryService = inject(CategoryService);

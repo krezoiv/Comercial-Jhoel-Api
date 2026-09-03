@@ -47,12 +47,12 @@ export class AuthService {
   readonly isAdmin = computed(() => ADMIN_ROLES.includes(this.currentUser()?.role as UserRole));
 
   constructor() {
-    // "El backend debe tener prioridad" — una sesión restaurada (recarga
-    // del navegador) siempre vuelve a confirmar el tema real contra
-    // `GET /users/me/preferences`, nunca se conforma con el caché de
-    // `ThemeService` (que ya pintó *algo* de inmediato para evitar el
-    // parpadeo, pero puede estar desactualizado si el usuario cambió de
-    // tema desde otro dispositivo/pestaña).
+    // The backend is always the source of truth for theme, never the
+    // client cache: a restored session (page reload) immediately re-fetches
+    // the real preference from `GET /users/me/preferences` rather than
+    // trusting `ThemeService`'s own cached value (which already painted
+    // *something* on boot purely to avoid a flash of the wrong theme, and
+    // may be stale if the user changed theme from another device/tab).
     if (this.currentUser()) {
       this.themeService.loadUserTheme();
     }

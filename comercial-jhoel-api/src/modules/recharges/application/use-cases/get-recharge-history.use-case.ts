@@ -14,6 +14,8 @@ export interface GetRechargeHistoryInput {
   userId?: string;
   page?: number;
   limit?: number;
+  /** See `FindRechargeHistoryOptions.excludeCancelledDays` — left `undefined`/`false` by the operational `GET /recharges/history` route, set `true` by Reportería's reuse of this use case. */
+  excludeCancelledDays?: boolean;
 }
 
 export interface GetRechargeHistoryOutput {
@@ -58,6 +60,7 @@ export class GetRechargeHistoryUseCase {
       userId: input.userId,
       page,
       limit,
+      excludeCancelledDays: input.excludeCancelledDays,
     });
 
     return {

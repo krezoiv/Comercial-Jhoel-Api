@@ -22,10 +22,10 @@ export class CuadreAgentesStateService {
   }
 
   /**
-   * Segunda etapa — llamado únicamente después de un "Guardar Cuadre" exitoso.
-   * Solo limpia este estado temporal en memoria; el registro histórico ya
-   * quedó guardado en `agent_reconciliations` antes de que esto se ejecute,
-   * así que nunca borra nada persistido.
+   * Second stage — called only after a successful "Guardar Cuadre". Only
+   * clears this temporary in-memory state; the historical record is
+   * already saved in `agent_reconciliations` before this runs, so it
+   * never deletes anything persisted.
    */
   reset(): void {
     this.cashCounts.set(createEmptyCashCount());

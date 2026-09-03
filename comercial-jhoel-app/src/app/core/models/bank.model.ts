@@ -4,6 +4,7 @@ export interface Bank {
   accountNumber: string;
   accountTypeId: string;
   accountTypeName: string;
+  /** Cached "current" figures, not a specific operation date's values — see the backend's `BankProps` doc comment. For a given date's actual previous/final balance, use `BankBalanceView` instead. */
   previousBalance: number;
   finalBalance: number;
   isActive: boolean;

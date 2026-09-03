@@ -8,10 +8,10 @@ import { ApiSuccessResponse, ClosedDayDetail, ClosedDayRow, ClosedDaysFilters } 
 const BASE_URL = `${environment.apiUrl}/closed-days`;
 
 /**
- * "Sistema → Gestión de Días Cerrados" — todas las rutas del backend
- * (`ClosedDaysController`) ya exigen ADMIN/SUPER_ADMIN vía `@Roles` a
- * nivel de clase; este servicio no repite esa validación, es solo el
- * cliente HTTP. `authInterceptor` adjunta el JWT automáticamente.
+ * "Sistema → Gestión de Días Cerrados" — every backend route
+ * (`ClosedDaysController`) already requires ADMIN/SUPER_ADMIN via a
+ * class-level `@Roles`; this service doesn't repeat that check, it's
+ * just the HTTP client. `authInterceptor` attaches the JWT automatically.
  */
 @Injectable({ providedIn: 'root' })
 export class ClosedDaysService {

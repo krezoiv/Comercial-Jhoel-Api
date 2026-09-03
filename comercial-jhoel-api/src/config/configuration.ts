@@ -1,3 +1,11 @@
+/**
+ * The single source of typed environment configuration, loaded once via
+ * `ConfigModule.forRoot({ isGlobal: true, load: [configuration] })` in
+ * `AppModule`. Every module reads env vars through `ConfigService.get(...)`
+ * against these namespaces (`'database.host'`, `'jwt.secret'`, etc.) rather
+ * than touching `process.env` directly — this is the one file that needs
+ * updating when a new environment variable is introduced.
+ */
 export interface AppConfig {
   port: number;
   environment: string;

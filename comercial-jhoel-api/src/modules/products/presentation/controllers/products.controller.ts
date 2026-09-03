@@ -28,6 +28,15 @@ import {
   ProductResponseDto,
 } from '../dtos/product.response.dto';
 
+/**
+ * Follows the same CRUD/guard shape as `CategoriesController` (`GET` open
+ * to any authenticated role, mutations admin-only, soft delete), but with
+ * genuinely more validation: a product must reference an active
+ * `categoryId` and `businessId` (see `CreateProductUseCase`/
+ * `UpdateProductUseCase`), `name` is unique only among active products,
+ * and the optional `sku` follows the identical "unique only among active
+ * rows, many `NULL`s allowed" pattern.
+ */
 @UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {

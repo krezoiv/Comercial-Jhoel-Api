@@ -36,6 +36,11 @@ export class CreateProductUseCase {
   async execute(input: CreateProductInput): Promise<ProductOutput> {
     const name = input.name.trim().replace(/\s+/g, ' ');
 
+    // Referenced-entity validation runs before the uniqueness checks below
+    // — a product pointing at a deleted/deactivated category or business
+    // is a data-integrity problem worth catching before spending a query
+    // on name/SKU uniqueness, which only matters once the FKs are known
+    // to be valid.
     const category = await this.categoryRepository.findById(input.categoryId);
     if (!category || !category.isActive) {
       throw new InvalidCategoryError();
@@ -51,6 +56,10 @@ export class CreateProductUseCase {
       throw new ProductNameAlreadyExistsError(name);
     }
 
+    // `sku` is genuinely optional (a barcode a product may not have yet) —
+    // an empty/blank value is normalized to `null` rather than an empty
+    // string, matching the partial unique index (`UQ_products_sku_active`)
+    // that only enforces uniqueness among non-null, active rows.
     const sku = input.sku?.trim() || null;
     if (sku) {
       const existingSku = await this.productRepository.findByActiveSku(sku);

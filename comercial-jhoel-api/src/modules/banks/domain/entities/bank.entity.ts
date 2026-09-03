@@ -4,6 +4,19 @@ export interface BankProps {
   accountNumber: string;
   accountTypeId: string;
   accountTypeName: string;
+  /**
+   * `previousBalance`/`finalBalance` here are cached "current" figures on
+   * `banks` itself — `previousBalance` is only ever the bank's *configured
+   * opening* balance (set at creation, editable via Sistema → Bancos), and
+   * `finalBalance` is kept in sync with whatever `bank_balances` row is
+   * most recent for this bank, but only when a cuadre is saved for that
+   * latest date (see `save_bank_balance()`, migration
+   * `1758500000000-OnlySyncBanksFinalBalanceForLatestDate` — a *backdated*
+   * correction never overwrites this). Neither field reflects a specific
+   * operation date on its own; for a given date's actual previous/final
+   * balance, see `BankBalanceView` instead, which resolves both from the
+   * real `bank_balances` history.
+   */
   previousBalance: number;
   finalBalance: number;
   isActive: boolean;

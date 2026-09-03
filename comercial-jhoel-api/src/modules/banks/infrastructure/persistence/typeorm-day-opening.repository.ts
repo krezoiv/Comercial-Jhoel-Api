@@ -28,11 +28,11 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
   }
 
   /**
-   * Idempotente: si `date` ya tiene una fila, la devuelve tal cual (nunca
-   * crea una segunda). El `try/catch` sobre la violación de
-   * `UQ_day_openings_date` es la red de seguridad ante la carrera de un
-   * doble clic — el mismo patrón que `TypeOrmBankRepository.create` ya
-   * usa para su propia unicidad — no la vía principal.
+   * Idempotent: if `date` already has a row, returns it as-is (never
+   * creates a second one). The `try/catch` around the
+   * `UQ_day_openings_date` violation is the safety net for a double-click
+   * race — the same pattern `TypeOrmBankRepository.create` already uses
+   * for its own uniqueness — not the primary path.
    */
   async open(date: string, userId: string): Promise<DayOpening> {
     const existing = await this.findByDate(date);
@@ -57,13 +57,14 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
   }
 
   /**
-   * Lista solo fechas que alguna vez tuvieron un cierre — nunca un día en
-   * curso (`NOT_OPENED`/`OPENED`/`BANK_BALANCES_SAVED`), que no es asunto
-   * de este módulo administrativo. El total del cuadre viene de una
-   * subconsulta correlacionada al ÚLTIMO `agent_reconciliations` de esa
-   * fecha (mismo patrón de subconsulta que `findBalancesView` ya usa para
-   * "el saldo anterior más reciente") — puede haber más de una fila
-   * histórica si el día fue reabierto y vuelto a cerrar más de una vez.
+   * Lists only dates that were ever closed — never a day still in
+   * progress (`NOT_OPENED`/`OPENED`/`BANK_BALANCES_SAVED`), which isn't
+   * this administrative module's concern. Each total comes from a
+   * subquery correlated to that date's LATEST `agent_reconciliations`
+   * row (the same subquery pattern `findBalancesView` already uses for
+   * "the most recent previous balance") — there can be more than one
+   * historical row if the day was reopened and closed again more than
+   * once.
    */
   async findClosedDays(filters: ClosedDaysFilters): Promise<ClosedDayViewRow[]> {
     const qb = this.repository
@@ -186,11 +187,11 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     }>();
 
     return rows.map((row) => ({
-      // `getRawMany()` no pasa por la hidratación normal de TypeORM para
-      // columnas `date` (esa conversión a string plano solo ocurre en
-      // `find()`/`findOne()`) — el driver de pg devuelve un `Date` real
-      // para esta consulta cruda, hay que formatearlo a mano al mismo
-      // `yyyy-MM-dd` que el resto de la app ya usa.
+      // `getRawMany()` doesn't go through TypeORM's normal hydration for
+      // `date` columns (that plain-string conversion only happens on
+      // `find()`/`findOne()`) — the pg driver returns a real `Date` for
+      // this raw query, so it has to be formatted by hand to the same
+      // `yyyy-MM-dd` shape the rest of the app already uses.
       date: this.formatDateOnly(row.date),
       status: row.isCancelled ? 'CANCELLED' : row.closedAt ? 'CLOSED' : 'REOPENED',
       openedAt: row.openedAt,
@@ -231,7 +232,7 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     return DayOpeningMapper.toDomain(updated);
   }
 
-  /** Getters UTC a propósito — el driver de pg construye este `Date` a medianoche UTC para una columna `date`; usar los getters locales podría correr la fecha un día según el huso horario del servidor. */
+  /** UTC getters on purpose — the pg driver builds this `Date` at UTC midnight for a `date` column; using local getters could shift the date by a day depending on the server's timezone. */
   private formatDateOnly(value: string | Date): string {
     if (typeof value === 'string') {
       return value;
@@ -242,6 +243,7 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     return `${year}-${month}-${day}`;
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>[:...]'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. `reopen_agent_day`/`cancel_agent_day` (migration `1758900000000-AddDayReopeningAndAudit`, corrected by `1758900100000-FixLaterDayCheckIncludesReopened`) are the two functions behind `reopen()`/`cancel()` above. */
   private translateError(error: unknown, date: string): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

@@ -25,6 +25,13 @@ import { UpdateSupplierRequestDto } from '../dtos/update-supplier.request.dto';
 import { ListSuppliersQueryDto } from '../dtos/list-suppliers.query.dto';
 import { SupplierResponseDto } from '../dtos/supplier.response.dto';
 
+/**
+ * Same CRUD/guard shape as `CategoriesController` (see that class's own
+ * doc comment), with one deliberate difference: `name` is NOT unique here
+ * — only `taxId` is, and only when present, since a real supplier record
+ * legitimately may not have one yet. See `UQ_suppliers_tax_id_active` /
+ * `SupplierTaxIdAlreadyExistsError`.
+ */
 @UseGuards(JwtAuthGuard)
 @Controller('suppliers')
 export class SuppliersController {

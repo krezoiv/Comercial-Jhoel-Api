@@ -87,6 +87,15 @@ export const routes: Routes = [
         title: 'Gestión de Días Cerrados — Panel',
       },
       {
+        path: 'gestion-dias-recargas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/recharge-days/recharge-days-page.component').then(
+            (m) => m.RechargeDaysPageComponent,
+          ),
+        title: 'Gestión de Días de Recargas — Panel',
+      },
+      {
         path: 'bancos',
         loadComponent: () =>
           import('./features/dashboard/banks/banks-page.component').then((m) => m.BanksPageComponent),

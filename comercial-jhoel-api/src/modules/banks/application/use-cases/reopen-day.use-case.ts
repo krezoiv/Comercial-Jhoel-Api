@@ -12,12 +12,12 @@ export interface ReopenDayInput {
 }
 
 /**
- * "Reabrir Día" — la validación de rol (solo ADMIN/SUPER_ADMIN) ya ocurrió
- * en el `RolesGuard` del controller, la validación real de estado/
- * anulación/días posteriores ocurre atómicamente dentro de
- * `reopen_agent_day` (SQL, bajo lock de la fila) — este use case solo
- * orquesta y traduce el resultado a la forma que el frontend necesita
- * para refrescar la fila/el detalle sin una segunda llamada.
+ * "Reabrir Día" — role validation (ADMIN/SUPER_ADMIN only) already
+ * happened in the controller's `RolesGuard`; the real status/cancellation/
+ * later-day validation happens atomically inside `reopen_agent_day` (SQL,
+ * under the row lock) — this use case only orchestrates and translates
+ * the result into the shape the frontend needs to refresh the row/detail
+ * without a second call.
  */
 @Injectable()
 export class ReopenDayUseCase {

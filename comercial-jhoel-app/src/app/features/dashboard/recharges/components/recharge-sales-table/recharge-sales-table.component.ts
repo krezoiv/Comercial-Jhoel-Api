@@ -24,6 +24,8 @@ import { IconComponent } from '../../../../../shared/ui';
 export class RechargeSalesTableComponent {
   @Input() sales: RechargeSale[] = [];
   @Input() loading = false;
+  /** Whole-day gate — hides edit/delete for every row while non-null, same reasoning as a per-row `locked` sale, just module-wide instead of per-operator. `'closed'` vs `'not_opened'` drive different hint copy. */
+  @Input() dayLockReason: 'closed' | 'not_opened' | null = null;
 
   @Output() editRequested = new EventEmitter<RechargeSale>();
   @Output() deleteRequested = new EventEmitter<RechargeSale>();

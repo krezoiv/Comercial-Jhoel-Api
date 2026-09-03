@@ -29,6 +29,12 @@ export class UpdateRoleUseCase {
 
     const isSystemRole = (ROLE_NAMES as readonly string[]).includes(role.name);
 
+    // One of the three seeded roles can never be renamed — every
+    // `@Roles('ADMIN', 'SUPER_ADMIN')` guard across the app is a literal
+    // string match against `ROLE_NAMES` (see that constant's own doc
+    // comment), and renaming one here has no way to also update every
+    // guard that names it. Description and `isActive` on a system role
+    // stay editable; only `name` is locked.
     let name: string | undefined;
     if (input.name !== undefined) {
       name = normalizeRoleName(input.name);
@@ -43,6 +49,11 @@ export class UpdateRoleUseCase {
       }
     }
 
+    // Deactivating a role that still has active users would leave them
+    // holding a role that no longer satisfies any `@Roles(...)` check
+    // cleanly (or, worse, silently) — block it until they're moved off
+    // first. Users who are themselves already inactive don't count: they
+    // have no active access left to lose.
     if (input.isActive === false && role.isActive) {
       const activeUsers = await this.roleRepository.countUsersByRoleId(
         role.id,

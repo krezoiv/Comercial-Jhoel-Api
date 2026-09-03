@@ -18,7 +18,7 @@ export class NotificationService {
     this.push('error', message);
   }
 
-  /** Amarillo — para acciones canceladas/anuladas, distinto de un error real. */
+  /** Yellow — for cancelled/voided actions, distinct from a genuine error. */
   warning(message: string): void {
     this.push('warning', message);
   }

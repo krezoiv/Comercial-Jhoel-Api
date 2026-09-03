@@ -17,6 +17,7 @@ export * from './user.model';
 export * from './role.model';
 export * from './report.model';
 export * from './recharge.model';
+export * from './recharge-day.model';
 export * from './ice-cream.model';
 export * from './ice-cream-purchase.model';
 export * from './ice-cream-sale.model';

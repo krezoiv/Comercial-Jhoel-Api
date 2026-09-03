@@ -62,6 +62,11 @@ export class UpdateProductUseCase {
       }
     }
 
+    // Three-way distinction on `sku`: `undefined` means "field not sent,
+    // leave it alone"; an explicit `null` (or blank string, normalized to
+    // `null` here) means "clear the barcode"; a non-empty string is a new
+    // value to validate. Collapsing this to a plain optional string would
+    // make "clear the SKU" indistinguishable from "don't touch the SKU".
     const sku = input.sku !== undefined ? input.sku?.trim() || null : undefined;
     if (sku && sku !== product.sku) {
       const existingSku = await this.productRepository.findByActiveSku(sku);

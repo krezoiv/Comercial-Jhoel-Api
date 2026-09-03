@@ -24,6 +24,7 @@ export interface ListUsersOutput {
   limit: number;
 }
 
+/** Same pagination-default reasoning as `ListProductsUseCase` — a generous default limit, a hard ceiling against an abusive request. */
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 200;

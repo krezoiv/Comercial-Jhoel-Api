@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { CuadreResultStatus, formatCurrency, getCuadreResultStatus } from '../../../../../core/models';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
-/** Dumb — el padre (`CuadreAgentesPageComponent`) es dueño de la llamada real a `registerReconciliation`, mismo patrón que `FinalBalanceConfirmModalComponent`. */
+/** Dumb — the parent (`CuadreAgentesPageComponent`) owns the actual `registerReconciliation` call, same pattern as `FinalBalanceConfirmModalComponent`. */
 @Component({
   selector: 'app-agent-reconciliation-confirm-modal',
   standalone: true,

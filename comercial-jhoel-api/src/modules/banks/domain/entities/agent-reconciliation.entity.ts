@@ -12,8 +12,9 @@ export interface AgentReconciliationProps {
 }
 
 /**
- * A frozen historical snapshot of one "Cuadre Agentes" close — segunda
- * etapa. `totalBanks`/`totalAssets`/`totalAccountsReceivable` are copied
+ * A frozen historical snapshot of one "Cuadre Agentes" close — the second
+ * stage of the daily sequence, after bank balances are saved.
+ * `totalBanks`/`totalAssets`/`totalAccountsReceivable` are copied
  * in at save time from `GetCuadreAgentesSummaryUseCase` (never recomputed
  * live from this row later), same "frozen snapshot, not a live view"
  * reasoning `recharge_sales_closures` already established for its own

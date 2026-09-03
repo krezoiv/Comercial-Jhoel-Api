@@ -5,12 +5,12 @@ import { MissingBankInfo } from '../../../../../core/models';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 /**
- * Dumb — el padre (`CuadreAgentesPageComponent`) es dueño de la
- * validación y de cuándo mostrarlo. "Permanecer aquí" solo cierra el
- * modal (el bloqueo real vive en el botón "Guardar Cuadre", no aquí);
- * "Ir a registrar saldos" navega a Agentes Bancarios → Bancos, que ya
- * trabaja sobre "hoy" por defecto — la misma fecha implícita que usa
- * Cuadre Agentes, así que la fecha nunca se pierde en la navegación.
+ * Dumb — the parent (`CuadreAgentesPageComponent`) owns the validation
+ * and when to show it. "Permanecer aquí" only closes the modal (the real
+ * block lives in the "Guardar Cuadre" button, not here); "Ir a registrar
+ * saldos" navigates to Agentes Bancarios → Bancos, which already
+ * operates on "today" by default — the same implicit date Cuadre
+ * Agentes uses, so the date is never lost across the navigation.
  */
 @Component({
   selector: 'app-pending-balances-modal',

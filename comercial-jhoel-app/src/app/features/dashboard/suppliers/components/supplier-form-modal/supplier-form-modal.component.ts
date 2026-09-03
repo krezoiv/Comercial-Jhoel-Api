@@ -14,6 +14,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Supplier } from '../../../../../core/models';
 import { SupplierService } from '../../../../../core/services/supplier.service';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
@@ -35,6 +36,7 @@ export class SupplierFormModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly supplierService = inject(SupplierService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -72,11 +74,18 @@ export class SupplierFormModalComponent implements OnChanges {
     }
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.errorMessage.set(null);
 
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.confirm({
+      type: this.isEditMode ? 'UPDATE' : 'SAVE',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -106,9 +115,15 @@ export class SupplierFormModalComponent implements OnChanges {
     });
   }
 
-  close(): void {
+  async close(): Promise<void> {
     if (this.isSubmitting()) {
       return;
+    }
+    if (this.form.dirty) {
+      const discard = await this.confirmDialogService.confirm({ type: 'CANCEL' });
+      if (!discard) {
+        return;
+      }
     }
     this.closed.emit();
   }

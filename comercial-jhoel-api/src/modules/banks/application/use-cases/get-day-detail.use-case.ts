@@ -12,11 +12,12 @@ import { toAgentReconciliationOutput } from '../dtos/agent-reconciliation-output
 import { DayDetailOutput } from '../dtos/day-detail-output';
 
 /**
- * "Ver Detalle" — compone lecturas de cuatro repositorios que ya existen
- * (día, saldos bancarios, cuadre vigente, auditoría), nunca las duplica.
- * Solo aplica a un día que alguna vez tuvo un cierre (`DayNotFoundError`
- * si nunca existió `day_openings` para esa fecha) — un día en curso no es
- * responsabilidad de este módulo administrativo.
+ * "Ver Detalle" — composes reads from four repositories that already
+ * exist (day, bank balances, current reconciliation, audit trail), never
+ * duplicates them. Only applies to a day that was ever closed
+ * (`DayNotFoundError` if no `day_openings` row ever existed for that
+ * date) — a day still in progress isn't this administrative module's
+ * responsibility.
  */
 @Injectable()
 export class GetDayDetailUseCase {

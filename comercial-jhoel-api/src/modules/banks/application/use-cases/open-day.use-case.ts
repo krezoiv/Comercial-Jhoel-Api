@@ -15,11 +15,11 @@ export interface OpenDayInput {
 }
 
 /**
- * "Confirmar Apertura" — idempotente (`DayOpeningRepository.open` nunca
- * crea una segunda fila para una fecha ya aperturada), así que un doble
- * clic o un reintento nunca falla ni duplica nada. Devuelve el estado
- * completo del día (no solo "abierto: sí"), para que el frontend pueda
- * actualizar su UI en un solo paso sin una segunda llamada.
+ * "Confirmar Apertura" — idempotent (`DayOpeningRepository.open` never
+ * creates a second row for an already-opened date), so a double click or
+ * a retry never fails or duplicates anything. Returns the day's full
+ * status (not just "opened: yes"), so the frontend can update its UI in
+ * one step without a second call.
  */
 @Injectable()
 export class OpenDayUseCase {
@@ -36,9 +36,9 @@ export class OpenDayUseCase {
       throw new InvalidBankBalanceDateError();
     }
 
-    // Solo registra 'OPENED' en la primera apertura real — `open()` es
-    // idempotente y un doble clic/reintento no debe duplicar el evento en
-    // el historial del día.
+    // Only records 'OPENED' on the actual first opening — `open()` is
+    // idempotent and a double click/retry must not duplicate the event
+    // in the day's history.
     const existing = await this.dayOpeningRepository.findByDate(input.date);
     await this.dayOpeningRepository.open(input.date, input.userId);
     if (!existing) {

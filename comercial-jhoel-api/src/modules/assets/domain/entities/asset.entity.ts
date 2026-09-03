@@ -1,3 +1,13 @@
+/**
+ * "Activos" — a client-linked amount that subtracts from the daily Cuadre
+ * Agentes result (`Cash + Banks + AccountsReceivable − Assets`, see
+ * `GetCuadreAgentesSummaryUseCase` in the banks module). Structurally a
+ * clone of `AccountReceivable` (same client-link/date/amount/description
+ * shape, same soft delete), with one deliberate delta: `amount` may be
+ * negative here (migration `1758200000000-AllowNegativeAssetAmount`,
+ * `CreateAssetRequestDto`'s own doc comment) to record a correcting/
+ * reversing entry — `AccountReceivable.amount` stays positive-only.
+ */
 export interface AssetProps {
   id: string;
   clientId: string;

@@ -3,7 +3,7 @@ import type { ThemePreference } from '../../domain/entities/user.entity';
 
 const ALLOWED_THEMES: ThemePreference[] = ['LIGHT', 'DARK'];
 
-/** Único valor aceptado: `theme`, restringido a `LIGHT`/`DARK` — el `ValidationPipe` global (`whitelist` + `forbidNonWhitelisted`) ya rechaza cualquier otro campo antes de que este DTO se evalúe. */
+/** Only one accepted field: `theme`, restricted to `LIGHT`/`DARK` — the global `ValidationPipe` (`whitelist` + `forbidNonWhitelisted`) already rejects any other field before this DTO's own decorators even run. */
 export class UpdateThemeRequestDto {
   @IsIn(ALLOWED_THEMES, { message: 'theme debe ser LIGHT o DARK' })
   theme: ThemePreference;

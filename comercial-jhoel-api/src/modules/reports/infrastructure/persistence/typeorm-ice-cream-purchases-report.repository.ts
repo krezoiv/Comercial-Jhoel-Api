@@ -10,6 +10,7 @@ import {
   PaginatedReportResult,
 } from '../../domain/repositories/ice-cream-purchases-report.repository';
 
+/** Structural clone of `TypeOrmIceCreamSalesReportRepository` — see that repository's own doc comment for why this is deliberately rooted on the detail (line-item) table rather than the purchase header. */
 @Injectable()
 export class TypeOrmIceCreamPurchasesReportRepository implements IceCreamPurchasesReportRepository {
   constructor(

@@ -4,14 +4,20 @@ import { RechargeTypeOrmEntity } from './infrastructure/persistence/recharge-typ
 import { RechargeDailyBalanceOrmEntity } from './infrastructure/persistence/recharge-daily-balance.orm-entity';
 import { RechargeSalesClosureOrmEntity } from './infrastructure/persistence/recharge-sales-closure.orm-entity';
 import { RechargeSaleOrmEntity } from './infrastructure/persistence/recharge-sale.orm-entity';
+import { RechargeDayOpeningOrmEntity } from './infrastructure/persistence/recharge-day-opening.orm-entity';
+import { RechargeDayAuditLogOrmEntity } from './infrastructure/persistence/recharge-day-audit-log.orm-entity';
 import { TypeOrmRechargeTypeRepository } from './infrastructure/persistence/typeorm-recharge-type.repository';
 import { TypeOrmRechargeDailyBalanceRepository } from './infrastructure/persistence/typeorm-recharge-daily-balance.repository';
 import { TypeOrmRechargeSalesClosureRepository } from './infrastructure/persistence/typeorm-recharge-sales-closure.repository';
 import { TypeOrmRechargeSaleRepository } from './infrastructure/persistence/typeorm-recharge-sale.repository';
+import { TypeOrmRechargeDayOpeningRepository } from './infrastructure/persistence/typeorm-recharge-day-opening.repository';
+import { TypeOrmRechargeDayAuditLogRepository } from './infrastructure/persistence/typeorm-recharge-day-audit-log.repository';
 import { RECHARGE_TYPE_REPOSITORY } from './domain/repositories/recharge-type.repository';
 import { RECHARGE_DAILY_BALANCE_REPOSITORY } from './domain/repositories/recharge-daily-balance.repository';
 import { RECHARGE_SALES_CLOSURE_REPOSITORY } from './domain/repositories/recharge-sales-closure.repository';
 import { RECHARGE_SALE_REPOSITORY } from './domain/repositories/recharge-sale.repository';
+import { RECHARGE_DAY_OPENING_REPOSITORY } from './domain/repositories/recharge-day-opening.repository';
+import { RECHARGE_DAY_AUDIT_LOG_REPOSITORY } from './domain/repositories/recharge-day-audit-log.repository';
 import { ListRechargeTypesUseCase } from './application/use-cases/list-recharge-types.use-case';
 import { GetRechargeDailySummaryUseCase } from './application/use-cases/get-recharge-daily-summary.use-case';
 import { RegisterRechargePurchaseUseCase } from './application/use-cases/register-recharge-purchase.use-case';
@@ -23,7 +29,15 @@ import { GetRechargeSalesUseCase } from './application/use-cases/get-recharge-sa
 import { CreateRechargeSaleUseCase } from './application/use-cases/create-recharge-sale.use-case';
 import { UpdateRechargeSaleUseCase } from './application/use-cases/update-recharge-sale.use-case';
 import { DeleteRechargeSaleUseCase } from './application/use-cases/delete-recharge-sale.use-case';
+import { GetRechargeDayStatusUseCase } from './application/use-cases/get-recharge-day-status.use-case';
+import { OpenRechargeDayUseCase } from './application/use-cases/open-recharge-day.use-case';
+import { CloseRechargeDayUseCase } from './application/use-cases/close-recharge-day.use-case';
+import { ListClosedRechargeDaysUseCase } from './application/use-cases/list-closed-recharge-days.use-case';
+import { GetRechargeDayDetailUseCase } from './application/use-cases/get-recharge-day-detail.use-case';
+import { ReopenRechargeDayUseCase } from './application/use-cases/reopen-recharge-day.use-case';
+import { CancelRechargeDayUseCase } from './application/use-cases/cancel-recharge-day.use-case';
 import { RechargesController } from './presentation/controllers/recharges.controller';
+import { RechargeDaysController } from './presentation/controllers/recharge-days.controller';
 
 // `RechargePurchaseOrmEntity` is deliberately not registered here — nothing
 // in TypeScript reads `recharge_purchases` directly today (only the
@@ -41,9 +55,11 @@ import { RechargesController } from './presentation/controllers/recharges.contro
       RechargeDailyBalanceOrmEntity,
       RechargeSalesClosureOrmEntity,
       RechargeSaleOrmEntity,
+      RechargeDayOpeningOrmEntity,
+      RechargeDayAuditLogOrmEntity,
     ]),
   ],
-  controllers: [RechargesController],
+  controllers: [RechargesController, RechargeDaysController],
   providers: [
     {
       provide: RECHARGE_TYPE_REPOSITORY,
@@ -61,6 +77,14 @@ import { RechargesController } from './presentation/controllers/recharges.contro
       provide: RECHARGE_SALE_REPOSITORY,
       useClass: TypeOrmRechargeSaleRepository,
     },
+    {
+      provide: RECHARGE_DAY_OPENING_REPOSITORY,
+      useClass: TypeOrmRechargeDayOpeningRepository,
+    },
+    {
+      provide: RECHARGE_DAY_AUDIT_LOG_REPOSITORY,
+      useClass: TypeOrmRechargeDayAuditLogRepository,
+    },
     ListRechargeTypesUseCase,
     GetRechargeDailySummaryUseCase,
     RegisterRechargePurchaseUseCase,
@@ -72,6 +96,13 @@ import { RechargesController } from './presentation/controllers/recharges.contro
     CreateRechargeSaleUseCase,
     UpdateRechargeSaleUseCase,
     DeleteRechargeSaleUseCase,
+    GetRechargeDayStatusUseCase,
+    OpenRechargeDayUseCase,
+    CloseRechargeDayUseCase,
+    ListClosedRechargeDaysUseCase,
+    GetRechargeDayDetailUseCase,
+    ReopenRechargeDayUseCase,
+    CancelRechargeDayUseCase,
   ],
   // Exported for `ReportsModule`'s new Recargas report: `RECHARGE_TYPE_REPOSITORY`
   // resolves the `rechargeTypeId` filter into a display name for the PDF,

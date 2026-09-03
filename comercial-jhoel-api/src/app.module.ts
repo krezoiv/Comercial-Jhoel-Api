@@ -40,6 +40,12 @@ import { AssetsModule } from './modules/assets/assets.module';
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.name'),
         autoLoadEntities: true,
+        // Always false, on purpose: every schema change goes through an
+        // explicit migration under `src/database/migrations/`. Letting
+        // TypeORM auto-sync the schema from entity metadata would risk
+        // silently altering or dropping real production data the moment an
+        // entity file changes — migrations are reviewable and reversible,
+        // auto-sync is neither.
         synchronize: false,
       }),
     }),
@@ -63,6 +69,8 @@ import { AssetsModule } from './modules/assets/assets.module';
     RechargesModule,
   ],
   providers: [
+    // Registered globally here (not per-controller) — see each class's own
+    // doc comment for the exact response/error shapes they produce.
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
   ],

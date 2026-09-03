@@ -12,6 +12,14 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+/**
+ * Registered globally via `APP_INTERCEPTOR` — wraps every successful
+ * controller return value as `{ success: true, data }`, regardless of the
+ * module. This is why every use case can simply `return` its plain result;
+ * the envelope is applied uniformly here rather than by each controller.
+ * See `GlobalExceptionFilter` for the (deliberately differently shaped)
+ * error side of this contract.
+ */
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<
   T,

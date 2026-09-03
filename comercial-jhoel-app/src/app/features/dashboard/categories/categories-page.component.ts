@@ -26,6 +26,16 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './categories-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * The canonical shape every simple admin catalog screen in this app
+ * follows — `BusinessesPageComponent`, `SuppliersPageComponent`,
+ * `ClientsPageComponent`, `AccountTypesPageComponent` are all near-
+ * identical clones of this exact component (same summary/toolbar/table/
+ * form-modal/delete-modal split, same client-side search+status filtering,
+ * same in-place row update on soft delete rather than removing it from
+ * the list). `isAdmin` is UX-only here — hiding buttons for a non-admin
+ * — the backend's own guard is what actually enforces it.
+ */
 export class CategoriesPageComponent {
   private readonly categoryService = inject(CategoryService);
   private readonly notificationService = inject(NotificationService);

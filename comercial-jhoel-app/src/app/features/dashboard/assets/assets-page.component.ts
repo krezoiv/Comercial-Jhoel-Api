@@ -30,6 +30,16 @@ const LIMIT = 20;
   styleUrl: './assets-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Unlike `UsersPageComponent`/`BanksPageComponent` (client-side filtering
+ * over one fully-fetched list, optimistic local patching after save/
+ * delete), this page uses real server-side pagination — every filter
+ * change (search, status, client, date range, page) calls `fetchRecords()`
+ * again rather than filtering an in-memory array, and a save/delete
+ * refetches the current page rather than patching `records` in place,
+ * since a deactivated/edited row may need to leave the page it was on
+ * entirely. `AccountsReceivablePageComponent` is the identical clone.
+ */
 export class AssetsPageComponent {
   private readonly assetService = inject(AssetService);
   private readonly notificationService = inject(NotificationService);

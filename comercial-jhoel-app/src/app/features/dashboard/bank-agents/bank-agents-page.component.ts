@@ -33,11 +33,11 @@ function todayIsoDate(): string {
  * they're always re-fetched from the backend, so this screen can never
  * show stale configuration.
  *
- * "Apertura del Día" (`DayStatusService`, un singleton compartido con el
- * Sidebar y con Cuadre Agentes) gatea la edición SOLO cuando la fecha
- * activa es la de hoy — editar una fecha pasada (corrección histórica ya
- * existente) nunca requiere aperturar nada, exactamente como funcionaba
- * antes de este ticket.
+ * "Apertura del Día" (`DayStatusService`, a singleton shared with the
+ * Sidebar and with Cuadre Agentes) gates editing ONLY when the active
+ * date is today — editing a past date (pre-existing historical
+ * correction) never requires opening anything, exactly as it worked
+ * before this ticket.
  */
 @Component({
   selector: 'app-bank-agents-page',
@@ -76,13 +76,13 @@ export class BankAgentsPageComponent {
   readonly isTodayOperationDate = computed(() => this.draft.operationDate() === this.maxSelectableDate);
 
   /**
-   * "Cierre del Día" — a diferencia de "aperturado", este chequeo aplica a
-   * CUALQUIER fecha, no solo a hoy: una corrección histórica sobre una
-   * fecha que ya fue cerrada (porque en su momento se guardó su propio
-   * Cuadre Agentes) debe bloquearse igual que hoy. Para la fecha de hoy
-   * se reutiliza el singleton `DayStatusService` (mismo estado que el
-   * Sidebar); para una fecha pasada se hace una consulta aparte, propia de
-   * esta página, porque el singleton solo representa "hoy".
+   * "Cierre del Día" — unlike "opened", this check applies to ANY date,
+   * not just today: a historical correction on a date that was already
+   * closed (because its own Cuadre Agentes was saved at the time) must be
+   * blocked the same as today. For today's date, the `DayStatusService`
+   * singleton (the same state the Sidebar reads) is reused; for a past
+   * date, this page makes its own separate query, because the singleton
+   * only ever represents "today".
    */
   readonly pastDateStatus = signal<DayStatus | null>(null);
 
@@ -93,10 +93,10 @@ export class BankAgentsPageComponent {
   );
 
   /**
-   * Gate real: para hoy, solo hasta que `DayStatusService` confirme que
-   * el día ya está aperturado; para cualquier fecha (hoy o pasada), nunca
-   * si esa fecha ya fue cerrada — un día cerrado no admite corrección por
-   * el flujo normal, ni siquiera como "corrección histórica".
+   * The actual gate: for today, only once `DayStatusService` confirms the
+   * day is already open; for any date (today or past), never if that
+   * date was already closed — a closed day doesn't accept correction
+   * through the normal flow, not even as a "historical correction".
    */
   readonly isEditingUnlocked = computed(
     () =>
@@ -107,10 +107,10 @@ export class BankAgentsPageComponent {
   private hasEvaluatedEntryGate = false;
 
   /**
-   * Refleja si la fecha actualmente seleccionada ya tiene algún saldo
-   * guardado — impulsa el mensaje informativo ("No existen
-   * registros..."/"Ya existen saldos...") y el mensaje de éxito al
-   * guardar ("fueron registrados"/"fueron actualizados").
+   * Reflects whether the currently selected date already has any balance
+   * saved — drives both the informational message ("No existen
+   * registros..."/"Ya existen saldos...") and the success message on save
+   * ("fueron registrados"/"fueron actualizados").
    */
   readonly hasExistingRecordsForDate = computed(() => this.rows().some((row) => row.finalBalance !== null));
 
@@ -120,11 +120,11 @@ export class BankAgentsPageComponent {
     this.fetchBalances();
     this.fetchPastDateStatusIfNeeded();
 
-    // Abre el modal de "Apertura del Día" la primera vez que se confirma
-    // (una vez que `DayStatusService` deja de estar cargando) que hoy
-    // todavía no está aperturado. Solo actúa una vez por instancia de
-    // este componente — cancelar el modal no debe hacer que se reabra
-    // solo; el usuario decide cuándo reintentar vía "Habilitar edición".
+    // Opens the "Apertura del Día" modal the first time it's confirmed
+    // (once `DayStatusService` is done loading) that today still isn't
+    // open. Only acts once per instance of this component — cancelling
+    // the modal must not make it reopen on its own; the user decides
+    // when to retry via "Habilitar edición".
     effect(() => {
       const isToday = this.isTodayOperationDate();
       const loading = this.dayStatusService.loading();
@@ -163,7 +163,7 @@ export class BankAgentsPageComponent {
     this.isEntryConfirmModalOpen.set(false);
   }
 
-  /** Único punto de reingreso tras cancelar el modal de apertura — vuelve a mostrarlo, sin navegar ni recargar nada. */
+  /** The one re-entry point after cancelling the opening modal — shows it again, without navigating or reloading anything. */
   reopenEntryModal(): void {
     this.isEntryConfirmModalOpen.set(true);
   }
@@ -178,7 +178,7 @@ export class BankAgentsPageComponent {
     this.fetchPastDateStatusIfNeeded();
   }
 
-  /** Solo consulta para una fecha pasada — hoy ya está cubierto por el singleton `DayStatusService`. */
+  /** Only queries for a past date — today is already covered by the `DayStatusService` singleton. */
   private fetchPastDateStatusIfNeeded(): void {
     if (this.isTodayOperationDate()) {
       this.pastDateStatus.set(null);
@@ -217,7 +217,7 @@ export class BankAgentsPageComponent {
     );
   }
 
-  /** "Guardar Cambios" ahora abre la confirmación (Paso 3) en vez de guardar directamente — el guardado real ocurre en `confirmSaveChanges()`. */
+  /** "Guardar Cambios" now opens the confirmation (Step 3) instead of saving directly — the actual save happens in `confirmSaveChanges()`. */
   openSaveConfirmModal(): void {
     if (!this.canSave) {
       return;
@@ -237,10 +237,10 @@ export class BankAgentsPageComponent {
    * then — same reset-after-save rule already used for Recargas
    * Electrónicas — clears the temporary draft and re-fetches the real
    * saldo anterior/saldo final straight from the database instead of
-   * trusting any client-side computation. Si la fecha guardada es hoy,
-   * también refresca `DayStatusService` — esto es lo que habilita el
-   * enlace de Cuadre Agentes en el Sidebar de inmediato, sin recargar
-   * nada manualmente.
+   * trusting any client-side computation. If the saved date is today, it
+   * also refreshes `DayStatusService` — this is what enables the Cuadre
+   * Agentes link in the Sidebar immediately, without reloading anything
+   * manually.
    */
   confirmSaveChanges(): void {
     if (!this.canSave) {
@@ -279,11 +279,11 @@ export class BankAgentsPageComponent {
   }
 
   /**
-   * "Poner Saldos en Cero" — solo se abre si hay bancos cargados y la
-   * edición está desbloqueada; nunca toca la base de datos por sí sola
-   * (ver `ZeroBalancesConfirmModalComponent` y `BankBalanceDraftStore.zeroAll`).
-   * El usuario sigue necesitando presionar "Guardar Cambios" y confirmar
-   * para que los ceros se persistan.
+   * "Poner Saldos en Cero" — only opens if banks are loaded and editing
+   * is unlocked; never touches the database on its own (see
+   * `ZeroBalancesConfirmModalComponent` and `BankBalanceDraftStore.zeroAll`).
+   * The user still needs to press "Guardar Cambios" and confirm for the
+   * zeros to be persisted.
    */
   openZeroConfirmModal(): void {
     if (this.loading() || this.rows().length === 0 || !this.isEditingUnlocked()) {
@@ -302,21 +302,20 @@ export class BankAgentsPageComponent {
   }
 
   /**
-   * "Actualizar Saldos" — vuelve a leer `GET /banks/balances` para la
-   * fecha seleccionada sin recargar la página, igual que el mismo botón
-   * en Cuadre Agentes. No toca `loading` (eso ocultaría toda la tabla
-   * detrás del esqueleto de carga inicial) ni el draft de
-   * `BankBalanceDraftStore`: `displayFinalBalance()` ya prioriza el draft
-   * sin guardar sobre `row.finalBalance`, así que refrescar `rows` nunca
-   * pisa un saldo que el usuario todavía no ha guardado — "Guardar
-   * Cambios" sigue funcionando exactamente igual después de actualizar.
+   * "Actualizar Saldos" — re-reads `GET /banks/balances` for the selected
+   * date without reloading the page, same as the identical button in
+   * Cuadre Agentes. Doesn't touch `loading` (that would hide the whole
+   * table behind the initial loading skeleton) or `BankBalanceDraftStore`'s
+   * draft: `displayFinalBalance()` already prioritizes the unsaved draft
+   * over `row.finalBalance`, so refreshing `rows` never overwrites a
+   * balance the user hasn't saved yet — "Guardar Cambios" keeps working
+   * exactly the same after refreshing.
    *
-   * También se bloquea mientras `isSaving()` está en curso — sin esto,
-   * un refresco disparado justo antes o durante un guardado podía
-   * responder *después* del propio refetch de `confirmSaveChanges()` y
-   * dejar en pantalla el saldo anterior (aunque el guardado sí se hubiera
-   * persistido correctamente en la base de datos), dando la falsa
-   * impresión de que "no se guardó".
+   * Also blocked while `isSaving()` is in progress — without this, a
+   * refresh triggered right before or during a save could respond *after*
+   * `confirmSaveChanges()`'s own refetch and leave the previous balance
+   * on screen (even though the save had actually persisted correctly to
+   * the database), giving the false impression that "it wasn't saved".
    */
   refreshBalances(): void {
     if (this.isRefreshingBalances() || this.isSaving()) {

@@ -52,19 +52,19 @@ export class SaveBankBalancesUseCase {
       throw new NoBankBalancesToSaveError();
     }
 
-    // La secuencia obligatoria de "Apertura del Día" solo aplica al día de
-    // trabajo actual — corregir saldos de una fecha pasada es una
-    // funcionalidad ya existente que este ticket pide preservar sin
-    // cambios, así que nunca exige una apertura retroactiva.
+    // The mandatory "Apertura del Día" sequencing only applies to today's
+    // operating date — correcting a past date's balances is pre-existing
+    // functionality this ticket was required to preserve unchanged, so it
+    // never demands a retroactive opening for a historical date.
     const dayOpening = await this.dayOpeningRepository.findByDate(input.operationDate);
     if (input.operationDate === todayIsoDate() && !dayOpening) {
       throw new DayNotOpenedError(input.operationDate, 'balances');
     }
 
-    // "Cierre del Día" — una vez cerrada, ninguna fecha (sea hoy o una
-    // corrección histórica) admite nuevos saldos por el flujo normal.
-    // Independiente de la regla anterior: un día cerrado siempre bloquea,
-    // sin importar si es la fecha de hoy o una fecha pasada.
+    // "Cierre del Día" — once a date is closed, no further balances can be
+    // saved for it through the normal flow, whether it's today or a past
+    // date being corrected. Independent of the rule above: a closed day
+    // always blocks, regardless of which of the two cases it was.
     if (dayOpening?.isClosed) {
       throw new DayAlreadyClosedError(input.operationDate);
     }

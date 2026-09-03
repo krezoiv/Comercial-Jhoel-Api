@@ -160,6 +160,16 @@ export class TypeOrmSaleRepository implements SaleRepository {
     return rows[0].cancel_open_sale;
   }
 
+  /**
+   * `confirm_sale`/`adjust_sale_item` (both stored Postgres functions — see
+   * migrations `1757100000000-CreateSalesTables`/`1757200000000-AddDraftSalesSupport`)
+   * signal a business-rule failure via `RAISE EXCEPTION '<CODE>:<productId>'`,
+   * which the driver surfaces as a `QueryFailedError` whose message embeds
+   * that string. Parsing it back into the matching domain error here is what
+   * lets a stock/quantity/product failure raised inside Postgres reach the
+   * `GlobalExceptionFilter` as the same typed error a TypeScript-level check
+   * would have thrown — the HTTP caller can't tell which layer caught it.
+   */
   private translateSaleError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

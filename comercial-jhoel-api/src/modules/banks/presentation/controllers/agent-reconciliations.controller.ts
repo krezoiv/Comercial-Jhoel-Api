@@ -9,10 +9,9 @@ import { todayIsoDate } from '../../application/utils/today-iso-date';
 /**
  * "Guardar Cuadre" (Cuadre Agentes) — any authenticated account, same
  * "operational, not admin-only" policy as `POST /banks/balances`/
- * `POST /recharges/*`. Desde el ticket de "Cierre del Día", esta misma
- * llamada también cierra oficialmente el día (ver `CloseAgentDayUseCase`)
- * — la ruta y el DTO de entrada no cambiaron, solo lo que ocurre del lado
- * del servidor al guardar.
+ * `POST /recharges/*`. Since the "Cierre del Día" ticket, this same call
+ * also officially closes the day (see `CloseAgentDayUseCase`) — the route
+ * and the request DTO didn't change, only what happens server-side on save.
  */
 @UseGuards(JwtAuthGuard)
 @Controller('agent-reconciliations')

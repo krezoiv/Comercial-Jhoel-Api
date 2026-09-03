@@ -13,12 +13,11 @@ import { ClosedDayOutput } from '../../application/dtos/closed-day-output';
 import { DayDetailOutput } from '../../application/dtos/day-detail-output';
 
 /**
- * "Sistema → Gestión de Días Cerrados" — módulo administrativo altamente
- * sensible (reabre/anula cuadres financieros ya cerrados). `@Roles`
- * a nivel de clase, igual que `RolesController`: TODAS las rutas,
- * incluidos los `GET`, exigen ADMIN/SUPER_ADMIN — esta es la protección
- * real; el Sidebar/adminGuard del frontend son solo experiencia de
- * usuario.
+ * "Sistema → Gestión de Días Cerrados" — a highly sensitive administrative
+ * module (reopens/cancels already-closed financial reconciliations).
+ * `@Roles` at the class level, same as `RolesController`: EVERY route,
+ * including the `GET`s, requires ADMIN/SUPER_ADMIN — this is the real
+ * protection; the frontend's Sidebar/adminGuard are UX only.
  */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')

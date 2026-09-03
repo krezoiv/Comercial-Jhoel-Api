@@ -2,10 +2,13 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AuthService } from './auth.service';
 
+/** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique every other date-driven page in this app already uses (Recargas, Reports, Bancos). */
 function todayIsoDate(): string {
   const now = new Date();
-  const offset = now.getTimezoneOffset();
-  return new Date(now.getTime() - offset * 60_000).toISOString().slice(0, 10);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 interface PersistedBankBalanceDraft {
@@ -27,6 +30,14 @@ const STORAGE_PREFIX = 'cj_bank_balance_draft:';
  * `BankBalanceService.getBalancesView`), never persisted client-side, so
  * this store can never drift from what Sistema → Bancos currently has
  * configured.
+ *
+ * `operationDate` is now the single source of truth for the WHOLE
+ * "Agentes Bancarios" cycle, not just Bancos — `CuadreAgentesPageComponent`
+ * reads it too, so both screens always operate on the exact same date
+ * instead of each independently guessing "today" and risking a silent
+ * mismatch (the bug this dual-consumption was added to fix). It only
+ * injects this store for `operationDate()`; it has no reason to read or
+ * write `draftFinalBalances`, which stays exclusively Bancos' own concern.
  */
 @Injectable({ providedIn: 'root' })
 export class BankBalanceDraftStore {
@@ -48,11 +59,11 @@ export class BankBalanceDraftStore {
   }
 
   /**
-   * "Poner Saldos en Cero" — pone en 0 el borrador de cada banco de la
-   * lista actual, en una sola actualización. Solo toca el estado temporal
-   * de este store (y su copia en `sessionStorage`); nunca llama al
-   * backend por sí mismo — la persistencia real sigue ocurriendo
-   * únicamente cuando el usuario presiona "Guardar Cambios".
+   * "Poner Saldos en Cero" — sets every bank in the current list's draft
+   * to 0, in a single update. Only touches this store's temporary state
+   * (and its `sessionStorage` copy); never calls the backend on its own —
+   * real persistence still only happens when the user presses "Guardar
+   * Cambios".
    */
   zeroAll(bankIds: string[]): void {
     this.draftFinalBalances.update((entries) => {

@@ -6,7 +6,8 @@ ARG NODE_VERSION=24-alpine
 # python3/make/g++ to compile its native binding).
 FROM node:${NODE_VERSION} AS base
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ tzdata
+ENV TZ=America/Guatemala
 
 FROM base AS dependencies
 COPY package.json package-lock.json ./
@@ -29,7 +30,9 @@ RUN npm run build
 # Minimal runtime image: no build toolchain, no dev dependencies, non-root user.
 FROM node:${NODE_VERSION} AS production
 WORKDIR /app
+RUN apk add --no-cache tzdata
 ENV NODE_ENV=production
+ENV TZ=America/Guatemala
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./

@@ -40,6 +40,7 @@ export interface UpdateIceCreamData {
   updatedBy: string;
 }
 
+/** Structural clone of `ProductRepository` — `findByActiveSku`/`findByActiveProduct` back the same partial-unique-active uniqueness checks `CreateProductUseCase`/`UpdateProductUseCase` run for `sku`/`name`. */
 export interface IceCreamRepository {
   findAll(options: FindIceCreamsOptions): Promise<PaginatedResult<IceCream>>;
   findById(id: string): Promise<IceCream | null>;

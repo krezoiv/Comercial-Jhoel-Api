@@ -3,10 +3,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 /**
- * "Apertura del Día" — dumb, el padre (`BankAgentsPageComponent`) es
- * dueño de la llamada real a `POST /banks/day-status/open` al confirmar.
- * "Cancelar" solo cierra este modal; nunca navega ni borra nada, porque
- * no se aperturó nada todavía.
+ * "Apertura del Día" — dumb, the parent (`BankAgentsPageComponent`) owns
+ * the actual `POST /banks/day-status/open` call on confirm. "Cancelar"
+ * only closes this modal; it never navigates or deletes anything, since
+ * nothing was opened yet.
  */
 @Component({
   selector: 'app-entry-confirm-modal',

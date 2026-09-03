@@ -5,6 +5,7 @@ import {
   TokenService,
 } from '../../application/ports/token-service.port';
 
+/** The concrete `TokenService`, bound in `AuthModule`; a thin wrapper over `@nestjs/jwt`'s own `JwtService`, configured (secret/expiry) in `AuthModule`'s `JwtModule.registerAsync`. */
 @Injectable()
 export class NestJwtTokenService implements TokenService {
   constructor(private readonly jwtService: JwtService) {}

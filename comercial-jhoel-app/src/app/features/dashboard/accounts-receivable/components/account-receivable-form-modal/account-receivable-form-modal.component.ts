@@ -14,6 +14,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AccountReceivable, Client } from '../../../../../core/models';
 import { AccountReceivableService } from '../../../../../core/services/account-receivable.service';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { ClientSearchSelectComponent } from '../client-search-select/client-search-select.component';
@@ -44,6 +45,7 @@ export class AccountReceivableFormModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly accountReceivableService = inject(AccountReceivableService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -80,14 +82,25 @@ export class AccountReceivableFormModalComponent implements OnChanges {
   onClientSelected(client: Client | null): void {
     this.selectedClientName = client?.name ?? null;
     this.form.controls.clientId.setValue(client?.id ?? '');
+    // `setValue()` alone doesn't mark a control dirty (it's not routed through the
+    // ControlValueAccessor's own onChange) — mark it explicitly so the Cancel/X
+    // "descartar cambios" check still catches a client-only change.
+    this.form.controls.clientId.markAsDirty();
     this.form.controls.clientId.markAsTouched();
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.errorMessage.set(null);
 
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.confirm({
+      type: this.isEditMode ? 'UPDATE' : 'SAVE',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -119,9 +132,15 @@ export class AccountReceivableFormModalComponent implements OnChanges {
     });
   }
 
-  close(): void {
+  async close(): Promise<void> {
     if (this.isSubmitting()) {
       return;
+    }
+    if (this.form.dirty) {
+      const discard = await this.confirmDialogService.confirm({ type: 'CANCEL' });
+      if (!discard) {
+        return;
+      }
     }
     this.closed.emit();
   }

@@ -25,6 +25,12 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './roles-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A structural clone of `UsersPageComponent` — see that class's own doc comment for the page-
+ * assembly pattern and the optimistic local-update-instead-of-refetch reasoning, both shared
+ * as-is here. Genuine deltas: no role dropdown filter (roles have no analogous "role of a role"),
+ * and no self-action guard (`UsersPageComponent`'s `currentUserId`/self-deactivation UI block has
+ * no equivalent here — deactivating a role is blocked by whether it still has assigned users,
+ * not by who's logged in, and that check already lives server-side/in `RoleTableComponent`). */
 export class RolesPageComponent {
   private readonly roleService = inject(RoleService);
   private readonly notificationService = inject(NotificationService);

@@ -70,6 +70,7 @@ export class ExportRechargesReportPdfUseCase {
         ...filters,
         page: 1,
         limit: EXPORT_ROW_LIMIT,
+        excludeCancelledDays: true,
       }),
       this.dailyBalanceRepository.getReportSummary(filters),
       this.resolveFilterLines(input),

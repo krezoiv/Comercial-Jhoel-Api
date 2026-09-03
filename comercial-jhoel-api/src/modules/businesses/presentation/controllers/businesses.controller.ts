@@ -25,6 +25,7 @@ import { UpdateBusinessRequestDto } from '../dtos/update-business.request.dto';
 import { ListBusinessesQueryDto } from '../dtos/list-businesses.query.dto';
 import { BusinessResponseDto } from '../dtos/business.response.dto';
 
+/** A structural clone of `CategoriesController` (see that class's own doc comment for the full CRUD/guard-shape rationale) — `name` globally unique, soft delete, `GET` open to any authenticated role, mutations admin-only. */
 @UseGuards(JwtAuthGuard)
 @Controller('businesses')
 export class BusinessesController {

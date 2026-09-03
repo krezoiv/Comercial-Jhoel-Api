@@ -13,10 +13,10 @@ export interface DayAuditLogProps {
 }
 
 /**
- * Una fila por transición del CICLO de un día (apertura, cierre/recierre,
- * reapertura, anulación) — no un log genérico de cambios de campo. Ver
- * `ReopenDayUseCase`/`CancelDayUseCase`/`close_agent_day` (SQL) para dónde
- * se escribe cada acción.
+ * One row per CYCLE transition of a day (opening, close/re-close,
+ * reopening, cancellation) — not a generic field-change log. See
+ * `ReopenDayUseCase`/`CancelDayUseCase`/`close_agent_day` (SQL) for where
+ * each action is written.
  */
 export class DayAuditLog {
   private constructor(private readonly props: DayAuditLogProps) {}

@@ -5,22 +5,46 @@
       <p class="recharges__subtitle">Controla el saldo diario de cada operadora: compras, saldo del día y cierre.</p>
     </div>
 
-    <label class="recharges__date-field">
-      <span>Fecha de operación</span>
-      <input
-        type="date"
-        [value]="operationDate()"
-        [max]="maxSelectableDate"
-        (change)="onDateChange($any($event.target).value)"
-        aria-label="Fecha de operación"
-      />
-    </label>
+    <div class="recharges__header-actions">
+      <label class="recharges__date-field">
+        <span>Fecha de operación</span>
+        <input
+          type="date"
+          [value]="operationDate()"
+          [max]="maxSelectableDate"
+          (change)="onDateChange($any($event.target).value)"
+          aria-label="Fecha de operación"
+        />
+      </label>
+
+      @if (!isEditingUnlocked() && isTodayOperationDate()) {
+        <app-button variant="ghost" (click)="reopenEntryModal()">
+          <app-icon name="lock" [size]="16" />
+          Habilitar edición
+        </app-button>
+      }
+
+      @if (activeDayStatus()?.canCloseDay) {
+        <app-button variant="primary" (click)="openCloseDayModal()">
+          <app-icon name="lock" [size]="16" />
+          Cerrar Día
+        </app-button>
+      }
+    </div>
   </header>
+
+  @if (effectiveDayClosed()) {
+    <p class="info-banner info-banner--locked">
+      <app-icon name="lock" [size]="16" />
+      El día de recargas del {{ operationDate() }} está cerrado. Solo un administrador puede reabrirlo desde
+      "Gestión de Días de Recargas".
+    </p>
+  }
 
   <section class="recharges__sales-section">
     <div class="recharges__sales-header">
       <h2 class="recharges__sales-title">Recargas Vendidas</h2>
-      <app-button variant="primary" (click)="openAddSaleModal()">
+      <app-button variant="primary" [disabled]="!isEditingUnlocked()" (click)="openAddSaleModal()">
         <app-icon name="plus" [size]="16" />
         Agregar Recarga
       </app-button>
@@ -29,6 +53,7 @@
     <app-recharge-sales-table
       [sales]="sales()"
       [loading]="salesLoading()"
+      [dayLockReason]="dayLockReason()"
       (editRequested)="openEditSaleModal($event)"
       (deleteRequested)="requestDeleteSale($event)"
     />
@@ -38,6 +63,7 @@
     [balances]="balances()"
     [loading]="loading()"
     [isAdmin]="isAdmin()"
+    [dayLockReason]="dayLockReason()"
     (requestFinalBalance)="onRequestFinalBalance($event)"
   />
 
@@ -46,6 +72,7 @@
       <app-register-purchase-form
         [types]="types()"
         [operationDate]="operationDate()"
+        [lockReason]="dayLockReason()"
         (registered)="onPurchaseRegistered($event)"
       />
     </app-card>
@@ -54,11 +81,26 @@
       <app-recharge-sales-summary-card
         [operationDate]="operationDate()"
         [refreshTrigger]="salesSummaryRefreshTick()"
+        [lockReason]="dayLockReason()"
         (closureSaved)="onClosureSaved()"
       />
     </app-card>
   </div>
 </div>
+
+<app-recharge-entry-confirm-modal
+  [open]="isEntryConfirmModalOpen()"
+  [isOpening]="isOpeningDay()"
+  (confirmed)="confirmEntryModal()"
+  (cancelled)="cancelEntryModal()"
+/>
+
+<app-close-recharge-day-confirm-modal
+  [open]="isCloseDayConfirmModalOpen()"
+  [isClosing]="isClosingDay()"
+  (confirmed)="confirmCloseDayModal()"
+  (cancelled)="cancelCloseDayModal()"
+/>
 
 <app-final-balance-confirm-modal
   [open]="isFinalBalanceModalOpen()"

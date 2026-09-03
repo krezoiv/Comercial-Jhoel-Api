@@ -22,12 +22,12 @@ export class TypeOrmAgentReconciliationRepository
   ) {}
 
   /**
-   * Un único `SELECT close_agent_day(...)` — la función PL/pgSQL hace el
-   * `INSERT` en `agent_reconciliations` y el `UPDATE` de
-   * `day_openings.closed_at` dentro de su propia transacción implícita
-   * (mismo patrón que `register_recharge_sales_closure`/`save_bank_balance`
-   * ya usan en este código base). Un `RAISE EXCEPTION` ahí adentro revierte
-   * ambas escrituras — nunca puede quedar una sin la otra.
+   * A single `SELECT close_agent_day(...)` — the PL/pgSQL function does
+   * the `INSERT` into `agent_reconciliations` and the `UPDATE` of
+   * `day_openings.closed_at` inside its own implicit transaction (the same
+   * pattern `register_recharge_sales_closure`/`save_bank_balance` already
+   * use elsewhere in this codebase). A `RAISE EXCEPTION` in there rolls
+   * back both writes — one can never be left without the other.
    */
   async closeDayWithReconciliation(
     data: CloseAgentDayData,
@@ -66,6 +66,7 @@ export class TypeOrmAgentReconciliationRepository
     return orm ? AgentReconciliationMapper.toDomain(orm) : null;
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>:<extra>'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translateCloseError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

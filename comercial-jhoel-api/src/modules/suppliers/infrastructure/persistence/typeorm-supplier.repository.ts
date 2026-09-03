@@ -62,6 +62,12 @@ export class TypeOrmSupplierRepository implements SupplierRepository {
     await this.repository.update({ id }, { isActive: false });
   }
 
+  /**
+   * Same race-safety-net role as `TypeOrmCategoryRepository`'s own version
+   * of this method, keyed off `taxId` instead of `name` — see
+   * `SuppliersController`'s doc comment for why suppliers uniqueness works
+   * this way.
+   */
   private translateUniqueViolation(
     error: unknown,
     taxId?: string | null,

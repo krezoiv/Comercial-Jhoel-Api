@@ -9,16 +9,17 @@ export interface ClosedDaysFilters {
   dateFrom?: string;
   dateTo?: string;
   status?: ClosedDayStatus;
-  /** Coincide contra opened_by, closed_by O reopened_by — "cualquier usuario involucrado en el ciclo de este día". */
+  /** Matches against opened_by, closed_by, OR reopened_by — "any user involved in this day's cycle". */
   userId?: string;
   resultSign?: ResultSign;
 }
 
 /**
- * Fila de la lista "Gestión de Días Cerrados" — combina `day_openings` con
- * los totales del ÚLTIMO `agent_reconciliations` de esa fecha (puede haber
- * más de uno histórico si el día fue reabierto y vuelto a cerrar; el más
- * reciente es el que representa el cuadre vigente).
+ * Row of the "Gestión de Días Cerrados" list — combines `day_openings`
+ * with the totals from that date's LATEST `agent_reconciliations` row
+ * (there can be more than one historical row if the day was reopened and
+ * closed again; the most recent one is what represents the current
+ * reconciliation).
  */
 export interface ClosedDayViewRow {
   date: string;
@@ -42,12 +43,12 @@ export interface ClosedDayViewRow {
 
 export interface DayOpeningRepository {
   findByDate(date: string): Promise<DayOpening | null>;
-  /** Idempotente: si la fecha ya está aperturada, devuelve la fila existente sin crear una segunda ni fallar. */
+  /** Idempotent: if the date is already open, returns the existing row instead of creating a second one or failing. */
   open(date: string, userId: string): Promise<DayOpening>;
-  /** "Gestión de Días Cerrados" — solo fechas que alguna vez tuvieron un cierre (CLOSED/REOPENED/CANCELLED), nunca días en curso. */
+  /** "Gestión de Días Cerrados" — only dates that were ever closed (CLOSED/REOPENED/CANCELLED), never a day still in progress. */
   findClosedDays(filters: ClosedDaysFilters): Promise<ClosedDayViewRow[]>;
-  /** Vía `reopen_agent_day` (SQL) — valida estado/anulación/días posteriores y registra auditoría atómicamente. */
+  /** Via `reopen_agent_day` (SQL) — validates status/cancellation/later-day-exists and records the audit trail atomically. */
   reopen(date: string, userId: string, reason: string): Promise<DayOpening>;
-  /** Vía `cancel_agent_day` (SQL) — mismo tipo de validación atómica que `reopen`. */
+  /** Via `cancel_agent_day` (SQL) — same kind of atomic validation as `reopen`. */
   cancel(date: string, userId: string, reason: string): Promise<DayOpening>;
 }

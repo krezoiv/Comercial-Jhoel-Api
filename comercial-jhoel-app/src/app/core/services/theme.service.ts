@@ -10,24 +10,24 @@ const THEME_CACHE_KEY = 'cj_theme';
 const THEME_ATTR = 'data-theme';
 const PREFERENCES_URL = `${environment.apiUrl}/users/me/preferences`;
 const UPDATE_THEME_URL = `${PREFERENCES_URL}/theme`;
-/** Misma clave que `AuthService` usa para el JWT — duplicada a propósito en vez de importar `AuthService` aquí (evitaría el ciclo real: `AuthService` ya inyecta `ThemeService`). */
+/** Same key `AuthService` uses for the JWT — duplicated on purpose instead of importing `AuthService` here, which would create a real cycle (`AuthService` already injects `ThemeService`). */
 const AUTH_TOKEN_KEY = 'cj_auth_token';
 
 /**
- * Única fuente de verdad para "Modo Claro / Modo Oscuro" en todo el
- * frontend — ningún componente debe leer/escribir el atributo
- * `data-theme` ni `localStorage` directamente, todos pasan por aquí (ver
- * el botón del `DashboardTopbarComponent`).
+ * The single source of truth for "Light Mode / Dark Mode" across the
+ * frontend — no component should read or write the `data-theme` attribute
+ * or `localStorage` directly; everything goes through here (see the
+ * toggle button in `DashboardTopbarComponent`).
  *
- * La base de datos (usuario autenticado) es la fuente de verdad real —
- * `localStorage` es solo un caché para pintar el tema correcto de
- * inmediato al cargar la app (evita el parpadeo claro→oscuro mientras la
- * llamada a `GET /users/me/preferences` todavía está en vuelo) y nunca se
- * consulta después del arranque. `AuthService` es quien decide CUÁNDO
- * llamar a `loadUserTheme()` (tras `restoreSession()` y tras un login
- * exitoso) — este servicio no sabe nada de autenticación, el
- * `authInterceptor` ya adjunta el JWT a cualquier llamada a
- * `environment.apiUrl` automáticamente.
+ * The database (the authenticated user's own preference) is the real
+ * source of truth — `localStorage` is only a cache used to paint the
+ * correct theme immediately on app load (avoiding a light→dark flash
+ * while the `GET /users/me/preferences` call is still in flight) and is
+ * never consulted again after boot. `AuthService` decides WHEN to call
+ * `loadUserTheme()` (after `restoreSession()` and after a successful
+ * login) — this service knows nothing about authentication itself;
+ * `authInterceptor` already attaches the JWT to any call to
+ * `environment.apiUrl` automatically.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -37,14 +37,14 @@ export class ThemeService {
   readonly theme = signal<ThemePreference>(this.readCachedTheme());
 
   constructor() {
-    // Aplica el caché sincrónicamente en cuanto este servicio se
-    // construye (uno de los primeros providers `root` que arranca la
-    // app) — lo más temprano posible sin necesitar un `APP_INITIALIZER`,
-    // igual de efectivo para el propósito real: que el primer paint ya
-    // use el tema correcto en la enorme mayoría de los casos. Solo si hay
-    // una sesión guardada — "Modo Claro/Oscuro" es una preferencia del
-    // panel autenticado, nunca debe filtrarse al sitio público (landing,
-    // login) para un visitante sin sesión o justo después de cerrarla.
+    // Applies the cached value synchronously as soon as this service is
+    // constructed (one of the first `root` providers the app boots) — as
+    // early as practical without needing an `APP_INITIALIZER`, and equally
+    // effective for the real goal: the first paint already uses the
+    // correct theme in the overwhelming majority of cases. Only when a
+    // session actually exists — "Light Mode/Dark Mode" is an authenticated-
+    // panel preference and must never leak into the public site (landing,
+    // login) for a visitor with no session, or right after logging out.
     if (this.hasSession()) {
       this.applyTheme(this.theme());
     }
@@ -55,10 +55,11 @@ export class ThemeService {
   }
 
   /**
-   * Cambio optimista: aplica y cachea de inmediato (toda la app reacciona
-   * al signal en el mismo tick), luego persiste en backend. Si el
-   * guardado falla, revierte visualmente al valor anterior y avisa —
-   * nunca deja el frontend "creyendo" un tema que el backend no aceptó.
+   * Optimistic update: applies and caches immediately (the whole app
+   * reacts to the signal in the same tick), then persists to the backend.
+   * If the save fails, it visually reverts to the previous value and
+   * notifies — the frontend is never left "believing" a theme the backend
+   * never actually accepted.
    */
   setTheme(theme: ThemePreference): void {
     if (this.theme() === theme) {
@@ -80,11 +81,11 @@ export class ThemeService {
   }
 
   /**
-   * "El backend debe tener prioridad" al iniciar sesión — se llama desde
-   * `AuthService` tras restaurar sesión y tras un login exitoso, nunca
-   * desde un componente de UI. Un fallo de red aquí deja el tema cacheado
-   * tal cual estaba (mejor una preferencia potencialmente desactualizada
-   * que ningún tema aplicado).
+   * "The backend takes priority" on login — called from `AuthService`
+   * after restoring a session and after a successful login, never from a
+   * UI component. A network failure here just leaves the cached theme as
+   * it was (a possibly stale preference is better than no theme applied
+   * at all).
    */
   loadUserTheme(): void {
     this.http
@@ -96,7 +97,7 @@ export class ThemeService {
       .subscribe();
   }
 
-  /** `AuthService.logout()` llama esto — quita el atributo del documento de inmediato para que el sitio público nunca herede el tema oscuro de la sesión recién cerrada. */
+  /** Called by `AuthService.logout()` — removes the document attribute immediately so the public site never inherits the dark theme of the session that just ended. */
   reset(): void {
     this.theme.set('LIGHT');
     localStorage.removeItem(THEME_CACHE_KEY);

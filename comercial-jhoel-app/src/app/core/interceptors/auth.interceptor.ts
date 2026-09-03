@@ -12,6 +12,13 @@ function isApiRequest(url: string): boolean {
   return url.startsWith(environment.apiUrl);
 }
 
+/**
+ * Registered once in `app.config.ts` via `provideHttpClient(withInterceptors([authInterceptor]))`
+ * — every outgoing request to our own API gets the bearer token attached
+ * here, and a 401 from our own API is what triggers the network-wide
+ * "session expired" handling (logout + redirect), rather than each
+ * component/service having to check for it individually.
+ */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);

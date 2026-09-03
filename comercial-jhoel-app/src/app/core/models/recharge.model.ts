@@ -90,7 +90,7 @@ export interface UpdateRechargeSaleInput {
 
 export type SalesClosureStatus = 'zero' | 'positive' | 'negative';
 
-/** Zero = cuadre correcto, positive = falta reportar/recaudar (diferencia pendiente), negative = se recaudó de más. */
+/** Zero = correct cuadre, positive = still owed/uncollected (pending difference), negative = over-collected. */
 export function getSalesClosureStatus(difference: number): SalesClosureStatus {
   if (difference > 0) {
     return 'positive';

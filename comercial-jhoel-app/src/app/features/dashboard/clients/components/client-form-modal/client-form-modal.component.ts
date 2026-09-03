@@ -14,6 +14,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 
 import { Client } from '../../../../../core/models';
 import { ClientService } from '../../../../../core/services/client.service';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
@@ -41,6 +42,7 @@ export class ClientFormModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly clientService = inject(ClientService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -81,11 +83,18 @@ export class ClientFormModalComponent implements OnChanges {
     this.form.reset({ name: this.client?.name ?? '' });
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.errorMessage.set(null);
 
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.confirm({
+      type: this.isEditMode ? 'UPDATE' : 'SAVE',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -110,9 +119,15 @@ export class ClientFormModalComponent implements OnChanges {
     });
   }
 
-  close(): void {
+  async close(): Promise<void> {
     if (this.isSubmitting()) {
       return;
+    }
+    if (this.form.dirty) {
+      const discard = await this.confirmDialogService.confirm({ type: 'CANCEL' });
+      if (!discard) {
+        return;
+      }
     }
     this.closed.emit();
   }

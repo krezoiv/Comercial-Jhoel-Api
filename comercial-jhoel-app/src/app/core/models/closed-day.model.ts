@@ -1,6 +1,6 @@
 import { DayWorkStatus } from './cuadre-agentes.model';
 
-/** Solo los tres estados terminales/de gestión — un día en curso (NOT_OPENED/OPENED/BANK_BALANCES_SAVED) no es asunto de este módulo. */
+/** Only the three terminal/managed states — a day still in progress (NOT_OPENED/OPENED/BANK_BALANCES_SAVED) isn't this module's concern. */
 export type ClosedDayStatus = Extract<DayWorkStatus, 'CLOSED' | 'REOPENED' | 'CANCELLED'>;
 export type ResultSign = 'positive' | 'negative' | 'zero';
 
@@ -12,7 +12,7 @@ export interface ClosedDaysFilters {
   resultSign?: ResultSign;
 }
 
-/** Una fila de "Sistema → Gestión de Días Cerrados". */
+/** A row of "Sistema → Gestión de Días Cerrados". */
 export interface ClosedDayRow {
   date: string;
   status: ClosedDayStatus;
@@ -67,11 +67,10 @@ export interface ClosedDayReconciliation {
 }
 
 /**
- * "Ver Detalle" — nunca incluye un desglose de denominaciones de
- * efectivo: esta app nunca tuvo una tabla de conteo por denominación,
- * `reconciliation.totalCash` es el único valor de efectivo que el
- * backend conoce para un día ya cerrado (ver el propio backend,
- * `DayDetailOutput`).
+ * "Ver Detalle" — never includes a cash-denomination breakdown: this app
+ * never had a per-denomination count table, `reconciliation.totalCash`
+ * is the only cash figure the backend knows for an already-closed day
+ * (see the backend's own `DayDetailOutput`).
  */
 export interface ClosedDayDetail {
   date: string;

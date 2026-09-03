@@ -30,6 +30,7 @@ const LIMIT = 20;
   styleUrl: './accounts-receivable-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Identical clone of `AssetsPageComponent` — see that class's own doc comment for the server-side-pagination/always-refetch pattern (a deliberate departure from `UsersPageComponent`/`BanksPageComponent`'s client-side-filtering pattern). */
 export class AccountsReceivablePageComponent {
   private readonly accountReceivableService = inject(AccountReceivableService);
   private readonly notificationService = inject(NotificationService);

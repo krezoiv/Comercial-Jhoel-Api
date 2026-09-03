@@ -1,3 +1,12 @@
+/**
+ * "Cuentas por Cobrar" — a client-linked amount owed to the business,
+ * added into the daily Cuadre Agentes result (`Cash + Banks +
+ * AccountsReceivable − Assets`, see `GetCuadreAgentesSummaryUseCase` in
+ * the banks module). Structurally a clone of `Asset` — see that entity's
+ * own doc comment for the one deliberate delta: this `amount` stays
+ * positive-only (`CHK_accounts_receivable_amount_positive`), unlike
+ * `Asset.amount`.
+ */
 export interface AccountReceivableProps {
   id: string;
   clientId: string;

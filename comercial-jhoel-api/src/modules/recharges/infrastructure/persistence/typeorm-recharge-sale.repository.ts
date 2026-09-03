@@ -15,6 +15,7 @@ import { InvalidPhoneNumberError } from '../../domain/errors/invalid-phone-numbe
 import { DayAlreadyClosedError } from '../../domain/errors/day-already-closed.error';
 import { RechargeSaleNotFoundError } from '../../domain/errors/recharge-sale-not-found.error';
 import { RechargeSaleLockedError } from '../../domain/errors/recharge-sale-locked.error';
+import { RechargeDayAlreadyClosedError } from '../../domain/errors/recharge-day-already-closed.error';
 import { RechargeSaleOrmEntity } from './recharge-sale.orm-entity';
 import { RechargeSaleMapper } from './recharge-sale.mapper';
 
@@ -132,6 +133,7 @@ export class TypeOrmRechargeSaleRepository implements RechargeSaleRepository {
     return sale;
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>:<id>'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translateError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;
@@ -158,6 +160,8 @@ export class TypeOrmRechargeSaleRepository implements RechargeSaleRepository {
         return new RechargeSaleNotFoundError(id);
       case 'RECHARGE_SALE_LOCKED':
         return new RechargeSaleLockedError();
+      case 'RECHARGE_DAY_CLOSED':
+        return new RechargeDayAlreadyClosedError(id);
       default:
         return error;
     }

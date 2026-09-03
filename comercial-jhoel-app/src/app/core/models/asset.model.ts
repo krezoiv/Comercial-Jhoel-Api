@@ -3,6 +3,7 @@ export interface Asset {
   clientId: string;
   clientName: string;
   date: string;
+  /** May be negative (a correcting/reversing entry) — the one amount field in this app without a positive-only rule; see the backend's `Asset` entity doc comment. */
   amount: number;
   description: string | null;
   isActive: boolean;

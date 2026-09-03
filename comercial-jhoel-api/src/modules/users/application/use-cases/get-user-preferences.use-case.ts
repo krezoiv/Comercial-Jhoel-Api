@@ -5,9 +5,9 @@ import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { UserPreferencesOutput, toUserPreferencesOutput } from '../dtos/user-preferences-output';
 
 /**
- * `GET /users/me/preferences` — el `userId` viene siempre de `@CurrentUser`
- * (JWT), nunca de un parámetro de ruta o body: no existe forma de pedir la
- * preferencia de otro usuario a través de este endpoint.
+ * `GET /users/me/preferences` — `userId` always comes from `@CurrentUser`
+ * (JWT), never from a route parameter or body: there is no way to request
+ * another user's preference through this endpoint.
  */
 @Injectable()
 export class GetUserPreferencesUseCase {

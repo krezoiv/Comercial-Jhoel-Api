@@ -30,13 +30,13 @@ const STATUS_ICON: Record<string, string> = {
 };
 
 /**
- * "Ver Detalle" de un día cerrado — pide `ClosedDaysService.getDayDetail`
- * cada vez que se abre (o cambia la fecha seleccionada), nunca cachea
- * entre aperturas: refleja siempre el estado más reciente, incluso si el
- * usuario acaba de reabrir/recerrar/anular el mismo día momentos antes.
+ * "Ver Detalle" of a closed day — calls `ClosedDaysService.getDayDetail`
+ * every time it opens (or the selected date changes), never caches
+ * across openings: always reflects the most recent state, even if the
+ * user just reopened/re-closed/cancelled that same day moments earlier.
  *
- * No muestra un desglose de denominaciones de efectivo — deliberado, ver
- * `ClosedDayDetail` (modelo): esta app nunca tuvo esa tabla, solo el
+ * Doesn't show a cash-denomination breakdown — deliberate, see
+ * `ClosedDayDetail` (the model): this app never had that table, only the
  * total.
  */
 @Component({

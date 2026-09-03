@@ -64,6 +64,8 @@ export class SalesSummaryCardComponent implements OnChanges {
   @Input() operationDate = '';
   /** Bumped by the parent after a final-balance save changes this date's sale figures — triggers a refetch. */
   @Input() refreshTrigger = 0;
+  /** The active date's Recargas day is CLOSED (via "Cerrar Día") or, for today, not yet opened — a module-wide gate, stronger than the per-cuadre `isAdmin` re-save rule below: not even an admin can save a cuadre until the day is reopened. `null` means editing is unlocked. */
+  @Input() lockReason: 'closed' | 'not_opened' | null = null;
   /** Emitted after a successful save — the backend has already reset this date to a fresh cuadre cycle, so the parent's own table (saldo anterior, compra, etc.) needs a refetch too. */
   @Output() closureSaved = new EventEmitter<void>();
 
@@ -196,7 +198,7 @@ export class SalesSummaryCardComponent implements OnChanges {
   }
 
   save(): void {
-    if (!this.canSave() || this.isSaving()) {
+    if (!this.canSave() || this.isSaving() || this.lockReason !== null) {
       return;
     }
     this.isSaving.set(true);

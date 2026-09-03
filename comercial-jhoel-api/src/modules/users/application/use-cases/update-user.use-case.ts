@@ -20,6 +20,15 @@ export interface UpdateUserInput {
   password?: string;
 }
 
+/**
+ * The admin-only "edit any user" path (`PATCH /users/:id`) — every field
+ * is optional and only re-validated/rewritten when actually present in
+ * `input`, so a partial edit (e.g. just flipping `isActive`) never
+ * re-triggers a username/phone uniqueness check against unrelated,
+ * unchanged data. `password` is likewise only rehashed when a new one is
+ * supplied — "Nueva contraseña (opcional)" in the admin form maps
+ * directly to this optionality.
+ */
 @Injectable()
 export class UpdateUserUseCase {
   constructor(
@@ -38,6 +47,9 @@ export class UpdateUserUseCase {
       throw new UserNotFoundError(id);
     }
 
+    // Each uniqueness check only runs when the field actually changed —
+    // re-saving a user with their own unchanged username/phone must never
+    // trip a false "already exists" against themselves.
     const username = input.username?.trim();
     if (username && username !== user.username) {
       const existing = await this.userRepository.findByUsername(username);
@@ -61,6 +73,10 @@ export class UpdateUserUseCase {
       }
     }
 
+    // The same self-deactivation guard `DeactivateUserUseCase` enforces
+    // for `DELETE /users/:id` — this is the second path to the same
+    // effect (`PATCH` with `isActive: false`), so it needs its own check
+    // rather than assuming the frontend never sends this combination.
     if (input.isActive === false && id === currentUserId) {
       throw new CannotDeactivateSelfError();
     }

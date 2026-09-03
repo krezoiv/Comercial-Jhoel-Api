@@ -70,6 +70,7 @@ export class TypeOrmAccountTypeRepository implements AccountTypeRepository {
     await this.repository.update({ id }, { isActive: false });
   }
 
+  /** Safety net for the create/update race the use case's own pre-check can't close — see `TypeOrmCategoryRepository.translateUniqueViolation`'s own doc comment. */
   private translateUniqueViolation(error: unknown, name: string): unknown {
     if (error instanceof QueryFailedError) {
       const constraint = (

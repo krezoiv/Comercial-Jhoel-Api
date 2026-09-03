@@ -6,20 +6,19 @@ import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { UserPreferencesOutput, toUserPreferencesOutput } from '../dtos/user-preferences-output';
 
 /**
- * `PATCH /users/me/preferences/theme` — mismo patrón que el resto de
- * escrituras simples de un único campo en este módulo (ver
- * `UpdateUserUseCase`): un `UPDATE` de una sola columna vía
- * `UserRepository.update()`, sin stored procedure. Esta app reserva las
- * funciones PL/pgSQL para operaciones multi-tabla que necesitan
- * atomicidad real (cierre de día, ventas, compras, recargas) — revisado
- * explícitamente antes de escribir esto; `UpdateUserUseCase` (username,
- * teléfono, rol, contraseña, `isActive`) ya actualiza `users` con un
- * `UPDATE` plano, así que agregar un procedimiento solo para `theme`
- * introduciría un patrón paralelo para el mismo tipo de operación.
+ * `PATCH /users/me/preferences/theme` — same pattern as every other
+ * simple single-field write in this module (see `UpdateUserUseCase`): a
+ * single-column `UPDATE` via `UserRepository.update()`, no stored
+ * procedure. This codebase reserves PL/pgSQL functions for multi-table
+ * operations that need real atomicity (day closing, sales, purchases,
+ * recharges) — explicitly checked before writing this; `UpdateUserUseCase`
+ * (username, phone, role, password, `isActive`) already updates `users`
+ * with a plain `UPDATE`, so adding a stored procedure just for `theme`
+ * would introduce a parallel pattern for the same kind of operation.
  *
- * `userId` viene siempre de `@CurrentUser` (JWT) en el controlador —
- * nunca se acepta como parámetro, así que no hay forma de que esta
- * llamada modifique la preferencia de otro usuario.
+ * `userId` always comes from `@CurrentUser` (JWT) in the controller —
+ * never accepted as a parameter, so there is no way for this call to
+ * modify another user's preference.
  */
 @Injectable()
 export class UpdateUserThemeUseCase {

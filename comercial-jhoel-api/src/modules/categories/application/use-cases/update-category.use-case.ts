@@ -27,6 +27,9 @@ export class UpdateCategoryUseCase {
     }
 
     const name = input.name?.trim().replace(/\s+/g, ' ');
+    // Only re-checks uniqueness when the name actually changed — saving a
+    // category with its own unchanged name must never trip a false
+    // "already exists" against itself.
     if (name && name !== category.name) {
       const existing = await this.categoryRepository.findByName(name);
       if (existing) {

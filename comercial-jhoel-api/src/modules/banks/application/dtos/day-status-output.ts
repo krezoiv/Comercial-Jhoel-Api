@@ -1,27 +1,27 @@
 /**
- * Estado conceptual del "ciclo de trabajo" de una fecha — cinco valores,
- * derivados siempre desde los mismos tres hechos independientes
- * (`isOpened`/`bankBalancesSaved`/`isClosed`), nunca almacenados aparte:
- * - `NOT_OPENED`: no existe fila en `day_openings` para esta fecha.
- * - `OPENED`: aperturado, pero no todos los bancos activos tienen saldo
- *   guardado para esta fecha todavía.
- * - `BANK_BALANCES_SAVED`: todos los saldos guardados, cuadre aún no
- *   realizado — Cuadre Agentes ya está habilitado.
- * - `RECONCILIATION_COMPLETED`: existe un cuadre guardado para esta
- *   fecha pero el día no quedó formalmente cerrado — solo puede darse en
- *   datos anteriores a "Cierre del Día" (desde este ticket, guardar un
- *   cuadre siempre cierra el día en la misma operación atómica, así que
- *   este estado nunca se produce para un cuadre nuevo).
- * - `CLOSED`: el ciclo de esta fecha terminó — bloqueado para nuevas
- *   operaciones por el flujo normal.
- * - `REOPENED`: fue `CLOSED` y un ADMIN/SUPER_ADMIN lo reabrió desde
- *   "Gestión de Días Cerrados" — vuelve a admitir edición de saldos y un
- *   nuevo cierre, exactamente como `OPENED`/`BANK_BALANCES_SAVED`
- *   (`isClosed` es `false` en este estado a propósito, ver `DayOpening.
- *   isReopened`), pero se etiqueta distinto para que la UI lo distinga de
- *   un día que nunca fue cerrado.
- * - `CANCELLED`: el ciclo fue anulado (soft delete) desde "Gestión de
- *   Días Cerrados" — estado terminal, bloqueado igual que `CLOSED`.
+ * The conceptual state of a date's "working cycle" — seven values, always
+ * derived from the same three independent facts
+ * (`isOpened`/`bankBalancesSaved`/`isClosed`), never stored separately:
+ * - `NOT_OPENED`: no `day_openings` row exists for this date.
+ * - `OPENED`: opened, but not every active bank has a balance saved for
+ *   this date yet.
+ * - `BANK_BALANCES_SAVED`: every balance saved, cuadre not done yet —
+ *   Cuadre Agentes is now enabled.
+ * - `RECONCILIATION_COMPLETED`: a cuadre exists for this date but the day
+ *   was never formally closed — can only happen on data that predates
+ *   "Cierre del Día" (since that ticket, saving a cuadre always closes
+ *   the day in the same atomic operation, so this state can never occur
+ *   for a new cuadre).
+ * - `CLOSED`: this date's cycle is finished — blocked for new operations
+ *   through the normal flow.
+ * - `REOPENED`: was `CLOSED` and an ADMIN/SUPER_ADMIN reopened it from
+ *   "Gestión de Días Cerrados" — balances can be edited and it can be
+ *   closed again, exactly like `OPENED`/`BANK_BALANCES_SAVED` (`isClosed`
+ *   is deliberately `false` in this state, see `DayOpening.isReopened`),
+ *   but labeled differently so the UI can distinguish it from a day that
+ *   was never closed.
+ * - `CANCELLED`: the cycle was cancelled (soft delete) from "Gestión de
+ *   Días Cerrados" — a terminal state, blocked the same as `CLOSED`.
  */
 export type DayWorkStatus =
   | 'NOT_OPENED'

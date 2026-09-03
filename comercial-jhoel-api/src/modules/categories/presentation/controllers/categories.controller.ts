@@ -25,6 +25,21 @@ import { UpdateCategoryRequestDto } from '../dtos/update-category.request.dto';
 import { ListCategoriesQueryDto } from '../dtos/list-categories.query.dto';
 import { CategoryResponseDto } from '../dtos/category.response.dto';
 
+/**
+ * The canonical shape every simple reference-table module in this app
+ * follows (`businesses`, `suppliers`, `clients`, `account-types` are all
+ * near-identical clones of this exact controller) — flat CRUD over one
+ * table, `name` globally unique, soft delete only (`isActive = false`,
+ * no row is ever physically removed so nothing that already references it
+ * dangles).
+ *
+ * Two-tier guarding: `JwtAuthGuard` at the class level means every route
+ * requires a logged-in session, while `GET` (list/detail) stays open to
+ * any authenticated role — viewing the catalog is not a privileged action.
+ * `RolesGuard` + `@Roles('ADMIN','SUPER_ADMIN')` is added per-method only
+ * on the three mutating routes (create/update/deactivate), since managing
+ * the catalog itself is.
+ */
 @UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {

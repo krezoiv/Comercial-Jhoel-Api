@@ -30,6 +30,7 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 200;
 
+/** Structural clone of `GetSalesReportUseCase` — see that use case for the pattern; `GetIceCreamPurchasesReportUseCase`/both modules' own `*ReportSummaryUseCase` are the same clone relationship to their Sales/Purchases counterparts. */
 @Injectable()
 export class GetIceCreamSalesReportUseCase {
   constructor(

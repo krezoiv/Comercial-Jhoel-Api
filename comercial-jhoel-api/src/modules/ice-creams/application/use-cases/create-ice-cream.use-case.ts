@@ -13,6 +13,7 @@ export interface CreateIceCreamInput {
   createdBy: string;
 }
 
+/** Structural clone of `CreateProductUseCase` (name/SKU normalization, active-only uniqueness pre-checks) — see that use case for the pattern; `UpdateIceCreamUseCase`/`ListIceCreamsUseCase`/`GetIceCreamByIdUseCase`/`DeactivateIceCreamUseCase` are the same clone relationship to their Products counterparts. */
 @Injectable()
 export class CreateIceCreamUseCase {
   constructor(

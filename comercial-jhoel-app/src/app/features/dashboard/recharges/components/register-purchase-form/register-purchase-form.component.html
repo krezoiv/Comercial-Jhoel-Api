@@ -32,7 +32,18 @@
     }
   </div>
 
-  <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting()">
+  <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting() || lockReason !== null">
     {{ isSubmitting() ? 'Registrando…' : 'Registrar compra' }}
   </app-button>
+  @if (lockReason === 'closed') {
+    <p class="purchase-form__lock-hint">
+      <app-icon name="lock" [size]="12" />
+      Día de recargas cerrado.
+    </p>
+  } @else if (lockReason === 'not_opened') {
+    <p class="purchase-form__lock-hint">
+      <app-icon name="lock" [size]="12" />
+      Día de recargas sin aperturar.
+    </p>
+  }
 </form>

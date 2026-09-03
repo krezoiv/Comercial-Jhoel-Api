@@ -14,16 +14,17 @@ export interface DayAuditLogOutput {
 }
 
 /**
- * "Ver Detalle" de un día cerrado — compone lecturas que ya existen en
- * otros use cases (`BankBalanceRepository.findBalancesView`,
- * `AgentReconciliationRepository.findLatestByDate`), nunca las duplica.
+ * "Ver Detalle" of a closed day — composes reads that already exist in
+ * other use cases (`BankBalanceRepository.findBalancesView`,
+ * `AgentReconciliationRepository.findLatestByDate`), never duplicates
+ * them.
  *
- * NO incluye un desglose de denominaciones de efectivo: esta app nunca
- * tuvo una tabla de conteo de efectivo — `agent_reconciliations.total_cash`
- * es y siempre fue el único valor de efectivo que el backend conoce (ver
- * `CloseAgentDayUseCase`, "el conteo de efectivo no tiene fuente de verdad
- * en el servidor"). Inventar un desglose por denominación aquí sería
- * mostrar datos que la base de datos nunca tuvo.
+ * Does NOT include a cash-denomination breakdown: this app never had a
+ * cash-count table — `agent_reconciliations.total_cash` is and always was
+ * the only cash figure the backend knows (see `CloseAgentDayUseCase`,
+ * "the cash count has no source of truth on the server"). Inventing a
+ * per-denomination breakdown here would be showing data the database
+ * never had.
  */
 export interface DayDetailOutput {
   date: string;

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
-/** Dumb — el padre (`BankAgentsPageComponent`) es dueño de aplicar los ceros al draft; este modal solo confirma la intención. */
+/** Dumb — the parent (`BankAgentsPageComponent`) owns applying the zeros to the draft; this modal only confirms the intent. */
 @Component({
   selector: 'app-zero-balances-confirm-modal',
   standalone: true,

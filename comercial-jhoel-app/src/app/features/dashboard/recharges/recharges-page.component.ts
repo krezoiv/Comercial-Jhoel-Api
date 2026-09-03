@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeSale, RechargeType, formatCurrency } from '../../../core/models';
+import { RechargeDailyBalance, RechargeDayStatus, RechargeSale, RechargeType, formatCurrency } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
+import { RechargeDayStatusService } from '../../../core/services/recharge-day-status.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { RechargeTableComponent, RequestFinalBalanceEvent } from './components/recharge-table/recharge-table.component';
 import { RegisterPurchaseFormComponent } from './components/register-purchase-form/register-purchase-form.component';
@@ -14,6 +15,8 @@ import { SalesSummaryCardComponent } from './components/sales-summary-card/sales
 import { RechargeSalesTableComponent } from './components/recharge-sales-table/recharge-sales-table.component';
 import { RechargeSaleFormModalComponent } from './components/recharge-sale-form-modal/recharge-sale-form-modal.component';
 import { RechargeSaleDeleteConfirmModalComponent } from './components/recharge-sale-delete-confirm-modal/recharge-sale-delete-confirm-modal.component';
+import { RechargeEntryConfirmModalComponent } from './components/recharge-entry-confirm-modal/recharge-entry-confirm-modal.component';
+import { CloseRechargeDayConfirmModalComponent } from './components/close-recharge-day-confirm-modal/close-recharge-day-confirm-modal.component';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
@@ -36,6 +39,8 @@ function todayIsoDate(): string {
     RechargeSalesTableComponent,
     RechargeSaleFormModalComponent,
     RechargeSaleDeleteConfirmModalComponent,
+    RechargeEntryConfirmModalComponent,
+    CloseRechargeDayConfirmModalComponent,
     CardComponent,
     ButtonComponent,
     IconComponent,
@@ -48,6 +53,7 @@ export class RechargesPageComponent {
   private readonly rechargesService = inject(RechargesService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
+  private readonly dayStatusService = inject(RechargeDayStatusService);
 
   /** Re-editing an already-closed day is admin-only — same rule the backend enforces server-side. */
   readonly isAdmin = this.authService.isAdmin;
@@ -55,6 +61,57 @@ export class RechargesPageComponent {
   /** `yyyy-MM-dd` — defaults to today; the whole page (table, compra, cuadre) is scoped to whichever date this holds. */
   readonly operationDate = signal(todayIsoDate());
   readonly maxSelectableDate = todayIsoDate();
+
+  readonly isTodayOperationDate = computed(() => this.operationDate() === this.maxSelectableDate);
+
+  /**
+   * "Apertura del Día"/"Cerrar Día" para Recargas — fully independent from
+   * Bancos' own day-lifecycle (`DayStatusService`), same pattern though:
+   * for TODAY, `RechargeDayStatusService` (a singleton shared with the
+   * Sidebar) is the source of truth; for a past date, this page makes its
+   * own separate query, since the singleton only ever represents "today".
+   */
+  readonly pastDateStatus = signal<RechargeDayStatus | null>(null);
+
+  readonly activeDayStatus = computed<RechargeDayStatus | null>(() =>
+    this.isTodayOperationDate() ? this.dayStatusService.status() : this.pastDateStatus(),
+  );
+
+  readonly effectiveDayClosed = computed(() => this.activeDayStatus()?.isClosed === true);
+
+  /**
+   * The actual gate: for today, only once `RechargeDayStatusService`
+   * confirms the day is already open; for any date (today or past), never
+   * if that date was already closed via "Cerrar Día" — a closed day
+   * doesn't accept new compras/ventas/cuadres, only an admin's "Reabrir
+   * Día" unlocks it again.
+   */
+  readonly isEditingUnlocked = computed(
+    () =>
+      (!this.isTodayOperationDate() || this.dayStatusService.status()?.isOpened === true) &&
+      !this.effectiveDayClosed(),
+  );
+
+  /**
+   * WHY editing is locked, for accurate hint copy in the child components —
+   * "closed" (needs an admin's "Reabrir Día") and "not_opened" (today only,
+   * just needs "Confirmar Apertura") are different situations with
+   * different fixes; collapsing them into one boolean would tell the user
+   * to ask an admin to reopen a day that was never even opened yet.
+   */
+  readonly dayLockReason = computed<'closed' | 'not_opened' | null>(() => {
+    if (this.isEditingUnlocked()) {
+      return null;
+    }
+    return this.effectiveDayClosed() ? 'closed' : 'not_opened';
+  });
+
+  readonly isEntryConfirmModalOpen = signal(false);
+  readonly isOpeningDay = signal(false);
+  readonly isCloseDayConfirmModalOpen = signal(false);
+  readonly isClosingDay = signal(false);
+
+  private hasEvaluatedEntryGate = false;
 
   readonly types = signal<RechargeType[]>([]);
   readonly balances = signal<RechargeDailyBalance[]>([]);
@@ -82,6 +139,101 @@ export class RechargesPageComponent {
 
   constructor() {
     this.fetchAll();
+    this.fetchPastDateStatusIfNeeded();
+
+    // Opens the "Apertura del Día" modal the first time it's confirmed
+    // (once `RechargeDayStatusService` is done loading) that today still
+    // isn't open. Only acts once per instance of this component —
+    // cancelling the modal must not make it reopen on its own; the user
+    // decides when to retry via "Habilitar edición".
+    effect(() => {
+      const isToday = this.isTodayOperationDate();
+      const loading = this.dayStatusService.loading();
+      const status = this.dayStatusService.status();
+      if (!isToday || loading || this.hasEvaluatedEntryGate) {
+        return;
+      }
+      this.hasEvaluatedEntryGate = true;
+      if (!status?.isOpened) {
+        this.isEntryConfirmModalOpen.set(true);
+      }
+    });
+  }
+
+  confirmEntryModal(): void {
+    if (this.isOpeningDay()) {
+      return;
+    }
+    this.isOpeningDay.set(true);
+    this.dayStatusService.openDay().subscribe({
+      next: () => {
+        this.isOpeningDay.set(false);
+        this.isEntryConfirmModalOpen.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isOpeningDay.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo aperturar el día. Intente nuevamente.'));
+      },
+    });
+  }
+
+  cancelEntryModal(): void {
+    if (this.isOpeningDay()) {
+      return;
+    }
+    this.isEntryConfirmModalOpen.set(false);
+  }
+
+  /** The one re-entry point after cancelling the opening modal — shows it again, without navigating or reloading anything. */
+  reopenEntryModal(): void {
+    this.isEntryConfirmModalOpen.set(true);
+  }
+
+  openCloseDayModal(): void {
+    this.isCloseDayConfirmModalOpen.set(true);
+  }
+
+  cancelCloseDayModal(): void {
+    if (this.isClosingDay()) {
+      return;
+    }
+    this.isCloseDayConfirmModalOpen.set(false);
+  }
+
+  confirmCloseDayModal(): void {
+    if (this.isClosingDay()) {
+      return;
+    }
+    this.isClosingDay.set(true);
+    const close$ = this.isTodayOperationDate()
+      ? this.dayStatusService.closeDay()
+      : this.rechargesService.closeDay(this.operationDate());
+    close$.subscribe({
+      next: (status) => {
+        this.isClosingDay.set(false);
+        this.isCloseDayConfirmModalOpen.set(false);
+        if (!this.isTodayOperationDate()) {
+          this.pastDateStatus.set(status);
+        }
+        this.notificationService.success(`Día de recargas del ${status.date} cerrado correctamente.`);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isClosingDay.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo cerrar el día.'));
+      },
+    });
+  }
+
+  /** Only queries for a past date — today is already covered by the `RechargeDayStatusService` singleton. */
+  private fetchPastDateStatusIfNeeded(): void {
+    if (this.isTodayOperationDate()) {
+      this.pastDateStatus.set(null);
+      return;
+    }
+    this.rechargesService.getDayStatus(this.operationDate()).subscribe({
+      next: (status) => this.pastDateStatus.set(status),
+      error: () => this.pastDateStatus.set(null),
+    });
   }
 
   private fetchAll(): void {
@@ -156,15 +308,21 @@ export class RechargesPageComponent {
     }
     this.operationDate.set(date);
     this.fetchBalances();
+    this.fetchPastDateStatusIfNeeded();
   }
 
   onPurchaseRegistered(balance: RechargeDailyBalance): void {
     this.upsertBalance(balance);
   }
 
-  /** The backend already reset this date to a fresh cuadre cycle when the closure saved — refetch the table so saldo anterior/compra/saldo final all reflect it instead of the just-closed cycle. */
+  /** The backend already reset this date to a fresh cuadre cycle when the closure saved — refetch the table so saldo anterior/compra/saldo final all reflect it instead of the just-closed cycle. Also refreshes the day status: saving a cuadre is what makes "Cerrar Día" become available (`hasSavedCuadreToday`/`canCloseDay`). */
   onClosureSaved(): void {
     this.fetchBalances();
+    if (this.isTodayOperationDate()) {
+      this.dayStatusService.refresh();
+    } else {
+      this.fetchPastDateStatusIfNeeded();
+    }
   }
 
   onRequestFinalBalance(event: RequestFinalBalanceEvent): void {

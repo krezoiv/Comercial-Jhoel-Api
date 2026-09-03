@@ -6,10 +6,10 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 const MIN_REASON_LENGTH = 5;
 
 /**
- * Dumb — mismo patrón que `ReopenConfirmModalComponent`. "Anular" (no
- * "Eliminar"): es información financiera y el backend nunca hace un
- * `DELETE` físico (`cancel_agent_day` solo marca `is_cancelled`, ver el
- * backend) — la copia del modal debe reflejar exactamente eso.
+ * Dumb — same pattern as `ReopenConfirmModalComponent`. "Anular" (not
+ * "Eliminar"): this is financial information and the backend never does
+ * a physical `DELETE` (`cancel_agent_day` only marks `is_cancelled`, see
+ * the backend) — the modal's copy must reflect exactly that.
  */
 @Component({
   selector: 'app-cancel-confirm-modal',

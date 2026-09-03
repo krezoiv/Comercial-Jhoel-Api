@@ -20,25 +20,25 @@ export interface CloseAgentDayInput {
 }
 
 /**
- * "Guardar Cuadre" ya no es solo un `INSERT` histórico — desde el ticket
- * de "Cierre del Día" también cierra oficialmente el ciclo de trabajo de
- * esa fecha (`day_openings.closed_at`) en la misma operación atómica (ver
+ * "Guardar Cuadre" is no longer just a historical `INSERT` — since the
+ * "Cierre del Día" ticket, it also officially closes that date's working
+ * cycle (`day_openings.closed_at`) in the same atomic operation (see
  * `AgentReconciliationRepository.closeDayWithReconciliation` /
- * `close_agent_day` en la base de datos). No existe ningún camino en el
- * que el cuadre quede guardado sin que el día quede cerrado, ni al revés.
+ * `close_agent_day` in the database). There is no path where the
+ * reconciliation ends up saved without the day being closed, or vice versa.
  *
- * Las tres validaciones ("¿aperturado?", "¿saldos guardados?", "¿ya
- * cerrado?") se revisan aquí ANTES de tocar la base de datos —igual que
- * antes de este ticket— y se vuelven a revisar dentro de la propia
- * función SQL bajo el lock de la fila de `day_openings`: esta capa es la
- * que da el mensaje de error específico y evita el viaje a la base de
- * datos en el caso común; la función SQL es la garantía real ante una
- * carrera entre dos guardados casi simultáneos para la misma fecha.
+ * The three validations ("is it open?", "are balances saved?", "is it
+ * already closed?") are checked here BEFORE touching the database — same
+ * as before this ticket — and are checked again inside the SQL function
+ * itself under the `day_openings` row lock: this layer is what gives the
+ * specific error message and avoids the database round-trip in the common
+ * case; the SQL function is the real guarantee against a race between two
+ * near-simultaneous saves for the same date.
  *
- * `totalCash` sigue siendo el único valor que se acepta del cliente —
- * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` siempre
- * se recalculan aquí desde `GetCuadreAgentesSummaryUseCase`, nunca desde
- * el cuerpo de la petición.
+ * `totalCash` remains the only value accepted from the client —
+ * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` are always
+ * recomputed here from `GetCuadreAgentesSummaryUseCase`, never taken from
+ * the request body.
  */
 @Injectable()
 export class CloseAgentDayUseCase {

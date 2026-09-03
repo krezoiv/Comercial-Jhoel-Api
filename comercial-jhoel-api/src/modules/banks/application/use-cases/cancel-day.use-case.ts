@@ -12,11 +12,11 @@ export interface CancelDayInput {
 }
 
 /**
- * "Anular Día" — soft delete del ciclo completo (ver `cancel_agent_day`,
- * SQL): nunca borra `bank_balances`/`agent_reconciliations`, solo marca
- * `day_openings.is_cancelled`. Misma división de responsabilidades que
- * `ReopenDayUseCase`: rol ya filtrado por el guard, integridad real
- * validada atómicamente en la función SQL.
+ * "Anular Día" — a soft delete of the whole cycle (see `cancel_agent_day`,
+ * SQL): never deletes `bank_balances`/`agent_reconciliations`, only marks
+ * `day_openings.is_cancelled`. Same division of responsibility as
+ * `ReopenDayUseCase`: role already filtered by the guard, real integrity
+ * validated atomically in the SQL function.
  */
 @Injectable()
 export class CancelDayUseCase {

@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RECHARGE_SALES_CLOSURE_REPOSITORY } from '../../domain/repositories/recharge-sales-closure.repository';
 import type { RechargeSalesClosureRepository } from '../../domain/repositories/recharge-sales-closure.repository';
+import { RECHARGE_DAY_OPENING_REPOSITORY } from '../../domain/repositories/recharge-day-opening.repository';
+import type { RechargeDayOpeningRepository } from '../../domain/repositories/recharge-day-opening.repository';
 import { assertValidOperationDate } from '../utils/assert-valid-operation-date';
+import { assertRechargeDayWritable } from '../utils/assert-recharge-day-writable';
 import { RechargeSalesSummaryOutput } from '../dtos/recharge-sales-summary-output';
 import { GetRechargeSalesSummaryUseCase } from './get-recharge-sales-summary.use-case';
 
@@ -37,12 +40,20 @@ export interface RegisterRechargeSalesClosureInput {
  * successful save naturally shows a fresh, empty cycle — this is what
  * makes "Guardar cuadre" also read as "the screen is ready for a new
  * cuadre" without any separate frontend-side reset step.
+ *
+ * Also checks the Recargas day-lifecycle gate (`assertRechargeDayWritable`)
+ * before delegating — a cuadre save never itself closes the day (see
+ * `CloseRechargeDayUseCase`'s own doc comment for why the two are
+ * deliberately independent actions), but it's still blocked once the day
+ * *has* been explicitly closed via "Cerrar Día".
  */
 @Injectable()
 export class RegisterRechargeSalesClosureUseCase {
   constructor(
     @Inject(RECHARGE_SALES_CLOSURE_REPOSITORY)
     private readonly closureRepository: RechargeSalesClosureRepository,
+    @Inject(RECHARGE_DAY_OPENING_REPOSITORY)
+    private readonly dayOpeningRepository: RechargeDayOpeningRepository,
     private readonly getRechargeSalesSummaryUseCase: GetRechargeSalesSummaryUseCase,
   ) {}
 
@@ -50,6 +61,7 @@ export class RegisterRechargeSalesClosureUseCase {
     input: RegisterRechargeSalesClosureInput,
   ): Promise<RechargeSalesSummaryOutput> {
     assertValidOperationDate(input.operationDate);
+    await assertRechargeDayWritable(this.dayOpeningRepository, input.operationDate);
 
     await this.closureRepository.registerClosure({
       date: input.operationDate,

@@ -42,6 +42,9 @@ export class TypeOrmProductRepository implements ProductRepository {
     if (options.activeOnly) {
       qb.andWhere('product.isActive = true');
     }
+    // Matches against both name and SKU with one ILIKE pair — this is what
+    // lets scanning or typing a barcode into the Inventario search box
+    // find the product, not just searching by its display name.
     if (options.search) {
       qb.andWhere('(product.name ILIKE :search OR product.sku ILIKE :search)', {
         search: `%${options.search}%`,
@@ -119,6 +122,7 @@ export class TypeOrmProductRepository implements ProductRepository {
     await this.repository.update({ id }, { isActive: false });
   }
 
+  /** Two independent partial unique indexes to check against, unlike the single-constraint version this pattern has elsewhere (e.g. `TypeOrmCategoryRepository`) — `name` and `sku` are validated by the use case beforehand, this is only the race-safety net for both. */
   private translateUniqueViolation(
     error: unknown,
     name: string,

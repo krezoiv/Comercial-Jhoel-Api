@@ -37,6 +37,14 @@ export class RechargeTableComponent implements OnChanges {
   @Input() loading = false;
   /** Whether the caller can re-edit an already-closed day — mirrors the backend's admin-only re-edit rule. */
   @Input() isAdmin = false;
+  /**
+   * Whole-day gate, stronger than the per-type `isAdmin` re-edit rule below:
+   * `'closed'` (via "Cerrar Día") blocks everyone, admin included, until
+   * reopened via Gestión de Días de Recargas; `'not_opened'` (today only)
+   * just needs "Confirmar Apertura" — no admin action needed. `null` means
+   * editing is unlocked.
+   */
+  @Input() dayLockReason: 'closed' | 'not_opened' | null = null;
 
   @Output() requestFinalBalance = new EventEmitter<RequestFinalBalanceEvent>();
 
@@ -62,9 +70,9 @@ export class RechargeTableComponent implements OnChanges {
     this.draftFinalBalance[balance.id] = value;
   }
 
-  /** A day already closed can only be re-edited by an admin — same rule `RegisterRechargeFinalBalanceUseCase` enforces server-side. */
+  /** A day already closed can only be re-edited by an admin — same rule `RegisterRechargeFinalBalanceUseCase` enforces server-side. A day locked via "Cerrar Día" (or not yet opened) blocks everyone, admin included. */
   canEditFinalBalance(balance: RechargeDailyBalance): boolean {
-    return balance.finalBalance === null || this.isAdmin;
+    return this.dayLockReason === null && (balance.finalBalance === null || this.isAdmin);
   }
 
   canSave(balance: RechargeDailyBalance): boolean {

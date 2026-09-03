@@ -26,6 +26,16 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './ice-cream-inventory-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Same page-assembly pattern as `UsersPageComponent`/`BanksPageComponent` —
+ * see that class's own doc comment. One real delta from those: there is no
+ * "mostrar inactivos" toggle here (`IceCreamService.getIceCreams()` never
+ * passes `includeInactive`, and `IceCreamToolbarComponent`'s filter is by
+ * stock status, not active/inactive) — `confirmDelete` removes the
+ * deactivated row from the local list entirely rather than keeping it
+ * visible with an inactive badge, so a deactivated helado has no path back
+ * to visible/reactivatable from this screen.
+ */
 export class IceCreamInventoryPageComponent {
   private readonly iceCreamService = inject(IceCreamService);
   private readonly notificationService = inject(NotificationService);

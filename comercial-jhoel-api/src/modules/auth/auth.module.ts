@@ -11,11 +11,21 @@ import { TOKEN_SERVICE } from './application/ports/token-service.port';
 import { NestJwtTokenService } from './infrastructure/services/jwt-token.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 
+/**
+ * `JwtStrategy` is registered here as a provider (Passport looks it up by
+ * being constructed at all, not by an explicit token) but the guards that
+ * *use* it — `JwtAuthGuard`, `RolesGuard` — live under
+ * `infrastructure/guards/` and are applied per-route in each feature
+ * module's own controller, not exported from here.
+ */
 @Module({
   imports: [
     UsersModule,
     SharedModule,
     PassportModule,
+    // Secret/expiry come from the same typed config namespace every other
+    // module reads via `ConfigService` (`src/config/configuration.ts`) —
+    // never hardcoded here, so rotating the secret only means an env change.
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

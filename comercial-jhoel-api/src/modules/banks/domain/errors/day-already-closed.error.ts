@@ -1,13 +1,13 @@
 import { DomainError } from '../../../../shared/domain/domain-error';
 
 /**
- * "El día ya fue cerrado y no puede ser modificado" — cubre las tres
- * operaciones que quedan bloqueadas una vez `day_openings.closed_at` no
- * es null: guardar/modificar saldos bancarios de esa fecha
- * (`SaveBankBalancesUseCase`) y guardar un nuevo cuadre para la misma
- * fecha (`CloseAgentDayUseCase`, que también es quien la cierra). Nunca
- * se lanza para una fecha que nunca fue aperturada — ese caso sigue
- * siendo `DayNotOpenedError`, un estado distinto.
+ * "The day is already closed and can't be modified" — covers the
+ * operations that get blocked once `day_openings.closed_at` is no longer
+ * null: saving/editing that date's bank balances
+ * (`SaveBankBalancesUseCase`) and saving a new cuadre for that same date
+ * (`CloseAgentDayUseCase`, which is also what closes it). Never thrown
+ * for a date that was never opened — that case is still
+ * `DayNotOpenedError`, a distinct state.
  */
 export class DayAlreadyClosedError extends DomainError {
   readonly status = 400;

@@ -36,7 +36,15 @@ export class RechargesReportController {
 
   @Get()
   findAll(@Query() query: RechargesReportFilterQueryDto) {
-    return this.getRechargeHistoryUseCase.execute(query);
+    // `excludeCancelledDays: true` — a report row must never come from a
+    // day that was anulled via "Anular Día"; the operational
+    // `GET /recharges/history` endpoint (this same use case, called from
+    // `RechargesController`) leaves this off on purpose, since that screen
+    // is an audit trail, not a business-performance report.
+    return this.getRechargeHistoryUseCase.execute({
+      ...query,
+      excludeCancelledDays: true,
+    });
   }
 
   @Get('summary')

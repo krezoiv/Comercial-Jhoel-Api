@@ -21,6 +21,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './banks-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Structurally the same page-assembly + optimistic-local-update pattern as `UsersPageComponent` — see that class's own doc comment. */
 export class BanksPageComponent {
   private readonly bankService = inject(BankService);
   private readonly accountTypeService = inject(AccountTypeService);

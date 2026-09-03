@@ -17,6 +17,10 @@ export class CreateCategoryUseCase {
   ) {}
 
   async execute(input: CreateCategoryInput): Promise<CategoryOutput> {
+    // Collapse incidental whitespace (leading/trailing, double spaces from
+    // a copy-paste) before the uniqueness check — otherwise "Bebidas" and
+    // "Bebidas " would be treated as different names here while the DB's
+    // own unique index would still reject the second one anyway.
     const name = input.name.trim().replace(/\s+/g, ' ');
 
     const existing = await this.categoryRepository.findByName(name);

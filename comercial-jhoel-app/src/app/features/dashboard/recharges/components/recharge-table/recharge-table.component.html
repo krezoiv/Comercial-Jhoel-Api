@@ -68,7 +68,17 @@
               @if (finalBalanceError(balance); as error) {
                 <p class="final-balance-error">{{ error }}</p>
               }
-              @if (balance.finalBalance !== null && !isAdmin) {
+              @if (dayLockReason === 'closed') {
+                <p class="final-balance-hint">
+                  <app-icon name="lock" [size]="12" />
+                  Día de recargas cerrado — un administrador debe reabrirlo en Gestión de Días de Recargas.
+                </p>
+              } @else if (dayLockReason === 'not_opened') {
+                <p class="final-balance-hint">
+                  <app-icon name="lock" [size]="12" />
+                  Día de recargas sin aperturar — confirma la apertura para poder editar.
+                </p>
+              } @else if (balance.finalBalance !== null && !isAdmin) {
                 <p class="final-balance-hint">
                   <app-icon name="lock" [size]="12" />
                   Día cerrado — solo un administrador puede corregirlo.
@@ -127,7 +137,17 @@
           @if (finalBalanceError(balance); as error) {
             <p class="final-balance-error">{{ error }}</p>
           }
-          @if (balance.finalBalance !== null && !isAdmin) {
+          @if (dayLockReason === 'closed') {
+            <p class="final-balance-hint">
+              <app-icon name="lock" [size]="12" />
+              Día de recargas cerrado — un administrador debe reabrirlo en Gestión de Días de Recargas.
+            </p>
+          } @else if (dayLockReason === 'not_opened') {
+            <p class="final-balance-hint">
+              <app-icon name="lock" [size]="12" />
+              Día de recargas sin aperturar — confirma la apertura para poder editar.
+            </p>
+          } @else if (balance.finalBalance !== null && !isAdmin) {
             <p class="final-balance-hint">
               <app-icon name="lock" [size]="12" />
               Día cerrado — solo un administrador puede corregirlo.

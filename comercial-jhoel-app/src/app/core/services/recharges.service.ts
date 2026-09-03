@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   ApiSuccessResponse,
   RechargeDailyBalance,
+  RechargeDayStatus,
   RechargeSale,
   RechargeSalesSummary,
   RechargeType,
@@ -84,5 +85,27 @@ export class RechargesService {
 
   deleteSale(id: string): Observable<void> {
     return this.http.delete<void>(`${BASE_URL}/sales/${id}`);
+  }
+
+  /** `date` defaults to today server-side when omitted — pass the operation-date picker's value to check another day. */
+  getDayStatus(date?: string): Observable<RechargeDayStatus> {
+    const params = date ? new HttpParams().set('date', date) : undefined;
+    return this.http
+      .get<ApiSuccessResponse<RechargeDayStatus>>(`${BASE_URL}/day-status`, { params })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Idempotent on the backend — a double click or retry never fails or duplicates the opening. */
+  openDay(date?: string): Observable<RechargeDayStatus> {
+    return this.http
+      .post<ApiSuccessResponse<RechargeDayStatus>>(`${BASE_URL}/day-status/open`, date ? { date } : {})
+      .pipe(map((response) => response.data));
+  }
+
+  /** "Cerrar Día" — a standalone action, never a cuadre save; requires at least one cuadre already saved for the date. */
+  closeDay(date?: string): Observable<RechargeDayStatus> {
+    return this.http
+      .post<ApiSuccessResponse<RechargeDayStatus>>(`${BASE_URL}/day-status/close`, date ? { date } : {})
+      .pipe(map((response) => response.data));
   }
 }

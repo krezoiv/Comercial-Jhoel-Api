@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
-/** Dumb — el padre (`BankAgentsPageComponent`) es dueño del guardado real; este modal solo confirma la intención. */
+/** Dumb — the parent (`BankAgentsPageComponent`) owns the actual save; this modal only confirms the intent. */
 @Component({
   selector: 'app-save-balances-confirm-modal',
   standalone: true,

@@ -6,12 +6,12 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 const MIN_REASON_LENGTH = 5;
 
 /**
- * Dumb — el padre (`ClosedDaysPageComponent`) es dueño de la llamada real
- * a `ClosedDaysService.reopenDay`, mismo patrón que
- * `EntryConfirmModalComponent`/`SaveBalancesConfirmModalComponent`. El
- * motivo es obligatorio (mínimo 5 caracteres, mismo mínimo que el
- * backend) — "Confirmar Reapertura" permanece deshabilitado hasta que se
- * cumpla, para no depender solo del rechazo del servidor.
+ * Dumb — the parent (`ClosedDaysPageComponent`) owns the actual
+ * `ClosedDaysService.reopenDay` call, same pattern as
+ * `EntryConfirmModalComponent`/`SaveBalancesConfirmModalComponent`. The
+ * reason is mandatory (minimum 5 characters, the same minimum the
+ * backend enforces) — "Confirmar Reapertura" stays disabled until that's
+ * met, so it doesn't rely solely on the server's rejection.
  */
 @Component({
   selector: 'app-reopen-confirm-modal',

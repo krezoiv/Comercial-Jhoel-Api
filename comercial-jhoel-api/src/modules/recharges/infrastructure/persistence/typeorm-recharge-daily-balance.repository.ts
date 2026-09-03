@@ -18,6 +18,7 @@ import { DayAlreadyClosedError } from '../../domain/errors/day-already-closed.er
 import { DailyBalanceNotFoundError } from '../../domain/errors/daily-balance-not-found.error';
 import { InvalidFinalBalanceError } from '../../domain/errors/invalid-final-balance.error';
 import { FinalBalanceExceedsDailyError } from '../../domain/errors/final-balance-exceeds-daily.error';
+import { RechargeDayAlreadyClosedError } from '../../domain/errors/recharge-day-already-closed.error';
 import { RechargeDailyBalanceOrmEntity } from './recharge-daily-balance.orm-entity';
 import { RechargeDailyBalanceMapper } from './recharge-daily-balance.mapper';
 
@@ -143,6 +144,11 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
         userId: options.userId,
       });
     }
+    if (options.excludeCancelledDays) {
+      qb.andWhere(
+        `NOT EXISTS (SELECT 1 FROM recharge_day_openings rdo WHERE rdo.date = balance.date AND rdo.is_cancelled = true)`,
+      );
+    }
 
     qb.orderBy('balance.date', 'DESC').addOrderBy('rechargeType.name', 'ASC');
     qb.skip((options.page - 1) * options.limit).take(options.limit);
@@ -174,6 +180,12 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
         rechargeTypeId: options.rechargeTypeId,
       });
     }
+    // Unconditional — this method backs Reportería only, see its own doc
+    // comment on the domain interface for why an anulled day's figures must
+    // never appear in a management report.
+    qb.andWhere(
+      `NOT EXISTS (SELECT 1 FROM recharge_day_openings rdo WHERE rdo.date = balance.date AND rdo.is_cancelled = true)`,
+    );
 
     qb.select('COUNT(*)', 'recordCount')
       .addSelect(
@@ -241,6 +253,8 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
         return new InvalidFinalBalanceError();
       case 'FINAL_BALANCE_EXCEEDS_DAILY':
         return new FinalBalanceExceedsDailyError();
+      case 'RECHARGE_DAY_CLOSED':
+        return new RechargeDayAlreadyClosedError(id);
       default:
         return error;
     }

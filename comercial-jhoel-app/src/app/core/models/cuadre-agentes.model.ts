@@ -1,4 +1,4 @@
-/** Si `finalBalance` suma o resta en `totalBanks` — decidido por el backend según el tipo de cuenta, nunca re-derivado aquí desde `accountTypeName`. */
+/** Whether `finalBalance` adds to or subtracts from `totalBanks` — decided by the backend from the account type, never re-derived here from `accountTypeName`. */
 export type BankBalanceCalculationType = 'sum' | 'subtract';
 
 export interface BankBalanceSummaryItem {
@@ -11,14 +11,15 @@ export interface BankBalanceSummaryItem {
 }
 
 /**
- * Primera etapa de Cuadre Agentes — `finalBalance` es la columna estática
- * `banks.final_balance` (la misma que Sistema → Bancos administra), no el
- * cuadre diario en vivo de Agentes Bancarios → Bancos. Ver el backend
- * (`GetCuadreAgentesSummaryUseCase`) para el razonamiento completo.
+ * Cuadre Agentes' first stage — `finalBalance` is the static
+ * `banks.final_balance` column (the same one Sistema → Bancos manages),
+ * not Agentes Bancarios → Bancos' live daily cuadre. See the backend
+ * (`GetCuadreAgentesSummaryUseCase`) for the full reasoning.
  *
  * `totalBanks = totalPositiveAccounts - totalCreditLines` — Ahorro/Monetaria
- * suman, Línea de Crédito resta. El frontend nunca reclasifica un banco por
- * su `accountTypeName`; solo muestra los totales que el backend ya calculó.
+ * add, Línea de Crédito subtracts. The frontend never reclassifies a bank
+ * by its `accountTypeName`; it only displays the totals the backend already
+ * computed.
  */
 export interface CuadreAgentesSummary {
   banks: BankBalanceSummaryItem[];
@@ -29,19 +30,19 @@ export interface CuadreAgentesSummary {
   totalAccountsReceivable: number;
 }
 
-/** Denominaciones fijas de billetes/monedas para el conteo de efectivo — en el orden en que deben mostrarse. */
+/** Fixed bill/coin denominations for the cash count — in the order they should be displayed. */
 export const CASH_DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1] as const;
 export type CashDenomination = (typeof CASH_DENOMINATIONS)[number];
 
 /**
- * Cantidad de billetes/monedas por denominación — entero ≥ 0 para Q200–Q5;
- * Q1 es la única excepción (segunda etapa) y puede llevar hasta 2 decimales,
- * ya que suele contarse en monedas fraccionarias sueltas. Nunca es en sí un
- * valor monetario — `calculateTotalCash` es lo que lo convierte en uno.
+ * Count of bills/coins per denomination — integer ≥ 0 for Q200–Q5; Q1 is
+ * the one exception (second stage) and can carry up to 2 decimal places,
+ * since it's usually counted in loose fractional coins. Never a monetary
+ * value on its own — `calculateTotalCash` is what turns it into one.
  */
 export type CashCount = Record<CashDenomination, number>;
 
-/** Q1 es la única denominación que acepta decimales — ver el comentario de `CashCount`. */
+/** Q1 is the only denomination that accepts decimals — see `CashCount`'s own comment. */
 export function decimalPlacesFor(denomination: CashDenomination): number {
   return denomination === 1 ? 2 : 0;
 }
@@ -50,15 +51,16 @@ export function createEmptyCashCount(): CashCount {
   return Object.fromEntries(CASH_DENOMINATIONS.map((denomination) => [denomination, 0])) as CashCount;
 }
 
-/** `denominación × cantidad`, sumado en todas las denominaciones — el "Total Efectivo". */
+/** `denomination × count`, summed across every denomination — the "Total Efectivo". */
 export function calculateTotalCash(counts: CashCount): number {
   return CASH_DENOMINATIONS.reduce((sum, denomination) => sum + denomination * (counts[denomination] || 0), 0);
 }
 
 /**
- * Segunda etapa — el registro histórico que devuelve `POST /agent-reconciliations`.
- * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` son siempre los que
- * el backend recalculó y guardó en ese momento, nunca los que este frontend envió.
+ * Second stage — the historical record `POST /agent-reconciliations`
+ * returns. `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result`
+ * are always whatever the backend recomputed and saved at that moment,
+ * never what this frontend sent.
  */
 export interface AgentReconciliation {
   id: string;
@@ -72,12 +74,13 @@ export interface AgentReconciliation {
   createdByUsername: string;
 }
 
-/** Lo único que este frontend realmente decide al guardar — todo lo demás lo recalcula el backend. */
+/** `totalCash` is the only thing this frontend actually decides on save — everything else is recomputed by the backend. `date` is the shared Agentes Bancarios operation date (`BankBalanceDraftStore.operationDate`) — the exact same date Bancos used to save balances, never independently guessed as "today" (the backend still defaults to its own today when omitted, but the Cuadre Agentes screen must never omit it, that was the bug). */
 export interface RegisterAgentReconciliationInput {
   totalCash: number;
+  date?: string;
 }
 
-/** Resultado del Cuadre = Efectivo + Bancos + CuentasPorCobrar − Activos. Rojo si <0, verde si =0, amarillo si >0. */
+/** Cuadre result = Cash + Banks + AccountsReceivable − Assets. Red if <0, green if =0, yellow if >0. */
 export type CuadreResultStatus = 'negative' | 'zero' | 'positive';
 
 export function getCuadreResultStatus(result: number): CuadreResultStatus {
@@ -90,7 +93,7 @@ export function getCuadreResultStatus(result: number): CuadreResultStatus {
   return 'zero';
 }
 
-/** `Efectivo + Bancos + CuentasPorCobrar − Activos` — la misma fórmula que el backend recalcula y nunca confía del cliente al guardar. */
+/** `Cash + Banks + AccountsReceivable − Assets` — the same formula the backend recomputes and never trusts from the client on save. */
 export function calculateCuadreResult(
   totalCash: number,
   totalBanks: number,
@@ -106,12 +109,12 @@ export interface MissingBankInfo {
 }
 
 /**
- * Responde "¿se guardaron los saldos bancarios de esta fecha [en Agentes
- * Bancarios → Bancos]?" — nunca "¿el banco tiene un saldo actual?". Esta
- * es la regla que bloquea "Guardar Cuadre" hasta que exista un cuadre
- * diario guardado para la misma fecha; el backend (`CreateAgentReconciliationUseCase`)
- * vuelve a exigir esto de forma independiente al guardar, así que este
- * chequeo del frontend es solo para la experiencia del usuario.
+ * Answers "were this date's bank balances saved [in Agentes Bancarios →
+ * Bancos]?" — never "does the bank have a current balance?". This is the
+ * rule that blocks "Guardar Cuadre" until a daily cuadre is saved for
+ * that same date; the backend (`CreateAgentReconciliationUseCase`)
+ * enforces this again independently on save, so this frontend check is
+ * UX only.
  */
 export interface BankBalancesValidation {
   date: string;
@@ -122,21 +125,21 @@ export interface BankBalancesValidation {
 }
 
 /**
- * Las preguntas de la secuencia obligatoria "Apertura → Saldos → Cuadre → Cierre":
- * 1. ¿Está aperturado? → `isOpened`.
- * 2. ¿Ya se guardaron los saldos bancarios? → `bankBalancesSaved`.
- * 3. ¿Se puede entrar a Cuadre Agentes? → `canAccessReconciliation`.
- * 4. ¿El cuadre ya se realizó? → `reconciliationCompleted` (informativo — ver `status`).
- * 5. ¿El día ya fue cerrado? → `isClosed`.
+ * The questions of the mandatory "Apertura → Saldos → Cuadre → Cierre"
+ * sequence:
+ * 1. Is it open? → `isOpened`.
+ * 2. Were bank balances already saved? → `bankBalancesSaved`.
+ * 3. Can Cuadre Agentes be entered? → `canAccessReconciliation`.
+ * 4. Was the cuadre already done? → `reconciliationCompleted` (informational — see `status`).
+ * 5. Was the day already closed? → `isClosed`.
  *
- * `canAccessReconciliation` es lo único que gatea el sidebar y el
- * contenido real de Cuadre Agentes; el backend (`CloseAgentDayUseCase`)
- * vuelve a exigir `isOpened`/`bankBalancesSaved`/`!isClosed` de forma
- * independiente al guardar, así que este chequeo del frontend es solo
- * para la experiencia del usuario. `canAccessReconciliation` ya vale
- * `false` una vez `isClosed` es `true` — "Guardar Cuadre" cierra el día
- * en la misma operación, así que no hace falta comprobar `isClosed` por
- * separado para bloquear un segundo cuadre.
+ * `canAccessReconciliation` is the only thing that gates the sidebar and
+ * Cuadre Agentes' actual content; the backend (`CloseAgentDayUseCase`)
+ * enforces `isOpened`/`bankBalancesSaved`/`!isClosed` again independently
+ * on save, so this frontend check is UX only. `canAccessReconciliation`
+ * is already `false` once `isClosed` is `true` — "Guardar Cuadre" closes
+ * the day in the same operation, so there's no need to check `isClosed`
+ * separately to block a second cuadre.
  */
 export type DayWorkStatus =
   | 'NOT_OPENED'

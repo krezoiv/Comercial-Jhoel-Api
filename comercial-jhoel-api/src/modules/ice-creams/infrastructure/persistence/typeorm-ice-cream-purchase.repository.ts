@@ -106,6 +106,7 @@ export class TypeOrmIceCreamPurchaseRepository implements IceCreamPurchaseReposi
     return orm ? IceCreamPurchaseMapper.toDomain(orm) : null;
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>:<iceCreamId>'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translatePurchaseError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

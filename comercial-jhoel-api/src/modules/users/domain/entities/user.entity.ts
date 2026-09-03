@@ -3,6 +3,16 @@ import { RoleName } from '../../../roles/domain/entities/role.entity';
 /** "Modo Claro / Modo Oscuro" — preferencia individual del usuario, persistida en `users.theme`. */
 export type ThemePreference = 'LIGHT' | 'DARK';
 
+/**
+ * Models two distinct account origins in one table/entity: the originally
+ * seeded admin account (`name`+`email`) and every account created since
+ * (self-registered or admin-created), identified by `username`+`phone`
+ * instead. All four fields are nullable for that reason — only
+ * `passwordHash` is guaranteed on every row. Authentication
+ * (`findByUsernameOrPhone` in `LoginUseCase`) only ever uses `username`/
+ * `phone`; `name`/`email` are legacy columns still present on the schema
+ * but no longer part of the login flow.
+ */
 export interface UserProps {
   id: string;
   name: string | null;

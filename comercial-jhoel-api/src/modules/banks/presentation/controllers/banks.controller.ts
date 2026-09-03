@@ -76,10 +76,10 @@ export class BanksController {
   ) {}
 
   /**
-   * "¿Está aperturado el día? ¿Ya se guardaron los saldos? ¿Se puede
-   * entrar a Cuadre Agentes? ¿Ya se hizo el cuadre?" — una sola llamada
-   * para las cuatro preguntas de la secuencia obligatoria. Cualquier
-   * usuario autenticado, misma política que `balances`/`cuadre-agentes-summary`.
+   * "Is the day open? Were balances already saved? Can Cuadre Agentes be
+   * entered? Was the cuadre already done?" — one call answers all four
+   * questions of the mandatory sequence. Any authenticated user, same
+   * policy as `balances`/`cuadre-agentes-summary`.
    */
   @Get('day-status')
   getDayStatus(@Query() query: DayStatusQueryDto): Promise<DayStatusOutput> {
@@ -87,10 +87,10 @@ export class BanksController {
   }
 
   /**
-   * "Confirmar Apertura" — idempotente (ver `DayOpeningRepository.open`),
-   * así que un doble clic o un reintento nunca crea una segunda apertura
-   * ni falla. Cualquier usuario autenticado puede aperturar el día, misma
-   * política operacional que registrar saldos o hacer el cuadre.
+   * "Confirmar Apertura" — idempotent (see `DayOpeningRepository.open`),
+   * so a double click or a retry never creates a second opening or fails.
+   * Any authenticated user can open the day, same operational policy as
+   * saving balances or doing the cuadre.
    */
   @Post('day-status/open')
   @HttpCode(HttpStatus.OK)
@@ -123,13 +123,12 @@ export class BanksController {
   }
 
   /**
-   * "¿Se guardaron los saldos bancarios de esta fecha?" — el pre-chequeo
-   * que Cuadre Agentes usa para habilitar/bloquear "Guardar Cuadre" en la
-   * UI. Esto es solo experiencia de usuario: `CloseAgentDayUseCase`
-   * vuelve a correr exactamente esta misma validación server-side antes
-   * de guardar, así que un cliente que se salte esta llamada (o mienta
-   * sobre su resultado) no logra nada — el guardado real la exige de
-   * todas formas. Declarada antes de `:id` por la misma razón de siempre.
+   * "Were this date's bank balances already saved?" — the pre-check
+   * Cuadre Agentes uses to enable/block "Guardar Cuadre" in the UI. This
+   * is UX only: `CloseAgentDayUseCase` re-runs this exact same validation
+   * server-side before saving, so a client that skips this call (or lies
+   * about its result) gains nothing — the actual save still enforces it.
+   * Declared before `:id` for the same routing reason as always.
    */
   @Get('balances/validation')
   validateBankBalances(

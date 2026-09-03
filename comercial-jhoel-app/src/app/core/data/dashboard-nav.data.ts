@@ -21,6 +21,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         path: 'gestion-dias-cerrados',
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
+      {
+        label: 'Gestión de Días de Recargas',
+        icon: 'lock',
+        path: 'gestion-dias-recargas',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
     ],
   },
   {

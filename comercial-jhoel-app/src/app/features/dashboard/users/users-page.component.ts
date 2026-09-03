@@ -27,6 +27,18 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './users-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Composes the Usuarios admin screen from five dumb child components (summary tiles, toolbar,
+ * table, create/edit modal, delete-confirm modal) and owns all of their shared state itself —
+ * none of the children fetch or hold data on their own. Search/status/role filtering is done
+ * client-side over the full `users` list (`filteredUsers`), not via server-side query params,
+ * since this is an admin list expected to stay small. After a successful create/edit/delete,
+ * the local `users` signal is patched in place (`onUserSaved`/`confirmDelete`) rather than
+ * re-fetching the whole list — cheaper and avoids a visible reload flicker; the API response
+ * from the save/delete call is trusted as the new source of truth for that one row.
+ * `RolesPageComponent` is a structural clone of this class — see this doc comment for its
+ * shape too; its own comments only note genuine deltas (no role filter, no self-action guard).
+ */
 export class UsersPageComponent {
   private readonly userService = inject(UserService);
   private readonly roleService = inject(RoleService);

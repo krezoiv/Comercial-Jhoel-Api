@@ -16,15 +16,15 @@ export interface CloseAgentDayData {
 
 export interface AgentReconciliationRepository {
   /**
-   * "Guardar Cuadre" + "Cerrar Día" como una sola operación atómica (ver
-   * `close_agent_day` en la migración `AddDayClosingToDayOpenings`): o
-   * ambas escrituras (el cuadre nuevo, el día cerrado) se confirman
-   * juntas, o ninguna lo hace — nunca puede quedar un cuadre guardado sin
-   * cerrar el día, ni viceversa.
+   * "Guardar Cuadre" + "Cerrar Día" as a single atomic operation (see
+   * `close_agent_day` in migration `AddDayClosingToDayOpenings`): either
+   * both writes (the new reconciliation, the closed day) commit together,
+   * or neither does — a saved reconciliation can never be left with the
+   * day still open, or vice versa.
    */
   closeDayWithReconciliation(data: CloseAgentDayData): Promise<AgentReconciliation>;
-  /** ¿Ya existe un cuadre guardado para esta fecha? — usado por `GetDayStatusUseCase`, informativo (ver también `DayOpening.isClosed` para el bloqueo real). */
+  /** Does a saved reconciliation already exist for this date? — used by `GetDayStatusUseCase`, informational only (see also `DayOpening.isClosed` for the real block). */
   existsForDate(date: string): Promise<boolean>;
-  /** El cuadre VIGENTE de una fecha — puede haber más de uno histórico si el día fue reabierto y vuelto a cerrar; este es siempre el más reciente. Usado por "Gestión de Días Cerrados" para el detalle. */
+  /** The CURRENT reconciliation for a date — there can be more than one historical row if the day was reopened and closed again; this is always the most recent one. Used by "Gestión de Días Cerrados" for the detail view. */
   findLatestByDate(date: string): Promise<AgentReconciliation | null>;
 }

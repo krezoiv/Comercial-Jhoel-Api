@@ -18,7 +18,7 @@ export interface DayOpeningProps {
   cancelReason: string | null;
 }
 
-/** "El usuario confirmó que quiere empezar a trabajar en esta fecha" — independiente de si ya hay saldos guardados. */
+/** "The user confirmed they want to start working on this date" — independent of whether balances have already been saved. */
 export class DayOpening {
   private constructor(private readonly props: DayOpeningProps) {}
 
@@ -94,12 +94,12 @@ export class DayOpening {
     return this.props.cancelReason;
   }
 
-  /** "El día ya fue cerrado y no puede ser modificado" — la única pregunta que le importa a `SaveBankBalancesUseCase`/`CloseAgentDayUseCase`. Sigue siendo `false` para un día REOPENED (closed_at vuelve a NULL), a propósito: es lo que reactiva la edición sin tocar esos use cases. */
+  /** "The day is already closed and can't be modified" — the only question `SaveBankBalancesUseCase`/`CloseAgentDayUseCase` actually care about. Deliberately still `false` for a REOPENED day (`closed_at` goes back to `NULL`) — that's exactly what reactivates editing without touching either of those use cases. */
   get isClosed(): boolean {
     return this.props.closedAt !== null;
   }
 
-  /** Fue cerrado, luego reabierto, y todavía no se ha vuelto a cerrar. */
+  /** Was closed, then reopened, and hasn't been closed again yet. */
   get isReopened(): boolean {
     return this.props.reopenedAt !== null && this.props.closedAt === null;
   }

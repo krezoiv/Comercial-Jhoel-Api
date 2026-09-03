@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -28,6 +29,9 @@ import { GetRechargeSalesUseCase } from '../../application/use-cases/get-recharg
 import { CreateRechargeSaleUseCase } from '../../application/use-cases/create-recharge-sale.use-case';
 import { UpdateRechargeSaleUseCase } from '../../application/use-cases/update-recharge-sale.use-case';
 import { DeleteRechargeSaleUseCase } from '../../application/use-cases/delete-recharge-sale.use-case';
+import { GetRechargeDayStatusUseCase } from '../../application/use-cases/get-recharge-day-status.use-case';
+import { OpenRechargeDayUseCase } from '../../application/use-cases/open-recharge-day.use-case';
+import { CloseRechargeDayUseCase } from '../../application/use-cases/close-recharge-day.use-case';
 import { RegisterRechargePurchaseRequestDto } from '../dtos/register-recharge-purchase.request.dto';
 import { RegisterRechargeFinalBalanceRequestDto } from '../dtos/register-recharge-final-balance.request.dto';
 import { RegisterRechargeSalesClosureRequestDto } from '../dtos/register-recharge-sales-closure.request.dto';
@@ -37,10 +41,15 @@ import { RechargeHistoryQueryDto } from '../dtos/recharge-history.query.dto';
 import { RechargeDailyQueryDto } from '../dtos/recharge-daily.query.dto';
 import { RechargeSalesSummaryQueryDto } from '../dtos/recharge-sales-summary.query.dto';
 import { RechargeSalesQueryDto } from '../dtos/recharge-sales.query.dto';
+import { RechargeDayStatusQueryDto } from '../dtos/recharge-day-status.query.dto';
+import { OpenRechargeDayRequestDto } from '../dtos/open-recharge-day.request.dto';
+import { CloseRechargeDayRequestDto } from '../dtos/close-recharge-day.request.dto';
 import { RechargeTypeOutput } from '../../application/dtos/recharge-type-output';
 import { RechargeDailyBalanceOutput } from '../../application/dtos/recharge-daily-balance-output';
 import { RechargeSalesSummaryOutput } from '../../application/dtos/recharge-sales-summary-output';
 import { RechargeSaleOutput } from '../../application/dtos/recharge-sale-output';
+import { RechargeDayStatusOutput } from '../../application/dtos/recharge-day-status-output';
+import { todayIsoDate } from '../../application/utils/today-iso-date';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
@@ -69,7 +78,57 @@ export class RechargesController {
     private readonly createRechargeSaleUseCase: CreateRechargeSaleUseCase,
     private readonly updateRechargeSaleUseCase: UpdateRechargeSaleUseCase,
     private readonly deleteRechargeSaleUseCase: DeleteRechargeSaleUseCase,
+    private readonly getRechargeDayStatusUseCase: GetRechargeDayStatusUseCase,
+    private readonly openRechargeDayUseCase: OpenRechargeDayUseCase,
+    private readonly closeRechargeDayUseCase: CloseRechargeDayUseCase,
   ) {}
+
+  /**
+   * "Apertura del Día" status for Recargas — fully independent from the
+   * Banks/Agentes Bancarios module's own `GET /banks/day-status` (separate
+   * table, separate lifecycle). Any authenticated user, same operational
+   * policy as the rest of this controller.
+   */
+  @Get('day-status')
+  getDayStatus(
+    @Query() query: RechargeDayStatusQueryDto,
+  ): Promise<RechargeDayStatusOutput> {
+    return this.getRechargeDayStatusUseCase.execute(query.date ?? todayIsoDate());
+  }
+
+  /**
+   * "Confirmar Apertura" — idempotent, so a double click or a retry never
+   * creates a second opening or fails.
+   */
+  @Post('day-status/open')
+  @HttpCode(HttpStatus.OK)
+  openDay(
+    @Body() dto: OpenRechargeDayRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<RechargeDayStatusOutput> {
+    return this.openRechargeDayUseCase.execute({
+      date: dto.date ?? todayIsoDate(),
+      userId,
+    });
+  }
+
+  /**
+   * "Cerrar Día" — the standalone action confirmed with the user: it does
+   * NOT save a cuadre (that stays "Guardar Cuadre", unchanged and
+   * unlimited-per-day); it only requires at least one cuadre already saved
+   * for the date before it will succeed.
+   */
+  @Post('day-status/close')
+  @HttpCode(HttpStatus.OK)
+  closeDay(
+    @Body() dto: CloseRechargeDayRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<RechargeDayStatusOutput> {
+    return this.closeRechargeDayUseCase.execute({
+      date: dto.date ?? todayIsoDate(),
+      userId,
+    });
+  }
 
   @Get('types')
   findTypes(): Promise<RechargeTypeOutput[]> {

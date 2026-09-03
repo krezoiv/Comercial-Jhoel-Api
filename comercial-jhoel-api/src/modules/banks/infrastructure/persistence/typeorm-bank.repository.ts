@@ -95,6 +95,7 @@ export class TypeOrmBankRepository implements BankRepository {
     await this.repository.update({ id }, { isActive: false });
   }
 
+  /** Same DB-level-uniqueness-as-race-safety-net pattern as `TypeOrmProductRepository`'s own `translateUniqueViolation` — the use case's pre-check is the primary guard, this is the backstop. */
   private translateUniqueViolation(
     error: unknown,
     name: string,

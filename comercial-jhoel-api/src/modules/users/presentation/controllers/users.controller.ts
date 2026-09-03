@@ -72,15 +72,14 @@ export class UsersController {
   }
 
   /**
-   * "Modo Claro / Modo Oscuro por usuario" — cualquier cuenta autenticada
-   * (sin `@Roles`, a diferencia de las rutas de administración de abajo):
-   * el tema es una preferencia personal, no una acción administrativa.
-   * `userId` sale siempre de `@CurrentUser` (JWT), nunca de un parámetro
-   * de ruta, así que no existe forma de leer/escribir la preferencia de
-   * otra cuenta a través de este endpoint. Declaradas antes de `:id`
-   * (mismo motivo de siempre en esta base de código: un segmento literal
-   * debe registrarse antes que uno dinámico o Nest intentaría matchear
-   * "me" como `:id` y fallaría `ParseUUIDPipe`).
+   * "Light Mode / Dark Mode" per user — open to any authenticated account
+   * (no `@Roles`, unlike the admin routes below): the theme is a personal
+   * preference, not an administrative action. `userId` always comes from
+   * `@CurrentUser` (JWT), never from a route parameter, so there is no way
+   * to read/write another account's preference through this endpoint.
+   * Declared before `:id` (the same reason as everywhere else in this
+   * codebase: a literal path segment must be registered before a dynamic
+   * one, or Nest would try to match "me" as `:id` and fail `ParseUUIDPipe`).
    */
   @UseGuards(JwtAuthGuard)
   @Get('me/preferences')

@@ -1,11 +1,11 @@
 import { DomainError } from '../../../../shared/domain/domain-error';
 
 /**
- * Regla de integridad de días posteriores (Opción A, la más segura de las
- * evaluadas): nunca se reabre/anula una fecha si existe una fecha
- * estrictamente posterior con un ciclo CLOSED/REOPENED no anulado — evita
- * inconsistencias en saldos posteriores sin necesitar un recálculo en
- * cascada. El usuario debe gestionar primero los días más recientes.
+ * The later-day integrity rule (Option A, the safest of the options
+ * evaluated): a date is never reopened/cancelled if a strictly later date
+ * has a non-cancelled CLOSED/REOPENED cycle — this avoids inconsistencies
+ * in later balances without needing a cascading recalculation. The user
+ * must handle the more recent days first.
  */
 export class LaterDayExistsError extends DomainError {
   readonly status = 400;

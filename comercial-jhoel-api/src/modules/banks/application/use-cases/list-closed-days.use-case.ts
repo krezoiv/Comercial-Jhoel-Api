@@ -3,7 +3,7 @@ import { DAY_OPENING_REPOSITORY } from '../../domain/repositories/day-opening.re
 import type { ClosedDaysFilters, DayOpeningRepository } from '../../domain/repositories/day-opening.repository';
 import { ClosedDayOutput, toClosedDayOutput } from '../dtos/closed-day-output';
 
-/** "Sistema → Gestión de Días Cerrados" — listado administrativo, solo ADMIN/SUPER_ADMIN (ver el controller). */
+/** "Sistema → Gestión de Días Cerrados" — administrative listing, ADMIN/SUPER_ADMIN only (see the controller). */
 @Injectable()
 export class ListClosedDaysUseCase {
   constructor(

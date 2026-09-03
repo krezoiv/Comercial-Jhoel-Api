@@ -9,6 +9,7 @@ import {
 import { InvalidTotalCollectedError } from '../../domain/errors/invalid-total-collected.error';
 import { PendingTypeClosureError } from '../../domain/errors/pending-type-closure.error';
 import { SalesClosureEditForbiddenError } from '../../domain/errors/sales-closure-edit-forbidden.error';
+import { RechargeDayAlreadyClosedError } from '../../domain/errors/recharge-day-already-closed.error';
 import { RechargeSalesClosureOrmEntity } from './recharge-sales-closure.orm-entity';
 import { RechargeSalesClosureMapper } from './recharge-sales-closure.mapper';
 
@@ -25,6 +26,16 @@ export class TypeOrmRechargeSalesClosureRepository implements RechargeSalesClosu
   ): Promise<RechargeSalesClosure | null> {
     const orm = await this.repository.findOne({ where: { date, sequence } });
     return orm ? RechargeSalesClosureMapper.toDomain(orm) : null;
+  }
+
+  async findAllByDate(date: string): Promise<RechargeSalesClosure[]> {
+    const orms = await this.repository.find({ where: { date }, order: { sequence: 'ASC' } });
+    return orms.map((orm) => RechargeSalesClosureMapper.toDomain(orm));
+  }
+
+  async existsForDate(date: string): Promise<boolean> {
+    const count = await this.repository.count({ where: { date } });
+    return count > 0;
   }
 
   async registerClosure(
@@ -75,6 +86,8 @@ export class TypeOrmRechargeSalesClosureRepository implements RechargeSalesClosu
         return new PendingTypeClosureError(id);
       case 'SALES_CLOSURE_EDIT_FORBIDDEN':
         return new SalesClosureEditForbiddenError();
+      case 'RECHARGE_DAY_CLOSED':
+        return new RechargeDayAlreadyClosedError(id);
       default:
         return error;
     }

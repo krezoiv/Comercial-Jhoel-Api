@@ -1,14 +1,14 @@
 import { DomainError } from '../../../../shared/domain/domain-error';
 
 /**
- * "El usuario NO debe poder acceder libremente... hasta que se complete
- * correctamente la secuencia: aperturar día → registrar saldos → guardar
- * → confirmar." Este error cubre las dos mitades de esa secuencia que
- * dependen de haber aperturado primero: guardar saldos bancarios de HOY
- * (`SaveBankBalancesUseCase`) y guardar un cuadre de agentes
- * (`CloseAgentDayUseCase`). Nunca se lanza para una fecha
- * pasada — esas correcciones históricas son una funcionalidad ya
- * existente que este ticket pide preservar sin cambios.
+ * "The user must NOT be able to freely access... until the sequence is
+ * properly completed: open the day → register balances → save → confirm."
+ * This error covers the two halves of that sequence that depend on
+ * having opened the day first: saving TODAY's bank balances
+ * (`SaveBankBalancesUseCase`) and saving an agent reconciliation
+ * (`CloseAgentDayUseCase`). Never thrown for a past date — those
+ * historical corrections are pre-existing functionality this ticket was
+ * required to preserve unchanged.
  */
 export class DayNotOpenedError extends DomainError {
   readonly status = 400;

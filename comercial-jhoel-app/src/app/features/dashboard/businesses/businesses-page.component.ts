@@ -26,6 +26,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   styleUrl: './businesses-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A structural clone of `CategoriesPageComponent` — see that component's own doc comment for the shared admin-catalog-screen pattern. */
 export class BusinessesPageComponent {
   private readonly businessService = inject(BusinessService);
   private readonly notificationService = inject(NotificationService);

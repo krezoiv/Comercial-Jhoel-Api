@@ -107,6 +107,7 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
     return orm ? PurchaseMapper.toDomain(orm) : null;
   }
 
+  /** Same `RAISE EXCEPTION '<CODE>:<productId>'` → domain-error translation as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translatePurchaseError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
       return error;

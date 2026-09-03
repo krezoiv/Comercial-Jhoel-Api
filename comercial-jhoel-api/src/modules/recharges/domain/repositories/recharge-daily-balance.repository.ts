@@ -24,6 +24,8 @@ export interface FindRechargeHistoryOptions {
   userId?: string;
   page: number;
   limit: number;
+  /** Omits rows whose date belongs to a day anulled via "Anular Día" (`recharge_day_openings.is_cancelled`) — the operational `GET /recharges/history` endpoint leaves this off (an anulled day's movements stay visible for audit), Reportería turns it on (see `getReportSummary`'s own doc comment for why a report must exclude them). */
+  excludeCancelledDays?: boolean;
 }
 
 export interface PaginatedResult<T> {
@@ -73,7 +75,7 @@ export interface RechargeDailyBalanceRepository {
   findHistory(
     options: FindRechargeHistoryOptions,
   ): Promise<PaginatedResult<RechargeDailyBalance>>;
-  /** Aggregate totals across every cycle matching the filters — backs the Reportería summary tiles/PDF, never scoped to only the current cycle the way the daily-summary card is. */
+  /** Aggregate totals across every cycle matching the filters — backs the Reportería summary tiles/PDF, never scoped to only the current cycle the way the daily-summary card is. Always excludes rows whose date was anulled via "Anular Día" (unconditionally — this method has no other caller): an anulled day's purchases/sales never represented real, still-standing business activity, so counting them in a management report would misstate it, even though the rows themselves are kept in the table for audit. */
   getReportSummary(
     options: FindRechargeReportSummaryOptions,
   ): Promise<RechargeReportSummary>;

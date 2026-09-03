@@ -18,6 +18,10 @@ export interface RechargeSalesClosureRepository {
     date: string,
     sequence: number,
   ): Promise<RechargeSalesClosure | null>;
+  /** Every cuadre cycle saved for `date`, ordered by `sequence` ascending — backs "Gestión de Días de Recargas"' day-detail view, which (unlike Banks' single reconciliation) shows the full history of same-day cycles. */
+  findAllByDate(date: string): Promise<RechargeSalesClosure[]>;
+  /** Whether at least one cuadre has ever been saved for `date` — the precondition `close_recharge_day` (SQL) and `CloseRechargeDayUseCase` both require before a day can be closed. */
+  existsForDate(date: string): Promise<boolean>;
   /** Invokes `register_recharge_sales_closure` — recomputes total sales from real data, closes the current cycle, and (on a genuine first close) starts a fresh one. */
   registerClosure(
     data: RegisterRechargeSalesClosureData,

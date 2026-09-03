@@ -12,6 +12,13 @@ export interface ChangePasswordInput {
   newPassword: string;
 }
 
+/**
+ * `userId` always comes from the caller's own JWT (`@CurrentUser` in
+ * `AuthController`), never from the request body — there is no way to
+ * call this for a different account. Requiring `currentPassword` is what
+ * stops a hijacked-but-not-yet-expired session (e.g. an unattended,
+ * logged-in browser) from silently locking the real owner out.
+ */
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
