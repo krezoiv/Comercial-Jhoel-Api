@@ -29,7 +29,10 @@ export class TypeOrmRechargeSalesClosureRepository implements RechargeSalesClosu
   }
 
   async findAllByDate(date: string): Promise<RechargeSalesClosure[]> {
-    const orms = await this.repository.find({ where: { date }, order: { sequence: 'ASC' } });
+    const orms = await this.repository.find({
+      where: { date },
+      order: { sequence: 'ASC' },
+    });
     return orms.map((orm) => RechargeSalesClosureMapper.toDomain(orm));
   }
 

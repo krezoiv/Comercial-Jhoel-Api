@@ -27,7 +27,9 @@ export class ReopenRechargeDayUseCase {
     private readonly getRechargeDayDetailUseCase: GetRechargeDayDetailUseCase,
   ) {}
 
-  async execute(input: ReopenRechargeDayInput): Promise<RechargeDayDetailOutput> {
+  async execute(
+    input: ReopenRechargeDayInput,
+  ): Promise<RechargeDayDetailOutput> {
     const reason = input.reason?.trim();
     if (!reason) {
       throw new RechargeReopenReasonRequiredError();

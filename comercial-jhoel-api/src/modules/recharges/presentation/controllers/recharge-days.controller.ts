@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../../shared/decorators/roles.decorator';
@@ -50,7 +58,11 @@ export class RechargeDaysController {
     @Body() dto: RechargeDayActionReasonRequestDto,
     @CurrentUser('userId') userId: string,
   ): Promise<RechargeDayDetailOutput> {
-    return this.reopenRechargeDayUseCase.execute({ date, userId, reason: dto.reason });
+    return this.reopenRechargeDayUseCase.execute({
+      date,
+      userId,
+      reason: dto.reason,
+    });
   }
 
   @Post(':date/cancel')
@@ -59,6 +71,10 @@ export class RechargeDaysController {
     @Body() dto: RechargeDayActionReasonRequestDto,
     @CurrentUser('userId') userId: string,
   ): Promise<RechargeDayDetailOutput> {
-    return this.cancelRechargeDayUseCase.execute({ date, userId, reason: dto.reason });
+    return this.cancelRechargeDayUseCase.execute({
+      date,
+      userId,
+      reason: dto.reason,
+    });
   }
 }

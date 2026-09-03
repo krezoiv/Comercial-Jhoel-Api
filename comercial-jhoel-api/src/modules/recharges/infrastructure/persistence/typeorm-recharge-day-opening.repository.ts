@@ -53,7 +53,9 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
     try {
       const orm = this.repository.create({ date, openedBy: userId });
       const saved = await this.repository.save(orm);
-      const withRelations = await this.repository.findOneOrFail({ where: { id: saved.id } });
+      const withRelations = await this.repository.findOneOrFail({
+        where: { id: saved.id },
+      });
       return RechargeDayOpeningMapper.toDomain(withRelations);
     } catch (error) {
       if (error instanceof QueryFailedError) {
@@ -68,7 +70,10 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
 
   async close(date: string, userId: string): Promise<RechargeDayOpening> {
     try {
-      await this.repository.manager.query('SELECT close_recharge_day($1, $2)', [date, userId]);
+      await this.repository.manager.query('SELECT close_recharge_day($1, $2)', [
+        date,
+        userId,
+      ]);
     } catch (error) {
       throw this.translateError(error, date);
     }
@@ -89,14 +94,18 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
    * `ClosedDayViewRow` has no equivalent of, added specifically because
    * of that same feature.
    */
-  async findClosedDays(filters: RechargeClosedDaysFilters): Promise<RechargeClosedDayViewRow[]> {
+  async findClosedDays(
+    filters: RechargeClosedDaysFilters,
+  ): Promise<RechargeClosedDayViewRow[]> {
     const qb = this.repository
       .createQueryBuilder('day')
       .leftJoin('day.openedByUser', 'openedByUser')
       .leftJoin('day.closedByUser', 'closedByUser')
       .leftJoin('day.reopenedByUser', 'reopenedByUser')
       .leftJoin('day.cancelledByUser', 'cancelledByUser')
-      .where('(day.closedAt IS NOT NULL OR day.reopenedAt IS NOT NULL OR day.isCancelled = true)');
+      .where(
+        '(day.closedAt IS NOT NULL OR day.reopenedAt IS NOT NULL OR day.isCancelled = true)',
+      );
 
     if (filters.dateFrom) {
       qb.andWhere('day.date >= :dateFrom', { dateFrom: filters.dateFrom });
@@ -113,7 +122,9 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
     if (filters.status === 'CANCELLED') {
       qb.andWhere('day.isCancelled = true');
     } else if (filters.status === 'REOPENED') {
-      qb.andWhere('day.isCancelled = false AND day.reopenedAt IS NOT NULL AND day.closedAt IS NULL');
+      qb.andWhere(
+        'day.isCancelled = false AND day.reopenedAt IS NOT NULL AND day.closedAt IS NULL',
+      );
     } else if (filters.status === 'CLOSED') {
       qb.andWhere('day.isCancelled = false AND day.closedAt IS NOT NULL');
     }
@@ -171,7 +182,12 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
       .orderBy('day.date', 'DESC');
 
     if (filters.resultSign) {
-      const comparator = filters.resultSign === 'positive' ? '>' : filters.resultSign === 'negative' ? '<' : '=';
+      const comparator =
+        filters.resultSign === 'positive'
+          ? '>'
+          : filters.resultSign === 'negative'
+            ? '<'
+            : '=';
       qb.andWhere(
         `(SELECT c.result FROM recharge_sales_closures c WHERE c.date = day.date ORDER BY c.sequence DESC LIMIT 1) ${comparator} 0`,
       );
@@ -203,7 +219,11 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
       // of the app already uses (UTC getters, same reasoning as
       // `TypeOrmDayOpeningRepository.formatDateOnly`).
       date: this.formatDateOnly(row.date),
-      status: row.isCancelled ? 'CANCELLED' : row.closedAt ? 'CLOSED' : 'REOPENED',
+      status: row.isCancelled
+        ? 'CANCELLED'
+        : row.closedAt
+          ? 'CLOSED'
+          : 'REOPENED',
       openedAt: row.openedAt,
       openedByUsername: row.openedByUsername ?? '',
       closedAt: row.closedAt,
@@ -215,15 +235,23 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
       cancelledByUsername: row.cancelledByUsername,
       cancelReason: row.cancelReason,
       totalSales: row.totalSales !== null ? parseFloat(row.totalSales) : null,
-      totalCollected: row.totalCollected !== null ? parseFloat(row.totalCollected) : null,
+      totalCollected:
+        row.totalCollected !== null ? parseFloat(row.totalCollected) : null,
       result: row.result !== null ? parseFloat(row.result) : null,
       cycleCount: parseInt(row.cycleCount, 10),
     }));
   }
 
-  async reopen(date: string, userId: string, reason: string): Promise<RechargeDayOpening> {
+  async reopen(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<RechargeDayOpening> {
     try {
-      await this.repository.manager.query('SELECT reopen_recharge_day($1, $2, $3)', [date, userId, reason]);
+      await this.repository.manager.query(
+        'SELECT reopen_recharge_day($1, $2, $3)',
+        [date, userId, reason],
+      );
     } catch (error) {
       throw this.translateError(error, date);
     }
@@ -231,9 +259,16 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
     return RechargeDayOpeningMapper.toDomain(updated);
   }
 
-  async cancel(date: string, userId: string, reason: string): Promise<RechargeDayOpening> {
+  async cancel(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<RechargeDayOpening> {
     try {
-      await this.repository.manager.query('SELECT cancel_recharge_day($1, $2, $3)', [date, userId, reason]);
+      await this.repository.manager.query(
+        'SELECT cancel_recharge_day($1, $2, $3)',
+        [date, userId, reason],
+      );
     } catch (error) {
       throw this.translateError(error, date);
     }
@@ -264,7 +299,9 @@ export class TypeOrmRechargeDayOpeningRepository implements RechargeDayOpeningRe
     if (!(error instanceof QueryFailedError)) {
       return error;
     }
-    const message = (error.driverError as { message?: string } | undefined)?.message ?? error.message;
+    const message =
+      (error.driverError as { message?: string } | undefined)?.message ??
+      error.message;
     const [code] = message.split(':');
 
     switch (code) {

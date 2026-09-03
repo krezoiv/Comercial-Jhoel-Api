@@ -1,4 +1,5 @@
-export type RechargeDayAuditAction = 'OPENED' | 'CLOSED' | 'REOPENED' | 'CANCELLED';
+export type RechargeDayAuditAction =
+  'OPENED' | 'CLOSED' | 'REOPENED' | 'CANCELLED';
 
 export interface RechargeDayAuditLogProps {
   id: string;

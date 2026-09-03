@@ -20,9 +20,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Puramente aditiva — `CREATE OR REPLACE FUNCTION` sobre la misma firma,
  * sin tocar tablas ni filas existentes.
  */
-export class OnlySyncBanksFinalBalanceForLatestDate1758500000000
-  implements MigrationInterface
-{
+export class OnlySyncBanksFinalBalanceForLatestDate1758500000000 implements MigrationInterface {
   name = 'OnlySyncBanksFinalBalanceForLatestDate1758500000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

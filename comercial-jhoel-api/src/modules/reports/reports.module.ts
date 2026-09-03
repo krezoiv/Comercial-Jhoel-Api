@@ -18,14 +18,17 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
 import { AssetsModule } from '../assets/assets.module';
 import { IceCreamSaleDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-sale-detail.orm-entity';
 import { IceCreamPurchaseDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-purchase-detail.orm-entity';
+import { AgentReconciliationOrmEntity } from '../banks/infrastructure/persistence/agent-reconciliation.orm-entity';
 import { SALES_REPORT_REPOSITORY } from './domain/repositories/sales-report.repository';
 import { PURCHASES_REPORT_REPOSITORY } from './domain/repositories/purchases-report.repository';
 import { ICE_CREAM_SALES_REPORT_REPOSITORY } from './domain/repositories/ice-cream-sales-report.repository';
 import { ICE_CREAM_PURCHASES_REPORT_REPOSITORY } from './domain/repositories/ice-cream-purchases-report.repository';
+import { AGENT_RECONCILIATIONS_REPORT_REPOSITORY } from './domain/repositories/agent-reconciliations-report.repository';
 import { TypeOrmSalesReportRepository } from './infrastructure/persistence/typeorm-sales-report.repository';
 import { TypeOrmPurchasesReportRepository } from './infrastructure/persistence/typeorm-purchases-report.repository';
 import { TypeOrmIceCreamSalesReportRepository } from './infrastructure/persistence/typeorm-ice-cream-sales-report.repository';
 import { TypeOrmIceCreamPurchasesReportRepository } from './infrastructure/persistence/typeorm-ice-cream-purchases-report.repository';
+import { TypeOrmAgentReconciliationsReportRepository } from './infrastructure/persistence/typeorm-agent-reconciliations-report.repository';
 import { GetSalesReportUseCase } from './application/use-cases/get-sales-report.use-case';
 import { GetSalesReportSummaryUseCase } from './application/use-cases/get-sales-report-summary.use-case';
 import { GetSalesByProductReportUseCase } from './application/use-cases/get-sales-by-product-report.use-case';
@@ -50,11 +53,15 @@ import { GetAssetsReportSummaryUseCase } from './application/use-cases/get-asset
 import { GetAssetsReceivablesReportUseCase } from './application/use-cases/get-assets-receivables-report.use-case';
 import { GetAssetsReceivablesReportSummaryUseCase } from './application/use-cases/get-assets-receivables-report-summary.use-case';
 import { ExportAssetsReceivablesReportPdfUseCase } from './application/use-cases/export-assets-receivables-report-pdf.use-case';
+import { GetAgentReconciliationsReportUseCase } from './application/use-cases/get-agent-reconciliations-report.use-case';
+import { GetAgentReconciliationsReportSummaryUseCase } from './application/use-cases/get-agent-reconciliations-report-summary.use-case';
+import { ExportAgentReconciliationsReportPdfUseCase } from './application/use-cases/export-agent-reconciliations-report-pdf.use-case';
 import { SalesReportController } from './presentation/controllers/sales-report.controller';
 import { PurchasesReportController } from './presentation/controllers/purchases-report.controller';
 import { RechargesReportController } from './presentation/controllers/recharges-report.controller';
 import { AssetsReceivablesReportController } from './presentation/controllers/assets-receivables-report.controller';
 import { IceCreamReportController } from './presentation/controllers/ice-cream-report.controller';
+import { AgentReconciliationsReportController } from './presentation/controllers/agent-reconciliations-report.controller';
 
 /**
  * Reportería is a pure read-side, cross-cutting module — it never writes to
@@ -92,6 +99,7 @@ import { IceCreamReportController } from './presentation/controllers/ice-cream-r
       PurchaseDetailOrmEntity,
       IceCreamSaleDetailOrmEntity,
       IceCreamPurchaseDetailOrmEntity,
+      AgentReconciliationOrmEntity,
     ]),
     SalesModule,
     PurchasesModule,
@@ -112,6 +120,7 @@ import { IceCreamReportController } from './presentation/controllers/ice-cream-r
     RechargesReportController,
     AssetsReceivablesReportController,
     IceCreamReportController,
+    AgentReconciliationsReportController,
   ],
   providers: [
     {
@@ -129,6 +138,10 @@ import { IceCreamReportController } from './presentation/controllers/ice-cream-r
     {
       provide: ICE_CREAM_PURCHASES_REPORT_REPOSITORY,
       useClass: TypeOrmIceCreamPurchasesReportRepository,
+    },
+    {
+      provide: AGENT_RECONCILIATIONS_REPORT_REPOSITORY,
+      useClass: TypeOrmAgentReconciliationsReportRepository,
     },
     GetSalesReportUseCase,
     GetSalesReportSummaryUseCase,
@@ -154,6 +167,9 @@ import { IceCreamReportController } from './presentation/controllers/ice-cream-r
     GetAssetsReceivablesReportUseCase,
     GetAssetsReceivablesReportSummaryUseCase,
     ExportAssetsReceivablesReportPdfUseCase,
+    GetAgentReconciliationsReportUseCase,
+    GetAgentReconciliationsReportSummaryUseCase,
+    ExportAgentReconciliationsReportPdfUseCase,
   ],
 })
 export class ReportsModule {}

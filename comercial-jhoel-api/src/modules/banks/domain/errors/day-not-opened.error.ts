@@ -13,7 +13,10 @@ import { DomainError } from '../../../../shared/domain/domain-error';
 export class DayNotOpenedError extends DomainError {
   readonly status = 400;
 
-  constructor(date: string, action: 'balances' | 'reconciliation' = 'balances') {
+  constructor(
+    date: string,
+    action: 'balances' | 'reconciliation' = 'balances',
+  ) {
     super(
       action === 'reconciliation'
         ? `Debe aperturar el día y guardar los saldos bancarios correspondientes antes de realizar el cuadre de agentes.`

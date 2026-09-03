@@ -51,9 +51,7 @@ export class CloseAgentDayUseCase {
     private readonly validateBankBalancesForDateUseCase: ValidateBankBalancesForDateUseCase,
   ) {}
 
-  async execute(
-    input: CloseAgentDayInput,
-  ): Promise<AgentReconciliationOutput> {
+  async execute(input: CloseAgentDayInput): Promise<AgentReconciliationOutput> {
     const dayOpening = await this.dayOpeningRepository.findByDate(input.date);
     if (!dayOpening) {
       throw new DayNotOpenedError(input.date, 'reconciliation');
@@ -63,7 +61,8 @@ export class CloseAgentDayUseCase {
       throw new DayAlreadyClosedError(input.date);
     }
 
-    const balancesValidation = await this.validateBankBalancesForDateUseCase.execute(input.date);
+    const balancesValidation =
+      await this.validateBankBalancesForDateUseCase.execute(input.date);
     if (!balancesValidation.canReconcile) {
       throw new BankBalancesNotRegisteredError(input.date);
     }

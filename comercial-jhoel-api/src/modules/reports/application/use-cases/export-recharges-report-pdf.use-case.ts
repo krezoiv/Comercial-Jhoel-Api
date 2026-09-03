@@ -4,7 +4,10 @@ import type { RechargeDailyBalanceRepository } from '../../../recharges/domain/r
 import { RECHARGE_TYPE_REPOSITORY } from '../../../recharges/domain/repositories/recharge-type.repository';
 import type { RechargeTypeRepository } from '../../../recharges/domain/repositories/recharge-type.repository';
 import { InvalidRechargeDateRangeError } from '../../../recharges/domain/errors/invalid-recharge-date-range.error';
-import { formatReportCurrency, formatReportQuantity } from '../utils/report-format.util';
+import {
+  formatReportCurrency,
+  formatReportQuantity,
+} from '../utils/report-format.util';
 import {
   ReportPdfFilterLine,
   buildReportPdf,
@@ -102,7 +105,10 @@ export class ExportRechargesReportPdfUseCase {
           label: 'Total vendido',
           value: formatReportCurrency(summary.totalSales),
         },
-        { label: 'Registros', value: formatReportQuantity(summary.recordCount) },
+        {
+          label: 'Registros',
+          value: formatReportQuantity(summary.recordCount),
+        },
         {
           label: 'Promedio de venta',
           value: formatReportCurrency(

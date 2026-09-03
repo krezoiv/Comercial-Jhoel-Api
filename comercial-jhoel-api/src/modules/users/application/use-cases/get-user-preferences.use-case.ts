@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { USER_REPOSITORY } from '../../domain/repositories/user.repository';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
-import { UserPreferencesOutput, toUserPreferencesOutput } from '../dtos/user-preferences-output';
+import {
+  UserPreferencesOutput,
+  toUserPreferencesOutput,
+} from '../dtos/user-preferences-output';
 
 /**
  * `GET /users/me/preferences` — `userId` always comes from `@CurrentUser`

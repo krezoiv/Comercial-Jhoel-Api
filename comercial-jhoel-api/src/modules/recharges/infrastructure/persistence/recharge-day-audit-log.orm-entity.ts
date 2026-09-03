@@ -1,4 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
 
 @Entity('recharge_day_audit_logs')
@@ -25,7 +31,12 @@ export class RechargeDayAuditLogOrmEntity {
   @Column({ type: 'text', nullable: true })
   reason: string | null;
 
-  @Column({ name: 'previous_status', type: 'varchar', length: 30, nullable: true })
+  @Column({
+    name: 'previous_status',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
   previousStatus: string | null;
 
   @Column({ name: 'new_status', type: 'varchar', length: 30, nullable: true })

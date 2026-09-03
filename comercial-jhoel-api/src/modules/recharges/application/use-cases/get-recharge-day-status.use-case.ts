@@ -3,7 +3,10 @@ import { RECHARGE_DAY_OPENING_REPOSITORY } from '../../domain/repositories/recha
 import type { RechargeDayOpeningRepository } from '../../domain/repositories/recharge-day-opening.repository';
 import { RECHARGE_SALES_CLOSURE_REPOSITORY } from '../../domain/repositories/recharge-sales-closure.repository';
 import type { RechargeSalesClosureRepository } from '../../domain/repositories/recharge-sales-closure.repository';
-import { RechargeDayStatusOutput, RechargeDayWorkStatus } from '../dtos/recharge-day-status-output';
+import {
+  RechargeDayStatusOutput,
+  RechargeDayWorkStatus,
+} from '../dtos/recharge-day-status-output';
 
 /**
  * Combines two independent sources into a single response — never

@@ -51,6 +51,9 @@
   font-size: var(--fs-sm);
   color: var(--color-text-on-light-muted);
   margin-bottom: var(--space-6);
+  // Lets a caller pass a multi-line summary (e.g. "Monto de Compra: Qx\nMonto Acreditado: Qy")
+  // and have it actually render as separate lines instead of collapsing to one.
+  white-space: pre-line;
 
   strong {
     color: var(--color-text-on-light);

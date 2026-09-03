@@ -39,7 +39,10 @@ export class CreateRechargeSaleUseCase {
 
   async execute(input: CreateRechargeSaleInput): Promise<RechargeSaleOutput> {
     assertValidOperationDate(input.operationDate);
-    await assertRechargeDayWritable(this.dayOpeningRepository, input.operationDate);
+    await assertRechargeDayWritable(
+      this.dayOpeningRepository,
+      input.operationDate,
+    );
 
     const sale = await this.saleRepository.create({
       rechargeTypeId: input.rechargeTypeId,

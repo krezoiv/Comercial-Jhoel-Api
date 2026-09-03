@@ -12,6 +12,8 @@ export class RechargeDayNotOpenedError extends DomainError {
   readonly status = 400;
 
   constructor(date: string) {
-    super(`Debe aperturar el día de recargas ${date} antes de registrar operaciones.`);
+    super(
+      `Debe aperturar el día de recargas ${date} antes de registrar operaciones.`,
+    );
   }
 }

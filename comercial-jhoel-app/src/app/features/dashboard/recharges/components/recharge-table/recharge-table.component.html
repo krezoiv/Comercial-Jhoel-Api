@@ -6,6 +6,7 @@
           <th>Tipo</th>
           <th class="align-right">Saldo anterior</th>
           <th class="align-right">Compra</th>
+          <th class="align-right">Acreditado</th>
           <th class="align-right">Saldo del día</th>
           <th class="align-right">Saldo final</th>
           <th class="align-right">Venta</th>
@@ -15,6 +16,7 @@
         @for (row of skeletonRows; track row) {
           <tr class="skeleton-row">
             <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
@@ -37,6 +39,7 @@
           <th>Tipo</th>
           <th class="align-right">Saldo anterior</th>
           <th class="align-right">Compra</th>
+          <th class="align-right">Acreditado</th>
           <th class="align-right">Saldo del día</th>
           <th class="align-right">Saldo final</th>
           <th class="align-right">Venta</th>
@@ -47,6 +50,7 @@
           <tr>
             <td class="recharge-table__type">{{ balance.rechargeTypeName }}</td>
             <td class="align-right">{{ formatCurrency(balance.previousBalance) }}</td>
+            <td class="align-right">{{ formatCurrency(balance.totalPurchaseAmount) }}</td>
             <td class="align-right">{{ formatCurrency(balance.totalPurchases) }}</td>
             <td class="align-right recharge-table__daily">{{ formatCurrency(balance.dailyBalance) }}</td>
             <td class="align-right">
@@ -109,6 +113,10 @@
           </div>
           <div>
             <dt>Compra</dt>
+            <dd>{{ formatCurrency(balance.totalPurchaseAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Acreditado</dt>
             <dd>{{ formatCurrency(balance.totalPurchases) }}</dd>
           </div>
           <div>

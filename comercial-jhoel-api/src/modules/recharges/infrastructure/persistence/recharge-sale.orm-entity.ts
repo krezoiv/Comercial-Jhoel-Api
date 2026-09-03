@@ -32,7 +32,10 @@ export class RechargeSaleOrmEntity {
 
   // Eager so `RechargeSaleMapper` can derive `locked` from
   // `dailyBalance.finalBalance` without a second query.
-  @ManyToOne(() => RechargeDailyBalanceOrmEntity, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => RechargeDailyBalanceOrmEntity, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'daily_balance_id' })
   dailyBalance: RechargeDailyBalanceOrmEntity;
 

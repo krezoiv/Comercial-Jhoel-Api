@@ -26,9 +26,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * a caller controls; gating each caller is sufficient and avoids gating a
  * read path that must keep working to show a closed day's own history.
  */
-export class AddRechargeDayGateToWriteFunctions1759000100000
-  implements MigrationInterface
-{
+export class AddRechargeDayGateToWriteFunctions1759000100000 implements MigrationInterface {
   name = 'AddRechargeDayGateToWriteFunctions1759000100000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

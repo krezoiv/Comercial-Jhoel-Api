@@ -41,6 +41,8 @@ export class SetDatabaseTimezone1759100000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const databaseName = process.env.DATABASE_NAME ?? 'comercial_jhoel';
-    await queryRunner.query(`ALTER DATABASE "${databaseName}" SET timezone TO 'UTC'`);
+    await queryRunner.query(
+      `ALTER DATABASE "${databaseName}" SET timezone TO 'UTC'`,
+    );
   }
 }

@@ -56,6 +56,11 @@
   color: #dc4444;
 }
 
+.field__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
 .purchase-form__lock-hint {
   display: flex;
   align-items: center;

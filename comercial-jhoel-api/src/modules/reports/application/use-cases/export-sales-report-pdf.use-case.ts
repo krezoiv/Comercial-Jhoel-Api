@@ -101,8 +101,14 @@ export class ExportSalesReportPdfUseCase {
           label: 'Total de ventas',
           value: formatReportCurrency(summary.totalAmount),
         },
-        { label: 'Cantidad de ventas', value: formatReportQuantity(summary.salesCount) },
-        { label: 'Productos vendidos', value: formatReportQuantity(summary.unitsSold) },
+        {
+          label: 'Cantidad de ventas',
+          value: formatReportQuantity(summary.salesCount),
+        },
+        {
+          label: 'Productos vendidos',
+          value: formatReportQuantity(summary.unitsSold),
+        },
         {
           label: 'Promedio por venta',
           value: formatReportCurrency(summary.averageTicket),

@@ -439,7 +439,9 @@ export class CreateRechargeSales1757800000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(PREVIOUS_CLOSURE_FUNCTION);
-    await queryRunner.query('DROP FUNCTION IF EXISTS delete_recharge_sale(UUID)');
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS delete_recharge_sale(UUID)',
+    );
     await queryRunner.query(
       'DROP FUNCTION IF EXISTS update_recharge_sale(UUID, VARCHAR, NUMERIC, UUID)',
     );

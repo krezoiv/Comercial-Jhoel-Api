@@ -36,7 +36,9 @@ export class TypeOrmAssetRepository implements AssetRepository {
       .leftJoinAndSelect('record.updatedByUser', 'updatedByUser');
 
     if (options.isActive !== undefined) {
-      qb.andWhere('record.isActive = :isActive', { isActive: options.isActive });
+      qb.andWhere('record.isActive = :isActive', {
+        isActive: options.isActive,
+      });
     }
     if (options.clientId) {
       qb.andWhere('record.clientId = :clientId', {
@@ -60,9 +62,12 @@ export class TypeOrmAssetRepository implements AssetRepository {
       });
     }
     if (options.search) {
-      qb.andWhere('(record.description ILIKE :search OR client.name ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      qb.andWhere(
+        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        {
+          search: `%${options.search}%`,
+        },
+      );
     }
 
     qb.orderBy(
@@ -89,7 +94,9 @@ export class TypeOrmAssetRepository implements AssetRepository {
       .leftJoin('record.client', 'client');
 
     if (options.isActive !== undefined) {
-      qb.andWhere('record.isActive = :isActive', { isActive: options.isActive });
+      qb.andWhere('record.isActive = :isActive', {
+        isActive: options.isActive,
+      });
     }
     if (options.clientId) {
       qb.andWhere('record.clientId = :clientId', {
@@ -103,9 +110,12 @@ export class TypeOrmAssetRepository implements AssetRepository {
       qb.andWhere('record.date <= :dateTo', { dateTo: options.dateTo });
     }
     if (options.search) {
-      qb.andWhere('(record.description ILIKE :search OR client.name ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      qb.andWhere(
+        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        {
+          search: `%${options.search}%`,
+        },
+      );
     }
 
     const raw = await qb

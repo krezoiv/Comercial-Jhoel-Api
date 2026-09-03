@@ -4,6 +4,8 @@ export class RechargeDayNotFoundError extends DomainError {
   readonly status = 404;
 
   constructor(date: string) {
-    super(`No existe ningún ciclo de recargas registrado para la fecha ${date}.`);
+    super(
+      `No existe ningún ciclo de recargas registrado para la fecha ${date}.`,
+    );
   }
 }

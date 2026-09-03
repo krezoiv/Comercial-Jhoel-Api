@@ -56,7 +56,9 @@ export class SaveBankBalancesUseCase {
     // operating date — correcting a past date's balances is pre-existing
     // functionality this ticket was required to preserve unchanged, so it
     // never demands a retroactive opening for a historical date.
-    const dayOpening = await this.dayOpeningRepository.findByDate(input.operationDate);
+    const dayOpening = await this.dayOpeningRepository.findByDate(
+      input.operationDate,
+    );
     if (input.operationDate === todayIsoDate() && !dayOpening) {
       throw new DayNotOpenedError(input.operationDate, 'balances');
     }

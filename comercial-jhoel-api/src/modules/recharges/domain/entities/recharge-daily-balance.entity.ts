@@ -9,6 +9,8 @@ export interface RechargeDailyBalanceProps {
   previousBalance: number;
   dailyBalance: number;
   finalBalance: number | null;
+  /** Real `SUM(recharge_purchases.amount)` for this row's cycle — "Compra" total, purely informational (never derivable from the balances above since `dailyBalance` now grows by `creditedAmount`, not `purchaseAmount`). */
+  totalPurchaseAmount: number;
   createdByUserId: string;
   createdByUsername: string;
   updatedByUserId: string | null;
@@ -65,9 +67,20 @@ export class RechargeDailyBalance {
     return this.props.finalBalance;
   }
 
-  /** How much was bought today — always `dailyBalance - previousBalance`. */
+  /**
+   * "Acreditado" — how much actually fed the running balance today, always
+   * `dailyBalance - previousBalance`. Kept as a derived getter (unchanged
+   * since before the Monto de Compra/Acreditado split) since `dailyBalance`
+   * only ever grows by `creditedAmount`, never `purchaseAmount` — this
+   * value and `totalPurchaseAmount` (see prop) can legitimately differ now.
+   */
   get totalPurchases(): number {
     return this.props.dailyBalance - this.props.previousBalance;
+  }
+
+  /** "Compra" — real sum of every purchase's `purchaseAmount` this cycle, informational only. */
+  get totalPurchaseAmount(): number {
+    return this.props.totalPurchaseAmount;
   }
 
   /** `null` until the day is closed (no `finalBalance` yet) — never a premature 0. */

@@ -93,7 +93,9 @@ export class RechargesController {
   getDayStatus(
     @Query() query: RechargeDayStatusQueryDto,
   ): Promise<RechargeDayStatusOutput> {
-    return this.getRechargeDayStatusUseCase.execute(query.date ?? todayIsoDate());
+    return this.getRechargeDayStatusUseCase.execute(
+      query.date ?? todayIsoDate(),
+    );
   }
 
   /**
@@ -150,7 +152,8 @@ export class RechargesController {
   ): Promise<RechargeDailyBalanceOutput> {
     return this.registerRechargePurchaseUseCase.execute({
       rechargeTypeId: dto.rechargeTypeId,
-      amount: dto.amount,
+      purchaseAmount: dto.purchaseAmount,
+      creditedAmount: dto.creditedAmount,
       operationDate: dto.operationDate,
       userId,
     });

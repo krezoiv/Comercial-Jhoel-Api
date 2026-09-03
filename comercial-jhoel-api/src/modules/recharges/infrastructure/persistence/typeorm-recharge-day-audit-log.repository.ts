@@ -17,11 +17,16 @@ export class TypeOrmRechargeDayAuditLogRepository implements RechargeDayAuditLog
   ) {}
 
   async findByDate(date: string): Promise<RechargeDayAuditLog[]> {
-    const orms = await this.repository.find({ where: { date }, order: { performedAt: 'ASC' } });
+    const orms = await this.repository.find({
+      where: { date },
+      order: { performedAt: 'ASC' },
+    });
     return orms.map((orm) => RechargeDayAuditLogMapper.toDomain(orm));
   }
 
-  async record(data: CreateRechargeDayAuditLogData): Promise<RechargeDayAuditLog> {
+  async record(
+    data: CreateRechargeDayAuditLogData,
+  ): Promise<RechargeDayAuditLog> {
     const orm = this.repository.create({
       date: data.date,
       action: data.action,
@@ -31,7 +36,9 @@ export class TypeOrmRechargeDayAuditLogRepository implements RechargeDayAuditLog
       newStatus: data.newStatus ?? null,
     });
     const saved = await this.repository.save(orm);
-    const withRelations = await this.repository.findOneOrFail({ where: { id: saved.id } });
+    const withRelations = await this.repository.findOneOrFail({
+      where: { id: saved.id },
+    });
     return RechargeDayAuditLogMapper.toDomain(withRelations);
   }
 }

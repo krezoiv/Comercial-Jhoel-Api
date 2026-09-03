@@ -14,9 +14,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * negative values natively — the constraint was the only thing rejecting
  * them.
  */
-export class AllowNegativeAssetAmount1758200000000
-  implements MigrationInterface
-{
+export class AllowNegativeAssetAmount1758200000000 implements MigrationInterface {
   name = 'AllowNegativeAssetAmount1758200000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

@@ -9,7 +9,11 @@ import { USER_REPOSITORY } from '../../../users/domain/repositories/user.reposit
 import type { UserRepository } from '../../../users/domain/repositories/user.repository';
 import { NoIceCreamMovementTypeSelectedError } from '../../domain/errors/no-ice-cream-movement-type-selected.error';
 import { parseReportDateRange } from '../utils/parse-report-date-range';
-import { formatReportCurrency, formatReportPeriodLabel, formatReportQuantity } from '../utils/report-format.util';
+import {
+  formatReportCurrency,
+  formatReportPeriodLabel,
+  formatReportQuantity,
+} from '../utils/report-format.util';
 import { IceCreamReportType } from '../dtos/ice-cream-report-output';
 import {
   ReportPdfFilterLine,
@@ -65,7 +69,10 @@ export class ExportIceCreamReportPdfUseCase {
       throw new NoIceCreamMovementTypeSelectedError();
     }
 
-    const { startDate, endDate } = parseReportDateRange(input.startDate, input.endDate);
+    const { startDate, endDate } = parseReportDateRange(
+      input.startDate,
+      input.endDate,
+    );
     const wantsSales = types.includes('sales');
     const wantsPurchases = types.includes('purchases');
     const showTypeColumn = wantsSales && wantsPurchases;
@@ -79,22 +86,37 @@ export class ExportIceCreamReportPdfUseCase {
       limit: EXPORT_ROW_LIMIT,
     };
 
-    const [salesResult, purchasesResult, salesSummary, purchasesSummary, filterLines] =
-      await Promise.all([
-        wantsSales
-          ? this.getIceCreamSalesReportUseCase.execute(listInput)
-          : Promise.resolve({ items: [], total: 0 }),
-        wantsPurchases
-          ? this.getIceCreamPurchasesReportUseCase.execute(listInput)
-          : Promise.resolve({ items: [], total: 0 }),
-        wantsSales
-          ? this.getIceCreamSalesReportSummaryUseCase.execute(input)
-          : Promise.resolve({ totalSold: 0, totalQuantity: 0, recordCount: 0, averagePrice: 0 }),
-        wantsPurchases
-          ? this.getIceCreamPurchasesReportSummaryUseCase.execute(input)
-          : Promise.resolve({ totalPurchased: 0, totalQuantity: 0, recordCount: 0, averageCost: 0 }),
-        this.resolveFilterLines(input, types),
-      ]);
+    const [
+      salesResult,
+      purchasesResult,
+      salesSummary,
+      purchasesSummary,
+      filterLines,
+    ] = await Promise.all([
+      wantsSales
+        ? this.getIceCreamSalesReportUseCase.execute(listInput)
+        : Promise.resolve({ items: [], total: 0 }),
+      wantsPurchases
+        ? this.getIceCreamPurchasesReportUseCase.execute(listInput)
+        : Promise.resolve({ items: [], total: 0 }),
+      wantsSales
+        ? this.getIceCreamSalesReportSummaryUseCase.execute(input)
+        : Promise.resolve({
+            totalSold: 0,
+            totalQuantity: 0,
+            recordCount: 0,
+            averagePrice: 0,
+          }),
+      wantsPurchases
+        ? this.getIceCreamPurchasesReportSummaryUseCase.execute(input)
+        : Promise.resolve({
+            totalPurchased: 0,
+            totalQuantity: 0,
+            recordCount: 0,
+            averageCost: 0,
+          }),
+      this.resolveFilterLines(input, types),
+    ]);
 
     const merged = [
       ...salesResult.items.map((item) => ({
@@ -124,7 +146,11 @@ export class ExportIceCreamReportPdfUseCase {
 
     const rows = limited.map((item) => {
       const base = [
-        new Date(item.date).toLocaleDateString('es-GT', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        new Date(item.date).toLocaleDateString('es-GT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
         item.product,
         item.sku,
         formatReportQuantity(item.quantity),
@@ -138,15 +164,29 @@ export class ExportIceCreamReportPdfUseCase {
     const difference = salesSummary.totalSold - purchasesSummary.totalPurchased;
     const summaryTiles = [
       ...(wantsSales
-        ? [{ label: 'Total de Ventas', value: formatReportCurrency(salesSummary.totalSold) }]
+        ? [
+            {
+              label: 'Total de Ventas',
+              value: formatReportCurrency(salesSummary.totalSold),
+            },
+          ]
         : []),
       ...(wantsPurchases
-        ? [{ label: 'Total de Compras', value: formatReportCurrency(purchasesSummary.totalPurchased) }]
+        ? [
+            {
+              label: 'Total de Compras',
+              value: formatReportCurrency(purchasesSummary.totalPurchased),
+            },
+          ]
         : []),
-      ...(showTypeColumn ? [{ label: 'Diferencia', value: formatReportCurrency(difference) }] : []),
+      ...(showTypeColumn
+        ? [{ label: 'Diferencia', value: formatReportCurrency(difference) }]
+        : []),
       {
         label: 'Total de Movimientos',
-        value: formatReportQuantity(salesSummary.recordCount + purchasesSummary.recordCount),
+        value: formatReportQuantity(
+          salesSummary.recordCount + purchasesSummary.recordCount,
+        ),
       },
     ];
 
@@ -159,7 +199,9 @@ export class ExportIceCreamReportPdfUseCase {
       { header: 'Total', width: 60, align: 'right' as const },
       { header: 'Usuario', width: 60 },
     ];
-    const columns = showTypeColumn ? [{ header: 'Tipo', width: 50 }, ...baseColumns] : baseColumns;
+    const columns = showTypeColumn
+      ? [{ header: 'Tipo', width: 50 }, ...baseColumns]
+      : baseColumns;
 
     return buildReportPdf({
       reportTitle: reportTitle(types),
@@ -182,7 +224,12 @@ export class ExportIceCreamReportPdfUseCase {
     types: IceCreamReportType[],
   ): Promise<ReportPdfFilterLine[]> {
     const lines: ReportPdfFilterLine[] = [
-      { label: 'Tipo', value: types.map((t) => (t === 'sales' ? 'Ventas' : 'Compras')).join(', ') },
+      {
+        label: 'Tipo',
+        value: types
+          .map((t) => (t === 'sales' ? 'Ventas' : 'Compras'))
+          .join(', '),
+      },
     ];
 
     if (input.iceCreamId) {
@@ -194,7 +241,10 @@ export class ExportIceCreamReportPdfUseCase {
     }
     if (input.userId) {
       const user = await this.userRepository.findById(input.userId);
-      lines.push({ label: 'Usuario', value: user?.username ?? user?.name ?? '—' });
+      lines.push({
+        label: 'Usuario',
+        value: user?.username ?? user?.name ?? '—',
+      });
     }
 
     return lines;

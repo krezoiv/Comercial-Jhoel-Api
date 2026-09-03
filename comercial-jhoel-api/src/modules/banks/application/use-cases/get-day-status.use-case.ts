@@ -26,11 +26,12 @@ export class GetDayStatusUseCase {
   ) {}
 
   async execute(date: string): Promise<DayStatusOutput> {
-    const [dayOpening, balancesValidation, reconciliationCompleted] = await Promise.all([
-      this.dayOpeningRepository.findByDate(date),
-      this.validateBankBalancesForDateUseCase.execute(date),
-      this.agentReconciliationRepository.existsForDate(date),
-    ]);
+    const [dayOpening, balancesValidation, reconciliationCompleted] =
+      await Promise.all([
+        this.dayOpeningRepository.findByDate(date),
+        this.validateBankBalancesForDateUseCase.execute(date),
+        this.agentReconciliationRepository.existsForDate(date),
+      ]);
 
     const isOpened = dayOpening !== null;
     const bankBalancesSaved = balancesValidation.canReconcile;

@@ -1,4 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
 
 @Entity('day_openings')
@@ -25,7 +31,11 @@ export class DayOpeningOrmEntity {
   @Column({ name: 'closed_by', nullable: true })
   closedBy: string | null;
 
-  @ManyToOne(() => UserOrmEntity, { eager: true, nullable: true, onDelete: 'RESTRICT' })
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'closed_by' })
   closedByUser: UserOrmEntity | null;
 
@@ -35,7 +45,11 @@ export class DayOpeningOrmEntity {
   @Column({ name: 'reopened_by', nullable: true })
   reopenedBy: string | null;
 
-  @ManyToOne(() => UserOrmEntity, { eager: true, nullable: true, onDelete: 'RESTRICT' })
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'reopened_by' })
   reopenedByUser: UserOrmEntity | null;
 
@@ -51,7 +65,11 @@ export class DayOpeningOrmEntity {
   @Column({ name: 'cancelled_by', nullable: true })
   cancelledBy: string | null;
 
-  @ManyToOne(() => UserOrmEntity, { eager: true, nullable: true, onDelete: 'RESTRICT' })
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'cancelled_by' })
   cancelledByUser: UserOrmEntity | null;
 

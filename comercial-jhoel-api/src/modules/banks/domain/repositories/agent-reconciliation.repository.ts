@@ -22,7 +22,9 @@ export interface AgentReconciliationRepository {
    * or neither does — a saved reconciliation can never be left with the
    * day still open, or vice versa.
    */
-  closeDayWithReconciliation(data: CloseAgentDayData): Promise<AgentReconciliation>;
+  closeDayWithReconciliation(
+    data: CloseAgentDayData,
+  ): Promise<AgentReconciliation>;
   /** Does a saved reconciliation already exist for this date? — used by `GetDayStatusUseCase`, informational only (see also `DayOpening.isClosed` for the real block). */
   existsForDate(date: string): Promise<boolean>;
   /** The CURRENT reconciliation for a date — there can be more than one historical row if the day was reopened and closed again; this is always the most recent one. Used by "Gestión de Días Cerrados" for the detail view. */

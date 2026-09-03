@@ -2,10 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeDayStatus, RechargeSale, RechargeType, formatCurrency } from '../../../core/models';
+import { RechargeDailyBalance, RechargeDayStatus, RechargeSale, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
+import { RechargeSimsService } from '../../../core/services/recharge-sims.service';
 import { RechargeDayStatusService } from '../../../core/services/recharge-day-status.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { RechargeTableComponent, RequestFinalBalanceEvent } from './components/recharge-table/recharge-table.component';
@@ -17,6 +18,9 @@ import { RechargeSaleFormModalComponent } from './components/recharge-sale-form-
 import { RechargeSaleDeleteConfirmModalComponent } from './components/recharge-sale-delete-confirm-modal/recharge-sale-delete-confirm-modal.component';
 import { RechargeEntryConfirmModalComponent } from './components/recharge-entry-confirm-modal/recharge-entry-confirm-modal.component';
 import { CloseRechargeDayConfirmModalComponent } from './components/close-recharge-day-confirm-modal/close-recharge-day-confirm-modal.component';
+import { SimStockTableComponent } from './components/sim-stock-table/sim-stock-table.component';
+import { RegisterSimPurchaseFormComponent } from './components/register-sim-purchase-form/register-sim-purchase-form.component';
+import { RegisterSimSaleFormComponent } from './components/register-sim-sale-form/register-sim-sale-form.component';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
@@ -41,6 +45,9 @@ function todayIsoDate(): string {
     RechargeSaleDeleteConfirmModalComponent,
     RechargeEntryConfirmModalComponent,
     CloseRechargeDayConfirmModalComponent,
+    SimStockTableComponent,
+    RegisterSimPurchaseFormComponent,
+    RegisterSimSaleFormComponent,
     CardComponent,
     ButtonComponent,
     IconComponent,
@@ -51,6 +58,7 @@ function todayIsoDate(): string {
 })
 export class RechargesPageComponent {
   private readonly rechargesService = inject(RechargesService);
+  private readonly simsService = inject(RechargeSimsService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
   private readonly dayStatusService = inject(RechargeDayStatusService);
@@ -116,6 +124,26 @@ export class RechargesPageComponent {
   readonly types = signal<RechargeType[]>([]);
   readonly balances = signal<RechargeDailyBalance[]>([]);
   readonly loading = signal(true);
+
+  /**
+   * SIM Claro/SIM Tigo — physical, stock-tracked products, deliberately
+   * fetched/rendered as a completely separate block from the electronic
+   * balance above: own signals, own section in the template, never summed
+   * or mixed with `balances`. Scoped to the exact same `operationDate()`
+   * and gated by the exact same `dayLockReason()` — no new day-lifecycle
+   * logic, just reusing what already exists.
+   */
+  readonly simTypes = signal<SimType[]>([]);
+  readonly simStocks = signal<SimDailyStock[]>([]);
+  readonly simLoading = signal(true);
+
+  readonly simStockByTypeId = computed<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+    for (const stock of this.simStocks()) {
+      map[stock.simTypeId] = stock.currentStock;
+    }
+    return map;
+  });
 
   readonly isFinalBalanceModalOpen = signal(false);
   readonly finalBalanceTarget = signal<RechargeDailyBalance | null>(null);
@@ -239,21 +267,28 @@ export class RechargesPageComponent {
   private fetchAll(): void {
     this.loading.set(true);
     this.salesLoading.set(true);
+    this.simLoading.set(true);
     forkJoin({
       types: this.rechargesService.getTypes(),
       balances: this.rechargesService.getDailySummary(this.operationDate()),
       sales: this.rechargesService.getSales(this.operationDate()),
+      simTypes: this.simsService.getTypes(),
+      simStocks: this.simsService.getDailyStock(this.operationDate()),
     }).subscribe({
-      next: ({ types, balances, sales }) => {
+      next: ({ types, balances, sales, simTypes, simStocks }) => {
         this.types.set(types);
         this.balances.set(balances);
         this.sales.set(sales);
+        this.simTypes.set(simTypes);
+        this.simStocks.set(simStocks);
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.simLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.simLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
       },
     });
@@ -262,22 +297,42 @@ export class RechargesPageComponent {
   private fetchBalances(): void {
     this.loading.set(true);
     this.salesLoading.set(true);
+    this.simLoading.set(true);
     forkJoin({
       balances: this.rechargesService.getDailySummary(this.operationDate()),
       sales: this.rechargesService.getSales(this.operationDate()),
+      simStocks: this.simsService.getDailyStock(this.operationDate()),
     }).subscribe({
-      next: ({ balances, sales }) => {
+      next: ({ balances, sales, simStocks }) => {
         this.balances.set(balances);
         this.sales.set(sales);
+        this.simStocks.set(simStocks);
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.simLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.simLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
       },
     });
+  }
+
+  private upsertSimStock(stock: SimDailyStock): void {
+    this.simStocks.update((list) => {
+      const exists = list.some((s) => s.id === stock.id);
+      return exists ? list.map((s) => (s.id === stock.id ? stock : s)) : [...list, stock];
+    });
+  }
+
+  onSimPurchaseRegistered(stock: SimDailyStock): void {
+    this.upsertSimStock(stock);
+  }
+
+  onSimSaleRegistered(stock: SimDailyStock): void {
+    this.upsertSimStock(stock);
   }
 
   private fetchSales(): void {

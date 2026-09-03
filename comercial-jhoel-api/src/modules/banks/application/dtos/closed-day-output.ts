@@ -1,4 +1,7 @@
-import { ClosedDayStatus, ClosedDayViewRow } from '../../domain/repositories/day-opening.repository';
+import {
+  ClosedDayStatus,
+  ClosedDayViewRow,
+} from '../../domain/repositories/day-opening.repository';
 
 export interface ClosedDayOutput {
   date: string;

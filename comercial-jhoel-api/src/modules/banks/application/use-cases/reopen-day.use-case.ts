@@ -22,7 +22,8 @@ export interface ReopenDayInput {
 @Injectable()
 export class ReopenDayUseCase {
   constructor(
-    @Inject(DAY_OPENING_REPOSITORY) private readonly dayOpeningRepository: DayOpeningRepository,
+    @Inject(DAY_OPENING_REPOSITORY)
+    private readonly dayOpeningRepository: DayOpeningRepository,
     private readonly getDayDetailUseCase: GetDayDetailUseCase,
   ) {}
 

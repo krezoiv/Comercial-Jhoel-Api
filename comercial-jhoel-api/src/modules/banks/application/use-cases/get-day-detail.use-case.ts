@@ -22,11 +22,14 @@ import { DayDetailOutput } from '../dtos/day-detail-output';
 @Injectable()
 export class GetDayDetailUseCase {
   constructor(
-    @Inject(DAY_OPENING_REPOSITORY) private readonly dayOpeningRepository: DayOpeningRepository,
+    @Inject(DAY_OPENING_REPOSITORY)
+    private readonly dayOpeningRepository: DayOpeningRepository,
     @Inject(AGENT_RECONCILIATION_REPOSITORY)
     private readonly agentReconciliationRepository: AgentReconciliationRepository,
-    @Inject(BANK_BALANCE_REPOSITORY) private readonly bankBalanceRepository: BankBalanceRepository,
-    @Inject(DAY_AUDIT_LOG_REPOSITORY) private readonly dayAuditLogRepository: DayAuditLogRepository,
+    @Inject(BANK_BALANCE_REPOSITORY)
+    private readonly bankBalanceRepository: BankBalanceRepository,
+    @Inject(DAY_AUDIT_LOG_REPOSITORY)
+    private readonly dayAuditLogRepository: DayAuditLogRepository,
   ) {}
 
   async execute(date: string): Promise<DayDetailOutput> {
@@ -41,7 +44,11 @@ export class GetDayDetailUseCase {
       this.dayAuditLogRepository.findByDate(date),
     ]);
 
-    const status = dayOpening.isCancelled ? 'CANCELLED' : dayOpening.isClosed ? 'CLOSED' : 'REOPENED';
+    const status = dayOpening.isCancelled
+      ? 'CANCELLED'
+      : dayOpening.isClosed
+        ? 'CLOSED'
+        : 'REOPENED';
 
     return {
       date: dayOpening.date,
@@ -49,16 +56,24 @@ export class GetDayDetailUseCase {
       openedAt: dayOpening.openedAt,
       openedByUsername: dayOpening.openedByUsername,
       closedAt: dayOpening.closedAt,
-      closedByUsername: dayOpening.closedBy ? dayOpening.closedByUsername : null,
+      closedByUsername: dayOpening.closedBy
+        ? dayOpening.closedByUsername
+        : null,
       reopenedAt: dayOpening.reopenedAt,
-      reopenedByUsername: dayOpening.reopenedBy ? dayOpening.reopenedByUsername : null,
+      reopenedByUsername: dayOpening.reopenedBy
+        ? dayOpening.reopenedByUsername
+        : null,
       reopenReason: dayOpening.reopenReason,
       isCancelled: dayOpening.isCancelled,
       cancelledAt: dayOpening.cancelledAt,
-      cancelledByUsername: dayOpening.cancelledBy ? dayOpening.cancelledByUsername : null,
+      cancelledByUsername: dayOpening.cancelledBy
+        ? dayOpening.cancelledByUsername
+        : null,
       cancelReason: dayOpening.cancelReason,
       banks,
-      reconciliation: reconciliation ? toAgentReconciliationOutput(reconciliation) : null,
+      reconciliation: reconciliation
+        ? toAgentReconciliationOutput(reconciliation)
+        : null,
       auditLog: auditLog.map((entry) => ({
         id: entry.id,
         action: entry.action,

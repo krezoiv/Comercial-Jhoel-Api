@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { GetIceCreamSalesReportUseCase } from './get-ice-cream-sales-report.use-case';
 import { GetIceCreamPurchasesReportUseCase } from './get-ice-cream-purchases-report.use-case';
 import { NoIceCreamMovementTypeSelectedError } from '../../domain/errors/no-ice-cream-movement-type-selected.error';
-import { IceCreamReportRowOutput, IceCreamReportType } from '../dtos/ice-cream-report-output';
+import {
+  IceCreamReportRowOutput,
+  IceCreamReportType,
+} from '../dtos/ice-cream-report-output';
 
 export interface GetIceCreamReportInput {
   types?: IceCreamReportType[];
@@ -40,7 +43,9 @@ export class GetIceCreamReportUseCase {
     private readonly getIceCreamPurchasesReportUseCase: GetIceCreamPurchasesReportUseCase,
   ) {}
 
-  async execute(input: GetIceCreamReportInput): Promise<GetIceCreamReportOutput> {
+  async execute(
+    input: GetIceCreamReportInput,
+  ): Promise<GetIceCreamReportOutput> {
     const types = input.types ?? [];
     if (types.length === 0) {
       throw new NoIceCreamMovementTypeSelectedError();
@@ -48,7 +53,9 @@ export class GetIceCreamReportUseCase {
 
     const page = input.page && input.page > 0 ? input.page : DEFAULT_PAGE;
     const limit =
-      input.limit && input.limit > 0 ? Math.min(input.limit, PER_TYPE_FETCH_CAP) : DEFAULT_LIMIT;
+      input.limit && input.limit > 0
+        ? Math.min(input.limit, PER_TYPE_FETCH_CAP)
+        : DEFAULT_LIMIT;
 
     const wantsSales = types.includes('sales');
     const wantsPurchases = types.includes('purchases');

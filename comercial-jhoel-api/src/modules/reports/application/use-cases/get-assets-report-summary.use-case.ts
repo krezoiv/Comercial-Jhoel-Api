@@ -3,7 +3,10 @@ import { ASSET_REPOSITORY } from '../../../assets/domain/repositories/asset.repo
 import type { AssetRepository } from '../../../assets/domain/repositories/asset.repository';
 import { InvalidDateRangeError } from '../../domain/errors/invalid-date-range.error';
 import { AssetsReportSummaryOutput } from '../dtos/assets-report-output';
-import { ReportStatusFilter, parseReportStatus } from '../utils/parse-report-status';
+import {
+  ReportStatusFilter,
+  parseReportStatus,
+} from '../utils/parse-report-status';
 
 export interface GetAssetsReportSummaryInput {
   clientId?: string;

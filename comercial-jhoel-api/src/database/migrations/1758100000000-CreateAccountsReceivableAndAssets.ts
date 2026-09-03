@@ -8,9 +8,7 @@ import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 // operation_date — avoids any timezone-driven date shift. `amount` is NUMERIC(12,2),
 // never FLOAT, with a DB-level CHECK > 0 as the last line of defense behind the
 // DTO's own @Min(0.01) validation.
-export class CreateAccountsReceivableAndAssets1758100000000
-  implements MigrationInterface
-{
+export class CreateAccountsReceivableAndAssets1758100000000 implements MigrationInterface {
   name = 'CreateAccountsReceivableAndAssets1758100000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

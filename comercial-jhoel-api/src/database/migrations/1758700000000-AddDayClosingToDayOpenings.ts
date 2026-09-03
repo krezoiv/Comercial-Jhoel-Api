@@ -104,8 +104,12 @@ export class AddDayClosingToDayOpenings1758700000000 implements MigrationInterfa
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('DROP FUNCTION IF EXISTS close_agent_day(DATE, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, UUID)');
-    await queryRunner.query('ALTER TABLE day_openings DROP CONSTRAINT IF EXISTS FK_day_openings_closed_by');
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS close_agent_day(DATE, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, UUID)',
+    );
+    await queryRunner.query(
+      'ALTER TABLE day_openings DROP CONSTRAINT IF EXISTS FK_day_openings_closed_by',
+    );
     await queryRunner.dropColumn('day_openings', 'closed_by');
     await queryRunner.dropColumn('day_openings', 'closed_at');
   }

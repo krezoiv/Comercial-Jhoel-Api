@@ -1,5 +1,8 @@
 import { IsDateString, IsIn, IsOptional, IsUUID } from 'class-validator';
-import type { ClosedDayStatus, ResultSign } from '../../domain/repositories/day-opening.repository';
+import type {
+  ClosedDayStatus,
+  ResultSign,
+} from '../../domain/repositories/day-opening.repository';
 
 const STATUSES: ClosedDayStatus[] = ['CLOSED', 'REOPENED', 'CANCELLED'];
 const RESULT_SIGNS: ResultSign[] = ['positive', 'negative', 'zero'];

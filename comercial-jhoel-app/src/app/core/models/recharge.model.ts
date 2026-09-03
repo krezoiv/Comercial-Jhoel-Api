@@ -16,7 +16,10 @@ export interface RechargeDailyBalance {
   rechargeTypeName: string;
   date: string;
   previousBalance: number;
+  /** "Acreditado" — derived (`dailyBalance - previousBalance`), unchanged since before the Monto de Compra/Acreditado split. */
   totalPurchases: number;
+  /** "Compra" — real sum of every registered purchase's monto de compra this cycle, purely informational (never affects `dailyBalance`). */
+  totalPurchaseAmount: number;
   dailyBalance: number;
   finalBalance: number | null;
   /** `null` until the day is closed (no `finalBalance` registered yet). */
@@ -27,7 +30,10 @@ export interface RechargeDailyBalance {
 
 export interface RegisterRechargePurchaseInput {
   rechargeTypeId: string;
-  amount: number;
+  /** "Monto de Compra" — informational only, never affects the balance. */
+  purchaseAmount: number;
+  /** "Monto Acreditado" — the only value that increments the running balance. */
+  creditedAmount: number;
   /** `yyyy-MM-dd` — the operation-date picker's current value, not necessarily today. */
   operationDate: string;
 }

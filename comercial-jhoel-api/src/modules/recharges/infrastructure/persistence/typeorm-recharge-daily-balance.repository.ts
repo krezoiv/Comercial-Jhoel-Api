@@ -58,7 +58,11 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
       where: { rechargeTypeId, date },
       order: { sequence: 'DESC' },
     });
-    return orm ? RechargeDailyBalanceMapper.toDomain(orm) : null;
+    if (!orm) {
+      return null;
+    }
+    const totals = await this.sumPurchaseAmounts([orm.id]);
+    return RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0);
   }
 
   /** One row per type — the CURRENT (highest-`sequence`) cycle, even if several cycles have accumulated for this date via "Guardar cuadre" resets. */
@@ -73,14 +77,20 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
         latestByType.set(orm.rechargeTypeId, orm);
       }
     }
-    return Array.from(latestByType.values()).map((orm) =>
-      RechargeDailyBalanceMapper.toDomain(orm),
+    const latest = Array.from(latestByType.values());
+    const totals = await this.sumPurchaseAmounts(latest.map((orm) => orm.id));
+    return latest.map((orm) =>
+      RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0),
     );
   }
 
   async findById(id: string): Promise<RechargeDailyBalance | null> {
     const orm = await this.repository.findOne({ where: { id } });
-    return orm ? RechargeDailyBalanceMapper.toDomain(orm) : null;
+    if (!orm) {
+      return null;
+    }
+    const totals = await this.sumPurchaseAmounts([orm.id]);
+    return RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0);
   }
 
   async registerPurchase(
@@ -90,10 +100,11 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
     try {
       const rows = await this.repository.manager.query<
         { register_recharge_purchase: string }[]
-      >('SELECT register_recharge_purchase($1, $2, $3, $4)', [
+      >('SELECT register_recharge_purchase($1, $2, $3, $4, $5)', [
         data.rechargeTypeId,
         data.date,
-        data.amount,
+        data.purchaseAmount,
+        data.creditedAmount,
         data.userId,
       ]);
       dailyBalanceId = rows[0].register_recharge_purchase;
@@ -101,6 +112,26 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
       throw this.translateRechargeError(error);
     }
     return this.fetchOrThrow(dailyBalanceId);
+  }
+
+  /** Real `SUM(recharge_purchases.amount)` per `daily_balance_id` — raw SQL (no ORM entity exists for `recharge_purchases`, consistent with this module's "no ORM entity for a write-only movement table" precedent) rather than a QueryBuilder join, to keep every existing `.find`/`.findOne` read path unchanged. */
+  private async sumPurchaseAmounts(
+    dailyBalanceIds: string[],
+  ): Promise<Map<string, number>> {
+    const totals = new Map<string, number>();
+    if (dailyBalanceIds.length === 0) {
+      return totals;
+    }
+    const rows = await this.repository.manager.query<
+      { daily_balance_id: string; total: string }[]
+    >(
+      `SELECT daily_balance_id, SUM(amount) AS total FROM recharge_purchases WHERE daily_balance_id = ANY($1) GROUP BY daily_balance_id`,
+      [dailyBalanceIds],
+    );
+    for (const row of rows) {
+      totals.set(row.daily_balance_id, parseFloat(row.total));
+    }
+    return totals;
   }
 
   async registerFinalBalance(
@@ -154,8 +185,11 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
     qb.skip((options.page - 1) * options.limit).take(options.limit);
 
     const [orms, total] = await qb.getManyAndCount();
+    const totals = await this.sumPurchaseAmounts(orms.map((orm) => orm.id));
     return {
-      items: orms.map((orm) => RechargeDailyBalanceMapper.toDomain(orm)),
+      items: orms.map((orm) =>
+        RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0),
+      ),
       total,
       page: options.page,
       limit: options.limit,

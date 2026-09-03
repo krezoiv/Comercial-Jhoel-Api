@@ -3,7 +3,10 @@ import { ListAccountsReceivableUseCase } from '../../../accounts-receivable/appl
 import { ListAssetsUseCase } from '../../../assets/application/use-cases/list-assets.use-case';
 import { InvalidDateRangeError } from '../../domain/errors/invalid-date-range.error';
 import { NoReportTypeSelectedError } from '../../domain/errors/no-report-type-selected.error';
-import { ReportStatusFilter, parseReportStatus } from '../utils/parse-report-status';
+import {
+  ReportStatusFilter,
+  parseReportStatus,
+} from '../utils/parse-report-status';
 import {
   AssetsReceivablesReportRowOutput,
   AssetsReceivablesReportType,
@@ -67,7 +70,9 @@ export class GetAssetsReceivablesReportUseCase {
 
     const page = input.page && input.page > 0 ? input.page : DEFAULT_PAGE;
     const limit =
-      input.limit && input.limit > 0 ? Math.min(input.limit, PER_TYPE_FETCH_CAP) : DEFAULT_LIMIT;
+      input.limit && input.limit > 0
+        ? Math.min(input.limit, PER_TYPE_FETCH_CAP)
+        : DEFAULT_LIMIT;
 
     const isActive = parseReportStatus(input.status);
     const wantsAssets = types.includes('assets');
@@ -103,7 +108,9 @@ export class GetAssetsReceivablesReportUseCase {
         limit,
       });
       return {
-        items: result.items.map((item) => this.toRow(item, 'accounts_receivable')),
+        items: result.items.map((item) =>
+          this.toRow(item, 'accounts_receivable'),
+        ),
         total: result.total,
         page: result.page,
         limit: result.limit,
@@ -134,7 +141,9 @@ export class GetAssetsReceivablesReportUseCase {
 
     const merged = [
       ...assetsResult.items.map((item) => this.toRow(item, 'assets')),
-      ...receivablesResult.items.map((item) => this.toRow(item, 'accounts_receivable')),
+      ...receivablesResult.items.map((item) =>
+        this.toRow(item, 'accounts_receivable'),
+      ),
     ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
     const total = assetsResult.total + receivablesResult.total;
@@ -145,7 +154,15 @@ export class GetAssetsReceivablesReportUseCase {
   }
 
   private toRow(
-    item: { id: string; clientId: string; clientName: string; date: string; amount: number; description: string | null; isActive: boolean },
+    item: {
+      id: string;
+      clientId: string;
+      clientName: string;
+      date: string;
+      amount: number;
+      description: string | null;
+      isActive: boolean;
+    },
     type: AssetsReceivablesReportType,
   ): AssetsReceivablesReportRowOutput {
     return {

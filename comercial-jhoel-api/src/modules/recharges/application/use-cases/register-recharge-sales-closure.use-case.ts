@@ -61,7 +61,10 @@ export class RegisterRechargeSalesClosureUseCase {
     input: RegisterRechargeSalesClosureInput,
   ): Promise<RechargeSalesSummaryOutput> {
     assertValidOperationDate(input.operationDate);
-    await assertRechargeDayWritable(this.dayOpeningRepository, input.operationDate);
+    await assertRechargeDayWritable(
+      this.dayOpeningRepository,
+      input.operationDate,
+    );
 
     await this.closureRepository.registerClosure({
       date: input.operationDate,

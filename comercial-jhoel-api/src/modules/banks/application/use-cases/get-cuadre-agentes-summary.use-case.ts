@@ -71,11 +71,8 @@ export class GetCuadreAgentesSummaryUseCase {
     ]);
 
     const bankItems = banks.map((bank) => {
-      const calculationType: BankBalanceCalculationType = isCreditLineAccountType(
-        bank.accountTypeName,
-      )
-        ? 'subtract'
-        : 'sum';
+      const calculationType: BankBalanceCalculationType =
+        isCreditLineAccountType(bank.accountTypeName) ? 'subtract' : 'sum';
       return {
         id: bank.id,
         name: bank.name,

@@ -22,9 +22,7 @@ const SORT_COLUMN: Record<AccountReceivableSortField, string> = {
 };
 
 @Injectable()
-export class TypeOrmAccountReceivableRepository
-  implements AccountReceivableRepository
-{
+export class TypeOrmAccountReceivableRepository implements AccountReceivableRepository {
   constructor(
     @InjectRepository(AccountReceivableOrmEntity)
     private readonly repository: Repository<AccountReceivableOrmEntity>,
@@ -40,7 +38,9 @@ export class TypeOrmAccountReceivableRepository
       .leftJoinAndSelect('record.updatedByUser', 'updatedByUser');
 
     if (options.isActive !== undefined) {
-      qb.andWhere('record.isActive = :isActive', { isActive: options.isActive });
+      qb.andWhere('record.isActive = :isActive', {
+        isActive: options.isActive,
+      });
     }
     if (options.clientId) {
       qb.andWhere('record.clientId = :clientId', {
@@ -64,9 +64,12 @@ export class TypeOrmAccountReceivableRepository
       });
     }
     if (options.search) {
-      qb.andWhere('(record.description ILIKE :search OR client.name ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      qb.andWhere(
+        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        {
+          search: `%${options.search}%`,
+        },
+      );
     }
 
     qb.orderBy(
@@ -93,7 +96,9 @@ export class TypeOrmAccountReceivableRepository
       .leftJoin('record.client', 'client');
 
     if (options.isActive !== undefined) {
-      qb.andWhere('record.isActive = :isActive', { isActive: options.isActive });
+      qb.andWhere('record.isActive = :isActive', {
+        isActive: options.isActive,
+      });
     }
     if (options.clientId) {
       qb.andWhere('record.clientId = :clientId', {
@@ -107,9 +112,12 @@ export class TypeOrmAccountReceivableRepository
       qb.andWhere('record.date <= :dateTo', { dateTo: options.dateTo });
     }
     if (options.search) {
-      qb.andWhere('(record.description ILIKE :search OR client.name ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      qb.andWhere(
+        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        {
+          search: `%${options.search}%`,
+        },
+      );
     }
 
     const raw = await qb
@@ -128,9 +136,7 @@ export class TypeOrmAccountReceivableRepository
     return orm ? AccountReceivableMapper.toDomain(orm) : null;
   }
 
-  async create(
-    data: CreateAccountReceivableData,
-  ): Promise<AccountReceivable> {
+  async create(data: CreateAccountReceivableData): Promise<AccountReceivable> {
     const orm = this.repository.create(data);
     const saved = await this.repository.save(orm);
     const withRelations = await this.repository.findOneOrFail({

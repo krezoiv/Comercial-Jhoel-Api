@@ -13,9 +13,7 @@ import { AgentReconciliationOrmEntity } from './agent-reconciliation.orm-entity'
 import { AgentReconciliationMapper } from './agent-reconciliation.mapper';
 
 @Injectable()
-export class TypeOrmAgentReconciliationRepository
-  implements AgentReconciliationRepository
-{
+export class TypeOrmAgentReconciliationRepository implements AgentReconciliationRepository {
   constructor(
     @InjectRepository(AgentReconciliationOrmEntity)
     private readonly repository: Repository<AgentReconciliationOrmEntity>,
@@ -62,7 +60,10 @@ export class TypeOrmAgentReconciliationRepository
   }
 
   async findLatestByDate(date: string): Promise<AgentReconciliation | null> {
-    const orm = await this.repository.findOne({ where: { date }, order: { createdAt: 'DESC' } });
+    const orm = await this.repository.findOne({
+      where: { date },
+      order: { createdAt: 'DESC' },
+    });
     return orm ? AgentReconciliationMapper.toDomain(orm) : null;
   }
 

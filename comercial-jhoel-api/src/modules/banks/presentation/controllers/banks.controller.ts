@@ -98,7 +98,10 @@ export class BanksController {
     @Body() dto: OpenDayRequestDto,
     @CurrentUser('userId') userId: string,
   ): Promise<DayStatusOutput> {
-    return this.openDayUseCase.execute({ date: dto.date ?? todayIsoDate(), userId });
+    return this.openDayUseCase.execute({
+      date: dto.date ?? todayIsoDate(),
+      userId,
+    });
   }
 
   @Get('balances')
@@ -134,7 +137,9 @@ export class BanksController {
   validateBankBalances(
     @Query() query: BankBalancesValidationQueryDto,
   ): Promise<BankBalancesValidationOutput> {
-    return this.validateBankBalancesForDateUseCase.execute(query.date ?? todayIsoDate());
+    return this.validateBankBalancesForDateUseCase.execute(
+      query.date ?? todayIsoDate(),
+    );
   }
 
   @Post('balances')

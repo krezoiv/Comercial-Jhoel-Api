@@ -27,7 +27,9 @@ export class CancelRechargeDayUseCase {
     private readonly getRechargeDayDetailUseCase: GetRechargeDayDetailUseCase,
   ) {}
 
-  async execute(input: CancelRechargeDayInput): Promise<RechargeDayDetailOutput> {
+  async execute(
+    input: CancelRechargeDayInput,
+  ): Promise<RechargeDayDetailOutput> {
     const reason = input.reason?.trim();
     if (!reason) {
       throw new RechargeCancelReasonRequiredError();

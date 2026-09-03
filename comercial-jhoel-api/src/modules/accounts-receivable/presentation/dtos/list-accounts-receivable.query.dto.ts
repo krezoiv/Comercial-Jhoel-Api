@@ -16,7 +16,11 @@ import type {
   SortDirection,
 } from '../../domain/repositories/account-receivable.repository';
 
-const SORT_FIELDS: AccountReceivableSortField[] = ['date', 'amount', 'createdAt'];
+const SORT_FIELDS: AccountReceivableSortField[] = [
+  'date',
+  'amount',
+  'createdAt',
+];
 const SORT_DIRECTIONS: SortDirection[] = ['asc', 'desc'];
 
 export class ListAccountsReceivableQueryDto {
@@ -71,7 +75,9 @@ export class ListAccountsReceivableQueryDto {
 
   /** Omit for both states ("Todos"); "true"/"false" filters to exactly one. */
   @IsOptional()
-  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @Transform(({ value }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
   @IsBoolean()
   isActive?: boolean;
 }

@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import { CloseAgentDayUseCase } from '../../application/use-cases/close-agent-day.use-case';
@@ -16,9 +23,7 @@ import { todayIsoDate } from '../../application/utils/today-iso-date';
 @UseGuards(JwtAuthGuard)
 @Controller('agent-reconciliations')
 export class AgentReconciliationsController {
-  constructor(
-    private readonly closeAgentDayUseCase: CloseAgentDayUseCase,
-  ) {}
+  constructor(private readonly closeAgentDayUseCase: CloseAgentDayUseCase) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

@@ -59,6 +59,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       },
       { label: 'Reportería de Heladería', icon: 'gift', path: 'reportes-heladeria' },
       { label: 'Reporte de Recargas', icon: 'smartphone', path: 'reportes-recargas' },
+      { label: 'Reporte de Cuadre de Agentes', icon: 'bank', path: 'reportes-cuadre-agentes' },
     ],
   },
   {

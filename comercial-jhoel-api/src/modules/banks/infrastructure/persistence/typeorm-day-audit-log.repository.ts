@@ -17,7 +17,10 @@ export class TypeOrmDayAuditLogRepository implements DayAuditLogRepository {
   ) {}
 
   async findByDate(date: string): Promise<DayAuditLog[]> {
-    const orms = await this.repository.find({ where: { date }, order: { performedAt: 'ASC' } });
+    const orms = await this.repository.find({
+      where: { date },
+      order: { performedAt: 'ASC' },
+    });
     return orms.map((orm) => DayAuditLogMapper.toDomain(orm));
   }
 
@@ -31,7 +34,9 @@ export class TypeOrmDayAuditLogRepository implements DayAuditLogRepository {
       newStatus: data.newStatus ?? null,
     });
     const saved = await this.repository.save(orm);
-    const withRelations = await this.repository.findOneOrFail({ where: { id: saved.id } });
+    const withRelations = await this.repository.findOneOrFail({
+      where: { id: saved.id },
+    });
     return DayAuditLogMapper.toDomain(withRelations);
   }
 }

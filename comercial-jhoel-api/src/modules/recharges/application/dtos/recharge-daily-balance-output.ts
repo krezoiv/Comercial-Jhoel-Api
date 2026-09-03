@@ -6,7 +6,10 @@ export interface RechargeDailyBalanceOutput {
   rechargeTypeName: string;
   date: string;
   previousBalance: number;
+  /** "Acreditado" — derived (`dailyBalance - previousBalance`), unchanged since before the Monto de Compra/Acreditado split. */
   totalPurchases: number;
+  /** "Compra" — real sum of every registered purchase's monto de compra this cycle, purely informational. */
+  totalPurchaseAmount: number;
   dailyBalance: number;
   finalBalance: number | null;
   /** `null` until the day is closed (no `finalBalance` registered yet). */
@@ -25,6 +28,7 @@ export function toRechargeDailyBalanceOutput(
     date: balance.date,
     previousBalance: balance.previousBalance,
     totalPurchases: balance.totalPurchases,
+    totalPurchaseAmount: balance.totalPurchaseAmount,
     dailyBalance: balance.dailyBalance,
     finalBalance: balance.finalBalance,
     sale: balance.sale,

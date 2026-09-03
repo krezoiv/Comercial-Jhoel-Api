@@ -15,7 +15,7 @@
   </div>
 
   <div class="field">
-    <label for="recharge-purchase-amount">Monto</label>
+    <label for="recharge-purchase-amount">Monto de Compra</label>
     <div class="price-input">
       <span>Q</span>
       <input
@@ -23,13 +23,32 @@
         type="text"
         inputmode="decimal"
         appDecimalInput
-        formControlName="amount"
+        formControlName="purchaseAmount"
         placeholder="0.00"
       />
     </div>
-    @if (form.controls.amount.invalid && form.controls.amount.touched) {
+    @if (form.controls.purchaseAmount.invalid && form.controls.purchaseAmount.touched) {
       <span class="field__error">Ingresa un monto mayor que cero.</span>
     }
+  </div>
+
+  <div class="field">
+    <label for="recharge-credited-amount">Monto Acreditado</label>
+    <div class="price-input">
+      <span>Q</span>
+      <input
+        id="recharge-credited-amount"
+        type="text"
+        inputmode="decimal"
+        appDecimalInput
+        formControlName="creditedAmount"
+        placeholder="0.00"
+      />
+    </div>
+    @if (form.controls.creditedAmount.invalid && form.controls.creditedAmount.touched) {
+      <span class="field__error">Ingresa un monto mayor que cero.</span>
+    }
+    <span class="field__hint">Este es el valor que afecta el saldo del día.</span>
   </div>
 
   <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting() || lockReason !== null">

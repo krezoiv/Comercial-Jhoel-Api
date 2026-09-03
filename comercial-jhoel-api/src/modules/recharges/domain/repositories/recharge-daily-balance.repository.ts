@@ -7,7 +7,10 @@ export const RECHARGE_DAILY_BALANCE_REPOSITORY = Symbol(
 export interface RegisterRechargePurchaseData {
   rechargeTypeId: string;
   date: string;
-  amount: number;
+  /** "Monto de Compra" — informational only, never affects the balance. */
+  purchaseAmount: number;
+  /** "Monto Acreditado" — the only value that increments `daily_balance`. */
+  creditedAmount: number;
   userId: string;
 }
 

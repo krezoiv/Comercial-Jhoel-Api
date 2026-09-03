@@ -21,9 +21,7 @@ import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
  * isSaving()-gates-the-button pattern, same as every other save action in
  * this app.
  */
-export class CreateAgentReconciliations1758300000000
-  implements MigrationInterface
-{
+export class CreateAgentReconciliations1758300000000 implements MigrationInterface {
   name = 'CreateAgentReconciliations1758300000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

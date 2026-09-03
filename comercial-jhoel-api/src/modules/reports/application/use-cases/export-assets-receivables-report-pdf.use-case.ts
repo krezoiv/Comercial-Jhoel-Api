@@ -7,8 +7,14 @@ import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.r
 import type { ClientRepository } from '../../../clients/domain/repositories/client.repository';
 import { InvalidDateRangeError } from '../../domain/errors/invalid-date-range.error';
 import { NoReportTypeSelectedError } from '../../domain/errors/no-report-type-selected.error';
-import { formatReportCurrency, formatReportQuantity } from '../utils/report-format.util';
-import { ReportStatusFilter, parseReportStatus } from '../utils/parse-report-status';
+import {
+  formatReportCurrency,
+  formatReportQuantity,
+} from '../utils/report-format.util';
+import {
+  ReportStatusFilter,
+  parseReportStatus,
+} from '../utils/parse-report-status';
 import { AssetsReceivablesReportType } from '../dtos/assets-receivables-report-output';
 import {
   ReportPdfFilterLine,
@@ -105,26 +111,37 @@ export class ExportAssetsReceivablesReportPdfUseCase {
       limit: EXPORT_ROW_LIMIT,
     };
 
-    const [assetsResult, receivablesResult, assetsSummary, receivablesSummary, filterLines] =
-      await Promise.all([
-        wantsAssets
-          ? this.listAssetsUseCase.execute(listInput)
-          : Promise.resolve({ items: [], total: 0 }),
-        wantsReceivables
-          ? this.listAccountsReceivableUseCase.execute(listInput)
-          : Promise.resolve({ items: [], total: 0 }),
-        wantsAssets
-          ? this.getAssetsReportSummaryUseCase.execute(input)
-          : Promise.resolve({ recordCount: 0, totalAmount: 0 }),
-        wantsReceivables
-          ? this.getAccountsReceivableReportSummaryUseCase.execute(input)
-          : Promise.resolve({ recordCount: 0, totalAmount: 0 }),
-        this.resolveFilterLines(input, types),
-      ]);
+    const [
+      assetsResult,
+      receivablesResult,
+      assetsSummary,
+      receivablesSummary,
+      filterLines,
+    ] = await Promise.all([
+      wantsAssets
+        ? this.listAssetsUseCase.execute(listInput)
+        : Promise.resolve({ items: [], total: 0 }),
+      wantsReceivables
+        ? this.listAccountsReceivableUseCase.execute(listInput)
+        : Promise.resolve({ items: [], total: 0 }),
+      wantsAssets
+        ? this.getAssetsReportSummaryUseCase.execute(input)
+        : Promise.resolve({ recordCount: 0, totalAmount: 0 }),
+      wantsReceivables
+        ? this.getAccountsReceivableReportSummaryUseCase.execute(input)
+        : Promise.resolve({ recordCount: 0, totalAmount: 0 }),
+      this.resolveFilterLines(input, types),
+    ]);
 
     const merged = [
-      ...assetsResult.items.map((item) => ({ ...item, type: 'assets' as const })),
-      ...receivablesResult.items.map((item) => ({ ...item, type: 'accounts_receivable' as const })),
+      ...assetsResult.items.map((item) => ({
+        ...item,
+        type: 'assets' as const,
+      })),
+      ...receivablesResult.items.map((item) => ({
+        ...item,
+        type: 'accounts_receivable' as const,
+      })),
     ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
     const totalMatching = assetsResult.total + receivablesResult.total;
@@ -141,10 +158,16 @@ export class ExportAssetsReceivablesReportPdfUseCase {
       return showTypeColumn ? [TYPE_LABEL[item.type], ...base] : base;
     });
 
-    const totalGeneral = assetsSummary.totalAmount + receivablesSummary.totalAmount;
+    const totalGeneral =
+      assetsSummary.totalAmount + receivablesSummary.totalAmount;
     const summaryTiles = [
       ...(wantsAssets
-        ? [{ label: 'Total Activos', value: formatReportCurrency(assetsSummary.totalAmount) }]
+        ? [
+            {
+              label: 'Total Activos',
+              value: formatReportCurrency(assetsSummary.totalAmount),
+            },
+          ]
         : []),
       ...(wantsReceivables
         ? [
@@ -154,10 +177,19 @@ export class ExportAssetsReceivablesReportPdfUseCase {
             },
           ]
         : []),
-      ...(showTypeColumn ? [{ label: 'Total General', value: formatReportCurrency(totalGeneral) }] : []),
+      ...(showTypeColumn
+        ? [
+            {
+              label: 'Total General',
+              value: formatReportCurrency(totalGeneral),
+            },
+          ]
+        : []),
       {
         label: 'Total de Registros',
-        value: formatReportQuantity(assetsSummary.recordCount + receivablesSummary.recordCount),
+        value: formatReportQuantity(
+          assetsSummary.recordCount + receivablesSummary.recordCount,
+        ),
       },
     ];
 

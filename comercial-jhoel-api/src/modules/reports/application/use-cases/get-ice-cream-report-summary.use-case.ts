@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { GetIceCreamSalesReportSummaryUseCase } from './get-ice-cream-sales-report-summary.use-case';
 import { GetIceCreamPurchasesReportSummaryUseCase } from './get-ice-cream-purchases-report-summary.use-case';
 import { NoIceCreamMovementTypeSelectedError } from '../../domain/errors/no-ice-cream-movement-type-selected.error';
-import { IceCreamReportSummaryOutput, IceCreamReportType } from '../dtos/ice-cream-report-output';
+import {
+  IceCreamReportSummaryOutput,
+  IceCreamReportType,
+} from '../dtos/ice-cream-report-output';
 
 export interface GetIceCreamReportSummaryInput {
   types?: IceCreamReportType[];
@@ -20,7 +23,9 @@ export class GetIceCreamReportSummaryUseCase {
     private readonly getIceCreamPurchasesReportSummaryUseCase: GetIceCreamPurchasesReportSummaryUseCase,
   ) {}
 
-  async execute(input: GetIceCreamReportSummaryInput): Promise<IceCreamReportSummaryOutput> {
+  async execute(
+    input: GetIceCreamReportSummaryInput,
+  ): Promise<IceCreamReportSummaryOutput> {
     const types = input.types ?? [];
     if (types.length === 0) {
       throw new NoIceCreamMovementTypeSelectedError();
@@ -32,10 +37,20 @@ export class GetIceCreamReportSummaryUseCase {
     const [salesSummary, purchasesSummary] = await Promise.all([
       wantsSales
         ? this.getIceCreamSalesReportSummaryUseCase.execute(input)
-        : Promise.resolve({ totalSold: 0, totalQuantity: 0, recordCount: 0, averagePrice: 0 }),
+        : Promise.resolve({
+            totalSold: 0,
+            totalQuantity: 0,
+            recordCount: 0,
+            averagePrice: 0,
+          }),
       wantsPurchases
         ? this.getIceCreamPurchasesReportSummaryUseCase.execute(input)
-        : Promise.resolve({ totalPurchased: 0, totalQuantity: 0, recordCount: 0, averageCost: 0 }),
+        : Promise.resolve({
+            totalPurchased: 0,
+            totalQuantity: 0,
+            recordCount: 0,
+            averageCost: 0,
+          }),
     ]);
 
     return {

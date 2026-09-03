@@ -86,6 +86,43 @@
       />
     </app-card>
   </div>
+
+  <!--
+    SIM Claro/SIM Tigo — inventario físico, completamente separado del
+    saldo electrónico de arriba: sección propia, tabla propia, tarjetas
+    propias. Nunca se suma ni se mezcla con las cifras de "Recargas
+    Vendidas"/el cuadre de saldo electrónico.
+  -->
+  <section class="recharges__sim-section">
+    <h2 class="recharges__sim-title">
+      <app-icon name="smartphone" [size]="18" />
+      SIM
+    </h2>
+    <p class="recharges__sim-subtitle">Inventario físico de SIM — independiente del saldo electrónico de Claro y Tigo.</p>
+
+    <app-sim-stock-table [stocks]="simStocks()" [loading]="simLoading()" />
+
+    <div class="recharges__cards-row">
+      <app-card [hoverable]="false" class="recharges__purchase-card">
+        <app-register-sim-purchase-form
+          [types]="simTypes()"
+          [operationDate]="operationDate()"
+          [lockReason]="dayLockReason()"
+          (registered)="onSimPurchaseRegistered($event)"
+        />
+      </app-card>
+
+      <app-card [hoverable]="false" class="recharges__purchase-card">
+        <app-register-sim-sale-form
+          [types]="simTypes()"
+          [stockByTypeId]="simStockByTypeId()"
+          [operationDate]="operationDate()"
+          [lockReason]="dayLockReason()"
+          (registered)="onSimSaleRegistered($event)"
+        />
+      </app-card>
+    </div>
+  </section>
 </div>
 
 <app-recharge-entry-confirm-modal

@@ -1,5 +1,14 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 import type { IceCreamReportType } from '../../application/dtos/ice-cream-report-output';
 
 const TYPE_VALUES: IceCreamReportType[] = ['sales', 'purchases'];
@@ -8,7 +17,9 @@ const TYPE_VALUES: IceCreamReportType[] = ['sales', 'purchases'];
 export class IceCreamReportFilterQueryDto {
   /** Comma-separated in the query string (`types=sales,purchases`) — the use case itself rejects an empty selection with `NoIceCreamMovementTypeSelectedError`, never trusting the frontend alone. */
   @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',').filter(Boolean) : value,
+  )
   @IsArray()
   @IsIn(TYPE_VALUES, { each: true })
   types?: IceCreamReportType[];

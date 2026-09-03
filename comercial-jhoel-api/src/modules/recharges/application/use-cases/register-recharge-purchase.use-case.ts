@@ -12,7 +12,10 @@ import {
 
 export interface RegisterRechargePurchaseInput {
   rechargeTypeId: string;
-  amount: number;
+  /** "Monto de Compra" — informational only, never affects the balance. */
+  purchaseAmount: number;
+  /** "Monto Acreditado" — the only value that increments the running balance. */
+  creditedAmount: number;
   userId: string;
   /** `yyyy-MM-dd` — the operation-date picker's current value, not necessarily today. */
   operationDate: string;
@@ -44,12 +47,16 @@ export class RegisterRechargePurchaseUseCase {
     input: RegisterRechargePurchaseInput,
   ): Promise<RechargeDailyBalanceOutput> {
     assertValidOperationDate(input.operationDate);
-    await assertRechargeDayWritable(this.dayOpeningRepository, input.operationDate);
+    await assertRechargeDayWritable(
+      this.dayOpeningRepository,
+      input.operationDate,
+    );
 
     const balance = await this.dailyBalanceRepository.registerPurchase({
       rechargeTypeId: input.rechargeTypeId,
       date: input.operationDate,
-      amount: input.amount,
+      purchaseAmount: input.purchaseAmount,
+      creditedAmount: input.creditedAmount,
       userId: input.userId,
     });
 

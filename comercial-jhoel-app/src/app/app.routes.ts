@@ -237,6 +237,15 @@ export const routes: Routes = [
         title: 'Reporte de Recargas Electrónicas — Panel',
       },
       {
+        path: 'reportes-cuadre-agentes',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/reports/agent-reconciliations/agent-reconciliations-report-page.component').then(
+            (m) => m.AgentReconciliationsReportPageComponent
+          ),
+        title: 'Reporte de Cuadre de Agentes — Panel',
+      },
+      {
         path: 'reportes-heladeria',
         canActivate: [adminGuard],
         loadComponent: () =>

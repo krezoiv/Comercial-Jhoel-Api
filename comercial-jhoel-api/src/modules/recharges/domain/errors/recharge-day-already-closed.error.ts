@@ -15,6 +15,8 @@ export class RechargeDayAlreadyClosedError extends DomainError {
   readonly status = 400;
 
   constructor(date: string) {
-    super(`El día de recargas correspondiente a esta operación (${date}) ya se encuentra cerrado.`);
+    super(
+      `El día de recargas correspondiente a esta operación (${date}) ya se encuentra cerrado.`,
+    );
   }
 }

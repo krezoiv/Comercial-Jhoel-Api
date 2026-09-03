@@ -35,7 +35,9 @@ export class CloseRechargeDayUseCase {
     private readonly getRechargeDayStatusUseCase: GetRechargeDayStatusUseCase,
   ) {}
 
-  async execute(input: CloseRechargeDayInput): Promise<RechargeDayStatusOutput> {
+  async execute(
+    input: CloseRechargeDayInput,
+  ): Promise<RechargeDayStatusOutput> {
     assertValidOperationDate(input.date);
 
     const dayOpening = await this.dayOpeningRepository.findByDate(input.date);
@@ -49,7 +51,9 @@ export class CloseRechargeDayUseCase {
       throw new RechargeDayAlreadyClosedError(input.date);
     }
 
-    const hasSavedCuadreToday = await this.salesClosureRepository.existsForDate(input.date);
+    const hasSavedCuadreToday = await this.salesClosureRepository.existsForDate(
+      input.date,
+    );
     if (!hasSavedCuadreToday) {
       throw new RechargeDayNotReadyToCloseError(input.date);
     }

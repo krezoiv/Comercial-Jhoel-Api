@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableColumn, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableColumn,
+  TableIndex,
+} from 'typeorm';
 
 /**
  * "Gestión de Días Cerrados" — reapertura controlada, recierre y anulación
@@ -26,13 +32,34 @@ export class AddDayReopeningAndAudit1758900000000 implements MigrationInterface 
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.addColumns('day_openings', [
-      new TableColumn({ name: 'reopened_at', type: 'timestamptz', isNullable: true }),
+      new TableColumn({
+        name: 'reopened_at',
+        type: 'timestamptz',
+        isNullable: true,
+      }),
       new TableColumn({ name: 'reopened_by', type: 'uuid', isNullable: true }),
-      new TableColumn({ name: 'reopen_reason', type: 'text', isNullable: true }),
-      new TableColumn({ name: 'is_cancelled', type: 'boolean', isNullable: false, default: false }),
-      new TableColumn({ name: 'cancelled_at', type: 'timestamptz', isNullable: true }),
+      new TableColumn({
+        name: 'reopen_reason',
+        type: 'text',
+        isNullable: true,
+      }),
+      new TableColumn({
+        name: 'is_cancelled',
+        type: 'boolean',
+        isNullable: false,
+        default: false,
+      }),
+      new TableColumn({
+        name: 'cancelled_at',
+        type: 'timestamptz',
+        isNullable: true,
+      }),
       new TableColumn({ name: 'cancelled_by', type: 'uuid', isNullable: true }),
-      new TableColumn({ name: 'cancel_reason', type: 'text', isNullable: true }),
+      new TableColumn({
+        name: 'cancel_reason',
+        type: 'text',
+        isNullable: true,
+      }),
     ]);
 
     await queryRunner.query(`
@@ -50,14 +77,29 @@ export class AddDayReopeningAndAudit1758900000000 implements MigrationInterface 
       new Table({
         name: 'day_audit_logs',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true, default: 'gen_random_uuid()' },
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            default: 'gen_random_uuid()',
+          },
           { name: 'date', type: 'date' },
           { name: 'action', type: 'varchar', length: '30' },
           { name: 'performed_by', type: 'uuid' },
           { name: 'performed_at', type: 'timestamptz', default: 'now()' },
           { name: 'reason', type: 'text', isNullable: true },
-          { name: 'previous_status', type: 'varchar', length: '30', isNullable: true },
-          { name: 'new_status', type: 'varchar', length: '30', isNullable: true },
+          {
+            name: 'previous_status',
+            type: 'varchar',
+            length: '30',
+            isNullable: true,
+          },
+          {
+            name: 'new_status',
+            type: 'varchar',
+            length: '30',
+            isNullable: true,
+          },
         ],
         foreignKeys: [
           {
@@ -73,7 +115,10 @@ export class AddDayReopeningAndAudit1758900000000 implements MigrationInterface 
 
     await queryRunner.createIndex(
       'day_audit_logs',
-      new TableIndex({ name: 'IDX_day_audit_logs_date', columnNames: ['date'] }),
+      new TableIndex({
+        name: 'IDX_day_audit_logs_date',
+        columnNames: ['date'],
+      }),
     );
 
     // ------------------------------------------------------------------
@@ -329,8 +374,12 @@ export class AddDayReopeningAndAudit1758900000000 implements MigrationInterface 
       $fn$;
     `);
 
-    await queryRunner.query('DROP FUNCTION IF EXISTS cancel_agent_day(DATE, UUID, TEXT)');
-    await queryRunner.query('DROP FUNCTION IF EXISTS reopen_agent_day(DATE, UUID, TEXT)');
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS cancel_agent_day(DATE, UUID, TEXT)',
+    );
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS reopen_agent_day(DATE, UUID, TEXT)',
+    );
     await queryRunner.dropTable('day_audit_logs');
     await queryRunner.query(`
       ALTER TABLE day_openings

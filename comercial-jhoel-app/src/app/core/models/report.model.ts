@@ -156,6 +156,36 @@ export interface RechargesReportSummary {
   averageSale: number;
 }
 
+/** No `rechargeTypeId`-style filter — `agent_reconciliations` has no product/category/business dimension, same reasoning as the Recargas report's own minimal filter set. */
+export interface AgentReconciliationsReportFilters {
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AgentReconciliationsReportRow {
+  id: string;
+  date: string;
+  totalCash: number;
+  totalBanks: number;
+  totalAssets: number;
+  totalAccountsReceivable: number;
+  result: number;
+  createdAt: string;
+  createdByUsername: string;
+}
+
+export interface AgentReconciliationsReportSummary {
+  recordCount: number;
+  totalCash: number;
+  totalBanks: number;
+  totalAssets: number;
+  totalAccountsReceivable: number;
+  totalResult: number;
+  averageResult: number;
+}
+
 export type ReportStatusFilter = 'all' | 'active' | 'inactive';
 
 /**

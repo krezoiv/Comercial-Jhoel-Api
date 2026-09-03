@@ -26,9 +26,7 @@ import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
  * business data of its own — cuadre saves and day-closing are independent
  * actions for this module, unlike Banks where they're the same one.
  */
-export class CreateRechargeDayOpenings1759000000000
-  implements MigrationInterface
-{
+export class CreateRechargeDayOpenings1759000000000 implements MigrationInterface {
   name = 'CreateRechargeDayOpenings1759000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -50,7 +48,12 @@ export class CreateRechargeDayOpenings1759000000000
           { name: 'reopened_at', type: 'timestamptz', isNullable: true },
           { name: 'reopened_by', type: 'uuid', isNullable: true },
           { name: 'reopen_reason', type: 'text', isNullable: true },
-          { name: 'is_cancelled', type: 'boolean', isNullable: false, default: false },
+          {
+            name: 'is_cancelled',
+            type: 'boolean',
+            isNullable: false,
+            default: false,
+          },
           { name: 'cancelled_at', type: 'timestamptz', isNullable: true },
           { name: 'cancelled_by', type: 'uuid', isNullable: true },
           { name: 'cancel_reason', type: 'text', isNullable: true },
@@ -96,14 +99,29 @@ export class CreateRechargeDayOpenings1759000000000
       new Table({
         name: 'recharge_day_audit_logs',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true, default: 'gen_random_uuid()' },
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            default: 'gen_random_uuid()',
+          },
           { name: 'date', type: 'date' },
           { name: 'action', type: 'varchar', length: '30' },
           { name: 'performed_by', type: 'uuid' },
           { name: 'performed_at', type: 'timestamptz', default: 'now()' },
           { name: 'reason', type: 'text', isNullable: true },
-          { name: 'previous_status', type: 'varchar', length: '30', isNullable: true },
-          { name: 'new_status', type: 'varchar', length: '30', isNullable: true },
+          {
+            name: 'previous_status',
+            type: 'varchar',
+            length: '30',
+            isNullable: true,
+          },
+          {
+            name: 'new_status',
+            type: 'varchar',
+            length: '30',
+            isNullable: true,
+          },
         ],
         foreignKeys: [
           {
@@ -119,7 +137,10 @@ export class CreateRechargeDayOpenings1759000000000
 
     await queryRunner.createIndex(
       'recharge_day_audit_logs',
-      new TableIndex({ name: 'IDX_recharge_day_audit_logs_date', columnNames: ['date'] }),
+      new TableIndex({
+        name: 'IDX_recharge_day_audit_logs_date',
+        columnNames: ['date'],
+      }),
     );
 
     // ------------------------------------------------------------------
@@ -306,9 +327,15 @@ export class CreateRechargeDayOpenings1759000000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('DROP FUNCTION IF EXISTS cancel_recharge_day(DATE, UUID, TEXT)');
-    await queryRunner.query('DROP FUNCTION IF EXISTS reopen_recharge_day(DATE, UUID, TEXT)');
-    await queryRunner.query('DROP FUNCTION IF EXISTS close_recharge_day(DATE, UUID)');
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS cancel_recharge_day(DATE, UUID, TEXT)',
+    );
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS reopen_recharge_day(DATE, UUID, TEXT)',
+    );
+    await queryRunner.query(
+      'DROP FUNCTION IF EXISTS close_recharge_day(DATE, UUID)',
+    );
     await queryRunner.dropTable('recharge_day_audit_logs');
     await queryRunner.dropTable('recharge_day_openings');
   }

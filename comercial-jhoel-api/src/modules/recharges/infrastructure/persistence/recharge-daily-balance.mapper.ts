@@ -2,7 +2,11 @@ import { RechargeDailyBalance } from '../../domain/entities/recharge-daily-balan
 import { RechargeDailyBalanceOrmEntity } from './recharge-daily-balance.orm-entity';
 
 export class RechargeDailyBalanceMapper {
-  static toDomain(orm: RechargeDailyBalanceOrmEntity): RechargeDailyBalance {
+  /** `totalPurchaseAmount` is always supplied explicitly by the repository (a real `SUM(recharge_purchases.amount)` query) — never defaulted here, so a call site can't silently forget it. */
+  static toDomain(
+    orm: RechargeDailyBalanceOrmEntity,
+    totalPurchaseAmount: number,
+  ): RechargeDailyBalance {
     return RechargeDailyBalance.create({
       id: orm.id,
       rechargeTypeId: orm.rechargeTypeId,
@@ -12,6 +16,7 @@ export class RechargeDailyBalanceMapper {
       previousBalance: orm.previousBalance,
       dailyBalance: orm.dailyBalance,
       finalBalance: orm.finalBalance,
+      totalPurchaseAmount,
       createdByUserId: orm.createdByUserId,
       createdByUsername: orm.createdByUser?.username ?? '—',
       updatedByUserId: orm.updatedByUserId,

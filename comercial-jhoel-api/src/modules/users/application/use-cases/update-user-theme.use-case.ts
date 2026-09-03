@@ -3,7 +3,10 @@ import { USER_REPOSITORY } from '../../domain/repositories/user.repository';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import { ThemePreference } from '../../domain/entities/user.entity';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
-import { UserPreferencesOutput, toUserPreferencesOutput } from '../dtos/user-preferences-output';
+import {
+  UserPreferencesOutput,
+  toUserPreferencesOutput,
+} from '../dtos/user-preferences-output';
 
 /**
  * `PATCH /users/me/preferences/theme` — same pattern as every other
@@ -26,7 +29,10 @@ export class UpdateUserThemeUseCase {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(userId: string, theme: ThemePreference): Promise<UserPreferencesOutput> {
+  async execute(
+    userId: string,
+    theme: ThemePreference,
+  ): Promise<UserPreferencesOutput> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new UserNotFoundError(userId);

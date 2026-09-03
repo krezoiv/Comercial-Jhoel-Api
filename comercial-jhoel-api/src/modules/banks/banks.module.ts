@@ -54,7 +54,11 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     AssetsModule,
     AccountsReceivableModule,
   ],
-  controllers: [BanksController, AgentReconciliationsController, ClosedDaysController],
+  controllers: [
+    BanksController,
+    AgentReconciliationsController,
+    ClosedDaysController,
+  ],
   providers: [
     { provide: BANK_REPOSITORY, useClass: TypeOrmBankRepository },
     {

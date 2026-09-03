@@ -3,7 +3,10 @@ import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../../accounts-receivable/doma
 import type { AccountReceivableRepository } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
 import { InvalidDateRangeError } from '../../domain/errors/invalid-date-range.error';
 import { AccountsReceivableReportSummaryOutput } from '../dtos/accounts-receivable-report-output';
-import { ReportStatusFilter, parseReportStatus } from '../utils/parse-report-status';
+import {
+  ReportStatusFilter,
+  parseReportStatus,
+} from '../utils/parse-report-status';
 
 export interface GetAccountsReceivableReportSummaryInput {
   clientId?: string;

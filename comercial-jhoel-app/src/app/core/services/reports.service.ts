@@ -4,6 +4,9 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  AgentReconciliationsReportFilters,
+  AgentReconciliationsReportRow,
+  AgentReconciliationsReportSummary,
   ApiSuccessResponse,
   AssetsReceivablesReportFilters,
   AssetsReceivablesReportRow,
@@ -139,6 +142,35 @@ export class ReportsService {
 
   exportRechargesReportPdf(filters: RechargesReportFilters): Observable<Blob> {
     return this.http.get(`${BASE_URL}/recharges/export`, {
+      params: toParams(filters),
+      responseType: 'blob',
+    });
+  }
+
+  getAgentReconciliationsReport(
+    filters: AgentReconciliationsReportFilters,
+  ): Observable<PaginatedReport<AgentReconciliationsReportRow>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedReport<AgentReconciliationsReportRow>>>(
+        `${BASE_URL}/agent-reconciliations`,
+        { params: toParams(filters) },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getAgentReconciliationsReportSummary(
+    filters: AgentReconciliationsReportFilters,
+  ): Observable<AgentReconciliationsReportSummary> {
+    return this.http
+      .get<ApiSuccessResponse<AgentReconciliationsReportSummary>>(
+        `${BASE_URL}/agent-reconciliations/summary`,
+        { params: toParams(filters) },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  exportAgentReconciliationsReportPdf(filters: AgentReconciliationsReportFilters): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/agent-reconciliations/export`, {
       params: toParams(filters),
       responseType: 'blob',
     });

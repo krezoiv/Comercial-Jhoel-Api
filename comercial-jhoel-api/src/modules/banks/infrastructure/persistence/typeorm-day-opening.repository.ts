@@ -9,9 +9,15 @@ import {
 } from '../../domain/repositories/day-opening.repository';
 import { DayNotFoundError } from '../../domain/errors/day-not-found.error';
 import { DayNotClosedError } from '../../domain/errors/day-not-closed.error';
-import { DayCancelledError, DayAlreadyCancelledError } from '../../domain/errors/day-cancelled.error';
+import {
+  DayCancelledError,
+  DayAlreadyCancelledError,
+} from '../../domain/errors/day-cancelled.error';
 import { LaterDayExistsError } from '../../domain/errors/later-day-exists.error';
-import { ReopenReasonRequiredError, CancelReasonRequiredError } from '../../domain/errors/reason-required.error';
+import {
+  ReopenReasonRequiredError,
+  CancelReasonRequiredError,
+} from '../../domain/errors/reason-required.error';
 import { DayOpeningOrmEntity } from './day-opening.orm-entity';
 import { DayOpeningMapper } from './day-opening.mapper';
 
@@ -43,7 +49,9 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     try {
       const orm = this.repository.create({ date, openedBy: userId });
       const saved = await this.repository.save(orm);
-      const withRelations = await this.repository.findOneOrFail({ where: { id: saved.id } });
+      const withRelations = await this.repository.findOneOrFail({
+        where: { id: saved.id },
+      });
       return DayOpeningMapper.toDomain(withRelations);
     } catch (error) {
       if (error instanceof QueryFailedError) {
@@ -66,14 +74,18 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
    * historical row if the day was reopened and closed again more than
    * once.
    */
-  async findClosedDays(filters: ClosedDaysFilters): Promise<ClosedDayViewRow[]> {
+  async findClosedDays(
+    filters: ClosedDaysFilters,
+  ): Promise<ClosedDayViewRow[]> {
     const qb = this.repository
       .createQueryBuilder('day')
       .leftJoin('day.openedByUser', 'openedByUser')
       .leftJoin('day.closedByUser', 'closedByUser')
       .leftJoin('day.reopenedByUser', 'reopenedByUser')
       .leftJoin('day.cancelledByUser', 'cancelledByUser')
-      .where('(day.closedAt IS NOT NULL OR day.reopenedAt IS NOT NULL OR day.isCancelled = true)');
+      .where(
+        '(day.closedAt IS NOT NULL OR day.reopenedAt IS NOT NULL OR day.isCancelled = true)',
+      );
 
     if (filters.dateFrom) {
       qb.andWhere('day.date >= :dateFrom', { dateFrom: filters.dateFrom });
@@ -90,7 +102,9 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     if (filters.status === 'CANCELLED') {
       qb.andWhere('day.isCancelled = true');
     } else if (filters.status === 'REOPENED') {
-      qb.andWhere('day.isCancelled = false AND day.reopenedAt IS NOT NULL AND day.closedAt IS NULL');
+      qb.andWhere(
+        'day.isCancelled = false AND day.reopenedAt IS NOT NULL AND day.closedAt IS NULL',
+      );
     } else if (filters.status === 'CLOSED') {
       qb.andWhere('day.isCancelled = false AND day.closedAt IS NOT NULL');
     }
@@ -160,7 +174,12 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
       .orderBy('day.date', 'DESC');
 
     if (filters.resultSign) {
-      const comparator = filters.resultSign === 'positive' ? '>' : filters.resultSign === 'negative' ? '<' : '=';
+      const comparator =
+        filters.resultSign === 'positive'
+          ? '>'
+          : filters.resultSign === 'negative'
+            ? '<'
+            : '=';
       qb.andWhere(
         `(SELECT r.result FROM agent_reconciliations r WHERE r.date = day.date ORDER BY r.created_at DESC LIMIT 1) ${comparator} 0`,
       );
@@ -193,7 +212,11 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
       // this raw query, so it has to be formatted by hand to the same
       // `yyyy-MM-dd` shape the rest of the app already uses.
       date: this.formatDateOnly(row.date),
-      status: row.isCancelled ? 'CANCELLED' : row.closedAt ? 'CLOSED' : 'REOPENED',
+      status: row.isCancelled
+        ? 'CANCELLED'
+        : row.closedAt
+          ? 'CLOSED'
+          : 'REOPENED',
       openedAt: row.openedAt,
       openedByUsername: row.openedByUsername ?? '',
       closedAt: row.closedAt,
@@ -206,15 +229,26 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
       cancelReason: row.cancelReason,
       totalBanks: row.totalBanks !== null ? parseFloat(row.totalBanks) : null,
       totalCash: row.totalCash !== null ? parseFloat(row.totalCash) : null,
-      totalAccountsReceivable: row.totalAccountsReceivable !== null ? parseFloat(row.totalAccountsReceivable) : null,
-      totalAssets: row.totalAssets !== null ? parseFloat(row.totalAssets) : null,
+      totalAccountsReceivable:
+        row.totalAccountsReceivable !== null
+          ? parseFloat(row.totalAccountsReceivable)
+          : null,
+      totalAssets:
+        row.totalAssets !== null ? parseFloat(row.totalAssets) : null,
       result: row.result !== null ? parseFloat(row.result) : null,
     }));
   }
 
-  async reopen(date: string, userId: string, reason: string): Promise<DayOpening> {
+  async reopen(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<DayOpening> {
     try {
-      await this.repository.manager.query('SELECT reopen_agent_day($1, $2, $3)', [date, userId, reason]);
+      await this.repository.manager.query(
+        'SELECT reopen_agent_day($1, $2, $3)',
+        [date, userId, reason],
+      );
     } catch (error) {
       throw this.translateError(error, date);
     }
@@ -222,9 +256,16 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     return DayOpeningMapper.toDomain(updated);
   }
 
-  async cancel(date: string, userId: string, reason: string): Promise<DayOpening> {
+  async cancel(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<DayOpening> {
     try {
-      await this.repository.manager.query('SELECT cancel_agent_day($1, $2, $3)', [date, userId, reason]);
+      await this.repository.manager.query(
+        'SELECT cancel_agent_day($1, $2, $3)',
+        [date, userId, reason],
+      );
     } catch (error) {
       throw this.translateError(error, date);
     }
@@ -248,7 +289,9 @@ export class TypeOrmDayOpeningRepository implements DayOpeningRepository {
     if (!(error instanceof QueryFailedError)) {
       return error;
     }
-    const message = (error.driverError as { message?: string } | undefined)?.message ?? error.message;
+    const message =
+      (error.driverError as { message?: string } | undefined)?.message ??
+      error.message;
     const [code] = message.split(':');
 
     switch (code) {

@@ -41,7 +41,11 @@ export class GetRechargeDayDetailUseCase {
       this.dayAuditLogRepository.findByDate(date),
     ]);
 
-    const status = dayOpening.isCancelled ? 'CANCELLED' : dayOpening.isClosed ? 'CLOSED' : 'REOPENED';
+    const status = dayOpening.isCancelled
+      ? 'CANCELLED'
+      : dayOpening.isClosed
+        ? 'CLOSED'
+        : 'REOPENED';
 
     return {
       date: dayOpening.date,
@@ -49,13 +53,19 @@ export class GetRechargeDayDetailUseCase {
       openedAt: dayOpening.openedAt,
       openedByUsername: dayOpening.openedByUsername,
       closedAt: dayOpening.closedAt,
-      closedByUsername: dayOpening.closedBy ? dayOpening.closedByUsername : null,
+      closedByUsername: dayOpening.closedBy
+        ? dayOpening.closedByUsername
+        : null,
       reopenedAt: dayOpening.reopenedAt,
-      reopenedByUsername: dayOpening.reopenedBy ? dayOpening.reopenedByUsername : null,
+      reopenedByUsername: dayOpening.reopenedBy
+        ? dayOpening.reopenedByUsername
+        : null,
       reopenReason: dayOpening.reopenReason,
       isCancelled: dayOpening.isCancelled,
       cancelledAt: dayOpening.cancelledAt,
-      cancelledByUsername: dayOpening.cancelledBy ? dayOpening.cancelledByUsername : null,
+      cancelledByUsername: dayOpening.cancelledBy
+        ? dayOpening.cancelledByUsername
+        : null,
       cancelReason: dayOpening.cancelReason,
       closures: closures.map(toRechargeSalesClosureOutput),
       auditLog: auditLog.map((entry) => ({

@@ -1,4 +1,7 @@
-import { RechargeDayAuditAction, RechargeDayAuditLog } from '../../domain/entities/recharge-day-audit-log.entity';
+import {
+  RechargeDayAuditAction,
+  RechargeDayAuditLog,
+} from '../../domain/entities/recharge-day-audit-log.entity';
 import { RechargeDayAuditLogOrmEntity } from './recharge-day-audit-log.orm-entity';
 
 export class RechargeDayAuditLogMapper {

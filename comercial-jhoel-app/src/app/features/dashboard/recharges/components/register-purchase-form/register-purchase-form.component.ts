@@ -15,6 +15,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RechargeDailyBalance, RechargeType, formatCurrency } from '../../../../../core/models';
 import { RechargesService } from '../../../../../core/services/recharges.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
@@ -22,7 +23,11 @@ import { DecimalInputDirective } from '../../../../../shared/directives/decimal-
 /**
  * Self-contained, like `CategoryFormModalComponent`/`ProductFormModalComponent` — calls
  * `RechargesService` directly and emits the updated row so the parent only has to merge it
- * into its `balances` list, rather than owning the request itself.
+ * into its `balances` list, rather than owning the request itself. Now confirms via the
+ * global `ConfirmDialogService` before submitting (this form had no confirmation step before
+ * the Monto de Compra/Acreditado ticket) — the promise resolves and closes immediately, the
+ * pre-existing `isSubmitting` signal takes over from there, same pattern already used by the
+ * 11 CRUD form-modals migrated to this service.
  */
 @Component({
   selector: 'app-register-purchase-form',
@@ -44,12 +49,14 @@ export class RegisterPurchaseFormComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly rechargesService = inject(RechargesService);
   private readonly notificationService = inject(NotificationService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     rechargeTypeId: ['', Validators.required],
-    amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    purchaseAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    creditedAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
   });
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -58,23 +65,40 @@ export class RegisterPurchaseFormComponent implements OnChanges {
     }
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid || this.isSubmitting() || this.lockReason !== null) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { rechargeTypeId, amount } = this.form.getRawValue();
+    const { rechargeTypeId, purchaseAmount, creditedAmount } = this.form.getRawValue();
+
+    const confirmed = await this.confirmDialogService.confirm({
+      type: 'FINANCIAL_OPERATION',
+      title: 'Confirmar registro de compra',
+      message: `¿Desea registrar esta compra?\n\nMonto de Compra: ${formatCurrency(purchaseAmount!)}\nMonto Acreditado: ${formatCurrency(creditedAmount!)}`,
+      confirmText: 'Confirmar',
+    });
+    if (!confirmed) {
+      return;
+    }
+
     this.isSubmitting.set(true);
 
     this.rechargesService
-      .registerPurchase({ rechargeTypeId, amount: amount!, operationDate: this.operationDate })
+      .registerPurchase({
+        rechargeTypeId,
+        purchaseAmount: purchaseAmount!,
+        creditedAmount: creditedAmount!,
+        operationDate: this.operationDate,
+      })
       .subscribe({
       next: (balance) => {
         this.isSubmitting.set(false);
-        this.form.controls.amount.reset(null);
+        this.form.controls.purchaseAmount.reset(null);
+        this.form.controls.creditedAmount.reset(null);
         this.notificationService.success(
-          `Compra de ${formatCurrency(amount!)} registrada para ${balance.rechargeTypeName}.`
+          `Compra de ${formatCurrency(purchaseAmount!)} (acreditado ${formatCurrency(creditedAmount!)}) registrada para ${balance.rechargeTypeName}.`
         );
         this.registered.emit(balance);
       },

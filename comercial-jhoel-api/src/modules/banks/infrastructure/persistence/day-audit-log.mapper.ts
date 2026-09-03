@@ -1,4 +1,7 @@
-import { DayAuditAction, DayAuditLog } from '../../domain/entities/day-audit-log.entity';
+import {
+  DayAuditAction,
+  DayAuditLog,
+} from '../../domain/entities/day-audit-log.entity';
 import { DayAuditLogOrmEntity } from './day-audit-log.orm-entity';
 
 export class DayAuditLogMapper {

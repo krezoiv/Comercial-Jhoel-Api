@@ -4,7 +4,10 @@ import { GetAccountsReceivableReportSummaryUseCase } from './get-accounts-receiv
 import { InvalidDateRangeError } from '../../domain/errors/invalid-date-range.error';
 import { NoReportTypeSelectedError } from '../../domain/errors/no-report-type-selected.error';
 import { ReportStatusFilter } from '../utils/parse-report-status';
-import { AssetsReceivablesReportSummaryOutput, AssetsReceivablesReportType } from '../dtos/assets-receivables-report-output';
+import {
+  AssetsReceivablesReportSummaryOutput,
+  AssetsReceivablesReportType,
+} from '../dtos/assets-receivables-report-output';
 
 export interface GetAssetsReceivablesReportSummaryInput {
   types?: AssetsReceivablesReportType[];

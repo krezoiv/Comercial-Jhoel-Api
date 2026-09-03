@@ -1,6 +1,8 @@
 import { RechargeDayOpening } from '../entities/recharge-day-opening.entity';
 
-export const RECHARGE_DAY_OPENING_REPOSITORY = Symbol('RECHARGE_DAY_OPENING_REPOSITORY');
+export const RECHARGE_DAY_OPENING_REPOSITORY = Symbol(
+  'RECHARGE_DAY_OPENING_REPOSITORY',
+);
 
 export type RechargeClosedDayStatus = 'CLOSED' | 'REOPENED' | 'CANCELLED';
 export type RechargeResultSign = 'positive' | 'negative' | 'zero';
@@ -50,9 +52,19 @@ export interface RechargeDayOpeningRepository {
   /** Via `close_recharge_day` (SQL) — requires at least one cuadre already saved for the date; carries no business data of its own (see the migration's own doc comment for why this is separate from "Guardar Cuadre", unlike Banks). */
   close(date: string, userId: string): Promise<RechargeDayOpening>;
   /** "Gestión de Días de Recargas" — only dates that were ever closed (CLOSED/REOPENED/CANCELLED), never a day still in progress. */
-  findClosedDays(filters: RechargeClosedDaysFilters): Promise<RechargeClosedDayViewRow[]>;
+  findClosedDays(
+    filters: RechargeClosedDaysFilters,
+  ): Promise<RechargeClosedDayViewRow[]>;
   /** Via `reopen_recharge_day` (SQL) — validates status/cancellation/later-day-exists and records the audit trail atomically. */
-  reopen(date: string, userId: string, reason: string): Promise<RechargeDayOpening>;
+  reopen(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<RechargeDayOpening>;
   /** Via `cancel_recharge_day` (SQL) — same kind of atomic validation as `reopen`. */
-  cancel(date: string, userId: string, reason: string): Promise<RechargeDayOpening>;
+  cancel(
+    date: string,
+    userId: string,
+    reason: string,
+  ): Promise<RechargeDayOpening>;
 }

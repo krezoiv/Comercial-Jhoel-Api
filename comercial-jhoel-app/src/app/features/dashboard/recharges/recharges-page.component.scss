@@ -116,3 +116,31 @@ app-recharge-table {
 .recharges__summary-card {
   display: block;
 }
+
+// ---- SIM — visually distinct block, never mixed with the saldo electrónico above ----
+
+.recharges__sim-section {
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 2px dashed var(--color-border-light);
+}
+
+.recharges__sim-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-2);
+}
+
+.recharges__sim-subtitle {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-subtle);
+  margin-bottom: var(--space-5);
+}
+
+app-sim-stock-table {
+  display: block;
+  margin-bottom: var(--space-6);
+}

@@ -5,6 +5,8 @@ export class RechargeDayNotClosedError extends DomainError {
   readonly status = 400;
 
   constructor(date: string) {
-    super(`El día de recargas ${date} no está cerrado, no se puede reabrir ni anular.`);
+    super(
+      `El día de recargas ${date} no está cerrado, no se puede reabrir ni anular.`,
+    );
   }
 }

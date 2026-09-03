@@ -21,7 +21,8 @@ export interface CancelDayInput {
 @Injectable()
 export class CancelDayUseCase {
   constructor(
-    @Inject(DAY_OPENING_REPOSITORY) private readonly dayOpeningRepository: DayOpeningRepository,
+    @Inject(DAY_OPENING_REPOSITORY)
+    private readonly dayOpeningRepository: DayOpeningRepository,
     private readonly getDayDetailUseCase: GetDayDetailUseCase,
   ) {}
 

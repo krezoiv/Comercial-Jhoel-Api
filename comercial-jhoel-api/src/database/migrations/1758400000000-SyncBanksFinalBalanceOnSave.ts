@@ -29,9 +29,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * value alone, that's a deliberate follow-up rule to add, not an
  * oversight here.
  */
-export class SyncBanksFinalBalanceOnSave1758400000000
-  implements MigrationInterface
-{
+export class SyncBanksFinalBalanceOnSave1758400000000 implements MigrationInterface {
   name = 'SyncBanksFinalBalanceOnSave1758400000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

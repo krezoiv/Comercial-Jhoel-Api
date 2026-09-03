@@ -18,7 +18,8 @@
  * - `CANCELLED`: the cycle was cancelled (soft delete) — a terminal state,
  *   blocked the same as `CLOSED`.
  */
-export type RechargeDayWorkStatus = 'NOT_OPENED' | 'OPENED' | 'REOPENED' | 'CLOSED' | 'CANCELLED';
+export type RechargeDayWorkStatus =
+  'NOT_OPENED' | 'OPENED' | 'REOPENED' | 'CLOSED' | 'CANCELLED';
 
 export interface RechargeDayStatusOutput {
   date: string;

@@ -1,6 +1,11 @@
-import { RechargeDayAuditAction, RechargeDayAuditLog } from '../entities/recharge-day-audit-log.entity';
+import {
+  RechargeDayAuditAction,
+  RechargeDayAuditLog,
+} from '../entities/recharge-day-audit-log.entity';
 
-export const RECHARGE_DAY_AUDIT_LOG_REPOSITORY = Symbol('RECHARGE_DAY_AUDIT_LOG_REPOSITORY');
+export const RECHARGE_DAY_AUDIT_LOG_REPOSITORY = Symbol(
+  'RECHARGE_DAY_AUDIT_LOG_REPOSITORY',
+);
 
 export interface CreateRechargeDayAuditLogData {
   date: string;

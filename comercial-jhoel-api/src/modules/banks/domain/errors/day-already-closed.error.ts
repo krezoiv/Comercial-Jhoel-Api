@@ -13,6 +13,8 @@ export class DayAlreadyClosedError extends DomainError {
   readonly status = 400;
 
   constructor(date: string) {
-    super(`El día correspondiente a esta operación (${date}) ya se encuentra cerrado.`);
+    super(
+      `El día correspondiente a esta operación (${date}) ya se encuentra cerrado.`,
+    );
   }
 }
