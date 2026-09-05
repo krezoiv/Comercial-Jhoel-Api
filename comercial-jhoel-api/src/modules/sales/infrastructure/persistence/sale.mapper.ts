@@ -12,6 +12,10 @@ export class SaleMapper {
       saleDate: orm.saleDate,
       total: orm.total,
       status: orm.status,
+      clientId: orm.clientId,
+      clientName: orm.client?.name ?? null,
+      priceList: orm.priceList,
+      draftKey: orm.draftKey,
       items: (orm.items ?? []).map((detail) =>
         SaleDetail.create({
           id: detail.id,

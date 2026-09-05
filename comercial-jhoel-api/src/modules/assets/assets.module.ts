@@ -9,6 +9,11 @@ import { ListAssetsUseCase } from './application/use-cases/list-assets.use-case'
 import { GetAssetByIdUseCase } from './application/use-cases/get-asset-by-id.use-case';
 import { UpdateAssetUseCase } from './application/use-cases/update-asset.use-case';
 import { DeactivateAssetUseCase } from './application/use-cases/deactivate-asset.use-case';
+import { RegisterAssetChargeUseCase } from './application/use-cases/register-asset-charge.use-case';
+import { RegisterAssetPaymentUseCase } from './application/use-cases/register-asset-payment.use-case';
+import { GetAssetStatementUseCase } from './application/use-cases/get-asset-statement.use-case';
+import { GetAssetCurrentBalanceUseCase } from './application/use-cases/get-asset-current-balance.use-case';
+import { GetAssetActiveBalanceUseCase } from './application/use-cases/get-asset-active-balance.use-case';
 import { AssetsController } from './presentation/controllers/assets.controller';
 
 @Module({
@@ -24,6 +29,11 @@ import { AssetsController } from './presentation/controllers/assets.controller';
     GetAssetByIdUseCase,
     UpdateAssetUseCase,
     DeactivateAssetUseCase,
+    RegisterAssetChargeUseCase,
+    RegisterAssetPaymentUseCase,
+    GetAssetStatementUseCase,
+    GetAssetCurrentBalanceUseCase,
+    GetAssetActiveBalanceUseCase,
   ],
   // Exported for ReportsModule's Activos report: ASSET_REPOSITORY backs its own summary
   // use case, and ListAssetsUseCase is reused directly for the report's list endpoint —

@@ -3,16 +3,24 @@ import {
   ArrayMinSize,
   IsArray,
   IsDateString,
+  IsIn,
   IsInt,
   IsNumber,
+  IsOptional,
   IsUUID,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
 export class CreatePurchaseItemRequestDto {
   @IsUUID()
   productId: string;
+
+  /** Which presentation `quantity` is expressed in (e.g. "Caja"). Omit to use the product's base "Unidad" — the conversion factor is always resolved server-side, never trusted from the client. */
+  @IsOptional()
+  @IsUUID()
+  presentationId?: string;
 
   @IsInt()
   @Min(1)
@@ -40,4 +48,15 @@ export class CreatePurchaseRequestDto {
   @ValidateNested({ each: true })
   @Type(() => CreatePurchaseItemRequestDto)
   items: CreatePurchaseItemRequestDto[];
+
+  @IsIn(['CONTADO', 'CREDITO'])
+  paymentType: 'CONTADO' | 'CREDITO';
+
+  /** ISO date string — required only when `paymentType` is `'CREDITO'` (`@ValidateIf` skips this rule entirely for `'CONTADO'`). `CreatePurchaseUseCase` also ignores any value sent alongside `'CONTADO'` rather than trusting it, matching `confirm_purchase`'s own `CHK_purchases_credit_has_due_date` constraint (a CONTADO purchase always has `payment_due_date = NULL`). */
+  @ValidateIf((dto: CreatePurchaseRequestDto) => dto.paymentType === 'CREDITO')
+  @IsDateString(
+    {},
+    { message: 'Debe indicar la fecha de pago para una compra a crédito.' },
+  )
+  paymentDueDate?: string;
 }

@@ -6,6 +6,9 @@ export interface ProductProps {
   categoryName: string;
   businessId: string;
   businessName: string;
+  unitOfMeasureId: string;
+  unitOfMeasureName: string;
+  unitOfMeasureAbbreviation: string;
   costPrice: number;
   publicPrice: number;
   wholesalePrice: number;
@@ -48,6 +51,18 @@ export class Product {
 
   get businessName(): string {
     return this.props.businessName;
+  }
+
+  get unitOfMeasureId(): string {
+    return this.props.unitOfMeasureId;
+  }
+
+  get unitOfMeasureName(): string {
+    return this.props.unitOfMeasureName;
+  }
+
+  get unitOfMeasureAbbreviation(): string {
+    return this.props.unitOfMeasureAbbreviation;
   }
 
   get costPrice(): number {

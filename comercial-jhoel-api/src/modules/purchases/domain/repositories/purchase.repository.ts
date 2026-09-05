@@ -4,6 +4,8 @@ export const PURCHASE_REPOSITORY = Symbol('PURCHASE_REPOSITORY');
 
 export interface PurchaseItemData {
   productId: string;
+  /** Omit to resolve the product's base "Unidad" presentation server-side. */
+  presentationId?: string;
   quantity: number;
   costPrice: number;
   publicPrice: number;
@@ -14,6 +16,9 @@ export interface ConfirmPurchaseData {
   userId: string;
   purchaseDate: Date;
   items: PurchaseItemData[];
+  paymentType: 'CONTADO' | 'CREDITO';
+  /** `yyyy-MM-dd` — required when `paymentType` is `'CREDITO'`, always omitted for `'CONTADO'`. */
+  paymentDueDate?: string;
 }
 
 export type PurchaseSortField = 'purchaseDate' | 'total' | 'createdAt';
@@ -42,4 +47,10 @@ export interface PurchaseRepository {
   findAll(options: FindPurchasesOptions): Promise<PaginatedResult<Purchase>>;
   /** Always includes `items` — unlike `findAll`, which never loads them (list rows use a lighter summary shape). */
   findById(id: string): Promise<Purchase | null>;
+  /** Plain conditional `UPDATE` — no stored function needed, same "don't build a procedure where a plain statement is already correct and simpler" call already made for `TypeOrmBankDepositRepository.voidOperation`. The caller (`MarkPurchaseAsPaidUseCase`) has already checked the purchase exists and isn't already paid. */
+  markAsPaid(id: string, paidBy: string): Promise<Purchase>;
+  /** Every still-unpaid credit purchase, regardless of due date (próxima/vence-hoy/vencida is decided by the caller — the Alerts module — comparing `paymentDueDate` against today) — bounded by construction (only `CREDITO` + `PENDING` rows, never the full purchase history). `userId` scopes to one account's own purchases (a `USER` role never sees another account's pending payments, same ownership rule `findAll`/`findById` already enforce); omit for an admin caller, who sees every pending credit purchase. */
+  findPendingCreditPurchases(options?: {
+    userId?: string;
+  }): Promise<Purchase[]>;
 }

@@ -5,7 +5,13 @@ import {
   SortDirection,
 } from '../../domain/repositories/product.repository';
 import type { ProductRepository } from '../../domain/repositories/product.repository';
-import { ProductOutput, toProductOutput } from '../dtos/product-output';
+import { INVENTORY_STOCK_REPOSITORY } from '../../../inventory/domain/repositories/inventory-stock.repository';
+import type { InventoryStockRepository } from '../../../inventory/domain/repositories/inventory-stock.repository';
+import {
+  ProductOutput,
+  toProductOutput,
+  withStockByLocation,
+} from '../dtos/product-output';
 
 export interface ListProductsInput {
   search?: string;
@@ -40,6 +46,8 @@ export class ListProductsUseCase {
   constructor(
     @Inject(PRODUCT_REPOSITORY)
     private readonly productRepository: ProductRepository,
+    @Inject(INVENTORY_STOCK_REPOSITORY)
+    private readonly stockRepository: InventoryStockRepository,
   ) {}
 
   async execute(input: ListProductsInput = {}): Promise<ListProductsOutput> {
@@ -60,8 +68,17 @@ export class ListProductsUseCase {
       limit,
     });
 
+    const stockByProduct = await this.stockRepository.findByProductIds(
+      result.items.map((item) => item.id),
+    );
+
     return {
-      items: result.items.map(toProductOutput),
+      items: result.items.map((item) =>
+        withStockByLocation(
+          toProductOutput(item),
+          stockByProduct.get(item.id) ?? [],
+        ),
+      ),
       total: result.total,
       page: result.page,
       limit: result.limit,

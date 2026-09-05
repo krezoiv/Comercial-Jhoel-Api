@@ -23,6 +23,12 @@ export interface PurchaseOutput {
   items: PurchaseItemOutput[];
   createdAt: Date;
   updatedAt: Date;
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDueDate: string | null;
+  paymentStatus: 'PENDING' | 'PAID';
+  paidAt: Date | null;
+  paidBy: string | null;
+  paidByUsername: string | null;
 }
 
 /** Lighter shape for `GET /purchases` — no line items, so listing purchases never needs to load them. */
@@ -35,6 +41,9 @@ export interface PurchaseSummaryOutput {
   purchaseDate: Date;
   total: number;
   createdAt: Date;
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDueDate: string | null;
+  paymentStatus: 'PENDING' | 'PAID';
 }
 
 export function toPurchaseOutput(purchase: Purchase): PurchaseOutput {
@@ -58,6 +67,12 @@ export function toPurchaseOutput(purchase: Purchase): PurchaseOutput {
     })),
     createdAt: purchase.createdAt,
     updatedAt: purchase.updatedAt,
+    paymentType: purchase.paymentType,
+    paymentDueDate: purchase.paymentDueDate,
+    paymentStatus: purchase.paymentStatus,
+    paidAt: purchase.paidAt,
+    paidBy: purchase.paidBy,
+    paidByUsername: purchase.paidByUsername,
   };
 }
 
@@ -73,5 +88,8 @@ export function toPurchaseSummaryOutput(
     purchaseDate: purchase.purchaseDate,
     total: purchase.total,
     createdAt: purchase.createdAt,
+    paymentType: purchase.paymentType,
+    paymentDueDate: purchase.paymentDueDate,
+    paymentStatus: purchase.paymentStatus,
   };
 }

@@ -1,4 +1,8 @@
-import { Sale, SaleStatus } from '../../domain/entities/sale.entity';
+import {
+  PriceListType,
+  Sale,
+  SaleStatus,
+} from '../../domain/entities/sale.entity';
 
 export interface SaleItemOutput {
   id: string;
@@ -18,6 +22,11 @@ export interface SaleOutput {
   saleDate: Date;
   total: number;
   status: SaleStatus;
+  clientId: string | null;
+  clientName: string | null;
+  priceList: PriceListType;
+  /** `null` for a `CONFIRMED` sale — only an `OPEN` receipt has a draft tab to identify. */
+  draftKey: string | null;
   items: SaleItemOutput[];
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +39,9 @@ export interface SaleSummaryOutput {
   username: string;
   saleDate: Date;
   total: number;
+  clientId: string | null;
+  clientName: string | null;
+  priceList: PriceListType;
   createdAt: Date;
 }
 
@@ -41,6 +53,10 @@ export function toSaleOutput(sale: Sale): SaleOutput {
     saleDate: sale.saleDate,
     total: sale.total,
     status: sale.status,
+    clientId: sale.clientId,
+    clientName: sale.clientName,
+    priceList: sale.priceList,
+    draftKey: sale.draftKey,
     items: sale.items.map((item) => ({
       id: item.id,
       productId: item.productId,
@@ -62,6 +78,9 @@ export function toSaleSummaryOutput(sale: Sale): SaleSummaryOutput {
     username: sale.username,
     saleDate: sale.saleDate,
     total: sale.total,
+    clientId: sale.clientId,
+    clientName: sale.clientName,
+    priceList: sale.priceList,
     createdAt: sale.createdAt,
   };
 }

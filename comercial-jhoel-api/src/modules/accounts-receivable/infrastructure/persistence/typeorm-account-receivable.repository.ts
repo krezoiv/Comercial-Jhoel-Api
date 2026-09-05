@@ -1,17 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { AccountReceivable } from '../../domain/entities/account-receivable.entity';
 import {
   AccountReceivableRepository,
   AccountReceivableSortField,
+  AccountReceivableStatement,
   AccountsReceivableReportSummary,
   CreateAccountReceivableData,
   FindAccountsReceivableOptions,
   FindAccountsReceivableReportSummaryOptions,
+  GetAccountReceivableStatementOptions,
   PaginatedResult,
+  RegisterAccountReceivableMovementData,
+  StatementMovement,
   UpdateAccountReceivableData,
 } from '../../domain/repositories/account-receivable.repository';
+import { AbonoExceedsBalanceError } from '../../domain/errors/abono-exceeds-balance.error';
+import {
+  InvalidMovementAmountError,
+  InvalidMovementTypeError,
+} from '../../domain/errors/invalid-movement.error';
 import { AccountReceivableOrmEntity } from './account-receivable.orm-entity';
 import { AccountReceivableMapper } from './account-receivable.mapper';
 
@@ -120,9 +129,18 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
       );
     }
 
+    // Signed sum, not a bare `SUM(amount)` — `amount` is always a positive
+    // magnitude now (see migration `CreateFinancialKardexColumns`), the
+    // sign comes from `movement_type`. This is the one caller-facing change
+    // that migration required: `GetCuadreAgentesSummaryUseCase` reads
+    // `.totalAmount` from here for its daily formula and must keep getting
+    // the true signed balance, not an inflated always-positive sum.
     const raw = await qb
       .select('COUNT(*)', 'recordCount')
-      .addSelect('COALESCE(SUM(record.amount), 0)', 'totalAmount')
+      .addSelect(
+        `COALESCE(SUM(CASE WHEN record.movementType = 'ABONO' THEN -record.amount ELSE record.amount END), 0)`,
+        'totalAmount',
+      )
       .getRawOne<{ recordCount: string; totalAmount: string }>();
 
     return {
@@ -156,5 +174,166 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
 
   async deactivate(id: string): Promise<void> {
     await this.repository.update({ id }, { isActive: false });
+  }
+
+  /** Invokes `register_account_receivable_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for the `ABONO_EXCEEDS_BALANCE` rule this table enforces, unlike Activos. */
+  async registerMovement(
+    data: RegisterAccountReceivableMovementData,
+  ): Promise<AccountReceivable> {
+    let movementId: string;
+    try {
+      const rows = await this.repository.manager.query<
+        { register_account_receivable_movement: string }[]
+      >('SELECT register_account_receivable_movement($1, $2, $3, $4, $5, $6)', [
+        data.clientId,
+        data.movementType,
+        data.amount,
+        data.date,
+        data.description,
+        data.createdBy,
+      ]);
+      movementId = rows[0].register_account_receivable_movement;
+    } catch (error) {
+      throw this.translateMovementError(error);
+    }
+
+    const record = await this.findById(movementId);
+    if (!record) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar el movimiento recién registrado.',
+      );
+    }
+    return record;
+  }
+
+  /** A single bounded aggregate — never a full-history fetch summed in TypeScript. */
+  async getCurrentBalance(clientId: string): Promise<number> {
+    const [row] = await this.repository.manager.query<{ balance: string }[]>(
+      `SELECT COALESCE(SUM(CASE WHEN movement_type = 'ABONO' THEN -amount ELSE amount END), 0) AS balance
+       FROM accounts_receivable
+       WHERE client_id = $1 AND is_active = true`,
+      [clientId],
+    );
+    return Number(row?.balance ?? 0);
+  }
+
+  /**
+   * `openingBalance` is the signed sum of every active movement strictly
+   * before `dateFrom` (0 when `dateFrom` is omitted — the WHERE clause then
+   * matches no rows). `balanceAfter` per row is computed with a window
+   * function over `sequence` seeded with that opening balance — never
+   * stored, always derived fresh (see the migration's own doc comment for
+   * why), and never summed client-side.
+   */
+  async getStatement(
+    clientId: string,
+    options: GetAccountReceivableStatementOptions,
+  ): Promise<AccountReceivableStatement> {
+    const dateFrom = options.dateFrom ?? null;
+    const dateTo = options.dateTo ?? null;
+
+    const [header] = await this.repository.manager.query<
+      { clientName: string | null; openingBalance: string }[]
+    >(
+      `SELECT
+         (SELECT name FROM clients WHERE id = $1) AS "clientName",
+         COALESCE((
+           SELECT SUM(CASE WHEN movement_type = 'ABONO' THEN -amount ELSE amount END)
+           FROM accounts_receivable
+           WHERE client_id = $1 AND is_active = true
+             AND $2::date IS NOT NULL AND date < $2::date
+         ), 0) AS "openingBalance"`,
+      [clientId, dateFrom],
+    );
+
+    const openingBalance = Number(header?.openingBalance ?? 0);
+
+    const rows = await this.repository.manager.query<
+      {
+        id: string;
+        date: string;
+        movementType: 'CARGO' | 'ABONO';
+        description: string | null;
+        amount: string;
+        createdAt: Date;
+        createdByUsername: string;
+        balanceAfter: string;
+      }[]
+    >(
+      `WITH movements AS (
+         SELECT
+           a.id, a.date, a.movement_type AS "movementType", a.description,
+           a.amount, a.sequence, a.created_at AS "createdAt",
+           u.username AS "createdByUsername"
+         FROM accounts_receivable a
+         JOIN users u ON u.id = a.created_by
+         WHERE a.client_id = $1 AND a.is_active = true
+           AND ($2::date IS NULL OR a.date >= $2::date)
+           AND ($3::date IS NULL OR a.date <= $3::date)
+       )
+       SELECT
+         m.id, m.date, m."movementType", m.description, m.amount,
+         m."createdAt", m."createdByUsername",
+         $4::numeric + SUM(CASE WHEN m."movementType" = 'ABONO' THEN -m.amount ELSE m.amount END)
+           OVER (ORDER BY m.sequence) AS "balanceAfter"
+       FROM movements m
+       ORDER BY m.sequence`,
+      [clientId, dateFrom, dateTo, openingBalance],
+    );
+
+    const movements: StatementMovement[] = rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      movementType: row.movementType,
+      description: row.description,
+      amount: Number(row.amount),
+      balanceAfter: Number(row.balanceAfter),
+      createdByUsername: row.createdByUsername,
+      createdAt: row.createdAt,
+    }));
+
+    const totalCargos = movements
+      .filter((m) => m.movementType === 'CARGO')
+      .reduce((sum, m) => sum + m.amount, 0);
+    const totalAbonos = movements
+      .filter((m) => m.movementType === 'ABONO')
+      .reduce((sum, m) => sum + m.amount, 0);
+    const closingBalance =
+      movements.length > 0
+        ? movements[movements.length - 1].balanceAfter
+        : openingBalance;
+
+    return {
+      clientId,
+      clientName: header?.clientName ?? '',
+      openingBalance,
+      movements,
+      totalCargos,
+      totalAbonos,
+      closingBalance,
+    };
+  }
+
+  /** `register_account_receivable_movement` signals a business-rule failure via `RAISE EXCEPTION '<CODE>:<clientId>'` — same `'CODE:id'` convention as `translateSaleError`/`translatePurchaseError` elsewhere in this codebase. */
+  private translateMovementError(error: unknown): unknown {
+    if (!(error instanceof QueryFailedError)) {
+      return error;
+    }
+
+    const message =
+      (error.driverError as { message?: string } | undefined)?.message ??
+      error.message;
+    const [code] = message.split(':');
+
+    switch (code) {
+      case 'INVALID_MOVEMENT_TYPE':
+        return new InvalidMovementTypeError();
+      case 'INVALID_AMOUNT':
+        return new InvalidMovementAmountError();
+      case 'ABONO_EXCEEDS_BALANCE':
+        return new AbonoExceedsBalanceError();
+      default:
+        return error;
+    }
   }
 }

@@ -33,6 +33,9 @@ export class CreateProductRequestDto {
   @IsUUID()
   businessId: string;
 
+  @IsUUID()
+  unitOfMeasureId: string;
+
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   costPrice: number;

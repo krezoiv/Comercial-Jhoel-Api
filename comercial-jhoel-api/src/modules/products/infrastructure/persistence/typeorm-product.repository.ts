@@ -37,7 +37,17 @@ export class TypeOrmProductRepository implements ProductRepository {
     const qb = this.repository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.business', 'business');
+      .leftJoinAndSelect('product.business', 'business')
+      // Pre-existing gap fixed here: `unitOfMeasure` is `{ eager: true }` on
+      // the ORM entity, but eager relations only auto-join through the
+      // repository's own `find`/`findOne` methods — a raw `QueryBuilder`
+      // (used here, same as `category`/`business` above) needs every
+      // relation joined explicitly. Without this, `unitOfMeasureName`/
+      // `unitOfMeasureAbbreviation` silently fell back to `''` for every
+      // row `findAll()` returned (see `ProductMapper.toDomain`'s `?? ''`),
+      // which is what a blank "Unidad" column on the Inventario export was
+      // actually surfacing, not a bug in the export itself.
+      .leftJoinAndSelect('product.unitOfMeasure', 'unitOfMeasure');
 
     if (options.activeOnly) {
       qb.andWhere('product.isActive = true');

@@ -4,6 +4,7 @@ export class AssetResponseDto {
   clientName: string;
   date: string;
   amount: number;
+  movementType: 'CARGO' | 'ABONO';
   description: string | null;
   isActive: boolean;
   createdAt: Date;

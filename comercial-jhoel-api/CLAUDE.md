@@ -987,6 +987,657 @@ group by in the first place.
   no confirmation step) makes it trivially easy to blend fabricated test data into what looks like genuine
   history.
 
+### Inventario por ubicación y presentaciones (`modules/inventory/`)
+
+Evolves Inventario from "producto → stock global" to "producto → presentaciones → ubicaciones → stock",
+added via migration `1759400000000-CreateInventoryLocationsAndPresentations`. Purely additive:
+`products.stock` is **kept** as the running total (`SUM(inventory_stock.quantity)` for that product,
+updated in lockstep by every function below), so every existing reader of it keeps working unchanged.
+
+- **Four new tables**: `inventory_locations` (extensible, seeded "Bodega"/"Vitrina" — a third location is
+  a plain `INSERT`, never a migration), `product_presentations` (per-product sellable/purchasable unit —
+  "Unidad", "Caja", "Paquete", ... — each with its own `conversion_factor` to base units and its own
+  cost/public price; every product always has exactly one "Unidad" presentation, factor 1, auto-created),
+  `inventory_stock` (the new granular source of truth, base units, one row per `(product, location)`),
+  `inventory_movements` (audit trail for **confirmed** operations only — compra, venta confirmada,
+  traslado — never for in-flight cart adjustments). `sale_details`/`purchase_details` gained nullable
+  `presentation_id`/`location_id`/`conversion_factor`/`quantity_base_units` — historical rows keep these
+  `NULL` forever, never backfilled.
+- **`ensure_product_presentation(productId, presentationId)`** is the one shared resolver every function
+  below calls: an explicit id is validated (belongs to the product, active) or `NULL` resolves to that
+  product's own "Unidad" row. **`ensure_inventory_stock_row(productId, locationId)`** guarantees a
+  `(product, location)` row exists via `INSERT ... EXCEPTION WHEN unique_violation THEN NULL` — same
+  "insert, swallow the race, let the caller's own `FOR UPDATE` lock it" pattern `adjust_sale_item`'s own
+  `OPEN`-sale creation already established.
+- **Every write path that touches stock now also touches `inventory_stock`, in lockstep with
+  `products.stock`, inside the same stored function**: `confirm_purchase` always enters "Bodega";
+  `adjust_sale_item`/`confirm_sale` always reserve from "Vitrina" by default (an explicit
+  `p_location_id` is accepted but nothing in the frontend sends one yet); `cancel_open_sale` restores each
+  line to whichever location it was actually reserved from (`COALESCE`d to Vitrina for any draft that
+  predates this migration). This is the one real, ticket-required behavior change: ventas de mostrador
+  now draw down Vitrina's stock specifically, not an undifferentiated global number.
+- **`register_inventory_transfer(productId, presentationId, fromLocationId, toLocationId, quantity,
+  userId, reason?)`** — the new write path, moving stock between two locations. **Never touches
+  `products.stock`** (a transfer changes location, not total — the cross-location sum is identical before
+  and after, by construction). Locks origin-then-destination in a fixed `id` order (same
+  deadlock-avoidance principle as `CreateSaleUseCase`'s productId sort) so two concurrent transfers of the
+  same location pair, in either direction, can never deadlock. Writes two `inventory_movements` rows
+  (`TRASLADO_SALIDA`/`TRASLADO_ENTRADA`) sharing one `reference_id` so the UI can group them as one
+  "Traslado". `RegisterInventoryTransferUseCase` pre-validates quantity-is-a-positive-integer and
+  origin≠destination for a fast, clean error — the SQL function's own `FOR UPDATE` locks are the real
+  guard against a race, same "TypeScript pre-check + SQL is the real guarantee" split every other critical
+  operation in this codebase uses.
+- **Presentations are admin-only to create/update** (`InventoryController`, `@Roles('ADMIN',
+  'SUPER_ADMIN')` on both), reading is open to any authenticated account (needed by the Compras/Ventas
+  product pickers and the Inventario screen). Registering a transfer is operational — same "any
+  authenticated active account" policy as Compras/Ventas/Recargas, since moving stock between your own
+  two locations is a daily register task. `CreatePresentationUseCase` never lets a second "Unidad" be
+  created (it's auto-created once by `CreateProductUseCase`); `UpdatePresentationUseCase` lets "Unidad"
+  have its prices updated (purchases already do this automatically) but never its name, factor, or active
+  state (`UnidadPresentationImmutableError`) — every purchase/sale that omits a presentation depends on it
+  always existing with factor 1. A presentation already used in a movement/purchase/sale is only ever
+  deactivated, never deleted — same soft-delete convention as everywhere else in this app.
+- **`GET /inventory/products/:productId`** (`GetProductInventoryUseCase`) is what backs the new product
+  detail page — per-location stock breakdown, active presentations, and recent movements for one product,
+  assembled from three repositories rather than a single query, since nothing else in the app needed that
+  join before this feature.
+- **No `down()` migration provided** — this migration closes real correctness gaps (a missing
+  `stock >= 0` CHECK `products` never had, the global-only stock model) that live rows may already depend
+  on by the time a rollback would run. Same "no downgrade for a structural/correctness change" precedent
+  as `AddRechargeDayGateToWriteFunctions`.
+
+### Venta por mayor — wholesale pricing (extension to Sales)
+
+Migration `1759500000000-AddWholesalePricingToSales` lets a sale be tagged with an optional `clientId` and
+a `priceList` (`'PUBLIC' | 'WHOLESALE'`), chosen once at the start of the sale and **locked once the
+receipt has any line item**. Purely additive — historical and in-progress sales default to
+`price_list = 'PUBLIC'`, `client_id = NULL`, byte-identical to the prior (implicit) behavior.
+
+- **`products.wholesale_price` already existed** (required at product creation) but until this migration
+  was never read by any sale function — `adjust_sale_item`/`confirm_sale` only ever charged
+  `public_price`. This is what makes it actually mean something — **and only for the base "Unidad"
+  presentation**: a line sold by a presentation (Caja, Paquete...) keeps using that presentation's own
+  `public_price` regardless of the sale's price list, a deliberate scope call (presentations are already
+  the bulk-discount mechanism; this feature is about which *client tier* buys, not a second discount on
+  top of the first).
+- **`configure_open_sale(userId, clientId?, priceList?)`** is the new stored function — sets/updates the
+  caller's open receipt's client and price list, creating the receipt if it doesn't exist yet (same
+  race-safe insert/catch-`unique_violation`/re-select pattern `adjust_sale_item` already uses against the
+  same `UQ_sales_open_per_user` partial index). The client can be changed freely at any time (pure
+  attribution, no pricing/stock impact); **the price list can only be changed while the receipt has zero
+  line items** — once a line exists, its `unit_price` was already fixed under the price list active at
+  that moment, and silently changing the list without recomputing every line would leave the receipt
+  internally inconsistent. This lock is enforced inside the function itself (has to run atomically against
+  the row it locks), not in `ConfigureSalePricingUseCase` — that use case only pre-validates `clientId`
+  (exists + active, `InvalidClientError`) before ever reaching SQL, same "validate the FK in TypeScript,
+  let SQL own the state-dependent rule" split as everywhere else.
+- **`PATCH /sales/current/pricing`** (any authenticated, active account, no `@Roles(...)`) is the new
+  route — call once, before or while the cart is empty. `POST /sales` (the bulk, one-shot path) and
+  `CreateSaleUseCase` also gained optional `clientId`/`priceList` fields for the same reason the bulk path
+  still exists at all: it's a separately-tested public API, kept in sync rather than left to drift.
+
+### Varias ventas a la vez — multiple simultaneous drafts (follow-up, migration `AddDraftKeyToSales`)
+
+Ventas gained the ability for one user to have several open receipts ("pestañas") at once, mirroring
+Compras' own multi-draft frontend feature (see the frontend `CLAUDE.md`) — but unlike Compras, a Ventas
+draft is a real, server-persisted `OPEN` sale with stock already reserved, gated at the DB level by
+`UQ_sales_open_per_user` (see "Real-time draft sales" above: at most one such row per user, the mechanism
+behind real-time stock reservation). Supporting several open receipts per user therefore required a real
+backend change, not just a frontend one.
+
+- **`sales.draft_key`** (`VARCHAR(64)`, nullable) is an opaque, client-generated id — the frontend uses a
+  UUID per open tab, but the column is deliberately **not** validated as a UUID anywhere (DTOs use
+  `@IsString() @IsNotEmpty() @MaxLength(64)`, not `@IsUUID()`) — a pre-existing `OPEN` sale from before
+  this column existed was backfilled to the literal string `'default'`, which must keep working
+  end-to-end (confirmed directly: an un-relaxed `@IsUUID()` on the request DTOs rejected that exact row
+  with `400 draftKey must be a UUID` the first time this was tested live, caught before shipping, not
+  assumed correct). `NULL` for every `CONFIRMED` row — meaningless once a sale is real.
+- **`UQ_sales_open_per_user` → `UQ_sales_open_per_draft`**, a partial unique index on
+  `(user_id, draft_key) WHERE status = 'OPEN'` — the exact same "at most one OPEN row" guarantee as
+  before, just scoped one level finer. A user can now have many open sales, as long as each has a
+  distinct `draft_key`.
+- **`adjust_sale_item`/`cancel_open_sale`/`configure_open_sale`/`confirm_open_sale` all gained
+  `p_draft_key VARCHAR DEFAULT 'default'`** as a new trailing parameter, with every "find my open sale"
+  lookup now filtering on `(user_id, draft_key)` instead of `user_id` alone. **Real gotcha hit and fixed
+  here**: `CREATE OR REPLACE FUNCTION` does **not** replace a function in place when the parameter count
+  changes — Postgres identifies a function by `(name, argument types)`, so adding a parameter (even a
+  `DEFAULT`-valued one) creates a brand-new overload alongside the old one, never a true replacement. This
+  was already a live, pre-existing bug before this migration (`AddWholesalePricingToSales` had added
+  `p_presentation_id`/`p_location_id` to `adjust_sale_item` the same bare-`CREATE OR REPLACE` way, leaving
+  the original 3-parameter version from `AddDraftSalesSupport` orphaned in the database — confirmed
+  directly via `pg_proc`, not assumed) — fixed by pairing every parameter-count change with an explicit
+  `DROP FUNCTION IF EXISTS <old-signature>` first. **General lesson for this codebase**: never trust a
+  bare `CREATE OR REPLACE FUNCTION` to replace a function whose parameter list is changing — always drop
+  the old signature explicitly first.
+- **A second, genuinely pre-existing bug was found and fixed while touching `cancel_open_sale`**: the
+  version being replaced only ever restored `products.stock`, and was never updated when
+  `CreateInventoryLocationsAndPresentations` introduced the per-location `inventory_stock` table — unlike
+  `adjust_sale_item`/`confirm_open_sale`, which both already handle it correctly. Cancelling a draft
+  therefore silently left `inventory_stock`'s per-location row permanently short by whatever was reserved
+  (confirmed directly during this feature's own manual testing: a real cancelled draft left
+  `products.stock` correct but Vitrina's `inventory_stock` row 1 unit short — a genuine data drift, not
+  hypothetical; reconciled by hand afterward, confirmed zero drift remained across every active product
+  before moving on). The fixed version restores `inventory_stock` too, using each line's own `location_id`
+  (falling back to Vitrina for a historical row that predates that column, same fallback
+  `confirm_open_sale` already uses) and `quantity_base_units` (falling back to `quantity` — a presentation
+  with `conversion_factor != 1`, e.g. a "Caja", must restore the full base-unit amount that was actually
+  reserved, not the presentation-level count, which the un-fixed version would have under-restored too).
+- **`GET /sales/current` now returns an array** (`SaleResponseDto[]`, via the renamed
+  `GetOpenSalesUseCase`/`findOpenSalesByUserId`) instead of a single sale — every one of the caller's open
+  drafts, not just one. An empty array is the normal "no open tabs" state, never an error (the old
+  `NoOpenSaleError` 404 on this endpoint is gone). `POST /sales/confirm` and `DELETE /sales/current` both
+  now require `draftKey` (body / `?draftKey=` query param respectively) to say which tab they target;
+  `POST /sales/items` and `PATCH /sales/current/pricing` gained a required `draftKey` field on their
+  existing DTOs. `SaleOutput`/`SaleResponseDto` both gained `draftKey: string | null` so the frontend can
+  correlate a response back to the tab that triggered it.
+- **`confirm_sale`/`CreateSaleUseCase`** (the bulk, one-shot path) needed **no** changes — it never
+  touches the "find my open sale" pattern at all, always creating a brand-new `CONFIRMED` sale directly.
+
+### Transaccionar (`modules/transaction-banks/`, `modules/transaction-types/`, `modules/bank-deposits/`)
+
+Three new modules, added by migrations `1759600000000` through `1759800000000`, implementing a daily bank
+deposit register: pick a "Banco Agente" and a "Tipo de Transacción", enter a total amount, break it down
+into physical cash denominations, and distribute it across N sub-transactions — the cuadre (cash total AND
+transaction total must both equal the entered total, exactly) is validated entirely inside one Postgres
+function, never trusted from the client.
+
+- **`transaction_banks`/`transaction_types` are flat catalogs**, structurally identical clones of
+  `account_types` (partial-unique-active `name`, soft delete only, `createdBy`/`updatedBy` audit columns)
+  — deliberately separate from `banks` (the heavier Agentes Bancarios entity tied to account numbers and
+  Cuadre de Agentes balances). `transaction_types` carries one extra column, `icon` — a key into the
+  frontend's shared icon registry, rendered on Transaccionar's own type cards. Both modules' use cases
+  mirror each other and the categories/businesses pattern exactly: `create` normalizes the name (trim +
+  collapse internal whitespace) and checks `findByActiveName` first (409 on a duplicate);
+  `update` only re-checks uniqueness when the name actually changed; `deactivate` 404s on a missing id,
+  otherwise soft-deletes.
+- **`bank_deposit_operations` / `_cash_details` / `_transactions`** — one registration: a total amount,
+  its physical cash breakdown (`_cash_details`, one row per denomination), and the N sub-transactions it
+  was split into (`_transactions`). `total_cash`/`total_distributed` are server-recomputed columns, always
+  equal to `total_amount` by construction — `register_bank_deposit_operation()` rolls back the entire
+  operation (`CASH_TOTAL_MISMATCH`/`TRANSACTION_TOTAL_MISMATCH`) otherwise, so these are never trusted
+  from the client despite being cached on the row. `operation_date` is a plain `DATE` (a calendar business
+  day, not an instant, same reasoning as `bank_balances.operation_date`). `client_name` (added by
+  `1759700000000-AddClientNameToBankDepositOperations`) is a **free-text** field, never a `clients` FK —
+  Transaccionar's "cliente" is just a label for whose deposit this was, a different concept from the
+  accounts-receivable `clients` table entirely.
+- **Transaccionar reuses Banks' own día-abierto/cerrado cycle** (`DAY_OPENING_REPOSITORY`, exported by
+  `BanksModule`) rather than a parallel one — `RegisterBankDepositOperationUseCase` gates on
+  `DayOpeningRepository.findByDate(today)` before ever calling the repository: no opening at all →
+  `BankDepositDayNotOpenedError` (400), already closed → `BankDepositDayAlreadyClosedError` (400). Each is
+  a module-scoped error class of its own (not a reuse of Banks' own `DayNotOpenedError`), consistent with
+  every other module in this codebase owning its own error classes even when the underlying condition is
+  conceptually shared. **Operation date is always "today" (server-local) — no backdating in v1**, unlike
+  Recargas' own operation-date picker.
+- **Every cuadre rule lives inside `register_bank_deposit_operation()` itself**, not the use case: total
+  amount must be positive, the target bank must exist and be active, the sum of `cashDetails` (denomination
+  × quantity) must equal `totalAmount` exactly, and the sum of `transactionAmounts` must also equal
+  `totalAmount` exactly — any mismatch rolls back the whole insert. `RegisterBankDepositOperationUseCase`
+  never recomputes or trusts these totals itself; it only gates on the business-day cycle before
+  delegating.
+- **`POST /bank-deposits` is operational** (any authenticated, active account, no `@Roles(...)`) — same
+  policy as Sales/Purchases/Recargas. Reading the full historical list/report is a separate, admin-only
+  concern under `/reports/bank-deposits` (see below) — `BankDepositsController` itself only exposes
+  `POST /bank-deposits` and `GET /bank-deposits/:id` (fetch-one, e.g. for a receipt/confirmation view).
+
+### Reportería de Transacciones (extension to Reports)
+
+`GET /reports/bank-deposits`, `/summary`, `/export` — a fourth Reportería screen, admin-only
+(`@Roles('ADMIN', 'SUPER_ADMIN')`, same as every other `/reports/*` route), filterable by
+`startDate`/`endDate`/`transactionBankId`/`transactionTypeId`/`userId`. `ReportsModule` gained
+`BankDepositsModule`/`TransactionBanksModule`/`TransactionTypesModule` imports to reach their exported
+repository tokens, same reuse pattern as every earlier report (Sales/Purchases' own `/:id` routes reusing
+`SALE_REPOSITORY`/`PURCHASE_REPOSITORY.findById`).
+
+- **`operationDate` is a plain `DATE` column**, so `getReportSummary()`'s date filters use safe
+  lexicographic `yyyy-MM-dd` string comparison — same reasoning `GetRechargesReportSummaryUseCase`
+  already established for its own `date` column, not the `Date`-object start/end-of-day widening
+  Sales/Purchases' own `sale_date`/`purchase_date` filters need.
+  `GetBankDepositsReportSummaryUseCase` still throws `InvalidBankDepositDateRangeError` (400) when
+  `startDate > endDate`.
+- **PDF export reuses the same generic `buildReportPdf()`** every other report already uses — no new
+  export mechanism, same `EXPORT_ROW_LIMIT = 500` ceiling and `@Res()` direct-response bypass of
+  `ResponseInterceptor`.
+
+### Anular una operación de Transaccionar (follow-up — correction path, never edit/delete)
+
+Migration `1759900000000-AddVoidToBankDepositOperations` adds the one correction mechanism this module
+had been missing: a registered deposit can be marked **anulada**, but is never edited in place and never
+physically deleted — same philosophy as every other financial record in this codebase (a confirmed sale,
+a purchase, a closed day). The recommended fix for a mistaken registration is "anular the wrong one (with
+a mandatory reason), then register the correct one" — never a silent overwrite, since re-validating the
+full cuadre (cash total == transactions total == total amount) in place would be exactly the complexity
+this module's original stored-function design already solved once at creation time.
+
+- **Four new nullable columns** on `bank_deposit_operations`: `is_voided` (`NOT NULL DEFAULT false`),
+  `voided_at`, `voided_by` (`FK → users, RESTRICT`), `void_reason`. A `CHECK` constraint enforces the two
+  valid states — all four null/false together, or all four populated together — so a half-voided row can
+  never exist. Purely additive: every pre-existing row defaults to `is_voided = false`, byte-identical to
+  today's actual behavior. Unlike most migrations in this file, this one ships a real, safe `down()` — the
+  feature adds an optional flag with no existing behavior depending on it yet, so a clean rollback is
+  possible (contrast with e.g. `CreateInventoryLocationsAndPresentations`'s deliberately absent `down()`).
+- **No stored function for the void action itself** — `VoidBankDepositOperationUseCase` checks
+  existence (`BankDepositOperationNotFoundError`, 404) and not-already-voided
+  (`BankDepositOperationAlreadyVoidedError`, 400) in TypeScript, then `TypeOrmBankDepositRepository
+  .voidOperation()` runs one conditional `UPDATE` — the "don't build a procedure where a plain statement
+  is already correct and simpler" call already made for `confirm_open_sale`'s own status transition.
+  `totalAmount`/`totalCash`/`totalDistributed`/every cash-detail and transaction row are never touched —
+  a voided operation's numbers stay exactly what was (mistakenly) cuadrado at registration time.
+- **`POST /bank-deposits/:id/void` is the one route on `BankDepositsController` that IS admin-gated**
+  (`@UseGuards(RolesGuard)` + `@Roles('ADMIN', 'SUPER_ADMIN')`, method-level only — `create`/`findOne`
+  stay open to any authenticated account under the controller's own class-level `JwtAuthGuard`).
+  Correcting an already-registered financial record is a management action, same policy as "Gestión de
+  Días Cerrados"' reopen/cancel and Recargas' saldo-final re-edit, even though registering the original
+  operation is deliberately operational. No day-gate check (`DAY_OPENING_REPOSITORY`) applies to voiding —
+  an admin can anular an operation from any date, open or closed, exactly the same way day reopen/cancel
+  already operate on closed days by design.
+- **A voided operation is never hidden from the listing, only excluded from aggregate totals** —
+  `BankDepositRepository.findAll()` (used by both `GET /bank-deposits` and the report's own list) applies
+  no `is_voided` filter at all, so a voided row stays fully visible (with `isVoided`/`voidedAt`/
+  `voidedByUsername`/`voidReason` now carried on both `BankDepositOperationOutput` and the lighter
+  `BankDepositOperationSummaryOutput`) for audit purposes. `TypeOrmBankDepositRepository.getReportSummary()`
+  is the one place that adds `WHERE is_voided = false` — to both the totals query and the by-bank
+  breakdown query — the same way a `CANCELLED` day is excluded from Cuadre de Agentes' own totals. The
+  distinction is deliberate and load-bearing: don't add the exclusion to `applyFilters()` (shared by both
+  `findAll` and `getReportSummary`), or the list would silently start hiding voided rows too.
+
+### Resumen dashboard's "Bancos" tile — monthly transaction count
+
+`GET /bank-deposits/monthly-count` — the one non-admin-gated aggregate this module exposes (`JwtAuthGuard`
+only, declared before `:id` on `BankDepositsController` so Express doesn't swallow "monthly-count" as that
+param). Added specifically because Resumen (`/dashboard`, no route guard beyond plain auth) is the first
+page every account sees on login, `USER`-role included — the full filterable report
+(`GetBankDepositsReportSummaryUseCase`) stays `@Roles('ADMIN', 'SUPER_ADMIN')`-gated behind Reportería, so
+Resumen needed its own lightweight, non-sensitive number instead of reusing that endpoint directly.
+
+- **`GetBankDepositMonthlyCountUseCase` has no stored counter and no reset job** — `startDate` is simply
+  "the 1st of whatever month the server's own clock says it is right now", recomputed on every call. The
+  count resets itself automatically the instant the calendar rolls into a new month; there is nothing to
+  reset, backfill, or schedule.
+- **Reuses `getReportSummary()`'s own `operationCount`** rather than a second, duplicated count query —
+  it already excludes voided operations (same `is_voided = false` filter documented above), so an anulada
+  transaction correctly never inflates this figure either.
+- Response is deliberately just `{ count, month }` — no by-bank breakdown, no amount, nothing a `USER`-role
+  account shouldn't see.
+
+## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
+
+`GET /dashboard/summary` — admin-only (`@Roles('ADMIN', 'SUPER_ADMIN')`, class-level), backs the Resumen
+dashboard's four financial indicator sections (see the frontend `CLAUDE.md`'s matching section). Pure
+read-side, cross-cutting module — same architectural precedent as `ReportsModule` (see that module's own
+doc comment): never writes anything, registers `SaleOrmEntity`/`PurchaseOrmEntity`/
+`RechargeDailyBalanceOrmEntity`/`BankDepositOperationOrmEntity` a second time via its own
+`TypeOrmModule.forFeature(...)` rather than importing `SalesModule`/`PurchasesModule`/`RechargesModule`/
+`BankDepositsModule` wholesale. No new table, no new migration — every number is computed live from
+tables those four modules already own. Deliberately does NOT import `BanksModule` — this dashboard's
+"Transacciones Bancarias" is explicitly Transaccionar's own `bank_deposit_operations`, never Cuadre de
+Agentes' `bank_balances`/`agent_reconciliations`/`final_balance`/`previous_balance`.
+
+- **The period is never stored, never a fixed date, and needs no month-rollover job** —
+  `GetDashboardSummaryUseCase.buildPeriod()` computes `dayStart`/`isoStartDate` as "the 1st of whatever
+  month the server's own clock (`new Date()`, under `TZ=America/Guatemala`, see
+  `1759100000000-SetDatabaseTimezone`) says it is right now" on every single call. The instant the
+  calendar rolls into a new month, the very next request computes a different `dayStart` and every
+  downstream query is scoped to that new range automatically — there is no `if (month === 9)` anywhere,
+  and nothing to reset. Same reasoning already established for `GetBankDepositMonthlyCountUseCase`'s own
+  "Bancos" Resumen tile, applied here to the fuller set.
+- **`TypeOrmDashboardRepository.getSummary()` runs four independent, already period-scoped queries in
+  parallel** (`Promise.all`), each bounded to at most one row per calendar day or per bank — never a full
+  history fetched into Node to filter/aggregate there:
+  - **Recharge sales by day**: `SUM(daily_balance - final_balance)` from `recharge_daily_balances`,
+    grouped by `date`, only where `final_balance IS NOT NULL` — an unclosed cuadre cycle has no defined
+    "venta" yet, same live-recompute reasoning `GetRechargeSalesSummaryUseCase` already established
+    (never the frozen `recharge_sales_closures.total_sales`). Summed across every recharge type AND every
+    cuadre cycle for that date, so a date closed more than once in one day correctly contributes every
+    cycle's sale to that day's total.
+  - **Sales by day**: `SUM(total)` from `sales`, grouped by day, `status = 'CONFIRMED'` only — an `OPEN`
+    draft is never a completed sale (same hardcoded filter `TypeOrmSaleRepository.findAll` already uses).
+  - **Purchases**: a single `COALESCE(SUM(total), 0)` from `purchases` — no day grouping, the ticket only
+    asked for one accumulated total.
+  - **Bank transactions by bank**: `SUM(transaction_count)` from `bank_deposit_operations`, grouped by
+    `transaction_bank_id`, `is_voided = false` only — the same exclusion `getReportSummary()`'s own report
+    totals already apply. **Sums the `transactionCount` column (the "cantidad de transacciones" each
+    operation was split into), never `COUNT(*)`/operation count** — the ticket is explicit that this must
+    never be confused with the number of Transaccionar registrations.
+  - **Gotcha caught and fixed during this session's own live verification, not assumed correct**: the
+    recharge-by-day query originally did a raw `.select('balance.date', 'date')` — for an entity-mapped
+    `find()`, TypeORM's own column metadata hydrates a `type: 'date'` column as a plain `yyyy-MM-dd`
+    string (see `RechargeDailyBalanceOrmEntity`'s own doc comment), but a raw, unmapped `getRawMany()`
+    column has none of that metadata to hint the pg driver's type parser, so the `date` OID actually came
+    back as a JS `Date` object at a shifted UTC instant (confirmed directly: `2026-09-02T06:00:00.000Z`
+    for the calendar day `2026-09-02`, not the plain string every other date in this codebase produces).
+    Fixed with `to_char(balance.date, 'YYYY-MM-DD')` — same technique already used for the `sales.saleDate`
+    (`timestamptz`) day-grouping, which sidesteps the ambiguity by returning text regardless of driver
+    settings. The general lesson: a raw `SELECT` of any `date`/`timestamp` column via `getRawMany()`/
+    `getRawOne()` should always go through `to_char(...)`, never the bare column, even when the same
+    column reads back correctly via an entity-mapped `find()`.
+- **Empates (ties) — two explicit, documented, deterministic rules**, both implemented as small pure
+  functions (`summarizeDailySeries`/`summarizeBankTransactions` in `application/dtos/
+  dashboard-summary-output.ts`), unit-tested directly against the exact example data sets from the ticket:
+  - **Día mayor/menor**: the most recent date wins a tie, for both the highest AND the lowest — resolved
+    by comparing `(amount, date)` and preferring the later date on an amount tie, never an
+    `Array.prototype.find`/first-match that would depend on array order.
+  - **Banco mayor/menor**: the alphabetically-first bank name (A→Z) wins a tie, for both the highest AND
+    the lowest — chosen because, unlike a day, a bank has no natural "more recent" concept to break a tie
+    with; alphabetical order is simply the smallest deterministic, human-legible rule available.
+  - A bank/day with **zero activity never appears as "the lowest"** — it's not in the grouped result set
+    at all (the `GROUP BY` only returns rows that exist), so there is no `0`-transactions/`0`-amount row
+    for the summarize functions to ever consider; "sin datos" is handled by the empty-array branch
+    (`highestDay`/`lowestDay`/`highestBank`/`lowestBank` all `null`, every total `0`) instead.
+- **Verified directly against the live dev database, not only unit-tested**: a real 2024-01-15 recharge
+  sale (Q900.50, left over from earlier work) exists in `recharge_daily_balances` alongside September's
+  real rows — confirmed the endpoint's `rechargeSales.total` correctly excluded it (September's own total
+  only), a genuine month-separation proof using real historical data rather than only synthetic test
+  fixtures. Every other section's numbers (`sales`, `purchases`, `bankTransactions`) were independently
+  cross-checked against direct `psql` queries and matched exactly.
+- **Unit tests** (`get-dashboard-summary.use-case.spec.ts`, `dashboard-summary-output.spec.ts`) cover: the
+  exact period-boundary computation for a fixed "now" (via `jest.useFakeTimers`), an explicit
+  31/08→01/09 month-rollover assertion (two calls, two different system times, two different computed
+  periods — proving there's no `if (month === ...)` branch to go stale), the ticket's own worked examples
+  for recharge sales/sales/purchases/bank-transaction totals, both tie-break rules, and the
+  all-nulls-and-zeros "sin datos" shape.
+
+## Alertas y Notificaciones (`modules/alerts/`, `modules/alert-settings/`)
+
+`GET /alerts`, `POST /alerts/:key/read`, `POST /alerts/read-all` — the centralized bell-icon alert system
+backing the Navbar dropdown. Any authenticated, active account (`JwtAuthGuard` only, no `@Roles(...)`) can
+call it — inventory/recharge-balance alerts are shared operational state, purchase alerts are
+ownership-scoped per-caller inside the use case itself (see below), the same split `PurchasesController`
+already uses for its own listing endpoints. **Alerts are never persisted as a historical log** — every
+`GET /alerts` call recomputes the full set fresh from current state across three unrelated domains
+(purchases, inventory, recharges); the only thing actually stored is which alert *keys* one user has
+opened (`alert_read_marks`), layered on top. An alert stops appearing in the very next response the
+instant its underlying condition resolves — there is no "dismiss"/"resolve"/manual-reset action anywhere
+in this module, on purpose.
+
+- **`Alert` (`domain/entities/alert.entity.ts`) is a plain, non-persisted shape** — `key` (a deterministic,
+  namespaced id: `purchase:<id>`, `inventory:<productId>:<locationId>`, `recharge:<rechargeTypeId>`),
+  `type` (`PURCHASE_PAYMENT_DUE | PURCHASE_PAYMENT_OVERDUE | LOW_INVENTORY | LOW_RECHARGE_BALANCE` —
+  named, extensible union, not a free string), `priority` (`CRITICAL | HIGH | MEDIUM`), `title`,
+  `description`, `amount`, `date`, `route` (where the frontend navigates on click), `referenceId`. Adding a
+  fifth alert type later means adding one more variant to `AlertType`, one more builder function, and one
+  more branch in `GetAlertsUseCase.execute()`'s `Promise.all` — never a restructuring of this shape.
+- **Three pure builder functions, one per source** (`application/utils/build-alerts.ts`,
+  `buildPurchaseAlert`/`buildInventoryAlert`/`buildRechargeBalanceAlert`), each returning `Alert | null` (or
+  `Alert` for inventory, whose caller already filtered to only-qualifying rows) — no side effects, no
+  repository access, fully unit-testable in isolation with the exact worked examples this feature's own
+  ticket specified (see `build-alerts.spec.ts`):
+  - **Purchase**: only ever called with `PENDING`/`CREDITO` purchases (see below) — `daysBetweenIsoDates(today, dueDate)` negative → `CRITICAL`/`PURCHASE_PAYMENT_OVERDUE` ("Pago vencido"); `0` → `HIGH`/`PURCHASE_PAYMENT_DUE` ("Pago vence hoy"); `1..alertDays` → `MEDIUM`/`PURCHASE_PAYMENT_DUE` ("Pago próximo a vencer"); beyond `alertDays` → excluded (`null`), not yet worth surfacing.
+  - **Inventory**: `quantity === 0` → `CRITICAL` ("Producto agotado"), else `MEDIUM` ("Inventario bajo") — the caller (`InventoryStockRepository.findLowStock()`) already only returns rows with `minStock > 0 AND quantity <= minStock`, so this function never has to re-check the threshold itself.
+  - **Recharge balance**: `minBalance <= 0` or no balance history yet → excluded; `dailyBalance <= 0` → `CRITICAL` ("Saldo de recargas agotado"); `0 < dailyBalance <= minBalance` → `MEDIUM` ("Saldo bajo de recargas"); above the threshold → excluded. Claro and Tigo are evaluated as two fully independent calls — nothing ever compares or sums them.
+- **`GetAlertsUseCase`** composes all three sources via `Promise.all` (bounded, parallel, never sequential),
+  sorts with `sortAlerts()` (`application/dtos/alerts-output.ts` — `CRITICAL` before `HIGH` before `MEDIUM`,
+  a stable tiebreak by `key` within a tier, since the ticket named priority tiers but no required intra-tier
+  order), then resolves `isRead` via one bounded `AlertReadMarkRepository.findReadKeys(userId, keys)` call
+  (never the whole read-marks table). `count` is the unread total (the bell badge), `total` is every active
+  alert regardless of read state (the panel's own list length).
+- **Purchase alerts reuse `PurchaseRepository.findPendingCreditPurchases(options?: { userId? })`** — a new
+  repository method, bounded by construction to only `CREDITO`+`PENDING` rows (never the full purchase
+  history), with `userId` omitted for an admin caller (sees every account's pending credit purchases) and
+  set to the caller's own id for a non-admin (mirrors `findAll`'s own ownership rule). This is also the
+  *entire* mechanism behind "a paid purchase stops alerting" — once `MarkPurchaseAsPaidUseCase` flips
+  `paymentStatus` to `PAID`, the purchase simply no longer appears in this query's result set on the next
+  call; nothing marks the alert itself as resolved, because the alert was never a stored thing to resolve.
+- **`AlertReadMarkRepository`** (`alert_read_marks`, composite PK `(user_id, alert_key)`, migration
+  `1760000400000-CreateAlertReadMarks`) is a pure upsert-only table — `markRead`/`markAllRead` both use
+  `.orIgnore()` inserts (marking an already-read alert read again is a no-op, not an error). Its
+  `user_id` FK is `CASCADE`, deliberately the *one* exception to this codebase's otherwise-universal
+  `RESTRICT` convention on every other FK — a read-mark is disposable bookkeeping with no independent
+  meaning once its user is gone, unlike every other referenced row in this app. A read-mark whose alert
+  condition has since resolved is simply an inert, harmless leftover row — nothing ever cleans it up, and
+  nothing needs to.
+- **`alert_settings`** (migration `1760000300000-CreateAlertSettings`) is a genuine singleton — exactly
+  one row, seeded by the migration, holding the *one* truly-global threshold this feature has:
+  `purchasePaymentAlertDays` (int, default `3`). `GET`/`PATCH /alert-settings` are both
+  `@Roles('ADMIN', 'SUPER_ADMIN')`-gated (class-level). Every *other* threshold this ticket asked for —
+  stock mínimo, saldo mínimo — lives on its own owning entity instead of a second generic config table (see
+  below), a deliberate call per the ticket's own "no crear tablas nuevas si ya existe una columna donde
+  vivir" instruction; `AlertSettingsRepository.get()` always returns the one row or throws
+  `InternalServerErrorException` (a missing singleton row would mean the migration itself failed, not a
+  normal runtime condition to model as a domain error).
+- **`inventory_stock.min_stock`** (migration `1760000100000-AddMinStockToInventoryStock`, `int not null
+  default 0`, `CHECK (min_stock >= 0)`) and **`recharge_types.min_balance`** (migration
+  `1760000200000-AddMinBalanceToRechargeTypes`, `numeric(12,2) not null default 0`, `CHECK (min_balance >=
+  0)`) are both per-entity thresholds added directly to their own owning tables — `0` means "no threshold
+  configured, never alert for this row" in both cases, so a fresh install/an unconfigured product or
+  recharge type is silent by default, never a false positive. `SetMinStockUseCase`
+  (`PATCH /inventory/products/:productId/locations/:locationId/min-stock`) and
+  `UpdateRechargeTypeMinBalanceUseCase` (`PATCH /recharges/types/:id/min-balance`) are both admin-only,
+  plain conditional `UPDATE`s (not hot paths, no stored function needed).
+- **Compras a crédito** (migration `1760000000000-AddCreditPaymentToPurchases`) — `purchases` gained
+  `payment_type` (`'CONTADO' | 'CREDITO'`), `payment_due_date` (`DATE`, `yyyy-MM-dd`, always `NULL` for
+  `CONTADO`), `payment_status` (`'PENDING' | 'PAID'`), `paid_at`, `paid_by` (`FK → users, RESTRICT`).
+  `confirm_purchase` gained two new optional trailing params (`p_payment_type DEFAULT 'CONTADO'`,
+  `p_payment_due_date DEFAULT NULL`) — backward compatible with any existing caller. **`VENCIDA` is
+  deliberately never a stored status** — only `PENDING`/`PAID` are persisted; "overdue" is always derived
+  by comparing `paymentDueDate` against today at read time (inside `buildPurchaseAlert`), specifically so
+  nothing in this feature depends on a cron/scheduled job to flip a status at midnight. Existing rows were
+  backfilled `payment_type='CONTADO'`, `payment_status='PAID'`, `paid_at=created_at`, `paid_by=user_id` — a
+  pre-existing purchase was always effectively "paid in full immediately", so this backfill changes no
+  observable behavior for historical data.
+  - **Gotcha hit and fixed in this migration**: the `CHK_purchases_paid_consistency` CHECK was originally
+    added in the same `ALTER TABLE` as the new columns (with `payment_status DEFAULT 'PAID'`), which made
+    every pre-existing row instantly non-compliant (`paid_at`/`paid_by` still `NULL`) before the backfill
+    `UPDATE` ever ran — Postgres validates a same-statement CHECK against the table's current state, not
+    against a later statement's effect. Fixed by splitting into three sequential steps: add columns + every
+    check *except* `paid_consistency` → run the backfill `UPDATE` → add `CHK_purchases_paid_consistency` in
+    its own final `ALTER TABLE`. General lesson: a CHECK that depends on a column-default-then-backfill
+    sequence must be added strictly *after* the backfill, in its own statement — never bundled with the
+    column that introduced the inconsistency.
+- **`MarkPurchaseAsPaidUseCase`** (`POST /purchases/:id/pay`, no `@Roles(...)` — operational, mirrors the
+  policy on registering the purchase itself) is the deliberately minimal "mark as paid" action this
+  feature needed — explicitly NOT a full cuentas-por-pagar module, per the ticket's own warning against
+  building one without first analyzing the architecture. Throws `PurchaseNotFoundError` (404) or
+  `PurchaseAlreadyPaidError` (400, covers both a genuine re-attempt on a CREDITO purchase and any accidental
+  call on an already-`PAID` CONTADO one — there's no need to special-case "this was never CREDITO").
+  `TypeOrmPurchaseRepository.markAsPaid()` is a plain conditional `UPDATE`, not a stored function — same
+  "don't build a procedure where a plain statement is already correct" call as `voidOperation`/
+  `confirm_open_sale`'s status transition elsewhere in this codebase.
+- **No new "read every alert type" endpoint duplication** — `modules/alerts/` reuses each owning module's
+  existing exported repository token directly (`PURCHASE_REPOSITORY`, `INVENTORY_STOCK_REPOSITORY`,
+  `RECHARGE_TYPE_REPOSITORY`, `RECHARGE_DAILY_BALANCE_REPOSITORY`, `ALERT_SETTINGS_REPOSITORY`) by importing
+  each owning module into `AlertsModule`, rather than the `ReportsModule`/`DashboardModule` pattern of
+  registering ORM entities a second time — a deliberate choice, since every value this module needs already
+  has a clean, existing single-repository interface to reuse (the "read maps cleanly onto one existing
+  repository per source" case, not the "read spans many unrelated tables with no existing interface" case
+  those two modules are actually in).
+- **Verified live against real, non-fabricated data** (not just unit tests): a recharge type's
+  `min_balance` was temporarily raised above its actual live balance — the alert appeared correctly in the
+  bell, then the threshold was reset to `0` afterward; a real `CREDITO` purchase was registered with today
+  as its due date — the "Pago vence hoy" alert appeared, "Marcar como pagada" was clicked from the panel,
+  and the purchase's `payment_status`/`paid_at` were confirmed `PAID`/set via a direct `psql` check
+  immediately after; a product's `min_stock` was temporarily raised above its real Bodega quantity — the
+  "Inventario bajo" alert appeared, then the threshold was reset to `0`. In every case the panel's
+  "No hay alertas activas" empty state was independently confirmed correct beforehand by cross-checking
+  zero qualifying rows via direct SQL, not merely assumed from an empty response.
+
+## Kardex financiero — Cuentas por Cobrar y Activos
+
+`accounts_receivable` and `assets` evolved from flat, independently-summed CRUD entries into a real
+Kardex/ledger, via migration `1760000600000-CreateFinancialKardexColumns`: every row is now an explicit
+`CARGO` or `ABONO` movement, and a client's balance is the signed running sum of their own movements.
+Deliberately additive to the **existing** tables — no new `_movements`/`_kardex` table, a movement already
+*is* a row here, it just gained a type. Cuentas por Cobrar and Activos use identical mechanics but **never
+share balances or movements** — each module's repository only ever queries its own table, scoped by
+`client_id`.
+
+- **`amount` stays an always-positive magnitude**, never re-interpreted — the sign comes from
+  `movement_type` at query time (`CASE WHEN movement_type = 'ABONO' THEN -amount ELSE amount END`), never
+  from the stored value. A new `sequence BIGSERIAL` column (one per table, not per client — the window
+  function below partitions by `client_id`) is the deterministic tie-break for ordering, more reliable
+  than `created_at` timestamp precision.
+- **No `balance_after` column, on purpose** — a stored running balance would require the history to be
+  strictly append-only, but `UpdateAccountReceivableUseCase`/`UpdateAssetUseCase` and their
+  `Deactivate*UseCase` siblings (this table's original, still-untouched admin CRUD) already let an admin
+  edit or soft-delete any row, and this migration deliberately does not restrict that — a real, already-used
+  correction tool. Instead, every read computes the balance fresh with a `SUM(...) OVER (ORDER BY sequence)`
+  window function — the Kardex is always correct no matter what the admin screens do to a row later,
+  nothing to desync. Same "derive, don't duplicate" precedent as `RechargeDailyBalance.totalPurchases`/
+  Reports' own folio numbers.
+- **Backfill, not invention**: every pre-existing row became exactly one movement.
+  `accounts_receivable` rows were already 100% positive (its own `CHECK (amount > 0)` never lapsed), so
+  they all became `CARGO` unchanged. `assets` rows split by sign — `amount >= 0` became `CARGO` as-is;
+  `amount < 0` (a real, already-used correction pattern — 5 of 29 live rows at migration time) became
+  `ABONO` with `amount` flipped to its absolute value. Verified directly post-migration: the signed running
+  total per client, recomputed with the new `CASE`-based sum, was byte-identical to the pre-migration naive
+  `SUM(amount)` for every client in both tables (captured a before-snapshot, diffed against an after-
+  snapshot, zero discrepancies).
+- **The one deliberate asymmetry — decided with the user, backed by real data, not assumed**: Cuentas por
+  Cobrar has never allowed a negative balance (its `CHECK (amount > 0)` never lapsed) — an `ABONO` larger
+  than the current balance is rejected (`ABONO_EXCEEDS_BALANCE` → `AbonoExceedsBalanceError`, 400).
+  Activos' own `CHECK` was already dropped in an earlier migration (`AllowNegativeAssetAmount`) — 5 real,
+  live rows already depended on a negative balance at migration time — so `register_asset_movement` applies
+  **no** such guard, preserving that existing capability exactly.
+- **`register_account_receivable_movement(p_client_id, p_type, p_amount, p_date, p_description,
+  p_user_id)`/`register_asset_movement(...)`** — two Postgres `FUNCTION`s (not `PROCEDURE`s, same
+  roll-back-on-`RAISE EXCEPTION` reasoning as every other critical-write module in this codebase), each
+  opening with `PERFORM pg_advisory_xact_lock(hashtext(p_client_id::text))` — a per-client transaction-scoped
+  lock that serializes two concurrent movements for the *same* client without blocking any other client's
+  writes, auto-released at commit/rollback. This is the actual mechanism that prevents two simultaneous
+  abonos from both succeeding against the same pending balance — verified directly: two parallel `ABONO 80`
+  calls against a `CARGO 100` balance correctly left exactly one accepted (final balance `20`) and one
+  rejected with `ABONO_EXCEEDS_BALANCE`, never a negative or double-deducted result.
+  `TypeOrmAssetRepository`/`TypeOrmAccountReceivableRepository.registerMovement()` call the function via
+  `manager.query('SELECT register_*_movement($1, ..., $6)', [...])` and re-fetch the persisted row by the
+  returned id — same `SELECT confirm_sale(...)`-then-refetch pattern as Sales/Purchases.
+- **`getStatement(clientId, { dateFrom?, dateTo? })`** — one query, not a full-history fetch: an
+  `openingBalance` scalar (the signed sum of every active movement strictly before `dateFrom`, `0` when
+  `dateFrom` is omitted since the `WHERE` then matches no rows) plus a `WITH movements AS (...) SELECT ...,
+  $openingBalance + SUM(CASE ...) OVER (ORDER BY sequence) AS "balanceAfter"` window-function query, so a
+  mid-period statement correctly shows the client's true prior balance as its saldo inicial, never
+  assuming zero. `getCurrentBalance(clientId)` is the same signed-sum aggregate with no date bound, backing
+  the client selector's "Saldo actual" and never iterated client-side.
+- **`getReportSummary()` (used by `GetCuadreAgentesSummaryUseCase`'s daily formula) was the one existing
+  caller this migration required changing** — its `SUM(record.amount)` became the same signed `CASE`
+  expression, since `amount` is no longer always the true signed value. Verified live: naive `SUM(amount)`
+  for assets was `Q136,568.78` immediately post-migration (wrong) vs. the corrected signed sum
+  `Q124,061.44` (right, byte-identical to the pre-migration total). The combined `assets-receivables` report
+  (`GetAssetsReceivablesReportRowOutput`) also gained a `movementType` field and the PDF export now prefixes
+  an `ABONO` row's amount with `-` — restoring the same negative-amount visual Activos corrections showed
+  before this migration split the sign out of `amount` into `movement_type`.
+- **A real regression was caught and fixed before shipping**: the legacy admin CRUD
+  (`CreateAssetUseCase`/`UpdateAssetUseCase`, still fully intact and unrestricted — see above) used to let
+  an admin enter a negative `amount` directly (Activos' own long-standing correction capability). Once
+  `CHK_assets_amount_positive` was re-added (now safe, since the sign lives in `movement_type` instead),
+  a plain negative-amount `INSERT`/`UPDATE` through that old path started throwing a raw, untranslated
+  `QueryFailedError` — confirmed directly via `psql` before fixing. Fixed by translating that specific
+  constraint violation into `InvalidMovementAmountError` in `TypeOrmAssetRepository.create()`/`update()`,
+  and by tightening the frontend's `AssetFormModalComponent` amount field from `Validators.min` removed
+  (allowing negative) to `Validators.min(0.01)` — the legacy form's own hint now points an admin needing a
+  correction toward "Registrar Abono" in the new Estado de Cuenta view instead.
+- **New use cases, one set per module**: `Register{AccountReceivable,Asset}ChargeUseCase`,
+  `Register{AccountReceivable,Asset}PaymentUseCase`, `Get{AccountReceivable,Asset}StatementUseCase`,
+  `Get{AccountReceivable,Asset}CurrentBalanceUseCase` — each thin, validating the referenced client
+  exists+active (`ReferencedClientNotFoundError`/`ReferencedClientInactiveError`, the same pattern
+  `CreateAccountReceivableUseCase` already used) before delegating to the repository. The payment use
+  cases deliberately do **not** pre-check the amount against the balance in TypeScript — the SQL function
+  computes the balance fresh inside its own advisory lock, so a TypeScript-side pre-check would only add a
+  TOCTOU gap, not close one.
+- **New routes on the existing controllers** (same permission split as `create`/`update`/`deactivate`
+  already had — admin-only mutation, any-authenticated-role read): `POST /:clientId/charges`,
+  `POST /:clientId/payments`, `GET /:clientId/statement?dateFrom=&dateTo=`, `GET /:clientId/balance` — on
+  both `AccountsReceivableController` and `AssetsController`. No route ordering conflict with the existing
+  `GET /:id`/`PATCH /:id`/`DELETE /:id` (those match exactly one path segment; the new routes are always
+  two segments).
+- **Verified live, end to end, against the real dev database** (not only via `psql`): registered a real
+  `Q500.00` abono on a real client through the actual Estado de Cuenta UI, confirmed the live saldo-anterior/
+  monto/saldo-nuevo preview, the global `FINANCIAL_OPERATION` confirmation dialog, the balance update, and
+  the movement appearing in the Kardex table; attempted a real over-limit abono and confirmed
+  `AbonoExceedsBalanceError`'s exact message surfaced through the UI with no movement written; reversed the
+  test abono with a real corrective cargo (never a delete) once confirmed with the user, leaving both
+  movements permanently in the history — a live demonstration of the "never edit a historical movement,
+  only add a new one" rule the whole feature is built on.
+
+## Catálogos maestros — Tipos de Presentación y Unidades de Medida
+
+`modules/presentation-types/` and `modules/units-of-measure/` — two flat admin catalogs
+(`Sistema → Presentaciones y Medidas`) that replace what used to be free text: `product_presentations.name`
+(Caja, Paquete...) and a brand-new `products.unit_of_measure_id` (Unidad, Kilogramo, Litro...). Added via
+migrations `1760000700000-CreatePresentationTypesTable`/`1760000800000-CreateUnitsOfMeasureTable`. Both
+modules are structural clones of `account-types`/`transaction-types` (domain entity, repository interface,
+`Create`/`Update`/`List`/`GetById`/`Deactivate` use cases, TypeORM repository/ORM entity/mapper,
+controller+DTOs) — confirmed by reading that module first, not assumed; **neither catalog uses a Postgres
+stored function** — SPs in this codebase are reserved for multi-step financial writes needing real
+atomicity (`confirm_sale`, the Kardex `register_*_movement`...), and a single-row `INSERT`/`UPDATE` has no
+such need, so plain TypeORM is "respecting the existing architecture," not skipping it.
+
+- **The two catalogs are deliberately never mixed** — `PresentationType` describes how a product is
+  grouped/commercialized (Caja, Paquete, Bolsa...); `UnitOfMeasure` describes the physical unit it's
+  measured in (kg, L, unidad). A product has exactly one `unitOfMeasureId` (a normal FK column on
+  `products`); a product has *many* presentations (unchanged `product_presentations`, one row per
+  Unidad/Caja/Paquete with its own `conversionFactor`/prices), each now pointing at a
+  `presentation_type_id` instead of typing the name.
+- **Case-insensitive duplicate protection, deliberately stronger than `account_types`' own pattern**: both
+  new tables use the `clients`-style raw-SQL partial unique index (`CREATE UNIQUE INDEX ... ON
+  presentation_types (LOWER(name)) WHERE is_active = true`, plus one more for `code`/`abbreviation`) rather
+  than `account_types`' plain case-sensitive `UQ_..._name_active` — "Caja"/"caja"/" CAJA " are the same row,
+  by construction, in the database, not just in application code. Verified directly via `psql`: inserting
+  "Prueba" then "prueba" then "PRUEBA" — only the first succeeds, the other two fail with `duplicate key
+  value violates unique constraint`.
+- **"Ya existe pero está inactiva, ¿desea activarla?" is a frontend-only flow, deliberately** — `GlobalExceptionFilter`
+  returns a fixed `{success, statusCode, message, timestamp}` shape with no room for a structured
+  "here's the existing id" payload, and widening that shape for one feature would touch every error
+  response in the app. Instead, `Create*UseCase` calls a new `findByName()` (any state, not just active —
+  unlike `account_types`' `findByActiveName`) and rejects an inactive match exactly like an active one
+  (409) — the frontend is expected to check the already-loaded list first and offer "Activar" instead of
+  ever calling create in that case; hitting the API directly without that check just gets a safe rejection.
+- **Reactivation needed a real behavior addition, not a copy of the precedent**: `account_types`/`categories`
+  only ever deactivate (`DELETE`) with no way back — a real, unaddressed gap in those older modules, not
+  something to replicate here since this ticket explicitly requires "Activar". `Update*RequestDto` on both
+  new modules includes `isActive?: boolean` (mirroring the richer pattern `roles`/`inventory` presentations
+  already use), so `PATCH /presentation-types/:id { isActive: true }` reactivates.
+- **`usageCount` per row is a single correlated-subquery `SELECT`, never N+1** — `findAll()` on both
+  repositories runs one raw query (`getRawMany()`, hand-selected columns, same "no relation-count-and-map
+  helper in this TypeORM version" reasoning as Reports' own `itemCount`) with `(SELECT COUNT(*) FROM
+  product_presentations WHERE presentation_type_id = presentationType.id)`/`(... FROM products WHERE
+  unit_of_measure_id = unitOfMeasure.id)` as a scalar subquery in the `SELECT` list — never a join (which
+  would fan out rows) and never a per-row follow-up query.
+- **Deactivating never blocks on usage, and never touches historical rows** — `Deactivate*UseCase` doesn't
+  check `usageCount` at all; a presentation/unit already used by real products can still be deactivated so
+  it stops appearing for *new* ones, while every product/presentation still referencing it (by stable FK,
+  `ON DELETE RESTRICT`) keeps working exactly as before. No `DELETE` route exists beyond the soft
+  `isActive=false` toggle — physical deletion was deliberately not added, since deactivation already covers
+  the real "stop offering this" need without the referential-integrity risk.
+- **Migration is additive and non-destructive, verified before and after**: `product_presentations.name`
+  (free text, unique only per-product) was grouped case-insensitively (trimmed), one `presentation_types`
+  row created per distinct group (using `MIN(name)` for a deterministic original-cased spelling — never an
+  invented name), every existing row related by matching normalized name, verified with a `RAISE EXCEPTION`
+  guard (`0` unmapped rows) before the column was ever touched, and only then was the now-fully-redundant
+  `name` column dropped (not a data loss — its value is preserved, just relocated into the FK). Verified
+  directly against live dev data before writing the migration: only two distinct normalized names existed
+  (`caja` × 3, `unidad` × 4) — no ambiguous plural/typo variants to reconcile by hand in this real dataset.
+  `products.unit_of_measure_id` followed the identical "seed a default row, backfill every existing row,
+  then `SET NOT NULL`" shape `CreateBusinessesTable` already used for `business_id` — a proven, safe
+  precedent in this exact codebase, not a new pattern.
+- **A real regression this migration required fixing**: `CreateProductUseCase`'s auto-created "Unidad"
+  presentation used to pass `name: 'Unidad'` as a literal string straight into the repository; it now
+  resolves the seeded "Unidad" `PresentationType`'s id via `findByActiveName()` first (throwing
+  `InternalServerErrorException` if the migration's own seed is somehow missing — a condition that should
+  never occur, not a normal business rule) and passes `presentationTypeId` instead.
+  `UnidadPresentationImmutableError`'s own guard in `UpdatePresentationUseCase` still works unchanged
+  (`presentation.name === 'Unidad'`, resolved via the join) — no other module needed to know the id ever
+  changed shape.
+- **`products`/`inventory` modules gained the identical FK-validation pattern already used for
+  `categoryId`/`businessId`**: `CreateProductUseCase`/`UpdateProductUseCase` validate `unitOfMeasureId`
+  exists+active (`InvalidUnitOfMeasureError`, 400) before writing; `CreatePresentationUseCase`/
+  `UpdatePresentationUseCase` do the same for `presentationTypeId`. `ProductOutput`/`ProductPresentationOutput`
+  both gained the resolved display fields (`unitOfMeasureName`/`unitOfMeasureAbbreviation`,
+  `presentationTypeId`) — `ProductPresentationOutput.name` itself is unchanged in shape (still a plain
+  string), so every existing consumer (Purchases/Ventas/Inventory-transfer/product-detail, all of which
+  read `presentation.name`/compare it to `'Unidad'`) needed zero changes.
+- **Permissions**: `POST`/`PATCH`/`DELETE` on both new controllers are `@Roles('ADMIN', 'SUPER_ADMIN')`,
+  identical to every other catalog in this app; `GET` (list/by-id) is open to any authenticated role — the
+  product/presentation forms' dropdowns need to read the catalog regardless of who's creating a product.
+- **Verified live end-to-end**: created "Docena"/"doc" through the real UI; attempted "DOCENA" and got the
+  exact case-insensitive rejection; deactivated a synthetic test presentation and confirmed the
+  usage-aware confirmation message; attempted to recreate it with different case/whitespace and got the
+  "ya existe pero está inactiva, ¿desea activarla?" prompt, confirmed it reactivated the same row rather
+  than creating a duplicate; opened the real product-creation form and confirmed "Unidad de medida" and
+  the additional-presentation dropdown both load only real, active catalog entries (never free text); ran
+  a real purchase against an existing product with two presentations and confirmed both "Unidad (factor 1)"
+  and "Caja (factor 12)" still resolve and work exactly as before the migration. All synthetic test rows
+  were removed afterward (`DELETE` by id, verified zero residual rows) — no real catalog entry (Caja,
+  Unidad, the 5 seeded units) was ever touched.
+
 ## Frontend contract
 
 The sibling Angular app at `../comercial-jhoel-app` is now fully wired to this API — see its own

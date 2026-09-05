@@ -8,13 +8,21 @@ import { CreateSaleUseCase } from './application/use-cases/create-sale.use-case'
 import { ListSalesUseCase } from './application/use-cases/list-sales.use-case';
 import { GetSaleByIdUseCase } from './application/use-cases/get-sale-by-id.use-case';
 import { AdjustSaleItemUseCase } from './application/use-cases/adjust-sale-item.use-case';
-import { GetOpenSaleUseCase } from './application/use-cases/get-open-sale.use-case';
+import { GetOpenSalesUseCase } from './application/use-cases/get-open-sales.use-case';
 import { ConfirmOpenSaleUseCase } from './application/use-cases/confirm-open-sale.use-case';
 import { CancelOpenSaleUseCase } from './application/use-cases/cancel-open-sale.use-case';
+import { ConfigureSalePricingUseCase } from './application/use-cases/configure-sale-pricing.use-case';
+import { GetSalePdfUseCase } from './application/use-cases/get-sale-pdf.use-case';
 import { SalesController } from './presentation/controllers/sales.controller';
+import { ClientsModule } from '../clients/clients.module';
+import { CompanySettingsModule } from '../company-settings/company-settings.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SaleOrmEntity, SaleDetailOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([SaleOrmEntity, SaleDetailOrmEntity]),
+    ClientsModule,
+    CompanySettingsModule,
+  ],
   controllers: [SalesController],
   providers: [
     { provide: SALE_REPOSITORY, useClass: TypeOrmSaleRepository },
@@ -22,9 +30,11 @@ import { SalesController } from './presentation/controllers/sales.controller';
     ListSalesUseCase,
     GetSaleByIdUseCase,
     AdjustSaleItemUseCase,
-    GetOpenSaleUseCase,
+    GetOpenSalesUseCase,
     ConfirmOpenSaleUseCase,
     CancelOpenSaleUseCase,
+    ConfigureSalePricingUseCase,
+    GetSalePdfUseCase,
   ],
   // Exported for ReportsModule's `GetSaleReportDetailUseCase`, which reuses
   // `findById` instead of re-querying the same sale a second time.

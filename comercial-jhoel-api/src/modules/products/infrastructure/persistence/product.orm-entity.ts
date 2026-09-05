@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { CategoryOrmEntity } from '../../../categories/infrastructure/persistence/category.orm-entity';
 import { BusinessOrmEntity } from '../../../businesses/infrastructure/persistence/business.orm-entity';
+import { UnitOfMeasureOrmEntity } from '../../../units-of-measure/infrastructure/persistence/unit-of-measure.orm-entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 
 // Name is unique only among *active* products — a deactivated product's name
@@ -47,6 +48,13 @@ export class ProductOrmEntity {
   @ManyToOne(() => BusinessOrmEntity, { eager: true, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'business_id' })
   business: BusinessOrmEntity;
+
+  @Column({ name: 'unit_of_measure_id' })
+  unitOfMeasureId: string;
+
+  @ManyToOne(() => UnitOfMeasureOrmEntity, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'unit_of_measure_id' })
+  unitOfMeasure: UnitOfMeasureOrmEntity;
 
   // numeric(12,2): exact decimal storage, no float rounding — see DecimalColumnTransformer.
   @Column({

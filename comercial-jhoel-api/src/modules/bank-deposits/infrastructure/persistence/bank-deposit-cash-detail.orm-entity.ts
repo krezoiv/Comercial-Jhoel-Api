@@ -1,0 +1,45 @@
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
+import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
+
+@Entity('bank_deposit_cash_details')
+export class BankDepositCashDetailOrmEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ name: 'operation_id' })
+  operationId: string;
+
+  @ManyToOne(
+    () => BankDepositOperationOrmEntity,
+    (operation) => operation.cashDetails,
+    { onDelete: 'CASCADE' },
+  )
+  @JoinColumn({ name: 'operation_id' })
+  operation: BankDepositOperationOrmEntity;
+
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  denomination: number;
+
+  @Column({ type: 'int' })
+  quantity: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  subtotal: number;
+}

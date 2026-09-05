@@ -15,6 +15,7 @@ import { PurchaseProductNotFoundError } from '../../domain/errors/purchase-produ
 import { PurchaseProductInactiveError } from '../../domain/errors/purchase-product-inactive.error';
 import { InvalidPurchaseQuantityError } from '../../domain/errors/invalid-purchase-quantity.error';
 import { InvalidPurchasePriceError } from '../../domain/errors/invalid-purchase-price.error';
+import { InvalidPaymentDataError } from '../../domain/errors/invalid-payment-data.error';
 import { PurchaseOrmEntity } from './purchase.orm-entity';
 import { PurchaseMapper } from './purchase.mapper';
 
@@ -35,6 +36,7 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
     const itemsJson = JSON.stringify(
       data.items.map((item) => ({
         productId: item.productId,
+        presentationId: item.presentationId ?? null,
         quantity: item.quantity,
         costPrice: item.costPrice,
         publicPrice: item.publicPrice,
@@ -45,11 +47,13 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
     try {
       const rows = await this.repository.manager.query<
         { confirm_purchase: string }[]
-      >('SELECT confirm_purchase($1, $2, $3, $4::jsonb)', [
+      >('SELECT confirm_purchase($1, $2, $3, $4::jsonb, $5, $6)', [
         data.supplierId,
         data.userId,
         data.purchaseDate,
         itemsJson,
+        data.paymentType,
+        data.paymentDueDate ?? null,
       ]);
       purchaseId = rows[0].confirm_purchase;
     } catch (error) {
@@ -107,6 +111,42 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
     return orm ? PurchaseMapper.toDomain(orm) : null;
   }
 
+  async markAsPaid(id: string, paidBy: string): Promise<Purchase> {
+    await this.repository.update(
+      { id },
+      { paymentStatus: 'PAID', paidAt: new Date(), paidBy },
+    );
+    const purchase = await this.findById(id);
+    if (!purchase) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar la compra recién pagada.',
+      );
+    }
+    return purchase;
+  }
+
+  async findPendingCreditPurchases(options?: {
+    userId?: string;
+  }): Promise<Purchase[]> {
+    const qb = this.repository
+      .createQueryBuilder('purchase')
+      .leftJoinAndSelect('purchase.supplier', 'supplier')
+      .leftJoinAndSelect('purchase.user', 'user')
+      .where('purchase.paymentType = :paymentType', { paymentType: 'CREDITO' })
+      .andWhere('purchase.paymentStatus = :paymentStatus', {
+        paymentStatus: 'PENDING',
+      });
+
+    if (options?.userId) {
+      qb.andWhere('purchase.userId = :userId', { userId: options.userId });
+    }
+
+    qb.orderBy('purchase.paymentDueDate', 'ASC');
+
+    const orms = await qb.getMany();
+    return orms.map((orm) => PurchaseMapper.toDomain(orm));
+  }
+
   /** Same `RAISE EXCEPTION '<CODE>:<productId>'` → domain-error translation as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */
   private translatePurchaseError(error: unknown): unknown {
     if (!(error instanceof QueryFailedError)) {
@@ -133,6 +173,14 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
         return new InvalidPurchaseQuantityError(productId);
       case 'INVALID_PRICE':
         return new InvalidPurchasePriceError(productId);
+      case 'INVALID_PAYMENT_TYPE':
+        return new InvalidPaymentDataError(
+          'El tipo de compra debe ser Contado o Crédito.',
+        );
+      case 'PAYMENT_DUE_DATE_REQUIRED':
+        return new InvalidPaymentDataError(
+          'Debe indicar la fecha de pago para una compra a crédito.',
+        );
       default:
         return error;
     }

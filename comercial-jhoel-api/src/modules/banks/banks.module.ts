@@ -94,6 +94,10 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     ReopenDayUseCase,
     CancelDayUseCase,
   ],
-  exports: [BANK_REPOSITORY],
+  // DAY_OPENING_REPOSITORY exported for BankDepositsModule (Transaccionar),
+  // which reuses the exact same "día abierto/cerrado" business-day cycle
+  // this module owns rather than duplicating a parallel one — Transaccionar
+  // deposits are gated by the same daily close as Cuadre de Agentes.
+  exports: [BANK_REPOSITORY, DAY_OPENING_REPOSITORY],
 })
 export class BanksModule {}

@@ -27,6 +27,12 @@ export class PurchaseMapper {
       ),
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
+      paymentType: orm.paymentType,
+      paymentDueDate: orm.paymentDueDate,
+      paymentStatus: orm.paymentStatus,
+      paidAt: orm.paidAt,
+      paidBy: orm.paidBy,
+      paidByUsername: orm.paidByUser?.username ?? null,
     });
   }
 }

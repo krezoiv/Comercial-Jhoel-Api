@@ -1,4 +1,4 @@
-import { Asset } from '../../domain/entities/asset.entity';
+import { Asset, AssetMovementType } from '../../domain/entities/asset.entity';
 
 export interface AssetOutput {
   id: string;
@@ -6,6 +6,7 @@ export interface AssetOutput {
   clientName: string;
   date: string;
   amount: number;
+  movementType: AssetMovementType;
   description: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -23,6 +24,7 @@ export function toAssetOutput(asset: Asset): AssetOutput {
     clientName: asset.clientName,
     date: asset.date,
     amount: asset.amount,
+    movementType: asset.movementType,
     description: asset.description,
     isActive: asset.isActive,
     createdAt: asset.createdAt,

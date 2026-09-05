@@ -20,6 +20,12 @@ export class PurchaseResponseDto {
   items: PurchaseItemResponseDto[];
   createdAt: Date;
   updatedAt: Date;
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDueDate: string | null;
+  paymentStatus: 'PENDING' | 'PAID';
+  paidAt: Date | null;
+  paidBy: string | null;
+  paidByUsername: string | null;
 }
 
 export class PurchaseSummaryResponseDto {
@@ -31,6 +37,9 @@ export class PurchaseSummaryResponseDto {
   purchaseDate: Date;
   total: number;
   createdAt: Date;
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDueDate: string | null;
+  paymentStatus: 'PENDING' | 'PAID';
 }
 
 export class PaginatedPurchasesResponseDto {

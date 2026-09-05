@@ -13,6 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { ListRechargeTypesUseCase } from '../../application/use-cases/list-recharge-types.use-case';
@@ -30,6 +32,7 @@ import { CreateRechargeSaleUseCase } from '../../application/use-cases/create-re
 import { UpdateRechargeSaleUseCase } from '../../application/use-cases/update-recharge-sale.use-case';
 import { DeleteRechargeSaleUseCase } from '../../application/use-cases/delete-recharge-sale.use-case';
 import { GetRechargeDayStatusUseCase } from '../../application/use-cases/get-recharge-day-status.use-case';
+import { UpdateRechargeTypeMinBalanceUseCase } from '../../application/use-cases/update-recharge-type-min-balance.use-case';
 import { OpenRechargeDayUseCase } from '../../application/use-cases/open-recharge-day.use-case';
 import { CloseRechargeDayUseCase } from '../../application/use-cases/close-recharge-day.use-case';
 import { RegisterRechargePurchaseRequestDto } from '../dtos/register-recharge-purchase.request.dto';
@@ -43,6 +46,7 @@ import { RechargeSalesSummaryQueryDto } from '../dtos/recharge-sales-summary.que
 import { RechargeSalesQueryDto } from '../dtos/recharge-sales.query.dto';
 import { RechargeDayStatusQueryDto } from '../dtos/recharge-day-status.query.dto';
 import { OpenRechargeDayRequestDto } from '../dtos/open-recharge-day.request.dto';
+import { UpdateRechargeTypeMinBalanceRequestDto } from '../dtos/update-recharge-type-min-balance.request.dto';
 import { CloseRechargeDayRequestDto } from '../dtos/close-recharge-day.request.dto';
 import { RechargeTypeOutput } from '../../application/dtos/recharge-type-output';
 import { RechargeDailyBalanceOutput } from '../../application/dtos/recharge-daily-balance-output';
@@ -81,6 +85,7 @@ export class RechargesController {
     private readonly getRechargeDayStatusUseCase: GetRechargeDayStatusUseCase,
     private readonly openRechargeDayUseCase: OpenRechargeDayUseCase,
     private readonly closeRechargeDayUseCase: CloseRechargeDayUseCase,
+    private readonly updateRechargeTypeMinBalanceUseCase: UpdateRechargeTypeMinBalanceUseCase,
   ) {}
 
   /**
@@ -135,6 +140,20 @@ export class RechargesController {
   @Get('types')
   findTypes(): Promise<RechargeTypeOutput[]> {
     return this.listRechargeTypesUseCase.execute();
+  }
+
+  /** "Saldo mínimo" — the threshold the Alerts module reads for "saldo bajo de recargas". Admin-only, the one route on this controller that IS `@Roles`-gated. */
+  @Patch('types/:id/min-balance')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  updateMinBalance(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRechargeTypeMinBalanceRequestDto,
+  ): Promise<RechargeTypeOutput> {
+    return this.updateRechargeTypeMinBalanceUseCase.execute({
+      id,
+      minBalance: dto.minBalance,
+    });
   }
 
   @Get('daily')

@@ -7,7 +7,11 @@ import { SaleOutput, toSaleOutput } from '../dtos/sale-output';
 export interface AdjustSaleItemInput {
   userId: string;
   productId: string;
+  /** Omit to resolve the product's base "Unidad" presentation / "Vitrina" location server-side. */
+  presentationId?: string;
   quantityDelta: number;
+  /** Which of the caller's (possibly several) open receipts this targets. */
+  draftKey: string;
 }
 
 /**
@@ -33,7 +37,9 @@ export class AdjustSaleItemUseCase {
     const sale = await this.saleRepository.adjustItem({
       userId: input.userId,
       productId: input.productId,
+      presentationId: input.presentationId,
       quantityDelta: input.quantityDelta,
+      draftKey: input.draftKey,
     });
 
     return toSaleOutput(sale);

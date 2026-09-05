@@ -160,6 +160,7 @@ export class GetAssetsReceivablesReportUseCase {
       clientName: string;
       date: string;
       amount: number;
+      movementType: 'CARGO' | 'ABONO';
       description: string | null;
       isActive: boolean;
     },
@@ -172,6 +173,7 @@ export class GetAssetsReceivablesReportUseCase {
       clientName: item.clientName,
       date: item.date,
       amount: item.amount,
+      movementType: item.movementType,
       description: item.description,
       isActive: item.isActive,
     };

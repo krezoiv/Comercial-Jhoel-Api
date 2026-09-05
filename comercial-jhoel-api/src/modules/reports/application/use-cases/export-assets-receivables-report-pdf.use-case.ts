@@ -148,10 +148,19 @@ export class ExportAssetsReceivablesReportPdfUseCase {
     const limited = merged.slice(0, EXPORT_ROW_LIMIT);
 
     const rows = limited.map((item) => {
+      // `amount` is always a positive magnitude now (see migration
+      // `CreateFinancialKardexColumns`) — prefixing an ABONO with "-"
+      // restores the same negative-amount visual this report showed for
+      // Activos corrections before that migration split the sign into
+      // `movementType`.
+      const amountLabel =
+        item.movementType === 'ABONO'
+          ? `-${formatReportCurrency(item.amount)}`
+          : formatReportCurrency(item.amount);
       const base = [
         item.clientName,
         formatRecordDate(item.date),
-        formatReportCurrency(item.amount),
+        amountLabel,
         item.description ?? '—',
         item.isActive ? 'Activo' : 'Inactivo',
       ];

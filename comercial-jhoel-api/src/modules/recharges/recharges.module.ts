@@ -38,6 +38,7 @@ import { DeleteRechargeSaleUseCase } from './application/use-cases/delete-rechar
 import { GetRechargeDayStatusUseCase } from './application/use-cases/get-recharge-day-status.use-case';
 import { OpenRechargeDayUseCase } from './application/use-cases/open-recharge-day.use-case';
 import { CloseRechargeDayUseCase } from './application/use-cases/close-recharge-day.use-case';
+import { UpdateRechargeTypeMinBalanceUseCase } from './application/use-cases/update-recharge-type-min-balance.use-case';
 import { ListClosedRechargeDaysUseCase } from './application/use-cases/list-closed-recharge-days.use-case';
 import { GetRechargeDayDetailUseCase } from './application/use-cases/get-recharge-day-detail.use-case';
 import { ReopenRechargeDayUseCase } from './application/use-cases/reopen-recharge-day.use-case';
@@ -124,6 +125,7 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
     GetRechargeDayStatusUseCase,
     OpenRechargeDayUseCase,
     CloseRechargeDayUseCase,
+    UpdateRechargeTypeMinBalanceUseCase,
     ListClosedRechargeDaysUseCase,
     GetRechargeDayDetailUseCase,
     ReopenRechargeDayUseCase,

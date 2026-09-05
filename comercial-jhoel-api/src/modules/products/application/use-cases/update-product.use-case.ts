@@ -10,6 +10,9 @@ import { ProductNameAlreadyExistsError } from '../../domain/errors/product-name-
 import { ProductSkuAlreadyExistsError } from '../../domain/errors/product-sku-already-exists.error';
 import { InvalidCategoryError } from '../../domain/errors/invalid-category.error';
 import { InvalidBusinessError } from '../../domain/errors/invalid-business.error';
+import { InvalidUnitOfMeasureError } from '../../domain/errors/invalid-unit-of-measure.error';
+import { UNIT_OF_MEASURE_REPOSITORY } from '../../../units-of-measure/domain/repositories/unit-of-measure.repository';
+import type { UnitOfMeasureRepository } from '../../../units-of-measure/domain/repositories/unit-of-measure.repository';
 import { ProductOutput, toProductOutput } from '../dtos/product-output';
 
 export interface UpdateProductInput {
@@ -17,10 +20,10 @@ export interface UpdateProductInput {
   sku?: string | null;
   categoryId?: string;
   businessId?: string;
+  unitOfMeasureId?: string;
   costPrice?: number;
   publicPrice?: number;
   wholesalePrice?: number;
-  stock?: number;
 }
 
 @Injectable()
@@ -32,6 +35,8 @@ export class UpdateProductUseCase {
     private readonly categoryRepository: CategoryRepository,
     @Inject(BUSINESS_REPOSITORY)
     private readonly businessRepository: BusinessRepository,
+    @Inject(UNIT_OF_MEASURE_REPOSITORY)
+    private readonly unitOfMeasureRepository: UnitOfMeasureRepository,
   ) {}
 
   async execute(id: string, input: UpdateProductInput): Promise<ProductOutput> {
@@ -51,6 +56,15 @@ export class UpdateProductUseCase {
       const business = await this.businessRepository.findById(input.businessId);
       if (!business || !business.isActive) {
         throw new InvalidBusinessError();
+      }
+    }
+
+    if (input.unitOfMeasureId) {
+      const unitOfMeasure = await this.unitOfMeasureRepository.findById(
+        input.unitOfMeasureId,
+      );
+      if (!unitOfMeasure || !unitOfMeasure.isActive) {
+        throw new InvalidUnitOfMeasureError();
       }
     }
 
@@ -80,6 +94,9 @@ export class UpdateProductUseCase {
       ...(sku !== undefined ? { sku } : {}),
       ...(input.categoryId ? { categoryId: input.categoryId } : {}),
       ...(input.businessId ? { businessId: input.businessId } : {}),
+      ...(input.unitOfMeasureId
+        ? { unitOfMeasureId: input.unitOfMeasureId }
+        : {}),
       ...(input.costPrice !== undefined ? { costPrice: input.costPrice } : {}),
       ...(input.publicPrice !== undefined
         ? { publicPrice: input.publicPrice }
@@ -87,7 +104,6 @@ export class UpdateProductUseCase {
       ...(input.wholesalePrice !== undefined
         ? { wholesalePrice: input.wholesalePrice }
         : {}),
-      ...(input.stock !== undefined ? { stock: input.stock } : {}),
     });
 
     return toProductOutput(updated);

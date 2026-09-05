@@ -10,8 +10,11 @@ export class CancelOpenSaleUseCase {
     @Inject(SALE_REPOSITORY) private readonly saleRepository: SaleRepository,
   ) {}
 
-  async execute(userId: string): Promise<void> {
-    const cancelled = await this.saleRepository.cancelOpenSale(userId);
+  async execute(userId: string, draftKey: string): Promise<void> {
+    const cancelled = await this.saleRepository.cancelOpenSale(
+      userId,
+      draftKey,
+    );
     if (!cancelled) {
       throw new NoOpenSaleError();
     }

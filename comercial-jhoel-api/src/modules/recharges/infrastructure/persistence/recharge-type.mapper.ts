@@ -9,6 +9,7 @@ export class RechargeTypeMapper {
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
+      minBalance: orm.minBalance,
     });
   }
 }

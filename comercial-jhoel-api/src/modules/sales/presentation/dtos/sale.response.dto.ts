@@ -15,6 +15,10 @@ export class SaleResponseDto {
   saleDate: Date;
   total: number;
   status: 'OPEN' | 'CONFIRMED';
+  clientId: string | null;
+  clientName: string | null;
+  priceList: 'PUBLIC' | 'WHOLESALE';
+  draftKey: string | null;
   items: SaleItemResponseDto[];
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +30,9 @@ export class SaleSummaryResponseDto {
   username: string;
   saleDate: Date;
   total: number;
+  clientId: string | null;
+  clientName: string | null;
+  priceList: 'PUBLIC' | 'WHOLESALE';
   createdAt: Date;
 }
 

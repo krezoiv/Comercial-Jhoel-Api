@@ -7,10 +7,13 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
@@ -18,12 +21,17 @@ import { CreateSaleUseCase } from '../../application/use-cases/create-sale.use-c
 import { ListSalesUseCase } from '../../application/use-cases/list-sales.use-case';
 import { GetSaleByIdUseCase } from '../../application/use-cases/get-sale-by-id.use-case';
 import { AdjustSaleItemUseCase } from '../../application/use-cases/adjust-sale-item.use-case';
-import { GetOpenSaleUseCase } from '../../application/use-cases/get-open-sale.use-case';
+import { GetOpenSalesUseCase } from '../../application/use-cases/get-open-sales.use-case';
 import { ConfirmOpenSaleUseCase } from '../../application/use-cases/confirm-open-sale.use-case';
 import { CancelOpenSaleUseCase } from '../../application/use-cases/cancel-open-sale.use-case';
+import { ConfigureSalePricingUseCase } from '../../application/use-cases/configure-sale-pricing.use-case';
+import { GetSalePdfUseCase } from '../../application/use-cases/get-sale-pdf.use-case';
 import { CreateSaleRequestDto } from '../dtos/create-sale.request.dto';
 import { ListSalesQueryDto } from '../dtos/list-sales.query.dto';
 import { AdjustSaleItemRequestDto } from '../dtos/adjust-sale-item.request.dto';
+import { ConfigureSalePricingRequestDto } from '../dtos/configure-sale-pricing.request.dto';
+import { ConfirmOpenSaleRequestDto } from '../dtos/confirm-open-sale.request.dto';
+import { CancelOpenSaleQueryDto } from '../dtos/cancel-open-sale.query.dto';
 import {
   PaginatedSalesResponseDto,
   SaleResponseDto,
@@ -52,9 +60,11 @@ export class SalesController {
     private readonly listSalesUseCase: ListSalesUseCase,
     private readonly getSaleByIdUseCase: GetSaleByIdUseCase,
     private readonly adjustSaleItemUseCase: AdjustSaleItemUseCase,
-    private readonly getOpenSaleUseCase: GetOpenSaleUseCase,
+    private readonly getOpenSalesUseCase: GetOpenSalesUseCase,
     private readonly confirmOpenSaleUseCase: ConfirmOpenSaleUseCase,
     private readonly cancelOpenSaleUseCase: CancelOpenSaleUseCase,
+    private readonly configureSalePricingUseCase: ConfigureSalePricingUseCase,
+    private readonly getSalePdfUseCase: GetSalePdfUseCase,
   ) {}
 
   /** Bulk, one-shot sale creation — unchanged, still fully atomic via `confirm_sale`. Independent of the incremental draft flow below. */
@@ -64,7 +74,12 @@ export class SalesController {
     @Body() dto: CreateSaleRequestDto,
     @CurrentUser('userId') userId: string,
   ): Promise<SaleResponseDto> {
-    return this.createSaleUseCase.execute({ userId, items: dto.items });
+    return this.createSaleUseCase.execute({
+      userId,
+      items: dto.items,
+      clientId: dto.clientId,
+      priceList: dto.priceList,
+    });
   }
 
   @Get()
@@ -88,23 +103,69 @@ export class SalesController {
     return this.adjustSaleItemUseCase.execute({ userId, ...dto });
   }
 
-  /** The caller's in-progress receipt, if any — lets the frontend restore it after a reload/navigation. */
+  /** Every one of the caller's in-progress receipts (one per open tab) — lets the frontend restore all of them after a reload/navigation. An empty array means no open tabs, not an error. */
   @Get('current')
-  getCurrent(@CurrentUser('userId') userId: string): Promise<SaleResponseDto> {
-    return this.getOpenSaleUseCase.execute(userId);
+  getCurrent(
+    @CurrentUser('userId') userId: string,
+  ): Promise<SaleResponseDto[]> {
+    return this.getOpenSalesUseCase.execute(userId);
   }
 
-  /** "Guardar venta" — stock is already reserved; this just marks the receipt CONFIRMED. */
+  /** Sets/updates one open receipt's client and price list — call once per tab, before or while that tab's cart is empty. Rejects a price-list change once that receipt has line items. */
+  @Patch('current/pricing')
+  configurePricing(
+    @Body() dto: ConfigureSalePricingRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<SaleResponseDto> {
+    return this.configureSalePricingUseCase.execute({
+      userId,
+      clientId: dto.clientId ?? null,
+      priceList: dto.priceList,
+      draftKey: dto.draftKey,
+    });
+  }
+
+  /** "Guardar venta" — stock is already reserved; this just marks the targeted tab's receipt CONFIRMED. */
   @Post('confirm')
-  confirm(@CurrentUser('userId') userId: string): Promise<SaleResponseDto> {
-    return this.confirmOpenSaleUseCase.execute(userId);
+  confirm(
+    @Body() dto: ConfirmOpenSaleRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<SaleResponseDto> {
+    return this.confirmOpenSaleUseCase.execute(userId, dto.draftKey);
   }
 
-  /** Discards the receipt and restores every reserved line's stock. */
+  /** Discards one tab's receipt and restores every reserved line's stock. */
   @Delete('current')
   @HttpCode(HttpStatus.NO_CONTENT)
-  cancelCurrent(@CurrentUser('userId') userId: string): Promise<void> {
-    return this.cancelOpenSaleUseCase.execute(userId);
+  cancelCurrent(
+    @Query() query: CancelOpenSaleQueryDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<void> {
+    return this.cancelOpenSaleUseCase.execute(userId, query.draftKey);
+  }
+
+  /**
+   * Reconstructs the sale's receipt PDF purely from already-persisted data —
+   * never re-runs `confirm_open_sale`. Declared before `:id` so it isn't
+   * swallowed by that route's `ParseUUIDPipe` matching on `id`, matching
+   * this controller's existing route-ordering discipline.
+   */
+  @Get(':id/pdf')
+  async getPdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.getSalePdfUseCase.execute(id, {
+      currentUserId: user.userId,
+      isAdmin: ADMIN_ROLES.includes(user.role),
+    });
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="venta-${id.slice(0, 8)}.pdf"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.send(buffer);
   }
 
   @Get(':id')

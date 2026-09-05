@@ -13,6 +13,9 @@ import { RolesModule } from './modules/roles/roles.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { BusinessesModule } from './modules/businesses/businesses.module';
 import { ProductsModule } from './modules/products/products.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { PresentationTypesModule } from './modules/presentation-types/presentation-types.module';
+import { UnitsOfMeasureModule } from './modules/units-of-measure/units-of-measure.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
@@ -21,9 +24,18 @@ import { RechargesModule } from './modules/recharges/recharges.module';
 import { IceCreamsModule } from './modules/ice-creams/ice-creams.module';
 import { AccountTypesModule } from './modules/account-types/account-types.module';
 import { BanksModule } from './modules/banks/banks.module';
+import { TransactionBanksModule } from './modules/transaction-banks/transaction-banks.module';
+import { TransactionTypesModule } from './modules/transaction-types/transaction-types.module';
+import { BankDepositsModule } from './modules/bank-deposits/bank-deposits.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { AccountsReceivableModule } from './modules/accounts-receivable/accounts-receivable.module';
 import { AssetsModule } from './modules/assets/assets.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AlertSettingsModule } from './modules/alert-settings/alert-settings.module';
+import { AlertsModule } from './modules/alerts/alerts.module';
+import { CompanySettingsModule } from './modules/company-settings/company-settings.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { QuotationsModule } from './modules/quotations/quotations.module';
 
 @Module({
   imports: [
@@ -55,18 +67,30 @@ import { AssetsModule } from './modules/assets/assets.module';
     AuthModule,
     CategoriesModule,
     BusinessesModule,
+    PresentationTypesModule,
+    UnitsOfMeasureModule,
     ProductsModule,
+    InventoryModule,
     SalesModule,
     SuppliersModule,
     PurchasesModule,
     IceCreamsModule,
     AccountTypesModule,
     BanksModule,
+    TransactionBanksModule,
+    TransactionTypesModule,
+    BankDepositsModule,
     ClientsModule,
     AccountsReceivableModule,
     AssetsModule,
     ReportsModule,
     RechargesModule,
+    DashboardModule,
+    AlertSettingsModule,
+    AlertsModule,
+    CompanySettingsModule,
+    TicketsModule,
+    QuotationsModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

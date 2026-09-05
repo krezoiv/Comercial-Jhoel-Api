@@ -1,5 +1,4 @@
 import {
-  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -37,6 +36,10 @@ export class UpdateProductRequestDto {
   businessId?: string;
 
   @IsOptional()
+  @IsUUID()
+  unitOfMeasureId?: string;
+
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   costPrice?: number;
@@ -50,9 +53,4 @@ export class UpdateProductRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   wholesalePrice?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  stock?: number;
 }

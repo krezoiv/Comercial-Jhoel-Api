@@ -34,6 +34,7 @@ export interface CreateProductData {
   sku: string | null;
   categoryId: string;
   businessId: string;
+  unitOfMeasureId: string;
   costPrice: number;
   publicPrice: number;
   wholesalePrice: number;

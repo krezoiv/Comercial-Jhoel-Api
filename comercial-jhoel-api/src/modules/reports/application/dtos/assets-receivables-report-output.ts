@@ -7,6 +7,8 @@ export interface AssetsReceivablesReportRowOutput {
   clientName: string;
   date: string;
   amount: number;
+  /** `amount` is always a positive magnitude now (see migration `CreateFinancialKardexColumns`) — this is what lets the report distinguish a Cargo from an Abono, information a bare negative `amount` used to carry for Activos before that migration. */
+  movementType: 'CARGO' | 'ABONO';
   description: string | null;
   isActive: boolean;
 }

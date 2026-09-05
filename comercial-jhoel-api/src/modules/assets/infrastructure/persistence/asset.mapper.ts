@@ -9,6 +9,8 @@ export class AssetMapper {
       clientName: orm.client?.name ?? '',
       date: orm.date,
       amount: orm.amount,
+      movementType: orm.movementType,
+      sequence: Number(orm.sequence),
       description: orm.description,
       isActive: orm.isActive,
       createdAt: orm.createdAt,

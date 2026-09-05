@@ -9,6 +9,11 @@ import { ListAccountsReceivableUseCase } from './application/use-cases/list-acco
 import { GetAccountReceivableByIdUseCase } from './application/use-cases/get-account-receivable-by-id.use-case';
 import { UpdateAccountReceivableUseCase } from './application/use-cases/update-account-receivable.use-case';
 import { DeactivateAccountReceivableUseCase } from './application/use-cases/deactivate-account-receivable.use-case';
+import { RegisterAccountReceivableChargeUseCase } from './application/use-cases/register-account-receivable-charge.use-case';
+import { RegisterAccountReceivablePaymentUseCase } from './application/use-cases/register-account-receivable-payment.use-case';
+import { GetAccountReceivableStatementUseCase } from './application/use-cases/get-account-receivable-statement.use-case';
+import { GetAccountReceivableCurrentBalanceUseCase } from './application/use-cases/get-account-receivable-current-balance.use-case';
+import { GetAccountReceivableActiveBalanceUseCase } from './application/use-cases/get-account-receivable-active-balance.use-case';
 import { AccountsReceivableController } from './presentation/controllers/accounts-receivable.controller';
 
 @Module({
@@ -27,6 +32,11 @@ import { AccountsReceivableController } from './presentation/controllers/account
     GetAccountReceivableByIdUseCase,
     UpdateAccountReceivableUseCase,
     DeactivateAccountReceivableUseCase,
+    RegisterAccountReceivableChargeUseCase,
+    RegisterAccountReceivablePaymentUseCase,
+    GetAccountReceivableStatementUseCase,
+    GetAccountReceivableCurrentBalanceUseCase,
+    GetAccountReceivableActiveBalanceUseCase,
   ],
   // Exported for ReportsModule's Cuentas por Cobrar report: ACCOUNT_RECEIVABLE_REPOSITORY
   // backs its own summary use case, and ListAccountsReceivableUseCase is reused directly

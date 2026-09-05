@@ -7,11 +7,17 @@ import { PURCHASE_REPOSITORY } from './domain/repositories/purchase.repository';
 import { CreatePurchaseUseCase } from './application/use-cases/create-purchase.use-case';
 import { ListPurchasesUseCase } from './application/use-cases/list-purchases.use-case';
 import { GetPurchaseByIdUseCase } from './application/use-cases/get-purchase-by-id.use-case';
+import { MarkPurchaseAsPaidUseCase } from './application/use-cases/mark-purchase-as-paid.use-case';
+import { GetPurchasePdfUseCase } from './application/use-cases/get-purchase-pdf.use-case';
 import { PurchasesController } from './presentation/controllers/purchases.controller';
+import { SuppliersModule } from '../suppliers/suppliers.module';
+import { CompanySettingsModule } from '../company-settings/company-settings.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PurchaseOrmEntity, PurchaseDetailOrmEntity]),
+    SuppliersModule,
+    CompanySettingsModule,
   ],
   controllers: [PurchasesController],
   providers: [
@@ -19,6 +25,8 @@ import { PurchasesController } from './presentation/controllers/purchases.contro
     CreatePurchaseUseCase,
     ListPurchasesUseCase,
     GetPurchaseByIdUseCase,
+    MarkPurchaseAsPaidUseCase,
+    GetPurchasePdfUseCase,
   ],
   // Exported for ReportsModule's `GetPurchaseReportDetailUseCase` — same
   // reuse-over-duplicate reasoning as `SalesModule`.

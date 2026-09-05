@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { In, QueryFailedError, Repository } from 'typeorm';
 import { RechargeDailyBalance } from '../../domain/entities/recharge-daily-balance.entity';
 import {
   FindRechargeHistoryOptions,
@@ -80,6 +80,36 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
     const latest = Array.from(latestByType.values());
     const totals = await this.sumPurchaseAmounts(latest.map((orm) => orm.id));
     return latest.map((orm) =>
+      RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0),
+    );
+  }
+
+  /**
+   * `DISTINCT ON` resolves only the target ids (at most one per recharge
+   * type — a tiny, bounded result), then a plain `find()` hydrates the full
+   * entities with relations — same two-step "resolve ids via DISTINCT ON,
+   * then act on hydrated rows" split this codebase already established for
+   * `register_recharge_sales_closure`'s own cycle-closing query (see the
+   * backend CLAUDE.md's "Cuadre cycles" section: `FOR UPDATE` and
+   * `DISTINCT`/`DISTINCT ON` can never share one `SELECT` level in
+   * Postgres, and more generally this avoids ever pulling the whole
+   * table's history into Node just to keep the top 1-2 rows).
+   */
+  async findLatestPerType(): Promise<RechargeDailyBalance[]> {
+    const rows = await this.repository.manager.query<{ id: string }[]>(`
+      SELECT DISTINCT ON (recharge_type_id) id
+      FROM recharge_daily_balances
+      ORDER BY recharge_type_id, date DESC, sequence DESC
+    `);
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const orms = await this.repository.find({
+      where: { id: In(rows.map((row) => row.id)) },
+    });
+    const totals = await this.sumPurchaseAmounts(orms.map((orm) => orm.id));
+    return orms.map((orm) =>
       RechargeDailyBalanceMapper.toDomain(orm, totals.get(orm.id) ?? 0),
     );
   }

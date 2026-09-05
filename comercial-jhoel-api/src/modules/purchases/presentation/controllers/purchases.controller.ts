@@ -8,14 +8,18 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { CreatePurchaseUseCase } from '../../application/use-cases/create-purchase.use-case';
 import { ListPurchasesUseCase } from '../../application/use-cases/list-purchases.use-case';
 import { GetPurchaseByIdUseCase } from '../../application/use-cases/get-purchase-by-id.use-case';
+import { MarkPurchaseAsPaidUseCase } from '../../application/use-cases/mark-purchase-as-paid.use-case';
+import { GetPurchasePdfUseCase } from '../../application/use-cases/get-purchase-pdf.use-case';
 import { CreatePurchaseRequestDto } from '../dtos/create-purchase.request.dto';
 import { ListPurchasesQueryDto } from '../dtos/list-purchases.query.dto';
 import {
@@ -41,6 +45,8 @@ export class PurchasesController {
     private readonly createPurchaseUseCase: CreatePurchaseUseCase,
     private readonly listPurchasesUseCase: ListPurchasesUseCase,
     private readonly getPurchaseByIdUseCase: GetPurchaseByIdUseCase,
+    private readonly markPurchaseAsPaidUseCase: MarkPurchaseAsPaidUseCase,
+    private readonly getPurchasePdfUseCase: GetPurchasePdfUseCase,
   ) {}
 
   @Post()
@@ -54,7 +60,19 @@ export class PurchasesController {
       userId,
       purchaseDate: new Date(dto.purchaseDate),
       items: dto.items,
+      paymentType: dto.paymentType,
+      paymentDueDate: dto.paymentDueDate,
     });
+  }
+
+  /** "Marcar como pagada" — see `MarkPurchaseAsPaidUseCase`'s own doc comment for why this is operational, not admin-gated. */
+  @Post(':id/pay')
+  @HttpCode(HttpStatus.OK)
+  markAsPaid(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<PurchaseResponseDto> {
+    return this.markPurchaseAsPaidUseCase.execute({ id, paidBy: userId });
   }
 
   @Get()
@@ -67,6 +85,30 @@ export class PurchasesController {
       isAdmin: ADMIN_ROLES.includes(user.role),
       ...query,
     });
+  }
+
+  /**
+   * Reconstructs the purchase's invoice PDF purely from already-persisted
+   * data — never re-runs `confirm_purchase`. Declared before `:id` so it
+   * isn't swallowed by that route's `ParseUUIDPipe` matching on `id`,
+   * matching Sales' own route-ordering discipline.
+   */
+  @Get(':id/pdf')
+  async getPdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.getPurchasePdfUseCase.execute(id, {
+      currentUserId: user.userId,
+      isAdmin: ADMIN_ROLES.includes(user.role),
+    });
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="compra-${id.slice(0, 8)}.pdf"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.send(buffer);
   }
 
   @Get(':id')

@@ -1,6 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
+import {
+  formatDateTime,
+  drawDivider,
+} from '../../../../shared/infrastructure/pdf/pdf-helpers';
 
 const LOGO_PATH = path.join(__dirname, 'assets', 'logo.png');
 
@@ -284,17 +288,6 @@ function drawTable(
   });
 }
 
-function drawDivider(doc: PDFKit.PDFDocument): void {
-  const y = doc.y;
-  doc
-    .moveTo(doc.page.margins.left, y)
-    .lineTo(doc.page.width - doc.page.margins.right, y)
-    .strokeColor('#e2e8f0')
-    .lineWidth(1)
-    .stroke();
-  doc.y = y + 6;
-}
-
 function numberPages(doc: PDFKit.PDFDocument): void {
   const range = doc.bufferedPageRange();
   for (let i = range.start; i < range.start + range.count; i++) {
@@ -323,26 +316,4 @@ function numberPages(doc: PDFKit.PDFDocument): void {
       );
     doc.page.margins.bottom = bottomMargin;
   }
-}
-
-/**
- * `Date.prototype.toLocaleString` with no `timeZone` formats using the
- * *server process's* local timezone, not Guatemala's — harmless when the
- * API happens to run on a Guatemala-local host, but this project's Docker
- * setup runs the container on UTC (see this repo's own CLAUDE.md note on
- * the same class of bug in the Recargas sales-summary card), so the
- * printed "Generado el" timestamp was silently off by the container's
- * UTC offset from `America/Guatemala` (currently 6 hours, no DST).
- * Pinning `timeZone` here makes the PDF correct regardless of what
- * timezone the underlying server/container happens to run in.
- */
-function formatDateTime(date: Date): string {
-  return date.toLocaleString('es-GT', {
-    timeZone: 'America/Guatemala',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }

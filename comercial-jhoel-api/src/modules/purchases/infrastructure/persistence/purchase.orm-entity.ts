@@ -51,4 +51,27 @@ export class PurchaseOrmEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'payment_type', type: 'varchar', length: 20 })
+  paymentType: 'CONTADO' | 'CREDITO';
+
+  @Column({ name: 'payment_due_date', type: 'date', nullable: true })
+  paymentDueDate: string | null;
+
+  @Column({ name: 'payment_status', type: 'varchar', length: 20 })
+  paymentStatus: 'PENDING' | 'PAID';
+
+  @Column({ name: 'paid_at', type: 'timestamptz', nullable: true })
+  paidAt: Date | null;
+
+  @Column({ name: 'paid_by', type: 'uuid', nullable: true })
+  paidBy: string | null;
+
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'paid_by' })
+  paidByUser: UserOrmEntity | null;
 }

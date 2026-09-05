@@ -66,6 +66,8 @@ export interface RechargeDailyBalanceRepository {
   ): Promise<RechargeDailyBalance | null>;
   /** Every recharge type's CURRENT cycle row for one date — used to compute the sales summary/closure across all operators at once. */
   findAllByDate(date: string): Promise<RechargeDailyBalance[]>;
+  /** Every recharge type's single most-recent row overall — by `(date DESC, sequence DESC)`, regardless of what date that actually is — used by the Alerts module for "current balance" (`dailyBalance`). Deliberately NOT `findAllByDate(today)`: before the first purchase/close of a new day, today has no row yet (nothing has lazily created it), so scoping to today would miss a type whose real current balance simply carried over from yesterday's close. A pure `SELECT`, same as `findAllByDate` — never triggers `ensure_recharge_daily_balance`'s own lazy-create side effect. A type with literally no balance history ever is simply absent from the result (no invented `0` row). */
+  findLatestPerType(): Promise<RechargeDailyBalance[]>;
   findById(id: string): Promise<RechargeDailyBalance | null>;
   /** Invokes `register_recharge_purchase` — validates the type, records the movement, and increments the day's running total, atomically. */
   registerPurchase(

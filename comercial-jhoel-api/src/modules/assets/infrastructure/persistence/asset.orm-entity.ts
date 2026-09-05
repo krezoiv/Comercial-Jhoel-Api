@@ -41,6 +41,18 @@ export class AssetOrmEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  // 'CARGO' increases the client's balance, 'ABONO' decreases it — see
+  // migration `CreateFinancialKardexColumns`. `amount` is always a positive
+  // magnitude; the sign always comes from this column, never from `amount`.
+  @Column({ name: 'movement_type', type: 'varchar', length: 20, default: 'CARGO' })
+  movementType: 'CARGO' | 'ABONO';
+
+  // Deterministic tie-break for the Kardex's running-balance window
+  // function and "balance as of a period boundary" queries — auto-
+  // incrementing, never set by application code.
+  @Column({ type: 'bigint' })
+  sequence: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

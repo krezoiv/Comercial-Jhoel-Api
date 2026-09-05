@@ -16,6 +16,9 @@ import { IceCreamsModule } from '../ice-creams/ice-creams.module';
 import { ClientsModule } from '../clients/clients.module';
 import { AccountsReceivableModule } from '../accounts-receivable/accounts-receivable.module';
 import { AssetsModule } from '../assets/assets.module';
+import { BankDepositsModule } from '../bank-deposits/bank-deposits.module';
+import { TransactionBanksModule } from '../transaction-banks/transaction-banks.module';
+import { TransactionTypesModule } from '../transaction-types/transaction-types.module';
 import { IceCreamSaleDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-sale-detail.orm-entity';
 import { IceCreamPurchaseDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-purchase-detail.orm-entity';
 import { AgentReconciliationOrmEntity } from '../banks/infrastructure/persistence/agent-reconciliation.orm-entity';
@@ -56,12 +59,15 @@ import { ExportAssetsReceivablesReportPdfUseCase } from './application/use-cases
 import { GetAgentReconciliationsReportUseCase } from './application/use-cases/get-agent-reconciliations-report.use-case';
 import { GetAgentReconciliationsReportSummaryUseCase } from './application/use-cases/get-agent-reconciliations-report-summary.use-case';
 import { ExportAgentReconciliationsReportPdfUseCase } from './application/use-cases/export-agent-reconciliations-report-pdf.use-case';
+import { GetBankDepositsReportSummaryUseCase } from './application/use-cases/get-bank-deposits-report-summary.use-case';
+import { ExportBankDepositsReportPdfUseCase } from './application/use-cases/export-bank-deposits-report-pdf.use-case';
 import { SalesReportController } from './presentation/controllers/sales-report.controller';
 import { PurchasesReportController } from './presentation/controllers/purchases-report.controller';
 import { RechargesReportController } from './presentation/controllers/recharges-report.controller';
 import { AssetsReceivablesReportController } from './presentation/controllers/assets-receivables-report.controller';
 import { IceCreamReportController } from './presentation/controllers/ice-cream-report.controller';
 import { AgentReconciliationsReportController } from './presentation/controllers/agent-reconciliations-report.controller';
+import { BankDepositsReportController } from './presentation/controllers/bank-deposits-report.controller';
 
 /**
  * Reportería is a pure read-side, cross-cutting module — it never writes to
@@ -113,6 +119,9 @@ import { AgentReconciliationsReportController } from './presentation/controllers
     ClientsModule,
     AccountsReceivableModule,
     AssetsModule,
+    BankDepositsModule,
+    TransactionBanksModule,
+    TransactionTypesModule,
   ],
   controllers: [
     SalesReportController,
@@ -121,6 +130,7 @@ import { AgentReconciliationsReportController } from './presentation/controllers
     AssetsReceivablesReportController,
     IceCreamReportController,
     AgentReconciliationsReportController,
+    BankDepositsReportController,
   ],
   providers: [
     {
@@ -170,6 +180,8 @@ import { AgentReconciliationsReportController } from './presentation/controllers
     GetAgentReconciliationsReportUseCase,
     GetAgentReconciliationsReportSummaryUseCase,
     ExportAgentReconciliationsReportPdfUseCase,
+    GetBankDepositsReportSummaryUseCase,
+    ExportBankDepositsReportPdfUseCase,
   ],
 })
 export class ReportsModule {}

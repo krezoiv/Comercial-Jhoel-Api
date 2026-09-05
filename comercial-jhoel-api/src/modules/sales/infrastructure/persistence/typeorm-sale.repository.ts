@@ -4,6 +4,7 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { Sale } from '../../domain/entities/sale.entity';
 import {
   AdjustSaleItemData,
+  ConfigureSalePricingData,
   ConfirmSaleData,
   FindSalesOptions,
   PaginatedResult,
@@ -16,6 +17,7 @@ import { SaleProductInactiveError } from '../../domain/errors/sale-product-inact
 import { InsufficientStockError } from '../../domain/errors/insufficient-stock.error';
 import { InvalidSaleQuantityError } from '../../domain/errors/invalid-sale-quantity.error';
 import { NoOpenSaleError } from '../../domain/errors/no-open-sale.error';
+import { PriceListLockedError } from '../../domain/errors/price-list-locked.error';
 import { SaleOrmEntity } from './sale.orm-entity';
 import { SaleMapper } from './sale.mapper';
 
@@ -36,6 +38,7 @@ export class TypeOrmSaleRepository implements SaleRepository {
     const itemsJson = JSON.stringify(
       data.items.map((item) => ({
         productId: item.productId,
+        presentationId: item.presentationId ?? null,
         quantity: item.quantity,
       })),
     );
@@ -44,7 +47,12 @@ export class TypeOrmSaleRepository implements SaleRepository {
     try {
       const rows = await this.repository.manager.query<
         { confirm_sale: string }[]
-      >('SELECT confirm_sale($1, $2::jsonb)', [data.userId, itemsJson]);
+      >('SELECT confirm_sale($1, $2::jsonb, $3, $4)', [
+        data.userId,
+        itemsJson,
+        data.clientId ?? null,
+        data.priceList ?? 'PUBLIC',
+      ]);
       saleId = rows[0].confirm_sale;
     } catch (error) {
       throw this.translateSaleError(error);
@@ -100,10 +108,13 @@ export class TypeOrmSaleRepository implements SaleRepository {
     try {
       const rows = await this.repository.manager.query<
         { adjust_sale_item: string }[]
-      >('SELECT adjust_sale_item($1, $2, $3)', [
+      >('SELECT adjust_sale_item($1, $2, $3, $4, $5, $6)', [
         data.userId,
         data.productId,
         data.quantityDelta,
+        data.presentationId ?? null,
+        null, // p_location_id — the live POS UI never sends this yet, same as before this method gained draftKey.
+        data.draftKey,
       ]);
       saleId = rows[0].adjust_sale_item;
     } catch (error) {
@@ -119,17 +130,25 @@ export class TypeOrmSaleRepository implements SaleRepository {
     return sale;
   }
 
-  async findOpenSaleByUserId(userId: string): Promise<Sale | null> {
-    const orm = await this.repository.findOne({
+  async findOpenSalesByUserId(userId: string): Promise<Sale[]> {
+    const orms = await this.repository.find({
       where: { userId, status: 'OPEN' },
       relations: { items: { product: true } },
+      order: { createdAt: 'ASC' },
     });
-    return orm ? SaleMapper.toDomain(orm) : null;
+    return orms.map((orm) => SaleMapper.toDomain(orm));
   }
 
-  async confirmOpenSale(userId: string): Promise<Sale> {
+  /**
+   * Calls the `confirm_open_sale` Postgres function (see migration
+   * `1759400000000-CreateInventoryLocationsAndPresentations`) rather than a
+   * plain `UPDATE` — confirming a draft is the one moment a `SALIDA_VENTA`
+   * movement row is written per line, and that has to happen atomically
+   * alongside the status flip, inside the same function.
+   */
+  async confirmOpenSale(userId: string, draftKey: string): Promise<Sale> {
     const openSale = await this.repository.findOne({
-      where: { userId, status: 'OPEN' },
+      where: { userId, draftKey, status: 'OPEN' },
       relations: { items: true },
     });
     if (!openSale) {
@@ -139,10 +158,12 @@ export class TypeOrmSaleRepository implements SaleRepository {
       throw new SaleEmptyError();
     }
 
-    await this.repository.update(
-      { id: openSale.id },
-      { status: 'CONFIRMED', saleDate: new Date() },
-    );
+    const rows = await this.repository.manager.query<
+      { confirm_open_sale: string | null }[]
+    >('SELECT confirm_open_sale($1, $2)', [userId, draftKey]);
+    if (!rows[0].confirm_open_sale) {
+      throw new NoOpenSaleError();
+    }
 
     const sale = await this.findById(openSale.id);
     if (!sale) {
@@ -153,11 +174,36 @@ export class TypeOrmSaleRepository implements SaleRepository {
     return sale;
   }
 
-  async cancelOpenSale(userId: string): Promise<boolean> {
+  async cancelOpenSale(userId: string, draftKey: string): Promise<boolean> {
     const rows = await this.repository.manager.query<
       { cancel_open_sale: boolean }[]
-    >('SELECT cancel_open_sale($1)', [userId]);
+    >('SELECT cancel_open_sale($1, $2)', [userId, draftKey]);
     return rows[0].cancel_open_sale;
+  }
+
+  async configureOpenSale(data: ConfigureSalePricingData): Promise<Sale> {
+    let saleId: string;
+    try {
+      const rows = await this.repository.manager.query<
+        { configure_open_sale: string }[]
+      >('SELECT configure_open_sale($1, $2, $3, $4)', [
+        data.userId,
+        data.clientId,
+        data.priceList,
+        data.draftKey,
+      ]);
+      saleId = rows[0].configure_open_sale;
+    } catch (error) {
+      throw this.translateSaleError(error);
+    }
+
+    const sale = await this.findById(saleId);
+    if (!sale) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar la venta en construcción.',
+      );
+    }
+    return sale;
   }
 
   /**
@@ -192,6 +238,8 @@ export class TypeOrmSaleRepository implements SaleRepository {
         return new InsufficientStockError(productId);
       case 'INVALID_QUANTITY':
         return new InvalidSaleQuantityError(productId);
+      case 'PRICE_LIST_LOCKED':
+        return new PriceListLockedError();
       default:
         return error;
     }

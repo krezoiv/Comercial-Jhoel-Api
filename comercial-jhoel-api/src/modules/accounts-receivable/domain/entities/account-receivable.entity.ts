@@ -1,11 +1,19 @@
+export type AccountReceivableMovementType = 'CARGO' | 'ABONO';
+
 /**
- * "Cuentas por Cobrar" — a client-linked amount owed to the business,
- * added into the daily Cuadre Agentes result (`Cash + Banks +
- * AccountsReceivable − Assets`, see `GetCuadreAgentesSummaryUseCase` in
- * the banks module). Structurally a clone of `Asset` — see that entity's
- * own doc comment for the one deliberate delta: this `amount` stays
- * positive-only (`CHK_accounts_receivable_amount_positive`), unlike
- * `Asset.amount`.
+ * "Cuentas por Cobrar" — a client-linked Kardex/ledger of money the client
+ * owes: every row is a `CARGO` (adds to the balance) or `ABONO` (reduces
+ * it) movement, `amount` always a positive magnitude (see migration
+ * `CreateFinancialKardexColumns`). The client's current balance adds into
+ * the daily Cuadre Agentes result (`Cash + Banks + AccountsReceivable −
+ * Assets`, see `GetCuadreAgentesSummaryUseCase` in the banks module).
+ * Structurally a clone of `Asset` — see that entity's own doc comment for
+ * the one deliberate behavioral delta: `register_account_receivable_movement`
+ * rejects an `ABONO` larger than the client's current balance
+ * (`ABONO_EXCEEDS_BALANCE`) — this table's `amount` has never allowed a
+ * negative representation (`CHK_accounts_receivable_amount_positive` never
+ * lapsed, unlike `assets`' own history), so this preserves that existing
+ * rule exactly rather than introducing a new one.
  */
 export interface AccountReceivableProps {
   id: string;
@@ -13,6 +21,9 @@ export interface AccountReceivableProps {
   clientName: string;
   date: string;
   amount: number;
+  /** Always a positive magnitude — the sign is `movementType`, never encoded in `amount` itself. */
+  movementType: AccountReceivableMovementType;
+  sequence: number;
   description: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -48,6 +59,14 @@ export class AccountReceivable {
 
   get amount(): number {
     return this.props.amount;
+  }
+
+  get movementType(): AccountReceivableMovementType {
+    return this.props.movementType;
+  }
+
+  get sequence(): number {
+    return this.props.sequence;
   }
 
   get description(): string | null {

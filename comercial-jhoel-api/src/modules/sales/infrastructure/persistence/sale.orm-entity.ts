@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
+import { ClientOrmEntity } from '../../../clients/infrastructure/persistence/client.orm-entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import { SaleDetailOrmEntity } from './sale-detail.orm-entity';
 
@@ -40,6 +41,34 @@ export class SaleOrmEntity {
   // OPEN sale is hard-deleted by cancel_open_sale(), not soft-cancelled.
   @Column({ type: 'varchar', length: 20, default: 'CONFIRMED' })
   status: 'OPEN' | 'CONFIRMED';
+
+  @Column({ name: 'client_id', nullable: true })
+  clientId: string | null;
+
+  @ManyToOne(() => ClientOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'client_id' })
+  client: ClientOrmEntity | null;
+
+  // 'PUBLIC' (default) or 'WHOLESALE' — chosen once at the start of the sale
+  // (see configure_open_sale) and locked once the receipt has any line item,
+  // so it never disagrees with prices already fixed on existing sale_details rows.
+  @Column({
+    name: 'price_list',
+    type: 'varchar',
+    length: 20,
+    default: 'PUBLIC',
+  })
+  priceList: 'PUBLIC' | 'WHOLESALE';
+
+  // Opaque, client-generated id scoping "which open receipt" for a user with
+  // several open at once (see migration `AddDraftKeyToSales`) — NULL for a
+  // CONFIRMED sale, only meaningful while status = 'OPEN'.
+  @Column({ name: 'draft_key', type: 'varchar', length: 64, nullable: true })
+  draftKey: string | null;
 
   @OneToMany(() => SaleDetailOrmEntity, (detail) => detail.sale)
   items: SaleDetailOrmEntity[];

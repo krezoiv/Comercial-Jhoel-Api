@@ -1,4 +1,7 @@
-import { AccountReceivable } from '../../domain/entities/account-receivable.entity';
+import {
+  AccountReceivable,
+  AccountReceivableMovementType,
+} from '../../domain/entities/account-receivable.entity';
 
 export interface AccountReceivableOutput {
   id: string;
@@ -6,6 +9,7 @@ export interface AccountReceivableOutput {
   clientName: string;
   date: string;
   amount: number;
+  movementType: AccountReceivableMovementType;
   description: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -25,6 +29,7 @@ export function toAccountReceivableOutput(
     clientName: record.clientName,
     date: record.date,
     amount: record.amount,
+    movementType: record.movementType,
     description: record.description,
     isActive: record.isActive,
     createdAt: record.createdAt,
