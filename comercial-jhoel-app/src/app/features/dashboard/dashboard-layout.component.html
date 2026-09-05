@@ -1,8 +1,10 @@
 <div class="dashboard">
   <app-dashboard-sidebar
     [open]="isSidebarOpen()"
+    [collapsed]="isSidebarCollapsed()"
     (closeRequested)="closeSidebar()"
     (logoutRequested)="logout()"
+    (collapseToggled)="toggleSidebarCollapse()"
   />
 
   @if (isSidebarOpen()) {

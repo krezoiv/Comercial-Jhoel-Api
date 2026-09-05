@@ -41,6 +41,9 @@ export class InventoryToolbarComponent {
   @Output() selectedBusinessChange = new EventEmitter<string>();
   @Output() stockFilterChange = new EventEmitter<StockFilterValue>();
   @Output() addProduct = new EventEmitter<void>();
+  @Output() transferInventory = new EventEmitter<void>();
+  @Output() exportPdf = new EventEmitter<void>();
+  @Output() exportExcel = new EventEmitter<void>();
 
   readonly stockFilterOptions = STOCK_FILTER_OPTIONS;
 }

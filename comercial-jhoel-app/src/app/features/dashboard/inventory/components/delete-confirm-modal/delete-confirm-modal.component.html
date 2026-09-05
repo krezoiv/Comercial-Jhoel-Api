@@ -12,7 +12,10 @@
       </p>
 
       <div class="modal__actions">
-        <app-button variant="ghost" [disabled]="isDeleting" (click)="cancelled.emit()">Cancelar</app-button>
+        <app-button variant="ghost-danger" [disabled]="isDeleting" (click)="cancelled.emit()">
+          <app-icon name="close" [size]="16" />
+          Cancelar
+        </app-button>
         <app-button variant="danger" [disabled]="isDeleting" (click)="confirmed.emit()">
           {{ isDeleting ? 'Desactivando…' : 'Sí, desactivar' }}
         </app-button>

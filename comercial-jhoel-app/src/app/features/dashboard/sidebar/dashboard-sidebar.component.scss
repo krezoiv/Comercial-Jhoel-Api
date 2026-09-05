@@ -5,6 +5,22 @@
 }
 
 .sidebar {
+  // El Sidebar usa sus propios tokens "-dark" directamente (no los "-light"
+  // que sí cambian con el interruptor de modo oscuro/claro) — se mantiene
+  // visualmente igual en ambos modos a propósito, como en la mayoría de
+  // paneles admin (Vercel, Linear, Notion). Alias locales, no valores
+  // hardcodeados, para que un futuro retoque de paleta siga viniendo de
+  // `_tokens.scss` en vez de vivir duplicado aquí.
+  --sidebar-bg: var(--color-bg-dark);
+  --sidebar-border: var(--color-border-dark);
+  --sidebar-border-strong: var(--color-border-dark-strong);
+  --sidebar-text: var(--color-text-on-dark);
+  --sidebar-text-muted: var(--color-text-on-dark-muted);
+  --sidebar-text-subtle: var(--color-text-on-dark-subtle);
+  --sidebar-hover-bg: var(--color-surface-dark-hover);
+  --sidebar-active-bg: var(--gradient-brand-soft);
+  --sidebar-active-icon: var(--color-accent-cyan);
+
   position: fixed;
   inset-block: 0;
   left: 0;
@@ -18,11 +34,13 @@
   // nothing here ever reflows on page scroll, which is what looked like
   // "the sidebar doesn't adjust" once enough nav items were added.
   overflow: hidden;
-  background: var(--color-bg-dark);
-  border-right: 1px solid var(--color-border-dark);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   padding: var(--space-6) var(--space-4);
   transform: translateX(-100%);
-  transition: transform var(--duration-base) var(--ease-out);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    width var(--duration-base) var(--ease-out);
 
   @include bp.respond(lg) {
     position: sticky;
@@ -35,6 +53,40 @@
 .sidebar--open {
   transform: translateX(0);
   box-shadow: var(--shadow-lg);
+}
+
+// El modo contraído (solo logo + íconos) únicamente tiene sentido en
+// escritorio — en móvil el Sidebar ya es un drawer completo controlado por
+// `.sidebar--open`, así que esta regla queda anidada dentro del mismo
+// breakpoint que activa `position: sticky` arriba.
+@include bp.respond(lg) {
+  .sidebar--collapsed {
+    width: 4.75rem;
+    padding-inline: var(--space-3);
+
+    .sidebar__brand {
+      justify-content: center;
+      padding-inline: 0;
+    }
+
+    .sidebar__brand-name,
+    .sidebar__link-label,
+    .sidebar__chevron,
+    .sidebar__submenu-wrapper,
+    .sidebar__draft-dot {
+      display: none;
+    }
+
+    .sidebar__link,
+    .sidebar__logout {
+      justify-content: center;
+      padding-inline: var(--space-2);
+    }
+
+    .sidebar__collapse-toggle app-icon {
+      transform: rotate(180deg);
+    }
+  }
 }
 
 .sidebar__brand {
@@ -50,13 +102,42 @@
   height: 2.25rem;
   border-radius: var(--radius-sm);
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .sidebar__brand-name {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-heading);
   font-weight: var(--fw-semibold);
   font-size: var(--fs-md);
-  color: var(--color-text-on-dark);
+  color: var(--sidebar-text);
+}
+
+.sidebar__collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-md);
+  color: var(--sidebar-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+
+  app-icon {
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  &:hover {
+    background: var(--sidebar-hover-bg);
+    color: var(--sidebar-text);
+  }
 }
 
 .sidebar__nav {
@@ -74,7 +155,7 @@
   margin-right: calc(var(--space-1) * -1);
 
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-dark-strong) transparent;
+  scrollbar-color: var(--sidebar-border-strong) transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -85,12 +166,12 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--color-border-dark-strong);
+    background: var(--sidebar-border-strong);
     border-radius: var(--radius-full);
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-on-dark-subtle);
+    background: var(--sidebar-text-subtle);
   }
 }
 
@@ -104,7 +185,7 @@
   font: inherit;
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
-  color: var(--color-text-on-dark-muted);
+  color: var(--sidebar-text-muted);
   text-align: left;
   background: none;
   border: none;
@@ -115,13 +196,13 @@
     transform var(--duration-fast) var(--ease-out);
 
   app-icon {
-    color: var(--color-text-on-dark-subtle);
+    color: var(--sidebar-text-subtle);
     flex-shrink: 0;
   }
 
   &:hover {
-    background: var(--color-surface-dark-hover);
-    color: var(--color-text-on-dark);
+    background: var(--sidebar-hover-bg);
+    color: var(--sidebar-text);
     transform: translateX(3px);
   }
 
@@ -133,6 +214,12 @@
 /** A group's own row is a toggle button, not a link — see the template's `@if (item.children)` branch. */
 .sidebar__link--group {
   justify-content: flex-start;
+}
+
+.sidebar__link-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar__icon {
@@ -155,8 +242,8 @@
 
 /** Resalta cuál es el grupo actualmente abierto — junto con el acordeón exclusivo, deja clarísimo que solo uno puede estar así a la vez. */
 .sidebar__link--expanded {
-  background: var(--color-surface-dark-hover);
-  color: var(--color-text-on-dark);
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text);
 
   &:hover {
     transform: none;
@@ -164,11 +251,11 @@
 }
 
 .sidebar__link--active {
-  background: var(--gradient-brand-soft);
-  color: var(--color-text-on-dark);
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text);
 
   app-icon {
-    color: var(--color-accent-cyan);
+    color: var(--sidebar-active-icon);
   }
 }
 
@@ -197,7 +284,7 @@
   overflow: hidden;
   margin: var(--space-1) 0 var(--space-1) var(--space-5);
   padding-left: var(--space-4);
-  border-left: 1px solid var(--color-border-dark-strong);
+  border-left: 1px solid var(--sidebar-border-strong);
 }
 
 .sidebar__link--sub {
@@ -229,7 +316,7 @@
 }
 
 .sidebar__link--sub.sidebar__link--active {
-  border-left-color: var(--color-accent-cyan);
+  border-left-color: var(--sidebar-active-icon);
 }
 
 /**
@@ -264,17 +351,24 @@
   gap: var(--space-3);
   margin-top: var(--space-2);
   padding: var(--space-3);
-  border-top: 1px solid var(--color-border-dark);
+  border-top: 1px solid var(--sidebar-border);
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
-  color: var(--color-text-on-dark-muted);
+  // Pedido explícito: el texto de "Cerrar sesión" siempre en rojo, no solo
+  // al pasar el mouse — mismo rojo que `.btn--ghost-danger` ya usa en el
+  // resto de la app, para no inventar un segundo rojo "de peligro".
+  color: #dc4444;
   transition:
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 
+  app-icon {
+    color: #dc4444;
+  }
+
   &:hover {
-    background: rgba(255, 97, 97, 0.12);
-    color: #ff8080;
+    background: rgba(220, 68, 68, 0.12);
+    color: #c22f2f;
   }
 }

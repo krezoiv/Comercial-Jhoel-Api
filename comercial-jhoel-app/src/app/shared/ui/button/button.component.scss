@@ -99,6 +99,18 @@
   }
 }
 
+// Same transparent/ghost surface as .btn--ghost, but for a "Cancelar"-type
+// action — red text instead of the default ink color, no red background
+// (that's what .btn--danger is for, on an actual destructive confirm).
+.btn--ghost-danger {
+  background: transparent;
+  color: #dc4444;
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 68, 68, 0.08);
+  }
+}
+
 .btn--full {
   width: 100%;
 }

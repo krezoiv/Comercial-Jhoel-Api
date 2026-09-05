@@ -917,6 +917,689 @@ was refetching the *table* after a cuadre save.
   simultaneously reset to `Total ventas Q0.00` / an empty "Total recaudado" input — both panels reflecting
   the new cycle in the same screenshot.
 
+### Inventario por ubicación y presentaciones (extension to Inventory)
+
+Backend now models "producto → presentaciones → ubicaciones → stock" instead of a single global number —
+see the backend `CLAUDE.md`'s matching section for the full stored-function mechanism. The frontend gained
+one new route and two new modals rather than a rewrite of the existing Inventario screen.
+
+- **`/dashboard/inventario/:id`** (`product-detail-page.component.ts`) — per-location stock breakdown
+  (Bodega/Vitrina), the product's presentations table (Nombre/Factor/Precio costo/Precio público/Estado,
+  with edit and, for anything but "Unidad", delete-via-deactivate actions), and a "Movimientos recientes"
+  audit table. Reached by clicking a product row's "view" action in `ProductTableComponent`
+  (`InventoryPageComponent.router.navigate(['/dashboard/inventario', product.id])`) — the table's own
+  columns/sorting/filtering are otherwise unchanged.
+- **`Product.stockByLocation?: StockByLocation[]`** (`core/models/product.model.ts`) is optional —
+  present whenever the API resolved it alongside the product (the detail page's own fetch), absent
+  everywhere else (the main Inventario list still only needs the running total). `stockAt(product,
+  locationName)` is the one accessor every caller should use rather than `.find()`-ing the array inline —
+  returns `0`, not `undefined`, when a location has no row yet, since "no row" and "zero stock" mean the
+  same thing to a caller. `ProductInput.stock` became optional and is documented as create-only — the
+  backend rejects it on update now that stock is managed via Compras/Ventas/Traslados, never a direct
+  product-form edit.
+- **`transfer-inventory-modal`** (`inventory/components/transfer-inventory-modal/`) — reachable from the
+  Inventario toolbar's "Trasladar inventario" link, calls `InventoryLocationsService.registerTransfer()`
+  directly (self-contained form, same pattern as `ProductFormModalComponent`). Any authenticated active
+  account can register a transfer (mirrors the backend's own operational, non-admin-gated policy) — moving
+  stock between your own two locations is a daily register task, not an admin action.
+- **`presentation-form-modal`** — create/edit a presentation, admin-gated the same way
+  `ProductFormModalComponent` already is (`canManage`/`AuthService.isAdmin`); this is UX only, the
+  backend's `@Roles('ADMIN', 'SUPER_ADMIN')` on both write endpoints is the real enforcement.
+- **`InventoryLocationsService`** (`core/services/inventory-locations.service.ts`) is the new service
+  wrapping `${environment.apiUrl}/inventory/*` — `getLocations()`, `getPresentations(productId)`,
+  `createPresentation()`, `updatePresentation()`, `getProductInventory(productId)` (the detail page's own
+  fetch), `registerTransfer()`. Deliberately separate from `InventoryService` (which still owns plain
+  product CRUD against `/products`) rather than merged into it — the two map to genuinely different
+  backend modules (`products` vs. `inventory`).
+
+### Venta por mayor — wholesale pricing (extension to Sales)
+
+`SalePricingBarComponent` (`sales/components/sale-pricing-bar/`), rendered above the product search on
+`/dashboard/ventas`, lets the cashier pick an optional client and a price list (Público/Mayorista) for the
+receipt about to be built — mirrors the backend's `configure_open_sale`/`PATCH /sales/current/pricing`
+contract (see the backend `CLAUDE.md`).
+
+- **Reuses `ClientSearchSelectComponent`** (already built for Cuentas por Cobrar) rather than duplicating
+  a client picker — the one cross-feature import in this app's product-search family, justified because
+  the two screens need the exact same "search a client, pick one" behavior, unlike Ventas'/Compras' own
+  deliberately-duplicated product-search components (which diverge in real, feature-specific ways).
+- **`locked` (an `@Input()`, driven by the parent's `items().length > 0`) disables the price-list toggle**
+  once the receipt has any line item — pure UX echo of the backend's own lock (see
+  `configure_open_sale`'s doc comment); a stale/bypassed frontend still gets rejected server-side
+  regardless.
+- **`SalesDraftStore`/`SalesPageComponent`** gained `clientId`/`clientName`/`priceList` alongside the
+  pre-existing `items`/`total` signals, all sourced the same way — from whatever `Sale` object the last
+  successful API call returned, never computed locally. `onConfigurePricing()` calls the new
+  `SalesService.configurePricing()` (`PATCH /sales/current/pricing`) and applies the returned `Sale`
+  exactly like every other mutation on this screen already does.
+- **`CreateSaleInput` gained optional `clientId`/`priceList`** for the bulk one-shot path too, kept in
+  sync with the backend's own `POST /sales` change even though the live Ventas screen only ever calls the
+  incremental `PATCH .../pricing` route.
+
+### Transaccionar (`features/dashboard/transaccionar/`, `transaction-banks/`, `transaction-types/`)
+
+A new operational screen under "Finanzas" (`/dashboard/transaccionar`) for registering bank deposit
+operations, plus two admin catalog screens under "Sistema" (`/dashboard/banco-agente`,
+`/dashboard/tipo-transaccion`) for the "Banco Agente"/"Tipo de Transacción" lookups it depends on — see
+the backend `CLAUDE.md`'s matching section for the stored-function cuadre mechanism this all drives
+toward.
+
+- **`transaction-banks-page.component.ts`/`transaction-types-page.component.ts`** are structural clones
+  of the Categories/Businesses admin screen (same component split — summary tiles, toolbar, sortable
+  table, form modal, delete-confirm modal — same soft-delete "se desactivará" wording, same
+  `canManage`/`isAdmin` gating for mutations while `GET` stays open to any authenticated role). Neither
+  route is admin-gated at the router level (unlike Usuarios/Roles/Reportería) — any authenticated account
+  can view+use both catalogs, matching the backend's own non-`@Roles(...)` read policy; only the two
+  report/admin screens (see below) are actually restricted.
+- **`TransaccionarPageComponent`** is a two-step flow: a landing grid of transaction-type cards (icon +
+  name, sourced live from `TransactionTypeService.getTypes()`, not hardcoded) → selecting one reveals the
+  registration form (Banco Agente select, monto total, desglose de efectivo, distribución de
+  transacciones, cliente opcional). `BankDepositDraftStore` (`core/services/bank-deposit-draft.store.ts`)
+  is the root-provided singleton holding all of this — same reasoning as `PurchaseDraftStore` (see
+  "Draft persistence across navigation" under Suppliers/Purchases above): Transaccionar has no
+  server-side draft either, nothing is sent to the backend until "Confirmar y Guardar", so this store is
+  the only place the in-progress operation lives, persisted to `sessionStorage` (never `localStorage` —
+  real money data shouldn't linger indefinitely on a shared machine) scoped by the current user's id, the
+  same pattern `PurchaseDraftStore` already established.
+- **Three-way cuadre status (`CuadreStatus = 'red' | 'yellow' | 'green'`), computed entirely client-side
+  and live**: `cashStatus`/`transactionsStatus` each compare their own running total against
+  `totalAmount` (green = exact match, red = over, yellow = under or the monto is still `0`), and
+  `overallStatus` is the worse of the two (red beats yellow beats green) — mirrors the backend's own
+  exact-match rule inside `register_bank_deposit_operation` (`CASH_TOTAL_MISMATCH`/
+  `TRANSACTION_TOTAL_MISMATCH`) as a proactive UX echo, not the real guarantee. `round2()` (rounds before
+  comparing) exists specifically because plain float arithmetic on money can otherwise miss an exact match
+  by a fraction of a centavo. `canSave` additionally requires both a bank and a type to be selected and at
+  least one transaction row — never true for a `0` total, since an empty draft isn't a valid cuadre.
+- **`setTransactionCount(count)` resizes `transactionAmounts` by padding with `0`/truncating** — the page
+  component, not the store, is responsible for confirming with the user before calling this when shrinking
+  would silently discard an already-typed amount.
+- **`formatDenomination()` (in `cash-breakdown-table`/`save-confirm-modal`) is a small, deliberately local
+  helper**, not a reuse of the shared `formatCurrency` from `core/utils/number-format.util.ts` — it labels
+  a fixed bill/coin denomination (`Q200`, `Q0.50`, no thousands separator needed, 0 decimals for whole
+  denominations vs. 2 for coins under `Q1`), a genuinely different formatting need from a money *amount*
+  display. Every actual currency total in this feature (row subtotals, "Total Efectivo", the confirm
+  modal's summary) does call the shared `formatCurrency` — confirmed directly, not assumed, before
+  concluding this wasn't a duplicated-logic bug (`core/utils/number-format.util.ts`'s own doc comment
+  explains why that file exists at all: several older modules used to each hand-roll this exact
+  `` `Q${value.toFixed(2)}` `` pattern).
+- **Day-gate errors surface through the existing `extractErrorMessage`/toast path, unhandled specially** —
+  Transaccionar reuses Banks' día-abierto/cerrado cycle (see the backend `CLAUDE.md`), so a save attempt
+  against an unopened or already-closed day returns the backend's own real message
+  (`BankDepositDayNotOpenedError`/`BankDepositDayAlreadyClosedError`), shown via the same toast mechanism
+  every other write error in this app uses — no bespoke "day closed" UI state was built for this screen.
+- **No history/list screen was built inside Transaccionar itself** — `BankDepositService.getById()` exists
+  for a future receipt-lookup view, but the actual historical listing lives in Reportería (below), not
+  duplicated here.
+
+### Reporte de Transacciones (fourth Reportería screen)
+
+`/dashboard/reportes-transacciones` (`features/dashboard/reports/bank-deposits/`) — a fourth admin-only
+analytics screen alongside Ventas/Compras/Recargas, same `adminGuard`-guarded route and
+`roles: ['SUPER_ADMIN', 'ADMIN']` sidebar entry. Structurally the simpler shape Recargas' own report
+established (see the backend `CLAUDE.md`'s "Reportería de Recargas" section) — no `viewMode` toggle, no
+detail modal, a plain inline `<table>` rather than a separate sortable-table component, since a
+`bank_deposit_operations` row already is the full detail.
+
+- **Reuses the two fully generic Reportería components** (`ReportSummaryComponent`,
+  `ReportPaginationComponent`) with zero modification, plus the same draft/applied filter-signal split
+  documented under the original Sales/Purchases Reportería section — editing a filter field only ever
+  touches `draftStartDate`/`draftTransactionBankId`/etc., and `applyFilters()`/`clearFilters()` are the
+  only two places the applied signals (the ones the table, summary tiles, and PDF export actually read)
+  change. This is what guarantees "Exportar PDF" can never export a filter edit the visible table hasn't
+  already re-fetched against.
+- **Filter dropdowns are populated from the two new catalog services** (`TransactionBankService.getBanks()`,
+  `TransactionTypeService.getTypes()`) rather than a bespoke lookup — the same services the
+  Banco Agente/Tipo de Transacción admin screens already use.
+- **Default filter window is "current month"**, same local `firstDayOfMonthIsoDate()`/`todayIsoDate()`
+  helper pair redefined in this page's own file — this codebase's established "small per-feature copy"
+  convention for this exact 5-line date helper, not imported from another report page.
+- **PDF export downloads through the same `Blob`/`downloadBlob()`/`extractBlobErrorMessage()` path** every
+  other report export already uses — no new download mechanism for this fourth screen.
+
+### Gestión de Transacciones (`features/dashboard/transaction-days/`)
+
+`/dashboard/gestion-transacciones`, a third "Sistema" day-management screen alongside "Gestión de Días
+Cerrados" (`features/dashboard/closed-days/`) and "Gestión de Días de Recargas"
+(`features/dashboard/recharge-days/`) — same `adminGuard`-guarded route,
+`roles: ['SUPER_ADMIN', 'ADMIN']` nav entry. Neither of those two sibling screens is documented in this
+file yet (a pre-existing gap, not introduced here) — read their own source directly
+(`closed-days-page.component.ts`/`recharge-days-page.component.ts` and their doc comments) if extending
+either.
+
+- **Deliberately reuses `ClosedDaysService` directly, not a third copy of the same endpoints** — this is
+  the one place this decision genuinely differs from the closed-days/recharge-days precedent (which are
+  fully independent backend cycles and rightly get their own services). Transaccionar's
+  `RegisterBankDepositOperationUseCase` (backend) gates every write against the *same* `day_openings` row
+  Cuadre de Agentes uses (see the backend `CLAUDE.md`'s "Transaccionar" section) — there is only one
+  open/close/reopen/cancel cycle per calendar date, so `TransactionDaysPageComponent` calls
+  `ClosedDaysService.getClosedDays/getDayDetail/reopenDay/cancelDay` for exactly that shared data, and
+  `DayStatusService.refresh()` after a reopen/cancel, identical to `ClosedDaysPageComponent`. Reopening or
+  anulando a day here reopens/anula it in "Gestión de Días Cerrados" too, and vice versa — this is
+  correct, not a bug, and both confirmation modals' copy says so explicitly.
+- **The list table drops Cuadre de Agentes' own money columns** (Total Bancos/Efectivo/CxC/Activos/
+  Resultado — meaningless for Transacciones) and keeps only the day-cycle columns (Fecha/Estado/
+  Apertura/Cierre/Abrió/Cerró/Acciones) — `ClosedDayRow` still carries those fields (same shared model,
+  reused as-is), the table template just doesn't render them.
+- **`TransactionDayDetailModalComponent` is genuinely new**, not a reuse — it still calls
+  `ClosedDaysService.getDayDetail(date)` for the status/audit-log fields (same shared data), but
+  additionally calls `ReportsService.getBankDepositsReport({ startDate: date, endDate: date, limit: 200 })`
+  (already built for "Reporte de Transacciones", see above) for that date's actual Transaccionar
+  operations, shown as a table (Hora/Banco Agente/Tipo/Cliente/Monto/Transacciones/Usuario) with a small
+  client-computed summary (operation count, transaction count, total amount) — never a bank-balance/
+  reconciliation view, unlike the closed-days detail modal it's structurally modeled on. Both requests run
+  via `forkJoin` so the modal has one `loading` state, not two sequential spinners.
+- **`ReopenConfirmModalComponent`/`CancelConfirmModalComponent` are small, deliberate copies**, not a
+  reuse of closed-days' own — their backend call is identical (`ClosedDaysService.reopenDay/cancelDay`),
+  but the copy has to say explicitly that this is the same cycle as Cuadre de Agentes and that
+  `bank_deposit_operations` rows are never touched by a reopen/cancel, which the original modals' text
+  (written before Transaccionar existed) doesn't mention — this codebase's established "small per-feature
+  copy over cross-feature coupling" convention, applied because the text genuinely differs, not the
+  backend call.
+- **No new backend endpoints, tables, or migrations** — every data source this screen needs
+  (`GET/POST /closed-days/*`, `GET /reports/bank-deposits`) already existed before this feature, built for
+  "Gestión de Días Cerrados" and "Reporte de Transacciones" respectively.
+
+#### Ver / Anular una operación de Transaccionar (follow-up — never edit/delete)
+
+Added after "Gestión de Transacciones" first shipped, in direct response to "necesito poder ver, modificar
+o eliminar una transacción específica, sin borrar nada ni tocar datos ya registrados": the recommended and
+implemented answer is **Ver** (full detail) + **Anular** (soft void, admin-only) — never a real edit, never
+a real delete. See the backend `CLAUDE.md`'s matching section for the `isVoided`/`voidedAt`/`voidedBy`/
+`voidReason` migration and the `POST /bank-deposits/:id/void` endpoint this is built on.
+
+- **`BankDepositDetailModalComponent`** (`features/dashboard/reports/bank-deposits/components/
+  bank-deposit-detail-modal/`) is genuinely shared, not duplicated — imported directly by both "Reporte de
+  Transacciones" (its own table) and `TransactionDayDetailModalComponent` (the day-detail modal's
+  operations table). This is a deliberate exception to this codebase's usual "small per-feature copy"
+  convention: the need (full detail of one `BankDepositOperation` — cash breakdown, transaction
+  distribution, void banner if applicable) is byte-identical in both places, the same reasoning
+  `SalePricingBarComponent` already reuses `ClientSearchSelectComponent` for. It calls
+  `BankDepositService.getOperationById()` (already existed) on open/id change.
+- **`VoidConfirmModalComponent`** (`.../reports/bank-deposits/components/void-confirm-modal/`) is a small,
+  deliberate copy of the reopen/cancel confirm-modal pattern (mandatory reason, min 5 chars, dumb —
+  parent owns the actual `BankDepositService.voidOperation()` call) — its own copy explicitly tells the
+  user nothing is deleted/edited and that the fix for a wrong monto/banco/desglose is to anular this one
+  and register a new correct one via Transaccionar. Only wired into "Reporte de Transacciones" (not the
+  day-detail modal) — that screen already has the filters/search to find the right operation across dates,
+  so anular doesn't need a second entry point.
+- **`BankDepositService.voidOperation(id, reason)`** is the one new frontend method — `POST
+  /bank-deposits/:id/void`. No `canManage`/`isAdmin` gating needed anywhere in this feature: both
+  "Reporte de Transacciones" (route) and "Gestión de Transacciones" (route) are already `adminGuard`-gated
+  end to end, so every viewer who can reach either screen is already an admin.
+- **A voided row stays fully visible with a badge, never hidden or grayed out of existence** — "Reporte de
+  Transacciones"' table gained an "Estado" column (`Vigente`/`Anulada`, `status-badge--active`/
+  `status-badge--voided`) and an "Acciones" column (Ver always enabled, Anular disabled once already
+  voided); the row itself gets a `report-table__row--voided` dimming class. The day-detail modal's own
+  operations table mirrors this with the existing `status-badge--CLOSED`/`--CANCELLED` classes (relabeled
+  "Vigente"/"Anulada" in that context) plus a `detail-table__row--voided` dimming class and a "Ver" action.
+- **Every client-computed total now excludes voided operations** — `TransactionDayDetailModalComponent`'s
+  `activeOperations` computed (`operations().filter(op => !op.isVoided)`) is what `operationsTotal`/
+  `transactionsTotal` and the "Operaciones vigentes" tile are derived from; the raw `operations()` signal
+  (every row, voided included) is only ever used to render the table itself. This mirrors the backend's
+  own `getReportSummary()` exclusion — "Reporte de Transacciones"' own summary tiles/by-bank breakdown
+  already exclude voided rows because they come from that same backend aggregate, no frontend-side
+  filtering was needed there.
+- **Verified directly, not assumed**: `psql`-checked the real `bank_deposit_operations` table before
+  touching anything — zero rows existed at that point, so no live click-through was performed in that
+  session pass. In a later, explicitly user-authorized follow-up ("registra una transacción de prueba y
+  pruébalo tú mismo"), a real test operation was registered end-to-end (opening today's day via the normal
+  Agentes Bancarios flow first, since Transaccionar requires it), then Ver/Anular were both exercised
+  live against it — the row stayed fully visible with the "Anulada" badge, the report's own totals dropped
+  to exclude it, and the detail modal's void banner rendered correctly, all confirmed via screenshots and
+  a final `psql` check of the row's own `is_voided`/`voided_at`/`void_reason` columns.
+
+### Resumen dashboard's "Bancos" tile — real, live monthly transaction count (follow-up)
+
+`DashboardHomeComponent` (`features/dashboard/home/`) renders `DASHBOARD_SUMMARY`'s four cards
+(Sistema/Finanzas/Bancos/Librería) — all still mock (`core/data/dashboard-summary.data.ts`'s own doc
+comment already flagged this as a "phase 2" placeholder) **except "Bancos"**, whose `value`/`description`
+are now overridden with the real `BankDepositService.getMonthlyCount()` figure (`GET
+/bank-deposits/monthly-count` — see the backend `CLAUDE.md`'s matching section), labeled "Total de
+Transacciones este mes".
+
+- **`summary$` changed from a bare `getSummary()` passthrough to a `combineLatest` + `map`** that merges
+  the mock array with the live count, replacing only the `id: 'bancos'` item's `value` (via the shared
+  `formatQuantity()`, same thousands-separator formatter every other count in this app uses) and
+  `description`. The other three cards flow through completely unmodified.
+- **`catchError(() => of(null))` on the monthly-count call, not on the whole `combineLatest`** — Resumen is
+  reached by every authenticated account immediately after login with no route guard, so a transient
+  network failure on this one call must never break the page; on failure the "Bancos" card silently keeps
+  showing its mock value/description instead (no error toast, no broken layout) rather than the real one.
+- **No admin gating needed anywhere in this change** — `getMonthlyCount()` hits the one
+  `bank-deposits` route that is deliberately NOT behind `@Roles`, exactly because this page has no
+  `adminGuard` and needed a number every role can see.
+- **Verified directly**: navigated to `/dashboard` after registering-then-anulando one test operation and
+  observing a second, genuinely real operation appear in the same dataset (registered by the actual
+  business user concurrently, mid-session) — the tile correctly showed `1` (the one real, non-anulada
+  transaction that month), not `2` and not `0`, confirming the anulada exclusion and the real-count wiring
+  both work together correctly against live, non-fabricated data.
+
+### Resumen — Indicadores del mes (follow-up — Ventas de Recargas / Ventas / Compras / Transacciones Bancarias)
+
+`FinancialIndicatorsComponent` (`features/dashboard/home/components/financial-indicators/`) renders four
+admin-only sections below the existing four mock summary cards — sourced from `GET /dashboard/summary`
+(`DashboardMetricsService`, see the backend `CLAUDE.md`'s "Dashboard" section for the full query design).
+Dumb/presentational: `DashboardHomeComponent` owns the fetch, the admin gate, and loading/error state;
+this component only ever renders whatever `metrics` input it's handed (or a loading placeholder), with no
+date-range logic of its own — `period` is rendered exactly as the backend computed it.
+
+- **Admin-gated at both the fetch and the render** — `DashboardHomeComponent`'s constructor only calls
+  `DashboardMetricsService.getSummary()` when `AuthService.isAdmin()` is `true`, and the template only
+  mounts `<app-financial-indicators>` behind the same `@if (isAdmin())`. A `USER`-role account never
+  issues this request at all and never sees these four sections — the backend's own `@Roles('ADMIN',
+  'SUPER_ADMIN')` is the real enforcement regardless, same two-layer pattern (hide + guard) already
+  established for Usuarios/Roles/Reportería elsewhere in this app. This is the one place Resumen now
+  actually differs by role — every other card on this page is still open to any authenticated account.
+- **`catchError(() => of(null))` on the metrics call** — a transient failure hides just this one section
+  (`financialMetrics` stays `null`, nothing renders) rather than breaking the whole Resumen page, same
+  resilience reasoning already applied to the "Bancos" tile's own monthly-count fetch above.
+- **Gotcha caught and fixed live, not assumed correct**: `CardComponent`'s own `:host { display: block; }`
+  (`shared/ui/card/card.component.scss`) won a CSS specificity/ordering tie against an external
+  `.stat-card { display: flex; flex-direction: column; }` class applied directly to `<app-card
+  class="stat-card">` from this component's own stylesheet — both rules compile to equal-specificity
+  selectors (`:host[_nghost-x]` vs `.stat-card[_ngcontent-y]`), so which one wins depends on Angular's
+  build-time style ordering, not anything predictable from the template. Confirmed directly in the
+  browser: label/date/amount spans rendered side-by-side on one line instead of stacked. Fixed by never
+  trying to flex-style the `<app-card>` host element itself — each stat card wraps its projected content
+  in its own plain `<div class="stat-card">` *inside* `<app-card>`, a normal element fully owned by this
+  component's own scoped stylesheet with no competing `:host` rule to lose a specificity tie against. The
+  general lesson: style a wrapping element inside `<app-card>`'s projected content, never the `<app-card>`
+  tag itself, for any layout (flex/grid) requirement — background/border/padding-level styling on the host
+  class is fine, layout of the projected children is not.
+- **`periodDate` (`year`/`month` → a `Date`, purely for the `date: 'MMMM yyyy'` pipe) is the only place
+  this component touches `Date` at all** — never used for any range computation, which is entirely
+  server-side; `TitleCasePipe` capitalizes the Spanish month name the locale-aware `date` pipe already
+  produces (e.g. `septiembre 2026` → `Septiembre 2026`).
+- **Verified directly against live, non-fabricated data**: the four sections rendered real September
+  figures matching independent `psql` cross-checks of `sales`/`purchases`/`recharge_daily_balances`/
+  `bank_deposit_operations` (see the backend `CLAUDE.md`'s own verification note) — confirmed no console
+  errors, confirmed the responsive grid (`1fr` → `repeat(2,1fr)` at `sm` → `repeat(3,1fr)` at `lg`, the
+  same `bp.respond()` pattern already proven working on `transaction-days`/`bank-deposits-report`'s own
+  card grids this same session) via direct CSS review rather than re-verifying a pattern already exercised
+  live twice this session.
+
+### Alertas y Notificaciones — Navbar bell (`features/dashboard/topbar/components/alert-bell/`)
+
+`AlertBellComponent` (selector `app-alert-bell`) sits in `DashboardTopbarComponent`'s topbar, between the
+theme toggle and the user-menu dropdown — self-contained, like `RegisterPurchaseFormComponent`/
+`SalesSummaryCardComponent` (calls `AlertsService` directly, no parent-owned state). Backs the
+centralized alert system described in the backend `CLAUDE.md`'s own "Alertas y Notificaciones" section —
+read that first for the actual data model (`Alert`, priority/type rules, why nothing is ever persisted as
+a historical log).
+
+- **Not a WebSocket** — this app has no real-time transport anywhere (`SalesDraftStore`/`PurchaseDraftStore`
+  are local/`sessionStorage`-only); the bell polls `GET /alerts` every 60s (`setInterval`, cleared via
+  `DestroyRef.onDestroy`), refetches whenever the panel is opened (`togglePanel()`), and refetches on every
+  `NavigationEnd` (a navigation is frequently the moment an alert's underlying condition just changed —
+  paying a purchase, closing a recharge day, registering a transfer). A transient fetch failure silently
+  keeps the last-known state on screen rather than showing a broken/blank bell, same resilience reasoning
+  already established for the Resumen dashboard's own tiles.
+- **The badge shows `count` (unread), the panel lists every item up to `total`** (read or not) — opening an
+  alert never removes it from the list on its own, only its underlying condition resolving does that (see
+  backend doc). Clicking an alert row calls `AlertsService.markAsRead(key)` (optimistically flips
+  `isRead`/decrements the local unread count without waiting for the response — a failed mark-read is a
+  harmless no-op, worth staying silent about rather than toasting), closes the panel, and navigates to
+  `alert.route`. "Marcar todas como leídas" calls `markAllAsRead()` and flips every currently-shown item.
+- **"Marcar como pagada" lives directly on a purchase alert row inside the panel itself** — `isPayable(alert)`
+  gates on `alert.type` being `PURCHASE_PAYMENT_DUE`/`PURCHASE_PAYMENT_OVERDUE`, and `alert.referenceId` is
+  already the purchase id, so `markPurchaseAsPaid()` can call `PurchasesService.markAsPaid(referenceId)`
+  (`POST /purchases/:id/pay`) with nothing else to look up. This was a deliberate, minimal UI placement —
+  no purchase-history/list page exists yet to put the action on instead (see the backend `CLAUDE.md`'s
+  `MarkPurchaseAsPaidUseCase` doc comment: explicitly not a full cuentas-por-pagar module), and the alert
+  panel already has everything the action needs. The action is a `<span role="button">` nested inside the
+  alert's own `<button>` row (native `<button>`-in-`<button>` nesting isn't valid HTML), with
+  `event.stopPropagation()` so clicking "Marcar como pagada" never also triggers the row's own
+  mark-read-and-navigate click handler.
+- **`core/models/alert.model.ts`** exports `Alert`/`AlertType`/`AlertPriority` (mirroring the backend shape
+  exactly) plus three lookup constants — `ALERT_PRIORITY_TONE` (feeds `<app-badge tone>`),
+  `ALERT_PRIORITY_ICON`, `ALERT_TYPE_ICON` — so priority/type never gets a second, drifting color/icon
+  decision anywhere else this feature might render an alert later. `AlertsService`
+  (`core/services/alerts.service.ts`) is a thin 3-method wrapper (`getAlerts`/`markAsRead`/`markAllAsRead`)
+  around `${environment.apiUrl}/alerts`.
+- **New `bell`/`check-check` icons** added to `shared/ui/icon/icon-registry.ts` for the trigger button and
+  the "marcar todas como leídas" action respectively — neither existed before this feature.
+- **Purchases (`/dashboard/compras`) gained a "Tipo de compra" `<select>` (Contado/Crédito) and a
+  conditional "Fecha de pago" date input**, both wired straight into `PurchaseDraftStore`
+  (`paymentType`/`paymentDueDate` signals, persisted to `sessionStorage` alongside everything else the
+  store already tracked — same pattern, no new persistence mechanism). The due-date field only renders
+  `@if (draft.paymentType() === 'CREDITO')`, is required before "Guardar compra" will proceed
+  (`PurchasesPageComponent.requestSave()` shows a toast and refuses to open the confirm modal otherwise —
+  the same backend-required field is validated server-side too, this is a proactive echo not the real
+  guarantee), and its `[min]` is bound to the purchase date itself (can't set a payment due date earlier
+  than the purchase). `.purchases__form-row`'s grid widened from a fixed `2fr 1fr` to `repeat(2,1fr)` /
+  `repeat(4,1fr)` at `sm`/`lg` to fit the two new fields without cramming.
+- **Product detail page (`/dashboard/inventario/:id`) gained an inline-editable "Stock mínimo" column** on
+  its existing "Inventario por ubicación" table, admin-only (`isAdmin()`, same UI-only gating every other
+  admin action in this app uses — the backend's own `@Roles(...)` is the real enforcement). Follows
+  `RechargeTableComponent`'s established "draft record keyed by row id, not a reactive form" idiom exactly:
+  `draftMinStock: signal<Record<string, string>>` is seeded once per `locationId` in `fetchDetail()`'s
+  success handler — **only for ids not already tracked**, so a value the admin is mid-typing is never
+  clobbered by a refetch (identical reasoning to Recargas' own `draftFinalBalance`). Saving calls
+  `InventoryLocationsService.setMinStock(productId, locationId, minStock)`
+  (`PATCH /inventory/products/:productId/locations/:locationId/min-stock`) and refetches the whole detail
+  view on success.
+- **New admin-only `/dashboard/configuracion-alertas`** (`features/dashboard/alert-settings/`,
+  `adminGuard`-gated route + `roles: ['SUPER_ADMIN', 'ADMIN']` sidebar entry under "Sistema", reusing the
+  `bell` icon) — two independent `app-card` panels: "Compras a crédito" (one number input, días de
+  anticipación, `AlertSettingsService.getSettings()`/`.updateSettings()`) and "Saldo mínimo de recargas"
+  (one number input + Guardar per recharge type, `RechargesService.updateTypeMinBalance()` — new method,
+  `PATCH /recharges/types/:id/min-balance`; `RechargeType` gained a `minBalance` field it didn't carry
+  before this feature). **Stock mínimo per producto is deliberately NOT duplicated on this screen** — it
+  already lives on each product's own detail page, right next to the stock it thresholds (see above); the
+  page's own subtitle says so explicitly, so an admin looking for it here isn't left wondering where it
+  went. `core/services/alert-settings.service.ts` and `core/models/alert.model.ts`'s
+  `AlertSettings`/`UpdateAlertSettingsInput` types are new, following every other admin-settings service in
+  this app's exact `get`/`update` shape.
+- **Verified live end to end against real data**, not only via a build check: the bell's empty state
+  ("No hay alertas activas") was confirmed correct by cross-checking zero qualifying rows directly in
+  Postgres beforehand; a recharge type's saldo mínimo, a product's stock mínimo, and a real `CREDITO`
+  purchase's fecha de pago were each temporarily set to trigger their respective alert, confirmed to
+  appear in the bell with the correct title/priority/description, and reverted (or, for the purchase,
+  resolved via "Marcar como pagada" and confirmed `PAID` in the database) — leaving no fabricated
+  configuration behind. The `/dashboard/configuracion-alertas` screen and the product detail page's inline
+  stock-mínimo editor were both exercised live in the browser, not just build-checked.
+
+### Sidebar reorganization — Inventario promoted, Heladería · Compras/Ventas later removed (follow-up)
+
+A navigation/UI-only cleanup ticket (explicitly scoped to "no refactorización general", no business-logic
+changes) asked to: (1) remove "Heladería · Compras"/"Heladería · Ventas" from the sidebar since they
+duplicate the general Compras/Ventas, (2) promote "Inventario" out from under "Librería" to be its own
+top-level item, (3) fix the Dashboard's Ventas/Compras/Recargas/Transacciones card row alignment, (4) add
+the ability to work on several Compras invoices at once (open multiple tabs). Two of those four needed a
+scope check before touching anything, done live with the user via `AskUserQuestion` before any file
+changed:
+
+- **Heladería · Compras / Heladería · Ventas were initially kept, then removed in a direct follow-up
+  request.** First pass: confirmed with the user that "Heladería" is backed by an entirely separate,
+  parallel backend module (`modules/ice-creams/`, its own `ice_creams`/`ice_cream_purchases`/
+  `ice_cream_sales` tables) with zero overlap with the general `products`/`purchases`/`sales` module — an
+  ice-cream item cannot be bought or sold through the general `POST /purchases`/`POST /sales`, since it
+  was never in the `products` table those endpoints (and their product-search) read from — so removing the
+  menu entries risked cutting off the only working path for a real heladería purchase/sale. Before acting
+  on the follow-up request to remove them anyway, this was checked directly against real data rather than
+  assumed still true: `ice_creams`/`ice_cream_purchases`/`ice_cream_sales` all had **zero rows** — the
+  dedicated module had never actually been used — while the general `categories` table already had a
+  ready-to-use "Helados" category with zero products assigned. Removing the two menu entries therefore
+  orphans no real data; heladería products/purchases/sales going forward just use the general
+  Compras/Ventas screens under that existing category. `dashboard-nav.data.ts`'s `Finanzas` children lost
+  exactly those two entries — `Heladería · Inventario` stayed (never asked to be removed). Per the same
+  "no eliminar código obsoleto en esta tarea" instruction from the original ticket, the `heladeria-compras`/
+  `heladeria-ventas` routes, components, and backend module were all left completely untouched — only the
+  menu entry points are gone; a direct URL still reaches the old screens.
+- **"Inventario" is now a top-level sidebar item, not nested under "Librería"** — `dashboard-nav.data.ts`:
+  `Librería` lost its `children` array entirely (now a plain link to its own existing `/dashboard/libreria`
+  placeholder route, rendered the same way `Resumen` is — `DashboardSidebarComponent`'s template branches
+  purely on whether `item.children` is present, so dropping the key was the whole change), and a new
+  sibling `{ label: 'Inventario', icon: 'package', path: 'inventario' }` entry was added at the same level
+  as `Finanzas`/`Sistema`/`Reportería`/`Agentes Bancarios`. **Zero route changes were needed** — `/dashboard/
+  inventario` was already a flat top-level route in `app.routes.ts` (never `/dashboard/libreria/
+  inventario`), confirmed before editing anything by grepping the whole app for `libreria/inventario`
+  references (zero hits) and checking that both existing internal navigations to inventory
+  (`product-detail-page.component.ts`, `inventory-page.component.ts`) already called
+  `router.navigate(['/dashboard/inventario', ...])` directly. This app has no breadcrumb component at all,
+  so there was nothing to update there either. Since the route, its guard (none — open to any authenticated
+  role, same as before), and the component behind it are all completely unchanged, every permission a user
+  had for Inventario before this change is identical after it.
+
+#### Dashboard indicator cards — alignment fix (CSS-only, no metrics touched)
+
+`financial-indicators.component.html`/`.scss` — the visual complaint was that the "Compras" card (which
+has no Mayor/Menor breakdown — a purchases total has no day-by-day figures to break down, by the backend's
+own design) sat top-aligned with a large empty gap at the bottom, next to "Transacciones Bancarias" (which
+does have a Mayor/Menor footer) in the same grid row. The card boxes themselves were already the same
+height (CSS Grid's own default `align-items: stretch` already equalizes every item in a row to the tallest
+one) — the actual problem was *unused whitespace inside the shorter card*, not misaligned box edges.
+
+- Every card's hero amount + caption (+ optional Mayor/Menor footer) is now wrapped in one new
+  `.metric-card__content` element; `.metric-card__body` (unchanged in every other respect) gained
+  `height: 100%`, and `.metric-card__content` is `flex: 1; display: flex; flex-direction: column;
+  justify-content: center`. A card with a footer that already nearly fills the available height (Recargas/
+  Ventas/Transacciones Bancarias) is visually unaffected; a card with less content (Compras) now centers
+  that content in the space it actually has instead of leaving a dead zone below it. `.metric-card__header`
+  gained `flex-shrink: 0` so the title row never gets squeezed by the centering.
+- **No data, calculation, color, typography, icon, or spacing-token changed** — confirmed live in the
+  browser before and after: the exact same `Q 29.10` "Compras" figure, same accent colors, same card
+  shadows/borders, just recentered within its card.
+
+#### Compras — multiple simultaneous drafts (tabs)
+
+Added per an explicit follow-up ask ("poder abrir varias compras... a la vez"), scoped to **Compras only**
+after checking with the user first: Ventas' own "borrador" is a real, server-persisted `OPEN` sale gated by
+a DB-level partial unique index (`UQ_sales_open_per_user` — at most one open sale per user, the mechanism
+behind its real-time stock reservation), so supporting concurrent Ventas drafts would mean changing that
+backend invariant, out of scope for a navigation/UI ticket. Compras' draft was already purely local
+(`sessionStorage`, nothing server-side until "Guardar compra"), so multi-draft there is a frontend-only
+change.
+
+- **`PurchaseDraftStore` now holds `drafts: PurchaseDraft[]` + `activeDraftId`**, not one flat draft — each
+  `PurchaseDraft` (`{ id, supplierId, purchaseDate, items, paymentType, paymentDueDate }`) is completely
+  independent. The store still exposes the same flat `supplierId()`/`purchaseDate()`/`items()`/
+  `paymentType()`/`paymentDueDate()`/`total()` computed signals as before — each now just reads through
+  `activeDraft()` — specifically so `PurchasesPageComponent`'s template needed almost no changes beyond the
+  new tab bar; every mutation method (`onProductSelected`, `updateQuantity`, `setSupplier`, ...) keeps its
+  exact old signature and now applies to whichever draft is active via one shared private
+  `updateActiveDraft()` helper. There is always at least one draft — `closeDraft()` on the last remaining
+  one replaces it with a fresh blank draft rather than ever leaving the array empty, so the page always has
+  something to render.
+- **New store methods**: `openNewDraft()`, `setActiveDraft(id)`, `closeDraft(id)`, `draftTotal(draft)` (for
+  the tab bar to show a non-active tab's total without switching to it). `reset()` keeps its old name and
+  its old "wipe everything" meaning — the **only** remaining caller is `DashboardLayoutComponent.logout()`,
+  unchanged — but now resets to a single fresh draft rather than clearing flat signals. The former
+  per-save/per-cancel use of `reset()` was replaced with a new `resetActiveDraft()` (thin wrapper around
+  `closeDraft(activeDraftId())`), since ending one invoice must never touch any other open tab.
+  `sessionStorage`'s persisted shape changed from one flat draft object to `{ drafts, activeDraftId }`
+  under the same per-user key (`cj_purchase_draft:<userId>`) — no migration needed for old-shaped leftover
+  data, since it's ephemeral `sessionStorage` and a shape mismatch on `restore()` already fell back to a
+  fresh empty draft before this change too (same `catch`/fallback path, now falling back to a
+  single-draft array instead of flat fields).
+- **`PurchasesPageComponent` gained a tab bar** (`.purchases__tabs`, above the existing form row) — one
+  pill per open draft (`draftLabel()`: the chosen supplier's name once picked, else a stable positional
+  "Compra N" fallback so an empty new tab is never blank-labeled), a gold dot on any tab that has items
+  (`draftHasItems()`), an inline "×" to close that specific tab, and a "+ Nueva compra" button
+  (`openNewDraft()`). Closing a tab with items reuses the exact same `CancelConfirmModalComponent` the
+  page's own "Cancelar" button already used — both now funnel through one `closeConfirmDraftId` signal
+  (`requestCloseTab(id)` / `requestCancel()` is now just `requestCloseTab(activeDraftId())`), so there is
+  one confirmation flow, not two. Closing an **empty** tab (no items) skips the confirmation entirely,
+  same "nothing to lose" reasoning the original single-draft "Cancelar" already had.
+  `confirmSave()` captures the draft id being submitted *before* the API call (not re-read from
+  `activeDraftId()` inside the response handler) so the tab that actually gets closed on success is
+  unambiguously the one that was saved, not "whatever happens to be active when the response arrives."
+- **Verified live, end to end, against the real backend**: opened two tabs, put a different real product in
+  each with the same real test supplier, confirmed switching tabs preserved each one's state independently
+  (including the sidebar's own draft-dot reflecting "any tab has items", not just the active one), closed a
+  tab with items and saw the confirmation modal (declined once, confirmed once — items were lost only on
+  confirm), closed an empty tab with no prompt, then saved one of the two populated tabs for real
+  (`POST /purchases`, confirmed the resulting row via a direct `psql` check) and confirmed only that tab
+  closed afterward — the other open tab's own unrelated item was untouched and still there.
+
+#### Ventas — multiple simultaneous drafts (tabs), the harder sibling of Compras' own
+
+Added right after Compras' own multi-draft feature, per a direct follow-up asking for the same
+capability on Ventas. **Genuinely more involved than Compras**: a Ventas "borrador" is a real,
+server-persisted `OPEN` sale with stock already reserved, not a purely local draft — so this needed a real
+backend change first (`sales.draft_key`, see the backend `CLAUDE.md`'s own "Varias ventas a la vez"
+section for the full migration/gotcha writeup) before any frontend work could start.
+
+- **`SalesDraftStore` now holds `drafts: SaleDraftState[]` + `activeDraftId`**, one entry per open tab —
+  `{ draftKey, sale: Sale | null, pendingProductIds, isConfiguringPricing, isSaving, isCancelling }`.
+  `sale` is `null` until the tab's first product is added (no server-side `sales` row exists yet for that
+  tab); once it exists, `items`/`total`/`clientId`/`clientName`/`priceList` for the active tab are all
+  `computed()` straight off `activeDraft().sale`, so `SalesPageComponent`'s template needed almost no
+  changes beyond a new tab bar (same "flat computed passthrough" trick `PurchaseDraftStore` already uses).
+  On construction, `SalesService.getCurrentSales()` (renamed from the old singular `getCurrentSale()`,
+  now returns every open sale for the user) seeds one tab per real `OPEN` row found — a genuinely empty
+  browser session still starts with exactly one fresh blank tab, same as Compras.
+- **Closing a tab is never purely local, unlike Compras** — real stock may already be reserved server-side.
+  `SalesPageComponent.requestCloseTab(draftKey)` picks one of three paths: a tab whose `sale` is still
+  `null` closes instantly (`closeDraftWithoutServerRow()`, no network call — nothing was ever reserved); a
+  tab with a real `sales` row but zero current items closes via a **silent** `cancelDraft()` (still a real
+  `DELETE /sales/current?draftKey=...` call, to clean up that now-empty `OPEN` row server-side, but no
+  confirmation prompt — there's nothing visible for the user to lose); a tab with real items shows the
+  existing `SaleCancelConfirmModalComponent` first, and only calls `cancelDraft()` on confirm. All three
+  paths funnel through the same `closeConfirmDraftId` signal / `requestCancel()` = `requestCloseTab
+  (activeDraftId())` pattern Compras already established.
+- **`confirmSale()`/`cancelDraft()` both remove their own tab locally only after the network call
+  succeeds** (via the same `removeDraftLocally()` helper Compras' `closeDraft()` uses — never leaves zero
+  tabs, replaces the last one with a fresh blank draft), and every other open tab's `sale`/pending state is
+  untouched by either call, since both are scoped to one specific `draftKey` throughout.
+- **`SalesService`**: `adjustSaleItem`/`configurePricing`/`confirmSale`/`cancelSale` all gained a required
+  `draftKey` parameter (query param for the `DELETE`, body field for the rest); `getCurrentSale()` was
+  renamed `getCurrentSales()` and now returns `Sale[]`. `Sale` itself gained `draftKey: string | null`.
+- **Real bug caught live during this feature's own first end-to-end test, not assumed correct**: a
+  pre-existing `OPEN` sale from earlier testing had been backfilled to the literal `draft_key` value
+  `'default'` by the backend migration — the frontend correctly picked it up as a real tab, but the very
+  first `adjust_sale_item` call against it failed with `400 draftKey must be a UUID`, because the request
+  DTOs were originally written with `@IsUUID()`. Fixed on the backend (`@IsString() @IsNotEmpty()
+  @MaxLength(64)` instead — the domain never actually required UUID-shaped keys, only opaque, per-tab
+  uniqueness) rather than by discarding or reformatting that real, pre-existing draft on the frontend
+  side. A second real bug was found in the same live-testing pass — `cancel_open_sale` silently drifting
+  `inventory_stock` out of sync with `products.stock` on every cancel — see the backend `CLAUDE.md` for
+  the full writeup; both were fixed before this feature was considered done, not left as known issues.
+- **Verified live, end to end, against the real backend, including the bug-fix round-trip**: opened two
+  tabs, added a different real product with real reserved stock to each, confirmed both showed up as
+  independent `OPEN` rows in the database with distinct `draft_key`s and correct line items, saved one
+  (`POST /sales/confirm`) and confirmed via `psql` that only that row flipped to `CONFIRMED` while the
+  other stayed `OPEN` and untouched, then cancelled the remaining tab through the real confirmation modal
+  and verified via `psql` that its stock was fully restored (after fixing the `inventory_stock` drift bug
+  above) and zero `OPEN` sales remained. Every product's `products.stock` was cross-checked against the
+  sum of its own `inventory_stock` rows afterward and confirmed to match exactly, project-wide, not just
+  for the two products this test happened to touch.
+
+#### Ventas — spacing fix between the pricing bar and the product search box
+
+A direct follow-up ("no hay espacio entre ellos") reported the "Cliente/Lista de precios" pricing bar and
+the product search box directly below it rendering with zero visual gap. Root cause, confirmed by reading
+both components' own stylesheets before changing anything: neither `app-sale-pricing-bar` nor
+`app-product-search` carries any margin of its own (both are card-styled but spacing-agnostic, matching
+this app's usual "the parent page owns inter-block spacing" convention — see `.purchases__form-row`'s own
+`margin-bottom`), and `sales-page.component.scss` never actually declared any spacing between them or
+between the header and the pricing bar — only `.sales__receipt` had a `margin-top`, which only affected
+what came *after* the search box. Fixed with one small addition targeting both child components by tag
+name from the parent's own stylesheet (`app-sale-pricing-bar, app-product-search { display: block;
+margin-bottom: var(--space-6); }`) — a normal, supported Angular pattern (a parent's emulated-encapsulation
+styles can target a child component's host element), not a new component or a change to either child.
+Verified live in the browser: the pricing bar, the search box, and the header above them now all have
+consistent, even spacing.
+
+### Kardex financiero — Estado de Cuenta (Cuentas por Cobrar / Activos)
+
+Both `/dashboard/cuentas-por-cobrar` and `/dashboard/activos` gained a new "Ver estado de cuenta" row
+action (an `eye` icon, **open to any authenticated role** — unlike edit/delete, viewing a statement isn't a
+mutation) that opens `AccountStatementModalComponent` (`shared/ui/account-statement-modal/`) — the
+client's saldo actual, a "Registrar Cargo"/"Registrar Abono" flow (admin-only, gated by `canManage`) with a
+live saldo-anterior/monto/saldo-nuevo preview and the global `ConfirmDialogService`
+(`type: 'FINANCIAL_OPERATION'`) before saving, date-range filters, and the Kardex table itself
+(Fecha/Concepto/Cargo/Abono/Saldo, with a "Saldo inicial del periodo" row and a totals footer). See the
+backend `CLAUDE.md`'s own "Kardex financiero" section for the underlying `register_*_movement`/
+`getStatement` mechanics this all calls into.
+
+- **One shared component for both modules, not two near-identical copies** — a deliberate exception to
+  this codebase's usual "small per-feature copy over cross-feature coupling" convention (see Ventas'/
+  Compras' own product-search components), justified the same way `ClientSearchSelectComponent`'s reuse in
+  `SalePricingBarComponent` already was: the UI and mechanics are byte-identical between Cuentas por
+  Cobrar and Activos (the backend's own Kardex design is explicitly the same for both), so duplicating the
+  component would only be duplicating code, not diverging behavior. The actual "never share balances or
+  movements" separation the ticket required lives entirely in which concrete service the parent page
+  injects — `KardexAccountService` (`core/models/kardex.model.ts`) is a structural interface both
+  `AccountReceivableService` and `AssetService` satisfy (`implements KardexAccountService`), each only
+  ever calling its own module's endpoints (`/accounts-receivable/*` vs `/assets/*`).
+- **`AccountReceivable`/`Asset` both gained a `movementType: KardexMovementType` field**, mirroring the
+  backend's `AccountReceivableOutput`/`AssetOutput`. `Asset`'s own doc comment was corrected — `amount` is
+  no longer "may be negative"; that capability now lives in `movementType` (see the backend's own writeup
+  of why `CHK_assets_amount_positive` was re-added).
+- **A real reactivity bug was caught and fixed during this feature's own live testing, not assumed
+  correct**: the "Saldo nuevo" preview was originally a `computed()` reading
+  `this.form.controls.amount.value` — but a Reactive Forms `FormControl`'s value is a plain property, not
+  a signal, so Angular's signal graph never saw it change and the preview silently stayed frozen at
+  whatever it computed on the very first render, even though the adjacent "Monto: {{ ... }}" line (a
+  direct template expression, not a `computed()`) updated correctly on every keystroke. Confirmed live:
+  typing an amount updated "Monto" but "Saldo nuevo" stayed stuck at the opening balance. Fixed by making
+  `previewNewBalance()` a plain method instead of a `computed()` — the template already re-evaluates it on
+  every change-detection cycle, the same way the adjacent line already worked. **General lesson for this
+  codebase**: never wrap a Reactive Forms `FormControl`/`FormGroup` value read in `computed()` — it will
+  not invalidate on user input; call it as a plain method from the template instead, exactly like every
+  other form-value-derived display expression already in this app does.
+- **`RegisterKardexMovementInput`/`KardexStatement`/`KardexStatementFilters`/`KardexAccountService`** (all
+  in `core/models/kardex.model.ts`) and the matching `registerCharge`/`registerPayment`/`getStatement`/
+  `getCurrentBalance` methods on both `AccountReceivableService`/`AssetService` mirror the backend's
+  `POST .../charges`/`POST .../payments`/`GET .../statement`/`GET .../balance` contract exactly.
+- **No new route was added** — the statement view is a modal reachable from the existing
+  `accounts-receivable-page`/`assets-page` list screens, not a separate page/route. The existing flat CRUD
+  list screens are otherwise completely unchanged (still full create/edit/deactivate, still the same
+  toolbar/pagination) — this feature is purely additive.
+- **`fetchRecords()` on both page components was widened from `private` to accessible-from-template**
+  (Angular's strict template type-checking rejects a `private`-called method from a binding) — it's now
+  also the `(changed)` handler on `<app-account-statement-modal>`, so registering a cargo/abono refetches
+  the underlying list (a new row exists now) the same way saving the legacy create/edit form already did.
+- **Verified live, end to end**: opened the statement for a real client with a real Q14,608.00 balance,
+  registered a real Q500.00 abono with the live preview and confirmation dialog both showing the correct
+  Q14,108.00 result, confirmed the Kardex table and totals updated correctly; attempted an abono exceeding
+  the balance and confirmed the backend's `AbonoExceedsBalanceError` message ("El abono no puede ser mayor
+  al saldo pendiente del cliente.") surfaced correctly with the form still open and nothing written;
+  reversed the test abono with a real corrective cargo once confirmed with the user (both movements stayed
+  permanently visible in the Kardex table afterward — never deleted); separately opened the statement for
+  a real Activos client with several real historical rows and confirmed the running-balance column
+  (783.46 → 1,783.46 → 1,918.05 → 1,938.05) computed correctly against real, non-fabricated data, read-only.
+
+### Catálogos maestros — Presentaciones y Medidas
+
+`/dashboard/presentaciones-medidas` (`features/dashboard/presentation-units/`), new "Sistema" nav entry —
+two master catalogs (Tipos de Presentación, Unidades de Medida) that replace what used to be free text
+across the app. See the backend `CLAUDE.md`'s own "Catálogos maestros" section for the full
+migration/architecture writeup this all sits on top of.
+
+- **One container page, two fully self-contained tab components** — `PresentationUnitsPageComponent` only
+  tracks which tab is active; `PresentationTypesTabComponent`/`UnitsOfMeasureTabComponent` each fetch,
+  filter, and mutate directly (same "self-contained" pattern as `RegisterPurchaseFormComponent`/
+  `SalesSummaryCardComponent` elsewhere in this app), including their own inline create/edit modal — no
+  summary/toolbar/table split into separate files the way `account-types` uses, a deliberate scope
+  reduction for two near-identical catalogs built together.
+- **The "ya existe pero está inactiva, ¿desea activarla?" prompt lives entirely in these two components**,
+  not the backend (see the backend `CLAUDE.md`'s own reasoning: the global error envelope has no room for
+  a structured "here's the existing id" payload). Before submitting a create, each component searches its
+  own already-loaded `items()` list (fetched with `includeInactive: true`) for a case-insensitive,
+  trimmed name match; if found and inactive, the global `ConfirmDialogService` (`type: 'UPDATE'`, custom
+  title/message) offers "Activar existente" instead of ever calling `create()`. Verified live: creating "
+  bolsa test qa " (different case, padding) against an inactive "Bolsa Test QA" correctly triggered this
+  prompt and reactivated the same row rather than creating a duplicate.
+- **Reactivation uses the same generic `PATCH .../:id { isActive: true }`** both the "reactivate a
+  duplicate" flow and the table's own inline "Activar" action (a `rotate-ccw` icon button, shown only for
+  an inactive row) call — no separate endpoint or method.
+- **Deactivating shows a usage-aware warning, never blocks**: the confirm dialog's message includes
+  "Actualmente la utilizan N producto(s) — seguirá funcionando para esos productos..." whenever
+  `usageCount > 0`, sourced directly from the list row the backend already computed (see that module's own
+  `usageCount` correlated-subquery doc comment) — never a second request just to check usage.
+- **`ProductFormModalComponent` gained a required "Unidad de medida" `<select>`**, populated from
+  `UnitOfMeasureService.getUnitsOfMeasure()` (fetched once in `InventoryPageComponent`'s constructor,
+  identical pattern to `categoryOptions`/`businessOptions`), positioned right after Categoría/Negocio.
+  `Product`/`ProductInput` both gained `unitOfMeasureId`/`unitOfMeasure`/`unitOfMeasureAbbreviation`.
+- **The same form's inline "Presentaciones adicionales" `FormArray`** (add Caja/Paquete at product-creation
+  time — a real, pre-existing capability this ticket's own research surfaced, not a new one) had its
+  free-text `name` input replaced with a `presentationTypeId` `<select>`, sourced from
+  `PresentationTypeService.getPresentationTypes()` with "Unidad" filtered out (auto-created separately,
+  never picked here) — the old `forbiddenPresentationName` validator (which blocked typing literally
+  "Unidad") is gone entirely; excluding it from the dropdown's own options makes that validator moot.
+- **`PresentationFormModalComponent`** (the product-detail page's own "add/edit presentation" modal) got
+  the identical text-input-to-`<select>` change, self-contained (fetches
+  `PresentationTypeService.getPresentationTypes()` itself in `ngOnChanges`) — "Unidad" stays in the options
+  only while editing the product's own immutable "Unidad" row (whose `presentationTypeId` control is
+  `disable()`d, so it can never actually change), otherwise excluded exactly like the product form's own
+  array.
+- **Zero changes needed in Purchases/Ventas/Inventory-transfer/product-detail's own display code** —
+  `ProductPresentation.name` is still a plain resolved string (now sourced from the catalog via the
+  backend's join, but the frontend shape is unchanged), so every existing `presentation.name`/
+  `presentation.name === 'Unidad'` reference across those screens kept working without modification —
+  confirmed by grepping every such usage across the app before concluding no further changes were needed,
+  not assumed.
+- **Verified live end-to-end**: the new page renders with real seeded data (2 tipos de presentación with
+  correct usage counts matching a direct `psql` check exactly — Caja: 3 productos, Unidad: 4 productos;
+  5 unidades de medida, Unidad: 4 productos); created and reactivated synthetic test rows through the real
+  confirm-dialog flow (all removed afterward, zero residual rows); opened a real product's "Agregar
+  producto"/detail-page presentation editor and confirmed both dropdowns show only real, active catalog
+  entries; ran a real purchase against an existing multi-presentation product and confirmed the
+  presentation `<select>` still resolves "Unidad (factor 1)"/"Caja (factor 12)" exactly as before this
+  feature — no regression in Compras' own product/presentation flow.
+
 ### Notifications
 
 `NotificationService` (`core/services/notification.service.ts`) is a global toast queue —

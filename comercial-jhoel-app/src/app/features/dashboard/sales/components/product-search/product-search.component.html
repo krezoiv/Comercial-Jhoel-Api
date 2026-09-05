@@ -35,7 +35,7 @@
               <span class="search__result-meta">{{ product.sku || 'Sin SKU' }} · {{ product.category }}</span>
             </div>
             <div class="search__result-stats">
-              <span class="search__result-price">{{ formatCurrency(product.publicPrice) }}</span>
+              <span class="search__result-price">{{ formatCurrency(priceFor(product)) }}</span>
               <span class="search__result-stock" [class.search__result-stock--out]="product.stock <= 0">
                 {{ product.stock <= 0 ? 'Sin stock' : product.stock + ' disp.' }}
               </span>

@@ -58,9 +58,7 @@
           <th class="align-right">Monto</th>
           <th>Descripción</th>
           <th>Estado</th>
-          @if (canManage) {
-            <th>Acciones</th>
-          }
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -75,9 +73,17 @@
                 {{ record.isActive ? 'Activo' : 'Inactivo' }}
               </app-badge>
             </td>
-            @if (canManage) {
-              <td>
-                <div class="actions">
+            <td>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="action-btn"
+                  (click)="viewStatement.emit(record)"
+                  [attr.aria-label]="'Ver estado de cuenta de ' + record.clientName"
+                >
+                  <app-icon name="eye" [size]="16" />
+                </button>
+                @if (canManage) {
                   <button
                     type="button"
                     class="action-btn"
@@ -95,9 +101,9 @@
                   >
                     <app-icon name="trash-2" [size]="16" />
                   </button>
-                </div>
-              </td>
-            }
+                }
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -119,8 +125,16 @@
           <p class="ar-card__description">{{ record.description }}</p>
         }
 
-        @if (canManage) {
-          <div class="actions">
+        <div class="actions">
+          <button
+            type="button"
+            class="action-btn"
+            (click)="viewStatement.emit(record)"
+            [attr.aria-label]="'Ver estado de cuenta de ' + record.clientName"
+          >
+            <app-icon name="eye" [size]="16" />
+          </button>
+          @if (canManage) {
             <button
               type="button"
               class="action-btn"
@@ -138,8 +152,8 @@
             >
               <app-icon name="trash-2" [size]="16" />
             </button>
-          </div>
-        }
+          }
+        </div>
       </div>
     }
   </div>

@@ -29,6 +29,13 @@ export class RechargesService {
       .pipe(map((response) => response.data));
   }
 
+  /** Admin-only threshold the Alerts module reads for "saldo bajo de recargas". */
+  updateTypeMinBalance(id: string, minBalance: number): Observable<RechargeType> {
+    return this.http
+      .patch<ApiSuccessResponse<RechargeType>>(`${BASE_URL}/types/${id}/min-balance`, { minBalance })
+      .pipe(map((response) => response.data));
+  }
+
   /** `date` defaults to today server-side when omitted — pass the operation-date picker's value to browse another day. */
   getDailySummary(date?: string): Observable<RechargeDailyBalance[]> {
     const params = date ? new HttpParams().set('date', date) : undefined;

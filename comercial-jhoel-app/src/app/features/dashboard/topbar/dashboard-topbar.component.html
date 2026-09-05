@@ -1,7 +1,11 @@
-<header class="topbar">
+<header class="topbar" [class.topbar--scrolled]="isScrolled()">
   <button type="button" class="topbar__menu-btn" (click)="menuToggled.emit()" aria-label="Abrir menú del panel">
     <app-icon name="menu" [size]="22" />
   </button>
+
+  @if (currentPageLabel(); as pageLabel) {
+    <div class="topbar__page-title">{{ pageLabel }}</div>
+  }
 
   <div class="topbar__datetime">
     <span class="topbar__datetime-icon">
@@ -27,6 +31,8 @@
       </span>
     </span>
   </button>
+
+  <app-alert-bell />
 
   <div class="topbar__user">
     <button type="button" class="topbar__user-trigger" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen()">

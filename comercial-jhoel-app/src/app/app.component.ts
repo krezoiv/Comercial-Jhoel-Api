@@ -6,14 +6,21 @@ import { filter } from 'rxjs';
 import { FragmentScrollService } from './core/services/fragment-scroll.service';
 import { NavbarComponent } from './layout/navbar/navbar.component';
 import { FooterComponent } from './layout/footer/footer.component';
-import { ConfirmDialogComponent, ToastContainerComponent } from './shared/ui';
+import { ConfirmDialogComponent, PdfPromptModalComponent, ToastContainerComponent } from './shared/ui';
 
 const CHROME_LESS_PREFIXES = ['/dashboard', '/login'];
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent, ToastContainerComponent, ConfirmDialogComponent],
+  imports: [
+    RouterOutlet,
+    NavbarComponent,
+    FooterComponent,
+    ToastContainerComponent,
+    ConfirmDialogComponent,
+    PdfPromptModalComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

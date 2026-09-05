@@ -8,6 +8,9 @@ export interface SaleItem {
   total: number;
 }
 
+/** 'PUBLIC' (default) or 'WHOLESALE' — chosen once at the start of a sale, locked once the receipt has any line item. */
+export type PriceListType = 'PUBLIC' | 'WHOLESALE';
+
 /**
  * `status` distinguishes an in-progress receipt from a completed one — the
  * Ventas screen only ever deals with `OPEN` sales (its own current draft,
@@ -21,6 +24,11 @@ export interface Sale {
   saleDate: string;
   total: number;
   status: 'OPEN' | 'CONFIRMED';
+  clientId: string | null;
+  clientName: string | null;
+  priceList: PriceListType;
+  /** Which open tab this receipt belongs to — `null` for a `CONFIRMED` sale, only meaningful while `status` is `'OPEN'`. */
+  draftKey: string | null;
   items: SaleItem[];
   createdAt: string;
   updatedAt: string;
@@ -41,4 +49,6 @@ export interface CreateSaleItemInput {
 
 export interface CreateSaleInput {
   items: CreateSaleItemInput[];
+  clientId?: string;
+  priceList?: PriceListType;
 }

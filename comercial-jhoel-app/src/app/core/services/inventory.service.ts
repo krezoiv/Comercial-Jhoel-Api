@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, PaginatedResponse, Product, ProductInput } from '../models';
+import { ApiSuccessResponse, PaginatedResponse, Product, ProductInput, StockByLocation } from '../models';
 
 /** Raw shape the API returns for a product — `category` maps this to the flat `Product` the UI uses. */
 interface ProductApiModel {
@@ -14,10 +14,14 @@ interface ProductApiModel {
   categoryName: string;
   businessId: string;
   businessName: string;
+  unitOfMeasureId: string;
+  unitOfMeasureName: string;
+  unitOfMeasureAbbreviation: string;
   costPrice: number;
   publicPrice: number;
   wholesalePrice: number;
   stock: number;
+  stockByLocation?: StockByLocation[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -32,14 +36,25 @@ function toProduct(api: ProductApiModel): Product {
     categoryId: api.categoryId,
     business: api.businessName,
     businessId: api.businessId,
+    unitOfMeasure: api.unitOfMeasureName,
+    unitOfMeasureAbbreviation: api.unitOfMeasureAbbreviation,
+    unitOfMeasureId: api.unitOfMeasureId,
     costPrice: api.costPrice,
     publicPrice: api.publicPrice,
     wholesalePrice: api.wholesalePrice,
     stock: api.stock,
+    stockByLocation: api.stockByLocation,
     isActive: api.isActive,
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,
   };
+}
+
+/** Filters the export routes accept — same shape the backend's `ExportProductsQueryDto` validates. */
+export interface ProductExportFilters {
+  search?: string;
+  categoryId?: string;
+  businessId?: string;
 }
 
 /**
@@ -86,14 +101,51 @@ export class InventoryService {
       .pipe(map((response) => toProduct(response.data)));
   }
 
+  /** `stock` is never sent here even if present on `input` — the backend rejects unknown fields on update (`forbidNonWhitelisted`), since stock is now only ever changed via Compras/Ventas/Traslados. */
   updateProduct(id: string, input: ProductInput): Observable<Product> {
+    const { stock: _stock, ...rest } = input;
     return this.http
-      .patch<ApiSuccessResponse<ProductApiModel>>(`${environment.apiUrl}/products/${id}`, input)
+      .patch<ApiSuccessResponse<ProductApiModel>>(`${environment.apiUrl}/products/${id}`, rest)
       .pipe(map((response) => toProduct(response.data)));
   }
 
   /** Soft delete — the backend deactivates the product, it never deletes the row. */
   deleteProduct(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/products/${id}`);
+  }
+
+  /**
+   * Both exports take the same filter shape and are declared before `:id`
+   * on the backend (see `ProductsController`), exactly like Reportería's
+   * own export routes — `responseType: 'blob'` so `downloadBlob()` can
+   * trigger a real save, mirroring `ReportsService`'s export methods.
+   *
+   * Only defined filter keys are ever sent — `HttpParams` stringifies an
+   * `undefined` value as the literal text `"undefined"` instead of omitting
+   * it, which the backend's `@IsUUID()`/`@IsString()` validators would then
+   * reject with a 400 (this exact mistake was already made and fixed once
+   * in `QuotationsService.getQuotations()` — building the params object
+   * explicitly here from the start avoids repeating it).
+   */
+  private toExportParams(filters: ProductExportFilters): Record<string, string> {
+    const params: Record<string, string> = {};
+    if (filters.search) params['search'] = filters.search;
+    if (filters.categoryId) params['categoryId'] = filters.categoryId;
+    if (filters.businessId) params['businessId'] = filters.businessId;
+    return params;
+  }
+
+  exportProductsPdf(filters: ProductExportFilters): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/products/export/pdf`, {
+      params: this.toExportParams(filters),
+      responseType: 'blob',
+    });
+  }
+
+  exportProductsExcel(filters: ProductExportFilters): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/products/export/excel`, {
+      params: this.toExportParams(filters),
+      responseType: 'blob',
+    });
   }
 }

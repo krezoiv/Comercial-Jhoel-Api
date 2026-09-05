@@ -49,6 +49,41 @@
   }
 }
 
+// Al hacer scroll la barra se "asienta": más opaca (ver `--color-topbar-bg
+// -scrolled` en `_tokens.scss`, definida por tema igual que la base) más un
+// filo de acento cian — mismo lenguaje que ya usa el navbar público al
+// hacer scroll, para que ambas barras "respondan" igual.
+.topbar--scrolled {
+  background: var(--color-topbar-bg-scrolled);
+  box-shadow: var(--shadow-md), 0 1px 0 rgba(23, 195, 214, 0.35);
+}
+
+// Nombre del módulo actual, centrado sobre la barra completa — posicionado
+// de forma absoluta (no como un hijo flex más) para que quede centrado
+// respecto al ancho total del topbar sin importar cuántos controles haya
+// a cada lado, y para que nunca empuje ni comprima al resto de elementos.
+.topbar__page-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-on-light-muted);
+  pointer-events: none;
+
+  @include bp.respond(md) {
+    display: block;
+  }
+}
+
 .topbar__menu-btn {
   display: flex;
   align-items: center;

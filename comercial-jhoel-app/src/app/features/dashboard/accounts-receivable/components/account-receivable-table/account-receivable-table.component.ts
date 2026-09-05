@@ -26,6 +26,8 @@ export class AccountReceivableTableComponent {
   @Output() delete = new EventEmitter<AccountReceivable>();
   @Output() clearFilters = new EventEmitter<void>();
   @Output() addRecord = new EventEmitter<void>();
+  /** Open to any authenticated role, unlike edit/delete — reading a statement isn't a mutation. */
+  @Output() viewStatement = new EventEmitter<AccountReceivable>();
 
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
 

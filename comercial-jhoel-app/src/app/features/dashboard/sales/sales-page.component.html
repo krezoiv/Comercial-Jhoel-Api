@@ -10,7 +10,44 @@
     </div>
   </header>
 
-  <app-product-search (productSelected)="onProductSelected($event)" />
+  <div class="sales__tabs" role="tablist" aria-label="Ventas abiertas">
+    @for (draftItem of draft.drafts(); track draftItem.draftKey) {
+      <div
+        class="sales__tab"
+        role="tab"
+        [class.sales__tab--active]="draftItem.draftKey === draft.activeDraftId()"
+        [attr.aria-selected]="draftItem.draftKey === draft.activeDraftId()"
+        (click)="switchDraft(draftItem.draftKey)"
+      >
+        @if (draftHasItems(draftItem)) {
+          <span class="sales__tab-dot" aria-hidden="true"></span>
+        }
+        <span class="sales__tab-label">{{ draftLabel(draftItem) }}</span>
+        <button
+          type="button"
+          class="sales__tab-close"
+          [attr.aria-label]="'Cerrar ' + draftLabel(draftItem)"
+          (click)="requestCloseTab(draftItem.draftKey); $event.stopPropagation()"
+        >
+          ×
+        </button>
+      </div>
+    }
+    <button type="button" class="sales__tab-add" (click)="openNewDraft()" aria-label="Nueva venta">
+      + Nueva venta
+    </button>
+  </div>
+
+  <app-sale-pricing-bar
+    [clientId]="draft.clientId()"
+    [clientName]="draft.clientName()"
+    [priceList]="draft.priceList()"
+    [locked]="draft.items().length > 0"
+    [disabled]="draft.isConfiguringPricing()"
+    (configure)="onConfigurePricing($event)"
+  />
+
+  <app-product-search [priceList]="draft.priceList()" (productSelected)="onProductSelected($event)" />
 
   <div class="sales__receipt">
     <app-sale-items-table
@@ -32,7 +69,7 @@
 </div>
 
 <app-sale-cancel-confirm-modal
-  [open]="isCancelConfirmOpen()"
-  (confirmed)="confirmCancel()"
+  [open]="closeConfirmDraftId() !== null"
+  (confirmed)="confirmCloseTab()"
   (cancelled)="dismissCancel()"
 />

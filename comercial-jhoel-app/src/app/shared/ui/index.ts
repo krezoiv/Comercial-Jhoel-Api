@@ -9,3 +9,5 @@ export * from './stat-card/stat-card.component';
 export * from './empty-state/empty-state.component';
 export * from './toast/toast-container.component';
 export * from './confirm-dialog/confirm-dialog.component';
+export * from './pdf-prompt-modal/pdf-prompt-modal.component';
+export * from './account-statement-modal/account-statement-modal.component';

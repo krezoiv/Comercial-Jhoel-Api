@@ -12,7 +12,10 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Proveedores', icon: 'truck', path: 'proveedores' },
       { label: 'Bancos', icon: 'bank', path: 'bancos' },
       { label: 'Tipos de Cuenta', icon: 'layers', path: 'tipos-cuenta' },
+      { label: 'Banco Agente', icon: 'bank', path: 'banco-agente' },
+      { label: 'Tipo de Transacción', icon: 'arrow-left-right', path: 'tipo-transaccion' },
       { label: 'Clientes', icon: 'users', path: 'clientes' },
+      { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Usuarios', icon: 'users', path: 'usuarios', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Roles', icon: 'shield-check', path: 'roles', roles: ['SUPER_ADMIN', 'ADMIN'] },
       {
@@ -27,6 +30,24 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         path: 'gestion-dias-recargas',
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
+      {
+        label: 'Gestión de Transacciones',
+        icon: 'lock',
+        path: 'gestion-transacciones',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Configuración de Empresa',
+        icon: 'briefcase',
+        path: 'configuracion-empresa',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Configuración de Alertas',
+        icon: 'bell',
+        path: 'configuracion-alertas',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
     ],
   },
   {
@@ -36,12 +57,13 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     children: [
       { label: 'Ventas', icon: 'receipt', path: 'ventas' },
       { label: 'Compras', icon: 'arrow-down-circle', path: 'compras' },
+      { label: 'Tickets', icon: 'tag', path: 'tickets' },
+      { label: 'Cotizaciones', icon: 'file-check', path: 'cotizaciones' },
+      { label: 'Transaccionar', icon: 'bank', path: 'transaccionar' },
       { label: 'Cuentas por Cobrar', icon: 'receipt', path: 'cuentas-por-cobrar' },
       { label: 'Activos', icon: 'package', path: 'activos' },
       { label: 'Recargas Electrónicas', icon: 'smartphone', path: 'recargas' },
       { label: 'Heladería · Inventario', icon: 'gift', path: 'heladeria-inventario' },
-      { label: 'Heladería · Compras', icon: 'arrow-down-circle', path: 'heladeria-compras' },
-      { label: 'Heladería · Ventas', icon: 'receipt', path: 'heladeria-ventas' },
     ],
   },
   {
@@ -60,6 +82,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Reportería de Heladería', icon: 'gift', path: 'reportes-heladeria' },
       { label: 'Reporte de Recargas', icon: 'smartphone', path: 'reportes-recargas' },
       { label: 'Reporte de Cuadre de Agentes', icon: 'bank', path: 'reportes-cuadre-agentes' },
+      { label: 'Reporte de Transacciones', icon: 'bank', path: 'reportes-transacciones' },
     ],
   },
   {
@@ -71,10 +94,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Cuadre Agentes', icon: 'file-check', path: 'agentes-bancarios-cuadre' },
     ],
   },
-  {
-    label: 'Librería',
-    icon: 'book',
-    path: 'libreria',
-    children: [{ label: 'Inventario', icon: 'package', path: 'inventario' }],
-  },
+  { label: 'Librería', icon: 'book', path: 'libreria' },
+  { label: 'Inventario', icon: 'package', path: 'inventario' },
 ];

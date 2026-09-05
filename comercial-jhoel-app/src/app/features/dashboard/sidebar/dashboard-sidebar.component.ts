@@ -25,8 +25,10 @@ import { IconComponent } from '../../../shared/ui';
 })
 export class DashboardSidebarComponent {
   @Input() open = false;
+  @Input() collapsed = false;
   @Output() closeRequested = new EventEmitter<void>();
   @Output() logoutRequested = new EventEmitter<void>();
+  @Output() collapseToggled = new EventEmitter<void>();
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -174,8 +176,19 @@ export class DashboardSidebarComponent {
     return this.expandedGroup() === path;
   }
 
-  /** Acordeón exclusivo: clicar el grupo ya abierto lo cierra; clicar cualquier otro lo abre y cierra el anterior. */
+  /**
+   * Acordeón exclusivo: clicar el grupo ya abierto lo cierra; clicar
+   * cualquier otro lo abre y cierra el anterior. Con el sidebar contraído
+   * (solo íconos), un submenú no tiene dónde mostrarse — clicar un grupo
+   * ahí primero lo expande de nuevo (vía el padre) y deja ese grupo abierto,
+   * en vez de alternar su estado a ciegas.
+   */
   toggleGroup(path: string): void {
+    if (this.collapsed) {
+      this.collapseToggled.emit();
+      this.expandedGroup.set(path);
+      return;
+    }
     this.expandedGroup.update((current) => (current === path ? null : path));
   }
 }

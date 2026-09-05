@@ -22,8 +22,24 @@ export class DashboardLayoutComponent {
   private readonly salesDraftStore = inject(SalesDraftStore);
   private readonly purchaseDraftStore = inject(PurchaseDraftStore);
 
+  private static readonly SIDEBAR_COLLAPSED_KEY = 'cj_sidebar_collapsed';
+
   readonly isSidebarOpen = signal(false);
   readonly isChangePasswordOpen = signal(false);
+  // Persistido para que el panel recuerde la preferencia entre sesiones —
+  // igual que el modo oscuro/claro ya persiste la suya. Solo aplica en
+  // escritorio (ver el propio Sidebar: el modo contraído está anidado
+  // dentro de su breakpoint `lg`), así que no hay nada que reconciliar con
+  // el drawer móvil (`isSidebarOpen`), que es un estado totalmente aparte.
+  readonly isSidebarCollapsed = signal(this.readStoredCollapsedPreference());
+
+  private readStoredCollapsedPreference(): boolean {
+    try {
+      return localStorage.getItem(DashboardLayoutComponent.SIDEBAR_COLLAPSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  }
 
   closeSidebar(): void {
     this.isSidebarOpen.set(false);
@@ -31,6 +47,18 @@ export class DashboardLayoutComponent {
 
   toggleSidebar(): void {
     this.isSidebarOpen.update((open) => !open);
+  }
+
+  toggleSidebarCollapse(): void {
+    this.isSidebarCollapsed.update((collapsed) => {
+      const next = !collapsed;
+      try {
+        localStorage.setItem(DashboardLayoutComponent.SIDEBAR_COLLAPSED_KEY, String(next));
+      } catch {
+        // Sin localStorage disponible (modo privado, etc.) simplemente no persiste — la sesión sigue funcionando.
+      }
+      return next;
+    });
   }
 
   openChangePassword(): void {

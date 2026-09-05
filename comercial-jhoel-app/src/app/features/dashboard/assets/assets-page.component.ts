@@ -3,11 +3,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 
-import { Asset, Client } from '../../../core/models';
+import { ActiveBalanceSummary, Asset, Client } from '../../../core/models';
 import { AssetService } from '../../../core/services/asset.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { formatCurrency } from '../../../core/utils/number-format.util';
+import { AccountStatementModalComponent, CardComponent, IconComponent, KardexStatementClient } from '../../../shared/ui';
 import { ReportPaginationComponent } from '../reports/components/report-pagination/report-pagination.component';
 import { AssetToolbarComponent, AssetStatusFilterValue } from './components/asset-toolbar/asset-toolbar.component';
 import { AssetTableComponent } from './components/asset-table/asset-table.component';
@@ -25,6 +27,9 @@ const LIMIT = 20;
     AssetFormModalComponent,
     DeleteConfirmModalComponent,
     ReportPaginationComponent,
+    AccountStatementModalComponent,
+    CardComponent,
+    IconComponent,
   ],
   templateUrl: './assets-page.component.html',
   styleUrl: './assets-page.component.scss',
@@ -41,7 +46,8 @@ const LIMIT = 20;
  * entirely. `AccountsReceivablePageComponent` is the identical clone.
  */
 export class AssetsPageComponent {
-  private readonly assetService = inject(AssetService);
+  /** Not private — bound directly as `[service]` on `<app-account-statement-modal>` in the template. */
+  readonly assetService = inject(AssetService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
 
@@ -67,6 +73,13 @@ export class AssetsPageComponent {
   readonly deletingRecord = signal<Asset | null>(null);
   readonly isDeleting = signal(false);
 
+  readonly isStatementOpen = signal(false);
+  readonly statementClient = signal<KardexStatementClient | null>(null);
+
+  /** Saldo total de cuentas activas — always unfiltered (independent of search/date/estado above), refetched whenever the underlying data actually changes (not on a plain filter/page change). */
+  readonly activeBalance = signal<ActiveBalanceSummary | null>(null);
+  formatCurrency = formatCurrency;
+
   readonly hasActiveFilters = computed(
     () =>
       this.searchTerm().trim().length > 0 ||
@@ -84,9 +97,21 @@ export class AssetsPageComponent {
       this.fetchRecords();
     });
     this.fetchRecords();
+    this.fetchActiveBalance();
   }
 
-  private fetchRecords(): void {
+  /** Always active-only, unfiltered — refetched whenever the underlying data actually changes (create/edit/deactivate/Kardex movement), never on a plain search/date/page change. */
+  fetchActiveBalance(): void {
+    this.assetService.getActiveBalance().subscribe({
+      next: (summary) => this.activeBalance.set(summary),
+      error: () => {
+        // Silent — this tile is a nice-to-have; the list itself already reports its own load errors.
+      },
+    });
+  }
+
+  /** Not private — also called from the template as `(changed)="fetchRecords()"` after a Kardex movement is registered. */
+  fetchRecords(): void {
     this.loading.set(true);
     const status = this.statusFilter();
     this.assetService
@@ -177,6 +202,16 @@ export class AssetsPageComponent {
       wasEditing ? 'El activo se actualizó correctamente.' : 'El activo se registró correctamente.',
     );
     this.fetchRecords();
+    this.fetchActiveBalance();
+  }
+
+  openStatement(record: Asset): void {
+    this.statementClient.set({ id: record.clientId, name: record.clientName });
+    this.isStatementOpen.set(true);
+  }
+
+  closeStatement(): void {
+    this.isStatementOpen.set(false);
   }
 
   requestDelete(record: Asset): void {
@@ -203,6 +238,7 @@ export class AssetsPageComponent {
         this.deletingRecord.set(null);
         this.notificationService.success('El activo se desactivó correctamente.');
         this.fetchRecords();
+        this.fetchActiveBalance();
       },
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, CreateSaleInput, PaginatedResponse, Sale } from '../models';
+import { ApiSuccessResponse, CreateSaleInput, PaginatedResponse, PriceListType, Sale } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/sales`;
 
@@ -33,38 +33,60 @@ export class SalesService {
 
   /**
    * Reserves (positive `quantityDelta`) or releases (negative) stock against
-   * the caller's own in-progress receipt, in real time — creates the draft
-   * on the first call. Returns the full updated draft so the UI always
-   * renders exactly what the backend actually committed, never an optimistic
-   * local guess.
+   * one specific open receipt (`draftKey` — one per open tab), in real time —
+   * creates that draft's server-side row on its first call. Returns the full
+   * updated draft so the UI always renders exactly what the backend actually
+   * committed, never an optimistic local guess.
    */
-  adjustSaleItem(productId: string, quantityDelta: number): Observable<Sale> {
+  adjustSaleItem(productId: string, quantityDelta: number, draftKey: string): Observable<Sale> {
     return this.http
-      .post<ApiSuccessResponse<Sale>>(`${BASE_URL}/items`, { productId, quantityDelta })
+      .post<ApiSuccessResponse<Sale>>(`${BASE_URL}/items`, { productId, quantityDelta, draftKey })
       .pipe(map((response) => response.data));
   }
 
   /**
-   * The caller's in-progress receipt, if any — `null` (not a thrown error)
-   * whenever there isn't one, so a page load never needs to special-case a
-   * 404 (the expected case for "nothing in progress") or treat a transient
-   * failure as fatal: either way, the Ventas screen just starts from an
-   * empty receipt.
+   * Every one of the caller's currently open receipts (one per open tab) —
+   * an empty array (not a thrown error) whenever there are none, so a page
+   * load never needs to special-case "nothing in progress": either way, the
+   * Ventas screen just starts from a single empty tab.
    */
-  getCurrentSale(): Observable<Sale | null> {
-    return this.http.get<ApiSuccessResponse<Sale>>(`${BASE_URL}/current`).pipe(
+  getCurrentSales(): Observable<Sale[]> {
+    return this.http.get<ApiSuccessResponse<Sale[]>>(`${BASE_URL}/current`).pipe(
       map((response) => response.data),
-      catchError(() => of(null)),
+      catchError(() => of([])),
     );
   }
 
-  /** "Guardar venta" — stock was already reserved as items were added; this only finalizes the receipt. */
-  confirmSale(): Observable<Sale> {
-    return this.http.post<ApiSuccessResponse<Sale>>(`${BASE_URL}/confirm`, {}).pipe(map((response) => response.data));
+  /** "Guardar venta" — stock was already reserved as items were added; this only finalizes the targeted tab's receipt. */
+  confirmSale(draftKey: string): Observable<Sale> {
+    return this.http
+      .post<ApiSuccessResponse<Sale>>(`${BASE_URL}/confirm`, { draftKey })
+      .pipe(map((response) => response.data));
   }
 
-  /** Discards the in-progress receipt — every reserved line's stock is restored. */
-  cancelSale(): Observable<void> {
-    return this.http.delete<void>(`${BASE_URL}/current`);
+  /** Discards the targeted tab's in-progress receipt — every reserved line's stock is restored. */
+  cancelSale(draftKey: string): Observable<void> {
+    return this.http.delete<void>(`${BASE_URL}/current`, { params: { draftKey } });
+  }
+
+  /**
+   * Sets/updates one open receipt's client and price list — call once per
+   * tab, before or while that tab's cart is empty. The backend rejects a
+   * price-list change once that receipt has line items (`clientId: null`
+   * clears the client, which is always allowed).
+   */
+  configurePricing(
+    clientId: string | null,
+    priceList: PriceListType,
+    draftKey: string,
+  ): Observable<Sale> {
+    return this.http
+      .patch<ApiSuccessResponse<Sale>>(`${BASE_URL}/current/pricing`, { clientId, priceList, draftKey })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Reconstructs the receipt PDF purely from the already-persisted sale — never re-runs the save. */
+  exportSalePdf(id: string): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' });
   }
 }

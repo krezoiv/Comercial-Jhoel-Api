@@ -2,6 +2,8 @@ export interface RechargeType {
   id: string;
   name: string;
   isActive: boolean;
+  /** `0` means "no threshold configured" — the Alerts module never alerts for this type until an admin sets a real minimum. */
+  minBalance: number;
 }
 
 /**

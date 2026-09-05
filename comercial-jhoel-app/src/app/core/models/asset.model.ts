@@ -1,10 +1,13 @@
+import { KardexMovementType } from './kardex.model';
+
 export interface Asset {
   id: string;
   clientId: string;
   clientName: string;
   date: string;
-  /** May be negative (a correcting/reversing entry) — the one amount field in this app without a positive-only rule; see the backend's `Asset` entity doc comment. */
+  /** Always a positive magnitude now — the sign lives in `movementType` (see the backend's Kardex migration). A correcting/reversing entry is now a "Registrar Abono" movement in the Estado de Cuenta view, not a negative value through this field. */
   amount: number;
+  movementType: KardexMovementType;
   description: string | null;
   isActive: boolean;
   createdAt: string;

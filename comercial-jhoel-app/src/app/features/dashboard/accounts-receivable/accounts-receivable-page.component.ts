@@ -3,11 +3,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 
-import { AccountReceivable, Client } from '../../../core/models';
+import { AccountReceivable, ActiveBalanceSummary, Client } from '../../../core/models';
 import { AccountReceivableService } from '../../../core/services/account-receivable.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { formatCurrency } from '../../../core/utils/number-format.util';
+import { AccountStatementModalComponent, CardComponent, IconComponent, KardexStatementClient } from '../../../shared/ui';
 import { ReportPaginationComponent } from '../reports/components/report-pagination/report-pagination.component';
 import { AccountReceivableToolbarComponent, AccountReceivableStatusFilterValue } from './components/account-receivable-toolbar/account-receivable-toolbar.component';
 import { AccountReceivableTableComponent } from './components/account-receivable-table/account-receivable-table.component';
@@ -25,6 +27,9 @@ const LIMIT = 20;
     AccountReceivableFormModalComponent,
     DeleteConfirmModalComponent,
     ReportPaginationComponent,
+    AccountStatementModalComponent,
+    CardComponent,
+    IconComponent,
   ],
   templateUrl: './accounts-receivable-page.component.html',
   styleUrl: './accounts-receivable-page.component.scss',
@@ -32,7 +37,8 @@ const LIMIT = 20;
 })
 /** Identical clone of `AssetsPageComponent` — see that class's own doc comment for the server-side-pagination/always-refetch pattern (a deliberate departure from `UsersPageComponent`/`BanksPageComponent`'s client-side-filtering pattern). */
 export class AccountsReceivablePageComponent {
-  private readonly accountReceivableService = inject(AccountReceivableService);
+  /** Not private — bound directly as `[service]` on `<app-account-statement-modal>` in the template. */
+  readonly accountReceivableService = inject(AccountReceivableService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
 
@@ -58,6 +64,13 @@ export class AccountsReceivablePageComponent {
   readonly deletingRecord = signal<AccountReceivable | null>(null);
   readonly isDeleting = signal(false);
 
+  readonly isStatementOpen = signal(false);
+  readonly statementClient = signal<KardexStatementClient | null>(null);
+
+  /** Saldo total de cuentas activas — always unfiltered (independent of search/date/estado above), refetched whenever the underlying data actually changes (not on a plain filter/page change). */
+  readonly activeBalance = signal<ActiveBalanceSummary | null>(null);
+  formatCurrency = formatCurrency;
+
   readonly hasActiveFilters = computed(
     () =>
       this.searchTerm().trim().length > 0 ||
@@ -75,9 +88,21 @@ export class AccountsReceivablePageComponent {
       this.fetchRecords();
     });
     this.fetchRecords();
+    this.fetchActiveBalance();
   }
 
-  private fetchRecords(): void {
+  /** Always active-only, unfiltered — refetched whenever the underlying data actually changes (create/edit/deactivate/Kardex movement), never on a plain search/date/page change. */
+  fetchActiveBalance(): void {
+    this.accountReceivableService.getActiveBalance().subscribe({
+      next: (summary) => this.activeBalance.set(summary),
+      error: () => {
+        // Silent — this tile is a nice-to-have; the list itself already reports its own load errors.
+      },
+    });
+  }
+
+  /** Not private — also called from the template as `(changed)="fetchRecords()"` after a Kardex movement is registered. */
+  fetchRecords(): void {
     this.loading.set(true);
     const status = this.statusFilter();
     this.accountReceivableService
@@ -168,6 +193,16 @@ export class AccountsReceivablePageComponent {
       wasEditing ? 'La cuenta por cobrar se actualizó correctamente.' : 'La cuenta por cobrar se registró correctamente.',
     );
     this.fetchRecords();
+    this.fetchActiveBalance();
+  }
+
+  openStatement(record: AccountReceivable): void {
+    this.statementClient.set({ id: record.clientId, name: record.clientName });
+    this.isStatementOpen.set(true);
+  }
+
+  closeStatement(): void {
+    this.isStatementOpen.set(false);
   }
 
   requestDelete(record: AccountReceivable): void {
@@ -194,6 +229,7 @@ export class AccountsReceivablePageComponent {
         this.deletingRecord.set(null);
         this.notificationService.success('La cuenta por cobrar se desactivó correctamente.');
         this.fetchRecords();
+        this.fetchActiveBalance();
       },
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);

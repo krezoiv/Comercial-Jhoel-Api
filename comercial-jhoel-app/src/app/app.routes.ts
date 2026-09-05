@@ -28,7 +28,7 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./features/dashboard/home/dashboard-home.component').then((m) => m.DashboardHomeComponent),
-        title: 'Resumen — Panel',
+        title: 'Resumen — Sistema',
       },
       {
         path: 'sistema',
@@ -41,13 +41,13 @@ export const routes: Routes = [
           icon: 'briefcase',
           description: 'Configuración general, usuarios y permisos del panel. Este módulo está en construcción.',
         },
-        title: 'Sistema — Panel',
+        title: 'Sistema',
       },
       {
         path: 'categorias',
         loadComponent: () =>
           import('./features/dashboard/categories/categories-page.component').then((m) => m.CategoriesPageComponent),
-        title: 'Categorías — Panel',
+        title: 'Categorías — Sistema',
       },
       {
         path: 'negocios',
@@ -55,27 +55,27 @@ export const routes: Routes = [
           import('./features/dashboard/businesses/businesses-page.component').then(
             (m) => m.BusinessesPageComponent
           ),
-        title: 'Negocios — Panel',
+        title: 'Negocios — Sistema',
       },
       {
         path: 'proveedores',
         loadComponent: () =>
           import('./features/dashboard/suppliers/suppliers-page.component').then((m) => m.SuppliersPageComponent),
-        title: 'Proveedores — Panel',
+        title: 'Proveedores — Sistema',
       },
       {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/dashboard/users/users-page.component').then((m) => m.UsersPageComponent),
-        title: 'Usuarios — Panel',
+        title: 'Usuarios — Sistema',
       },
       {
         path: 'roles',
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/dashboard/roles/roles-page.component').then((m) => m.RolesPageComponent),
-        title: 'Roles — Panel',
+        title: 'Roles — Sistema',
       },
       {
         path: 'gestion-dias-cerrados',
@@ -84,7 +84,7 @@ export const routes: Routes = [
           import('./features/dashboard/closed-days/closed-days-page.component').then(
             (m) => m.ClosedDaysPageComponent,
           ),
-        title: 'Gestión de Días Cerrados — Panel',
+        title: 'Gestión de Días Cerrados — Sistema',
       },
       {
         path: 'gestion-dias-recargas',
@@ -93,13 +93,40 @@ export const routes: Routes = [
           import('./features/dashboard/recharge-days/recharge-days-page.component').then(
             (m) => m.RechargeDaysPageComponent,
           ),
-        title: 'Gestión de Días de Recargas — Panel',
+        title: 'Gestión de Días de Recargas — Sistema',
+      },
+      {
+        path: 'gestion-transacciones',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/transaction-days/transaction-days-page.component').then(
+            (m) => m.TransactionDaysPageComponent,
+          ),
+        title: 'Gestión de Transacciones — Sistema',
+      },
+      {
+        path: 'configuracion-empresa',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/company-settings/company-settings-page.component').then(
+            (m) => m.CompanySettingsPageComponent,
+          ),
+        title: 'Configuración de Empresa — Sistema',
+      },
+      {
+        path: 'configuracion-alertas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/alert-settings/alert-settings-page.component').then(
+            (m) => m.AlertSettingsPageComponent,
+          ),
+        title: 'Configuración de Alertas — Sistema',
       },
       {
         path: 'bancos',
         loadComponent: () =>
           import('./features/dashboard/banks/banks-page.component').then((m) => m.BanksPageComponent),
-        title: 'Bancos — Panel',
+        title: 'Bancos — Sistema',
       },
       {
         path: 'tipos-cuenta',
@@ -107,7 +134,23 @@ export const routes: Routes = [
           import('./features/dashboard/account-types/account-types-page.component').then(
             (m) => m.AccountTypesPageComponent
           ),
-        title: 'Tipos de Cuenta — Panel',
+        title: 'Tipos de Cuenta — Sistema',
+      },
+      {
+        path: 'banco-agente',
+        loadComponent: () =>
+          import('./features/dashboard/transaction-banks/transaction-banks-page.component').then(
+            (m) => m.TransactionBanksPageComponent
+          ),
+        title: 'Banco Agente — Sistema',
+      },
+      {
+        path: 'tipo-transaccion',
+        loadComponent: () =>
+          import('./features/dashboard/transaction-types/transaction-types-page.component').then(
+            (m) => m.TransactionTypesPageComponent
+          ),
+        title: 'Tipo de Transacción — Sistema',
       },
       {
         path: 'clientes',
@@ -115,7 +158,15 @@ export const routes: Routes = [
           import('./features/dashboard/clients/clients-page.component').then(
             (m) => m.ClientsPageComponent
           ),
-        title: 'Clientes — Panel',
+        title: 'Clientes — Sistema',
+      },
+      {
+        path: 'presentaciones-medidas',
+        loadComponent: () =>
+          import('./features/dashboard/presentation-units/presentation-units-page.component').then(
+            (m) => m.PresentationUnitsPageComponent
+          ),
+        title: 'Presentaciones y Medidas — Sistema',
       },
       {
         path: 'finanzas',
@@ -128,25 +179,45 @@ export const routes: Routes = [
           icon: 'trending-up',
           description: 'Ingresos, egresos y reportes financieros del negocio. Este módulo está en construcción.',
         },
-        title: 'Finanzas — Panel',
+        title: 'Finanzas — Sistema',
       },
       {
         path: 'ventas',
         loadComponent: () =>
           import('./features/dashboard/sales/sales-page.component').then((m) => m.SalesPageComponent),
-        title: 'Ventas — Panel',
+        title: 'Ventas — Sistema',
       },
       {
         path: 'compras',
         loadComponent: () =>
           import('./features/dashboard/purchases/purchases-page.component').then((m) => m.PurchasesPageComponent),
-        title: 'Compras — Panel',
+        title: 'Compras — Sistema',
+      },
+      {
+        path: 'tickets',
+        loadComponent: () =>
+          import('./features/dashboard/tickets/tickets-page.component').then((m) => m.TicketsPageComponent),
+        title: 'Tickets — Sistema',
+      },
+      {
+        path: 'cotizaciones',
+        loadComponent: () =>
+          import('./features/dashboard/quotations/quotations-page.component').then((m) => m.QuotationsPageComponent),
+        title: 'Cotizaciones — Sistema',
+      },
+      {
+        path: 'transaccionar',
+        loadComponent: () =>
+          import('./features/dashboard/transaccionar/transaccionar-page.component').then(
+            (m) => m.TransaccionarPageComponent
+          ),
+        title: 'Transaccionar — Sistema',
       },
       {
         path: 'recargas',
         loadComponent: () =>
           import('./features/dashboard/recharges/recharges-page.component').then((m) => m.RechargesPageComponent),
-        title: 'Recargas Electrónicas — Panel',
+        title: 'Recargas Electrónicas — Sistema',
       },
       {
         path: 'cuentas-por-cobrar',
@@ -154,13 +225,13 @@ export const routes: Routes = [
           import('./features/dashboard/accounts-receivable/accounts-receivable-page.component').then(
             (m) => m.AccountsReceivablePageComponent
           ),
-        title: 'Cuentas por Cobrar — Panel',
+        title: 'Cuentas por Cobrar — Sistema',
       },
       {
         path: 'activos',
         loadComponent: () =>
           import('./features/dashboard/assets/assets-page.component').then((m) => m.AssetsPageComponent),
-        title: 'Activos — Panel',
+        title: 'Activos — Sistema',
       },
       {
         path: 'heladeria-inventario',
@@ -168,7 +239,7 @@ export const routes: Routes = [
           import('./features/dashboard/ice-creams/inventory/ice-cream-inventory-page.component').then(
             (m) => m.IceCreamInventoryPageComponent
           ),
-        title: 'Heladería · Inventario — Panel',
+        title: 'Heladería · Inventario — Sistema',
       },
       {
         path: 'heladeria-compras',
@@ -176,7 +247,7 @@ export const routes: Routes = [
           import('./features/dashboard/ice-creams/purchases/ice-cream-purchases-page.component').then(
             (m) => m.IceCreamPurchasesPageComponent
           ),
-        title: 'Heladería · Compras — Panel',
+        title: 'Heladería · Compras — Sistema',
       },
       {
         path: 'heladeria-ventas',
@@ -184,7 +255,7 @@ export const routes: Routes = [
           import('./features/dashboard/ice-creams/sales/ice-cream-sales-page.component').then(
             (m) => m.IceCreamSalesPageComponent
           ),
-        title: 'Heladería · Ventas — Panel',
+        title: 'Heladería · Ventas — Sistema',
       },
       {
         path: 'reportes',
@@ -198,7 +269,7 @@ export const routes: Routes = [
           icon: 'bar-chart',
           description: 'Selecciona un reporte del menú para consultar, filtrar y exportar la información.',
         },
-        title: 'Reportería — Panel',
+        title: 'Reportería — Sistema',
       },
       {
         path: 'reportes-ventas',
@@ -207,7 +278,7 @@ export const routes: Routes = [
           import('./features/dashboard/reports/sales/sales-report-page.component').then(
             (m) => m.SalesReportPageComponent
           ),
-        title: 'Reporte de Ventas — Panel',
+        title: 'Reporte de Ventas — Sistema',
       },
       {
         path: 'reportes-compras',
@@ -216,7 +287,7 @@ export const routes: Routes = [
           import('./features/dashboard/reports/purchases/purchases-report-page.component').then(
             (m) => m.PurchasesReportPageComponent
           ),
-        title: 'Reporte de Compras — Panel',
+        title: 'Reporte de Compras — Sistema',
       },
       {
         path: 'reportes-activos-cuentas-por-cobrar',
@@ -225,7 +296,7 @@ export const routes: Routes = [
           import(
             './features/dashboard/reports/assets-receivables/assets-receivables-report-page.component'
           ).then((m) => m.AssetsReceivablesReportPageComponent),
-        title: 'Reportería de Activos y Cuentas por Cobrar — Panel',
+        title: 'Reportería de Activos y Cuentas por Cobrar — Sistema',
       },
       {
         path: 'reportes-recargas',
@@ -234,7 +305,7 @@ export const routes: Routes = [
           import('./features/dashboard/reports/recharges/recharges-report-page.component').then(
             (m) => m.RechargesReportPageComponent
           ),
-        title: 'Reporte de Recargas Electrónicas — Panel',
+        title: 'Reporte de Recargas Electrónicas — Sistema',
       },
       {
         path: 'reportes-cuadre-agentes',
@@ -243,7 +314,16 @@ export const routes: Routes = [
           import('./features/dashboard/reports/agent-reconciliations/agent-reconciliations-report-page.component').then(
             (m) => m.AgentReconciliationsReportPageComponent
           ),
-        title: 'Reporte de Cuadre de Agentes — Panel',
+        title: 'Reporte de Cuadre de Agentes — Sistema',
+      },
+      {
+        path: 'reportes-transacciones',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/reports/bank-deposits/bank-deposits-report-page.component').then(
+            (m) => m.BankDepositsReportPageComponent
+          ),
+        title: 'Reporte de Transacciones — Sistema',
       },
       {
         path: 'reportes-heladeria',
@@ -252,7 +332,7 @@ export const routes: Routes = [
           import('./features/dashboard/reports/ice-cream/ice-cream-report-page.component').then(
             (m) => m.IceCreamReportPageComponent
           ),
-        title: 'Reportería de Heladería — Panel',
+        title: 'Reportería de Heladería — Sistema',
       },
       {
         path: 'agentes-bancarios-bancos',
@@ -260,7 +340,7 @@ export const routes: Routes = [
           import('./features/dashboard/bank-agents/bank-agents-page.component').then(
             (m) => m.BankAgentsPageComponent
           ),
-        title: 'Agentes Bancarios — Panel',
+        title: 'Agentes Bancarios — Sistema',
       },
       {
         path: 'agentes-bancarios-cuadre',
@@ -268,13 +348,21 @@ export const routes: Routes = [
           import('./features/dashboard/bank-agents/cuadre-agentes-page.component').then(
             (m) => m.CuadreAgentesPageComponent
           ),
-        title: 'Cuadre Agentes — Panel',
+        title: 'Cuadre Agentes — Sistema',
       },
       {
         path: 'inventario',
         loadComponent: () =>
           import('./features/dashboard/inventory/inventory-page.component').then((m) => m.InventoryPageComponent),
-        title: 'Inventario — Panel',
+        title: 'Inventario — Sistema',
+      },
+      {
+        path: 'inventario/:id',
+        loadComponent: () =>
+          import('./features/dashboard/inventory/product-detail-page.component').then(
+            (m) => m.ProductDetailPageComponent
+          ),
+        title: 'Detalle de producto — Sistema',
       },
       {
         path: 'libreria',
@@ -287,7 +375,7 @@ export const routes: Routes = [
           icon: 'book',
           description: 'Catálogo de productos, inventario y ventas de la librería. Este módulo está en construcción.',
         },
-        title: 'Librería — Panel',
+        title: 'Librería — Sistema',
       },
     ],
   },

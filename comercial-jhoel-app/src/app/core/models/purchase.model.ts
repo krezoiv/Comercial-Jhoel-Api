@@ -9,6 +9,9 @@ export interface PurchaseItem {
   total: number;
 }
 
+export type PurchasePaymentType = 'CONTADO' | 'CREDITO';
+export type PurchasePaymentStatus = 'PENDING' | 'PAID';
+
 export interface Purchase {
   id: string;
   supplierId: string;
@@ -20,6 +23,12 @@ export interface Purchase {
   items: PurchaseItem[];
   createdAt: string;
   updatedAt: string;
+  paymentType: PurchasePaymentType;
+  /** `yyyy-MM-dd` — always `null` for CONTADO. */
+  paymentDueDate: string | null;
+  paymentStatus: PurchasePaymentStatus;
+  paidAt: string | null;
+  paidByUsername: string | null;
 }
 
 /**
@@ -35,6 +44,9 @@ export interface PurchaseDraftItem {
   productId: string;
   sku: string | null;
   name: string;
+  /** Omitted/undefined = the product's base "Unidad" — the conversion factor is always resolved server-side regardless of what's shown here. */
+  presentationId?: string;
+  presentationName?: string;
   quantity: number;
   costPrice: number;
   publicPrice: number;
@@ -42,6 +54,7 @@ export interface PurchaseDraftItem {
 
 export interface CreatePurchaseItemInput {
   productId: string;
+  presentationId?: string;
   quantity: number;
   costPrice: number;
   publicPrice: number;
@@ -51,6 +64,9 @@ export interface CreatePurchaseInput {
   supplierId: string;
   purchaseDate: string;
   items: CreatePurchaseItemInput[];
+  paymentType: PurchasePaymentType;
+  /** `yyyy-MM-dd` — required when `paymentType` is `'CREDITO'`, omitted for `'CONTADO'`. */
+  paymentDueDate?: string;
 }
 
 /**

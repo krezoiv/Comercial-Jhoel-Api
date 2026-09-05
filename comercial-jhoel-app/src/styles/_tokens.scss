@@ -77,14 +77,26 @@
   // transparencia (rgba) para su efecto de vidrio esmerilado, algo que
   // ningún token sólido existente puede dar sin `color-mix()`.
   --color-page-bg: var(--color-ink-100);
-  --color-topbar-bg: rgba(255, 255, 255, 0.78);
-  // Encabezado "azul pastel" que casi todas las tablas del dashboard ya
-  // comparten (antes escrito directamente como `var(--color-primary-100)`
-  // en cada una) — centralizado aquí específicamente para que el modo
-  // oscuro pueda darle un valor distinto sin heredar el resto de usos de
-  // `--color-primary-100` (badges, resaltados puntuales) que sí deben
-  // seguir siendo ese azul de marca en ambos modos.
-  --color-table-header-bg: var(--color-primary-100);
+  // Vidrio con un ligero tinte del azul de marca (--color-primary-100) en
+  // vez de blanco puro — misma lógica de identidad que el navbar público
+  // (ver ese componente): ancla el topbar a `--gradient-brand` en vez de
+  // ser un cristal neutro. `-scrolled` es la misma superficie, más sólida,
+  // para el efecto "se asienta" al hacer scroll.
+  --color-topbar-bg: rgba(224, 238, 253, 0.78);
+  --color-topbar-bg-scrolled: rgba(224, 238, 253, 0.94);
+  // Encabezado de tabla — turquesa suave (misma familia que
+  // `--color-accent-cyan`, la firma de marca) en vez del azul pastel
+  // anterior, para darle a las ~40 tablas del panel una identidad propia
+  // y distinguible de los badges/resaltados que sí siguen usando
+  // `--color-primary-100`. Centralizado aquí (no en cada tabla) para que
+  // el modo oscuro pueda darle un tratamiento distinto sin heredarlo.
+  --color-table-header-bg: #190053;
+  // Color del texto del encabezado — separado del fondo a propósito, para
+  // que un cambio de tono del fondo (como el morado oscuro de arriba)
+  // nunca deje el texto con mal contraste otra vez. Antes las 43 tablas
+  // usaban `--color-text-on-light-subtle` (pensado para fondos claros),
+  // que se leía muy pobre sobre un fondo oscuro como este.
+  --color-table-header-text: var(--color-white);
 
   --gradient-brand: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-accent-cyan) 100%);
   --gradient-brand-soft: linear-gradient(135deg, rgba(47, 131, 224, 0.16) 0%, rgba(23, 195, 214, 0.12) 100%);
@@ -197,8 +209,15 @@
   --color-text-on-light-subtle: var(--color-text-on-dark-subtle);
 
   --color-page-bg: var(--color-bg-dark);
-  --color-topbar-bg: rgba(15, 20, 32, 0.72);
-  --color-table-header-bg: var(--color-surface-dark-hover);
+  // Mismo tinte de --color-primary-900 que ya ancla el navbar público al
+  // fundirse con el negro base, en vez del gris-azulado neutro anterior.
+  --color-topbar-bg: rgba(11, 32, 58, 0.74);
+  --color-topbar-bg-scrolled: rgba(11, 32, 58, 0.93);
+  // Mismo turquesa de marca, como un tinte translúcido sobre la superficie
+  // oscura en vez de un gris plano — encaja con el mismo lenguaje "vidrio"
+  // que ya usan topbar/navbar en este modo.
+  --color-table-header-bg: rgba(23, 195, 214, 0.16);
+  --color-table-header-text: var(--color-text-on-dark-muted);
 
   // Sombras algo más marcadas — sobre un fondo oscuro, las sombras suaves
   // calibradas para blanco (rgba negro muy claro) casi no se notan; estas

@@ -1,9 +1,12 @@
+import { KardexMovementType } from './kardex.model';
+
 export interface AccountReceivable {
   id: string;
   clientId: string;
   clientName: string;
   date: string;
   amount: number;
+  movementType: KardexMovementType;
   description: string | null;
   isActive: boolean;
   createdAt: string;

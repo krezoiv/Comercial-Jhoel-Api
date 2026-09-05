@@ -9,6 +9,9 @@ import {
   AgentReconciliationsReportSummary,
   ApiSuccessResponse,
   AssetsReceivablesReportFilters,
+  BankDepositOperationSummary,
+  BankDepositsReportFilters,
+  BankDepositsReportSummary,
   AssetsReceivablesReportRow,
   AssetsReceivablesReportSummary,
   IceCreamReportFilters,
@@ -171,6 +174,31 @@ export class ReportsService {
 
   exportAgentReconciliationsReportPdf(filters: AgentReconciliationsReportFilters): Observable<Blob> {
     return this.http.get(`${BASE_URL}/agent-reconciliations/export`, {
+      params: toParams(filters),
+      responseType: 'blob',
+    });
+  }
+
+  getBankDepositsReport(
+    filters: BankDepositsReportFilters,
+  ): Observable<PaginatedReport<BankDepositOperationSummary>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedReport<BankDepositOperationSummary>>>(`${BASE_URL}/bank-deposits`, {
+        params: toParams(filters),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  getBankDepositsReportSummary(filters: BankDepositsReportFilters): Observable<BankDepositsReportSummary> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositsReportSummary>>(`${BASE_URL}/bank-deposits/summary`, {
+        params: toParams(filters),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  exportBankDepositsReportPdf(filters: BankDepositsReportFilters): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/bank-deposits/export`, {
       params: toParams(filters),
       responseType: 'blob',
     });

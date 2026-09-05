@@ -6,6 +6,34 @@
     </div>
   </header>
 
+  <div class="purchases__tabs" role="tablist" aria-label="Compras abiertas">
+    @for (draftItem of draft.drafts(); track draftItem.id) {
+      <div
+        class="purchases__tab"
+        role="tab"
+        [class.purchases__tab--active]="draftItem.id === draft.activeDraftId()"
+        [attr.aria-selected]="draftItem.id === draft.activeDraftId()"
+        (click)="switchDraft(draftItem.id)"
+      >
+        @if (draftHasItems(draftItem)) {
+          <span class="purchases__tab-dot" aria-hidden="true"></span>
+        }
+        <span class="purchases__tab-label">{{ draftLabel(draftItem) }}</span>
+        <button
+          type="button"
+          class="purchases__tab-close"
+          [attr.aria-label]="'Cerrar ' + draftLabel(draftItem)"
+          (click)="requestCloseTab(draftItem.id); $event.stopPropagation()"
+        >
+          ×
+        </button>
+      </div>
+    }
+    <button type="button" class="purchases__tab-add" (click)="openNewDraft()" aria-label="Nueva compra">
+      + Nueva compra
+    </button>
+  </div>
+
   <div class="purchases__form-row">
     <div class="field">
       <label for="purchase-supplier">Proveedor</label>
@@ -27,6 +55,31 @@
         [max]="draft.purchaseDate()"
       />
     </div>
+
+    <div class="field">
+      <label for="purchase-payment-type">Tipo de compra</label>
+      <select
+        id="purchase-payment-type"
+        [ngModel]="draft.paymentType()"
+        (ngModelChange)="onPaymentTypeChange($event)"
+      >
+        <option value="CONTADO">Contado</option>
+        <option value="CREDITO">Crédito</option>
+      </select>
+    </div>
+
+    @if (draft.paymentType() === 'CREDITO') {
+      <div class="field">
+        <label for="purchase-payment-due-date">Fecha de pago</label>
+        <input
+          id="purchase-payment-due-date"
+          type="date"
+          [ngModel]="draft.paymentDueDate()"
+          (ngModelChange)="onPaymentDueDateChange($event)"
+          [min]="draft.purchaseDate()"
+        />
+      </div>
+    }
   </div>
 
   <app-purchase-product-search (productSelected)="onProductSelected($event)" />
@@ -37,6 +90,7 @@
       (quantityChange)="onQuantityChange($event)"
       (costPriceChange)="onCostPriceChange($event)"
       (publicPriceChange)="onPublicPriceChange($event)"
+      (presentationChange)="onPresentationChange($event)"
       (removeItem)="onRemoveItem($event)"
     />
 
@@ -52,8 +106,8 @@
 </div>
 
 <app-purchase-cancel-confirm-modal
-  [open]="isCancelConfirmOpen()"
-  (confirmed)="confirmCancel()"
+  [open]="closeConfirmDraftId() !== null"
+  (confirmed)="confirmCloseTab()"
   (cancelled)="dismissCancel()"
 />
 

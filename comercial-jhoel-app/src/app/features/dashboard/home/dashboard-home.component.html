@@ -21,4 +21,8 @@
       </app-card>
     }
   </div>
+
+  @if (isAdmin()) {
+    <app-financial-indicators [metrics]="financialMetrics()" [loading]="loadingFinancialMetrics()" />
+  }
 </div>

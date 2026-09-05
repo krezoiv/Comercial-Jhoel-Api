@@ -39,6 +39,21 @@
       </select>
     </label>
 
+    <app-button variant="ghost" (click)="transferInventory.emit()">
+      <app-icon name="arrow-right" [size]="16" />
+      Trasladar inventario
+    </app-button>
+
+    <app-button variant="ghost" (click)="exportPdf.emit()">
+      <app-icon name="download" [size]="16" />
+      Exportar PDF
+    </app-button>
+
+    <app-button variant="ghost" (click)="exportExcel.emit()">
+      <app-icon name="download" [size]="16" />
+      Exportar Excel
+    </app-button>
+
     @if (canManage) {
       <app-button variant="primary" (click)="addProduct.emit()">
         <app-icon name="plus" [size]="16" />

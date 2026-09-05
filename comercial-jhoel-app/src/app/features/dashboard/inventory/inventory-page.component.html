@@ -21,6 +21,9 @@
     (selectedBusinessChange)="selectedBusiness.set($event)"
     (stockFilterChange)="stockFilter.set($event)"
     (addProduct)="openCreateForm()"
+    (transferInventory)="openTransferModal()"
+    (exportPdf)="onExportPdf()"
+    (exportExcel)="onExportExcel()"
   />
 
   <app-product-table
@@ -32,14 +35,23 @@
     (delete)="requestDelete($event)"
     (clearFilters)="clearFilters()"
     (addProduct)="openCreateForm()"
+    (viewDetail)="viewDetail($event)"
   />
 </div>
+
+<app-transfer-inventory-modal
+  [open]="isTransferOpen()"
+  [products]="products()"
+  (closed)="closeTransferModal()"
+  (completed)="onTransferCompleted()"
+/>
 
 <app-product-form-modal
   [open]="isFormOpen()"
   [product]="editingProduct()"
   [categories]="categoryOptions()"
   [businesses]="businessOptions()"
+  [unitsOfMeasure]="unitOfMeasureOptions()"
   (closed)="closeForm()"
   (saved)="onProductSaved($event)"
 />

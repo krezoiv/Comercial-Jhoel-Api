@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 
-import { Product, formatCurrency } from '../../../../../core/models';
+import { PriceListType, Product, formatCurrency } from '../../../../../core/models';
 import { InventoryService } from '../../../../../core/services/inventory.service';
 import { IconComponent } from '../../../../../shared/ui';
 
@@ -16,6 +16,9 @@ import { IconComponent } from '../../../../../shared/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductSearchComponent {
+  /** Which price the dropdown displays per result — purely a display concern, the backend is always the real authority on what gets charged. */
+  @Input() priceList: PriceListType = 'PUBLIC';
+
   @Output() productSelected = new EventEmitter<Product>();
 
   private readonly inventoryService = inject(InventoryService);
@@ -92,5 +95,9 @@ export class ProductSearchComponent {
     if (first) {
       this.select(first);
     }
+  }
+
+  priceFor(product: Product): number {
+    return this.priceList === 'WHOLESALE' ? product.wholesalePrice : product.publicPrice;
   }
 }

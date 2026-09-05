@@ -1,6 +1,14 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 
-import { Product, STOCK_STATUS_LABEL, StockStatus, formatCurrency, formatQuantity, getStockStatus } from '../../../../../core/models';
+import {
+  Product,
+  STOCK_STATUS_LABEL,
+  StockStatus,
+  formatCurrency,
+  formatQuantity,
+  getStockStatus,
+  stockAt,
+} from '../../../../../core/models';
 import {
   BadgeComponent,
   BadgeTone,
@@ -55,6 +63,7 @@ export class ProductTableComponent {
   @Output() delete = new EventEmitter<Product>();
   @Output() clearFilters = new EventEmitter<void>();
   @Output() addProduct = new EventEmitter<void>();
+  @Output() viewDetail = new EventEmitter<Product>();
 
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
 
@@ -104,5 +113,13 @@ export class ProductTableComponent {
 
   statusTone(product: Product): BadgeTone {
     return STOCK_BADGE_TONE[this.statusOf(product)];
+  }
+
+  bodegaStock(product: Product): number {
+    return stockAt(product, 'Bodega');
+  }
+
+  vitrinaStock(product: Product): number {
+    return stockAt(product, 'Vitrina');
   }
 }

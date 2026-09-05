@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Asset, Client } from '../../../../../core/models';
 import { AssetService } from '../../../../../core/services/asset.service';
@@ -19,17 +19,6 @@ import { extractErrorMessage } from '../../../../../core/utils/extract-error-mes
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { ClientSearchSelectComponent } from '../client-search-select/client-search-select.component';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
-
-/**
- * Activos is the one monto field in this app that may legitimately be
- * negative (e.g. a correcting/reversing entry), by explicit scoped
- * request — every other form's amount field keeps `Validators.min(...)`
- * untouched. Zero still isn't a meaningful monto either way, so this
- * replaces the old "> 0" floor rather than dropping validation entirely.
- */
-function notZero(control: AbstractControl): ValidationErrors | null {
-  return control.value === 0 ? { notZero: true } : null;
-}
 
 function todayIsoDate(): string {
   const now = new Date();
@@ -65,7 +54,7 @@ export class AssetFormModalComponent implements OnChanges {
   readonly form = this.fb.nonNullable.group({
     clientId: ['', Validators.required],
     date: [todayIsoDate(), Validators.required],
-    amount: [0, [Validators.required, notZero]],
+    amount: [0, [Validators.required, Validators.min(0.01)]],
     description: ['', Validators.maxLength(500)],
   });
 

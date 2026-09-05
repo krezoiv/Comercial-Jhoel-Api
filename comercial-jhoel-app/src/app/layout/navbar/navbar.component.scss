@@ -11,18 +11,30 @@
   height: var(--navbar-height);
   display: flex;
   align-items: center;
-  background: rgba(5, 7, 12, 0.72);
+  // Antes era un negro neutro puro (rgba(5,7,12,…)) — sin ninguna relación
+  // con el resto del sistema de color. Este degradado usa el mismo azul
+  // primario que ya vertebra el sitio (--color-primary-900, la base de
+  // --gradient-brand que usan los CTAs) fundido hacia el mismo negro de
+  // siempre, así el navbar queda anclado a la identidad de marca en vez de
+  // ser un overlay genérico — sigue siendo un glass oscuro, discreto, que
+  // no compite con el hero.
+  background: linear-gradient(180deg, rgba(10, 43, 82, 0.82) 0%, rgba(5, 7, 12, 0.8) 100%);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   transition:
     background-color var(--duration-base) var(--ease-out),
-    border-color var(--duration-base) var(--ease-out);
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
 }
 
 .navbar--scrolled {
-  background: rgba(5, 7, 12, 0.92);
+  background: linear-gradient(180deg, rgba(10, 43, 82, 0.95) 0%, rgba(5, 7, 12, 0.95) 100%);
   border-bottom-color: var(--color-border-dark);
+  // Un filo de cian de marca, apenas visible — el mismo acento que cierra
+  // --gradient-brand — le da al navbar una firma sutil sin volverlo un
+  // segundo protagonista sobre el hero.
+  box-shadow: 0 1px 0 rgba(23, 195, 214, 0.3);
 }
 
 .navbar__row {

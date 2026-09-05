@@ -26,4 +26,16 @@ export class PurchasesService {
   getPurchaseById(id: string): Observable<Purchase> {
     return this.http.get<ApiSuccessResponse<Purchase>>(`${BASE_URL}/${id}`).pipe(map((response) => response.data));
   }
+
+  /** "Marcar como pagada" — operational, no admin check on this side either (mirrors the backend's own policy). */
+  markAsPaid(id: string): Observable<Purchase> {
+    return this.http
+      .post<ApiSuccessResponse<Purchase>>(`${BASE_URL}/${id}/pay`, {})
+      .pipe(map((response) => response.data));
+  }
+
+  /** Reconstructs the invoice PDF purely from the already-persisted purchase — never re-runs the save. */
+  exportPurchasePdf(id: string): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' });
+  }
 }

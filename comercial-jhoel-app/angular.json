@@ -102,6 +102,10 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "host": "0.0.0.0",
+            "allowedHosts": ["localhost", ".app.github.dev"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "comercial-jhoel-app:build:production"

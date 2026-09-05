@@ -1,9 +1,20 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { NAV_LINKS, NAV_LOGIN_LINK, SITE } from '../../core/data';
 import { AuthService } from '../../core/services/auth.service';
-import { ButtonComponent, ContainerComponent, IconComponent } from '../../shared/ui';
+import {
+  ButtonComponent,
+  ContainerComponent,
+  IconComponent,
+} from '../../shared/ui';
 
 @Component({
   selector: 'app-navbar',
@@ -23,7 +34,9 @@ export class NavbarComponent {
   readonly isMenuOpen = signal(false);
 
   readonly accountLink = computed(() =>
-    this.authService.isAuthenticated() ? { label: 'Panel', path: '/dashboard', icon: 'grid' } : { ...NAV_LOGIN_LINK, icon: 'log-in' }
+    this.authService.isAuthenticated()
+      ? { label: 'Sistema', path: '/dashboard', icon: 'grid' }
+      : { ...NAV_LOGIN_LINK, icon: 'log-in' },
   );
 
   @HostListener('window:scroll')

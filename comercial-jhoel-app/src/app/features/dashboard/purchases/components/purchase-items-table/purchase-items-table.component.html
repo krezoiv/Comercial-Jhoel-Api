@@ -12,6 +12,7 @@
           <th class="align-center">Cantidad</th>
           <th>SKU</th>
           <th>Producto</th>
+          <th>Presentación</th>
           <th class="align-right">Precio costo</th>
           <th class="align-right">Precio público</th>
           <th class="align-right">Total</th>
@@ -48,6 +49,31 @@
             </td>
             <td class="purchase-table__sku">{{ item.sku || '—' }}</td>
             <td class="purchase-table__name">{{ item.name }}</td>
+            <td>
+              <div class="presentation-cell">
+                <select
+                  class="presentation-select"
+                  [value]="item.presentationId || ''"
+                  (change)="onPresentationInput(item, $any($event.target).value)"
+                  [attr.aria-label]="'Presentación de ' + item.name"
+                >
+                  @for (presentation of presentationsFor(item.productId); track presentation.id) {
+                    <option [value]="presentation.id">
+                      {{ presentation.name }} (factor {{ presentation.conversionFactor }})
+                    </option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  class="new-presentation-btn"
+                  (click)="openPresentationModal(item.productId)"
+                  [attr.aria-label]="'Nueva unidad de medida para ' + item.name"
+                  title="Nueva unidad de medida"
+                >
+                  <app-icon name="plus" [size]="14" />
+                </button>
+              </div>
+            </td>
             <td class="align-right">
               <div class="price-input">
                 <span>Q</span>
@@ -102,6 +128,33 @@
           </div>
           <span class="purchase-card__total">{{ formatCurrency(calculateItemTotal(item)) }}</span>
         </div>
+
+        <label class="purchase-card__presentation">
+          Presentación
+          <div class="presentation-cell">
+            <select
+              class="presentation-select"
+              [value]="item.presentationId || ''"
+              (change)="onPresentationInput(item, $any($event.target).value)"
+              [attr.aria-label]="'Presentación de ' + item.name"
+            >
+              @for (presentation of presentationsFor(item.productId); track presentation.id) {
+                <option [value]="presentation.id">
+                  {{ presentation.name }} (factor {{ presentation.conversionFactor }})
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              class="new-presentation-btn"
+              (click)="openPresentationModal(item.productId)"
+              [attr.aria-label]="'Nueva unidad de medida para ' + item.name"
+              title="Nueva unidad de medida"
+            >
+              <app-icon name="plus" [size]="14" />
+            </button>
+          </div>
+        </label>
 
         <div class="purchase-card__prices">
           <label>
@@ -173,3 +226,11 @@
     }
   </div>
 }
+
+<app-presentation-form-modal
+  [open]="presentationModalProductId() !== null"
+  [productId]="presentationModalProductId()"
+  [presentation]="null"
+  (closed)="closePresentationModal()"
+  (saved)="onPresentationCreated($event)"
+/>

@@ -107,9 +107,7 @@
               <app-icon [name]="sortIcon('stock')" [size]="14" />
             </button>
           </th>
-          @if (canManage) {
-            <th class="align-right">Acciones</th>
-          }
+          <th class="align-right">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -126,11 +124,24 @@
               <div class="stock-cell">
                 <span>{{ formatQuantity(product.stock) }}</span>
                 <app-badge [tone]="statusTone(product)">{{ statusLabel(product) }}</app-badge>
+                @if (product.stockByLocation) {
+                  <span class="stock-cell__breakdown"
+                    >Bodega: {{ formatQuantity(bodegaStock(product)) }} · Vitrina: {{ formatQuantity(vitrinaStock(product)) }}</span
+                  >
+                }
               </div>
             </td>
-            @if (canManage) {
-              <td class="align-right">
-                <div class="actions">
+            <td class="align-right">
+              <div class="actions">
+                <button
+                  type="button"
+                  class="action-btn"
+                  (click)="viewDetail.emit(product)"
+                  [attr.aria-label]="'Ver detalle de ' + product.name"
+                >
+                  <app-icon name="eye" [size]="16" />
+                </button>
+                @if (canManage) {
                   <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
                     <app-icon name="edit-2" [size]="16" />
                   </button>
@@ -142,9 +153,9 @@
                   >
                     <app-icon name="trash-2" [size]="16" />
                   </button>
-                </div>
-              </td>
-            }
+                }
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -181,9 +192,24 @@
         </div>
 
         <div class="product-card__footer">
-          <span class="product-card__stock">Stock: <strong>{{ formatQuantity(product.stock) }}</strong></span>
-          @if (canManage) {
-            <div class="actions">
+          <div>
+            <span class="product-card__stock">Stock: <strong>{{ formatQuantity(product.stock) }}</strong></span>
+            @if (product.stockByLocation) {
+              <p class="stock-cell__breakdown">
+                Bodega: {{ formatQuantity(bodegaStock(product)) }} · Vitrina: {{ formatQuantity(vitrinaStock(product)) }}
+              </p>
+            }
+          </div>
+          <div class="actions">
+            <button
+              type="button"
+              class="action-btn"
+              (click)="viewDetail.emit(product)"
+              [attr.aria-label]="'Ver detalle de ' + product.name"
+            >
+              <app-icon name="eye" [size]="16" />
+            </button>
+            @if (canManage) {
               <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.name">
                 <app-icon name="edit-2" [size]="16" />
               </button>
@@ -195,8 +221,8 @@
               >
                 <app-icon name="trash-2" [size]="16" />
               </button>
-            </div>
-          }
+            }
+          </div>
         </div>
       </div>
     }
