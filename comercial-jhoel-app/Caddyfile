@@ -3,6 +3,21 @@
 root * /usr/share/caddy
 encode gzip
 
+# `no-cache` (revalida siempre con ETag antes de reusar la copia guardada,
+# no "nunca cachear") aplicado a TODO — no solo a una ruta como
+# `/index.html`, porque `try_files` reescribe internamente `/`, `/dashboard`,
+# etc. hacia index.html *antes* de que un matcher por ruta literal pueda
+# distinguirlos, así que un header condicionado a una sola ruta nunca cubre
+# el caso real (una visita normal a `/`). Este archivo resuelve en cada
+# carga la URL real del backend (ver src/main.ts) — un navegador que
+# cacheara `runtime-config.js` o `index.html` de forma agresiva seguiría
+# apuntando a una URL vieja después de cambiar `API_URL` y redesplegar;
+# esto fue un bug real en producción, no una precaución teórica. Los
+# bundles con hash (`chunk-XXXX.js`) no sufren por esto — cada build tiene
+# nombres nuevos, y `no-cache` solo agrega una revalidación barata, nunca
+# una recarga completa.
+header Cache-Control "no-cache, must-revalidate"
+
 # SPA fallback: Angular usa PathLocationStrategy (rutas reales, no /#/...),
 # así que cualquier ruta no reconocida como archivo estático (/dashboard,
 # /ventas, etc.) debe servir index.html y dejar que Angular Router la

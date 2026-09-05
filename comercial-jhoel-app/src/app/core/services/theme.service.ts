@@ -8,8 +8,6 @@ import { NotificationService } from './notification.service';
 
 const THEME_CACHE_KEY = 'cj_theme';
 const THEME_ATTR = 'data-theme';
-const PREFERENCES_URL = `${environment.apiUrl}/users/me/preferences`;
-const UPDATE_THEME_URL = `${PREFERENCES_URL}/theme`;
 /** Same key `AuthService` uses for the JWT — duplicated on purpose instead of importing `AuthService` here, which would create a real cycle (`AuthService` already injects `ThemeService`). */
 const AUTH_TOKEN_KEY = 'cj_auth_token';
 
@@ -35,6 +33,27 @@ export class ThemeService {
   private readonly notificationService = inject(NotificationService);
 
   readonly theme = signal<ThemePreference>(this.readCachedTheme());
+
+  /**
+   * Computed per call, never a module-scope `const` — `ThemeService` is
+   * imported eagerly (`AuthService` → `ThemeService`, needed so the
+   * constructor above can apply the cached theme immediately), which means
+   * its module evaluates as part of `main.ts`'s own eager import chain,
+   * BEFORE `main.ts`'s own body runs `environment.apiUrl = resolveApiUrl()`.
+   * A `const X = \`${environment.apiUrl}/...\`` here would freeze the
+   * placeholder compiled into `environment.ts`, permanently ignoring the
+   * real backend URL resolved at runtime (Codespaces/Railway/manual
+   * override) — confirmed live in production: every other request-URL
+   * pattern in this app already reads `environment.apiUrl` inside a method
+   * body for this exact reason, this was the one file that didn't.
+   */
+  private get preferencesUrl(): string {
+    return `${environment.apiUrl}/users/me/preferences`;
+  }
+
+  private get updateThemeUrl(): string {
+    return `${this.preferencesUrl}/theme`;
+  }
 
   constructor() {
     // Applies the cached value synchronously as soon as this service is
@@ -69,7 +88,7 @@ export class ThemeService {
     this.applyAndCache(theme);
 
     this.http
-      .patch<ApiSuccessResponse<ThemePreferencesResponse>>(UPDATE_THEME_URL, { theme })
+      .patch<ApiSuccessResponse<ThemePreferencesResponse>>(this.updateThemeUrl, { theme })
       .pipe(
         catchError(() => {
           this.applyAndCache(previous);
@@ -89,7 +108,7 @@ export class ThemeService {
    */
   loadUserTheme(): void {
     this.http
-      .get<ApiSuccessResponse<ThemePreferencesResponse>>(PREFERENCES_URL)
+      .get<ApiSuccessResponse<ThemePreferencesResponse>>(this.preferencesUrl)
       .pipe(
         tap(({ data }) => this.applyAndCache(data.theme)),
         catchError(() => of(null)),
