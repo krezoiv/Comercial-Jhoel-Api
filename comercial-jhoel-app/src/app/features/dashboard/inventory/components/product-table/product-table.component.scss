@@ -64,37 +64,56 @@
   }
 }
 
-// Column widths — percentages of the table's own width, so the table always
-// exactly fills its container (never wider) regardless of screen size.
-// Producto/Categoría/Negocio get the most room among the flexible/text
-// columns; Costo/Público/Mayor are sized to always fit "Q 1,250.00" in full
-// (prices must never truncate); Acciones is sized for its 3 icon buttons.
-.col-product {
-  width: 16%;
+// Column widths are no longer fixed here — `<col [style.width.%]>` in the
+// template binds each column to `ProductTableComponent.columnWidths()`
+// (percentages of the table's own width, always summing to 100, so the
+// table still exactly fills its container and never needs a horizontal
+// scrollbar). The user can drag `.col-resize-handle` below to change them;
+// the chosen widths persist to `localStorage` across reloads.
+
+// A resizable header needs `position: relative` so its handle (absolutely
+// positioned) anchors to the header cell's own right edge, not the table.
+.resizable-th {
+  position: relative;
 }
 
-.col-sku {
-  width: 8%;
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -4px;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 1;
+  // Invisible by default — only the cursor changes on hover, until the
+  // small bar below appears. Kept as a pseudo-element so the handle's own
+  // hit area (8px) can stay wider than the visible indicator (2px) without
+  // the indicator looking chunky.
+  &::after {
+    content: '';
+    position: absolute;
+    top: var(--space-2);
+    bottom: var(--space-2);
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    border-radius: var(--radius-sm);
+    background: transparent;
+  }
+
+  &:hover::after,
+  &.col-resize-handle--active::after {
+    background: var(--color-primary-500);
+  }
 }
 
-.col-category {
-  width: 11%;
-}
-
-.col-business {
-  width: 7%;
-}
-
-.col-price {
-  width: 12%;
-}
-
-.col-stock {
-  width: 9%;
-}
-
-.col-actions {
-  width: 13%;
+// While a drag is active, force the resize cursor and block text selection
+// everywhere — without this, moving the mouse slightly faster than the
+// dragged column's edge (a normal, frequent case) would otherwise flicker
+// back to the default cursor and start highlighting header/cell text.
+.product-table--resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 // Long text (product name, categoría, negocio, SKU) truncates with an
