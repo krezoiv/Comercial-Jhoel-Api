@@ -57,6 +57,9 @@
             <thead>
               <tr>
                 <th>Ubicación</th>
+                @if (bulkPresentation) {
+                  <th class="align-right">Equivalencia ({{ bulkPresentation.name }})</th>
+                }
                 <th class="align-right">Cantidad (unidades base)</th>
                 @if (isAdmin()) {
                   <th class="align-right">Stock mínimo</th>
@@ -67,6 +70,15 @@
               @for (row of d.stockByLocation; track row.locationId) {
                 <tr>
                   <td>{{ row.locationName }}</td>
+                  @if (bulkPresentation) {
+                    @let breakdown = bulkBreakdown(row.quantity)!;
+                    <td class="align-right">
+                      {{ formatQuantity(breakdown.count) }} {{ bulkPresentation.name }}(s)
+                      @if (breakdown.remainder > 0) {
+                        + {{ formatQuantity(breakdown.remainder) }}
+                      }
+                    </td>
+                  }
                   <td class="align-right">{{ formatQuantity(row.quantity) }}</td>
                   @if (isAdmin()) {
                     <td class="align-right">
@@ -98,6 +110,17 @@
             <tfoot>
               <tr>
                 <td>Total</td>
+                @if (bulkPresentation) {
+                  @let totalBreakdown = bulkBreakdown(d.totalStock)!;
+                  <td class="align-right">
+                    <strong>
+                      {{ formatQuantity(totalBreakdown.count) }} {{ bulkPresentation.name }}(s)
+                      @if (totalBreakdown.remainder > 0) {
+                        + {{ formatQuantity(totalBreakdown.remainder) }}
+                      }
+                    </strong>
+                  </td>
+                }
                 <td class="align-right"><strong>{{ formatQuantity(d.totalStock) }}</strong></td>
                 @if (isAdmin()) {
                   <td></td>

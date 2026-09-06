@@ -31,7 +31,15 @@ export class InventorySummaryComponent {
     const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
     const lowStock = products.filter((p) => getStockStatus(p.stock) === 'low-stock').length;
     const outOfStock = products.filter((p) => getStockStatus(p.stock) === 'out-of-stock').length;
-    const estimatedValue = products.reduce((sum, p) => sum + p.stock * p.costPrice, 0);
+    // `p.stock` is always the cross-location total in BASE UNITS (see `products.stock`'s own doc
+    // comment on the backend — kept in lockstep with `SUM(inventory_stock.quantity)`), and
+    // `p.costPrice`/`p.publicPrice` always represent the price of exactly one base unit (the
+    // "Unidad" presentation's price — never overwritten by a bulk-presentation purchase, e.g.
+    // buying by "Caja" only ever updates that presentation's own price, see `confirm_purchase`).
+    // `stock × pricePerUnit` is therefore already dimensionally correct and never double-counts a
+    // bulk presentation's own price — it must never multiply by a presentation's price instead.
+    const publicValue = products.reduce((sum, p) => sum + p.stock * p.publicPrice, 0);
+    const costValue = products.reduce((sum, p) => sum + p.stock * p.costPrice, 0);
 
     return [
       {
@@ -54,8 +62,14 @@ export class InventorySummaryComponent {
       },
       {
         icon: 'trending-up',
-        title: 'Valor del inventario',
-        value: formatCurrency(estimatedValue),
+        title: 'Valor de inventario (precio público)',
+        value: formatCurrency(publicValue),
+        description: 'a precio público',
+      },
+      {
+        icon: 'wallet',
+        title: 'Valor de inventario (precio costo)',
+        value: formatCurrency(costValue),
         description: 'a precio de costo',
       },
     ];

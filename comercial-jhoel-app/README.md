@@ -74,3 +74,4 @@ El resto sigue pendiente de conectar:
 - El catálogo completo (productos reales, no solo categorías) necesitará un nuevo endpoint
   (`/catalog/products`) y una página de listado/detalle nueva bajo `features/catalog/`; las categorías
   actuales sirven de filtro.
+# CJ_APP

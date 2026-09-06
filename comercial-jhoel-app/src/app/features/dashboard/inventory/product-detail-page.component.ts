@@ -63,6 +63,24 @@ export class ProductDetailPageComponent {
   readonly isPresentationFormOpen = signal(false);
   readonly editingPresentation = signal<ProductPresentation | null>(null);
 
+  /** The active, non-"Unidad" presentation with the largest factor — the natural "bulk" unit (e.g. Caja) to show a per-location equivalence for. `null` when a product only has "Unidad" (factor 1), since showing "X unidades (X unidades)" would be redundant noise. */
+  get bulkPresentation(): ProductPresentation | null {
+    const candidates = (this.detail()?.presentations ?? []).filter((p) => p.isActive && p.conversionFactor > 1);
+    if (candidates.length === 0) {
+      return null;
+    }
+    return candidates.reduce((best, current) => (current.conversionFactor > best.conversionFactor ? current : best));
+  }
+
+  /** Whole bulk-presentation units that fit in `baseUnits`, plus whatever doesn't evenly divide — purely a display equivalence, never a second source of truth (the real stored quantity is always `baseUnits`). */
+  bulkBreakdown(baseUnits: number): { count: number; remainder: number } | null {
+    const bulk = this.bulkPresentation;
+    if (!bulk) {
+      return null;
+    }
+    return { count: Math.floor(baseUnits / bulk.conversionFactor), remainder: baseUnits % bulk.conversionFactor };
+  }
+
   /** Keyed by `locationId` — mirrors `RechargeTableComponent`'s own `draftFinalBalance` pattern: a plain record, not a reactive form, seeded once per row so an in-progress edit is never clobbered by an unrelated refetch. */
   readonly draftMinStock = signal<Record<string, string>>({});
   readonly savingMinStockLocationId = signal<string | null>(null);

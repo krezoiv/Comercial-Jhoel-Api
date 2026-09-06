@@ -63,6 +63,23 @@
           <span class="field__error">El origen y el destino deben ser distintos.</span>
         }
 
+        @if (canPreviewTransfer) {
+          <div class="stock-preview">
+            <span class="stock-preview__label">Disponible en {{ locationNameOf(fromLocationId) }}</span>
+            <span class="stock-preview__value">
+              @if (conversionFactor > 1) {
+                {{ formatQuantity(fromBreakdown.count) }} {{ selectedPresentation?.name }}(s)
+                @if (fromBreakdown.remainder > 0) {
+                  + {{ formatQuantity(fromBreakdown.remainder) }} unidades sueltas
+                }
+                ({{ formatQuantity(fromStock) }} unidades)
+              } @else {
+                {{ formatQuantity(fromStock) }} unidades
+              }
+            </span>
+          </div>
+        }
+
         <div class="field">
           <label for="transfer-quantity">Cantidad</label>
           <input
@@ -88,6 +105,38 @@
           </div>
         }
 
+        @if (insufficientStock) {
+          <p class="field__error">
+            Inventario insuficiente en {{ locationNameOf(fromLocationId) }}. Disponible:
+            {{ formatQuantity(fromStock) }} unidades, se intenta trasladar {{ formatQuantity(totalBaseUnits) }}.
+          </p>
+        } @else if (canPreviewTransfer && totalBaseUnits > 0) {
+          <div class="transfer-result">
+            <div class="transfer-result__location">
+              <span class="transfer-result__title">{{ locationNameOf(fromLocationId) }} (después)</span>
+              <span class="transfer-result__value">
+                @if (conversionFactor > 1) {
+                  {{ formatQuantity(fromAfterBreakdown.count) }} {{ selectedPresentation?.name }}(s)
+                  @if (fromAfterBreakdown.remainder > 0) {
+                    + {{ formatQuantity(fromAfterBreakdown.remainder) }}
+                  }
+                }
+                ({{ formatQuantity(fromAfterBaseUnits) }} unidades)
+              </span>
+            </div>
+            @if (toLocationId) {
+              <div class="transfer-result__location">
+                <span class="transfer-result__title">{{ locationNameOf(toLocationId) }} (después)</span>
+                <span class="transfer-result__value">{{ formatQuantity(toAfterBaseUnits) }} unidades</span>
+              </div>
+            }
+            <div class="transfer-result__location transfer-result__location--total">
+              <span class="transfer-result__title">Total del producto</span>
+              <span class="transfer-result__value">{{ formatQuantity(productInventory()?.totalStock ?? 0) }} unidades (sin cambio)</span>
+            </div>
+          </div>
+        }
+
         <div class="field">
           <label for="transfer-reason">Motivo (opcional)</label>
           <input id="transfer-reason" type="text" formControlName="reason" placeholder="Ej. Reposición de vitrina" />
@@ -102,7 +151,7 @@
             <app-icon name="close" [size]="16" />
             Cancelar
           </app-button>
-          <app-button variant="primary" type="submit" [disabled]="isSubmitting()">
+          <app-button variant="primary" type="submit" [disabled]="isSubmitting() || insufficientStock">
             {{ isSubmitting() ? 'Trasladando…' : 'Trasladar inventario' }}
           </app-button>
         </div>

@@ -13,7 +13,13 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { InventoryLocation, Product, ProductPresentation, formatQuantity } from '../../../../../core/models';
+import {
+  InventoryLocation,
+  Product,
+  ProductInventoryDetail,
+  ProductPresentation,
+  formatQuantity,
+} from '../../../../../core/models';
 import { InventoryLocationsService } from '../../../../../core/services/inventory-locations.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
@@ -54,6 +60,8 @@ export class TransferInventoryModalComponent implements OnChanges {
   readonly locations = signal<InventoryLocation[]>([]);
   readonly presentations = signal<ProductPresentation[]>([]);
   readonly loadingPresentations = signal(false);
+  /** Fetched alongside presentations (`GET /inventory/products/:id` returns both in one call) — the source of truth for "disponible en <ubicación>" below, never guessed/cached from the product list. */
+  readonly productInventory = signal<ProductInventoryDetail | null>(null);
 
   formatQuantity = formatQuantity;
 
@@ -96,6 +104,73 @@ export class TransferInventoryModalComponent implements OnChanges {
     return !!fromLocationId && fromLocationId === toLocationId;
   }
 
+  /** Base-units stock currently at `locationId`, straight from `inventory_stock` (never derived from `products.stock`, which is the cross-location total). */
+  stockAt(locationId: string): number {
+    if (!locationId) {
+      return 0;
+    }
+    return this.productInventory()?.stockByLocation.find((row) => row.locationId === locationId)?.quantity ?? 0;
+  }
+
+  locationNameOf(locationId: string): string {
+    return this.locations().find((l) => l.id === locationId)?.name ?? '';
+  }
+
+  get fromLocationId(): string {
+    return this.form.controls.fromLocationId.value;
+  }
+
+  get toLocationId(): string {
+    return this.form.controls.toLocationId.value;
+  }
+
+  get fromStock(): number {
+    return this.stockAt(this.fromLocationId);
+  }
+
+  get toStock(): number {
+    return this.stockAt(this.toLocationId);
+  }
+
+  /** Whole presentation units (e.g. "cajas") that fit in a base-unit quantity, plus whatever doesn't evenly divide — factor 1 ("Unidad") always divides exactly, so `remainder` is always 0 in that case. */
+  presentationBreakdown(baseUnits: number): { count: number; remainder: number } {
+    const factor = this.conversionFactor;
+    if (factor <= 1) {
+      return { count: baseUnits, remainder: 0 };
+    }
+    return { count: Math.floor(baseUnits / factor), remainder: baseUnits % factor };
+  }
+
+  get fromBreakdown() {
+    return this.presentationBreakdown(this.fromStock);
+  }
+
+  get fromAfterBaseUnits(): number {
+    return this.fromStock - this.totalBaseUnits;
+  }
+
+  get toAfterBaseUnits(): number {
+    return this.toStock + this.totalBaseUnits;
+  }
+
+  get fromAfterBreakdown() {
+    return this.presentationBreakdown(Math.max(this.fromAfterBaseUnits, 0));
+  }
+
+  /** Client-side echo of the backend's own `INSUFFICIENT_STOCK` check — the real guard is the SQL function's `FOR UPDATE` lock, this only gives fast, clear feedback before ever calling it. */
+  get insufficientStock(): boolean {
+    return (
+      !!this.fromLocationId &&
+      !!this.selectedPresentation &&
+      this.totalBaseUnits > 0 &&
+      this.totalBaseUnits > this.fromStock
+    );
+  }
+
+  get canPreviewTransfer(): boolean {
+    return !!this.selectedProduct && !!this.selectedPresentation && !!this.fromLocationId && !this.sameLocation;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes['open'] || !this.open) {
       return;
@@ -104,6 +179,7 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.errorMessage.set(null);
     this.isSubmitting.set(false);
     this.presentations.set([]);
+    this.productInventory.set(null);
     this.form.reset({
       productId: '',
       presentationId: '',
@@ -122,15 +198,17 @@ export class TransferInventoryModalComponent implements OnChanges {
   onProductChange(productId: string): void {
     this.form.controls.presentationId.setValue('');
     this.presentations.set([]);
+    this.productInventory.set(null);
     if (!productId) {
       return;
     }
 
     this.loadingPresentations.set(true);
-    this.inventoryLocationsService.getPresentations(productId).subscribe({
-      next: (presentations) => {
+    this.inventoryLocationsService.getProductInventory(productId).subscribe({
+      next: (detail) => {
         this.loadingPresentations.set(false);
-        const active = presentations.filter((p) => p.isActive);
+        this.productInventory.set(detail);
+        const active = detail.presentations.filter((p) => p.isActive);
         this.presentations.set(active);
         const unidad = active.find((p) => p.name === 'Unidad');
         if (unidad) {
@@ -139,7 +217,7 @@ export class TransferInventoryModalComponent implements OnChanges {
       },
       error: () => {
         this.loadingPresentations.set(false);
-        this.errorMessage.set('No se pudieron cargar las presentaciones de este producto.');
+        this.errorMessage.set('No se pudieron cargar las presentaciones y el stock de este producto.');
       },
     });
   }
@@ -147,10 +225,14 @@ export class TransferInventoryModalComponent implements OnChanges {
   async submit(): Promise<void> {
     this.errorMessage.set(null);
 
-    if (this.form.invalid || this.sameLocation || this.isSubmitting()) {
+    if (this.form.invalid || this.sameLocation || this.insufficientStock || this.isSubmitting()) {
       this.form.markAllAsTouched();
       if (this.sameLocation) {
         this.errorMessage.set('El origen y el destino deben ser ubicaciones distintas.');
+      } else if (this.insufficientStock) {
+        this.errorMessage.set(
+          `Inventario insuficiente en ${this.locationNameOf(this.fromLocationId)}. Disponible: ${formatQuantity(this.fromStock)} unidades.`,
+        );
       }
       return;
     }
