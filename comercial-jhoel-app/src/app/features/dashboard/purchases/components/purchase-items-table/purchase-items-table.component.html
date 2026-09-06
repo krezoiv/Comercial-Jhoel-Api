@@ -73,6 +73,13 @@
                   <app-icon name="plus" [size]="14" />
                 </button>
               </div>
+              <span class="presentation-equivalence">
+                @if (factorFor(item) > 1) {
+                  {{ item.quantity }} {{ presentationLabelFor(item) }}(s) = {{ equivalentBaseUnits(item) }} unidades
+                } @else {
+                  {{ item.quantity }} unidades
+                }
+              </span>
             </td>
             <td class="align-right">
               <div class="price-input">
@@ -154,6 +161,13 @@
               <app-icon name="plus" [size]="14" />
             </button>
           </div>
+          <span class="presentation-equivalence">
+            @if (factorFor(item) > 1) {
+              {{ item.quantity }} {{ presentationLabelFor(item) }}(s) = {{ equivalentBaseUnits(item) }} unidades
+            } @else {
+              {{ item.quantity }} unidades
+            }
+          </span>
         </label>
 
         <div class="purchase-card__prices">

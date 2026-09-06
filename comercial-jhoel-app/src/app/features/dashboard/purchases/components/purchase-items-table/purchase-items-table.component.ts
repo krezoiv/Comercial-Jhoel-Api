@@ -72,6 +72,31 @@ export class PurchaseItemsTableComponent {
     return this.presentationsCache().get(productId) ?? [];
   }
 
+  /**
+   * The conversion factor actually in effect for this line — mirrors
+   * `confirm_purchase`'s own `ensure_product_presentation` resolution
+   * exactly: an explicit `presentationId` resolves to that presentation's
+   * factor, `undefined` (never touched the dropdown) resolves to "Unidad",
+   * factor 1. This is display-only — it never feeds back into `quantity`
+   * or any submitted value, it only lets the row show the same equivalence
+   * the backend is about to compute.
+   */
+  factorFor(item: PurchaseDraftItem): number {
+    if (!item.presentationId) {
+      return 1;
+    }
+    return this.presentationsFor(item.productId).find((p) => p.id === item.presentationId)?.conversionFactor ?? 1;
+  }
+
+  presentationLabelFor(item: PurchaseDraftItem): string {
+    return item.presentationName || 'Unidad';
+  }
+
+  /** `quantity` (in the selected presentation) × its factor — the exact `quantity_base_units` Bodega will receive. Never itself sent to the backend; the backend always recomputes this from `presentationId`/`quantity` directly. */
+  equivalentBaseUnits(item: PurchaseDraftItem): number {
+    return item.quantity * this.factorFor(item);
+  }
+
   onPresentationInput(item: PurchaseDraftItem, presentationId: string): void {
     const presentation = this.presentationsFor(item.productId).find((p) => p.id === presentationId) ?? null;
     this.presentationChange.emit({ productId: item.productId, presentation });
