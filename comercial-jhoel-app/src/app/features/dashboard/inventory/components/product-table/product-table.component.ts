@@ -49,15 +49,15 @@ type SortDirection = 'asc' | 'desc';
 
 /**
  * One entry per `<col>` in `product-table.component.html`, left to right.
- * "Negocio" is no longer its own column — its value now renders as a
- * secondary line inside the "category" column's own cell (see
- * `product-table.component.html`'s Categoría `<td>`), so it never had its
- * own `ProductColumnKey`/width to remove; `Product.business` itself is
- * untouched, still read directly from the model.
+ * Neither "Negocio" nor "SKU" is its own column anymore — both render as a
+ * secondary line inside another column's own cell instead (Negocio under
+ * Categoría, SKU under Producto — see `product-table.component.html`'s
+ * `<td>`s for each), so neither ever had its own `ProductColumnKey`/width to
+ * remove; `Product.business`/`Product.sku` themselves are untouched, still
+ * read directly from the model.
  */
 type ProductColumnKey =
   | 'product'
-  | 'sku'
   | 'category'
   | 'costPrice'
   | 'publicPrice'
@@ -67,7 +67,6 @@ type ProductColumnKey =
 
 const COLUMN_ORDER: ProductColumnKey[] = [
   'product',
-  'sku',
   'category',
   'costPrice',
   'publicPrice',
@@ -78,16 +77,15 @@ const COLUMN_ORDER: ProductColumnKey[] = [
 
 /**
  * Initial column widths, as percentages of the table's own width (must sum
- * to 100). Producto/Categoría get the most room — Categoría's own share
- * also covers the "Negocio" line now shown inside it — while Costo/Precio
- * Público are deliberately the smallest of the money columns — just enough
- * to always show "Q 1,250.00" in full. Precio Mayor keeps a bit more room
- * since it wasn't asked to shrink further.
+ * to 100). Producto/Categoría get the most room — each also covers the
+ * secondary line now shown inside it (SKU under Producto, Negocio under
+ * Categoría) — while Costo/Precio Público are deliberately the smallest of
+ * the money columns — just enough to always show "Q 1,250.00" in full.
+ * Precio Mayor keeps a bit more room since it wasn't asked to shrink further.
  */
 const DEFAULT_COLUMN_WIDTHS: Record<ProductColumnKey, number> = {
-  product: 26,
-  sku: 8,
-  category: 17,
+  product: 32,
+  category: 19,
   costPrice: 8,
   publicPrice: 8,
   wholesalePrice: 11,
@@ -97,8 +95,7 @@ const DEFAULT_COLUMN_WIDTHS: Record<ProductColumnKey, number> = {
 
 /** Never let a drag shrink a column past the point its content stops being legible. */
 const COLUMN_MIN_WIDTH_PX: Record<ProductColumnKey, number> = {
-  product: 140,
-  sku: 60,
+  product: 160,
   category: 90,
   costPrice: 76,
   publicPrice: 76,

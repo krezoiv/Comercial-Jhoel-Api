@@ -175,27 +175,25 @@
 .product-table__name {
   color: var(--color-text-on-light);
   font-weight: var(--fw-medium);
+  // No `white-space` override here — this class is always paired with
+  // `.ellipsis-cell` in the template, which needs `nowrap` to truncate the
+  // name on one line instead of wrapping it across several.
+}
+
+// Neither "Negocio" nor "SKU" is its own column anymore — each renders as a
+// second, smaller line inside another cell instead (SKU under Producto,
+// Negocio under Categoría), both built from the same two shared classes
+// below. `white-space: normal` overrides the table's base `nowrap`, since
+// a `.stacked-cell` always holds two stacked lines rather than one.
+.stacked-cell {
   white-space: normal;
 }
 
-.product-table__sku {
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-on-light-subtle);
-}
-
-// "Negocio" is no longer its own column — it renders as a second, smaller
-// line under Categoría instead. The cell needs `white-space: normal` to
-// override the table's base `nowrap`, since it now always holds two
-// stacked lines rather than one.
-.category-cell {
-  white-space: normal;
-}
-
-.category-cell__category {
+.cell-primary-line {
   display: block;
 }
 
-.category-cell__business {
+.cell-secondary-line {
   display: block;
   margin-top: 2px;
   font-size: var(--fs-xs);
