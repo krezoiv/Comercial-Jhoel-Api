@@ -47,12 +47,18 @@ export type ProductSortColumn =
   | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-/** One entry per `<col>` in `product-table.component.html`, left to right. */
+/**
+ * One entry per `<col>` in `product-table.component.html`, left to right.
+ * "Negocio" is no longer its own column — its value now renders as a
+ * secondary line inside the "category" column's own cell (see
+ * `product-table.component.html`'s Categoría `<td>`), so it never had its
+ * own `ProductColumnKey`/width to remove; `Product.business` itself is
+ * untouched, still read directly from the model.
+ */
 type ProductColumnKey =
   | 'product'
   | 'sku'
   | 'category'
-  | 'business'
   | 'costPrice'
   | 'publicPrice'
   | 'wholesalePrice'
@@ -63,7 +69,6 @@ const COLUMN_ORDER: ProductColumnKey[] = [
   'product',
   'sku',
   'category',
-  'business',
   'costPrice',
   'publicPrice',
   'wholesalePrice',
@@ -73,17 +78,16 @@ const COLUMN_ORDER: ProductColumnKey[] = [
 
 /**
  * Initial column widths, as percentages of the table's own width (must sum
- * to 100). Producto/Categoría get the most room; Costo/Precio Público are
- * deliberately the smallest of the money columns — just enough to always
- * show "Q 1,250.00" in full — freeing space that used to sit unused in two
- * columns nobody needs to scan at a glance the way Producto/Categoría do.
- * Precio Mayor keeps a bit more room since it wasn't asked to shrink further.
+ * to 100). Producto/Categoría get the most room — Categoría's own share
+ * also covers the "Negocio" line now shown inside it — while Costo/Precio
+ * Público are deliberately the smallest of the money columns — just enough
+ * to always show "Q 1,250.00" in full. Precio Mayor keeps a bit more room
+ * since it wasn't asked to shrink further.
  */
 const DEFAULT_COLUMN_WIDTHS: Record<ProductColumnKey, number> = {
-  product: 21,
+  product: 26,
   sku: 8,
-  category: 14,
-  business: 8,
+  category: 17,
   costPrice: 8,
   publicPrice: 8,
   wholesalePrice: 11,
@@ -95,8 +99,7 @@ const DEFAULT_COLUMN_WIDTHS: Record<ProductColumnKey, number> = {
 const COLUMN_MIN_WIDTH_PX: Record<ProductColumnKey, number> = {
   product: 140,
   sku: 60,
-  category: 80,
-  business: 60,
+  category: 90,
   costPrice: 76,
   publicPrice: 76,
   wholesalePrice: 76,

@@ -5,7 +5,6 @@
         <col [style.width.%]="columnWidths().product" />
         <col [style.width.%]="columnWidths().sku" />
         <col [style.width.%]="columnWidths().category" />
-        <col [style.width.%]="columnWidths().business" />
         <col [style.width.%]="columnWidths().costPrice" />
         <col [style.width.%]="columnWidths().publicPrice" />
         <col [style.width.%]="columnWidths().wholesalePrice" />
@@ -17,7 +16,6 @@
           <th>Producto</th>
           <th>SKU</th>
           <th>Categoría</th>
-          <th>Negocio</th>
           <th class="align-right">Costo</th>
           <th class="align-right">Público</th>
           <th class="align-right">Mayor</th>
@@ -29,7 +27,6 @@
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
             <td><span class="skeleton skeleton--lg"></span></td>
-            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td class="align-right"><span class="skeleton skeleton--sm"></span></td>
@@ -72,7 +69,6 @@
         <col [style.width.%]="columnWidths().product" />
         <col [style.width.%]="columnWidths().sku" />
         <col [style.width.%]="columnWidths().category" />
-        <col [style.width.%]="columnWidths().business" />
         <col [style.width.%]="columnWidths().costPrice" />
         <col [style.width.%]="columnWidths().publicPrice" />
         <col [style.width.%]="columnWidths().wholesalePrice" />
@@ -113,19 +109,7 @@
             <span
               class="col-resize-handle"
               [class.col-resize-handle--active]="resizingColumnKey() === 'category'"
-              (mousedown)="onResizeStart($event, 'category', 'business')"
-              aria-hidden="true"
-            ></span>
-          </th>
-          <th class="resizable-th">
-            <button type="button" class="sort-btn" (click)="toggleSort('business')" title="Negocio">
-              <span class="sort-btn__label">Negocio</span>
-              <app-icon [name]="sortIcon('business')" [size]="14" />
-            </button>
-            <span
-              class="col-resize-handle"
-              [class.col-resize-handle--active]="resizingColumnKey() === 'business'"
-              (mousedown)="onResizeStart($event, 'business', 'costPrice')"
+              (mousedown)="onResizeStart($event, 'category', 'costPrice')"
               aria-hidden="true"
             ></span>
           </th>
@@ -200,8 +184,10 @@
           <tr>
             <td class="product-table__name ellipsis-cell" [title]="product.name">{{ product.name }}</td>
             <td class="product-table__sku ellipsis-cell" [title]="product.sku || ''">{{ product.sku || '—' }}</td>
-            <td class="ellipsis-cell" [title]="product.category">{{ product.category }}</td>
-            <td class="ellipsis-cell" [title]="product.business">{{ product.business }}</td>
+            <td class="category-cell">
+              <span class="category-cell__category ellipsis-cell" [title]="product.category">{{ product.category }}</span>
+              <span class="category-cell__business ellipsis-cell" [title]="product.business">{{ product.business }}</span>
+            </td>
             <td class="align-right">{{ formatCurrency(product.costPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.publicPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.wholesalePrice) }}</td>

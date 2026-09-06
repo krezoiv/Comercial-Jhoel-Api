@@ -183,6 +183,28 @@
   color: var(--color-text-on-light-subtle);
 }
 
+// "Negocio" is no longer its own column — it renders as a second, smaller
+// line under Categoría instead. The cell needs `white-space: normal` to
+// override the table's base `nowrap`, since it now always holds two
+// stacked lines rather than one.
+.category-cell {
+  white-space: normal;
+}
+
+.category-cell__category {
+  display: block;
+}
+
+.category-cell__business {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  // Same secondary-text treatment already used for the Stock column's own
+  // Bodega/Vitrina breakdown line (`.stock-cell__breakdown` below) — reused
+  // here rather than introducing a new color.
+  color: var(--color-text-muted, #6b7280);
+}
+
 .align-right {
   text-align: center;
 }
