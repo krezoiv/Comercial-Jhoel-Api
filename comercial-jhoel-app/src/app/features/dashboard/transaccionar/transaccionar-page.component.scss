@@ -134,25 +134,29 @@
   }
 }
 
-// One card holding both breakdown sections side by side on wider screens —
-// keeps the page from needing two tall, separately-scrolled cards.
-.transaccionar__split {
+// Desglose de Efectivo + Resultado del Cuadre side by side on desktop, so
+// the result is visible while entering denominations without scrolling —
+// stacks to one column on narrow screens, never a horizontal scroll.
+.transaccionar__cuadre-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-6);
 
   @include bp.respond(lg) {
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-.transaccionar__split-divider {
-  display: none;
+// The two "Resumen Diario"/"Resumen Mes en Curso" cards on the type-picker
+// dashboard — same responsive shape as the cuadre grid above.
+.summary-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
 
-  @include bp.respond(lg) {
-    display: block;
-    width: 1px;
-    background: var(--color-border-light);
+  @include bp.respond(sm) {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

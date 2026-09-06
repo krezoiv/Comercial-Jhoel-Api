@@ -1,0 +1,22 @@
+<app-card padding="lg" class="result-card">
+  <h3 class="result-card__title">Resultado del Cuadre</h3>
+
+  <dl class="result-card__rows">
+    <div class="result-card__row">
+      <dt>Total esperado</dt>
+      <dd>{{ formatCurrency(totalAmount) }}</dd>
+    </div>
+    <div class="result-card__row">
+      <dt>Total contado</dt>
+      <dd>{{ formatCurrency(totalCash) }}</dd>
+    </div>
+    <div class="result-card__row result-card__row--diff" [class]="'result-card__row--' + status">
+      <dt>Diferencia</dt>
+      <dd>{{ difference > 0 ? '+' : '' }}{{ formatCurrency(difference) }}</dd>
+    </div>
+  </dl>
+
+  <div class="result-card__status">
+    <app-cuadre-status-indicator [status]="status" [text]="statusText" />
+  </div>
+</app-card>

@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { FragmentScrollService } from './core/services/fragment-scroll.service';
+import { KeyboardShortcutsService } from './core/services/keyboard-shortcuts.service';
 import { NavbarComponent } from './layout/navbar/navbar.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { ConfirmDialogComponent, PdfPromptModalComponent, ToastContainerComponent } from './shared/ui';
@@ -35,6 +36,7 @@ export class AppComponent {
 
   constructor() {
     inject(FragmentScrollService).listen();
+    inject(KeyboardShortcutsService).listen();
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),

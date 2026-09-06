@@ -5,6 +5,20 @@
       <p class="transaccionar__subtitle">Selecciona el tipo de transacción que deseas registrar.</p>
     </header>
 
+    <div class="summary-row">
+      <app-transaction-summary-card
+        title="Resumen Diario"
+        [summary]="transactionSummary()?.daily ?? { totalTransactions: 0, byBank: [] }"
+        [loading]="loadingSummary()"
+      />
+      <app-transaction-summary-card
+        title="Resumen Mes en Curso"
+        [subtitle]="(currentMonthDate | date: 'MMMM yyyy' | titlecase) ?? ''"
+        [summary]="transactionSummary()?.monthly ?? { totalTransactions: 0, byBank: [] }"
+        [loading]="loadingSummary()"
+      />
+    </div>
+
     @if (loadingTypes()) {
       <p class="type-grid__loading">Cargando tipos de transacción…</p>
     } @else if (transactionTypes().length === 0) {
@@ -84,8 +98,8 @@
     </section>
 
     <section class="transaccionar__card">
-      <div class="transaccionar__split">
-        <div class="transaccionar__split-col">
+      <div class="transaccionar__cuadre-grid">
+        <div>
           <h2 class="transaccionar__section-title">Desglose de Efectivo</h2>
           <app-cash-breakdown-table
             [cashCounts]="draft.cashCounts()"
@@ -96,20 +110,24 @@
           />
         </div>
 
-        <div class="transaccionar__split-divider"></div>
-
-        <div class="transaccionar__split-col">
-          <h2 class="transaccionar__section-title">Distribución de Transacciones</h2>
-          <app-transaction-distribution
-            [transactionAmounts]="draft.transactionAmounts()"
-            [totalDistributed]="draft.totalDistributed()"
-            [totalAmount]="draft.totalAmount()"
-            [status]="draft.transactionsStatus()"
-            (transactionCountRequested)="onTransactionCountRequested($event)"
-            (amountChange)="onTransactionAmountChange($event)"
-          />
-        </div>
+        <app-cuadre-result-card
+          [totalAmount]="draft.totalAmount()"
+          [totalCash]="draft.totalCash()"
+          [status]="draft.cashStatus()"
+        />
       </div>
+    </section>
+
+    <section class="transaccionar__card">
+      <h2 class="transaccionar__section-title">Distribución de Transacciones</h2>
+      <app-transaction-distribution
+        [transactionAmounts]="draft.transactionAmounts()"
+        [totalDistributed]="draft.totalDistributed()"
+        [totalAmount]="draft.totalAmount()"
+        [status]="draft.transactionsStatus()"
+        (transactionCountRequested)="onTransactionCountRequested($event)"
+        (amountChange)="onTransactionAmountChange($event)"
+      />
     </section>
 
     <section class="transaccionar__footer">

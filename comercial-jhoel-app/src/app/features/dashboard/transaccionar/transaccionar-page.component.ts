@@ -1,8 +1,10 @@
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { catchError, of } from 'rxjs';
 
-import { TransactionBank, TransactionType } from '../../../core/models';
+import { BankDepositTransactionSummary, TransactionBank, TransactionType } from '../../../core/models';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
@@ -16,6 +18,8 @@ import { CashBreakdownTableComponent } from './components/cash-breakdown-table/c
 import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-confirm-modal.component';
 import { StatusIndicatorComponent } from './components/status-indicator/status-indicator.component';
 import { TransactionDistributionComponent } from './components/transaction-distribution/transaction-distribution.component';
+import { TransactionSummaryCardComponent } from './components/transaction-summary-card/transaction-summary-card.component';
+import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadre-result-card.component';
 
 type TransaccionarView = 'dashboard' | 'form';
 
@@ -39,6 +43,8 @@ type TransaccionarView = 'dashboard' | 'form';
   selector: 'app-transaccionar-page',
   standalone: true,
   imports: [
+    DatePipe,
+    TitleCasePipe,
     FormsModule,
     DecimalInputDirective,
     ButtonComponent,
@@ -47,6 +53,8 @@ type TransaccionarView = 'dashboard' | 'form';
     TransactionDistributionComponent,
     StatusIndicatorComponent,
     SaveConfirmModalComponent,
+    TransactionSummaryCardComponent,
+    CuadreResultCardComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -66,6 +74,12 @@ export class TransaccionarPageComponent {
 
   readonly transactionTypes = signal<TransactionType[]>([]);
   readonly loadingTypes = signal(true);
+
+  /** `GET /bank-deposits/summary` — the same call the Resumen dashboard's own "Resumen Diario de Transacciones" section reads, see `BankDepositService.getTransactionSummary()`'s own doc comment. Fetched once when the dashboard view mounts; a transient failure just leaves both cards showing zero rather than breaking this screen. */
+  readonly transactionSummary = signal<BankDepositTransactionSummary | null>(null);
+  readonly loadingSummary = signal(true);
+  /** Purely a display label ("Septiembre 2026") — never used for any filtering, that's entirely server-side. */
+  readonly currentMonthDate = new Date();
 
   /** Resumes straight on the form if a type was already selected (e.g. after a reload mid-draft) — never re-shows the dashboard out from under an in-progress operation. */
   readonly view = signal<TransaccionarView>(this.draft.transactionTypeId() ? 'form' : 'dashboard');
@@ -114,6 +128,14 @@ export class TransaccionarPageComponent {
         this.notificationService.error('No se pudieron cargar los tipos de transacción.');
       },
     });
+
+    this.bankDepositService
+      .getTransactionSummary()
+      .pipe(catchError(() => of(null)))
+      .subscribe((summary) => {
+        this.transactionSummary.set(summary);
+        this.loadingSummary.set(false);
+      });
   }
 
   selectType(type: TransactionType): void {

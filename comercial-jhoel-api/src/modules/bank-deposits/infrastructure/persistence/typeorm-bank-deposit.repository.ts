@@ -134,6 +134,10 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       .select('operation.transactionBankId', 'transactionBankId')
       .addSelect('transactionBank.name', 'transactionBankName')
       .addSelect('COUNT(*)', 'operationCount')
+      .addSelect(
+        'COALESCE(SUM(operation.transactionCount), 0)',
+        'transactionCount',
+      )
       .addSelect('COALESCE(SUM(operation.totalAmount), 0)', 'totalAmount')
       .groupBy('operation.transactionBankId')
       .addGroupBy('transactionBank.name')
@@ -143,6 +147,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       transactionBankId: string;
       transactionBankName: string;
       operationCount: string;
+      transactionCount: string;
       totalAmount: string;
     }>();
 
@@ -154,6 +159,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         transactionBankId: row.transactionBankId,
         transactionBankName: row.transactionBankName,
         operationCount: parseInt(row.operationCount, 10),
+        transactionCount: parseInt(row.transactionCount, 10),
         totalAmount: parseFloat(row.totalAmount),
       })),
     };

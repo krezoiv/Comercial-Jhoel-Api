@@ -10,6 +10,7 @@ import { ListBankDepositOperationsUseCase } from './application/use-cases/list-b
 import { GetBankDepositOperationByIdUseCase } from './application/use-cases/get-bank-deposit-operation-by-id.use-case';
 import { VoidBankDepositOperationUseCase } from './application/use-cases/void-bank-deposit-operation.use-case';
 import { GetBankDepositMonthlyCountUseCase } from './application/use-cases/get-bank-deposit-monthly-count.use-case';
+import { GetBankDepositTransactionSummaryUseCase } from './application/use-cases/get-bank-deposit-transaction-summary.use-case';
 import { BankDepositsController } from './presentation/controllers/bank-deposits.controller';
 import { TransactionBanksModule } from '../transaction-banks/transaction-banks.module';
 import { TransactionTypesModule } from '../transaction-types/transaction-types.module';
@@ -41,6 +42,7 @@ import { BanksModule } from '../banks/banks.module';
     GetBankDepositOperationByIdUseCase,
     VoidBankDepositOperationUseCase,
     GetBankDepositMonthlyCountUseCase,
+    GetBankDepositTransactionSummaryUseCase,
   ],
   // Exported for ReportsModule — BankDepositsReportController reuses
   // ListBankDepositOperationsUseCase directly for its listing route,

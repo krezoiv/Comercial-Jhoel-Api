@@ -1,0 +1,35 @@
+<app-card padding="lg" class="summary-card">
+  <div class="summary-card__header">
+    <h3 class="summary-card__title">{{ title }}</h3>
+    @if (subtitle) {
+      <span class="summary-card__subtitle">{{ subtitle }}</span>
+    }
+  </div>
+
+  @if (loading) {
+    <p class="summary-card__loading">Cargando…</p>
+  } @else {
+    <div class="summary-card__total">
+      <span class="summary-card__total-label">Total</span>
+      <span class="summary-card__total-value">{{ formatQuantity(summary.totalTransactions) }} transacciones</span>
+    </div>
+
+    @if (summary.byBank.length === 0) {
+      <p class="summary-card__empty">Sin transacciones registradas.</p>
+    } @else {
+      <ul class="summary-card__banks">
+        @for (bank of summary.byBank; track bank.transactionBankId) {
+          <li class="summary-card__bank-row">
+            <span class="summary-card__bank-name">{{ bank.transactionBankName }}</span>
+            <span class="summary-card__bank-value">{{ formatQuantity(bank.transactions) }}</span>
+          </li>
+        }
+      </ul>
+
+      <div class="summary-card__footer-total">
+        <span>Total</span>
+        <span>{{ formatQuantity(summary.totalTransactions) }}</span>
+      </div>
+    }
+  }
+</app-card>

@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, BankDepositMonthlyCount, BankDepositOperation, RegisterBankDepositInput } from '../models';
+import {
+  ApiSuccessResponse,
+  BankDepositMonthlyCount,
+  BankDepositOperation,
+  BankDepositTransactionSummary,
+  RegisterBankDepositInput,
+} from '../models';
 
 const BASE_URL = `${environment.apiUrl}/bank-deposits`;
 
@@ -35,6 +41,13 @@ export class BankDepositService {
   getMonthlyCount(): Observable<BankDepositMonthlyCount> {
     return this.http
       .get<ApiSuccessResponse<BankDepositMonthlyCount>>(`${BASE_URL}/monthly-count`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account, same policy as `getMonthlyCount()` — backs Transaccionar's own summary cards and the Resumen dashboard's daily section, both reading this exact same call so there is only one place "cuántas transacciones hoy/este mes" is computed. */
+  getTransactionSummary(): Observable<BankDepositTransactionSummary> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositTransactionSummary>>(`${BASE_URL}/summary`)
       .pipe(map((response) => response.data));
   }
 }

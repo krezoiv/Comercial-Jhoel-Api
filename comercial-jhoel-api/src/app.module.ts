@@ -36,6 +36,7 @@ import { AlertsModule } from './modules/alerts/alerts.module';
 import { CompanySettingsModule } from './modules/company-settings/company-settings.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
+import { KeyboardShortcutsModule } from './modules/keyboard-shortcuts/keyboard-shortcuts.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { QuotationsModule } from './modules/quotations/quotations.module';
     CompanySettingsModule,
     TicketsModule,
     QuotationsModule,
+    KeyboardShortcutsModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

@@ -83,6 +83,23 @@ export interface BankDepositMonthlyCount {
   month: string;
 }
 
+export interface BankDepositSummaryByBank {
+  transactionBankId: string;
+  transactionBankName: string;
+  transactions: number;
+}
+
+export interface BankDepositPeriodSummary {
+  totalTransactions: number;
+  byBank: BankDepositSummaryByBank[];
+}
+
+/** `GET /bank-deposits/summary` — backs Transaccionar's "Resumen Diario"/"Resumen del Mes en Curso" cards and the Resumen dashboard's "Resumen Diario de Transacciones" section, all from the same call. `daily` is today only, `monthly` is the 1st of the current calendar month through today — both server-computed (`America/Guatemala`), never derived from the browser's clock. Excludes anuladas. */
+export interface BankDepositTransactionSummary {
+  daily: BankDepositPeriodSummary;
+  monthly: BankDepositPeriodSummary;
+}
+
 export interface BankDepositsReportFilters {
   startDate?: string;
   endDate?: string;

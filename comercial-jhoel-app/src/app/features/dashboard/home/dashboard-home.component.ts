@@ -4,13 +4,14 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of } from 'rxjs';
 
-import { DashboardMetrics, DashboardSummaryItem, formatQuantity } from '../../../core/models';
+import { BankDepositTransactionSummary, DashboardMetrics, DashboardSummaryItem, formatQuantity } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { DashboardMetricsService } from '../../../core/services/dashboard-metrics.service';
 import { DashboardSummaryService } from '../../../core/services/dashboard-summary.service';
 import { CardComponent, IconComponent } from '../../../shared/ui';
 import { FinancialIndicatorsComponent } from './components/financial-indicators/financial-indicators.component';
+import { TransactionSummaryCardComponent } from '../transaccionar/components/transaction-summary-card/transaction-summary-card.component';
 
 /** Every card is still mock (see `DASHBOARD_SUMMARY`'s own doc comment) EXCEPT this one, which "Bancos" is overridden to. */
 const BANCOS_CARD_ID = 'bancos';
@@ -18,7 +19,15 @@ const BANCOS_CARD_ID = 'bancos';
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, CardComponent, IconComponent, FinancialIndicatorsComponent],
+  imports: [
+    AsyncPipe,
+    DatePipe,
+    RouterLink,
+    CardComponent,
+    IconComponent,
+    FinancialIndicatorsComponent,
+    TransactionSummaryCardComponent,
+  ],
   templateUrl: './dashboard-home.component.html',
   styleUrl: './dashboard-home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,7 +79,27 @@ export class DashboardHomeComponent {
   readonly financialMetrics = signal<DashboardMetrics | null>(null);
   readonly loadingFinancialMetrics = signal(false);
 
+  /**
+   * "Resumen Diario de Transacciones" — reads the exact same
+   * `GET /bank-deposits/summary` call Transaccionar's own "Resumen Diario"
+   * card uses (`BankDepositService.getTransactionSummary()`), only ever
+   * showing `.daily` here per the ticket's own "no mezclar con el resumen
+   * mensual" rule. Open to any authenticated role (unlike
+   * `financialMetrics` above) — same visibility policy as the "Bancos"
+   * tile, since Transaccionar itself has no admin gate either.
+   */
+  readonly dailyTransactionSummary = signal<BankDepositTransactionSummary | null>(null);
+  readonly loadingDailyTransactionSummary = signal(true);
+
   constructor() {
+    this.bankDepositService
+      .getTransactionSummary()
+      .pipe(catchError(() => of(null)))
+      .subscribe((summary) => {
+        this.dailyTransactionSummary.set(summary);
+        this.loadingDailyTransactionSummary.set(false);
+      });
+
     if (this.isAdmin()) {
       this.loadingFinancialMetrics.set(true);
       this.dashboardMetricsService

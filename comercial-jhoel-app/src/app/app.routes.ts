@@ -78,6 +78,15 @@ export const routes: Routes = [
         title: 'Roles — Sistema',
       },
       {
+        path: 'atajos-teclado',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/keyboard-shortcuts/keyboard-shortcuts-page.component').then(
+            (m) => m.KeyboardShortcutsPageComponent,
+          ),
+        title: 'Atajos de Teclado — Sistema',
+      },
+      {
         path: 'gestion-dias-cerrados',
         canActivate: [adminGuard],
         loadComponent: () =>

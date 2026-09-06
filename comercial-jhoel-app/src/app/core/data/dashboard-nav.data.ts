@@ -18,6 +18,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Usuarios', icon: 'users', path: 'usuarios', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Roles', icon: 'shield-check', path: 'roles', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Atajos de Teclado', icon: 'keyboard', path: 'atajos-teclado', roles: ['SUPER_ADMIN', 'ADMIN'] },
       {
         label: 'Gestión de Días Cerrados',
         icon: 'lock',

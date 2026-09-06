@@ -48,6 +48,8 @@ export interface BankDepositReportByBank {
   transactionBankId: string;
   transactionBankName: string;
   operationCount: number;
+  /** `SUM(transaction_count)` for this bank — the "cantidad de transacciones" total, distinct from `operationCount` (number of Transaccionar registrations). See `GetDashboardSummaryUseCase`'s own doc comment for why these two are never the same number. */
+  transactionCount: number;
   totalAmount: number;
 }
 

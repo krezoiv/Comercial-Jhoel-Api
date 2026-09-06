@@ -17,10 +17,12 @@ import { RegisterBankDepositOperationUseCase } from '../../application/use-cases
 import { GetBankDepositOperationByIdUseCase } from '../../application/use-cases/get-bank-deposit-operation-by-id.use-case';
 import { VoidBankDepositOperationUseCase } from '../../application/use-cases/void-bank-deposit-operation.use-case';
 import { GetBankDepositMonthlyCountUseCase } from '../../application/use-cases/get-bank-deposit-monthly-count.use-case';
+import { GetBankDepositTransactionSummaryUseCase } from '../../application/use-cases/get-bank-deposit-transaction-summary.use-case';
 import { CreateBankDepositRequestDto } from '../dtos/create-bank-deposit.request.dto';
 import { VoidBankDepositOperationRequestDto } from '../dtos/void-bank-deposit-operation.request.dto';
 import { BankDepositOperationResponseDto } from '../dtos/bank-deposit.response.dto';
 import { BankDepositMonthlyCountResponseDto } from '../dtos/bank-deposit-monthly-count.response.dto';
+import { BankDepositTransactionSummaryResponseDto } from '../dtos/bank-deposit-transaction-summary.response.dto';
 
 /**
  * No class-level `@Roles(...)` — registering a Transaccionar deposit is an
@@ -45,6 +47,7 @@ export class BankDepositsController {
     private readonly getBankDepositOperationByIdUseCase: GetBankDepositOperationByIdUseCase,
     private readonly voidBankDepositOperationUseCase: VoidBankDepositOperationUseCase,
     private readonly getBankDepositMonthlyCountUseCase: GetBankDepositMonthlyCountUseCase,
+    private readonly getBankDepositTransactionSummaryUseCase: GetBankDepositTransactionSummaryUseCase,
   ) {}
 
   @Post()
@@ -68,6 +71,12 @@ export class BankDepositsController {
   @Get('monthly-count')
   monthlyCount(): Promise<BankDepositMonthlyCountResponseDto> {
     return this.getBankDepositMonthlyCountUseCase.execute();
+  }
+
+  /** Backs Transaccionar's "Resumen Diario"/"Resumen del Mes en Curso" cards and the Resumen dashboard's "Resumen Diario de Transacciones" section — same reasoning as `monthly-count` above, must be declared before `:id`. Open to any authenticated account, same policy as the rest of this controller (excluding `void`). */
+  @Get('summary')
+  transactionSummary(): Promise<BankDepositTransactionSummaryResponseDto> {
+    return this.getBankDepositTransactionSummaryUseCase.execute();
   }
 
   @Get(':id')

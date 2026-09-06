@@ -22,6 +22,14 @@
     }
   </div>
 
+  <section class="home__daily-transactions">
+    <app-transaction-summary-card
+      title="Resumen Diario de Transacciones"
+      [summary]="dailyTransactionSummary()?.daily ?? { totalTransactions: 0, byBank: [] }"
+      [loading]="loadingDailyTransactionSummary()"
+    />
+  </section>
+
   @if (isAdmin()) {
     <app-financial-indicators [metrics]="financialMetrics()" [loading]="loadingFinancialMetrics()" />
   }

@@ -6,6 +6,7 @@ export * from './testimonial.model';
 export * from './bank-operation.model';
 export * from './contact-channel.model';
 export * from './dashboard-nav-item.model';
+export * from './keyboard-shortcut.model';
 export * from './dashboard-summary-item.model';
 export * from './product.model';
 export * from './inventory.model';
