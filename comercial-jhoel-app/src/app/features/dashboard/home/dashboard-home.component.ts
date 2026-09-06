@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -22,6 +22,7 @@ const BANCOS_CARD_ID = 'bancos';
   imports: [
     AsyncPipe,
     DatePipe,
+    TitleCasePipe,
     RouterLink,
     CardComponent,
     IconComponent,
@@ -80,13 +81,16 @@ export class DashboardHomeComponent {
   readonly loadingFinancialMetrics = signal(false);
 
   /**
-   * "Resumen Diario de Transacciones" — reads the exact same
-   * `GET /bank-deposits/summary` call Transaccionar's own "Resumen Diario"
-   * card uses (`BankDepositService.getTransactionSummary()`), only ever
-   * showing `.daily` here per the ticket's own "no mezclar con el resumen
-   * mensual" rule. Open to any authenticated role (unlike
-   * `financialMetrics` above) — same visibility policy as the "Bancos"
-   * tile, since Transaccionar itself has no admin gate either.
+   * "Resumen Diario de Transacciones" + "Resumen Mensual de Transacciones" —
+   * both read this same `GET /bank-deposits/summary` response
+   * (`BankDepositService.getTransactionSummary()`), the identical call
+   * Transaccionar's own daily/monthly cards already use — one fetch backs
+   * both sections here, never two separate calculations of the same data.
+   * Open to any authenticated role (unlike `financialMetrics` above) — same
+   * visibility policy as the "Bancos" tile, since Transaccionar itself has
+   * no admin gate either. Kept the name `dailyTransactionSummary` (it holds
+   * both `.daily` and `.monthly`) to avoid an unrelated rename churning this
+   * file for a small, targeted addition.
    */
   readonly dailyTransactionSummary = signal<BankDepositTransactionSummary | null>(null);
   readonly loadingDailyTransactionSummary = signal(true);

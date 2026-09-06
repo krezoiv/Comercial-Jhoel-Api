@@ -27,9 +27,16 @@
 }
 
 .home__daily-transactions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
   margin-top: var(--space-8);
   margin-bottom: var(--space-8);
-  max-width: 28rem;
+  max-width: 40rem;
+
+  @include bp.respond(sm) {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .home__grid {

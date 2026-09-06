@@ -28,6 +28,12 @@
       [summary]="dailyTransactionSummary()?.daily ?? { totalTransactions: 0, byBank: [] }"
       [loading]="loadingDailyTransactionSummary()"
     />
+    <app-transaction-summary-card
+      title="Resumen Mensual de Transacciones"
+      [subtitle]="(today() | date: 'MMMM yyyy' | titlecase) ?? ''"
+      [summary]="dailyTransactionSummary()?.monthly ?? { totalTransactions: 0, byBank: [] }"
+      [loading]="loadingDailyTransactionSummary()"
+    />
   </section>
 
   @if (isAdmin()) {
