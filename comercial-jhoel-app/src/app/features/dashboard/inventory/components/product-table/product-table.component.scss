@@ -21,14 +21,14 @@
 
 .product-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  min-width: 58rem;
 
   th,
   td {
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-2) var(--space-3);
     text-align: center;
-    font-size: var(--fs-sm);
+    font-size: 0.875rem;
     white-space: nowrap;
   }
 
@@ -37,13 +37,14 @@
   }
 
   thead th {
-    font-size: var(--fs-xs);
+    font-size: 0.75rem;
     font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: var(--color-table-header-text);
     border-bottom: 1px solid var(--color-border-light);
-    padding-block: var(--space-3);
+    padding-block: var(--space-2);
+    overflow: hidden;
   }
 
   tbody tr {
@@ -63,10 +64,63 @@
   }
 }
 
+// Column widths — percentages of the table's own width, so the table always
+// exactly fills its container (never wider) regardless of screen size.
+// Producto/Categoría/Negocio get the most room among the flexible/text
+// columns; Costo/Público/Mayor are sized to always fit "Q 1,250.00" in full
+// (prices must never truncate); Acciones is sized for its 3 icon buttons.
+.col-product {
+  width: 16%;
+}
+
+.col-sku {
+  width: 8%;
+}
+
+.col-category {
+  width: 11%;
+}
+
+.col-business {
+  width: 7%;
+}
+
+.col-price {
+  width: 12%;
+}
+
+.col-stock {
+  width: 9%;
+}
+
+.col-actions {
+  width: 13%;
+}
+
+// Long text (product name, categoría, negocio, SKU) truncates with an
+// ellipsis instead of forcing the column wider — the full value is still
+// available via the native `title` tooltip set in the template.
+.ellipsis-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sort-btn {
-  display: inline-flex;
+  // `display: flex` + `width: 100%` (not `inline-flex`/shrink-to-fit) so the
+  // label span below has a real, stable width to shrink against — an
+  // inline-flex button only ever sizes to its own content, which left the
+  // ellipsis with nothing meaningful to truncate relative to.
+  display: flex;
+  width: 100%;
   align-items: center;
+  justify-content: center;
   gap: var(--space-1);
+  // Resets the browser's default `<button>` padding (Chrome: `1px 6px`) —
+  // at this table's tightened column widths that default padding was
+  // eating meaningfully into the small amount of space a header label has
+  // to work with before needing to ellipsis.
+  padding: 0;
   color: inherit;
   font: inherit;
   text-transform: inherit;
@@ -85,6 +139,18 @@
       color: var(--color-primary-600);
     }
   }
+}
+
+// The header label is the one part allowed to shrink — the sort icon next
+// to it never gets clipped. Needed because a single-word header (e.g.
+// "Categoría") has no space to wrap on, so on the tightest desktop widths
+// it must ellipsis instead of visually overflowing into the next column.
+.sort-btn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .product-table__name {
@@ -107,7 +173,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .stock-cell__breakdown {
@@ -128,6 +194,7 @@
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
+  flex-shrink: 0;
   border-radius: var(--radius-md);
   background: rgba(47, 131, 224, 0.1);
   color: var(--color-primary-600);
@@ -136,6 +203,19 @@
   &:hover {
     background: rgba(47, 131, 224, 0.18);
   }
+}
+
+// The desktop table's own Acciones column is deliberately more compact than
+// the mobile card's — a mouse-driven admin table can afford a smaller,
+// denser hit target than a touch card, and this scoping keeps the mobile
+// `.product-card` buttons at their original (larger, touch-friendly) size.
+.product-table .actions {
+  gap: var(--space-1);
+}
+
+.product-table .action-btn {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .action-btn--danger {

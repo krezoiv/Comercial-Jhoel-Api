@@ -268,7 +268,23 @@
   color: var(--color-text-on-light);
 }
 
-// ---- Sección 3: Conteo de Efectivo -------------------------------------------
+// ---- Sección 3: Conteo de Efectivo / Resumen del Cuadre ----------------------
+// Side by side on desktop so the result is visible without scrolling while
+// entering cash — same `bp.respond()` grid pattern as `.cuadre-agentes__totals-row`
+// above and `.transaccionar__cuadre-grid` in Transaccionar. Layout only: no
+// change to either card's own content, calculations, or the cuadre logic.
+
+.cuadre-agentes__cuadre-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+
+  @include bp.respond(lg) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 // Deliberately narrow and dense — a teller's cash-count slip, not a
 // full-width app table. Header/total rows reuse the same dark-navy
 // (`#1e3a5f`) this system's own PDF statements already use for a table
@@ -380,7 +396,6 @@
 
 .cuadre-agentes__result-card {
   display: block;
-  margin-top: var(--space-6);
 }
 
 .result-summary {

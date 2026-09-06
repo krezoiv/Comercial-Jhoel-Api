@@ -61,3 +61,39 @@
 .result-card__row--red dd {
   color: #dc4444;
 }
+
+.result-card__status {
+  margin-bottom: var(--space-5);
+}
+
+.result-card__change-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  background: rgba(184, 134, 11, 0.08);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.result-card__change-title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #b8860b;
+}
+
+.result-card__change-hint {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.result-card__change-amount {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-2);
+}

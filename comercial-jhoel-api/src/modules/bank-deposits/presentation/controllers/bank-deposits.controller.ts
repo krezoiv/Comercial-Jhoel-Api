@@ -64,6 +64,7 @@ export class BankDepositsController {
       transactionAmounts: dto.transactionAmounts,
       userId,
       clientName: dto.clientName ?? null,
+      changeGiven: dto.changeGiven ?? 0,
     });
   }
 

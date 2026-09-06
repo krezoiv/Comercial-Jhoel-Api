@@ -12,6 +12,7 @@ import {
 } from '../../domain/repositories/bank-deposit.repository';
 import { InvalidTransactionBankError } from '../../domain/errors/invalid-transaction-bank.error';
 import { InvalidTransactionTypeError } from '../../domain/errors/invalid-transaction-type.error';
+import { InvalidChangeGivenError } from '../../domain/errors/invalid-change-given.error';
 import { InvalidDepositAmountError } from '../../domain/errors/invalid-deposit-amount.error';
 import { InvalidCashQuantityError } from '../../domain/errors/invalid-cash-quantity.error';
 import { CashTotalMismatchError } from '../../domain/errors/cash-total-mismatch.error';
@@ -42,7 +43,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       const rows = await this.repository.manager.query<
         { register_bank_deposit_operation: string }[]
       >(
-        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8)',
+        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9)',
         [
           data.transactionBankId,
           data.totalAmount,
@@ -52,6 +53,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
           data.userId,
           data.transactionTypeId,
           data.clientName,
+          data.changeGiven ?? 0,
         ],
       );
       operationId = rows[0].register_bank_deposit_operation;
@@ -250,6 +252,8 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         return new CashTotalMismatchError();
       case 'TRANSACTION_TOTAL_MISMATCH':
         return new TransactionTotalMismatchError();
+      case 'INVALID_CHANGE_GIVEN':
+        return new InvalidChangeGivenError();
       default:
         return error;
     }

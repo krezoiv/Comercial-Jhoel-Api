@@ -173,89 +173,91 @@
       </app-card>
     </div>
 
-    <app-card [hoverable]="false" class="cuadre-agentes__cash-card">
-      <h2 class="section-title">
-        <app-icon name="briefcase" [size]="18" />
-        Conteo de Efectivo
-      </h2>
+    <div class="cuadre-agentes__cuadre-grid">
+      <app-card [hoverable]="false" class="cuadre-agentes__cash-card">
+        <h2 class="section-title">
+          <app-icon name="briefcase" [size]="18" />
+          Conteo de Efectivo
+        </h2>
 
-      <div class="cash-table-wrapper">
-        <table class="cash-table">
-          <thead>
-            <tr>
-              <th>Denominación</th>
-              <th class="align-right">Cantidad</th>
-              <th class="align-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (denomination of denominations; track denomination) {
+        <div class="cash-table-wrapper">
+          <table class="cash-table">
+            <thead>
               <tr>
-                <td class="cash-table__denomination">{{ formatCurrency(denomination) }}</td>
-                <td class="align-right">
-                  <input
-                    type="text"
-                    [attr.inputmode]="decimalPlacesFor(denomination) > 0 ? 'decimal' : 'numeric'"
-                    [appDecimalInput]="decimalPlacesFor(denomination)"
-                    [value]="cashCounts()[denomination]"
-                    (input)="onQuantityInput(denomination, $any($event.target).value)"
-                    [attr.aria-label]="'Cantidad de billetes o monedas de ' + formatCurrency(denomination)"
-                  />
-                </td>
-                <td class="align-right cash-table__row-total">{{ formatCurrency(rowTotal(denomination)) }}</td>
+                <th>Denominación</th>
+                <th class="align-right">Cantidad</th>
+                <th class="align-right">Total</th>
               </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr class="cash-table__total-row">
-              <td colspan="2">Total Efectivo</td>
-              <td class="align-right">{{ formatCurrency(totalCash()) }}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </app-card>
-
-    <app-card [hoverable]="false" class="cuadre-agentes__result-card">
-      <h2 class="section-title">
-        <app-icon name="file-check" [size]="18" />
-        Resumen del Cuadre
-      </h2>
-
-      <dl class="result-summary">
-        <div class="result-summary__row">
-          <dt>Total Efectivo</dt>
-          <dd>{{ formatCurrency(totalCash()) }}</dd>
+            </thead>
+            <tbody>
+              @for (denomination of denominations; track denomination) {
+                <tr>
+                  <td class="cash-table__denomination">{{ formatCurrency(denomination) }}</td>
+                  <td class="align-right">
+                    <input
+                      type="text"
+                      [attr.inputmode]="decimalPlacesFor(denomination) > 0 ? 'decimal' : 'numeric'"
+                      [appDecimalInput]="decimalPlacesFor(denomination)"
+                      [value]="cashCounts()[denomination]"
+                      (input)="onQuantityInput(denomination, $any($event.target).value)"
+                      [attr.aria-label]="'Cantidad de billetes o monedas de ' + formatCurrency(denomination)"
+                    />
+                  </td>
+                  <td class="align-right cash-table__row-total">{{ formatCurrency(rowTotal(denomination)) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="cash-table__total-row">
+                <td colspan="2">Total Efectivo</td>
+                <td class="align-right">{{ formatCurrency(totalCash()) }}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
-        <div class="result-summary__row">
-          <dt>Total Bancos</dt>
-          <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalBanks ?? 0) }}</dd>
-        </div>
-        <div class="result-summary__row">
-          <dt>Total Cuentas por Cobrar</dt>
-          <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalAccountsReceivable ?? 0) }}</dd>
-        </div>
-        <div class="result-summary__row">
-          <dt>Total Activos</dt>
-          <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalAssets ?? 0) }}</dd>
-        </div>
-      </dl>
+      </app-card>
 
-      <div class="result-block" [class]="'result-block--' + resultStatus()">
-        <span class="result-block__label">Resultado del Cuadre</span>
-        <span class="result-block__value">{{ formatCurrency(resultCuadre()) }}</span>
-        <span class="result-block__badge">
-          <app-icon [name]="resultIcon()" [size]="16" />
-          {{ resultText() }}
-        </span>
-      </div>
+      <app-card [hoverable]="false" class="cuadre-agentes__result-card">
+        <h2 class="section-title">
+          <app-icon name="file-check" [size]="18" />
+          Resumen del Cuadre
+        </h2>
 
-      <div class="cuadre-agentes__save-action">
-        <app-button variant="primary" [disabled]="!canSaveCuadre()" (click)="openConfirmModal()">
-          Guardar Cuadre
-        </app-button>
-      </div>
-    </app-card>
+        <dl class="result-summary">
+          <div class="result-summary__row">
+            <dt>Total Efectivo</dt>
+            <dd>{{ formatCurrency(totalCash()) }}</dd>
+          </div>
+          <div class="result-summary__row">
+            <dt>Total Bancos</dt>
+            <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalBanks ?? 0) }}</dd>
+          </div>
+          <div class="result-summary__row">
+            <dt>Total Cuentas por Cobrar</dt>
+            <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalAccountsReceivable ?? 0) }}</dd>
+          </div>
+          <div class="result-summary__row">
+            <dt>Total Activos</dt>
+            <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalAssets ?? 0) }}</dd>
+          </div>
+        </dl>
+
+        <div class="result-block" [class]="'result-block--' + resultStatus()">
+          <span class="result-block__label">Resultado del Cuadre</span>
+          <span class="result-block__value">{{ formatCurrency(resultCuadre()) }}</span>
+          <span class="result-block__badge">
+            <app-icon [name]="resultIcon()" [size]="16" />
+            {{ resultText() }}
+          </span>
+        </div>
+
+        <div class="cuadre-agentes__save-action">
+          <app-button variant="primary" [disabled]="!canSaveCuadre()" (click)="openConfirmModal()">
+            Guardar Cuadre
+          </app-button>
+        </div>
+      </app-card>
+    </div>
   }
 </div>
 

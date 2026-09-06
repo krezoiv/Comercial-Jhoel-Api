@@ -17,6 +17,8 @@ export interface RegisterBankDepositOperationData {
   /** Free-text — never looked up against the `clients` table, see the entity's own doc comment. */
   clientName: string | null;
   transactionTypeId: string;
+  /** "Vuelto" — omitted/`0` means no vuelto, byte-identical to this operation's behavior before vuelto existed. The SQL function recomputes/validates this server-side regardless of what's sent. */
+  changeGiven?: number;
 }
 
 export interface FindBankDepositOperationsOptions {

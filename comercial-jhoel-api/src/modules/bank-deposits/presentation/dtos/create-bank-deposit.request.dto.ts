@@ -54,4 +54,10 @@ export class CreateBankDepositRequestDto {
   @IsString()
   @MaxLength(150)
   clientName?: string;
+
+  /** "Vuelto" — omitido/`0` significa que no hubo vuelto, idéntico al comportamiento de siempre. El backend recalcula/valida esto contra el efectivo real, nunca confía ciegamente en este valor. */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  changeGiven?: number;
 }

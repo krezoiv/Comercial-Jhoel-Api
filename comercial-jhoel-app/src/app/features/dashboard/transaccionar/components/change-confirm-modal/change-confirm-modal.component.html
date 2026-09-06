@@ -1,0 +1,21 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__icon">
+        <app-icon name="arrow-left-right" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">Confirmar Vuelto</h2>
+      <p class="modal__message">El cliente debe recibir:</p>
+      <p class="modal__amount">{{ formatCurrency(amount) }}</p>
+      <p class="modal__question">¿Confirma que entregará este vuelto al cliente?</p>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="confirming()" (click)="cancel()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="confirming()" (click)="confirm()">
+          {{ confirming() ? 'Confirmando…' : 'Confirmar vuelto' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

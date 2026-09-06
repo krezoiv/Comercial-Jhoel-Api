@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  computed,
+  signal,
+} from '@angular/core';
 
 import {
   Product,
@@ -41,7 +49,12 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-product-table',
   standalone: true,
-  imports: [BadgeComponent, ButtonComponent, IconComponent, EmptyStateComponent],
+  imports: [
+    BadgeComponent,
+    ButtonComponent,
+    IconComponent,
+    EmptyStateComponent,
+  ],
   templateUrl: './product-table.component.html',
   styleUrl: './product-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,13 +96,17 @@ export class ProductTableComponent {
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return (aValue - bValue) * direction;
       }
-      return String(aValue ?? '').localeCompare(String(bValue ?? '')) * direction;
+      return (
+        String(aValue ?? '').localeCompare(String(bValue ?? '')) * direction
+      );
     });
   });
 
   toggleSort(column: ProductSortColumn): void {
     if (this.sortColumn() === column) {
-      this.sortDirection.update((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+      this.sortDirection.update((direction) =>
+        direction === 'asc' ? 'desc' : 'asc',
+      );
     } else {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');

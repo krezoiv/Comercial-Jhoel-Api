@@ -24,6 +24,10 @@ export interface BankDepositOperation {
   totalCash: number;
   totalDistributed: number;
   operationDate: string;
+  /** "Vuelto" entregado al cliente — `0` para una operación que no lo necesitó. */
+  changeGiven: number;
+  /** `totalCash - changeGiven` — el efectivo realmente aplicado al depósito, siempre igual a `totalAmount` en una operación guardada. */
+  netCashApplied: number;
   /** Free text, typed by whoever registers the deposit — never looked up against the clients table. */
   clientName: string | null;
   transactionTypeId: string;
@@ -75,6 +79,8 @@ export interface RegisterBankDepositInput {
   cashDetails: BankDepositCashDetailInput[];
   transactionAmounts: number[];
   clientName?: string | null;
+  /** "Vuelto" — omitido/`0` significa que no hubo vuelto, idéntico al comportamiento de siempre. El backend recalcula/valida esto contra el efectivo real. */
+  changeGiven?: number;
 }
 
 /** `GET /bank-deposits/monthly-count` — backs the Resumen dashboard's "Bancos" tile. `count` excludes anuladas and always covers the 1st of the current month through today; it resets on its own the moment the calendar rolls into a new month, there's nothing to reset client-side. */

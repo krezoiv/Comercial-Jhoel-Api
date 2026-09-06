@@ -113,7 +113,13 @@
         <app-cuadre-result-card
           [totalAmount]="draft.totalAmount()"
           [totalCash]="draft.totalCash()"
+          [netCash]="draft.netCash()"
           [status]="draft.cashStatus()"
+          [hasPendingChange]="draft.hasPendingChange()"
+          [excessAmount]="draft.excessAmount()"
+          [changeGiven]="draft.changeGiven()"
+          [changeConfirmed]="draft.changeConfirmed()"
+          (confirmChangeRequested)="onConfirmChangeRequested($event)"
         />
       </div>
     </section>
@@ -147,8 +153,16 @@
     [totalAmount]="draft.totalAmount()"
     [cashCounts]="draft.cashCounts()"
     [transactionAmounts]="draft.transactionAmounts()"
+    [changeGiven]="draft.changeConfirmed() ? draft.changeGiven() : 0"
     [isSaving]="isSaving()"
     (confirmed)="confirmSave()"
     (cancelled)="dismissConfirm()"
+  />
+
+  <app-change-confirm-modal
+    [open]="isChangeConfirmOpen()"
+    [amount]="pendingChangeAmount()"
+    (confirmed)="onChangeConfirmed()"
+    (cancelled)="onChangeCancelled()"
   />
 }

@@ -20,6 +20,7 @@ import { StatusIndicatorComponent } from './components/status-indicator/status-i
 import { TransactionDistributionComponent } from './components/transaction-distribution/transaction-distribution.component';
 import { TransactionSummaryCardComponent } from './components/transaction-summary-card/transaction-summary-card.component';
 import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadre-result-card.component';
+import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 
 type TransaccionarView = 'dashboard' | 'form';
 
@@ -55,6 +56,7 @@ type TransaccionarView = 'dashboard' | 'form';
     SaveConfirmModalComponent,
     TransactionSummaryCardComponent,
     CuadreResultCardComponent,
+    ChangeConfirmModalComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -86,6 +88,10 @@ export class TransaccionarPageComponent {
 
   readonly isSaving = signal(false);
   readonly isConfirmOpen = signal(false);
+
+  /** State for "Confirmar Vuelto" — `pendingChangeAmount` is captured at the moment "Confirmar vuelto" is clicked (the card's own `excessAmount` at that instant), never re-read from the store inside the modal, so what the modal displays and what gets confirmed can never drift apart even if the draft changes in the background. */
+  readonly isChangeConfirmOpen = signal(false);
+  readonly pendingChangeAmount = signal(0);
 
   readonly selectedBankName = computed(
     () => this.transactionBanks().find((b) => b.id === this.draft.transactionBankId())?.name ?? '',
@@ -200,6 +206,21 @@ export class TransaccionarPageComponent {
     this.draft.setTransactionAmount(event.index, event.amount);
   }
 
+  onConfirmChangeRequested(amount: number): void {
+    this.pendingChangeAmount.set(amount);
+    this.isChangeConfirmOpen.set(true);
+  }
+
+  /** The vuelto is NOT applied here — only once the modal's own "Confirmar vuelto" fires this. Cancelling the modal (or the draft changing while it's open) leaves the operation exactly as unconfirmed/uncuadrado as before, per the ticket's own "no debe considerarse confirmado hasta confirmar" rule. */
+  onChangeConfirmed(): void {
+    this.draft.confirmChange(this.pendingChangeAmount());
+    this.isChangeConfirmOpen.set(false);
+  }
+
+  onChangeCancelled(): void {
+    this.isChangeConfirmOpen.set(false);
+  }
+
   requestSave(): void {
     if (!this.draft.canSave() || this.isSaving()) {
       return;
@@ -230,6 +251,7 @@ export class TransaccionarPageComponent {
           .filter((row) => row.quantity > 0),
         transactionAmounts: this.draft.transactionAmounts(),
         clientName: this.draft.clientName().trim() || null,
+        changeGiven: this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
       })
       .subscribe({
         next: () => {

@@ -15,6 +15,7 @@ export class BankDepositOperationMapper {
       totalCash: orm.totalCash,
       totalDistributed: orm.totalDistributed,
       operationDate: orm.operationDate,
+      changeGiven: orm.changeGiven,
       clientName: orm.clientName,
       transactionTypeId: orm.transactionTypeId,
       transactionTypeName: orm.transactionType.name,

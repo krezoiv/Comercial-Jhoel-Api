@@ -13,6 +13,8 @@ interface PersistedBankDepositDraft {
   cashCounts: Record<string, number>;
   transactionAmounts: number[];
   clientName: string;
+  changeGiven: number;
+  changeConfirmed: boolean;
 }
 
 const STORAGE_PREFIX = 'cj_bank_deposit_draft:';
@@ -52,6 +54,19 @@ export class BankDepositDraftStore {
   /** Free text, never required to save — see `RegisterBankDepositInput.clientName`'s own doc comment. */
   readonly clientName = signal('');
 
+  /**
+   * "Vuelto" — cash handed back to the client when `totalCash` exceeds
+   * `totalAmount`. `changeGiven` only ever takes effect once
+   * `changeConfirmed` is `true` (set exclusively by `confirmChange()`, after
+   * the user explicitly confirms the "Confirmar vuelto" modal) — never
+   * applied automatically just because an excess exists. Editing cash
+   * counts or the monto after confirming invalidates the confirmation (see
+   * `setCashQuantity`/`setTotalAmount` below), so a stale vuelto can never
+   * silently apply to different numbers.
+   */
+  readonly changeGiven = signal(0);
+  readonly changeConfirmed = signal(false);
+
   readonly totalCash = computed(() =>
     round2(
       BANK_DEPOSIT_CASH_DENOMINATIONS.reduce(
@@ -65,14 +80,25 @@ export class BankDepositDraftStore {
     round2(this.transactionAmounts().reduce((sum, amount) => sum + (amount || 0), 0)),
   );
 
+  /** `totalCash - totalAmount` — only meaningful (and only ever shown to the user) when positive; the raw excess before any vuelto is confirmed. */
+  readonly excessAmount = computed(() => round2(this.totalCash() - round2(this.totalAmount())));
+
+  /** The cash actually applied to the deposit — `totalCash` minus a *confirmed* vuelto, never an unconfirmed one. Identical to `totalCash` for every draft that doesn't use vuelto (the overwhelming majority), which is what keeps existing behavior byte-for-byte unchanged. */
+  readonly netCash = computed(() =>
+    this.changeConfirmed() ? round2(this.totalCash() - this.changeGiven()) : this.totalCash(),
+  );
+
+  /** Drives the "Dar vuelto" action — true only while there's a real, not-yet-confirmed excess. */
+  readonly hasPendingChange = computed(() => !this.changeConfirmed() && this.excessAmount() > 0);
+
   readonly cashStatus = computed<CuadreStatus>(() => {
     const total = round2(this.totalAmount());
-    const cash = this.totalCash();
+    const net = this.netCash();
     // A zero monto has nothing to cuadrar against yet — never claim "green"
     // for an effectively empty draft, even though 0 === 0 mathematically.
     if (total === 0) return 'yellow';
-    if (cash === total) return 'green';
-    return cash > total ? 'red' : 'yellow';
+    if (net === total) return 'green';
+    return net > total ? 'red' : 'yellow';
   });
 
   readonly transactionsStatus = computed<CuadreStatus>(() => {
@@ -132,16 +158,52 @@ export class BankDepositDraftStore {
 
   setTotalAmount(amount: number): void {
     this.totalAmount.set(amount);
+    this.invalidateChange();
+    // With exactly one transaction, its amount is never typed independently —
+    // it always mirrors the total, so a change here must stay in sync too.
+    if (this.transactionAmounts().length === 1) {
+      this.transactionAmounts.set([amount]);
+    }
     this.persist();
   }
 
   setCashQuantity(denomination: number, quantity: number): void {
     this.cashCounts.update((counts) => ({ ...counts, [String(denomination)]: quantity }));
+    this.invalidateChange();
     this.persist();
   }
 
-  /** Resizes `transactionAmounts` to `count` rows, padding new rows with `0` and truncating extras — the page component is responsible for confirming with the user before calling this when shrinking would discard already-typed amounts. */
+  /** Called from "Confirmar vuelto" — the one and only place `changeConfirmed` becomes `true`. `amount` is always `excessAmount()` at the moment of confirming, passed in rather than re-read here so the modal's own displayed figure and the value actually stored can never drift apart. */
+  confirmChange(amount: number): void {
+    this.changeGiven.set(round2(amount));
+    this.changeConfirmed.set(true);
+    this.persist();
+  }
+
+  /** Cash counts or the monto changed after a vuelto was confirmed — the old confirmation no longer means anything against new numbers, so it's cleared rather than silently carried forward. A no-op (and free) whenever nothing was confirmed yet. */
+  private invalidateChange(): void {
+    if (this.changeConfirmed()) {
+      this.changeGiven.set(0);
+      this.changeConfirmed.set(false);
+    }
+  }
+
+  /**
+   * Resizes `transactionAmounts` to `count` rows. A single transaction never
+   * needs to be typed manually — it always equals the full `totalAmount`, so
+   * `count === 1` always rebuilds a fresh `[totalAmount]` regardless of what
+   * was there before (discarding any prior multi-row distribution, per this
+   * feature's own explicit rule). For every other count, the existing
+   * pad-with-`0`/truncate behavior is unchanged — the page component is still
+   * responsible for confirming with the user before calling this when
+   * shrinking would discard already-typed amounts.
+   */
   setTransactionCount(count: number): void {
+    if (count === 1) {
+      this.transactionAmounts.set([round2(this.totalAmount())]);
+      this.persist();
+      return;
+    }
     this.transactionAmounts.update((amounts) => {
       const next = amounts.slice(0, count);
       while (next.length < count) {
@@ -173,6 +235,8 @@ export class BankDepositDraftStore {
     this.cashCounts.set(emptyCashCounts());
     this.transactionAmounts.set([]);
     this.clientName.set('');
+    this.changeGiven.set(0);
+    this.changeConfirmed.set(false);
     this.clearStorage();
   }
 
@@ -189,6 +253,8 @@ export class BankDepositDraftStore {
       cashCounts: this.cashCounts(),
       transactionAmounts: this.transactionAmounts(),
       clientName: this.clientName(),
+      changeGiven: this.changeGiven(),
+      changeConfirmed: this.changeConfirmed(),
     };
     try {
       sessionStorage.setItem(key, JSON.stringify(payload));
@@ -217,6 +283,8 @@ export class BankDepositDraftStore {
       this.cashCounts.set({ ...emptyCashCounts(), ...(parsed.cashCounts ?? {}) });
       this.transactionAmounts.set(Array.isArray(parsed.transactionAmounts) ? parsed.transactionAmounts : []);
       this.clientName.set(parsed.clientName ?? '');
+      this.changeGiven.set(parsed.changeGiven ?? 0);
+      this.changeConfirmed.set(parsed.changeConfirmed ?? false);
     } catch {
       sessionStorage.removeItem(key);
     }

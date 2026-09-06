@@ -24,6 +24,8 @@ export interface RegisterBankDepositOperationInput {
   transactionAmounts: number[];
   userId: string;
   clientName?: string | null;
+  /** "Vuelto" — omitted/`0` means no vuelto. `register_bank_deposit_operation` recomputes/validates this against the actual cash total server-side regardless of what's sent here. */
+  changeGiven?: number;
 }
 
 /**
@@ -69,6 +71,7 @@ export class RegisterBankDepositOperationUseCase {
       transactionAmounts: input.transactionAmounts,
       userId: input.userId,
       clientName: input.clientName ?? null,
+      changeGiven: input.changeGiven ?? 0,
     });
 
     return toBankDepositOperationOutput(operation);

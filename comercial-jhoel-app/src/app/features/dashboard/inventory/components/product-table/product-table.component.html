@@ -1,15 +1,26 @@
 @if (loading) {
   <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
     <table class="product-table">
+      <colgroup>
+        <col class="col-product" />
+        <col class="col-sku" />
+        <col class="col-category" />
+        <col class="col-business" />
+        <col class="col-price" />
+        <col class="col-price" />
+        <col class="col-price" />
+        <col class="col-stock" />
+        <col class="col-actions" />
+      </colgroup>
       <thead>
         <tr>
           <th>Producto</th>
           <th>SKU</th>
           <th>Categoría</th>
           <th>Negocio</th>
-          <th class="align-right">Precio costo</th>
-          <th class="align-right">Precio público</th>
-          <th class="align-right">Precio mayor</th>
+          <th class="align-right">Costo</th>
+          <th class="align-right">Público</th>
+          <th class="align-right">Mayor</th>
           <th class="align-right">Stock</th>
           <th class="align-right">Acciones</th>
         </tr>
@@ -57,53 +68,79 @@
 } @else {
   <div class="table-wrapper table-wrapper--desktop">
     <table class="product-table">
+      <colgroup>
+        <col class="col-product" />
+        <col class="col-sku" />
+        <col class="col-category" />
+        <col class="col-business" />
+        <col class="col-price" />
+        <col class="col-price" />
+        <col class="col-price" />
+        <col class="col-stock" />
+        <col class="col-actions" />
+      </colgroup>
       <thead>
         <tr>
           <th>
             <button type="button" class="sort-btn" (click)="toggleSort('name')">
-              Producto
+              <span class="sort-btn__label">Producto</span>
               <app-icon [name]="sortIcon('name')" [size]="14" />
             </button>
           </th>
           <th>
             <button type="button" class="sort-btn" (click)="toggleSort('sku')">
-              SKU
+              <span class="sort-btn__label">SKU</span>
               <app-icon [name]="sortIcon('sku')" [size]="14" />
             </button>
           </th>
           <th>
-            <button type="button" class="sort-btn" (click)="toggleSort('category')">
-              Categoría
+            <button type="button" class="sort-btn" (click)="toggleSort('category')" title="Categoría">
+              <span class="sort-btn__label">Categoría</span>
               <app-icon [name]="sortIcon('category')" [size]="14" />
             </button>
           </th>
           <th>
-            <button type="button" class="sort-btn" (click)="toggleSort('business')">
-              Negocio
+            <button type="button" class="sort-btn" (click)="toggleSort('business')" title="Negocio">
+              <span class="sort-btn__label">Negocio</span>
               <app-icon [name]="sortIcon('business')" [size]="14" />
             </button>
           </th>
           <th class="align-right">
-            <button type="button" class="sort-btn sort-btn--right" (click)="toggleSort('costPrice')">
-              Precio costo
+            <button
+              type="button"
+              class="sort-btn sort-btn--right"
+              (click)="toggleSort('costPrice')"
+              title="Precio costo"
+            >
+              <span class="sort-btn__label">Costo</span>
               <app-icon [name]="sortIcon('costPrice')" [size]="14" />
             </button>
           </th>
           <th class="align-right">
-            <button type="button" class="sort-btn sort-btn--right" (click)="toggleSort('publicPrice')">
-              Precio público
+            <button
+              type="button"
+              class="sort-btn sort-btn--right"
+              (click)="toggleSort('publicPrice')"
+              title="Precio público"
+            >
+              <span class="sort-btn__label">Público</span>
               <app-icon [name]="sortIcon('publicPrice')" [size]="14" />
             </button>
           </th>
           <th class="align-right">
-            <button type="button" class="sort-btn sort-btn--right" (click)="toggleSort('wholesalePrice')">
-              Precio mayor
+            <button
+              type="button"
+              class="sort-btn sort-btn--right"
+              (click)="toggleSort('wholesalePrice')"
+              title="Precio mayor"
+            >
+              <span class="sort-btn__label">Mayor</span>
               <app-icon [name]="sortIcon('wholesalePrice')" [size]="14" />
             </button>
           </th>
           <th class="align-right">
             <button type="button" class="sort-btn sort-btn--right" (click)="toggleSort('stock')">
-              Stock
+              <span class="sort-btn__label">Stock</span>
               <app-icon [name]="sortIcon('stock')" [size]="14" />
             </button>
           </th>
@@ -113,10 +150,10 @@
       <tbody>
         @for (product of sortedProducts(); track product.id) {
           <tr>
-            <td class="product-table__name">{{ product.name }}</td>
-            <td class="product-table__sku">{{ product.sku || '—' }}</td>
-            <td>{{ product.category }}</td>
-            <td>{{ product.business }}</td>
+            <td class="product-table__name ellipsis-cell" [title]="product.name">{{ product.name }}</td>
+            <td class="product-table__sku ellipsis-cell" [title]="product.sku || ''">{{ product.sku || '—' }}</td>
+            <td class="ellipsis-cell" [title]="product.category">{{ product.category }}</td>
+            <td class="ellipsis-cell" [title]="product.business">{{ product.business }}</td>
             <td class="align-right">{{ formatCurrency(product.costPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.publicPrice) }}</td>
             <td class="align-right">{{ formatCurrency(product.wholesalePrice) }}</td>

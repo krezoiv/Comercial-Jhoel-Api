@@ -26,6 +26,8 @@ export class SaveConfirmModalComponent {
   @Input() totalAmount = 0;
   @Input() cashCounts: Record<string, number> = {};
   @Input() transactionAmounts: number[] = [];
+  /** "Vuelto" confirmado — `0` cuando la operación no lo necesitó. */
+  @Input() changeGiven = 0;
   @Input() isSaving = false;
 
   @Output() confirmed = new EventEmitter<void>();
@@ -33,6 +35,10 @@ export class SaveConfirmModalComponent {
 
   formatCurrency = formatCurrency;
   formatQuantity = formatQuantity;
+
+  get totalCashReceived(): number {
+    return this.cashRows.reduce((sum, row) => sum + row.subtotal, 0);
+  }
 
   get cashRows(): CashSummaryRow[] {
     return BANK_DEPOSIT_CASH_DENOMINATIONS.map((denomination) => ({

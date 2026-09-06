@@ -63,6 +63,17 @@ export class BankDepositOperationOrmEntity {
   @Column({ name: 'operation_date', type: 'date' })
   operationDate: string;
 
+  /** "Vuelto" — cash handed back to the client. `total_cash - change_given` is always the net amount actually applied to the deposit; `total_cash` alone is the gross cash received, kept for audit. */
+  @Column({
+    name: 'change_given',
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    default: 0,
+    transformer: new DecimalColumnTransformer(),
+  })
+  changeGiven: number;
+
   @Column({ name: 'client_name', type: 'varchar', length: 150, nullable: true })
   clientName: string | null;
 

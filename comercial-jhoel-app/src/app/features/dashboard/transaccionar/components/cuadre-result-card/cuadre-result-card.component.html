@@ -7,9 +7,19 @@
       <dd>{{ formatCurrency(totalAmount) }}</dd>
     </div>
     <div class="result-card__row">
-      <dt>Total contado</dt>
+      <dt>{{ hasConfirmedChange ? 'Efectivo recibido' : 'Total contado' }}</dt>
       <dd>{{ formatCurrency(totalCash) }}</dd>
     </div>
+    @if (hasConfirmedChange) {
+      <div class="result-card__row">
+        <dt>Vuelto entregado</dt>
+        <dd>{{ formatCurrency(changeGiven) }}</dd>
+      </div>
+      <div class="result-card__row">
+        <dt>Efectivo neto aplicado</dt>
+        <dd>{{ formatCurrency(netCash) }}</dd>
+      </div>
+    }
     <div class="result-card__row result-card__row--diff" [class]="'result-card__row--' + status">
       <dt>Diferencia</dt>
       <dd>{{ difference > 0 ? '+' : '' }}{{ formatCurrency(difference) }}</dd>
@@ -19,4 +29,13 @@
   <div class="result-card__status">
     <app-cuadre-status-indicator [status]="status" [text]="statusText" />
   </div>
+
+  @if (hasPendingChange) {
+    <div class="result-card__change-panel">
+      <span class="result-card__change-title">Vuelto al Cliente</span>
+      <span class="result-card__change-hint">Se debe entregar:</span>
+      <span class="result-card__change-amount">{{ formatCurrency(excessAmount) }}</span>
+      <app-button variant="primary" (click)="requestConfirmChange()">Confirmar vuelto</app-button>
+    </div>
+  }
 </app-card>

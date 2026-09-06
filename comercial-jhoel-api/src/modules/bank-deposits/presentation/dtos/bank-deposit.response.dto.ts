@@ -20,6 +20,8 @@ export class BankDepositOperationResponseDto {
   totalCash: number;
   totalDistributed: number;
   operationDate: string;
+  changeGiven: number;
+  netCashApplied: number;
   clientName: string | null;
   transactionTypeId: string;
   transactionTypeName: string;

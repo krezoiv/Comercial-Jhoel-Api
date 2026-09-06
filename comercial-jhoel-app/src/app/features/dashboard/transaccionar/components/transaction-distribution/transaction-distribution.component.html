@@ -22,7 +22,7 @@
           appDecimalInput
           class="transaction-row__input"
           [value]="amount"
-          [disabled]="disabled"
+          [disabled]="disabled || transactionAmounts.length === 1"
           (change)="onAmountInput($index, $any($event.target).value)"
           [attr.aria-label]="'Monto de la transacción ' + ($index + 1)"
         />

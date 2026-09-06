@@ -10,6 +10,8 @@ export interface BankDepositOperationProps {
   totalCash: number;
   totalDistributed: number;
   operationDate: string;
+  /** "Vuelto" — always `0` for an operation that didn't need one. `totalCash - changeGiven` is the net amount actually applied to the deposit. */
+  changeGiven: number;
   clientName: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
@@ -69,6 +71,15 @@ export class BankDepositOperation {
 
   get operationDate(): string {
     return this.props.operationDate;
+  }
+
+  get changeGiven(): number {
+    return this.props.changeGiven;
+  }
+
+  /** The net cash actually applied to the deposit — always equal to `totalAmount` for a saved operation, per `register_bank_deposit_operation`'s own cuadre check. Derived, never stored twice. */
+  get netCashApplied(): number {
+    return this.props.totalCash - this.props.changeGiven;
   }
 
   get clientName(): string | null {

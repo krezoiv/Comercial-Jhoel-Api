@@ -26,6 +26,16 @@
           <dt>Monto Total</dt>
           <dd>{{ formatCurrency(totalAmount) }}</dd>
         </div>
+        @if (changeGiven > 0) {
+          <div class="modal__summary-row">
+            <dt>Efectivo recibido</dt>
+            <dd>{{ formatCurrency(totalCashReceived) }}</dd>
+          </div>
+          <div class="modal__summary-row">
+            <dt>Vuelto</dt>
+            <dd>{{ formatCurrency(changeGiven) }}</dd>
+          </div>
+        }
       </dl>
 
       <div class="modal__section">
