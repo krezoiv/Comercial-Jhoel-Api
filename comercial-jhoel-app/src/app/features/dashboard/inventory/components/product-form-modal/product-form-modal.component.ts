@@ -89,7 +89,20 @@ export class ProductFormModalComponent implements OnChanges {
     costPrice: [0, [Validators.required, Validators.min(0.01)]],
     publicPrice: [0, [Validators.required, Validators.min(0.01)]],
     wholesalePrice: [0, [Validators.required, Validators.min(0.01)]],
-    stock: [0, [Validators.required, Validators.min(0)]],
+    /**
+     * Always `0` for a new product — no UI exposes this anymore (see the
+     * template's "El producto se creará con stock 0" note). Stock only
+     * enters the system through Compras (which correctly resolves the
+     * chosen presentation's conversion factor) or Traslados; a plain
+     * "Stock inicial" number here had no presentation selector at all, so
+     * a user who defined a "Caja" presentation below and typed "10" got
+     * exactly 10 base units, not 10 cajas — silently wrong, and impossible
+     * to fix generically without duplicating Compras' own conversion UI.
+     * Removing the input avoids that trap entirely rather than papering
+     * over it. Still present as a control (not deleted) only so `submit()`
+     * can keep destructuring the form without a separate special case.
+     */
+    stock: [0],
     presentations: this.fb.array<PresentationRow>([]),
   });
 

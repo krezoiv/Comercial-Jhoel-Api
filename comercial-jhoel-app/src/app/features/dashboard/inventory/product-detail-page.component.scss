@@ -179,9 +179,15 @@
 .min-stock-input {
   width: 4.5rem;
   padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-light-muted);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-sm);
   font-size: var(--fs-sm);
   text-align: right;
   color: var(--color-text-on-light);
+  @include focus-ring;
+
+  &:focus {
+    border-color: var(--color-primary-500);
+  }
 }

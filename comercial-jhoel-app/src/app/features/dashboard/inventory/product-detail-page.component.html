@@ -84,9 +84,9 @@
                     <td class="align-right">
                       <div class="min-stock-editor">
                         <input
-                          type="number"
-                          min="0"
-                          step="1"
+                          type="text"
+                          inputmode="numeric"
+                          [appDecimalInput]="0"
                           class="min-stock-input"
                           [attr.aria-label]="'Stock mínimo en ' + row.locationName"
                           [value]="draftMinStock()[row.locationId]"

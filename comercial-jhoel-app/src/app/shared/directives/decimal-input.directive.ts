@@ -102,6 +102,19 @@ export class DecimalInputDirective implements ControlValueAccessor {
     this.onTouched();
   }
 
+  /**
+   * Selects the whole current value on focus — so replacing it is a single
+   * keystroke (type over the selection, or one Delete/Backspace) instead of
+   * having to repeatedly press Backspace to clear a stale amount/quantity
+   * first. Applies everywhere this directive already does (every price,
+   * cantidad, saldo, stock field in the app), so this one change covers all
+   * of them at once rather than needing a per-field opt-in.
+   */
+  @HostListener('focus')
+  onFocus(): void {
+    this.el.nativeElement.select();
+  }
+
   // ---- Keystroke/paste filtering — applies no matter how the value is bound ----
 
   @HostListener('keydown', ['$event'])

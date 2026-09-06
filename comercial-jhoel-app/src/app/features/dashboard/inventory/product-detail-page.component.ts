@@ -17,6 +17,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, BadgeComponent, CardComponent, IconComponent, EmptyStateComponent } from '../../../shared/ui';
 import { PresentationFormModalComponent } from './components/presentation-form-modal/presentation-form-modal.component';
+import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 
 /**
  * Product detail view — General / Presentaciones / Inventario / Movimientos
@@ -38,6 +39,7 @@ import { PresentationFormModalComponent } from './components/presentation-form-m
     IconComponent,
     EmptyStateComponent,
     PresentationFormModalComponent,
+    DecimalInputDirective,
   ],
   templateUrl: './product-detail-page.component.html',
   styleUrl: './product-detail-page.component.scss',

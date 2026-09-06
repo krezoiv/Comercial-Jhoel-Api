@@ -114,28 +114,16 @@
             }
           </div>
 
-          @if (!isEditMode) {
-            <div class="field">
-              <label for="product-stock">Stock inicial</label>
-              <input
-                id="product-stock"
-                type="text"
-                inputmode="numeric"
-                [appDecimalInput]="0"
-                formControlName="stock"
-                placeholder="0"
-              />
-              <span class="field__hint">Se registrará como saldo inicial en Bodega.</span>
-              @if (form.controls.stock.invalid && form.controls.stock.touched) {
-                <span class="field__error">Ingresa una cantidad válida (0 o más).</span>
-              }
-            </div>
-          }
         </div>
 
         @if (isEditMode) {
           <p class="field__hint">
             El stock ya no se edita aquí — usa Compras, Ventas o Traslados para modificarlo.
+          </p>
+        } @else {
+          <p class="field__hint">
+            El producto se creará con stock 0 en Bodega — registra la existencia real desde Compras (respeta la
+            presentación y el factor de conversión) o desde un Traslado.
           </p>
         }
 
