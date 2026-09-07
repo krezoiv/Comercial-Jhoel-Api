@@ -66,13 +66,20 @@ import { PresentationTypesModule } from '../presentation-types/presentation-type
     RegisterInventoryTransferUseCase,
     SetMinStockUseCase,
   ],
-  // Exported so `ProductsModule`'s own use cases (CreateProductUseCase) can
-  // create a product's default "Unidad" presentation and seed its
-  // inventory_stock rows without duplicating this module's repositories.
+  // Exported so `ProductsModule`'s own use cases (CreateProductUseCase,
+  // ImportProductsFromExcelUseCase) can create a product's default "Unidad"
+  // presentation and seed its inventory_stock rows without duplicating this
+  // module's repositories. `CreatePresentationUseCase` itself is exported
+  // for the same reason `ImportProductsFromExcelUseCase` reuses
+  // `CreateProductUseCase` — an optional additional presentation (Caja,
+  // Paquete, ...) per imported row must be validated/created through the
+  // exact same use case the manual "Agregar presentación" form already
+  // calls, never a second copy of its factor/price validation.
   exports: [
     PRODUCT_PRESENTATION_REPOSITORY,
     INVENTORY_STOCK_REPOSITORY,
     INVENTORY_LOCATION_REPOSITORY,
+    CreatePresentationUseCase,
   ],
 })
 export class InventoryModule {}

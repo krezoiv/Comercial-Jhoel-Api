@@ -10,6 +10,7 @@ import { UpdateProductUseCase } from './application/use-cases/update-product.use
 import { DeactivateProductUseCase } from './application/use-cases/deactivate-product.use-case';
 import { ExportProductsPdfUseCase } from './application/use-cases/export-products-pdf.use-case';
 import { ExportProductsExcelUseCase } from './application/use-cases/export-products-excel.use-case';
+import { ImportProductsFromExcelUseCase } from './application/use-cases/import-products-from-excel.use-case';
 import { ProductsController } from './presentation/controllers/products.controller';
 import { CategoriesModule } from '../categories/categories.module';
 import { BusinessesModule } from '../businesses/businesses.module';
@@ -36,6 +37,7 @@ import { PresentationTypesModule } from '../presentation-types/presentation-type
     DeactivateProductUseCase,
     ExportProductsPdfUseCase,
     ExportProductsExcelUseCase,
+    ImportProductsFromExcelUseCase,
   ],
   // Exported for ReportsModule, which resolves `productId`/`categoryId`
   // filters into display names for the PDF export.

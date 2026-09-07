@@ -74,3 +74,20 @@ export function getStockStatus(stock: number): StockStatus {
 }
 
 export { formatCurrency, formatQuantity, parseNumericValue } from '../utils/number-format.util';
+
+/** One row from the uploaded Excel that couldn't be created, with a human-readable reason — the backend's `ImportProductsFromExcelUseCase` never aborts the whole file on a single bad row. */
+export interface ImportProductsSkippedRow {
+  row: number;
+  name: string;
+  reason: string;
+}
+
+/** `POST /products/import`'s response shape — mirrors `ImportProductsResultResponseDto` on the backend exactly. */
+export interface ImportProductsResult {
+  totalRows: number;
+  created: number;
+  createdNames: string[];
+  skipped: ImportProductsSkippedRow[];
+  /** The product itself was created — only its optional extra presentation (Caja, Paquete, ...) failed. */
+  presentationWarnings: ImportProductsSkippedRow[];
+}

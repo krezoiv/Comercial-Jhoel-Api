@@ -55,12 +55,34 @@
     </app-button>
 
     @if (canManage) {
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx"
+        class="visually-hidden"
+        (change)="onFileSelected($event)"
+      />
+      <app-button variant="ghost" [disabled]="importing" (click)="importFileInput.click()">
+        <app-icon name="upload" [size]="16" />
+        {{ importing ? 'Importando…' : 'Importar Excel' }}
+      </app-button>
+
       <app-button variant="primary" (click)="addProduct.emit()">
         <app-icon name="plus" [size]="16" />
         Agregar producto
       </app-button>
     }
   </div>
+
+  @if (canManage) {
+    <div class="toolbar__import-hint">
+      ¿Primera vez importando?
+      <button type="button" class="template-link" (click)="downloadImportTemplate.emit()">
+        Descarga la plantilla
+      </button>
+      con el formato exacto.
+    </div>
+  }
 
   <div class="toolbar__filters" role="group" aria-label="Filtrar por estado de stock">
     @for (option of stockFilterOptions; track option.value) {

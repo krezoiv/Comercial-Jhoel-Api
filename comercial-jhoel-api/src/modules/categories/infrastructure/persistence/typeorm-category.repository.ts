@@ -36,6 +36,15 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
     return orm ? CategoryMapper.toDomain(orm) : null;
   }
 
+  async findByActiveName(name: string): Promise<Category | null> {
+    const orm = await this.repository
+      .createQueryBuilder('category')
+      .where('LOWER(category.name) = LOWER(:name)', { name })
+      .andWhere('category.isActive = true')
+      .getOne();
+    return orm ? CategoryMapper.toDomain(orm) : null;
+  }
+
   async create(data: CreateCategoryData): Promise<Category> {
     const orm = this.repository.create({
       name: data.name,

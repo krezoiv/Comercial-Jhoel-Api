@@ -16,6 +16,8 @@ export interface BusinessRepository {
   findAll(options?: { activeOnly?: boolean }): Promise<Business[]>;
   findById(id: string): Promise<Business | null>;
   findByName(name: string): Promise<Business | null>;
+  /** Case-insensitive — among active rows only. Backs name-based lookups (e.g. the Excel bulk-import) where a caller has a human-typed name, not an id. */
+  findByActiveName(name: string): Promise<Business | null>;
   create(data: CreateBusinessData): Promise<Business>;
   update(id: string, data: UpdateBusinessData): Promise<Business>;
   deactivate(id: string): Promise<void>;

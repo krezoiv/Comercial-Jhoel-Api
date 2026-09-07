@@ -1,0 +1,83 @@
+@if (open && result) {
+  <div class="modal-backdrop" (click)="closed.emit()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div
+        class="modal__icon"
+        [class.modal__icon--warning]="result.skipped.length > 0 || result.presentationWarnings.length > 0"
+      >
+        <app-icon
+          [name]="result.skipped.length > 0 || result.presentationWarnings.length > 0 ? 'alert-triangle' : 'check-circle'"
+          [size]="24"
+        />
+      </div>
+
+      <h2 class="modal__title">Importación completada</h2>
+      <p class="modal__description">
+        <strong>{{ result.created }}</strong> de <strong>{{ result.totalRows }}</strong>
+        {{ result.totalRows === 1 ? 'producto' : 'productos' }} se {{ result.created === 1 ? 'creó' : 'crearon' }}
+        correctamente.
+        @if (result.skipped.length > 0) {
+          <strong>{{ result.skipped.length }}</strong> fila{{ result.skipped.length === 1 ? '' : 's' }} se
+          omitieron.
+        }
+        @if (result.presentationWarnings.length > 0) {
+          <strong>{{ result.presentationWarnings.length }}</strong>
+          {{ result.presentationWarnings.length === 1 ? 'producto se creó' : 'productos se crearon' }} sin su
+          presentación adicional.
+        }
+      </p>
+
+      @if (result.skipped.length > 0) {
+        <p class="modal__section-title">Filas omitidas</p>
+        <div class="modal__table-wrapper">
+          <table class="modal__table">
+            <thead>
+              <tr>
+                <th>Fila</th>
+                <th>Producto</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result.skipped; track row.row) {
+                <tr>
+                  <td>{{ row.row }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.reason }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (result.presentationWarnings.length > 0) {
+        <p class="modal__section-title">Productos creados sin su presentación adicional</p>
+        <div class="modal__table-wrapper">
+          <table class="modal__table">
+            <thead>
+              <tr>
+                <th>Fila</th>
+                <th>Producto</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result.presentationWarnings; track row.row) {
+                <tr>
+                  <td>{{ row.row }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.reason }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="modal__actions">
+        <app-button variant="primary" (click)="closed.emit()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

@@ -2,7 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Business, Category, Product, UnitOfMeasureListItem, getStockStatus } from '../../../core/models';
+import {
+  Business,
+  Category,
+  ImportProductsResult,
+  Product,
+  UnitOfMeasureListItem,
+  getStockStatus,
+} from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { BusinessService } from '../../../core/services/business.service';
@@ -18,6 +25,7 @@ import { ProductTableComponent } from './components/product-table/product-table.
 import { ProductFormModalComponent } from './components/product-form-modal/product-form-modal.component';
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
 import { TransferInventoryModalComponent } from './components/transfer-inventory-modal/transfer-inventory-modal.component';
+import { ImportResultsModalComponent } from './components/import-results-modal/import-results-modal.component';
 
 @Component({
   selector: 'app-inventory-page',
@@ -29,6 +37,7 @@ import { TransferInventoryModalComponent } from './components/transfer-inventory
     ProductFormModalComponent,
     DeleteConfirmModalComponent,
     TransferInventoryModalComponent,
+    ImportResultsModalComponent,
   ],
   templateUrl: './inventory-page.component.html',
   styleUrl: './inventory-page.component.scss',
@@ -60,6 +69,10 @@ export class InventoryPageComponent {
   private readonly router = inject(Router);
 
   readonly isTransferOpen = signal(false);
+
+  readonly isImporting = signal(false);
+  readonly isImportResultsOpen = signal(false);
+  readonly importResult = signal<ImportProductsResult | null>(null);
 
   /** ADMIN/SUPER_ADMIN only — passed down to hide add/edit/delete for USER. The backend enforces this regardless. */
   readonly isAdmin = this.authService.isAdmin;
@@ -289,5 +302,45 @@ export class InventoryPageComponent {
     // Stock breakdown per product changed — the table's own Bodega/Vitrina
     // columns need the fresh totals, not just a toast.
     this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+  }
+
+  onDownloadImportTemplate(): void {
+    this.inventoryService.downloadImportTemplate().subscribe({
+      next: (blob) => downloadBlob(blob, 'plantilla-importar-productos.xlsx'),
+      error: async (error: HttpErrorResponse) =>
+        this.notificationService.error(
+          await extractBlobErrorMessage(error, 'No se pudo descargar la plantilla.'),
+        ),
+    });
+  }
+
+  /**
+   * Every product `POST /products/import` accepted is already saved by the
+   * time this resolves — the response is only a summary, never something
+   * to "confirm" — so the follow-up is the same as after any create: show
+   * the result, then refetch the list once (never per-row) so the table
+   * reflects every newly created product in one request.
+   */
+  onImportFile(file: File): void {
+    this.isImporting.set(true);
+    this.inventoryService.importProductsExcel(file).subscribe({
+      next: (result) => {
+        this.isImporting.set(false);
+        this.importResult.set(result);
+        this.isImportResultsOpen.set(true);
+        if (result.created > 0) {
+          this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isImporting.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo importar el archivo.'));
+      },
+    });
+  }
+
+  closeImportResults(): void {
+    this.isImportResultsOpen.set(false);
+    this.importResult.set(null);
   }
 }

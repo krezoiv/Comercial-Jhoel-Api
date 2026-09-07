@@ -22,6 +22,40 @@ const HEADER_FILL: ExcelJS.Fill = {
 const MONEY_FORMAT = '"Q"#,##0.00';
 
 /**
+ * The exact, ordered header row `ImportProductsFromExcelUseCase` expects —
+ * defined once here (the "products excel" schema's home) and imported by
+ * that use case, so the parser and the template it hands out can never
+ * silently drift apart. Deliberately mirrors the export's own column
+ * naming/order above (Producto, SKU, Categoría, Negocio, Unidad, precios,
+ * Stock) — a file exported from this same screen already looks like a
+ * filled-in import template.
+ *
+ * The last 4 columns are for one **optional additional presentation**
+ * (Caja, Paquete, ...) — the product's own base "Unidad" presentation
+ * (factor 1) is still always auto-created regardless, exactly like a
+ * manually-created product. Leave all 4 blank for a row that only needs
+ * "Unidad"; fill all 4 together to also create one more presentation for
+ * that product. This never supports more than one extra presentation per
+ * row — a product needing several (Unidad + Caja + Paquete, say) still gets
+ * the rest added afterward through the existing "Agregar presentación" UI.
+ */
+export const PRODUCTS_IMPORT_HEADERS = [
+  'Producto',
+  'SKU',
+  'Categoría',
+  'Negocio',
+  'Unidad de Medida',
+  'Precio Costo',
+  'Precio Público',
+  'Precio Mayorista',
+  'Stock Inicial',
+  'Tipo de Presentación',
+  'Factor de Presentación',
+  'Precio Costo Presentación',
+  'Precio Público Presentación',
+] as const;
+
+/**
  * `exceljs` is this app's Excel equivalent of `pdfkit` — pure JS, no native
  * build step. Unlike the PDF export (capped at `EXPORT_ROW_LIMIT`, a printed
  * table has a practical page-count limit), a spreadsheet has no such
@@ -86,6 +120,78 @@ export async function buildProductsExcel(
     }
   }
 
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+}
+
+/**
+ * Blank import template — `PRODUCTS_IMPORT_HEADERS` as the header row, plus
+ * one filled-in example row so the expected format (numbers as plain
+ * numbers, not text; empty SKU/Stock/presentation columns allowed) is
+ * obvious without a separate instructions sheet. `ImportProductsFromExcelUseCase`
+ * reads columns purely by position (1-13, matching this exact order), never
+ * by header text matching beyond the one initial "does this look like our
+ * template" check.
+ */
+export async function buildProductsImportTemplate(): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Comercial Jhoel';
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet('Productos');
+
+  sheet.columns = [
+    { header: PRODUCTS_IMPORT_HEADERS[0], key: 'name', width: 32 },
+    { header: PRODUCTS_IMPORT_HEADERS[1], key: 'sku', width: 16 },
+    { header: PRODUCTS_IMPORT_HEADERS[2], key: 'categoryName', width: 20 },
+    { header: PRODUCTS_IMPORT_HEADERS[3], key: 'businessName', width: 18 },
+    { header: PRODUCTS_IMPORT_HEADERS[4], key: 'unitName', width: 18 },
+    { header: PRODUCTS_IMPORT_HEADERS[5], key: 'costPrice', width: 14 },
+    { header: PRODUCTS_IMPORT_HEADERS[6], key: 'publicPrice', width: 14 },
+    { header: PRODUCTS_IMPORT_HEADERS[7], key: 'wholesalePrice', width: 16 },
+    { header: PRODUCTS_IMPORT_HEADERS[8], key: 'stock', width: 14 },
+    { header: PRODUCTS_IMPORT_HEADERS[9], key: 'presentationTypeName', width: 20 },
+    { header: PRODUCTS_IMPORT_HEADERS[10], key: 'presentationFactor', width: 20 },
+    { header: PRODUCTS_IMPORT_HEADERS[11], key: 'presentationCostPrice', width: 22 },
+    { header: PRODUCTS_IMPORT_HEADERS[12], key: 'presentationPublicPrice', width: 24 },
+  ];
+
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = HEADER_FILL;
+  headerRow.alignment = { vertical: 'middle' };
+  headerRow.height = 20;
+
+  sheet.addRow({
+    name: 'Lapicero BIC Negro',
+    sku: '7501014511023',
+    categoryName: 'Papelería Escolar',
+    businessName: 'Librería',
+    unitName: 'Unidad',
+    costPrice: 0.84,
+    publicPrice: 1.5,
+    wholesalePrice: 1.25,
+    stock: 100,
+    // Optional — deja estas 4 celdas vacías si el producto solo se vende
+    // por "Unidad". Aquí se muestra un ejemplo con una presentación
+    // adicional: una "Caja" de 12 unidades con su propio precio.
+    presentationTypeName: 'Caja',
+    presentationFactor: 12,
+    presentationCostPrice: 9,
+    presentationPublicPrice: 16,
+  });
+
+  ['costPrice', 'publicPrice', 'wholesalePrice', 'presentationCostPrice', 'presentationPublicPrice'].forEach(
+    (key) => {
+      sheet.getColumn(key).numFmt = MONEY_FORMAT;
+    },
+  );
+  sheet.getColumn('stock').numFmt = '#,##0';
+  sheet.getColumn('presentationFactor').numFmt = '#,##0';
+
+  sheet.getRow(2).font = { italic: true, color: { argb: 'FF6B7280' } };
   sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
   const buffer = await workbook.xlsx.writeBuffer();

@@ -36,6 +36,15 @@ export class TypeOrmBusinessRepository implements BusinessRepository {
     return orm ? BusinessMapper.toDomain(orm) : null;
   }
 
+  async findByActiveName(name: string): Promise<Business | null> {
+    const orm = await this.repository
+      .createQueryBuilder('business')
+      .where('LOWER(business.name) = LOWER(:name)', { name })
+      .andWhere('business.isActive = true')
+      .getOne();
+    return orm ? BusinessMapper.toDomain(orm) : null;
+  }
+
   async create(data: CreateBusinessData): Promise<Business> {
     const orm = this.repository.create({
       name: data.name,

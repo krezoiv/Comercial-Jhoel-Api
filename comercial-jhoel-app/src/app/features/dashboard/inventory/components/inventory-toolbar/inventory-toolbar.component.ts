@@ -35,6 +35,8 @@ export class InventoryToolbarComponent {
   @Input() stockFilter: StockFilterValue = 'all';
   /** USER role doesn't get to create products — hides the button, the backend still enforces this. */
   @Input() canManage = true;
+  /** True while `POST /products/import` is in flight — disables the button so a slow upload can't be double-submitted. */
+  @Input() importing = false;
 
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() selectedCategoryChange = new EventEmitter<string>();
@@ -44,6 +46,18 @@ export class InventoryToolbarComponent {
   @Output() transferInventory = new EventEmitter<void>();
   @Output() exportPdf = new EventEmitter<void>();
   @Output() exportExcel = new EventEmitter<void>();
+  @Output() importFile = new EventEmitter<File>();
+  @Output() downloadImportTemplate = new EventEmitter<void>();
 
   readonly stockFilterOptions = STOCK_FILTER_OPTIONS;
+
+  /** The hidden `<input type="file">` is the real picker — this only forwards whatever it resolves, and always clears it after so selecting the exact same file twice in a row still fires a `change` event. */
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.importFile.emit(file);
+    }
+    input.value = '';
+  }
 }

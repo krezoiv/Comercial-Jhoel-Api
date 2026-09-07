@@ -3,7 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, PaginatedResponse, Product, ProductInput, StockByLocation } from '../models';
+import {
+  ApiSuccessResponse,
+  ImportProductsResult,
+  PaginatedResponse,
+  Product,
+  ProductInput,
+  StockByLocation,
+} from '../models';
 
 /** Raw shape the API returns for a product — `category` maps this to the flat `Product` the UI uses. */
 interface ProductApiModel {
@@ -147,5 +154,27 @@ export class InventoryService {
       params: this.toExportParams(filters),
       responseType: 'blob',
     });
+  }
+
+  /** The blank `.xlsx` template `ImportProductsFromExcelUseCase` expects — same blob-download shape as the two exports above. */
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/products/import/template`, {
+      responseType: 'blob',
+    });
+  }
+
+  /**
+   * `POST /products/import` — a plain JSON response (created/skipped
+   * counts), not a file, so unlike the exports this is a normal `FormData`
+   * upload with no `responseType: 'blob'`. Every row the backend accepted
+   * is already a real, saved product by the time this resolves — there's
+   * nothing further to "confirm".
+   */
+  importProductsExcel(file: File): Observable<ImportProductsResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<ApiSuccessResponse<ImportProductsResult>>(`${environment.apiUrl}/products/import`, formData)
+      .pipe(map((response) => response.data));
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,8 +12,11 @@ import {
   Post,
   Query,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
@@ -25,6 +29,8 @@ import { UpdateProductUseCase } from '../../application/use-cases/update-product
 import { DeactivateProductUseCase } from '../../application/use-cases/deactivate-product.use-case';
 import { ExportProductsPdfUseCase } from '../../application/use-cases/export-products-pdf.use-case';
 import { ExportProductsExcelUseCase } from '../../application/use-cases/export-products-excel.use-case';
+import { ImportProductsFromExcelUseCase } from '../../application/use-cases/import-products-from-excel.use-case';
+import { buildProductsImportTemplate } from '../../infrastructure/excel/products-excel.builder';
 import { CreateProductRequestDto } from '../dtos/create-product.request.dto';
 import { UpdateProductRequestDto } from '../dtos/update-product.request.dto';
 import { ListProductsQueryDto } from '../dtos/list-products.query.dto';
@@ -33,6 +39,16 @@ import {
   PaginatedProductsResponseDto,
   ProductResponseDto,
 } from '../dtos/product.response.dto';
+import { ImportProductsResultResponseDto } from '../dtos/import-products-result.response.dto';
+
+/** The minimal shape actually read off an uploaded file — avoids a dependency on `@types/multer` (not installed; `multer` itself ships transitively via `@nestjs/platform-express`, see that module's own doc comment) for a single-field usage. */
+interface UploadedExcelFile {
+  buffer: Buffer;
+  originalname: string;
+  size: number;
+}
+
+const MAX_IMPORT_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /**
  * Follows the same CRUD/guard shape as `CategoriesController` (`GET` open
@@ -54,6 +70,7 @@ export class ProductsController {
     private readonly deactivateProductUseCase: DeactivateProductUseCase,
     private readonly exportProductsPdfUseCase: ExportProductsPdfUseCase,
     private readonly exportProductsExcelUseCase: ExportProductsExcelUseCase,
+    private readonly importProductsFromExcelUseCase: ImportProductsFromExcelUseCase,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -111,6 +128,41 @@ export class ProductsController {
       'Content-Length': String(buffer.length),
     });
     res.send(buffer);
+  }
+
+  /**
+   * Declared before `:id` for the same route-ordering reason as
+   * `export/pdf`/`export/excel` above. Admin-only, same gate as `POST
+   * /products` itself — bulk-creating products is a heavier version of the
+   * same action, never a lighter one.
+   */
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Get('import/template')
+  async importTemplate(@Res() res: Response): Promise<void> {
+    const buffer = await buildProductsImportTemplate();
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="plantilla-importar-productos.xlsx"',
+      'Content-Length': String(buffer.length),
+    });
+    res.send(buffer);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Post('import')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_FILE_SIZE_BYTES } }),
+  )
+  importExcel(
+    @UploadedFile() file: UploadedExcelFile,
+  ): Promise<ImportProductsResultResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Debes adjuntar un archivo Excel (.xlsx).');
+    }
+    return this.importProductsFromExcelUseCase.execute(file.buffer);
   }
 
   @Get(':id')
