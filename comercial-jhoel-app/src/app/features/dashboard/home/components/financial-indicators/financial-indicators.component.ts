@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@an
 
 import { DashboardMetrics, formatCurrency, formatQuantity } from '../../../../../core/models';
 import { CardComponent, IconComponent } from '../../../../../shared/ui';
+import { COMMISSION_RATE_PER_TRANSACTION } from '../../../transaccionar/components/commission-summary-card/commission-summary-card.component';
 
 /**
  * "Indicadores del mes" — Ventas de Recargas / Ventas / Compras /
@@ -36,6 +37,18 @@ export class FinancialIndicatorsComponent {
 
   @Input() loading = false;
 
+  /**
+   * Today's `transaction_count` total for "Transacciones Bancarias" — the
+   * one figure `DashboardMetrics.bankTransactions` genuinely doesn't carry
+   * (it's month-scoped only, see `DashboardBankTransactions`'s own doc
+   * comment). Rather than adding a backend field for this, the parent
+   * (`DashboardHomeComponent`) already fetches it for its own "Resumen
+   * Diario de Transacciones" card via the exact same
+   * `BankDepositService.getTransactionSummary()` call Transaccionar itself
+   * uses — this is just that same number, passed one level down.
+   */
+  @Input() dailyBankTransactionCount = 0;
+
   formatCurrency = formatCurrency;
   formatQuantity = formatQuantity;
 
@@ -44,4 +57,23 @@ export class FinancialIndicatorsComponent {
     const period = this._metrics()?.period;
     return period ? new Date(period.year, period.month - 1, 1) : null;
   });
+
+  /**
+   * "Comisión Estimada" — a pure display transformation, never a real
+   * financial transaction: `subtransacciones × Q1.50` (see
+   * `COMMISSION_RATE_PER_TRANSACTION`'s own doc comment, reused as-is from
+   * Transaccionar's identical card rather than re-declaring the rate here).
+   * `monthlyCommission` is derived from `metrics.bankTransactions
+   * .totalTransactions` — the exact same count already shown as this card's
+   * own hero number — never a second query for the same data.
+   */
+  get dailyCommission(): number {
+    return this.dailyBankTransactionCount * COMMISSION_RATE_PER_TRANSACTION;
+  }
+
+  get monthlyCommission(): number {
+    return (this.metrics?.bankTransactions.totalTransactions ?? 0) * COMMISSION_RATE_PER_TRANSACTION;
+  }
+
+  readonly commissionRate = COMMISSION_RATE_PER_TRANSACTION;
 }

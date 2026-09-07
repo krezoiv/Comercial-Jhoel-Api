@@ -1,0 +1,26 @@
+<app-card padding="lg" class="commission-card">
+  <div class="commission-card__header">
+    <h3 class="commission-card__title">Comisión Estimada</h3>
+  </div>
+
+  @if (loading) {
+    <p class="commission-card__loading">Cargando…</p>
+  } @else {
+    <div class="commission-card__grid">
+      <div class="commission-card__period">
+        <span class="commission-card__period-label">Hoy</span>
+        <span class="commission-card__value">{{ formatCurrency(dailyCommission) }}</span>
+        <span class="commission-card__detail"
+          >{{ formatQuantity(dailyTransactions) }} subtransacciones × {{ formatCurrency(rate) }}</span
+        >
+      </div>
+      <div class="commission-card__period">
+        <span class="commission-card__period-label">Acumulado del mes</span>
+        <span class="commission-card__value">{{ formatCurrency(monthlyCommission) }}</span>
+        <span class="commission-card__detail"
+          >{{ formatQuantity(monthlyTransactions) }} subtransacciones × {{ formatCurrency(rate) }}</span
+        >
+      </div>
+    </div>
+  }
+</app-card>

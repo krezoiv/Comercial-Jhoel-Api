@@ -19,6 +19,7 @@ import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-
 import { StatusIndicatorComponent } from './components/status-indicator/status-indicator.component';
 import { TransactionDistributionComponent } from './components/transaction-distribution/transaction-distribution.component';
 import { TransactionSummaryCardComponent } from './components/transaction-summary-card/transaction-summary-card.component';
+import { CommissionSummaryCardComponent } from './components/commission-summary-card/commission-summary-card.component';
 import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadre-result-card.component';
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 
@@ -55,6 +56,7 @@ type TransaccionarView = 'dashboard' | 'form';
     StatusIndicatorComponent,
     SaveConfirmModalComponent,
     TransactionSummaryCardComponent,
+    CommissionSummaryCardComponent,
     CuadreResultCardComponent,
     ChangeConfirmModalComponent,
   ],

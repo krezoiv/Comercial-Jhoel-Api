@@ -37,6 +37,10 @@
   </section>
 
   @if (isAdmin()) {
-    <app-financial-indicators [metrics]="financialMetrics()" [loading]="loadingFinancialMetrics()" />
+    <app-financial-indicators
+      [metrics]="financialMetrics()"
+      [loading]="loadingFinancialMetrics()"
+      [dailyBankTransactionCount]="dailyTransactionSummary()?.daily?.totalTransactions ?? 0"
+    />
   }
 </div>

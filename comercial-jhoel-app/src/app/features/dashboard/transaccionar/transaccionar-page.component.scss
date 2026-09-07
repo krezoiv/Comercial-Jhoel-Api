@@ -147,8 +147,10 @@
   }
 }
 
-// The two "Resumen Diario"/"Resumen Mes en Curso" cards on the type-picker
-// dashboard — same responsive shape as the cuadre grid above.
+// The "Resumen Diario"/"Resumen Mes en Curso"/"Comisión Estimada" cards on
+// the type-picker dashboard — one column on mobile, two on tablet (the
+// third simply wraps to its own row), all three side by side once there's
+// enough room at `lg`.
 .summary-row {
   display: grid;
   grid-template-columns: 1fr;
@@ -157,6 +159,10 @@
 
   @include bp.respond(sm) {
     grid-template-columns: 1fr 1fr;
+  }
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

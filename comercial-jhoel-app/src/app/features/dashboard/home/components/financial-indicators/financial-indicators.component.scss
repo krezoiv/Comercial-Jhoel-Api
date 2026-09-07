@@ -202,3 +202,44 @@
   width: 1px;
   background: var(--color-border-light);
 }
+
+// "Comisión Estimada" — a derived/computed figure, not raw data like the
+// Mayor/Menor stats above it, so it gets a dashed divider instead of the
+// solid one `.metric-card__footer` uses — the same solid-vs-dashed
+// convention `TransactionSummaryCardComponent`'s own footer-total already
+// uses to distinguish "measured" from "derived" totals in this app.
+.metric-card__commission {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border-light);
+}
+
+.metric-card__commission-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+
+.metric-card__commission-label {
+  flex: 1 0 100%;
+  font-size: 0.6875rem;
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-on-light-subtle);
+}
+
+.metric-card__commission-value {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+}
+
+.metric-card__commission-detail {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}

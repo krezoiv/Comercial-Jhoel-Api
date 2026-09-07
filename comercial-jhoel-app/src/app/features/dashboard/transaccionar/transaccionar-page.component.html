@@ -17,6 +17,11 @@
         [summary]="transactionSummary()?.monthly ?? { totalTransactions: 0, byBank: [] }"
         [loading]="loadingSummary()"
       />
+      <app-commission-summary-card
+        [dailyTransactions]="transactionSummary()?.daily?.totalTransactions ?? 0"
+        [monthlyTransactions]="transactionSummary()?.monthly?.totalTransactions ?? 0"
+        [loading]="loadingSummary()"
+      />
     </div>
 
     @if (loadingTypes()) {
