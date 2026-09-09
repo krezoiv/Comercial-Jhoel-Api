@@ -61,6 +61,7 @@ export class TicketsController {
     return this.createTicketUseCase.execute({
       userId,
       clientId: dto.clientId,
+      clientName: dto.clientName,
       items: dto.items,
     });
   }

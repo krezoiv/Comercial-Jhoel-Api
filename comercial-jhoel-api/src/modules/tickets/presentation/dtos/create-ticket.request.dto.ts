@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -44,6 +44,21 @@ export class CreateTicketRequestDto {
   @IsOptional()
   @IsUUID()
   clientId?: string;
+
+  /**
+   * Free-text client name — not a `clients` catalog reference. Never sent
+   * together with `clientId` by the frontend (Tickets stopped using the
+   * client search/select entirely), but both are independently optional:
+   * a ticket may have neither, either, or (if some future caller sends
+   * both) `clientId` wins — see `CreateTicketUseCase`.
+   */
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @MaxLength(150, {
+    message: 'El nombre del cliente no puede exceder 150 caracteres.',
+  })
+  clientName?: string;
 
   @IsArray()
   @ArrayMinSize(1, { message: 'El ticket debe contener al menos un producto.' })

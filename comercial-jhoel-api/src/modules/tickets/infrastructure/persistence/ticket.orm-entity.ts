@@ -32,6 +32,16 @@ export class TicketOrmEntity {
   @JoinColumn({ name: 'client_id' })
   client: ClientOrmEntity | null;
 
+  /**
+   * The client's display name, frozen at ticket-creation time by
+   * `create_ticket()` — never re-derived from the `client` relation, so
+   * editing a client's name in the Clientes catalog later never changes a
+   * historical ticket. Free text: may hold a name that doesn't match any
+   * real client at all (or none, if the ticket was created without one).
+   */
+  @Column({ name: 'client_name', type: 'varchar', length: 150, nullable: true })
+  clientName: string | null;
+
   @Column({ name: 'user_id' })
   userId: string;
 

@@ -9,7 +9,10 @@ export class TicketMapper {
       id: orm.id,
       ticketNumber: orm.ticketNumber,
       clientId: orm.clientId,
-      clientName: orm.client?.name ?? null,
+      // Frozen at creation time by create_ticket() — never re-derived from
+      // the `client` relation, so editing the Clientes catalog later never
+      // changes what a historical ticket displays.
+      clientName: orm.clientName,
       userId: orm.userId,
       username: orm.user.username ?? '',
       subtotal: orm.subtotal,

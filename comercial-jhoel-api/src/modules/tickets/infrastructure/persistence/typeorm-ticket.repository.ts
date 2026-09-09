@@ -38,10 +38,11 @@ export class TypeOrmTicketRepository implements TicketRepository {
     try {
       const rows = await this.repository.manager.query<
         { create_ticket: string }[]
-      >('SELECT create_ticket($1, $2, $3::jsonb)', [
+      >('SELECT create_ticket($1, $2, $3::jsonb, $4)', [
         data.userId,
         data.clientId,
         itemsJson,
+        data.clientName,
       ]);
       ticketId = rows[0].create_ticket;
     } catch (error) {

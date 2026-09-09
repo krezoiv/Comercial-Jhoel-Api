@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import {
-  Client,
   CreateTicketItemInput,
   Product,
   TicketDraftItem,
@@ -15,8 +15,10 @@ import { TicketsService } from '../../../../../core/services/tickets.service';
 import { downloadBlob } from '../../../../../core/utils/download-blob';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
-import { ClientSearchSelectComponent } from '../../../accounts-receivable/components/client-search-select/client-search-select.component';
 import { TicketProductSearchComponent } from '../ticket-product-search/ticket-product-search.component';
+
+/** Same ceiling as the backend's `tickets.client_name` column (VARCHAR(150), matching `clients.name`'s own convention). */
+const CLIENT_NAME_MAX_LENGTH = 150;
 
 /**
  * A Ticket is explicitly NOT a real sale — the cart here is pure local
@@ -28,7 +30,7 @@ import { TicketProductSearchComponent } from '../ticket-product-search/ticket-pr
 @Component({
   selector: 'app-create-ticket-tab',
   standalone: true,
-  imports: [TicketProductSearchComponent, ClientSearchSelectComponent, EmptyStateComponent, IconComponent, ButtonComponent],
+  imports: [FormsModule, TicketProductSearchComponent, EmptyStateComponent, IconComponent, ButtonComponent],
   templateUrl: './create-ticket-tab.component.html',
   styleUrl: './create-ticket-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,20 +41,22 @@ export class CreateTicketTabComponent {
   private readonly notificationService = inject(NotificationService);
 
   readonly items = signal<TicketDraftItem[]>([]);
-  readonly selectedClientId = signal<string | null>(null);
-  readonly selectedClientName = signal<string | null>(null);
+  /**
+   * Free-text client name — not a lookup against the Clientes catalog. Any
+   * value the cashier types is accepted, including one that doesn't match a
+   * real client, and none of it ever creates or touches a `clients` row;
+   * the backend stores it only as this ticket's own frozen `client_name`.
+   */
+  readonly clientName = signal('');
   readonly isSaving = signal(false);
+
+  readonly clientNameMaxLength = CLIENT_NAME_MAX_LENGTH;
 
   calculateItemTotal = calculateTicketDraftItemTotal;
   formatCurrency = formatCurrency;
 
   get total(): number {
     return calculateTicketDraftTotal(this.items());
-  }
-
-  onClientSelectionChange(client: Client | null): void {
-    this.selectedClientId.set(client?.id ?? null);
-    this.selectedClientName.set(client?.name ?? null);
   }
 
   onProductSelected(product: Product): void {
@@ -129,12 +133,13 @@ export class CreateTicketTabComponent {
       unitPrice: item.unitPrice,
     }));
 
-    this.ticketsService.createTicket({ clientId: this.selectedClientId() ?? undefined, items }).subscribe({
+    const clientName = this.clientName().trim() || undefined;
+
+    this.ticketsService.createTicket({ clientName, items }).subscribe({
       next: (ticket) => {
         this.notificationService.success(`Ticket ${ticket.ticketNumber} registrado correctamente.`);
         this.items.set([]);
-        this.selectedClientId.set(null);
-        this.selectedClientName.set(null);
+        this.clientName.set('');
         // Auto-download the PDF — no yes/no prompt, unlike Ventas/Compras' post-save PDF modal.
         this.ticketsService.exportTicketPdf(ticket.id).subscribe({
           next: (blob) => {

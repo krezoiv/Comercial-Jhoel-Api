@@ -53,6 +53,8 @@ export interface CreateTicketItemInput {
 
 export interface CreateTicketInput {
   clientId?: string;
+  /** Free-text client name — not a `clients` catalog reference. See `TicketsController`'s own doc comment. */
+  clientName?: string;
   items: CreateTicketItemInput[];
 }
 

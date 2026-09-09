@@ -20,6 +20,8 @@ export interface CreateTicketItemInput {
 export interface CreateTicketInput {
   userId: string;
   clientId?: string | null;
+  /** Free-text client name — see the request DTO's own doc comment. */
+  clientName?: string | null;
   items: CreateTicketItemInput[];
 }
 
@@ -90,9 +92,18 @@ export class CreateTicketUseCase {
       }))
       .sort((a, b) => a.productId.localeCompare(b.productId));
 
+    // Defense in depth against a raw API call bypassing the DTO's own
+    // trim/whitespace handling — a whitespace-only name is never persisted
+    // as if it were a real one. Ignored entirely when clientId is set: the
+    // stored function freezes the real client's name in that case instead.
+    const clientName = input.clientId
+      ? null
+      : input.clientName?.trim() || null;
+
     const ticket = await this.ticketRepository.createTicket({
       userId: input.userId,
       clientId: input.clientId ?? null,
+      clientName,
       items,
     });
 

@@ -13,6 +13,8 @@ export interface CreateTicketItemData {
 export interface CreateTicketData {
   userId: string;
   clientId: string | null;
+  /** Free-text client name — see `create-ticket.request.dto.ts`'s own doc comment. Ignored by `create_ticket()` when `clientId` is set, since the real client's name is frozen instead in that case. */
+  clientName: string | null;
   items: CreateTicketItemData[];
 }
 

@@ -1,11 +1,13 @@
 <div class="create-ticket">
   <div class="create-ticket__client">
     <span class="create-ticket__client-label">Cliente (opcional)</span>
-    <app-client-search-select
-      [selectedClientId]="selectedClientId()"
-      [selectedClientName]="selectedClientName()"
-      placeholder="Buscar cliente (opcional)…"
-      (selectionChange)="onClientSelectionChange($event)"
+    <input
+      type="text"
+      class="client-name-input"
+      placeholder="Escriba el nombre del cliente…"
+      [maxlength]="clientNameMaxLength"
+      [ngModel]="clientName()"
+      (ngModelChange)="clientName.set($event)"
     />
   </div>
 
