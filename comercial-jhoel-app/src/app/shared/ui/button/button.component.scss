@@ -90,6 +90,18 @@
   }
 }
 
+// Flat — deliberately no glow shadow, same reasoning as `.btn--danger`: a
+// solid, confident fill reads clearly on its own without needing the
+// primary/secondary variants' drop-shadow treatment.
+.btn--purple {
+  background: var(--color-accent-purple);
+  color: var(--color-white);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+}
+
 .btn--ghost {
   background: transparent;
   color: var(--color-text-on-light);

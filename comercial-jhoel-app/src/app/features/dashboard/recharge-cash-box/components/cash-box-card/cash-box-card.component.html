@@ -10,11 +10,11 @@
 
       @if (isAdmin()) {
         <div class="cash-box__header-actions">
-          <app-button variant="ghost" (click)="openContributionModal()">
+          <app-button variant="purple" (click)="openContributionModal()">
             <app-icon name="plus" [size]="16" />
             Aporte
           </app-button>
-          <app-button variant="primary" (click)="openWithdrawalModal()">
+          <app-button variant="danger" (click)="openWithdrawalModal()">
             <app-icon name="minus" [size]="16" />
             Salida de Ganancia
           </app-button>
