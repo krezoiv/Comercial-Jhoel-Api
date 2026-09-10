@@ -30,6 +30,8 @@ export interface SalesReportRow {
   username: string;
   itemCount: number;
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
 }
 
 /** `unitsSold` DOES respect the category/product filter (unlike a row's `itemCount`) — it's a "how many units of what I filtered for" KPI, not "how many line items". */

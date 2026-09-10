@@ -85,7 +85,7 @@
 }
 
 .cash-box__hero-value--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .cash-box__tiles {
@@ -126,7 +126,7 @@
 }
 
 .cash-box__tile-value--expense {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .cash-box__tile-value--positive {
@@ -134,7 +134,7 @@
 }
 
 .cash-box__tile-value--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .cash-box__detail {

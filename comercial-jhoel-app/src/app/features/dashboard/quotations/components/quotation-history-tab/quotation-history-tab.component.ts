@@ -14,7 +14,7 @@ import { NotificationService } from '../../../../../core/services/notification.s
 import { QuotationsService } from '../../../../../core/services/quotations.service';
 import { downloadBlob } from '../../../../../core/utils/download-blob';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { BadgeComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
+import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 import { QuotationDetailModalComponent } from '../quotation-detail-modal/quotation-detail-modal.component';
 import { QuotationVoidReasonModalComponent } from '../quotation-void-reason-modal/quotation-void-reason-modal.component';
@@ -22,6 +22,13 @@ import { QuotationVoidReasonModalComponent } from '../quotation-void-reason-moda
 const PAGE_LIMIT = 20;
 
 type StatusFilter = QuotationStatus | 'ALL';
+
+const DEFAULT_FILTERS: { search: string; startDate: string; endDate: string; status: StatusFilter } = {
+  search: '',
+  startDate: '',
+  endDate: '',
+  status: 'ALL',
+};
 
 @Component({
   selector: 'app-quotation-history-tab',
@@ -31,6 +38,7 @@ type StatusFilter = QuotationStatus | 'ALL';
     FormsModule,
     EmptyStateComponent,
     BadgeComponent,
+    ButtonComponent,
     IconComponent,
     ReportPaginationComponent,
     QuotationDetailModalComponent,
@@ -51,7 +59,25 @@ export class QuotationHistoryTabComponent {
   readonly total = signal(0);
   readonly page = signal(1);
   readonly loading = signal(false);
-  readonly statusFilter = signal<StatusFilter>('ALL');
+
+  /** Draft/applied split — same pattern as `TicketHistoryTabComponent`'s own copy and the Compras/Ventas admin screens: editing a filter only ever touches `draftX`, `applyFilters()`/`clearFilters()` are the only two places the applied signals (the ones `fetch()` reads) change. Replaces this component's previous immediate-apply status dropdown for consistency. */
+  readonly draftSearch = signal(DEFAULT_FILTERS.search);
+  readonly draftStartDate = signal(DEFAULT_FILTERS.startDate);
+  readonly draftEndDate = signal(DEFAULT_FILTERS.endDate);
+  readonly draftStatus = signal<StatusFilter>(DEFAULT_FILTERS.status);
+
+  readonly search = signal(DEFAULT_FILTERS.search);
+  readonly startDate = signal(DEFAULT_FILTERS.startDate);
+  readonly endDate = signal(DEFAULT_FILTERS.endDate);
+  readonly statusFilter = signal<StatusFilter>(DEFAULT_FILTERS.status);
+
+  readonly hasActiveFilters = computed(
+    () =>
+      this.search() !== DEFAULT_FILTERS.search ||
+      this.startDate() !== DEFAULT_FILTERS.startDate ||
+      this.endDate() !== DEFAULT_FILTERS.endDate ||
+      this.statusFilter() !== DEFAULT_FILTERS.status,
+  );
 
   readonly detailQuotationId = signal<string | null>(null);
   readonly voidTarget = signal<QuotationSummary | null>(null);
@@ -76,6 +102,9 @@ export class QuotationHistoryTabComponent {
         page: this.page(),
         limit: this.limit,
         status: status === 'ALL' ? undefined : status,
+        search: this.search() || undefined,
+        startDate: this.startDate() || undefined,
+        endDate: this.endDate() || undefined,
       })
       .subscribe({
         next: (response) => {
@@ -90,8 +119,24 @@ export class QuotationHistoryTabComponent {
       });
   }
 
-  onStatusFilterChange(value: StatusFilter): void {
-    this.statusFilter.set(value);
+  applyFilters(): void {
+    this.search.set(this.draftSearch().trim());
+    this.startDate.set(this.draftStartDate());
+    this.endDate.set(this.draftEndDate());
+    this.statusFilter.set(this.draftStatus());
+    this.page.set(1);
+    this.fetch();
+  }
+
+  clearFilters(): void {
+    this.draftSearch.set(DEFAULT_FILTERS.search);
+    this.draftStartDate.set(DEFAULT_FILTERS.startDate);
+    this.draftEndDate.set(DEFAULT_FILTERS.endDate);
+    this.draftStatus.set(DEFAULT_FILTERS.status);
+    this.search.set(DEFAULT_FILTERS.search);
+    this.startDate.set(DEFAULT_FILTERS.startDate);
+    this.endDate.set(DEFAULT_FILTERS.endDate);
+    this.statusFilter.set(DEFAULT_FILTERS.status);
     this.page.set(1);
     this.fetch();
   }

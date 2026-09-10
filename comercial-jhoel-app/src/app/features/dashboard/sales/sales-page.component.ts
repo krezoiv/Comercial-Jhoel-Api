@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 
 import { PriceListType, Product } from '../../../core/models';
 import { SaleDraftState, SalesDraftStore } from '../../../core/services/sales-draft.store';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { ProductSearchComponent } from './components/product-search/product-search.component';
 import { SaleItemsTableComponent } from './components/sale-items-table/sale-items-table.component';
 import { SaleSummaryComponent } from './components/sale-summary/sale-summary.component';
@@ -22,6 +23,7 @@ import { SalePricingBarComponent } from './components/sale-pricing-bar/sale-pric
   standalone: true,
   imports: [
     DatePipe,
+    PageHeaderComponent,
     ProductSearchComponent,
     SaleItemsTableComponent,
     SaleSummaryComponent,

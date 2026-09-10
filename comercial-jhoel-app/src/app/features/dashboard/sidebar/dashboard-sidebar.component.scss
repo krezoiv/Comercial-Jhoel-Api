@@ -358,13 +358,13 @@
   // Pedido explícito: el texto de "Cerrar sesión" siempre en rojo, no solo
   // al pasar el mouse — mismo rojo que `.btn--ghost-danger` ya usa en el
   // resto de la app, para no inventar un segundo rojo "de peligro".
-  color: #dc4444;
+  color: var(--color-danger);
   transition:
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 
   app-icon {
-    color: #dc4444;
+    color: var(--color-danger);
   }
 
   &:hover {

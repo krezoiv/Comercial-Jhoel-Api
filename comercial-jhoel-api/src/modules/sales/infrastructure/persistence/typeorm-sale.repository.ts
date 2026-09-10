@@ -18,6 +18,10 @@ import { InsufficientStockError } from '../../domain/errors/insufficient-stock.e
 import { InvalidSaleQuantityError } from '../../domain/errors/invalid-sale-quantity.error';
 import { NoOpenSaleError } from '../../domain/errors/no-open-sale.error';
 import { PriceListLockedError } from '../../domain/errors/price-list-locked.error';
+import { SaleNotFoundError } from '../../domain/errors/sale-not-found.error';
+import { SaleAlreadyVoidedError } from '../../domain/errors/sale-already-voided.error';
+import { SaleVoidReasonRequiredError } from '../../domain/errors/sale-void-reason-required.error';
+import { SaleNotConfirmedError } from '../../domain/errors/sale-not-confirmed.error';
 import { SaleOrmEntity } from './sale.orm-entity';
 import { SaleMapper } from './sale.mapper';
 
@@ -58,6 +62,10 @@ export class TypeOrmSaleRepository implements SaleRepository {
       throw this.translateSaleError(error);
     }
 
+    if (data.invoiceNumber) {
+      await this.repository.update({ id: saleId }, { invoiceNumber: data.invoiceNumber });
+    }
+
     const sale = await this.findById(saleId);
     if (!sale) {
       // The function just committed it — this would only happen on a bug.
@@ -72,11 +80,34 @@ export class TypeOrmSaleRepository implements SaleRepository {
     const qb = this.repository
       .createQueryBuilder('sale')
       .leftJoinAndSelect('sale.user', 'user')
+      .leftJoin('sale.client', 'client')
       // A listing is sales history — an in-progress receipt isn't a sale yet.
       .andWhere('sale.status = :status', { status: 'CONFIRMED' });
 
     if (options.userId) {
       qb.andWhere('sale.userId = :userId', { userId: options.userId });
+    }
+    if (options.clientId) {
+      qb.andWhere('sale.clientId = :clientId', { clientId: options.clientId });
+    }
+    if (options.startDate) {
+      qb.andWhere('sale.saleDate >= :startDate', { startDate: options.startDate });
+    }
+    if (options.endDate) {
+      qb.andWhere('sale.saleDate <= :endDate', {
+        endDate: `${options.endDate} 23:59:59.999`,
+      });
+    }
+    if (options.search) {
+      qb.andWhere(
+        '(client.name ILIKE :search OR sale.invoiceNumber ILIKE :search)',
+        { search: `%${options.search}%` },
+      );
+    }
+    if (options.status === 'ACTIVE') {
+      qb.andWhere('sale.isVoided = false');
+    } else if (options.status === 'VOIDED') {
+      qb.andWhere('sale.isVoided = true');
     }
 
     qb.orderBy(
@@ -146,7 +177,11 @@ export class TypeOrmSaleRepository implements SaleRepository {
    * movement row is written per line, and that has to happen atomically
    * alongside the status flip, inside the same function.
    */
-  async confirmOpenSale(userId: string, draftKey: string): Promise<Sale> {
+  async confirmOpenSale(
+    userId: string,
+    draftKey: string,
+    invoiceNumber?: string,
+  ): Promise<Sale> {
     const openSale = await this.repository.findOne({
       where: { userId, draftKey, status: 'OPEN' },
       relations: { items: true },
@@ -163,6 +198,10 @@ export class TypeOrmSaleRepository implements SaleRepository {
     >('SELECT confirm_open_sale($1, $2)', [userId, draftKey]);
     if (!rows[0].confirm_open_sale) {
       throw new NoOpenSaleError();
+    }
+
+    if (invoiceNumber) {
+      await this.repository.update({ id: openSale.id }, { invoiceNumber });
     }
 
     const sale = await this.findById(openSale.id);
@@ -204,6 +243,52 @@ export class TypeOrmSaleRepository implements SaleRepository {
       );
     }
     return sale;
+  }
+
+  async voidSale(id: string, voidedBy: string, reason: string): Promise<Sale> {
+    try {
+      await this.repository.manager.query('SELECT void_sale($1, $2, $3)', [
+        id,
+        voidedBy,
+        reason,
+      ]);
+    } catch (error) {
+      throw this.translateSaleVoidError(error);
+    }
+
+    const sale = await this.findById(id);
+    if (!sale) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar la venta recién anulada.',
+      );
+    }
+    return sale;
+  }
+
+  /** Same `RAISE EXCEPTION '<CODE>:<id>'` → domain-error translation pattern as `translateSaleError`/`TypeOrmPurchaseRepository.translatePurchaseVoidError` — kept separate since the codes don't overlap. */
+  private translateSaleVoidError(error: unknown): unknown {
+    if (!(error instanceof QueryFailedError)) {
+      return error;
+    }
+
+    const message =
+      (error.driverError as { message?: string } | undefined)?.message ??
+      error.message;
+
+    const [code, identifier] = message.split(':');
+
+    switch (code) {
+      case 'VOID_REASON_REQUIRED':
+        return new SaleVoidReasonRequiredError();
+      case 'SALE_NOT_FOUND':
+        return new SaleNotFoundError(identifier);
+      case 'SALE_NOT_CONFIRMED':
+        return new SaleNotConfirmedError(identifier);
+      case 'SALE_ALREADY_VOIDED':
+        return new SaleAlreadyVoidedError(identifier);
+      default:
+        return error;
+    }
   }
 
   /**

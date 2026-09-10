@@ -6,6 +6,7 @@ export class SaleItemResponseDto {
   quantity: number;
   unitPrice: number;
   total: number;
+  presentationName: string;
 }
 
 export class SaleResponseDto {
@@ -22,6 +23,11 @@ export class SaleResponseDto {
   items: SaleItemResponseDto[];
   createdAt: Date;
   updatedAt: Date;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class SaleSummaryResponseDto {
@@ -34,6 +40,11 @@ export class SaleSummaryResponseDto {
   clientName: string | null;
   priceList: 'PUBLIC' | 'WHOLESALE';
   createdAt: Date;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class PaginatedSalesResponseDto {

@@ -1,21 +1,15 @@
 <div class="accounts-receivable">
-  <header class="accounts-receivable__header">
-    <div>
-      <h1 class="accounts-receivable__title">Cuentas por Cobrar</h1>
-      <p class="accounts-receivable__subtitle">Administra los montos pendientes de cobro por cliente.</p>
-    </div>
-  </header>
+  <app-page-header icon="receipt" title="Cuentas por Cobrar" subtitle="Administra los montos pendientes de cobro por cliente." />
 
   @if (activeBalance()) {
     <app-card padding="lg" class="balance-summary">
-      <div class="balance-summary__tile">
-        <div class="balance-summary__icon">
-          <app-icon name="receipt" [size]="22" />
-        </div>
-        <span class="balance-summary__title">Saldo total (cuentas activas)</span>
-        <span class="balance-summary__value">{{ formatCurrency(activeBalance()!.totalAmount) }}</span>
-        <span class="balance-summary__description">{{ activeBalance()!.recordCount }} registros activos</span>
-      </div>
+      <app-summary-tile
+        icon="receipt"
+        title="Saldo total (cuentas activas)"
+        [value]="formatCurrency(activeBalance()!.totalAmount)"
+        [description]="activeBalance()!.recordCount + ' registros activos'"
+        tone="gold"
+      />
     </app-card>
   }
 

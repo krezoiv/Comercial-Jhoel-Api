@@ -1,19 +1,20 @@
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 
 import { Bank } from '../../../../../core/models';
-import { CardComponent, IconComponent } from '../../../../../shared/ui';
+import { CardComponent, SummaryTileComponent, SummaryTileTone } from '../../../../../shared/ui';
 
 interface SummaryTile {
   icon: string;
   title: string;
   value: string;
   description: string;
+  tone: SummaryTileTone;
 }
 
 @Component({
   selector: 'app-bank-summary',
   standalone: true,
-  imports: [CardComponent, IconComponent],
+  imports: [CardComponent, SummaryTileComponent],
   templateUrl: './bank-summary.component.html',
   styleUrl: './bank-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,18 +38,21 @@ export class BankSummaryComponent {
         title: 'Total de bancos',
         value: `${banks.length}`,
         description: 'bancos registrados',
+        tone: 'primary',
       },
       {
         icon: 'check',
         title: 'Activos',
         value: `${active}`,
         description: 'disponibles para cuadre',
+        tone: 'success',
       },
       {
         icon: 'x-circle',
         title: 'Inactivos',
         value: `${inactive}`,
         description: 'desactivados',
+        tone: 'danger',
       },
     ];
   });

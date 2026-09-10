@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { CategorySummaryComponent } from './components/category-summary/category-summary.component';
 import { CategoryToolbarComponent, StatusFilterValue } from './components/category-toolbar/category-toolbar.component';
 import { CategoryTableComponent } from './components/category-table/category-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-categories-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CategorySummaryComponent,
     CategoryToolbarComponent,
     CategoryTableComponent,

@@ -9,6 +9,7 @@ export interface PurchaseItemOutput {
   costPrice: number;
   publicPrice: number;
   total: number;
+  presentationName: string;
 }
 
 /** Full shape — used for `GET /purchases/:id` and the response of `POST /purchases`. */
@@ -29,6 +30,11 @@ export interface PurchaseOutput {
   paidAt: Date | null;
   paidBy: string | null;
   paidByUsername: string | null;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 /** Lighter shape for `GET /purchases` — no line items, so listing purchases never needs to load them. */
@@ -44,6 +50,11 @@ export interface PurchaseSummaryOutput {
   paymentType: 'CONTADO' | 'CREDITO';
   paymentDueDate: string | null;
   paymentStatus: 'PENDING' | 'PAID';
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export function toPurchaseOutput(purchase: Purchase): PurchaseOutput {
@@ -64,6 +75,7 @@ export function toPurchaseOutput(purchase: Purchase): PurchaseOutput {
       costPrice: item.costPrice,
       publicPrice: item.publicPrice,
       total: item.total,
+      presentationName: item.presentationName,
     })),
     createdAt: purchase.createdAt,
     updatedAt: purchase.updatedAt,
@@ -73,6 +85,11 @@ export function toPurchaseOutput(purchase: Purchase): PurchaseOutput {
     paidAt: purchase.paidAt,
     paidBy: purchase.paidBy,
     paidByUsername: purchase.paidByUsername,
+    invoiceNumber: purchase.invoiceNumber,
+    isVoided: purchase.isVoided,
+    voidedAt: purchase.voidedAt,
+    voidedByUsername: purchase.voidedByUsername,
+    voidReason: purchase.voidReason,
   };
 }
 
@@ -91,5 +108,10 @@ export function toPurchaseSummaryOutput(
     paymentType: purchase.paymentType,
     paymentDueDate: purchase.paymentDueDate,
     paymentStatus: purchase.paymentStatus,
+    invoiceNumber: purchase.invoiceNumber,
+    isVoided: purchase.isVoided,
+    voidedAt: purchase.voidedAt,
+    voidedByUsername: purchase.voidedByUsername,
+    voidReason: purchase.voidReason,
   };
 }

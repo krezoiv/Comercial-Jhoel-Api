@@ -6,6 +6,7 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { TransactionBankSummaryComponent } from './components/transaction-bank-summary/transaction-bank-summary.component';
 import { TransactionBankToolbarComponent, TransactionBankStatusFilterValue } from './components/transaction-bank-toolbar/transaction-bank-toolbar.component';
 import { TransactionBankTableComponent } from './components/transaction-bank-table/transaction-bank-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-transaction-banks-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     TransactionBankSummaryComponent,
     TransactionBankToolbarComponent,
     TransactionBankTableComponent,

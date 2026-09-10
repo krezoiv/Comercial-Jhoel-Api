@@ -22,7 +22,7 @@ import { DayStatusService } from '../../../core/services/day-status.service';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { AgentReconciliationConfirmModalComponent } from './components/agent-reconciliation-confirm-modal/agent-reconciliation-confirm-modal.component';
 
@@ -79,8 +79,10 @@ function todayIsoDate(): string {
   standalone: true,
   imports: [
     DatePipe,
+    PageHeaderComponent,
     CardComponent,
     IconComponent,
+    SummaryTileComponent,
     ButtonComponent,
     DecimalInputDirective,
     AgentReconciliationConfirmModalComponent,

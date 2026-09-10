@@ -1,11 +1,9 @@
 <div class="company-settings">
-  <header class="company-settings__header">
-    <h1 class="company-settings__title">Configuración de Empresa</h1>
-    <p class="company-settings__subtitle">
-      Estos datos (logo, nombre, dirección, teléfono, correo, NIT y redes sociales) aparecen en el
-      encabezado de todos los documentos PDF: Ventas, Compras, Tickets y Cotizaciones.
-    </p>
-  </header>
+  <app-page-header
+    icon="briefcase"
+    title="Configuración de Empresa"
+    subtitle="Estos datos (logo, nombre, dirección, teléfono, correo, NIT y redes sociales) aparecen en el encabezado de todos los documentos PDF: Ventas, Compras, Tickets y Cotizaciones."
+  />
 
   @if (loading()) {
     <p class="loading-note">

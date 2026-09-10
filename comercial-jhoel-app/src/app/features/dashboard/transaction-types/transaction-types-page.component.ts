@@ -6,6 +6,7 @@ import { TransactionTypeService } from '../../../core/services/transaction-type.
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { TransactionTypeSummaryComponent } from './components/transaction-type-summary/transaction-type-summary.component';
 import { TransactionTypeToolbarComponent, TransactionTypeStatusFilterValue } from './components/transaction-type-toolbar/transaction-type-toolbar.component';
 import { TransactionTypeTableComponent } from './components/transaction-type-table/transaction-type-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-transaction-types-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     TransactionTypeSummaryComponent,
     TransactionTypeToolbarComponent,
     TransactionTypeTableComponent,

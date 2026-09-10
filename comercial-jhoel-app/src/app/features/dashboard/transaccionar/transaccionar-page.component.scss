@@ -1,19 +1,6 @@
 @use 'mixins' as *;
 @use 'breakpoints' as bp;
 
-.transaccionar__header {
-  margin-bottom: var(--space-6);
-}
-
-.transaccionar__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--fs-2xl);
-  color: var(--color-text-on-light);
-  margin-bottom: var(--space-2);
-}
-
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -98,11 +85,6 @@
 
 .type-grid__empty-hint {
   font-size: var(--fs-sm);
-}
-
-.transaccionar__subtitle {
-  font-size: var(--fs-md);
-  color: var(--color-text-on-light-muted);
 }
 
 .transaccionar__card {

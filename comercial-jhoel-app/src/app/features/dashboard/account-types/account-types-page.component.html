@@ -1,10 +1,9 @@
 <div class="account-types">
-  <header class="account-types__header">
-    <div>
-      <h1 class="account-types__title">Tipos de Cuenta</h1>
-      <p class="account-types__subtitle">Administra los tipos de cuenta disponibles para registrar bancos (Monetaria, Ahorro, Corriente…).</p>
-    </div>
-  </header>
+  <app-page-header
+    icon="layers"
+    title="Tipos de Cuenta"
+    subtitle="Administra los tipos de cuenta disponibles para registrar bancos (Monetaria, Ahorro, Corriente…)."
+  />
 
   <app-account-type-summary [data]="accountTypes()" />
 

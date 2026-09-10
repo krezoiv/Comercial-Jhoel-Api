@@ -24,6 +24,11 @@ export interface FindQuotationsOptions {
   /** Restricts the listing to one user's own quotations (a USER role never sees anyone else's, same rule as Sales/Purchases/Tickets). */
   userId?: string;
   status?: QuotationStatusFilter;
+  /** `startDate`/`endDate` are `yyyy-MM-dd` — compared against `createdAt`, inclusive on both ends. */
+  startDate?: string;
+  endDate?: string;
+  /** Matches against the client's name OR the quotation's own `quotationNumber`, case-insensitive. */
+  search?: string;
   page: number;
   limit: number;
 }

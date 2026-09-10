@@ -11,7 +11,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { downloadBlob } from '../../../../core/utils/download-blob';
 import { extractBlobErrorMessage } from '../../../../core/utils/extract-blob-error-message';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../../shared/ui';
+import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../../shared/ui';
 import { ReportSummaryComponent, ReportSummaryTile } from '../components/report-summary/report-summary.component';
 import { ReportPaginationComponent } from '../components/report-pagination/report-pagination.component';
 import { IceCreamFilterSearchComponent } from '../components/ice-cream-filter-search/ice-cream-filter-search.component';
@@ -43,6 +43,7 @@ function buildExportFilename(startDate: string, endDate: string): string {
   imports: [
     FormsModule,
     DatePipe,
+    PageHeaderComponent,
     ButtonComponent,
     IconComponent,
     ReportSummaryComponent,

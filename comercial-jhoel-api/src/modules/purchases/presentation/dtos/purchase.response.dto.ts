@@ -7,6 +7,7 @@ export class PurchaseItemResponseDto {
   costPrice: number;
   publicPrice: number;
   total: number;
+  presentationName: string;
 }
 
 export class PurchaseResponseDto {
@@ -26,6 +27,11 @@ export class PurchaseResponseDto {
   paidAt: Date | null;
   paidBy: string | null;
   paidByUsername: string | null;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class PurchaseSummaryResponseDto {
@@ -40,6 +46,11 @@ export class PurchaseSummaryResponseDto {
   paymentType: 'CONTADO' | 'CREDITO';
   paymentDueDate: string | null;
   paymentStatus: 'PENDING' | 'PAID';
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class PaginatedPurchasesResponseDto {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { PageHeaderComponent } from '../../../shared/ui';
 import { CashBoxCardComponent } from './components/cash-box-card/cash-box-card.component';
 import { CashBoxHistoryComponent } from './components/cash-box-history/cash-box-history.component';
 
@@ -25,7 +26,7 @@ function todayIsoDate(): string {
 @Component({
   selector: 'app-recharge-cash-box-page',
   standalone: true,
-  imports: [CashBoxCardComponent, CashBoxHistoryComponent],
+  imports: [PageHeaderComponent, CashBoxCardComponent, CashBoxHistoryComponent],
   templateUrl: './recharge-cash-box-page.component.html',
   styleUrl: './recharge-cash-box-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

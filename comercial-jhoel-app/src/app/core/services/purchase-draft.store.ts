@@ -28,6 +28,8 @@ export interface PurchaseDraft {
   paymentType: PurchasePaymentType;
   /** `yyyy-MM-dd` — only meaningful (and required) while `paymentType` is `'CREDITO'`. */
   paymentDueDate: string;
+  /** Free-text folio from the supplier's own invoice — optional. */
+  invoiceNumber: string;
 }
 
 function makeBlankDraft(): PurchaseDraft {
@@ -38,6 +40,7 @@ function makeBlankDraft(): PurchaseDraft {
     items: [],
     paymentType: 'CONTADO',
     paymentDueDate: '',
+    invoiceNumber: '',
   };
 }
 
@@ -94,6 +97,7 @@ export class PurchaseDraftStore {
   readonly items = computed(() => this.activeDraft().items);
   readonly paymentType = computed(() => this.activeDraft().paymentType);
   readonly paymentDueDate = computed(() => this.activeDraft().paymentDueDate);
+  readonly invoiceNumber = computed(() => this.activeDraft().invoiceNumber);
   readonly total = computed(() => calculatePurchaseTotal(this.activeDraft().items));
 
   /** At least one open tab has a product added — matches the "operación en proceso" rule used to gate the sidebar indicator and the unload warning, across every open tab, not just the active one. */
@@ -239,6 +243,10 @@ export class PurchaseDraftStore {
 
   setPaymentDueDate(date: string): void {
     this.updateActiveDraft((draft) => ({ ...draft, paymentDueDate: date }));
+  }
+
+  setInvoiceNumber(invoiceNumber: string): void {
+    this.updateActiveDraft((draft) => ({ ...draft, invoiceNumber }));
   }
 
   /**

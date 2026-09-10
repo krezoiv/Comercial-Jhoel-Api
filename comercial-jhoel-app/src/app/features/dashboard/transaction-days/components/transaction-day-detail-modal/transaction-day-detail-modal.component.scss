@@ -143,7 +143,7 @@
 }
 
 .status-badge--CANCELLED {
-  color: #dc4444;
+  color: var(--color-danger);
   background: rgba(220, 68, 68, 0.1);
 }
 
@@ -260,7 +260,7 @@
 }
 
 .summary-grid__item--negative dd {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .summary-grid__item--zero dd {
@@ -302,7 +302,7 @@
 }
 
 .timeline__dot--CANCELLED {
-  background: #dc4444;
+  background: var(--color-danger);
 }
 
 .timeline__row {

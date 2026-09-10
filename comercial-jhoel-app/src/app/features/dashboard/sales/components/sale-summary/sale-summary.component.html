@@ -9,6 +9,17 @@
         <app-icon name="check" [size]="14" />
         Inventario ya reservado — se confirma al guardar.
       </p>
+
+      <label class="summary__invoice-field">
+        <span>Número de factura (opcional)</span>
+        <input
+          type="text"
+          placeholder="Ej: V-00300"
+          maxlength="50"
+          [ngModel]="invoiceNumber"
+          (ngModelChange)="invoiceNumberChange.emit($event)"
+        />
+      </label>
     }
   </div>
 

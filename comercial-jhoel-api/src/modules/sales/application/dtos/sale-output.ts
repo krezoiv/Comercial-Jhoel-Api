@@ -12,6 +12,7 @@ export interface SaleItemOutput {
   quantity: number;
   unitPrice: number;
   total: number;
+  presentationName: string;
 }
 
 /** Full shape — used for `GET /sales/:id` and the response of `POST /sales`. */
@@ -30,6 +31,11 @@ export interface SaleOutput {
   items: SaleItemOutput[];
   createdAt: Date;
   updatedAt: Date;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 /** Lighter shape for `GET /sales` — no line items, so listing sales never needs to load them. */
@@ -43,6 +49,11 @@ export interface SaleSummaryOutput {
   clientName: string | null;
   priceList: PriceListType;
   createdAt: Date;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export function toSaleOutput(sale: Sale): SaleOutput {
@@ -65,9 +76,15 @@ export function toSaleOutput(sale: Sale): SaleOutput {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       total: item.total,
+      presentationName: item.presentationName,
     })),
     createdAt: sale.createdAt,
     updatedAt: sale.updatedAt,
+    invoiceNumber: sale.invoiceNumber,
+    isVoided: sale.isVoided,
+    voidedAt: sale.voidedAt,
+    voidedByUsername: sale.voidedByUsername,
+    voidReason: sale.voidReason,
   };
 }
 
@@ -82,5 +99,10 @@ export function toSaleSummaryOutput(sale: Sale): SaleSummaryOutput {
     clientName: sale.clientName,
     priceList: sale.priceList,
     createdAt: sale.createdAt,
+    invoiceNumber: sale.invoiceNumber,
+    isVoided: sale.isVoided,
+    voidedAt: sale.voidedAt,
+    voidedByUsername: sale.voidedByUsername,
+    voidReason: sale.voidReason,
   };
 }

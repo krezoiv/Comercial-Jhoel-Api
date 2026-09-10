@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { PageHeaderComponent } from '../../../shared/ui';
 import { CreateQuotationTabComponent } from './components/create-quotation-tab/create-quotation-tab.component';
 import { QuotationHistoryTabComponent } from './components/quotation-history-tab/quotation-history-tab.component';
 
@@ -16,7 +17,7 @@ type TabValue = 'crear' | 'historial';
 @Component({
   selector: 'app-quotations-page',
   standalone: true,
-  imports: [CreateQuotationTabComponent, QuotationHistoryTabComponent],
+  imports: [PageHeaderComponent, CreateQuotationTabComponent, QuotationHistoryTabComponent],
   templateUrl: './quotations-page.component.html',
   styleUrl: './quotations-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

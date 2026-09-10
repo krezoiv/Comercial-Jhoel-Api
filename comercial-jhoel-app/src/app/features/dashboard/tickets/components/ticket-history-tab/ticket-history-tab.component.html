@@ -1,6 +1,54 @@
 <div class="history">
+  <div class="history__filters">
+    <div class="history__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field field--wide">
+        <label for="th-search">Buscar por número o cliente</label>
+        <input
+          id="th-search"
+          type="text"
+          placeholder="Ej: T-00125 o Juan Pérez"
+          [ngModel]="draftSearch()"
+          (ngModelChange)="draftSearch.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="th-start-date">Desde</label>
+        <input id="th-start-date" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="th-end-date">Hasta</label>
+        <input id="th-end-date" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="th-status">Estado</label>
+        <select id="th-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          <option value="">Todos</option>
+          <option value="ACTIVE">Vigente</option>
+          <option value="VOIDED">Anulado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
+  </div>
+
   @if (isEmpty()) {
-    <app-empty-state icon="tag" title="Sin tickets registrados" description="Los tickets que registres aparecerán aquí." />
+    <app-empty-state
+      icon="tag"
+      [title]="hasActiveFilters() ? 'Sin resultados' : 'Sin tickets registrados'"
+      [description]="hasActiveFilters() ? 'No se encontraron tickets con los filtros indicados.' : 'Los tickets que registres aparecerán aquí.'"
+    />
   } @else {
     <div class="table-wrapper">
       <table class="history-table">

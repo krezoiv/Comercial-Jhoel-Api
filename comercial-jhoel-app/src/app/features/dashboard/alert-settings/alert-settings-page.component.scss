@@ -8,23 +8,6 @@
   padding: var(--space-6);
 }
 
-.alert-settings__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.alert-settings__title {
-  font-size: var(--fs-xl);
-  color: var(--color-text-on-light);
-}
-
-.alert-settings__subtitle {
-  font-size: var(--fs-sm);
-  color: var(--color-text-on-light-muted);
-  max-width: 48rem;
-}
-
 .alert-settings__grid {
   display: grid;
   grid-template-columns: 1fr;

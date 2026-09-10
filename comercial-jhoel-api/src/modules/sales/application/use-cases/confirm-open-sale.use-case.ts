@@ -15,8 +15,16 @@ export class ConfirmOpenSaleUseCase {
     @Inject(SALE_REPOSITORY) private readonly saleRepository: SaleRepository,
   ) {}
 
-  async execute(userId: string, draftKey: string): Promise<SaleOutput> {
-    const sale = await this.saleRepository.confirmOpenSale(userId, draftKey);
+  async execute(
+    userId: string,
+    draftKey: string,
+    invoiceNumber?: string,
+  ): Promise<SaleOutput> {
+    const sale = await this.saleRepository.confirmOpenSale(
+      userId,
+      draftKey,
+      invoiceNumber?.trim() || undefined,
+    );
     return toSaleOutput(sale);
   }
 }

@@ -62,10 +62,7 @@
   }
 }
 
-.align-center {
-  text-align: center;
-}
-
+.align-center,
 .align-right {
   text-align: center;
 }
@@ -83,6 +80,15 @@
 .purchase-table__total {
   color: var(--color-text-on-light);
   font-weight: var(--fw-semibold);
+}
+
+%no-spinner {
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
 }
 
 // ---- Quantity stepper --------------------------------------------------------
@@ -125,17 +131,11 @@
   font-size: var(--fs-sm);
   color: var(--color-text-on-light);
   @include focus-ring;
+  @extend %no-spinner;
 
   &:focus {
     border-color: var(--color-primary-500);
   }
-
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  -moz-appearance: textfield;
 }
 
 // ---- Editable price inputs --------------------------------------------------
@@ -164,13 +164,7 @@
     color: var(--color-text-on-light);
     font-size: var(--fs-sm);
     text-align: right;
-
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    -moz-appearance: textfield;
+    @extend %no-spinner;
   }
 }
 
@@ -242,7 +236,7 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   @include focus-ring;

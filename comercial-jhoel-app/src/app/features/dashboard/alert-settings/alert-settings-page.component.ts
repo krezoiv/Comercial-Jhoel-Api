@@ -6,7 +6,7 @@ import { AlertSettingsService } from '../../../core/services/alert-settings.serv
 import { RechargesService } from '../../../core/services/recharges.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 
 /**
  * Admin-only screen for the DB-persisted alert thresholds: días de
@@ -22,7 +22,7 @@ import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/u
 @Component({
   selector: 'app-alert-settings-page',
   standalone: true,
-  imports: [ButtonComponent, CardComponent, IconComponent],
+  imports: [ButtonComponent, CardComponent, IconComponent, PageHeaderComponent],
   templateUrl: './alert-settings-page.component.html',
   styleUrl: './alert-settings-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

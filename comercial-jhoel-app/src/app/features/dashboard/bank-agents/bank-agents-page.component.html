@@ -1,10 +1,5 @@
 <div class="bank-agents">
-  <header class="bank-agents__header">
-    <div>
-      <h1 class="bank-agents__title">Agentes Bancarios</h1>
-      <p class="bank-agents__subtitle">Registra el cuadre diario de saldos de cada banco.</p>
-    </div>
-
+  <app-page-header icon="bank" title="Agentes Bancarios" subtitle="Registra el cuadre diario de saldos de cada banco.">
     <div class="bank-agents__header-actions">
       <label class="bank-agents__date-field">
         <span>Fecha de operación</span>
@@ -27,7 +22,7 @@
         {{ isRefreshingBalances() ? 'Actualizando…' : 'Actualizar Saldos' }}
       </app-button>
     </div>
-  </header>
+  </app-page-header>
 
   @if (loading()) {
     <div class="table-wrapper">

@@ -1,0 +1,80 @@
+@if (saleId) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      @if (loading()) {
+        <p class="modal__loading">Cargando…</p>
+      } @else if (sale()) {
+        @let s = sale()!;
+
+        <div class="modal__header">
+          <h2 class="modal__title">Venta {{ s.invoiceNumber || ('V-' + s.id.slice(0, 8).toUpperCase()) }}</h2>
+          @if (s.isVoided) {
+            <app-badge tone="danger">Anulada</app-badge>
+          } @else {
+            <app-badge tone="success">Activa</app-badge>
+          }
+        </div>
+
+        @if (s.isVoided) {
+          <div class="modal__void-banner">
+            <app-icon name="alert-triangle" [size]="16" />
+            Anulada por {{ s.voidedByUsername }} el {{ s.voidedAt | date: 'dd/MM/yyyy HH:mm' }} — {{ s.voidReason }}
+          </div>
+        }
+
+        <dl class="modal__summary-grid">
+          <div>
+            <dt>Cliente</dt>
+            <dd>{{ s.clientName || 'Sin cliente' }}</dd>
+          </div>
+          <div>
+            <dt>Fecha</dt>
+            <dd>{{ s.saleDate | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Lista de precios</dt>
+            <dd>{{ s.priceList === 'WHOLESALE' ? 'Mayorista' : 'Público' }}</dd>
+          </div>
+          <div>
+            <dt>Usuario</dt>
+            <dd>{{ s.username }}</dd>
+          </div>
+        </dl>
+
+        <table class="modal__table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th>Presentación</th>
+              <th class="align-center">Cant.</th>
+              <th class="align-right">Precio</th>
+              <th class="align-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of s.items; track item.id) {
+              <tr>
+                <td>{{ item.productName }}</td>
+                <td>{{ item.sku || '—' }}</td>
+                <td>{{ item.presentationName }}</td>
+                <td class="align-center">{{ item.quantity }}</td>
+                <td class="align-right">{{ formatCurrency(item.unitPrice) }}</td>
+                <td class="align-right">{{ formatCurrency(item.total) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="modal__total">
+          <span>Total</span>
+          <strong>{{ formatCurrency(s.total) }}</strong>
+        </div>
+      }
+    </div>
+  </div>
+}

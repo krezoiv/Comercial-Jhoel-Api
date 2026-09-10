@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   PURCHASE_REPOSITORY,
   PurchaseSortField,
+  PurchaseStatusFilter,
   SortDirection,
 } from '../../domain/repositories/purchase.repository';
 import type { PurchaseRepository } from '../../domain/repositories/purchase.repository';
@@ -15,6 +16,10 @@ export interface ListPurchasesInput {
   currentUserId: string;
   isAdmin: boolean;
   supplierId?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  status?: PurchaseStatusFilter;
   sortBy?: PurchaseSortField;
   sortDirection?: SortDirection;
   page?: number;
@@ -51,6 +56,10 @@ export class ListPurchasesUseCase {
     const result = await this.purchaseRepository.findAll({
       userId,
       supplierId: input.supplierId,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      search: input.search,
+      status: input.status,
       sortBy: input.sortBy ?? 'purchaseDate',
       sortDirection: input.sortDirection ?? 'desc',
       page,

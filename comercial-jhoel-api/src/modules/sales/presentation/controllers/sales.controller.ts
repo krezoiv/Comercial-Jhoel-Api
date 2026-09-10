@@ -15,6 +15,8 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { CreateSaleUseCase } from '../../application/use-cases/create-sale.use-case';
@@ -26,12 +28,14 @@ import { ConfirmOpenSaleUseCase } from '../../application/use-cases/confirm-open
 import { CancelOpenSaleUseCase } from '../../application/use-cases/cancel-open-sale.use-case';
 import { ConfigureSalePricingUseCase } from '../../application/use-cases/configure-sale-pricing.use-case';
 import { GetSalePdfUseCase } from '../../application/use-cases/get-sale-pdf.use-case';
+import { VoidSaleUseCase } from '../../application/use-cases/void-sale.use-case';
 import { CreateSaleRequestDto } from '../dtos/create-sale.request.dto';
 import { ListSalesQueryDto } from '../dtos/list-sales.query.dto';
 import { AdjustSaleItemRequestDto } from '../dtos/adjust-sale-item.request.dto';
 import { ConfigureSalePricingRequestDto } from '../dtos/configure-sale-pricing.request.dto';
 import { ConfirmOpenSaleRequestDto } from '../dtos/confirm-open-sale.request.dto';
 import { CancelOpenSaleQueryDto } from '../dtos/cancel-open-sale.query.dto';
+import { VoidSaleRequestDto } from '../dtos/void-sale.request.dto';
 import {
   PaginatedSalesResponseDto,
   SaleResponseDto,
@@ -65,6 +69,7 @@ export class SalesController {
     private readonly cancelOpenSaleUseCase: CancelOpenSaleUseCase,
     private readonly configureSalePricingUseCase: ConfigureSalePricingUseCase,
     private readonly getSalePdfUseCase: GetSalePdfUseCase,
+    private readonly voidSaleUseCase: VoidSaleUseCase,
   ) {}
 
   /** Bulk, one-shot sale creation — unchanged, still fully atomic via `confirm_sale`. Independent of the incremental draft flow below. */
@@ -79,6 +84,7 @@ export class SalesController {
       items: dto.items,
       clientId: dto.clientId,
       priceList: dto.priceList,
+      invoiceNumber: dto.invoiceNumber,
     });
   }
 
@@ -91,6 +97,29 @@ export class SalesController {
       currentUserId: user.userId,
       isAdmin: ADMIN_ROLES.includes(user.role),
       ...query,
+    });
+  }
+
+  /**
+   * "Anular venta" — admin-only correction path for the "Administrar
+   * Facturas de Ventas" module. Only ever targets a `CONFIRMED` sale — an
+   * `OPEN` draft has its own correction mechanism (`DELETE /sales/current`).
+   * Never an edit, never a physical delete — see `VoidSaleUseCase`'s own
+   * doc comment.
+   */
+  @Post(':id/void')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  voidSale(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidSaleRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<SaleResponseDto> {
+    return this.voidSaleUseCase.execute({
+      id,
+      voidedBy: userId,
+      reason: dto.reason,
     });
   }
 
@@ -131,7 +160,11 @@ export class SalesController {
     @Body() dto: ConfirmOpenSaleRequestDto,
     @CurrentUser('userId') userId: string,
   ): Promise<SaleResponseDto> {
-    return this.confirmOpenSaleUseCase.execute(userId, dto.draftKey);
+    return this.confirmOpenSaleUseCase.execute(
+      userId,
+      dto.draftKey,
+      dto.invoiceNumber,
+    );
   }
 
   /** Discards one tab's receipt and restores every reserved line's stock. */

@@ -1,9 +1,6 @@
 @if (view() === 'dashboard') {
   <div class="transaccionar">
-    <header class="transaccionar__header">
-      <h1 class="transaccionar__title">Transaccionar</h1>
-      <p class="transaccionar__subtitle">Selecciona el tipo de transacción que deseas registrar.</p>
-    </header>
+    <app-page-header icon="bank" title="Transaccionar" subtitle="Selecciona el tipo de transacción que deseas registrar." />
 
     <div class="summary-row">
       <app-transaction-summary-card
@@ -47,17 +44,15 @@
   </div>
 } @else {
   <div class="transaccionar">
-    <header class="transaccionar__header">
-      <button type="button" class="back-link" (click)="changeType()">
-        <app-icon name="arrow-left-right" [size]="16" />
-        Cambiar tipo de transacción
-      </button>
-      <h1 class="transaccionar__title">
-        <app-icon [name]="selectedTypeIcon()" [size]="24" />
-        {{ draft.transactionTypeName() }}
-      </h1>
-      <p class="transaccionar__subtitle">Registra un depósito bancario: monto, banco agente, desglose de efectivo y las transacciones en que se reparte.</p>
-    </header>
+    <button type="button" class="back-link" (click)="changeType()">
+      <app-icon name="arrow-left-right" [size]="16" />
+      Cambiar tipo de transacción
+    </button>
+    <app-page-header
+      [icon]="selectedTypeIcon()"
+      [title]="draft.transactionTypeName()"
+      subtitle="Registra un depósito bancario: monto, banco agente, desglose de efectivo y las transacciones en que se reparte."
+    />
 
     <section class="transaccionar__card">
       <div class="transaccionar__row">

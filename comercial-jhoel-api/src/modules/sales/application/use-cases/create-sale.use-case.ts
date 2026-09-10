@@ -21,6 +21,8 @@ export interface CreateSaleInput {
   items: CreateSaleItemInput[];
   clientId?: string | null;
   priceList?: PriceListType;
+  /** Free-text folio — optional, never enforced as unique. */
+  invoiceNumber?: string;
 }
 
 @Injectable()
@@ -81,6 +83,7 @@ export class CreateSaleUseCase {
       items,
       clientId: input.clientId,
       priceList: input.priceList,
+      invoiceNumber: input.invoiceNumber?.trim() || undefined,
     });
 
     return toSaleOutput(sale);

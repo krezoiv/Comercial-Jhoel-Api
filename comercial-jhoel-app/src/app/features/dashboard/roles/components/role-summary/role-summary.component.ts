@@ -1,19 +1,20 @@
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 
 import { Role } from '../../../../../core/models';
-import { CardComponent, IconComponent } from '../../../../../shared/ui';
+import { CardComponent, SummaryTileComponent, SummaryTileTone } from '../../../../../shared/ui';
 
 interface SummaryTile {
   icon: string;
   title: string;
   value: string;
   description: string;
+  tone: SummaryTileTone;
 }
 
 @Component({
   selector: 'app-role-summary',
   standalone: true,
-  imports: [CardComponent, IconComponent],
+  imports: [CardComponent, SummaryTileComponent],
   templateUrl: './role-summary.component.html',
   styleUrl: './role-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,18 +38,21 @@ export class RoleSummaryComponent {
         title: 'Total de roles',
         value: `${roles.length}`,
         description: 'roles registrados',
+        tone: 'primary',
       },
       {
         icon: 'check',
         title: 'Activos',
         value: `${active}`,
         description: 'disponibles para asignar',
+        tone: 'success',
       },
       {
         icon: 'x-circle',
         title: 'Inactivos',
         value: `${inactive}`,
         description: 'desactivados',
+        tone: 'danger',
       },
     ];
   });

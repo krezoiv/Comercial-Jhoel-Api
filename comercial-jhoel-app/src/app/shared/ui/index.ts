@@ -11,3 +11,5 @@ export * from './toast/toast-container.component';
 export * from './confirm-dialog/confirm-dialog.component';
 export * from './pdf-prompt-modal/pdf-prompt-modal.component';
 export * from './account-statement-modal/account-statement-modal.component';
+export * from './page-header/page-header.component';
+export * from './summary-tile/summary-tile.component';

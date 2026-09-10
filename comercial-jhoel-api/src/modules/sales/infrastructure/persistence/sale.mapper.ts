@@ -25,10 +25,17 @@ export class SaleMapper {
           quantity: detail.quantity,
           unitPrice: detail.unitPrice,
           total: detail.total,
+          presentationName: detail.presentation?.presentationType?.name ?? 'Unidad',
         }),
       ),
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
+      invoiceNumber: orm.invoiceNumber,
+      isVoided: orm.isVoided,
+      voidedAt: orm.voidedAt,
+      voidedBy: orm.voidedBy,
+      voidedByUsername: orm.voidedByUser?.username ?? null,
+      voidReason: orm.voidReason,
     });
   }
 }

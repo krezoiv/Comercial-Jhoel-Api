@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -24,8 +24,14 @@ export class TicketsService {
   }
 
   getTickets(query: ListTicketsQuery = {}): Observable<PaginatedResponse<TicketSummary>> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
     return this.http
-      .get<ApiSuccessResponse<PaginatedResponse<TicketSummary>>>(BASE_URL, { params: { ...query } })
+      .get<ApiSuccessResponse<PaginatedResponse<TicketSummary>>>(BASE_URL, { params })
       .pipe(map((response) => response.data));
   }
 

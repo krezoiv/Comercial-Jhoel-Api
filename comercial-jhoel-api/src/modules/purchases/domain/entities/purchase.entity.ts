@@ -21,6 +21,13 @@ export interface PurchaseProps {
   paidAt: Date | null;
   paidBy: string | null;
   paidByUsername: string | null;
+  /** Free-text folio from the supplier's own invoice — never enforced as unique, purely a search aid. `null` for purchases registered before this field existed. */
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedBy: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class Purchase {
@@ -92,5 +99,29 @@ export class Purchase {
 
   get paidByUsername(): string | null {
     return this.props.paidByUsername;
+  }
+
+  get invoiceNumber(): string | null {
+    return this.props.invoiceNumber;
+  }
+
+  get isVoided(): boolean {
+    return this.props.isVoided;
+  }
+
+  get voidedAt(): Date | null {
+    return this.props.voidedAt;
+  }
+
+  get voidedBy(): string | null {
+    return this.props.voidedBy;
+  }
+
+  get voidedByUsername(): string | null {
+    return this.props.voidedByUsername;
+  }
+
+  get voidReason(): string | null {
+    return this.props.voidReason;
   }
 }

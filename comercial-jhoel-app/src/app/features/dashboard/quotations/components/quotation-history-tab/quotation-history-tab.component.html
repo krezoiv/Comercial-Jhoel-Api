@@ -1,19 +1,56 @@
 <div class="history">
   <div class="history__filters">
-    <label class="filter">
-      <span class="filter__label">Estado</span>
-      <select class="filter__select" [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
-        <option value="ALL">Todas</option>
-        <option value="PENDIENTE">Pendiente</option>
-        <option value="ACEPTADA">Aceptada</option>
-        <option value="VENCIDA">Vencida</option>
-        <option value="ANULADA">Anulada</option>
-      </select>
-    </label>
+    <div class="history__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field field--wide">
+        <label for="qh-search">Buscar por número o cliente</label>
+        <input
+          id="qh-search"
+          type="text"
+          placeholder="Ej: Q-00125 o Juan Pérez"
+          [ngModel]="draftSearch()"
+          (ngModelChange)="draftSearch.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="qh-start-date">Desde</label>
+        <input id="qh-start-date" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="qh-end-date">Hasta</label>
+        <input id="qh-end-date" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="qh-status">Estado</label>
+        <select id="qh-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          <option value="ALL">Todas</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="ACEPTADA">Aceptada</option>
+          <option value="VENCIDA">Vencida</option>
+          <option value="ANULADA">Anulada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
   </div>
 
   @if (isEmpty()) {
-    <app-empty-state icon="tag" title="Sin cotizaciones registradas" description="Las cotizaciones que registres aparecerán aquí." />
+    <app-empty-state
+      icon="tag"
+      [title]="hasActiveFilters() ? 'Sin resultados' : 'Sin cotizaciones registradas'"
+      [description]="hasActiveFilters() ? 'No se encontraron cotizaciones con los filtros indicados.' : 'Las cotizaciones que registres aparecerán aquí.'"
+    />
   } @else {
     <div class="table-wrapper">
       <table class="history-table">

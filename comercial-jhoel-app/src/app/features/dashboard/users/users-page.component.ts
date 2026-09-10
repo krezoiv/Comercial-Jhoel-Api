@@ -7,6 +7,7 @@ import { RoleService } from '../../../core/services/role.service';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { UserSummaryComponent } from './components/user-summary/user-summary.component';
 import { UserToolbarComponent, StatusFilterValue } from './components/user-toolbar/user-toolbar.component';
 import { UserTableComponent } from './components/user-table/user-table.component';
@@ -17,6 +18,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-users-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     UserSummaryComponent,
     UserToolbarComponent,
     UserTableComponent,

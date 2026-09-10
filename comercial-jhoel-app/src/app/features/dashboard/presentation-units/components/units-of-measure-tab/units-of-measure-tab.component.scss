@@ -171,7 +171,7 @@
 
 .action-btn--danger {
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
 
   &:hover:not(:disabled) {
     background: rgba(220, 68, 68, 0.18);
@@ -292,12 +292,12 @@
 
 .field__error {
   font-size: var(--fs-xs);
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .modal__error {
   font-size: var(--fs-sm);
-  color: #dc4444;
+  color: var(--color-danger);
   background: rgba(220, 68, 68, 0.08);
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);

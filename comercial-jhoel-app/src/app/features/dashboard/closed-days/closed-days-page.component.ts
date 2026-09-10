@@ -15,7 +15,7 @@ import { ClosedDaysService } from '../../../core/services/closed-days.service';
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, CardComponent, EmptyStateComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, EmptyStateComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { DayDetailModalComponent } from './components/day-detail-modal/day-detail-modal.component';
 import { ReopenConfirmModalComponent } from './components/reopen-confirm-modal/reopen-confirm-modal.component';
 import { CancelConfirmModalComponent } from './components/cancel-confirm-modal/cancel-confirm-modal.component';
@@ -56,6 +56,7 @@ const STATUS_ICON: Record<ClosedDayStatus, string> = {
     CardComponent,
     ButtonComponent,
     IconComponent,
+    PageHeaderComponent,
     EmptyStateComponent,
     DayDetailModalComponent,
     ReopenConfirmModalComponent,

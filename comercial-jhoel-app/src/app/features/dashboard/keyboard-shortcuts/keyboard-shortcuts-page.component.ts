@@ -10,7 +10,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { buildShortcutRouteOptions } from '../../../core/utils/shortcut-route-options';
-import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } from '../../../shared/ui';
+import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 
 /** Rows to render while `loading` is true — just enough to fill the fold without looking sparse. */
 const SKELETON_ROWS = 3;
@@ -40,7 +40,7 @@ interface CapturedCombo {
 @Component({
   selector: 'app-keyboard-shortcuts-page',
   standalone: true,
-  imports: [ReactiveFormsModule, BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent],
+  imports: [ReactiveFormsModule, BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent, PageHeaderComponent],
   templateUrl: './keyboard-shortcuts-page.component.html',
   styleUrl: './keyboard-shortcuts-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

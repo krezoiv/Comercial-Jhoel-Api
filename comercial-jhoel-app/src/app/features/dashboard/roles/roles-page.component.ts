@@ -5,6 +5,7 @@ import { Role } from '../../../core/models';
 import { RoleService } from '../../../core/services/role.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { RoleSummaryComponent } from './components/role-summary/role-summary.component';
 import { RoleToolbarComponent, StatusFilterValue } from './components/role-toolbar/role-toolbar.component';
 import { RoleTableComponent } from './components/role-table/role-table.component';
@@ -15,6 +16,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-roles-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     RoleSummaryComponent,
     RoleToolbarComponent,
     RoleTableComponent,

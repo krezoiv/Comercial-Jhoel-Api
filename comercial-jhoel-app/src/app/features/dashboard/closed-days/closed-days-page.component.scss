@@ -1,21 +1,6 @@
 @use 'breakpoints' as bp;
 @use 'mixins' as *;
 
-.closed-days__header {
-  margin-bottom: var(--space-6);
-}
-
-.closed-days__title {
-  font-size: var(--fs-2xl);
-  color: var(--color-text-on-light);
-  margin-bottom: var(--space-2);
-}
-
-.closed-days__subtitle {
-  font-size: var(--fs-md);
-  color: var(--color-text-on-light-muted);
-}
-
 .section-title {
   display: flex;
   align-items: center;
@@ -180,7 +165,7 @@
 }
 
 .status-badge--CANCELLED {
-  color: #dc4444;
+  color: var(--color-danger);
   background: rgba(220, 68, 68, 0.1);
 }
 
@@ -193,7 +178,7 @@
 }
 
 .result-cell--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .result-cell--zero {
@@ -232,5 +217,5 @@
 
 .action-btn--danger:not(:disabled):hover {
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
 }

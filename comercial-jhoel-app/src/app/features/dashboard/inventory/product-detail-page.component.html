@@ -16,10 +16,7 @@
   } @else {
     @let d = detail()!;
 
-    <div class="detail__title-row">
-      <h1 class="detail__title">{{ d.productName }}</h1>
-      <span class="detail__subtitle">{{ d.categoryName }} @if (d.sku) { · SKU: {{ d.sku }} }</span>
-    </div>
+    <app-page-header icon="package" [title]="d.productName" [subtitle]="d.categoryName + (d.sku ? ' · SKU: ' + d.sku : '')" />
 
     <div class="detail__grid">
       <app-card>

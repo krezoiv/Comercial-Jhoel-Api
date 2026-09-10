@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, CreatePurchaseInput, PaginatedResponse, Purchase } from '../models';
+import { ApiSuccessResponse, CreatePurchaseInput, ListPurchasesFilters, PaginatedResponse, Purchase } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/purchases`;
 
@@ -16,10 +16,18 @@ export class PurchasesService {
     return this.http.post<ApiSuccessResponse<Purchase>>(BASE_URL, input).pipe(map((response) => response.data));
   }
 
-  /** A USER account only ever gets their own purchases back — the backend decides that, not this call. */
-  getPurchases(): Observable<PaginatedResponse<Purchase>> {
+  /** A USER account only ever gets their own purchases back — the backend decides that, not this call. An admin (e.g. "Administrar Facturas de Compras") sees every purchase, filtered by whatever `filters` carries. */
+  getPurchases(filters?: ListPurchasesFilters): Observable<PaginatedResponse<Purchase>> {
+    let params = new HttpParams();
+    if (filters) {
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, String(value));
+        }
+      }
+    }
     return this.http
-      .get<ApiSuccessResponse<PaginatedResponse<Purchase>>>(BASE_URL)
+      .get<ApiSuccessResponse<PaginatedResponse<Purchase>>>(BASE_URL, { params })
       .pipe(map((response) => response.data));
   }
 
@@ -37,5 +45,12 @@ export class PurchasesService {
   /** Reconstructs the invoice PDF purely from the already-persisted purchase — never re-runs the save. */
   exportPurchasePdf(id: string): Observable<Blob> {
     return this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  /** "Anular factura" — admin-only server-side; never a physical delete/edit, marks the purchase `ANULADA` and reverses its exact inventory effect atomically. */
+  voidPurchase(id: string, reason: string): Observable<Purchase> {
+    return this.http
+      .post<ApiSuccessResponse<Purchase>>(`${BASE_URL}/${id}/void`, { reason })
+      .pipe(map((response) => response.data));
   }
 }

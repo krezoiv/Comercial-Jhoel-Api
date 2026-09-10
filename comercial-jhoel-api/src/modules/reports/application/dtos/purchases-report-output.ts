@@ -15,6 +15,8 @@ export interface PurchasesReportRowOutput {
   username: string;
   itemCount: number;
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
 }
 
 export function toPurchasesReportRowOutput(
@@ -70,6 +72,11 @@ export interface PurchaseReportDetailOutput {
   username: string;
   total: number;
   items: PurchaseReportDetailItemOutput[];
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 /** Folio is derived from the id, not stored — see `PurchasesReportRow.purchaseNumber`'s doc comment. */
@@ -94,5 +101,10 @@ export function toPurchaseReportDetailOutput(
       publicPrice: item.publicPrice,
       total: item.total,
     })),
+    invoiceNumber: purchase.invoiceNumber,
+    isVoided: purchase.isVoided,
+    voidedAt: purchase.voidedAt,
+    voidedByUsername: purchase.voidedByUsername,
+    voidReason: purchase.voidReason,
   };
 }

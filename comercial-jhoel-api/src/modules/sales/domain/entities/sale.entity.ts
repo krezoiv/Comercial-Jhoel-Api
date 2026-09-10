@@ -18,6 +18,13 @@ export interface SaleProps {
   items: SaleDetail[];
   createdAt: Date;
   updatedAt: Date;
+  /** Free-text folio — never enforced as unique, purely a search aid. `null` for sales registered before this field existed. */
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedBy: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 export class Sale {
@@ -77,5 +84,29 @@ export class Sale {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  get invoiceNumber(): string | null {
+    return this.props.invoiceNumber;
+  }
+
+  get isVoided(): boolean {
+    return this.props.isVoided;
+  }
+
+  get voidedAt(): Date | null {
+    return this.props.voidedAt;
+  }
+
+  get voidedBy(): string | null {
+    return this.props.voidedBy;
+  }
+
+  get voidedByUsername(): string | null {
+    return this.props.voidedByUsername;
+  }
+
+  get voidReason(): string | null {
+    return this.props.voidReason;
   }
 }

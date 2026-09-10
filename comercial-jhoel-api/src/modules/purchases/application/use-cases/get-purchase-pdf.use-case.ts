@@ -69,12 +69,15 @@ export class GetPurchasePdfUseCase {
       paymentDueDate: purchase.paymentDueDate,
       items: purchase.items.map((item) => ({
         productName: item.productName,
-        presentationName: 'Unidad',
+        presentationName: item.presentationName,
         quantity: item.quantity,
         costPrice: item.costPrice,
         total: item.total,
       })),
       total: purchase.total,
+      invoiceNumber: purchase.invoiceNumber,
+      isVoided: purchase.isVoided,
+      voidReason: purchase.voidReason,
     });
   }
 }

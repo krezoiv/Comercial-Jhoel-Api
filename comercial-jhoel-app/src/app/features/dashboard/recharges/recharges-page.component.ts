@@ -23,7 +23,7 @@ import { CloseRechargeDayConfirmModalComponent } from './components/close-rechar
 import { SimStockTableComponent } from './components/sim-stock-table/sim-stock-table.component';
 import { RegisterSimPurchaseFormComponent } from './components/register-sim-purchase-form/register-sim-purchase-form.component';
 import { RegisterSimSaleFormComponent } from './components/register-sim-sale-form/register-sim-sale-form.component';
-import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
 function todayIsoDate(): string {
@@ -38,6 +38,7 @@ function todayIsoDate(): string {
   selector: 'app-recharges-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     RechargeTableComponent,
     RegisterPurchaseFormComponent,
     FinalBalanceConfirmModalComponent,

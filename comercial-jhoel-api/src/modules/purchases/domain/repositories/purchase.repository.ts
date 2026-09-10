@@ -19,15 +19,25 @@ export interface ConfirmPurchaseData {
   paymentType: 'CONTADO' | 'CREDITO';
   /** `yyyy-MM-dd` — required when `paymentType` is `'CREDITO'`, always omitted for `'CONTADO'`. */
   paymentDueDate?: string;
+  /** Free-text folio from the supplier's own invoice — optional, never enforced as unique. */
+  invoiceNumber?: string;
 }
 
 export type PurchaseSortField = 'purchaseDate' | 'total' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
+export type PurchaseStatusFilter = 'ACTIVE' | 'VOIDED';
 
 export interface FindPurchasesOptions {
   /** Restricts the listing to one user's own purchases (a USER role never sees anyone else's, same rule as Sales). */
   userId?: string;
   supplierId?: string;
+  /** `startDate`/`endDate` are `yyyy-MM-dd` — compared against `purchaseDate`, inclusive on both ends. */
+  startDate?: string;
+  endDate?: string;
+  /** Matches against the supplier's name OR the purchase's own `invoiceNumber`, case-insensitive. */
+  search?: string;
+  /** Omit to see both active and voided purchases — used by the "Administrar Facturas de Compras" listing, which must always show anuladas too, just clearly flagged. */
+  status?: PurchaseStatusFilter;
   sortBy: PurchaseSortField;
   sortDirection: SortDirection;
   page: number;
@@ -53,4 +63,6 @@ export interface PurchaseRepository {
   findPendingCreditPurchases(options?: {
     userId?: string;
   }): Promise<Purchase[]>;
+  /** Invokes the `void_purchase` Postgres function — reverses the exact inventory effect the original purchase applied and marks it `ANULADA`, atomically. Never a physical delete/edit. */
+  voidPurchase(id: string, voidedBy: string, reason: string): Promise<Purchase>;
 }

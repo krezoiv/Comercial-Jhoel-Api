@@ -15,14 +15,25 @@ export interface ConfirmSaleData {
   items: SaleItemData[];
   clientId?: string | null;
   priceList?: PriceListType;
+  /** Free-text folio — optional, never enforced as unique. */
+  invoiceNumber?: string;
 }
 
 export type SaleSortField = 'saleDate' | 'total' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
+export type SaleStatusFilter = 'ACTIVE' | 'VOIDED';
 
 export interface FindSalesOptions {
   /** Restricts the listing to one user's own sales (a USER role never sees anyone else's). */
   userId?: string;
+  clientId?: string;
+  /** `startDate`/`endDate` are `yyyy-MM-dd` — compared against `saleDate`, inclusive on both ends. */
+  startDate?: string;
+  endDate?: string;
+  /** Matches against the client's name OR the sale's own `invoiceNumber`, case-insensitive. */
+  search?: string;
+  /** Omit to see both active and voided sales — used by the "Administrar Facturas de Ventas" listing, which must always show anuladas too, just clearly flagged. */
+  status?: SaleStatusFilter;
   sortBy: SaleSortField;
   sortDirection: SortDirection;
   page: number;
@@ -64,10 +75,16 @@ export interface SaleRepository {
   adjustItem(data: AdjustSaleItemData): Promise<Sale>;
   /** Every one of the caller's currently open receipts (any/all tabs) — never just one, since a user can now have several open at once. */
   findOpenSalesByUserId(userId: string): Promise<Sale[]>;
-  /** Marks the caller's open receipt identified by `draftKey` as CONFIRMED. Throws if there isn't one, or it has no items. */
-  confirmOpenSale(userId: string, draftKey: string): Promise<Sale>;
+  /** Marks the caller's open receipt identified by `draftKey` as CONFIRMED. Throws if there isn't one, or it has no items. `invoiceNumber` is optional and set via a plain follow-up `UPDATE` — it has no effect on `confirm_open_sale` itself. */
+  confirmOpenSale(
+    userId: string,
+    draftKey: string,
+    invoiceNumber?: string,
+  ): Promise<Sale>;
   /** Invokes `cancel_open_sale` — restores all reserved stock and discards the receipt identified by `draftKey`. `false` if there was nothing to cancel. */
   cancelOpenSale(userId: string, draftKey: string): Promise<boolean>;
   /** Invokes `configure_open_sale` — sets/updates the client and price list of the receipt identified by `draftKey`. Creates it if it doesn't exist yet. Rejects a price-list change once the receipt has line items. */
   configureOpenSale(data: ConfigureSalePricingData): Promise<Sale>;
+  /** Invokes the `void_sale` Postgres function — reverses the exact inventory effect the original CONFIRMED sale applied and marks it `ANULADA`, atomically. Never a physical delete/edit. */
+  voidSale(id: string, voidedBy: string, reason: string): Promise<Sale>;
 }

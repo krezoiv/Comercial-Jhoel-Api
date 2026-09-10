@@ -6,6 +6,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { IceCreamService } from '../../../../core/services/ice-cream.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../../shared/ui';
 import { IceCreamSummaryComponent } from './components/ice-cream-summary/ice-cream-summary.component';
 import { IceCreamToolbarComponent, IceCreamStockFilterValue } from './components/ice-cream-toolbar/ice-cream-toolbar.component';
 import { IceCreamTableComponent } from './components/ice-cream-table/ice-cream-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-ice-cream-inventory-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     IceCreamSummaryComponent,
     IceCreamToolbarComponent,
     IceCreamTableComponent,

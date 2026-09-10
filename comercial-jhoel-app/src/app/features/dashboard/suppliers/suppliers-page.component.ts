@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SupplierService } from '../../../core/services/supplier.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { SupplierSummaryComponent } from './components/supplier-summary/supplier-summary.component';
 import { SupplierToolbarComponent, StatusFilterValue } from './components/supplier-toolbar/supplier-toolbar.component';
 import { SupplierTableComponent } from './components/supplier-table/supplier-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-suppliers-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     SupplierSummaryComponent,
     SupplierToolbarComponent,
     SupplierTableComponent,

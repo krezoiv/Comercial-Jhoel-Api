@@ -1,12 +1,9 @@
 <div class="businesses">
-  <header class="businesses__header">
-    <div>
-      <h1 class="businesses__title">Negocios</h1>
-      <p class="businesses__subtitle">
-        Gestiona las líneas de negocio (librería, tienda, heladería...) a las que pertenecen tus productos.
-      </p>
-    </div>
-  </header>
+  <app-page-header
+    icon="shopping-bag"
+    title="Negocios"
+    subtitle="Gestiona las líneas de negocio (librería, tienda, heladería...) a las que pertenecen tus productos."
+  />
 
   <app-business-summary [data]="businesses()" />
 

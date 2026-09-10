@@ -9,6 +9,7 @@ import { ListPurchasesUseCase } from './application/use-cases/list-purchases.use
 import { GetPurchaseByIdUseCase } from './application/use-cases/get-purchase-by-id.use-case';
 import { MarkPurchaseAsPaidUseCase } from './application/use-cases/mark-purchase-as-paid.use-case';
 import { GetPurchasePdfUseCase } from './application/use-cases/get-purchase-pdf.use-case';
+import { VoidPurchaseUseCase } from './application/use-cases/void-purchase.use-case';
 import { PurchasesController } from './presentation/controllers/purchases.controller';
 import { SuppliersModule } from '../suppliers/suppliers.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
@@ -27,6 +28,7 @@ import { CompanySettingsModule } from '../company-settings/company-settings.modu
     GetPurchaseByIdUseCase,
     MarkPurchaseAsPaidUseCase,
     GetPurchasePdfUseCase,
+    VoidPurchaseUseCase,
   ],
   // Exported for ReportsModule's `GetPurchaseReportDetailUseCase` — same
   // reuse-over-duplicate reasoning as `SalesModule`.

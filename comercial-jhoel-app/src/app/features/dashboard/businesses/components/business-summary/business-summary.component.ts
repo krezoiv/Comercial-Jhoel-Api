@@ -1,19 +1,20 @@
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 
 import { Business } from '../../../../../core/models';
-import { CardComponent, IconComponent } from '../../../../../shared/ui';
+import { CardComponent, SummaryTileComponent, SummaryTileTone } from '../../../../../shared/ui';
 
 interface SummaryTile {
   icon: string;
   title: string;
   value: string;
   description: string;
+  tone: SummaryTileTone;
 }
 
 @Component({
   selector: 'app-business-summary',
   standalone: true,
-  imports: [CardComponent, IconComponent],
+  imports: [CardComponent, SummaryTileComponent],
   templateUrl: './business-summary.component.html',
   styleUrl: './business-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,18 +38,21 @@ export class BusinessSummaryComponent {
         title: 'Total de negocios',
         value: `${businesses.length}`,
         description: 'líneas de negocio registradas',
+        tone: 'primary',
       },
       {
         icon: 'check',
         title: 'Activos',
         value: `${active}`,
         description: 'disponibles para productos',
+        tone: 'success',
       },
       {
         icon: 'x-circle',
         title: 'Inactivos',
         value: `${inactive}`,
         description: 'desactivados',
+        tone: 'danger',
       },
     ];
   });

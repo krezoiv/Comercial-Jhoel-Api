@@ -6,6 +6,7 @@ export interface SaleItem {
   quantity: number;
   unitPrice: number;
   total: number;
+  presentationName: string;
 }
 
 /** 'PUBLIC' (default) or 'WHOLESALE' — chosen once at the start of a sale, locked once the receipt has any line item. */
@@ -32,6 +33,12 @@ export interface Sale {
   items: SaleItem[];
   createdAt: string;
   updatedAt: string;
+  /** Free-text folio — never enforced as unique, purely a search aid. `null` for sales registered before this field existed. */
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 /**
@@ -51,4 +58,19 @@ export interface CreateSaleInput {
   items: CreateSaleItemInput[];
   clientId?: string;
   priceList?: PriceListType;
+  invoiceNumber?: string;
+}
+
+export type SaleStatusFilter = 'ACTIVE' | 'VOIDED';
+
+/** Filters for "Administrar Facturas de Ventas" — matches `GET /sales`'s own query params exactly. */
+export interface ListSalesFilters {
+  clientId?: string;
+  startDate?: string;
+  endDate?: string;
+  /** Matches against client name OR invoice number. */
+  search?: string;
+  status?: SaleStatusFilter;
+  page?: number;
+  limit?: number;
 }

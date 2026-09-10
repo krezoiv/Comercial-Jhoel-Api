@@ -6,6 +6,7 @@ import { ClientService } from '../../../core/services/client.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { ClientSummaryComponent } from './components/client-summary/client-summary.component';
 import { ClientToolbarComponent, ClientStatusFilterValue } from './components/client-toolbar/client-toolbar.component';
 import { ClientTableComponent } from './components/client-table/client-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-clients-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     ClientSummaryComponent,
     ClientToolbarComponent,
     ClientTableComponent,

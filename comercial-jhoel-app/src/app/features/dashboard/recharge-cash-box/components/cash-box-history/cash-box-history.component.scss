@@ -153,7 +153,7 @@
 }
 
 .history-table__expense {
-  color: #dc4444;
+  color: var(--color-danger);
   font-weight: var(--fw-medium);
 }
 
@@ -163,11 +163,11 @@
 }
 
 .history-table__balance--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .movement-card__balance--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 // ---- Mobile card list ----------------------------------------------------

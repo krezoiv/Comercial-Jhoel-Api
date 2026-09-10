@@ -1,0 +1,92 @@
+@if (purchaseId) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      @if (loading()) {
+        <p class="modal__loading">Cargando…</p>
+      } @else if (purchase()) {
+        @let p = purchase()!;
+
+        <div class="modal__header">
+          <h2 class="modal__title">Factura {{ p.invoiceNumber || ('C-' + p.id.slice(0, 8).toUpperCase()) }}</h2>
+          @if (p.isVoided) {
+            <app-badge tone="danger">Anulada</app-badge>
+          } @else {
+            <app-badge tone="success">Activa</app-badge>
+          }
+        </div>
+
+        @if (p.isVoided) {
+          <div class="modal__void-banner">
+            <app-icon name="alert-triangle" [size]="16" />
+            Anulada por {{ p.voidedByUsername }} el {{ p.voidedAt | date: 'dd/MM/yyyy HH:mm' }} — {{ p.voidReason }}
+          </div>
+        }
+
+        <dl class="modal__summary-grid">
+          <div>
+            <dt>Proveedor</dt>
+            <dd>{{ p.supplierName }}</dd>
+          </div>
+          <div>
+            <dt>Fecha</dt>
+            <dd>{{ p.purchaseDate | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt>Tipo de compra</dt>
+            <dd>{{ p.paymentType === 'CREDITO' ? 'Crédito' : 'Contado' }}</dd>
+          </div>
+          @if (p.paymentType === 'CREDITO') {
+            <div>
+              <dt>Fecha de vencimiento</dt>
+              <dd>{{ p.paymentDueDate | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>Estado de pago</dt>
+              <dd>{{ p.paymentStatus === 'PAID' ? 'Pagada' : 'Pendiente' }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Usuario</dt>
+            <dd>{{ p.username }}</dd>
+          </div>
+        </dl>
+
+        <table class="modal__table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th>Presentación</th>
+              <th class="align-center">Cant.</th>
+              <th class="align-right">Costo</th>
+              <th class="align-right">P. público</th>
+              <th class="align-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of p.items; track item.id) {
+              <tr>
+                <td>{{ item.productName }}</td>
+                <td>{{ item.sku || '—' }}</td>
+                <td>{{ item.presentationName }}</td>
+                <td class="align-center">{{ item.quantity }}</td>
+                <td class="align-right">{{ formatCurrency(item.costPrice) }}</td>
+                <td class="align-right">{{ formatCurrency(item.publicPrice) }}</td>
+                <td class="align-right">{{ formatCurrency(item.total) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="modal__total">
+          <span>Total</span>
+          <strong>{{ formatCurrency(p.total) }}</strong>
+        </div>
+      }
+    </div>
+  </div>
+}

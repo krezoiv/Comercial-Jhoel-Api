@@ -1,5 +1,8 @@
 <div class="home">
   <header class="home__header">
+    <div class="home__icon">
+      <app-icon name="grid" [size]="24" />
+    </div>
     <div>
       <p class="home__eyebrow">{{ today() | date: "EEEE d 'de' MMMM, yyyy" }}</p>
       <h1 class="home__title">Hola, {{ currentUser()?.username }}</h1>
@@ -11,12 +14,7 @@
     @for (item of summary$ | async; track item.id) {
       <app-card padding="lg">
         <a class="summary-card" [routerLink]="['/dashboard', item.path]">
-          <div class="summary-card__icon">
-            <app-icon [name]="item.icon" [size]="24" />
-          </div>
-          <span class="summary-card__title">{{ item.title }}</span>
-          <span class="summary-card__value">{{ item.value }}</span>
-          <span class="summary-card__description">{{ item.description }}</span>
+          <app-summary-tile [icon]="item.icon" [title]="item.title" [value]="item.value" [description]="item.description" tone="primary" />
         </a>
       </app-card>
     }

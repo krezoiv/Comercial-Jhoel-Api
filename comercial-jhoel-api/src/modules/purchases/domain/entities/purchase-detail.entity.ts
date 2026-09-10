@@ -7,6 +7,8 @@ export interface PurchaseDetailProps {
   costPrice: number;
   publicPrice: number;
   total: number;
+  /** `'Unidad'` when the line has no `presentation_id` on record (rows from before presentations existed). */
+  presentationName: string;
 }
 
 /** A frozen line item — `costPrice`/`publicPrice`/`total` are the values recorded at the moment of purchase, never recomputed from the live product. */
@@ -47,5 +49,9 @@ export class PurchaseDetail {
 
   get total(): number {
     return this.props.total;
+  }
+
+  get presentationName(): string {
+    return this.props.presentationName;
   }
 }

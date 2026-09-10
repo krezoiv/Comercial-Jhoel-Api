@@ -57,6 +57,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
       .addSelect('sale.saleDate', 'saleDate')
       .addSelect('sale.total', 'total')
       .addSelect('sale.userId', 'userId')
+      .addSelect('sale.invoiceNumber', 'invoiceNumber')
+      .addSelect('sale.isVoided', 'isVoided')
       .addSelect('user.username', 'username')
       .addSelect(
         (subQb) =>
@@ -75,6 +77,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
       saleDate: Date;
       total: string;
       userId: string;
+      invoiceNumber: string | null;
+      isVoided: boolean;
       username: string | null;
       itemCount: string;
     }>();
@@ -88,6 +92,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
         username: row.username ?? '—',
         itemCount: parseInt(row.itemCount, 10),
         total: parseFloat(row.total),
+        invoiceNumber: row.invoiceNumber,
+        isVoided: row.isVoided,
       })),
       total,
     };
@@ -99,7 +105,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
     // total once per matching line item.
     const salesQb = this.saleRepository
       .createQueryBuilder('sale')
-      .where('sale.status = :status', { status: 'CONFIRMED' });
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.isVoided = false');
     this.applyDateUserFilters(salesQb, filters);
     this.applyProductExistsFilter(salesQb, filters);
     salesQb
@@ -116,7 +123,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
       .createQueryBuilder('detail')
       .innerJoin('detail.sale', 'sale')
       .innerJoin('detail.product', 'product')
-      .where('sale.status = :status', { status: 'CONFIRMED' });
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.isVoided = false');
     this.applyDateUserFilters(detailsQb, filters, 'sale');
     this.applyProductFilters(detailsQb, filters, 'detail', 'product');
     detailsQb.select('COALESCE(SUM(detail.quantity), 0)', 'unitsSold');
@@ -143,7 +151,8 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
       .createQueryBuilder('detail')
       .innerJoin('detail.sale', 'sale')
       .innerJoin('detail.product', 'product')
-      .where('sale.status = :status', { status: 'CONFIRMED' });
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.isVoided = false');
     this.applyDateUserFilters(baseQb, filters, 'sale');
     this.applyProductFilters(baseQb, filters, 'detail', 'product');
 

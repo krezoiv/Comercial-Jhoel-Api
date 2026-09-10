@@ -29,7 +29,7 @@
 }
 
 .field__required {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .field__input {
@@ -48,7 +48,7 @@
 
 .field__error {
   font-size: var(--fs-xs);
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 textarea {
@@ -184,7 +184,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  color: #dc4444;
+  color: var(--color-danger);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
 

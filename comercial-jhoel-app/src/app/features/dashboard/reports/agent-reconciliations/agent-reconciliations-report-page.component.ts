@@ -15,7 +15,7 @@ import { ReportsService } from '../../../../core/services/reports.service';
 import { downloadBlob } from '../../../../core/utils/download-blob';
 import { extractBlobErrorMessage } from '../../../../core/utils/extract-blob-error-message';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../../shared/ui';
+import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../../shared/ui';
 import { ReportSummaryComponent, ReportSummaryTile } from '../components/report-summary/report-summary.component';
 import { ReportPaginationComponent } from '../components/report-pagination/report-pagination.component';
 
@@ -55,7 +55,15 @@ function defaultFilterFields(): FilterFieldsState {
 @Component({
   selector: 'app-agent-reconciliations-report-page',
   standalone: true,
-  imports: [FormsModule, DatePipe, ButtonComponent, IconComponent, ReportSummaryComponent, ReportPaginationComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    PageHeaderComponent,
+    ButtonComponent,
+    IconComponent,
+    ReportSummaryComponent,
+    ReportPaginationComponent,
+  ],
   templateUrl: './agent-reconciliations-report-page.component.html',
   styleUrl: './agent-reconciliations-report-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -129,7 +129,7 @@
 }
 
 .result__value--negative {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .saved-closure {

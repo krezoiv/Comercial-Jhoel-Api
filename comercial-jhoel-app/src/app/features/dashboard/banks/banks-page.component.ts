@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BankService } from '../../../core/services/bank.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { BankSummaryComponent } from './components/bank-summary/bank-summary.component';
 import { BankToolbarComponent, BankStatusFilterValue } from './components/bank-toolbar/bank-toolbar.component';
 import { BankTableComponent } from './components/bank-table/bank-table.component';
@@ -16,7 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
 @Component({
   selector: 'app-banks-page',
   standalone: true,
-  imports: [BankSummaryComponent, BankToolbarComponent, BankTableComponent, BankFormModalComponent, DeleteConfirmModalComponent],
+  imports: [PageHeaderComponent, BankSummaryComponent, BankToolbarComponent, BankTableComponent, BankFormModalComponent, DeleteConfirmModalComponent],
   templateUrl: './banks-page.component.html',
   styleUrl: './banks-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -9,7 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { formatCurrency } from '../../../core/utils/number-format.util';
-import { AccountStatementModalComponent, CardComponent, IconComponent, KardexStatementClient } from '../../../shared/ui';
+import { AccountStatementModalComponent, CardComponent, KardexStatementClient, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 import { ReportPaginationComponent } from '../reports/components/report-pagination/report-pagination.component';
 import { AssetToolbarComponent, AssetStatusFilterValue } from './components/asset-toolbar/asset-toolbar.component';
 import { AssetTableComponent } from './components/asset-table/asset-table.component';
@@ -22,6 +22,7 @@ const LIMIT = 20;
   selector: 'app-assets-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     AssetToolbarComponent,
     AssetTableComponent,
     AssetFormModalComponent,
@@ -29,7 +30,7 @@ const LIMIT = 20;
     ReportPaginationComponent,
     AccountStatementModalComponent,
     CardComponent,
-    IconComponent,
+    SummaryTileComponent,
   ],
   templateUrl: './assets-page.component.html',
   styleUrl: './assets-page.component.scss',

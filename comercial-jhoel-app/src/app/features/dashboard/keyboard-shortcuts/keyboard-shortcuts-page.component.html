@@ -1,14 +1,10 @@
 <div class="page">
-  <div class="page__header">
-    <div>
-      <h1 class="page__title">Atajos de Teclado</h1>
-      <p class="page__subtitle">Combinaciones globales para navegar rápido entre módulos, sin usar el mouse.</p>
-    </div>
+  <app-page-header icon="keyboard" title="Atajos de Teclado" subtitle="Combinaciones globales para navegar rápido entre módulos, sin usar el mouse.">
     <app-button variant="primary" (click)="openCreateForm()">
       <app-icon name="plus" [size]="16" />
       Nuevo atajo
     </app-button>
-  </div>
+  </app-page-header>
 
   <div class="summary-row">
     <div class="summary-tile">

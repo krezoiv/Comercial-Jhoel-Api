@@ -9,6 +9,7 @@ import { PurchaseDraft, PurchaseDraftStore } from '../../../core/services/purcha
 import { PurchasesService } from '../../../core/services/purchases.service';
 import { SupplierService } from '../../../core/services/supplier.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { PurchaseProductSearchComponent } from './components/purchase-product-search/purchase-product-search.component';
 import { PurchaseItemsTableComponent } from './components/purchase-items-table/purchase-items-table.component';
 import { PurchaseSummaryComponent } from './components/purchase-summary/purchase-summary.component';
@@ -30,6 +31,7 @@ import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-
   standalone: true,
   imports: [
     FormsModule,
+    PageHeaderComponent,
     PurchaseProductSearchComponent,
     PurchaseItemsTableComponent,
     PurchaseSummaryComponent,
@@ -205,6 +207,7 @@ export class PurchasesPageComponent {
         })),
         paymentType: this.draft.paymentType(),
         paymentDueDate: this.draft.paymentType() === 'CREDITO' ? this.draft.paymentDueDate() : undefined,
+        invoiceNumber: this.draft.invoiceNumber().trim() || undefined,
       })
       .subscribe({
         next: (purchase) => {

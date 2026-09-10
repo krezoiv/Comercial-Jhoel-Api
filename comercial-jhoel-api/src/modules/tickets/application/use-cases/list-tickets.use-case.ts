@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { TICKET_REPOSITORY } from '../../domain/repositories/ticket.repository';
+import {
+  TICKET_REPOSITORY,
+  TicketStatusFilter,
+} from '../../domain/repositories/ticket.repository';
 import type { TicketRepository } from '../../domain/repositories/ticket.repository';
 import {
   TicketSummaryOutput,
@@ -10,6 +13,10 @@ export interface ListTicketsInput {
   /** The requesting user's id/role — a USER only ever sees their own tickets, regardless of what's asked. */
   currentUserId: string;
   isAdmin: boolean;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  status?: TicketStatusFilter;
   page?: number;
   limit?: number;
 }
@@ -43,6 +50,10 @@ export class ListTicketsUseCase {
 
     const result = await this.ticketRepository.findAll({
       userId,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      search: input.search,
+      status: input.status,
       page,
       limit,
     });

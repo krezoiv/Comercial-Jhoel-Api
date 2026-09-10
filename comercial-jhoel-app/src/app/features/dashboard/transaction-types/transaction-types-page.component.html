@@ -1,10 +1,9 @@
 <div class="transaction-types">
-  <header class="transaction-types__header">
-    <div>
-      <h1 class="transaction-types__title">Tipo de Transacción</h1>
-      <p class="transaction-types__subtitle">Administra los tipos de transacción disponibles para registrar transacciones en Transaccionar.</p>
-    </div>
-  </header>
+  <app-page-header
+    icon="arrow-left-right"
+    title="Tipo de Transacción"
+    subtitle="Administra los tipos de transacción disponibles para registrar transacciones en Transaccionar."
+  />
 
   <app-transaction-type-summary [data]="transactionTypes()" />
 

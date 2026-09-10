@@ -13,6 +13,8 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { CreatePurchaseUseCase } from '../../application/use-cases/create-purchase.use-case';
@@ -20,8 +22,10 @@ import { ListPurchasesUseCase } from '../../application/use-cases/list-purchases
 import { GetPurchaseByIdUseCase } from '../../application/use-cases/get-purchase-by-id.use-case';
 import { MarkPurchaseAsPaidUseCase } from '../../application/use-cases/mark-purchase-as-paid.use-case';
 import { GetPurchasePdfUseCase } from '../../application/use-cases/get-purchase-pdf.use-case';
+import { VoidPurchaseUseCase } from '../../application/use-cases/void-purchase.use-case';
 import { CreatePurchaseRequestDto } from '../dtos/create-purchase.request.dto';
 import { ListPurchasesQueryDto } from '../dtos/list-purchases.query.dto';
+import { VoidPurchaseRequestDto } from '../dtos/void-purchase.request.dto';
 import {
   PaginatedPurchasesResponseDto,
   PurchaseResponseDto,
@@ -47,6 +51,7 @@ export class PurchasesController {
     private readonly getPurchaseByIdUseCase: GetPurchaseByIdUseCase,
     private readonly markPurchaseAsPaidUseCase: MarkPurchaseAsPaidUseCase,
     private readonly getPurchasePdfUseCase: GetPurchasePdfUseCase,
+    private readonly voidPurchaseUseCase: VoidPurchaseUseCase,
   ) {}
 
   @Post()
@@ -62,6 +67,29 @@ export class PurchasesController {
       items: dto.items,
       paymentType: dto.paymentType,
       paymentDueDate: dto.paymentDueDate,
+      invoiceNumber: dto.invoiceNumber,
+    });
+  }
+
+  /**
+   * "Anular factura" — admin-only correction path for the "Administrar
+   * Facturas de Compras" module. Never an edit, never a physical delete —
+   * see `VoidPurchaseUseCase`'s own doc comment for why there is
+   * deliberately no "editar factura" that touches productos/cantidades.
+   */
+  @Post(':id/void')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  voidPurchase(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidPurchaseRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<PurchaseResponseDto> {
+    return this.voidPurchaseUseCase.execute({
+      id,
+      voidedBy: userId,
+      reason: dto.reason,
     });
   }
 

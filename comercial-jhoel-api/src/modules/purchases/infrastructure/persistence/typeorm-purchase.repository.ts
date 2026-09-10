@@ -16,6 +16,11 @@ import { PurchaseProductInactiveError } from '../../domain/errors/purchase-produ
 import { InvalidPurchaseQuantityError } from '../../domain/errors/invalid-purchase-quantity.error';
 import { InvalidPurchasePriceError } from '../../domain/errors/invalid-purchase-price.error';
 import { InvalidPaymentDataError } from '../../domain/errors/invalid-payment-data.error';
+import { PurchaseNotFoundError } from '../../domain/errors/purchase-not-found.error';
+import { PurchaseAlreadyVoidedError } from '../../domain/errors/purchase-already-voided.error';
+import { PurchaseVoidReasonRequiredError } from '../../domain/errors/purchase-void-reason-required.error';
+import { PurchaseVoidBlockedByPaymentError } from '../../domain/errors/purchase-void-blocked-by-payment.error';
+import { InsufficientStockToRevertPurchaseError } from '../../domain/errors/insufficient-stock-to-revert-purchase.error';
 import { PurchaseOrmEntity } from './purchase.orm-entity';
 import { PurchaseMapper } from './purchase.mapper';
 
@@ -60,6 +65,17 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
       throw this.translatePurchaseError(error);
     }
 
+    // `confirm_purchase` itself has no `invoiceNumber` parameter — it's a
+    // free-text search aid with no effect on any of the function's
+    // financial/inventory logic, so it's set with a plain follow-up
+    // `UPDATE` rather than widening the stored function's own signature.
+    if (data.invoiceNumber) {
+      await this.repository.update(
+        { id: purchaseId },
+        { invoiceNumber: data.invoiceNumber },
+      );
+    }
+
     const purchase = await this.findById(purchaseId);
     if (!purchase) {
       // The function just committed it — this would only happen on a bug.
@@ -85,6 +101,27 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
       qb.andWhere('purchase.supplierId = :supplierId', {
         supplierId: options.supplierId,
       });
+    }
+    if (options.startDate) {
+      qb.andWhere('purchase.purchaseDate >= :startDate', {
+        startDate: options.startDate,
+      });
+    }
+    if (options.endDate) {
+      qb.andWhere('purchase.purchaseDate <= :endDate', {
+        endDate: `${options.endDate} 23:59:59.999`,
+      });
+    }
+    if (options.search) {
+      qb.andWhere(
+        '(supplier.name ILIKE :search OR purchase.invoiceNumber ILIKE :search)',
+        { search: `%${options.search}%` },
+      );
+    }
+    if (options.status === 'ACTIVE') {
+      qb.andWhere('purchase.isVoided = false');
+    } else if (options.status === 'VOIDED') {
+      qb.andWhere('purchase.isVoided = true');
     }
 
     qb.orderBy(
@@ -135,7 +172,8 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
       .where('purchase.paymentType = :paymentType', { paymentType: 'CREDITO' })
       .andWhere('purchase.paymentStatus = :paymentStatus', {
         paymentStatus: 'PENDING',
-      });
+      })
+      .andWhere('purchase.isVoided = false');
 
     if (options?.userId) {
       qb.andWhere('purchase.userId = :userId', { userId: options.userId });
@@ -145,6 +183,57 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
 
     const orms = await qb.getMany();
     return orms.map((orm) => PurchaseMapper.toDomain(orm));
+  }
+
+  async voidPurchase(
+    id: string,
+    voidedBy: string,
+    reason: string,
+  ): Promise<Purchase> {
+    try {
+      await this.repository.manager.query(
+        'SELECT void_purchase($1, $2, $3)',
+        [id, voidedBy, reason],
+      );
+    } catch (error) {
+      throw this.translatePurchaseVoidError(error);
+    }
+
+    const purchase = await this.findById(id);
+    if (!purchase) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar la factura recién anulada.',
+      );
+    }
+    return purchase;
+  }
+
+  /** Same `RAISE EXCEPTION '<CODE>:<id>'` → domain-error translation pattern as `translatePurchaseError` — kept separate since the codes don't overlap. */
+  private translatePurchaseVoidError(error: unknown): unknown {
+    if (!(error instanceof QueryFailedError)) {
+      return error;
+    }
+
+    const message =
+      (error.driverError as { message?: string } | undefined)?.message ??
+      error.message;
+
+    const [code, identifier] = message.split(':');
+
+    switch (code) {
+      case 'VOID_REASON_REQUIRED':
+        return new PurchaseVoidReasonRequiredError();
+      case 'PURCHASE_NOT_FOUND':
+        return new PurchaseNotFoundError(identifier);
+      case 'PURCHASE_ALREADY_VOIDED':
+        return new PurchaseAlreadyVoidedError(identifier);
+      case 'PURCHASE_HAS_PAYMENT':
+        return new PurchaseVoidBlockedByPaymentError();
+      case 'INSUFFICIENT_STOCK_TO_REVERT':
+        return new InsufficientStockToRevertPurchaseError(identifier);
+      default:
+        return error;
+    }
   }
 
   /** Same `RAISE EXCEPTION '<CODE>:<productId>'` → domain-error translation as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */

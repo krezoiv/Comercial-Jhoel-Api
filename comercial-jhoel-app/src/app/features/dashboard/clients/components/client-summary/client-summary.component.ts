@@ -1,19 +1,20 @@
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 
 import { Client } from '../../../../../core/models';
-import { CardComponent, IconComponent } from '../../../../../shared/ui';
+import { CardComponent, SummaryTileComponent, SummaryTileTone } from '../../../../../shared/ui';
 
 interface SummaryTile {
   icon: string;
   title: string;
   value: string;
   description: string;
+  tone: SummaryTileTone;
 }
 
 @Component({
   selector: 'app-client-summary',
   standalone: true,
-  imports: [CardComponent, IconComponent],
+  imports: [CardComponent, SummaryTileComponent],
   templateUrl: './client-summary.component.html',
   styleUrl: './client-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,18 +38,21 @@ export class ClientSummaryComponent {
         title: 'Total de clientes',
         value: `${clients.length}`,
         description: 'clientes registrados',
+        tone: 'primary',
       },
       {
         icon: 'check',
         title: 'Activos',
         value: `${active}`,
         description: 'disponibles para ventas',
+        tone: 'success',
       },
       {
         icon: 'x-circle',
         title: 'Inactivos',
         value: `${inactive}`,
         description: 'desactivados',
+        tone: 'danger',
       },
     ];
   });

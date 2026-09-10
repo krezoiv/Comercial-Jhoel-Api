@@ -31,6 +31,15 @@ export class QuotationsService {
     if (query.status !== undefined) {
       params['status'] = query.status;
     }
+    if (query.startDate) {
+      params['startDate'] = query.startDate;
+    }
+    if (query.endDate) {
+      params['endDate'] = query.endDate;
+    }
+    if (query.search) {
+      params['search'] = query.search;
+    }
     if (query.page !== undefined) {
       params['page'] = query.page;
     }

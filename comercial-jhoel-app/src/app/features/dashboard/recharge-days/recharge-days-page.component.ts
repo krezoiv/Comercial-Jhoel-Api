@@ -15,7 +15,7 @@ import { RechargeDaysService } from '../../../core/services/recharge-days.servic
 import { RechargeDayStatusService } from '../../../core/services/recharge-day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, CardComponent, EmptyStateComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, EmptyStateComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { RechargeDayDetailModalComponent } from './components/recharge-day-detail-modal/recharge-day-detail-modal.component';
 import { ReopenRechargeDayConfirmModalComponent } from './components/reopen-recharge-day-confirm-modal/reopen-recharge-day-confirm-modal.component';
 import { CancelRechargeDayConfirmModalComponent } from './components/cancel-recharge-day-confirm-modal/cancel-recharge-day-confirm-modal.component';
@@ -53,6 +53,7 @@ const STATUS_ICON: Record<RechargeClosedDayStatus, string> = {
   imports: [
     FormsModule,
     DatePipe,
+    PageHeaderComponent,
     CardComponent,
     ButtonComponent,
     IconComponent,

@@ -13,6 +13,7 @@ import { ConfirmOpenSaleUseCase } from './application/use-cases/confirm-open-sal
 import { CancelOpenSaleUseCase } from './application/use-cases/cancel-open-sale.use-case';
 import { ConfigureSalePricingUseCase } from './application/use-cases/configure-sale-pricing.use-case';
 import { GetSalePdfUseCase } from './application/use-cases/get-sale-pdf.use-case';
+import { VoidSaleUseCase } from './application/use-cases/void-sale.use-case';
 import { SalesController } from './presentation/controllers/sales.controller';
 import { ClientsModule } from '../clients/clients.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
@@ -35,6 +36,7 @@ import { CompanySettingsModule } from '../company-settings/company-settings.modu
     CancelOpenSaleUseCase,
     ConfigureSalePricingUseCase,
     GetSalePdfUseCase,
+    VoidSaleUseCase,
   ],
   // Exported for ReportsModule's `GetSaleReportDetailUseCase`, which reuses
   // `findById` instead of re-querying the same sale a second time.

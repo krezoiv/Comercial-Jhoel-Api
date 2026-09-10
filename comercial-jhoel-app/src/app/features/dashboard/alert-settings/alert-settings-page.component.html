@@ -1,11 +1,9 @@
 <div class="alert-settings">
-  <header class="alert-settings__header">
-    <h1 class="alert-settings__title">Configuración de Alertas</h1>
-    <p class="alert-settings__subtitle">
-      Ajusta los umbrales que activan las alertas del sistema. El stock mínimo por producto se
-      configura en el detalle de cada producto, en Inventario.
-    </p>
-  </header>
+  <app-page-header
+    icon="bell"
+    title="Configuración de Alertas"
+    subtitle="Ajusta los umbrales que activan las alertas del sistema. El stock mínimo por producto se configura en el detalle de cada producto, en Inventario."
+  />
 
   @if (loading()) {
     <p class="loading-note">

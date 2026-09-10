@@ -58,7 +58,14 @@ export interface CreateTicketInput {
   items: CreateTicketItemInput[];
 }
 
+export type TicketStatusFilter = 'ACTIVE' | 'VOIDED';
+
 export interface ListTicketsQuery {
+  startDate?: string;
+  endDate?: string;
+  /** Matches against client name OR ticketNumber. */
+  search?: string;
+  status?: TicketStatusFilter;
   page?: number;
   limit?: number;
 }

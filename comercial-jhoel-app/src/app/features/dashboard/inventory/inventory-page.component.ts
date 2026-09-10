@@ -19,6 +19,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { downloadBlob } from '../../../core/utils/download-blob';
 import { extractBlobErrorMessage } from '../../../core/utils/extract-blob-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { InventorySummaryComponent } from './components/inventory-summary/inventory-summary.component';
 import { InventoryToolbarComponent, StockFilterValue } from './components/inventory-toolbar/inventory-toolbar.component';
 import { ProductTableComponent } from './components/product-table/product-table.component';
@@ -31,6 +32,7 @@ import { ImportResultsModalComponent } from './components/import-results-modal/i
   selector: 'app-inventory-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     InventorySummaryComponent,
     InventoryToolbarComponent,
     ProductTableComponent,

@@ -7,7 +7,9 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
+  MaxLength,
   Min,
   ValidateIf,
   ValidateNested,
@@ -59,4 +61,10 @@ export class CreatePurchaseRequestDto {
     { message: 'Debe indicar la fecha de pago para una compra a crédito.' },
   )
   paymentDueDate?: string;
+
+  /** Free-text folio from the supplier's own invoice — optional, never enforced as unique. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  invoiceNumber?: string;
 }

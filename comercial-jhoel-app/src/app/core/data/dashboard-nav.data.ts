@@ -17,6 +17,18 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Clientes', icon: 'users', path: 'clientes' },
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
+      {
+        label: 'Administrar Facturas de Compras',
+        icon: 'shopping-bag',
+        path: 'administrar-facturas-compras',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Administrar Facturas de Ventas',
+        icon: 'file-check',
+        path: 'administrar-facturas-ventas',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
       { label: 'Usuarios', icon: 'users', path: 'usuarios', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Roles', icon: 'shield-check', path: 'roles', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Atajos de Teclado', icon: 'keyboard', path: 'atajos-teclado', roles: ['SUPER_ADMIN', 'ADMIN'] },

@@ -4,7 +4,10 @@
   </button>
 
   @if (currentPageLabel(); as pageLabel) {
-    <div class="topbar__page-title">{{ pageLabel }}</div>
+    <div class="topbar__page-title">
+      <app-icon name="grid" [size]="13" class="topbar__page-title-icon" />
+      {{ pageLabel }}
+    </div>
   }
 
   <div class="topbar__datetime">

@@ -19,6 +19,8 @@ export interface SaleDraftState {
   isConfiguringPricing: boolean;
   isSaving: boolean;
   isCancelling: boolean;
+  /** Local-only, not part of `sale` until "Guardar venta" actually sends it — a free-text folio the cashier may optionally type before saving. */
+  invoiceNumberDraft: string;
 }
 
 function makeBlankDraft(): SaleDraftState {
@@ -29,6 +31,7 @@ function makeBlankDraft(): SaleDraftState {
     isConfiguringPricing: false,
     isSaving: false,
     isCancelling: false,
+    invoiceNumberDraft: '',
   };
 }
 
@@ -72,6 +75,11 @@ export class SalesDraftStore {
   // Flat, active-draft-scoped views — same "template barely changes" reasoning `PurchaseDraftStore` uses.
   readonly items = computed(() => this.activeDraft().sale?.items ?? []);
   readonly total = computed(() => this.activeDraft().sale?.total ?? 0);
+  readonly invoiceNumberDraft = computed(() => this.activeDraft().invoiceNumberDraft);
+
+  setInvoiceNumberDraft(invoiceNumber: string): void {
+    this.updateDraft(this.activeDraftId(), (d) => ({ ...d, invoiceNumberDraft: invoiceNumber }));
+  }
   readonly clientId = computed(() => this.activeDraft().sale?.clientId ?? null);
   readonly clientName = computed(() => this.activeDraft().sale?.clientName ?? null);
   readonly priceList = computed<PriceListType>(() => this.activeDraft().sale?.priceList ?? 'PUBLIC');
@@ -98,6 +106,7 @@ export class SalesDraftStore {
             isConfiguringPricing: false,
             isSaving: false,
             isCancelling: false,
+            invoiceNumberDraft: '',
           })),
         );
         this.activeDraftId.set(this.drafts()[0].draftKey);
@@ -254,8 +263,9 @@ export class SalesDraftStore {
       return;
     }
 
+    const invoiceNumber = draft.invoiceNumberDraft.trim() || undefined;
     this.updateDraft(draftKey, (d) => ({ ...d, isSaving: true }));
-    this.salesService.confirmSale(draftKey).subscribe({
+    this.salesService.confirmSale(draftKey, invoiceNumber).subscribe({
       next: (sale) => {
         this.removeDraftLocally(draftKey);
         this.notificationService.success('Venta registrada correctamente.');

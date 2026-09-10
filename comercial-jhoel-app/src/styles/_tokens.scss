@@ -27,6 +27,20 @@
   --color-accent-purple: #8b5cf6;
   --color-accent-purple-soft: #c4b5fd;
 
+  // ---- Semantic status colors (small, reusable palette) -------------------
+  // Same hex values already used as literals throughout the app for
+  // "danger" — named here so every future usage (and the new
+  // `SummaryTileComponent` tones) reads from one place instead of
+  // re-typing the hex. `--color-success`/`--color-success-soft` simply
+  // alias the brand green that already existed for this purpose.
+  --color-danger: #dc4444;
+  --color-danger-strong: #dc2626;
+  --color-danger-soft: rgba(220, 68, 68, 0.1);
+  --color-success: var(--color-accent-green);
+  --color-success-soft: rgba(52, 199, 123, 0.12);
+  --color-gold-soft: rgba(245, 166, 35, 0.14);
+  --color-neutral-soft: var(--color-ink-100);
+
   // ---- Neutral / surface ramps --------------------------------------------
   --color-ink-950: #05070c;
   --color-ink-900: #0a0e17;

@@ -9,7 +9,7 @@ import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.serv
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { ZeroBalancesConfirmModalComponent } from './components/zero-balances-confirm-modal/zero-balances-confirm-modal.component';
 import { EntryConfirmModalComponent } from './components/entry-confirm-modal/entry-confirm-modal.component';
@@ -44,6 +44,7 @@ function todayIsoDate(): string {
   standalone: true,
   imports: [
     FormsModule,
+    PageHeaderComponent,
     ButtonComponent,
     IconComponent,
     DecimalInputDirective,

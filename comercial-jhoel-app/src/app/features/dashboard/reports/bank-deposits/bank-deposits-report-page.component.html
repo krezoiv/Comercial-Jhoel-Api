@@ -1,14 +1,14 @@
 <div class="reports-page">
-  <header class="reports-page__header">
-    <div>
-      <h1 class="reports-page__title">Reporte de Transacciones</h1>
-      <p class="reports-page__subtitle">Consulta, filtra y exporta el historial de depósitos registrados en Transaccionar.</p>
-    </div>
+  <app-page-header
+    icon="bank"
+    title="Reporte de Transacciones"
+    subtitle="Consulta, filtra y exporta el historial de depósitos registrados en Transaccionar."
+  >
     <app-button variant="primary" [disabled]="exporting()" (click)="exportPdf()">
       <app-icon name="download" [size]="16" />
       {{ exporting() ? 'Generando…' : 'Exportar PDF' }}
     </app-button>
-  </header>
+  </app-page-header>
 
   <div class="reports-page__filters">
     <div class="reports-page__filters-title">

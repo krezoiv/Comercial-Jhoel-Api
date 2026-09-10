@@ -74,6 +74,22 @@ export class TypeOrmQuotationRepository implements QuotationRepository {
     if (options.userId) {
       qb.andWhere('quotation.userId = :userId', { userId: options.userId });
     }
+    if (options.startDate) {
+      qb.andWhere('quotation.createdAt >= :startDate', {
+        startDate: options.startDate,
+      });
+    }
+    if (options.endDate) {
+      qb.andWhere('quotation.createdAt <= :endDate', {
+        endDate: `${options.endDate} 23:59:59.999`,
+      });
+    }
+    if (options.search) {
+      qb.andWhere(
+        '(client.name ILIKE :search OR quotation.quotationNumber ILIKE :search)',
+        { search: `%${options.search}%` },
+      );
+    }
 
     // 'VENCIDA' is never a stored status — it means "still PENDIENTE, but
     // past its expiration date". Filtering by 'PENDIENTE' conversely

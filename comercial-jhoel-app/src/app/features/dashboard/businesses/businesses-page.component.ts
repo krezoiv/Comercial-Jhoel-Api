@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BusinessService } from '../../../core/services/business.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { BusinessSummaryComponent } from './components/business-summary/business-summary.component';
 import { BusinessToolbarComponent, StatusFilterValue } from './components/business-toolbar/business-toolbar.component';
 import { BusinessTableComponent } from './components/business-table/business-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-businesses-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     BusinessSummaryComponent,
     BusinessToolbarComponent,
     BusinessTableComponent,

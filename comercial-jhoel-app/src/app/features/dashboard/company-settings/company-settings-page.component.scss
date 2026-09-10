@@ -8,23 +8,6 @@
   padding: var(--space-6);
 }
 
-.company-settings__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.company-settings__title {
-  font-size: var(--fs-xl);
-  color: var(--color-text-on-light);
-}
-
-.company-settings__subtitle {
-  font-size: var(--fs-sm);
-  color: var(--color-text-on-light-muted);
-  max-width: 48rem;
-}
-
 .company-settings__form {
   display: flex;
   flex-direction: column;

@@ -5,7 +5,9 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -38,4 +40,10 @@ export class CreateSaleRequestDto {
   @IsOptional()
   @IsIn(['PUBLIC', 'WHOLESALE'])
   priceList?: 'PUBLIC' | 'WHOLESALE';
+
+  /** Free-text folio — optional, never enforced as unique. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  invoiceNumber?: string;
 }

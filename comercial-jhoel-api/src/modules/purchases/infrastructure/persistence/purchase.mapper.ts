@@ -23,6 +23,7 @@ export class PurchaseMapper {
           costPrice: detail.costPrice,
           publicPrice: detail.publicPrice,
           total: detail.total,
+          presentationName: detail.presentation?.presentationType?.name ?? 'Unidad',
         }),
       ),
       createdAt: orm.createdAt,
@@ -33,6 +34,12 @@ export class PurchaseMapper {
       paidAt: orm.paidAt,
       paidBy: orm.paidBy,
       paidByUsername: orm.paidByUser?.username ?? null,
+      invoiceNumber: orm.invoiceNumber,
+      isVoided: orm.isVoided,
+      voidedAt: orm.voidedAt,
+      voidedBy: orm.voidedBy,
+      voidedByUsername: orm.voidedByUser?.username ?? null,
+      voidReason: orm.voidReason,
     });
   }
 }

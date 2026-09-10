@@ -1,10 +1,5 @@
 <div class="purchases">
-  <header class="purchases__header">
-    <div>
-      <h1 class="purchases__title">Compras</h1>
-      <p class="purchases__subtitle">Registra las facturas de compra a tus proveedores.</p>
-    </div>
-  </header>
+  <app-page-header icon="arrow-down-circle" title="Compras" subtitle="Registra las facturas de compra a tus proveedores." />
 
   <div class="purchases__tabs" role="tablist" aria-label="Compras abiertas">
     @for (draftItem of draft.drafts(); track draftItem.id) {
@@ -53,6 +48,18 @@
         [ngModel]="draft.purchaseDate()"
         (ngModelChange)="onDateChange($event)"
         [max]="draft.purchaseDate()"
+      />
+    </div>
+
+    <div class="field">
+      <label for="purchase-invoice-number">Número de factura</label>
+      <input
+        id="purchase-invoice-number"
+        type="text"
+        placeholder="Ej: F-00125"
+        maxlength="50"
+        [ngModel]="draft.invoiceNumber()"
+        (ngModelChange)="draft.setInvoiceNumber($event)"
       />
     </div>
 

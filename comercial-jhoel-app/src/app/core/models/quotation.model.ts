@@ -78,6 +78,10 @@ export interface CreateQuotationInput {
 
 export interface ListQuotationsQuery {
   status?: QuotationStatus;
+  startDate?: string;
+  endDate?: string;
+  /** Matches against client name OR quotationNumber. */
+  search?: string;
   page?: number;
   limit?: number;
 }

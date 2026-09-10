@@ -1,14 +1,14 @@
 <div class="reports-page">
-  <header class="reports-page__header">
-    <div>
-      <h1 class="reports-page__title">Reportería de Heladería</h1>
-      <p class="reports-page__subtitle">Consulte y exporte las ventas y compras del negocio de heladería.</p>
-    </div>
+  <app-page-header
+    icon="gift"
+    title="Reportería de Heladería"
+    subtitle="Consulte y exporte las ventas y compras del negocio de heladería."
+  >
     <app-button variant="primary" [disabled]="state.exporting()" (click)="exportPdf()">
       <app-icon name="download" [size]="16" />
       {{ state.exporting() ? 'Generando…' : 'Exportar PDF' }}
     </app-button>
-  </header>
+  </app-page-header>
 
   <div class="reports-page__filters">
     <div class="reports-page__filters-title">

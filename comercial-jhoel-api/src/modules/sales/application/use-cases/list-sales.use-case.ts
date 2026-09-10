@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   SALE_REPOSITORY,
   SaleSortField,
+  SaleStatusFilter,
   SortDirection,
 } from '../../domain/repositories/sale.repository';
 import type { SaleRepository } from '../../domain/repositories/sale.repository';
@@ -13,6 +14,11 @@ export interface ListSalesInput {
   isAdmin: boolean;
   /** ADMIN/SUPER_ADMIN only — filters to one specific user's sales. Ignored for a non-admin caller. */
   userId?: string;
+  clientId?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  status?: SaleStatusFilter;
   sortBy?: SaleSortField;
   sortDirection?: SortDirection;
   page?: number;
@@ -50,6 +56,11 @@ export class ListSalesUseCase {
 
     const result = await this.saleRepository.findAll({
       userId,
+      clientId: input.clientId,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      search: input.search,
+      status: input.status,
       sortBy: input.sortBy ?? 'saleDate',
       sortDirection: input.sortDirection ?? 'desc',
       page,

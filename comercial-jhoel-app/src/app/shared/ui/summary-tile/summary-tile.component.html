@@ -1,0 +1,10 @@
+<div class="summary-tile" [class]="'summary-tile--' + tone">
+  <div class="summary-tile__icon">
+    <app-icon [name]="icon" [size]="22" />
+  </div>
+  <span class="summary-tile__title">{{ title }}</span>
+  <span class="summary-tile__value">{{ value }}</span>
+  @if (description) {
+    <span class="summary-tile__description">{{ description }}</span>
+  }
+</div>

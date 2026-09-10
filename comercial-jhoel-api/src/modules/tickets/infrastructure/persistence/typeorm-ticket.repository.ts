@@ -71,6 +71,27 @@ export class TypeOrmTicketRepository implements TicketRepository {
     if (options.userId) {
       qb.andWhere('ticket.userId = :userId', { userId: options.userId });
     }
+    if (options.startDate) {
+      qb.andWhere('ticket.createdAt >= :startDate', {
+        startDate: options.startDate,
+      });
+    }
+    if (options.endDate) {
+      qb.andWhere('ticket.createdAt <= :endDate', {
+        endDate: `${options.endDate} 23:59:59.999`,
+      });
+    }
+    if (options.search) {
+      qb.andWhere(
+        '(ticket.clientName ILIKE :search OR client.name ILIKE :search OR ticket.ticketNumber ILIKE :search)',
+        { search: `%${options.search}%` },
+      );
+    }
+    if (options.status === 'ACTIVE') {
+      qb.andWhere('ticket.isVoided = false');
+    } else if (options.status === 'VOIDED') {
+      qb.andWhere('ticket.isVoided = true');
+    }
 
     qb.orderBy('ticket.createdAt', 'DESC');
     qb.skip((options.page - 1) * options.limit).take(options.limit);

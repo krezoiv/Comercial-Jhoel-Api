@@ -13,7 +13,7 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
-import { ButtonComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { CashBreakdownTableComponent } from './components/cash-breakdown-table/cash-breakdown-table.component';
 import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-confirm-modal.component';
 import { StatusIndicatorComponent } from './components/status-indicator/status-indicator.component';
@@ -51,6 +51,7 @@ type TransaccionarView = 'dashboard' | 'form';
     DecimalInputDirective,
     ButtonComponent,
     IconComponent,
+    PageHeaderComponent,
     CashBreakdownTableComponent,
     TransactionDistributionComponent,
     StatusIndicatorComponent,

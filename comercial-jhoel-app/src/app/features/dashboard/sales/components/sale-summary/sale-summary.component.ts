@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import { formatCurrency } from '../../../../../core/models';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
@@ -6,7 +7,7 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 @Component({
   selector: 'app-sale-summary',
   standalone: true,
-  imports: [ButtonComponent, IconComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent],
   templateUrl: './sale-summary.component.html',
   styleUrl: './sale-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,9 +17,12 @@ export class SaleSummaryComponent {
   @Input() total = 0;
   @Input() isSaving = false;
   @Input() isCancelling = false;
+  /** Free-text folio, optional — captured just before "Guardar venta". */
+  @Input() invoiceNumber = '';
 
   @Output() save = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
+  @Output() invoiceNumberChange = new EventEmitter<string>();
 
   formatCurrency = formatCurrency;
 

@@ -14,6 +14,9 @@ export interface ListQuotationsInput {
   currentUserId: string;
   isAdmin: boolean;
   status?: QuotationStatusFilter;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -48,6 +51,9 @@ export class ListQuotationsUseCase {
     const result = await this.quotationRepository.findAll({
       userId,
       status: input.status,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      search: input.search,
       page,
       limit,
     });

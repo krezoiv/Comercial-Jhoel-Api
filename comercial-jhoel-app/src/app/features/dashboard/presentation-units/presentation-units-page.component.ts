@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { PageHeaderComponent } from '../../../shared/ui';
 import { PresentationTypesTabComponent } from './components/presentation-types-tab/presentation-types-tab.component';
 import { UnitsOfMeasureTabComponent } from './components/units-of-measure-tab/units-of-measure-tab.component';
 
@@ -15,7 +16,7 @@ type TabValue = 'presentaciones' | 'unidades';
 @Component({
   selector: 'app-presentation-units-page',
   standalone: true,
-  imports: [PresentationTypesTabComponent, UnitsOfMeasureTabComponent],
+  imports: [PageHeaderComponent, PresentationTypesTabComponent, UnitsOfMeasureTabComponent],
   templateUrl: './presentation-units-page.component.html',
   styleUrl: './presentation-units-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

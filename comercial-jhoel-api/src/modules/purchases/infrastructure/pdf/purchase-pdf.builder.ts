@@ -32,6 +32,9 @@ export interface PurchasePdfOptions {
   paymentDueDate: string | null;
   items: PurchasePdfItem[];
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidReason: string | null;
 }
 
 const PAGE_MARGIN = 40;
@@ -91,11 +94,32 @@ function drawDocumentInfo(
     .fillColor('#0f172a')
     .text('COMPRA', startX, doc.y, { width: usableWidth });
 
+  if (options.isVoided) {
+    doc.moveDown(0.2);
+    doc
+      .fontSize(12)
+      .fillColor('#dc2626')
+      .text('ANULADA', startX, doc.y, { width: usableWidth });
+    if (options.voidReason) {
+      doc
+        .fontSize(9)
+        .fillColor('#334155')
+        .text(`Motivo de anulación: ${options.voidReason}`, startX, doc.y, {
+          width: usableWidth,
+        });
+    }
+  }
+
   doc.moveDown(0.3);
   doc.fontSize(9).fillColor('#334155');
   doc.text(`Número: ${options.purchaseNumber}`, startX, doc.y, {
     width: usableWidth,
   });
+  if (options.invoiceNumber) {
+    doc.text(`Número de factura: ${options.invoiceNumber}`, startX, doc.y, {
+      width: usableWidth,
+    });
+  }
   doc.text(`Fecha: ${formatDateTime(options.purchaseDate)}`, startX, doc.y, {
     width: usableWidth,
   });

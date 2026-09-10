@@ -68,20 +68,27 @@
   top: 50%;
   transform: translate(-50%, -50%);
   display: none;
+  align-items: center;
+  gap: var(--space-2);
   max-width: 40%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.08em;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-on-light-muted);
+  color: var(--color-primary-700);
   pointer-events: none;
 
   @include bp.respond(md) {
-    display: block;
+    display: flex;
   }
+}
+
+.topbar__page-title-icon {
+  flex-shrink: 0;
+  color: var(--color-primary-500);
 }
 
 .topbar__menu-btn {
@@ -378,10 +385,10 @@
 }
 
 .topbar__menu-item--danger {
-  color: #dc4444;
+  color: var(--color-danger);
 
   app-icon {
-    color: #dc4444;
+    color: var(--color-danger);
   }
 
   &:hover {

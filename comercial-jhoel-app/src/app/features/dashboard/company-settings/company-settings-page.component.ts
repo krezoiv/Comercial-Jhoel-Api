@@ -7,7 +7,7 @@ import { CompanySettingsService } from '../../../core/services/company-settings.
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, CardComponent, IconComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 
 const MAX_LOGO_FILE_BYTES = 2 * 1024 * 1024;
 
@@ -26,7 +26,7 @@ const MAX_LOGO_FILE_BYTES = 2 * 1024 * 1024;
 @Component({
   selector: 'app-company-settings-page',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe, ButtonComponent, CardComponent, IconComponent],
+  imports: [ReactiveFormsModule, DatePipe, PageHeaderComponent, ButtonComponent, CardComponent, IconComponent],
   templateUrl: './company-settings-page.component.html',
   styleUrl: './company-settings-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

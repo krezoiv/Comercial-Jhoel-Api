@@ -5,30 +5,6 @@
   padding: var(--space-6);
 }
 
-.page__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-
-  @include bp.respond(md) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.page__title {
-  font-size: var(--fs-2xl);
-  color: var(--color-text-on-light);
-  margin-bottom: var(--space-2);
-}
-
-.page__subtitle {
-  font-size: var(--fs-md);
-  color: var(--color-text-on-light-muted);
-}
-
 .summary-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -147,7 +123,7 @@
 
 .action-btn--danger {
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
 
   &:hover:not(:disabled) {
     background: rgba(220, 68, 68, 0.18);
@@ -285,12 +261,12 @@
 
 .field__error {
   font-size: var(--fs-xs);
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .modal__error {
   font-size: var(--fs-sm);
-  color: #dc4444;
+  color: var(--color-danger);
   background: rgba(220, 68, 68, 0.08);
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);

@@ -78,4 +78,27 @@ export class SaleOrmEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'invoice_number', type: 'varchar', length: 50, nullable: true })
+  invoiceNumber: string | null;
+
+  @Column({ name: 'is_voided', type: 'boolean', default: false })
+  isVoided: boolean;
+
+  @Column({ name: 'voided_at', type: 'timestamptz', nullable: true })
+  voidedAt: Date | null;
+
+  @Column({ name: 'voided_by', type: 'uuid', nullable: true })
+  voidedBy: string | null;
+
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'voided_by' })
+  voidedByUser: UserOrmEntity | null;
+
+  @Column({ name: 'void_reason', type: 'varchar', length: 255, nullable: true })
+  voidReason: string | null;
 }

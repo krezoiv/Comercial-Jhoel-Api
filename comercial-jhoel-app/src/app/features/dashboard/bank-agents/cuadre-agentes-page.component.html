@@ -1,10 +1,9 @@
 <div class="cuadre-agentes">
-  <header class="cuadre-agentes__header">
-    <h1 class="cuadre-agentes__title">Cuadre Agentes</h1>
-    <p class="cuadre-agentes__subtitle">
-      Resumen financiero y conteo de efectivo — fecha de operación: {{ draft.operationDate() | date: 'dd/MM/yyyy' }}
-    </p>
-  </header>
+  <app-page-header
+    icon="file-check"
+    title="Cuadre Agentes"
+    [subtitle]="'Resumen financiero y conteo de efectivo — fecha de operación: ' + (draft.operationDate() | date: 'dd/MM/yyyy')"
+  />
 
   @if (!isTodayOperationDate()) {
     <p class="info-banner info-banner--warning">
@@ -151,25 +150,21 @@
 
     <div class="cuadre-agentes__totals-row">
       <app-card padding="lg">
-        <div class="summary-tile">
-          <div class="summary-tile__icon">
-            <app-icon name="package" [size]="22" />
-          </div>
-          <span class="summary-tile__title">Total de Activos</span>
-          <span class="summary-tile__value">{{ loading() ? '—' : formatCurrency(summary()?.totalAssets ?? 0) }}</span>
-        </div>
+        <app-summary-tile
+          icon="package"
+          title="Total de Activos"
+          [value]="loading() ? '—' : formatCurrency(summary()?.totalAssets ?? 0)"
+          tone="gold"
+        />
       </app-card>
 
       <app-card padding="lg">
-        <div class="summary-tile">
-          <div class="summary-tile__icon">
-            <app-icon name="receipt" [size]="22" />
-          </div>
-          <span class="summary-tile__title">Total de Cuentas por Cobrar</span>
-          <span class="summary-tile__value">{{
-            loading() ? '—' : formatCurrency(summary()?.totalAccountsReceivable ?? 0)
-          }}</span>
-        </div>
+        <app-summary-tile
+          icon="receipt"
+          title="Total de Cuentas por Cobrar"
+          [value]="loading() ? '—' : formatCurrency(summary()?.totalAccountsReceivable ?? 0)"
+          tone="gold"
+        />
       </app-card>
     </div>
 

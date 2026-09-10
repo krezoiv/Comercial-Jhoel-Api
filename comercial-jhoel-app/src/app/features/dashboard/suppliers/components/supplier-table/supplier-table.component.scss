@@ -120,7 +120,7 @@
 
 .action-btn--danger {
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
 
   &:hover:not(:disabled) {
     background: rgba(220, 68, 68, 0.18);

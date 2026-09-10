@@ -59,7 +59,7 @@
 }
 
 .result-card__row--red dd {
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .result-card__status {

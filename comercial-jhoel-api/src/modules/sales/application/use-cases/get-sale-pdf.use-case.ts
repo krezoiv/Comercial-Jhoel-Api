@@ -55,12 +55,15 @@ export class GetSalePdfUseCase {
       clientName: sale.clientName,
       items: sale.items.map((item) => ({
         productName: item.productName,
-        presentationName: 'Unidad',
+        presentationName: item.presentationName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         total: item.total,
       })),
       total: sale.total,
+      invoiceNumber: sale.invoiceNumber,
+      isVoided: sale.isVoided,
+      voidReason: sale.voidReason,
     });
   }
 }

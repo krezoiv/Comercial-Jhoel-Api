@@ -6,6 +6,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { IceCreamSaleDraftStore } from '../../../../core/services/ice-cream-sale-draft.store';
 import { IceCreamSalesService } from '../../../../core/services/ice-cream-sales.service';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../../shared/ui';
 import { IceCreamProductSearchComponent } from './components/ice-cream-product-search/ice-cream-product-search.component';
 import { IceCreamSaleItemsTableComponent } from './components/ice-cream-sale-items-table/ice-cream-sale-items-table.component';
 import { IceCreamSaleSummaryComponent } from './components/ice-cream-sale-summary/ice-cream-sale-summary.component';
@@ -23,6 +24,7 @@ import { CancelConfirmModalComponent } from './components/cancel-confirm-modal/c
   selector: 'app-ice-cream-sales-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     IceCreamProductSearchComponent,
     IceCreamSaleItemsTableComponent,
     IceCreamSaleSummaryComponent,

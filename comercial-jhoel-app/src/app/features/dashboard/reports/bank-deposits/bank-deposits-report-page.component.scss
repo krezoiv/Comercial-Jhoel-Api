@@ -1,29 +1,6 @@
 @use 'mixins' as *;
 @use 'breakpoints' as bp;
 
-.reports-page__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-
-  @include bp.respond(sm) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.reports-page__title {
-  font-size: var(--fs-2xl);
-  color: var(--color-text-on-light);
-  margin-bottom: var(--space-2);
-}
-
-.reports-page__subtitle {
-  font-size: var(--fs-md);
-  color: var(--color-text-on-light-muted);
-}
 
 .reports-page__filters {
   background: var(--color-surface-light);
@@ -188,7 +165,7 @@ app-report-summary {
 }
 
 .status-badge--voided {
-  color: #dc4444;
+  color: var(--color-danger);
   background: rgba(220, 68, 68, 0.1);
 }
 
@@ -224,7 +201,7 @@ app-report-summary {
 
 .action-btn--danger:not(:disabled):hover {
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
 }
 
 .by-bank {

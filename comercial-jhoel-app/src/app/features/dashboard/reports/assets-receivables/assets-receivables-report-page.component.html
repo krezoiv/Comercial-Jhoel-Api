@@ -1,14 +1,14 @@
 <div class="reports-page">
-  <header class="reports-page__header">
-    <div>
-      <h1 class="reports-page__title">Reportería de Activos y Cuentas por Cobrar</h1>
-      <p class="reports-page__subtitle">Consulte y exporte la información de activos y cuentas por cobrar.</p>
-    </div>
+  <app-page-header
+    icon="receipt"
+    title="Reportería de Activos y Cuentas por Cobrar"
+    subtitle="Consulte y exporte la información de activos y cuentas por cobrar."
+  >
     <app-button variant="primary" [disabled]="state.exporting()" (click)="exportPdf()">
       <app-icon name="download" [size]="16" />
       {{ state.exporting() ? 'Generando…' : 'Exportar PDF' }}
     </app-button>
-  </header>
+  </app-page-header>
 
   <div class="reports-page__filters">
     <div class="reports-page__filters-title">

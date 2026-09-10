@@ -183,7 +183,7 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   background: rgba(220, 68, 68, 0.1);
-  color: #dc4444;
+  color: var(--color-danger);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   @include focus-ring;

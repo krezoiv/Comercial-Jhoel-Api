@@ -26,6 +26,8 @@ export interface PurchasesReportRow {
   username: string;
   itemCount: number;
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
 }
 
 export interface PurchasesReportSummary {

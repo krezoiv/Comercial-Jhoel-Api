@@ -1,26 +1,36 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
-import { TicketSummary, formatCurrency } from '../../../../../core/models';
+import { TicketStatusFilter, TicketSummary, formatCurrency } from '../../../../../core/models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { TicketsService } from '../../../../../core/services/tickets.service';
 import { downloadBlob } from '../../../../../core/utils/download-blob';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { BadgeComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
+import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 import { TicketDetailModalComponent } from '../ticket-detail-modal/ticket-detail-modal.component';
 import { VoidReasonModalComponent } from '../void-reason-modal/void-reason-modal.component';
 
 const PAGE_LIMIT = 20;
 
+const DEFAULT_FILTERS: { search: string; startDate: string; endDate: string; status: TicketStatusFilter | '' } = {
+  search: '',
+  startDate: '',
+  endDate: '',
+  status: '',
+};
+
 @Component({
   selector: 'app-ticket-history-tab',
   standalone: true,
   imports: [
     DatePipe,
+    FormsModule,
     EmptyStateComponent,
     BadgeComponent,
+    ButtonComponent,
     IconComponent,
     ReportPaginationComponent,
     TicketDetailModalComponent,
@@ -42,6 +52,25 @@ export class TicketHistoryTabComponent {
   readonly page = signal(1);
   readonly loading = signal(false);
 
+  /** Draft/applied split — editing a filter field only ever touches `draftX`; `applyFilters()`/`clearFilters()` are the only two places the applied signals (the ones `fetch()` actually reads) change. Same pattern as the Reportería pages and the Compras/Ventas admin screens. */
+  readonly draftSearch = signal(DEFAULT_FILTERS.search);
+  readonly draftStartDate = signal(DEFAULT_FILTERS.startDate);
+  readonly draftEndDate = signal(DEFAULT_FILTERS.endDate);
+  readonly draftStatus = signal<TicketStatusFilter | ''>(DEFAULT_FILTERS.status);
+
+  readonly search = signal(DEFAULT_FILTERS.search);
+  readonly startDate = signal(DEFAULT_FILTERS.startDate);
+  readonly endDate = signal(DEFAULT_FILTERS.endDate);
+  readonly status = signal<TicketStatusFilter | ''>(DEFAULT_FILTERS.status);
+
+  readonly hasActiveFilters = computed(
+    () =>
+      this.search() !== DEFAULT_FILTERS.search ||
+      this.startDate() !== DEFAULT_FILTERS.startDate ||
+      this.endDate() !== DEFAULT_FILTERS.endDate ||
+      this.status() !== DEFAULT_FILTERS.status,
+  );
+
   readonly detailTicketId = signal<string | null>(null);
   readonly voidTarget = signal<TicketSummary | null>(null);
   readonly generatingPdfId = signal<string | null>(null);
@@ -57,17 +86,48 @@ export class TicketHistoryTabComponent {
 
   fetch(): void {
     this.loading.set(true);
-    this.ticketsService.getTickets({ page: this.page(), limit: this.limit }).subscribe({
-      next: (response) => {
-        this.tickets.set(response.items);
-        this.total.set(response.total);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.notificationService.error('No se pudo cargar el historial de tickets.');
-      },
-    });
+    this.ticketsService
+      .getTickets({
+        page: this.page(),
+        limit: this.limit,
+        search: this.search() || undefined,
+        startDate: this.startDate() || undefined,
+        endDate: this.endDate() || undefined,
+        status: this.status() || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          this.tickets.set(response.items);
+          this.total.set(response.total);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.notificationService.error('No se pudo cargar el historial de tickets.');
+        },
+      });
+  }
+
+  applyFilters(): void {
+    this.search.set(this.draftSearch().trim());
+    this.startDate.set(this.draftStartDate());
+    this.endDate.set(this.draftEndDate());
+    this.status.set(this.draftStatus());
+    this.page.set(1);
+    this.fetch();
+  }
+
+  clearFilters(): void {
+    this.draftSearch.set(DEFAULT_FILTERS.search);
+    this.draftStartDate.set(DEFAULT_FILTERS.startDate);
+    this.draftEndDate.set(DEFAULT_FILTERS.endDate);
+    this.draftStatus.set(DEFAULT_FILTERS.status);
+    this.search.set(DEFAULT_FILTERS.search);
+    this.startDate.set(DEFAULT_FILTERS.startDate);
+    this.endDate.set(DEFAULT_FILTERS.endDate);
+    this.status.set(DEFAULT_FILTERS.status);
+    this.page.set(1);
+    this.fetch();
   }
 
   onPageChange(page: number): void {

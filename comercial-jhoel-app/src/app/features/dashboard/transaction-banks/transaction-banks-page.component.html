@@ -1,10 +1,9 @@
 <div class="transaction-banks">
-  <header class="transaction-banks__header">
-    <div>
-      <h1 class="transaction-banks__title">Banco Agente</h1>
-      <p class="transaction-banks__subtitle">Administra los bancos agente disponibles para registrar transacciones en Transaccionar.</p>
-    </div>
-  </header>
+  <app-page-header
+    icon="bank"
+    title="Banco Agente"
+    subtitle="Administra los bancos agente disponibles para registrar transacciones en Transaccionar."
+  />
 
   <app-transaction-bank-summary [data]="transactionBanks()" />
 

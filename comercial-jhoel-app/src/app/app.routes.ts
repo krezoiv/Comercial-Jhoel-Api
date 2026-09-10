@@ -64,6 +64,24 @@ export const routes: Routes = [
         title: 'Proveedores — Sistema',
       },
       {
+        path: 'administrar-facturas-compras',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/purchases-admin/purchases-admin-page.component').then(
+            (m) => m.PurchasesAdminPageComponent,
+          ),
+        title: 'Administrar Facturas de Compras — Sistema',
+      },
+      {
+        path: 'administrar-facturas-ventas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/sales-admin/sales-admin-page.component').then(
+            (m) => m.SalesAdminPageComponent,
+          ),
+        title: 'Administrar Facturas de Ventas — Sistema',
+      },
+      {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>

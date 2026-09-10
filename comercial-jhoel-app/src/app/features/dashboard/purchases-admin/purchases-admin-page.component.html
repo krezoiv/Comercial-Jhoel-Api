@@ -1,0 +1,140 @@
+<div class="admin-page">
+  <app-page-header
+    icon="shopping-bag"
+    title="Administrar Facturas de Compras"
+    subtitle="Localiza una factura de compra ya registrada, consulta su detalle y anúlala si corresponde."
+  />
+
+  <div class="admin-page__filters">
+    <div class="admin-page__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field field--wide">
+        <label for="pa-search">Buscar por número de factura o proveedor</label>
+        <input
+          id="pa-search"
+          type="text"
+          placeholder="Ej: F-00125 o Proveedor A"
+          [ngModel]="draftSearch()"
+          (ngModelChange)="draftSearch.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="pa-start-date">Desde</label>
+        <input id="pa-start-date" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="pa-end-date">Hasta</label>
+        <input id="pa-end-date" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="pa-supplier">Proveedor</label>
+        <select id="pa-supplier" [ngModel]="draftSupplierId()" (ngModelChange)="draftSupplierId.set($event)">
+          <option value="">Todos los proveedores</option>
+          @for (supplier of suppliers(); track supplier.id) {
+            <option [value]="supplier.id">{{ supplier.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="pa-status">Estado</label>
+        <select id="pa-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          <option value="">Todas</option>
+          <option value="ACTIVE">Activa</option>
+          <option value="VOIDED">Anulada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
+  </div>
+
+  @if (!loading() && purchases().length === 0) {
+    <p class="empty-note">
+      <app-icon name="shopping-bag" [size]="16" />
+      No se encontraron facturas de compras con los filtros indicados.
+    </p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Factura</th>
+            <th>Proveedor</th>
+            <th>Tipo</th>
+            <th class="align-right">Total</th>
+            <th>Estado</th>
+            <th>Usuario</th>
+            <th class="align-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (row of [0, 1, 2]; track row) {
+              <tr class="skeleton-row">
+                <td colspan="8"><span class="skeleton"></span></td>
+              </tr>
+            }
+          } @else {
+            @for (purchase of purchases(); track purchase.id) {
+              <tr [class.admin-table__row--voided]="purchase.isVoided">
+                <td>{{ purchase.purchaseDate | date: 'dd/MM/yyyy' }}</td>
+                <td class="admin-table__invoice">{{ purchase.invoiceNumber || ('C-' + purchase.id.slice(0, 8).toUpperCase()) }}</td>
+                <td>{{ purchase.supplierName }}</td>
+                <td>{{ purchase.paymentType === 'CREDITO' ? 'Crédito' : 'Contado' }}</td>
+                <td class="align-right">{{ formatCurrency(purchase.total) }}</td>
+                <td>
+                  @if (purchase.isVoided) {
+                    <app-badge tone="danger">Anulada</app-badge>
+                  } @else {
+                    <app-badge tone="success">Activa</app-badge>
+                  }
+                </td>
+                <td>{{ purchase.username }}</td>
+                <td class="align-right">
+                  <div class="actions">
+                    <button type="button" class="action-btn" (click)="viewDetail(purchase)" title="Ver detalle">
+                      <app-icon name="eye" [size]="16" />
+                    </button>
+                    <button
+                      type="button"
+                      class="action-btn action-btn--danger"
+                      [disabled]="purchase.isVoided"
+                      (click)="requestVoid(purchase)"
+                      title="Anular factura"
+                    >
+                      <app-icon name="x-circle" [size]="16" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+  }
+</div>
+
+<app-purchase-detail-modal [purchaseId]="detailPurchaseId()" (closed)="closeDetail()" />
+
+<app-void-purchase-confirm-modal
+  [open]="voidTarget() !== null"
+  [purchase]="voidTarget()"
+  [isSaving]="isVoiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="cancelVoid()"
+/>

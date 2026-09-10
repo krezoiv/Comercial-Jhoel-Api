@@ -1,10 +1,9 @@
 <div class="recharges">
-  <header class="recharges__header">
-    <div>
-      <h1 class="recharges__title">Recargas Electrónicas</h1>
-      <p class="recharges__subtitle">Controla el saldo diario de cada operadora: compras, saldo del día y cierre.</p>
-    </div>
-
+  <app-page-header
+    icon="smartphone"
+    title="Recargas Electrónicas"
+    subtitle="Controla el saldo diario de cada operadora: compras, saldo del día y cierre."
+  >
     <div class="recharges__header-actions">
       <label class="recharges__date-field">
         <span>Fecha de operación</span>
@@ -31,7 +30,7 @@
         </app-button>
       }
     </div>
-  </header>
+  </app-page-header>
 
   @if (effectiveDayClosed()) {
     <p class="info-banner info-banner--locked">

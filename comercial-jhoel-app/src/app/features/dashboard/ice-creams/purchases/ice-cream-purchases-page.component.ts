@@ -8,6 +8,7 @@ import { IceCreamPurchaseDraftStore } from '../../../../core/services/ice-cream-
 import { IceCreamPurchasesService } from '../../../../core/services/ice-cream-purchases.service';
 import { SupplierService } from '../../../../core/services/supplier.service';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../../shared/ui';
 import { IceCreamProductSearchComponent } from './components/ice-cream-product-search/ice-cream-product-search.component';
 import { IceCreamPurchaseItemsTableComponent } from './components/ice-cream-purchase-items-table/ice-cream-purchase-items-table.component';
 import { IceCreamPurchaseSummaryComponent } from './components/ice-cream-purchase-summary/ice-cream-purchase-summary.component';
@@ -25,6 +26,7 @@ import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-
   standalone: true,
   imports: [
     FormsModule,
+    PageHeaderComponent,
     IceCreamProductSearchComponent,
     IceCreamPurchaseItemsTableComponent,
     IceCreamPurchaseSummaryComponent,

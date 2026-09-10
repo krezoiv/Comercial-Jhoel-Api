@@ -13,6 +13,8 @@ export interface SalesReportRowOutput {
   username: string;
   itemCount: number;
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
 }
 
 export function toSalesReportRowOutput(
@@ -65,6 +67,11 @@ export interface SaleReportDetailOutput {
   username: string;
   total: number;
   items: SaleReportDetailItemOutput[];
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
 }
 
 /** Folio is derived from the id, not stored — see `SalesReportRow.saleNumber`'s doc comment. */
@@ -84,5 +91,10 @@ export function toSaleReportDetailOutput(sale: Sale): SaleReportDetailOutput {
       unitPrice: item.unitPrice,
       total: item.total,
     })),
+    invoiceNumber: sale.invoiceNumber,
+    isVoided: sale.isVoided,
+    voidedAt: sale.voidedAt,
+    voidedByUsername: sale.voidedByUsername,
+    voidReason: sale.voidReason,
   };
 }

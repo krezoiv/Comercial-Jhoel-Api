@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
+import { PageHeaderComponent } from '../../../shared/ui';
 import { CreateTicketTabComponent } from './components/create-ticket-tab/create-ticket-tab.component';
 import { TicketHistoryTabComponent } from './components/ticket-history-tab/ticket-history-tab.component';
 
@@ -15,7 +16,7 @@ type TabValue = 'crear' | 'historial';
 @Component({
   selector: 'app-tickets-page',
   standalone: true,
-  imports: [CreateTicketTabComponent, TicketHistoryTabComponent],
+  imports: [PageHeaderComponent, CreateTicketTabComponent, TicketHistoryTabComponent],
   templateUrl: './tickets-page.component.html',
   styleUrl: './tickets-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

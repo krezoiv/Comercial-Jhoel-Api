@@ -6,6 +6,7 @@ import { AccountTypeService } from '../../../core/services/account-type.service'
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { PageHeaderComponent } from '../../../shared/ui';
 import { AccountTypeSummaryComponent } from './components/account-type-summary/account-type-summary.component';
 import { AccountTypeToolbarComponent, AccountTypeStatusFilterValue } from './components/account-type-toolbar/account-type-toolbar.component';
 import { AccountTypeTableComponent } from './components/account-type-table/account-type-table.component';
@@ -16,6 +17,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
   selector: 'app-account-types-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     AccountTypeSummaryComponent,
     AccountTypeToolbarComponent,
     AccountTypeTableComponent,

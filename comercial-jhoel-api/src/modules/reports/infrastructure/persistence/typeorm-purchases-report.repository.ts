@@ -54,6 +54,8 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
       .addSelect('purchase.total', 'total')
       .addSelect('purchase.userId', 'userId')
       .addSelect('purchase.supplierId', 'supplierId')
+      .addSelect('purchase.invoiceNumber', 'invoiceNumber')
+      .addSelect('purchase.isVoided', 'isVoided')
       .addSelect('user.username', 'username')
       .addSelect('supplier.name', 'supplierName')
       .addSelect(
@@ -74,6 +76,8 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
       total: string;
       userId: string;
       supplierId: string;
+      invoiceNumber: string | null;
+      isVoided: boolean;
       username: string | null;
       supplierName: string | null;
       itemCount: string;
@@ -90,6 +94,8 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
         username: row.username ?? '—',
         itemCount: parseInt(row.itemCount, 10),
         total: parseFloat(row.total),
+        invoiceNumber: row.invoiceNumber,
+        isVoided: row.isVoided,
       })),
       total,
     };
@@ -101,7 +107,9 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
     // Total/count from `purchases` directly — a join against
     // `purchase_details` would double-count a purchase's total once per
     // matching line item.
-    const purchasesQb = this.purchaseRepository.createQueryBuilder('purchase');
+    const purchasesQb = this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .where('purchase.isVoided = false');
     this.applyDateUserSupplierFilters(purchasesQb, filters);
     this.applyProductExistsFilter(purchasesQb, filters);
     purchasesQb
@@ -117,7 +125,8 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
     const detailsQb = this.purchaseDetailRepository
       .createQueryBuilder('detail')
       .innerJoin('detail.purchase', 'purchase')
-      .innerJoin('detail.product', 'product');
+      .innerJoin('detail.product', 'product')
+      .where('purchase.isVoided = false');
     this.applyDateUserSupplierFilters(detailsQb, filters, 'purchase');
     this.applyProductFilters(detailsQb, filters, 'detail', 'product');
     detailsQb.select('COALESCE(SUM(detail.quantity), 0)', 'unitsPurchased');
@@ -143,7 +152,8 @@ export class TypeOrmPurchasesReportRepository implements PurchasesReportReposito
     const baseQb = this.purchaseDetailRepository
       .createQueryBuilder('detail')
       .innerJoin('detail.purchase', 'purchase')
-      .innerJoin('detail.product', 'product');
+      .innerJoin('detail.product', 'product')
+      .where('purchase.isVoided = false');
     this.applyDateUserSupplierFilters(baseQb, filters, 'purchase');
     this.applyProductFilters(baseQb, filters, 'detail', 'product');
 

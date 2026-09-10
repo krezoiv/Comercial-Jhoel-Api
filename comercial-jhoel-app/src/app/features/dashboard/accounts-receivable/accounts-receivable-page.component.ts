@@ -9,7 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { formatCurrency } from '../../../core/utils/number-format.util';
-import { AccountStatementModalComponent, CardComponent, IconComponent, KardexStatementClient } from '../../../shared/ui';
+import { AccountStatementModalComponent, CardComponent, KardexStatementClient, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 import { ReportPaginationComponent } from '../reports/components/report-pagination/report-pagination.component';
 import { AccountReceivableToolbarComponent, AccountReceivableStatusFilterValue } from './components/account-receivable-toolbar/account-receivable-toolbar.component';
 import { AccountReceivableTableComponent } from './components/account-receivable-table/account-receivable-table.component';
@@ -22,6 +22,7 @@ const LIMIT = 20;
   selector: 'app-accounts-receivable-page',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     AccountReceivableToolbarComponent,
     AccountReceivableTableComponent,
     AccountReceivableFormModalComponent,
@@ -29,7 +30,7 @@ const LIMIT = 20;
     ReportPaginationComponent,
     AccountStatementModalComponent,
     CardComponent,
-    IconComponent,
+    SummaryTileComponent,
   ],
   templateUrl: './accounts-receivable-page.component.html',
   styleUrl: './accounts-receivable-page.component.scss',

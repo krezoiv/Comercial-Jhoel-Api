@@ -9,7 +9,6 @@ import {
 
 export interface SalePdfItem {
   productName: string;
-  /** `sale_details` carries no presentation column — an omitted presentation always means the base "Unidad", same convention the rest of this codebase already uses (`ensure_product_presentation`). */
   presentationName: string;
   quantity: number;
   unitPrice: number;
@@ -24,6 +23,9 @@ export interface SalePdfOptions {
   clientName: string | null;
   items: SalePdfItem[];
   total: number;
+  invoiceNumber: string | null;
+  isVoided: boolean;
+  voidReason: string | null;
 }
 
 const PAGE_MARGIN = 40;
@@ -84,11 +86,32 @@ function drawDocumentInfo(
     .fillColor('#0f172a')
     .text('VENTA', startX, doc.y, { width: usableWidth });
 
+  if (options.isVoided) {
+    doc.moveDown(0.2);
+    doc
+      .fontSize(12)
+      .fillColor('#dc2626')
+      .text('ANULADA', startX, doc.y, { width: usableWidth });
+    if (options.voidReason) {
+      doc
+        .fontSize(9)
+        .fillColor('#334155')
+        .text(`Motivo de anulación: ${options.voidReason}`, startX, doc.y, {
+          width: usableWidth,
+        });
+    }
+  }
+
   doc.moveDown(0.3);
   doc.fontSize(9).fillColor('#334155');
   doc.text(`Número: ${options.saleNumber}`, startX, doc.y, {
     width: usableWidth,
   });
+  if (options.invoiceNumber) {
+    doc.text(`Número de factura: ${options.invoiceNumber}`, startX, doc.y, {
+      width: usableWidth,
+    });
+  }
   doc.text(
     `Fecha: ${formatDateTime(options.saleDate)}`,
     startX,

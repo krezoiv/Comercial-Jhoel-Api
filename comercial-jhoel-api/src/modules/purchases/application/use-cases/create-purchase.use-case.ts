@@ -25,6 +25,8 @@ export interface CreatePurchaseInput {
   paymentType: 'CONTADO' | 'CREDITO';
   /** `yyyy-MM-dd` — required when `paymentType` is `'CREDITO'`. */
   paymentDueDate?: string;
+  /** Free-text folio from the supplier's own invoice — optional, never enforced as unique. */
+  invoiceNumber?: string;
 }
 
 // A purchase invoice can legitimately be dated in the past (entering an old
@@ -117,6 +119,7 @@ export class CreatePurchaseUseCase {
       paymentType: input.paymentType,
       paymentDueDate:
         input.paymentType === 'CREDITO' ? input.paymentDueDate : undefined,
+      invoiceNumber: input.invoiceNumber?.trim() || undefined,
     });
 
     return toPurchaseOutput(purchase);

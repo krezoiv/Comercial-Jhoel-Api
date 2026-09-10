@@ -18,9 +18,17 @@ export interface CreateTicketData {
   items: CreateTicketItemData[];
 }
 
+export type TicketStatusFilter = 'ACTIVE' | 'VOIDED';
+
 export interface FindTicketsOptions {
   /** Restricts the listing to one user's own tickets (a USER role never sees anyone else's, same rule as Sales/Purchases). */
   userId?: string;
+  /** `startDate`/`endDate` are `yyyy-MM-dd` — compared against `createdAt`, inclusive on both ends. */
+  startDate?: string;
+  endDate?: string;
+  /** Matches against the client's name OR the ticket's own `ticketNumber`, case-insensitive. */
+  search?: string;
+  status?: TicketStatusFilter;
   page: number;
   limit: number;
 }

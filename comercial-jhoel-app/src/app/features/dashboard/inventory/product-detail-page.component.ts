@@ -15,7 +15,7 @@ import { InventoryLocationsService } from '../../../core/services/inventory-loca
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, BadgeComponent, CardComponent, IconComponent, EmptyStateComponent } from '../../../shared/ui';
+import { ButtonComponent, BadgeComponent, CardComponent, IconComponent, EmptyStateComponent, PageHeaderComponent } from '../../../shared/ui';
 import { PresentationFormModalComponent } from './components/presentation-form-modal/presentation-form-modal.component';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 
@@ -33,6 +33,7 @@ import { DecimalInputDirective } from '../../../shared/directives/decimal-input.
   standalone: true,
   imports: [
     DatePipe,
+    PageHeaderComponent,
     ButtonComponent,
     BadgeComponent,
     CardComponent,
