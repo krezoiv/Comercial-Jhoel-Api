@@ -8,6 +8,7 @@ import { RechargeDayOpeningOrmEntity } from './infrastructure/persistence/rechar
 import { RechargeDayAuditLogOrmEntity } from './infrastructure/persistence/recharge-day-audit-log.orm-entity';
 import { RechargeSimTypeOrmEntity } from './infrastructure/persistence/recharge-sim-type.orm-entity';
 import { RechargeSimDailyStockOrmEntity } from './infrastructure/persistence/recharge-sim-daily-stock.orm-entity';
+import { RechargePurchaseFullOrmEntity } from './infrastructure/persistence/recharge-purchase-full.orm-entity';
 import { TypeOrmRechargeTypeRepository } from './infrastructure/persistence/typeorm-recharge-type.repository';
 import { TypeOrmRechargeDailyBalanceRepository } from './infrastructure/persistence/typeorm-recharge-daily-balance.repository';
 import { TypeOrmRechargeSalesClosureRepository } from './infrastructure/persistence/typeorm-recharge-sales-closure.repository';
@@ -16,6 +17,7 @@ import { TypeOrmRechargeDayOpeningRepository } from './infrastructure/persistenc
 import { TypeOrmRechargeDayAuditLogRepository } from './infrastructure/persistence/typeorm-recharge-day-audit-log.repository';
 import { TypeOrmRechargeSimTypeRepository } from './infrastructure/persistence/typeorm-recharge-sim-type.repository';
 import { TypeOrmRechargeSimDailyStockRepository } from './infrastructure/persistence/typeorm-recharge-sim-daily-stock.repository';
+import { TypeOrmRechargePurchaseRepository } from './infrastructure/persistence/typeorm-recharge-purchase.repository';
 import { RECHARGE_TYPE_REPOSITORY } from './domain/repositories/recharge-type.repository';
 import { RECHARGE_DAILY_BALANCE_REPOSITORY } from './domain/repositories/recharge-daily-balance.repository';
 import { RECHARGE_SALES_CLOSURE_REPOSITORY } from './domain/repositories/recharge-sales-closure.repository';
@@ -24,6 +26,7 @@ import { RECHARGE_DAY_OPENING_REPOSITORY } from './domain/repositories/recharge-
 import { RECHARGE_DAY_AUDIT_LOG_REPOSITORY } from './domain/repositories/recharge-day-audit-log.repository';
 import { RECHARGE_SIM_TYPE_REPOSITORY } from './domain/repositories/recharge-sim-type.repository';
 import { RECHARGE_SIM_DAILY_STOCK_REPOSITORY } from './domain/repositories/recharge-sim-daily-stock.repository';
+import { RECHARGE_PURCHASE_REPOSITORY } from './domain/repositories/recharge-purchase.repository';
 import { ListRechargeTypesUseCase } from './application/use-cases/list-recharge-types.use-case';
 import { GetRechargeDailySummaryUseCase } from './application/use-cases/get-recharge-daily-summary.use-case';
 import { RegisterRechargePurchaseUseCase } from './application/use-cases/register-recharge-purchase.use-case';
@@ -47,6 +50,8 @@ import { ListRechargeSimTypesUseCase } from './application/use-cases/list-rechar
 import { GetRechargeSimDailySummaryUseCase } from './application/use-cases/get-recharge-sim-daily-summary.use-case';
 import { RegisterRechargeSimPurchaseUseCase } from './application/use-cases/register-recharge-sim-purchase.use-case';
 import { RegisterRechargeSimSaleUseCase } from './application/use-cases/register-recharge-sim-sale.use-case';
+import { GetRechargePurchasesUseCase } from './application/use-cases/get-recharge-purchases.use-case';
+import { VoidRechargePurchaseUseCase } from './application/use-cases/void-recharge-purchase.use-case';
 import { RechargesController } from './presentation/controllers/recharges.controller';
 import { RechargeDaysController } from './presentation/controllers/recharge-days.controller';
 import { RechargeSimsController } from './presentation/controllers/recharge-sims.controller';
@@ -62,6 +67,7 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
       RechargeDayAuditLogOrmEntity,
       RechargeSimTypeOrmEntity,
       RechargeSimDailyStockOrmEntity,
+      RechargePurchaseFullOrmEntity,
     ]),
   ],
   controllers: [
@@ -102,6 +108,10 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
       provide: RECHARGE_SIM_DAILY_STOCK_REPOSITORY,
       useClass: TypeOrmRechargeSimDailyStockRepository,
     },
+    {
+      provide: RECHARGE_PURCHASE_REPOSITORY,
+      useClass: TypeOrmRechargePurchaseRepository,
+    },
     ListRechargeTypesUseCase,
     GetRechargeDailySummaryUseCase,
     RegisterRechargePurchaseUseCase,
@@ -125,6 +135,8 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
     GetRechargeSimDailySummaryUseCase,
     RegisterRechargeSimPurchaseUseCase,
     RegisterRechargeSimSaleUseCase,
+    GetRechargePurchasesUseCase,
+    VoidRechargePurchaseUseCase,
   ],
   // Exported for `ReportsModule`'s new Recargas report: `RECHARGE_TYPE_REPOSITORY`
   // resolves the `rechargeTypeId` filter into a display name for the PDF,

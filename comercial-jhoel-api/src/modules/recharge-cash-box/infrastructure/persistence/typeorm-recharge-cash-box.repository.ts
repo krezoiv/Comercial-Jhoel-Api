@@ -157,7 +157,8 @@ export class TypeOrmRechargeCashBoxRepository
       applyDateFilter(
         this.rechargePurchaseRepository
           .createQueryBuilder('purchase')
-          .select('COALESCE(SUM(purchase.amount), 0)', 'total'),
+          .select('COALESCE(SUM(purchase.amount), 0)', 'total')
+          .andWhere('purchase.isVoided = false'),
         'purchase.purchaseDate',
       ).getRawOne<{ total: string }>(),
       applyDateFilter(
@@ -247,6 +248,7 @@ export class TypeOrmRechargeCashBoxRepository
         SELECT
           purchase.purchase_date, 'RECHARGE_PURCHASE', 3, 'Compra de Recargas', 0, SUM(purchase.amount), NULL, NULL
         FROM recharge_purchases purchase
+        WHERE purchase.is_voided = false
         GROUP BY purchase.purchase_date
 
         UNION ALL

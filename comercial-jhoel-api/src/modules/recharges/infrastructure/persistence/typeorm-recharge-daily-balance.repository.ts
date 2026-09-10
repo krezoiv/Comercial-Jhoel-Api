@@ -155,7 +155,7 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
     const rows = await this.repository.manager.query<
       { daily_balance_id: string; total: string }[]
     >(
-      `SELECT daily_balance_id, SUM(amount) AS total FROM recharge_purchases WHERE daily_balance_id = ANY($1) GROUP BY daily_balance_id`,
+      `SELECT daily_balance_id, SUM(amount) AS total FROM recharge_purchases WHERE daily_balance_id = ANY($1) AND is_voided = false GROUP BY daily_balance_id`,
       [dailyBalanceIds],
     );
     for (const row of rows) {

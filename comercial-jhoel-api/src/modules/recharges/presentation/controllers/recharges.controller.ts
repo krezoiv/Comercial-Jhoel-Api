@@ -35,6 +35,8 @@ import { GetRechargeDayStatusUseCase } from '../../application/use-cases/get-rec
 import { UpdateRechargeTypeMinBalanceUseCase } from '../../application/use-cases/update-recharge-type-min-balance.use-case';
 import { OpenRechargeDayUseCase } from '../../application/use-cases/open-recharge-day.use-case';
 import { CloseRechargeDayUseCase } from '../../application/use-cases/close-recharge-day.use-case';
+import { GetRechargePurchasesUseCase } from '../../application/use-cases/get-recharge-purchases.use-case';
+import { VoidRechargePurchaseUseCase } from '../../application/use-cases/void-recharge-purchase.use-case';
 import { RegisterRechargePurchaseRequestDto } from '../dtos/register-recharge-purchase.request.dto';
 import { RegisterRechargeFinalBalanceRequestDto } from '../dtos/register-recharge-final-balance.request.dto';
 import { RegisterRechargeSalesClosureRequestDto } from '../dtos/register-recharge-sales-closure.request.dto';
@@ -48,11 +50,14 @@ import { RechargeDayStatusQueryDto } from '../dtos/recharge-day-status.query.dto
 import { OpenRechargeDayRequestDto } from '../dtos/open-recharge-day.request.dto';
 import { UpdateRechargeTypeMinBalanceRequestDto } from '../dtos/update-recharge-type-min-balance.request.dto';
 import { CloseRechargeDayRequestDto } from '../dtos/close-recharge-day.request.dto';
+import { RechargePurchasesQueryDto } from '../dtos/recharge-purchases.query.dto';
+import { VoidRechargePurchaseRequestDto } from '../dtos/void-recharge-purchase.request.dto';
 import { RechargeTypeOutput } from '../../application/dtos/recharge-type-output';
 import { RechargeDailyBalanceOutput } from '../../application/dtos/recharge-daily-balance-output';
 import { RechargeSalesSummaryOutput } from '../../application/dtos/recharge-sales-summary-output';
 import { RechargeSaleOutput } from '../../application/dtos/recharge-sale-output';
 import { RechargeDayStatusOutput } from '../../application/dtos/recharge-day-status-output';
+import { RechargePurchaseOutput } from '../../application/dtos/recharge-purchase-output';
 import { todayIsoDate } from '../../application/utils/today-iso-date';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -86,6 +91,8 @@ export class RechargesController {
     private readonly openRechargeDayUseCase: OpenRechargeDayUseCase,
     private readonly closeRechargeDayUseCase: CloseRechargeDayUseCase,
     private readonly updateRechargeTypeMinBalanceUseCase: UpdateRechargeTypeMinBalanceUseCase,
+    private readonly getRechargePurchasesUseCase: GetRechargePurchasesUseCase,
+    private readonly voidRechargePurchaseUseCase: VoidRechargePurchaseUseCase,
   ) {}
 
   /**
@@ -175,6 +182,37 @@ export class RechargesController {
       creditedAmount: dto.creditedAmount,
       operationDate: dto.operationDate,
       userId,
+    });
+  }
+
+  @Get('purchases')
+  findPurchases(
+    @Query() query: RechargePurchasesQueryDto,
+  ): Promise<RechargePurchaseOutput[]> {
+    return this.getRechargePurchasesUseCase.execute(query.date);
+  }
+
+  /**
+   * "Revertir compra" — admin-only, same elevated-permission policy as
+   * re-editing an already-closed day's saldo final. Never a physical
+   * delete/edit: the original row stays exactly as registered, marked
+   * `ANULADA` by `void_recharge_purchase`, which also atomically decrements
+   * the daily balance by the reverted `creditedAmount` and enforces every
+   * other guard (day-closed, cycle-closed, already-voided, missing reason).
+   */
+  @Post('purchases/:id/void')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  voidPurchase(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidRechargePurchaseRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<RechargePurchaseOutput> {
+    return this.voidRechargePurchaseUseCase.execute({
+      id,
+      voidedBy: userId,
+      reason: dto.reason,
     });
   }
 

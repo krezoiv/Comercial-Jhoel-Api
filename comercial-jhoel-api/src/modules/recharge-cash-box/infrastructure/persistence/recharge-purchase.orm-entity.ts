@@ -27,4 +27,8 @@ export class RechargePurchaseOrmEntity {
 
   @Column({ name: 'purchase_date', type: 'date' })
   purchaseDate: string;
+
+  /** A voided ("ANULADA") purchase must never count as a Caja Contable expense — see `TypeOrmRechargeCashBoxRepository`'s own `isVoided = false` filters. */
+  @Column({ name: 'is_voided', type: 'boolean', default: false })
+  isVoided: boolean;
 }
