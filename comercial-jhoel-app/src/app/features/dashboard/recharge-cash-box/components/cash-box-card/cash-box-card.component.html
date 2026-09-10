@@ -1,0 +1,117 @@
+<app-card [hoverable]="false" class="cash-box">
+  <div class="cash-box__body">
+    <div class="cash-box__header">
+      <div class="cash-box__title-group">
+        <span class="cash-box__icon">
+          <app-icon name="wallet" [size]="18" />
+        </span>
+        <span class="cash-box__title">Caja Contable</span>
+      </div>
+
+      @if (isAdmin()) {
+        <div class="cash-box__header-actions">
+          <app-button variant="ghost" (click)="openContributionModal()">
+            <app-icon name="plus" [size]="16" />
+            Aporte
+          </app-button>
+          <app-button variant="primary" (click)="openWithdrawalModal()">
+            <app-icon name="minus" [size]="16" />
+            Salida de Ganancia
+          </app-button>
+        </div>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="cash-box__loading">
+        <app-icon name="clock" [size]="16" />
+        Cargando Caja Contable…
+      </p>
+    }
+    @if (!loading() && balance(); as data) {
+      <div class="cash-box__hero">
+        <span class="cash-box__hero-label">Saldo Actual</span>
+        <span
+          class="cash-box__hero-value"
+          [class.cash-box__hero-value--positive]="data.currentBalance >= 0"
+          [class.cash-box__hero-value--negative]="data.currentBalance < 0"
+        >
+          {{ formatCurrency(data.currentBalance) }}
+        </span>
+      </div>
+
+      <div class="cash-box__tiles">
+        <div class="cash-box__tile">
+          <span class="cash-box__tile-label">
+            <app-icon name="arrow-up-circle" [size]="14" />
+            Ingresos Hoy
+          </span>
+          <span class="cash-box__tile-value cash-box__tile-value--income">{{ formatCurrency(data.incomeToday) }}</span>
+        </div>
+        <div class="cash-box__tile">
+          <span class="cash-box__tile-label">
+            <app-icon name="arrow-down-circle" [size]="14" />
+            Salidas Hoy
+          </span>
+          <span class="cash-box__tile-value cash-box__tile-value--expense">{{ formatCurrency(data.expenseToday) }}</span>
+        </div>
+        <div class="cash-box__tile">
+          <span class="cash-box__tile-label">
+            <app-icon name="wallet" [size]="14" />
+            Saldo Anterior
+          </span>
+          <span
+            class="cash-box__tile-value"
+            [class.cash-box__tile-value--positive]="data.previousBalance >= 0"
+            [class.cash-box__tile-value--negative]="data.previousBalance < 0"
+          >
+            {{ formatCurrency(data.previousBalance) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="cash-box__detail">
+        <div class="cash-box__detail-row">
+          <span>Ventas de Recargas</span>
+          <span>{{ formatCurrency(data.detail.salesRecharges) }}</span>
+        </div>
+        <div class="cash-box__detail-row">
+          <span>Ventas de SIM</span>
+          <span>{{ formatCurrency(data.detail.salesSim) }}</span>
+        </div>
+        <div class="cash-box__detail-row">
+          <span>Aporte a Caja</span>
+          <span>{{ formatCurrency(data.detail.contributions) }}</span>
+        </div>
+        <div class="cash-box__detail-row">
+          <span>Compras de Recargas</span>
+          <span>{{ formatCurrency(data.detail.purchasesRecharges) }}</span>
+        </div>
+        <div class="cash-box__detail-row">
+          <span>Compras de SIM</span>
+          <span>{{ formatCurrency(data.detail.purchasesSim) }}</span>
+        </div>
+        <div class="cash-box__detail-row">
+          <span>Salida de Ganancia</span>
+          <span>{{ formatCurrency(data.detail.profitWithdrawals) }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</app-card>
+
+<app-cash-box-withdrawal-modal
+  [open]="withdrawalModalOpen()"
+  [businessDate]="operationDate"
+  [currentBalance]="balance()?.currentBalance ?? 0"
+  (closed)="closeWithdrawalModal()"
+  (saved)="onWithdrawalSaved($event)"
+/>
+
+<app-cash-box-contribution-modal
+  [open]="contributionModalOpen()"
+  [businessDate]="operationDate"
+  [currentBalance]="balance()?.currentBalance ?? 0"
+  (closed)="closeContributionModal()"
+  (saved)="onContributionSaved($event)"
+/>

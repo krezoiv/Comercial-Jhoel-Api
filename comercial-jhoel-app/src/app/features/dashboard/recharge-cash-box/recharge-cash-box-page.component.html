@@ -1,0 +1,25 @@
+<div class="cash-box-page">
+  <header class="cash-box-page__header">
+    <div>
+      <h1 class="cash-box-page__title">Gestión Caja Recargas</h1>
+      <p class="cash-box-page__subtitle">
+        Balance acumulado de efectivo del negocio de Recargas Electrónicas y SIMs — independiente del cuadre/saldo de recargas.
+      </p>
+    </div>
+
+    <label class="cash-box-page__date-field">
+      <span>Fecha de negocio</span>
+      <input
+        type="date"
+        [value]="operationDate()"
+        [max]="maxSelectableDate"
+        (change)="onDateChange($any($event.target).value)"
+        aria-label="Fecha de negocio"
+      />
+    </label>
+  </header>
+
+  <app-recharge-cash-box-card [operationDate]="operationDate()" (movementRegistered)="onMovementRegistered()" />
+
+  <app-recharge-cash-box-history [maxSelectableDate]="maxSelectableDate" [refreshTrigger]="historyRefreshTrigger()" />
+</div>

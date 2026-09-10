@@ -21,6 +21,7 @@ export * from './report.model';
 export * from './recharge.model';
 export * from './recharge-day.model';
 export * from './recharge-sim.model';
+export * from './cash-box.model';
 export * from './ice-cream.model';
 export * from './ice-cream-purchase.model';
 export * from './ice-cream-sale.model';

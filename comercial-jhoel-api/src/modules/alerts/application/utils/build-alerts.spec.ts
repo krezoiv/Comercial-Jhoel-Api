@@ -3,6 +3,7 @@ import { LowStockRow } from '../../../inventory/domain/repositories/inventory-st
 import { RechargeType } from '../../../recharges/domain/entities/recharge-type.entity';
 import { RechargeDailyBalance } from '../../../recharges/domain/entities/recharge-daily-balance.entity';
 import {
+  buildCashBoxBalanceAlert,
   buildInventoryAlert,
   buildPurchaseAlert,
   buildRechargeBalanceAlert,
@@ -214,5 +215,26 @@ describe('buildRechargeBalanceAlert', () => {
 
     expect(claroAlert?.priority).toBe('MEDIUM');
     expect(tigoAlert).toBeNull();
+  });
+});
+
+describe('buildCashBoxBalanceAlert', () => {
+  it('returns null when the balance is positive', () => {
+    expect(buildCashBoxBalanceAlert(100)).toBeNull();
+  });
+
+  it('returns null when the balance is exactly zero', () => {
+    expect(buildCashBoxBalanceAlert(0)).toBeNull();
+  });
+
+  it('returns a CRITICAL alert when the balance is negative', () => {
+    const alert = buildCashBoxBalanceAlert(-50);
+    expect(alert).toMatchObject({
+      key: 'recharge-cash-box:balance',
+      type: 'NEGATIVE_CASH_BOX_BALANCE',
+      priority: 'CRITICAL',
+      amount: -50,
+      route: '/dashboard/gestion-caja-recargas',
+    });
   });
 });

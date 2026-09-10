@@ -7,6 +7,7 @@ import { AlertSettingsRepository } from '../../../alert-settings/domain/reposito
 import { AlertReadMarkRepository } from '../../domain/repositories/alert-read-mark.repository';
 import { Purchase } from '../../../purchases/domain/entities/purchase.entity';
 import { AlertSettings } from '../../../alert-settings/domain/entities/alert-settings.entity';
+import { GetCashBoxBalanceUseCase } from '../../../recharge-cash-box/application/use-cases/get-cash-box-balance.use-case';
 
 function makePurchase(paymentDueDate: string): Purchase {
   return Purchase.create({
@@ -36,6 +37,7 @@ describe('GetAlertsUseCase', () => {
   let rechargeDailyBalanceRepository: jest.Mocked<RechargeDailyBalanceRepository>;
   let alertSettingsRepository: jest.Mocked<AlertSettingsRepository>;
   let alertReadMarkRepository: jest.Mocked<AlertReadMarkRepository>;
+  let getCashBoxBalanceUseCase: jest.Mocked<GetCashBoxBalanceUseCase>;
   let useCase: GetAlertsUseCase;
 
   beforeEach(() => {
@@ -65,6 +67,23 @@ describe('GetAlertsUseCase', () => {
     alertReadMarkRepository = {
       findReadKeys: jest.fn().mockResolvedValue(new Set()),
     } as unknown as jest.Mocked<AlertReadMarkRepository>;
+    getCashBoxBalanceUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        date: '2026-09-10',
+        previousBalance: 0,
+        incomeToday: 0,
+        expenseToday: 0,
+        currentBalance: 0,
+        detail: {
+          salesRecharges: 0,
+          salesSim: 0,
+          contributions: 0,
+          purchasesRecharges: 0,
+          purchasesSim: 0,
+          profitWithdrawals: 0,
+        },
+      }),
+    } as unknown as jest.Mocked<GetCashBoxBalanceUseCase>;
 
     useCase = new GetAlertsUseCase(
       purchaseRepository,
@@ -73,6 +92,7 @@ describe('GetAlertsUseCase', () => {
       rechargeDailyBalanceRepository,
       alertSettingsRepository,
       alertReadMarkRepository,
+      getCashBoxBalanceUseCase,
     );
   });
 
@@ -131,5 +151,53 @@ describe('GetAlertsUseCase', () => {
       'CRITICAL',
       'MEDIUM',
     ]);
+  });
+
+  it('surfaces a CRITICAL alert when Caja Recargas balance is negative', async () => {
+    getCashBoxBalanceUseCase.execute.mockResolvedValue({
+      date: '2026-09-10',
+      previousBalance: -50,
+      incomeToday: 0,
+      expenseToday: 0,
+      currentBalance: -50,
+      detail: {
+        salesRecharges: 0,
+        salesSim: 0,
+        contributions: 0,
+        purchasesRecharges: 50,
+        purchasesSim: 0,
+        profitWithdrawals: 0,
+      },
+    });
+
+    const result = await useCase.execute({ userId: 'user-1', isAdmin: false });
+
+    expect(result.total).toBe(1);
+    expect(result.items[0]).toMatchObject({
+      type: 'NEGATIVE_CASH_BOX_BALANCE',
+      priority: 'CRITICAL',
+    });
+  });
+
+  it('never surfaces a Caja Recargas alert when the balance is zero or positive', async () => {
+    getCashBoxBalanceUseCase.execute.mockResolvedValue({
+      date: '2026-09-10',
+      previousBalance: 0,
+      incomeToday: 100,
+      expenseToday: 0,
+      currentBalance: 100,
+      detail: {
+        salesRecharges: 100,
+        salesSim: 0,
+        contributions: 0,
+        purchasesRecharges: 0,
+        purchasesSim: 0,
+        profitWithdrawals: 0,
+      },
+    });
+
+    const result = await useCase.execute({ userId: 'user-1', isAdmin: false });
+
+    expect(result.total).toBe(0);
   });
 });

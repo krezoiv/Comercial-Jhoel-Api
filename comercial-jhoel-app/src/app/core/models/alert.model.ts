@@ -2,7 +2,8 @@ export type AlertType =
   | 'PURCHASE_PAYMENT_DUE'
   | 'PURCHASE_PAYMENT_OVERDUE'
   | 'LOW_INVENTORY'
-  | 'LOW_RECHARGE_BALANCE';
+  | 'LOW_RECHARGE_BALANCE'
+  | 'NEGATIVE_CASH_BOX_BALANCE';
 
 export type AlertPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM';
 
@@ -51,6 +52,7 @@ export const ALERT_TYPE_ICON: Record<AlertType, string> = {
   PURCHASE_PAYMENT_OVERDUE: 'credit-card',
   LOW_INVENTORY: 'package',
   LOW_RECHARGE_BALANCE: 'smartphone',
+  NEGATIVE_CASH_BOX_BALANCE: 'wallet',
 };
 
 /** The one global alert threshold — everything else (stock mínimo, saldo mínimo) lives on its own owning entity (product location, recharge type), not here. */

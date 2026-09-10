@@ -21,6 +21,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { RechargesModule } from './modules/recharges/recharges.module';
+import { RechargeCashBoxModule } from './modules/recharge-cash-box/recharge-cash-box.module';
 import { IceCreamsModule } from './modules/ice-creams/ice-creams.module';
 import { AccountTypesModule } from './modules/account-types/account-types.module';
 import { BanksModule } from './modules/banks/banks.module';
@@ -86,6 +87,7 @@ import { KeyboardShortcutsModule } from './modules/keyboard-shortcuts/keyboard-s
     AssetsModule,
     ReportsModule,
     RechargesModule,
+    RechargeCashBoxModule,
     DashboardModule,
     AlertSettingsModule,
     AlertsModule,

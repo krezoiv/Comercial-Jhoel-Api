@@ -178,6 +178,14 @@ export const routes: Routes = [
         title: 'Presentaciones y Medidas — Sistema',
       },
       {
+        path: 'gestion-caja-recargas',
+        loadComponent: () =>
+          import('./features/dashboard/recharge-cash-box/recharge-cash-box-page.component').then(
+            (m) => m.RechargeCashBoxPageComponent
+          ),
+        title: 'Gestión Caja Recargas — Sistema',
+      },
+      {
         path: 'finanzas',
         loadComponent: () =>
           import('./features/dashboard/placeholder-page/dashboard-placeholder-page.component').then(

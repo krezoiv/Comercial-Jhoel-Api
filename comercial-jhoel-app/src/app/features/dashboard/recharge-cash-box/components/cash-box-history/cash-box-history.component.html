@@ -1,0 +1,124 @@
+<app-card [hoverable]="false" class="history">
+  <div class="history__body">
+    <div class="history__header">
+      <span class="history__title">Historial de Movimientos</span>
+    </div>
+
+    <div class="history__filters">
+      <div class="history__filter-field">
+        <label for="cash-box-start-date">Desde</label>
+        <input
+          id="cash-box-start-date"
+          type="date"
+          [ngModel]="startDate()"
+          (ngModelChange)="startDate.set($event)"
+          [max]="maxSelectableDate"
+        />
+      </div>
+      <div class="history__filter-field">
+        <label for="cash-box-end-date">Hasta</label>
+        <input
+          id="cash-box-end-date"
+          type="date"
+          [ngModel]="endDate()"
+          (ngModelChange)="endDate.set($event)"
+          [max]="maxSelectableDate"
+        />
+      </div>
+      <div class="history__filter-field">
+        <label for="cash-box-type">Tipo de movimiento</label>
+        <select id="cash-box-type" [ngModel]="type()" (ngModelChange)="type.set($event)">
+          <option value="">Todos</option>
+          @for (t of movementTypes; track t) {
+            <option [value]="t">{{ typeLabel[t] }}</option>
+          }
+        </select>
+      </div>
+      <div class="history__filter-actions">
+        <button type="button" class="history__filter-btn history__filter-btn--primary" (click)="applyFilters()">
+          Aplicar filtros
+        </button>
+        <button type="button" class="history__filter-btn" (click)="clearFilters()">Limpiar</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="history__loading">
+        <app-icon name="clock" [size]="16" />
+        Cargando historial…
+      </p>
+    } @else if (items().length === 0) {
+      <app-empty-state
+        icon="wallet"
+        title="Sin movimientos"
+        description="No hay movimientos de Caja Contable para el filtro seleccionado."
+      />
+    } @else {
+      <div class="table-wrapper--desktop">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Concepto</th>
+              <th class="align-right">Ingreso</th>
+              <th class="align-right">Salida</th>
+              <th class="align-right">Saldo</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (movement of items(); track movement.date + movement.type + (movement.movementId ?? '')) {
+              <tr [class.history-table__row--manual]="movement.type === 'PROFIT_WITHDRAWAL' || movement.type === 'CONTRIBUTION'">
+                <td>{{ movement.date | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ typeLabel[movement.type] }}</td>
+                <td>{{ movement.concept }}</td>
+                <td class="align-right history-table__income">
+                  {{ movement.income > 0 ? formatCurrency(movement.income) : '—' }}
+                </td>
+                <td class="align-right history-table__expense">
+                  {{ movement.expense > 0 ? formatCurrency(movement.expense) : '—' }}
+                </td>
+                <td
+                  class="align-right history-table__balance"
+                  [class.history-table__balance--negative]="movement.balance < 0"
+                >
+                  {{ formatCurrency(movement.balance) }}
+                </td>
+                <td>{{ movement.username ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-list">
+        @for (movement of items(); track movement.date + movement.type + (movement.movementId ?? '')) {
+          <div class="movement-card" [class.movement-card--manual]="movement.type === 'PROFIT_WITHDRAWAL' || movement.type === 'CONTRIBUTION'">
+            <div class="movement-card__row">
+              <span class="movement-card__type">{{ typeLabel[movement.type] }}</span>
+              <span class="movement-card__date">{{ movement.date | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <p class="movement-card__concept">{{ movement.concept }}</p>
+            <div class="movement-card__amounts">
+              @if (movement.income > 0) {
+                <span class="history-table__income">+{{ formatCurrency(movement.income) }}</span>
+              }
+              @if (movement.expense > 0) {
+                <span class="history-table__expense">-{{ formatCurrency(movement.expense) }}</span>
+              }
+            </div>
+            <div class="movement-card__footer">
+              <span>Saldo: <strong [class.movement-card__balance--negative]="movement.balance < 0">{{ formatCurrency(movement.balance) }}</strong></span>
+              @if (movement.username) {
+                <span>{{ movement.username }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+    }
+  </div>
+</app-card>

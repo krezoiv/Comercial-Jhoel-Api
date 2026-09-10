@@ -10,17 +10,20 @@ import { AlertsController } from './presentation/controllers/alerts.controller';
 import { PurchasesModule } from '../purchases/purchases.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { RechargesModule } from '../recharges/recharges.module';
+import { RechargeCashBoxModule } from '../recharge-cash-box/recharge-cash-box.module';
 import { AlertSettingsModule } from '../alert-settings/alert-settings.module';
 
 /**
- * Reads across four unrelated modules' own domain tokens (purchases,
- * inventory, recharges, alert-settings) — imports each module for its
- * exported repository token rather than duplicating a `TypeOrmModule
- * .forFeature` the way `ReportsModule`/`DashboardModule` do, since every
- * value this module needs is already exposed through a clean, existing
- * repository interface (a single-repository reuse case, not the
- * "read spans many unrelated tables with no existing interface" case those
- * two modules are actually in).
+ * Reads across five unrelated modules' own domain tokens/use cases
+ * (purchases, inventory, recharges, recharge-cash-box, alert-settings) —
+ * imports each module for its exported repository token (or, for
+ * `RechargeCashBoxModule`, its exported `GetCashBoxBalanceUseCase`) rather
+ * than duplicating a `TypeOrmModule.forFeature` the way
+ * `ReportsModule`/`DashboardModule` do, since every value this module
+ * needs is already exposed through a clean, existing interface (a
+ * single-repository/use-case reuse case, not the "read spans many unrelated
+ * tables with no existing interface" case those two modules are actually
+ * in).
  */
 @Module({
   imports: [
@@ -28,6 +31,7 @@ import { AlertSettingsModule } from '../alert-settings/alert-settings.module';
     PurchasesModule,
     InventoryModule,
     RechargesModule,
+    RechargeCashBoxModule,
     AlertSettingsModule,
   ],
   controllers: [AlertsController],

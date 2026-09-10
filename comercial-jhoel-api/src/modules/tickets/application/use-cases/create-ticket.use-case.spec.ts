@@ -123,6 +123,7 @@ describe('CreateTicketUseCase', () => {
     expect(ticketRepository.createTicket).toHaveBeenCalledWith({
       userId: 'user-1',
       clientId: null,
+      clientName: null,
       items: [
         { productId: 'product-1', quantity: 5, observation: null, unitPrice: null },
       ],
@@ -143,6 +144,7 @@ describe('CreateTicketUseCase', () => {
     expect(ticketRepository.createTicket).toHaveBeenCalledWith({
       userId: 'user-1',
       clientId: null,
+      clientName: null,
       items: [
         {
           productId: 'product-1',
@@ -171,6 +173,7 @@ describe('CreateTicketUseCase', () => {
     expect(ticketRepository.createTicket).toHaveBeenCalledWith({
       userId: 'user-1',
       clientId: null,
+      clientName: null,
       items: [
         { productId: 'product-1', quantity: 1, observation: null, unitPrice: null },
       ],
@@ -188,6 +191,7 @@ describe('CreateTicketUseCase', () => {
     expect(ticketRepository.createTicket).toHaveBeenCalledWith({
       userId: 'user-1',
       clientId: null,
+      clientName: null,
       items: [
         { productId: 'product-1', quantity: 2, observation: null, unitPrice: 5 },
       ],

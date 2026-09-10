@@ -9,12 +9,14 @@ import { RECHARGE_DAILY_BALANCE_REPOSITORY } from '../../../recharges/domain/rep
 import type { RechargeDailyBalanceRepository } from '../../../recharges/domain/repositories/recharge-daily-balance.repository';
 import { ALERT_SETTINGS_REPOSITORY } from '../../../alert-settings/domain/repositories/alert-settings.repository';
 import type { AlertSettingsRepository } from '../../../alert-settings/domain/repositories/alert-settings.repository';
+import { GetCashBoxBalanceUseCase } from '../../../recharge-cash-box/application/use-cases/get-cash-box-balance.use-case';
 import { ALERT_READ_MARK_REPOSITORY } from '../../domain/repositories/alert-read-mark.repository';
 import type { AlertReadMarkRepository } from '../../domain/repositories/alert-read-mark.repository';
 import { Alert } from '../../domain/entities/alert.entity';
 import { AlertsOutput, sortAlerts, toAlertOutput } from '../dtos/alerts-output';
 import { todayIsoDate } from '../utils/today-iso-date';
 import {
+  buildCashBoxBalanceAlert,
   buildInventoryAlert,
   buildPurchaseAlert,
   buildRechargeBalanceAlert,
@@ -54,6 +56,7 @@ export class GetAlertsUseCase {
     private readonly alertSettingsRepository: AlertSettingsRepository,
     @Inject(ALERT_READ_MARK_REPOSITORY)
     private readonly alertReadMarkRepository: AlertReadMarkRepository,
+    private readonly getCashBoxBalanceUseCase: GetCashBoxBalanceUseCase,
   ) {}
 
   async execute(input: GetAlertsInput): Promise<AlertsOutput> {
@@ -65,6 +68,7 @@ export class GetAlertsUseCase {
       lowStockRows,
       rechargeTypes,
       latestBalances,
+      cashBoxBalance,
     ] = await Promise.all([
       this.alertSettingsRepository.get(),
       this.purchaseRepository.findPendingCreditPurchases(
@@ -73,6 +77,7 @@ export class GetAlertsUseCase {
       this.inventoryStockRepository.findLowStock(),
       this.rechargeTypeRepository.findAll({ activeOnly: true }),
       this.rechargeDailyBalanceRepository.findLatestPerType(),
+      this.getCashBoxBalanceUseCase.execute({}),
     ]);
 
     const latestBalanceByType = new Map(
@@ -95,7 +100,8 @@ export class GetAlertsUseCase {
           buildRechargeBalanceAlert(type, latestBalanceByType.get(type.id)),
         )
         .filter((alert): alert is Alert => alert !== null),
-    ];
+      buildCashBoxBalanceAlert(cashBoxBalance.currentBalance),
+    ].filter((alert): alert is Alert => alert !== null);
 
     const sorted = sortAlerts(alerts);
     const readKeys = await this.alertReadMarkRepository.findReadKeys(

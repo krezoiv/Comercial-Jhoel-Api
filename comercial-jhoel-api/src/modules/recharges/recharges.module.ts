@@ -51,15 +51,6 @@ import { RechargesController } from './presentation/controllers/recharges.contro
 import { RechargeDaysController } from './presentation/controllers/recharge-days.controller';
 import { RechargeSimsController } from './presentation/controllers/recharge-sims.controller';
 
-// `RechargePurchaseOrmEntity` is deliberately not registered here — nothing
-// in TypeScript reads `recharge_purchases` directly today (only the
-// `register_recharge_purchase` stored function writes to it); it exists in
-// the schema purely as the individual-movement audit trail the ticket
-// required. Add the ORM entity + a listing method when a dedicated
-// per-movement history view is actually needed. `RechargeSaleOrmEntity` is
-// the one exception to this "write-only" pattern — the "Recargas Vendidas"
-// table/cards read it back directly, so it's registered and mapped like any
-// other module.
 @Module({
   imports: [
     TypeOrmModule.forFeature([

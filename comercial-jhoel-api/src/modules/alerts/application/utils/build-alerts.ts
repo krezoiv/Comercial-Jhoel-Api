@@ -132,3 +132,31 @@ export function buildRechargeBalanceAlert(
     referenceId: type.id,
   };
 }
+
+/**
+ * `NEGATIVE_CASH_BOX_BALANCE` — fires whenever Gestión Caja Recargas'
+ * accumulated balance (today's `currentBalance`, see
+ * `GetCashBoxBalanceUseCase`) is below zero. Unlike `LOW_RECHARGE_BALANCE`,
+ * this has no configurable per-item threshold (there's only one Caja, not
+ * one per recharge type) — the rule is simply "negative is always a real
+ * problem", always `CRITICAL`. A single, fixed `key` (there is only ever
+ * one Caja) — no `referenceId` row to point at, so it reuses the same
+ * fixed string.
+ */
+export function buildCashBoxBalanceAlert(currentBalance: number): Alert | null {
+  if (currentBalance >= 0) {
+    return null;
+  }
+
+  return {
+    key: 'recharge-cash-box:balance',
+    type: 'NEGATIVE_CASH_BOX_BALANCE',
+    priority: 'CRITICAL',
+    title: 'Saldo negativo en Caja Recargas',
+    description: `El saldo acumulado de Gestión Caja Recargas es Q${currentBalance.toFixed(2)}`,
+    amount: currentBalance,
+    date: null,
+    route: '/dashboard/gestion-caja-recargas',
+    referenceId: 'recharge-cash-box',
+  };
+}
