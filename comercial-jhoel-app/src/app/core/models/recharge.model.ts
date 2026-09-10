@@ -96,6 +96,31 @@ export interface UpdateRechargeSaleInput {
   amount: number;
 }
 
+/**
+ * One individually-registered recharge purchase — the "Compras de
+ * Recargas" audit trail. Never edited or physically deleted: a mistaken
+ * purchase is corrected via `canRevert`/"Revertir compra", which marks it
+ * `isVoided` forever and compensates the running balance, never by editing
+ * this row in place.
+ */
+export interface RechargePurchase {
+  id: string;
+  rechargeTypeId: string;
+  rechargeTypeName: string;
+  /** "Monto de Compra" — informational only, never affects the balance. */
+  amount: number;
+  /** "Monto Acreditado" — the value that was actually added to the balance, and the one reverted on void. */
+  creditedAmount: number;
+  date: string;
+  isVoided: boolean;
+  voidedAt: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
+  /** `true` only while not already voided and its cuadre cycle is still open — mirrors the backend's own guard exactly, so the frontend never re-derives it. */
+  canRevert: boolean;
+  createdByUsername: string;
+}
+
 export type SalesClosureStatus = 'zero' | 'positive' | 'negative';
 
 /** Zero = correct cuadre, positive = still owed/uncollected (pending difference), negative = over-collected. */

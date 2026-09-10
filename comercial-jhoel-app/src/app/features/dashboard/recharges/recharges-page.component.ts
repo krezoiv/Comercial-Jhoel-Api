@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeDayStatus, RechargeSale, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
+import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
@@ -14,6 +14,8 @@ import { RegisterPurchaseFormComponent } from './components/register-purchase-fo
 import { FinalBalanceConfirmModalComponent } from './components/final-balance-confirm-modal/final-balance-confirm-modal.component';
 import { SalesSummaryCardComponent } from './components/sales-summary-card/sales-summary-card.component';
 import { RechargeSalesTableComponent } from './components/recharge-sales-table/recharge-sales-table.component';
+import { RechargePurchasesTableComponent } from './components/recharge-purchases-table/recharge-purchases-table.component';
+import { VoidPurchaseConfirmModalComponent } from './components/void-purchase-confirm-modal/void-purchase-confirm-modal.component';
 import { RechargeSaleFormModalComponent } from './components/recharge-sale-form-modal/recharge-sale-form-modal.component';
 import { RechargeSaleDeleteConfirmModalComponent } from './components/recharge-sale-delete-confirm-modal/recharge-sale-delete-confirm-modal.component';
 import { RechargeEntryConfirmModalComponent } from './components/recharge-entry-confirm-modal/recharge-entry-confirm-modal.component';
@@ -41,6 +43,8 @@ function todayIsoDate(): string {
     FinalBalanceConfirmModalComponent,
     SalesSummaryCardComponent,
     RechargeSalesTableComponent,
+    RechargePurchasesTableComponent,
+    VoidPurchaseConfirmModalComponent,
     RechargeSaleFormModalComponent,
     RechargeSaleDeleteConfirmModalComponent,
     RechargeEntryConfirmModalComponent,
@@ -165,6 +169,14 @@ export class RechargesPageComponent {
   readonly deleteSaleTarget = signal<RechargeSale | null>(null);
   readonly isDeletingSale = signal(false);
 
+  /** "Compras de Recargas" — every individually-registered purchase for the current operation date, feeding the new table and its "Revertir compra" action. */
+  readonly purchases = signal<RechargePurchase[]>([]);
+  readonly purchasesLoading = signal(true);
+
+  readonly isVoidPurchaseModalOpen = signal(false);
+  readonly voidPurchaseTarget = signal<RechargePurchase | null>(null);
+  readonly isVoidingPurchase = signal(false);
+
   constructor() {
     this.fetchAll();
     this.fetchPastDateStatusIfNeeded();
@@ -268,26 +280,31 @@ export class RechargesPageComponent {
     this.loading.set(true);
     this.salesLoading.set(true);
     this.simLoading.set(true);
+    this.purchasesLoading.set(true);
     forkJoin({
       types: this.rechargesService.getTypes(),
       balances: this.rechargesService.getDailySummary(this.operationDate()),
       sales: this.rechargesService.getSales(this.operationDate()),
+      purchases: this.rechargesService.getPurchases(this.operationDate()),
       simTypes: this.simsService.getTypes(),
       simStocks: this.simsService.getDailyStock(this.operationDate()),
     }).subscribe({
-      next: ({ types, balances, sales, simTypes, simStocks }) => {
+      next: ({ types, balances, sales, purchases, simTypes, simStocks }) => {
         this.types.set(types);
         this.balances.set(balances);
         this.sales.set(sales);
+        this.purchases.set(purchases);
         this.simTypes.set(simTypes);
         this.simStocks.set(simStocks);
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.purchasesLoading.set(false);
         this.simLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.purchasesLoading.set(false);
         this.simLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
       },
@@ -298,22 +315,27 @@ export class RechargesPageComponent {
     this.loading.set(true);
     this.salesLoading.set(true);
     this.simLoading.set(true);
+    this.purchasesLoading.set(true);
     forkJoin({
       balances: this.rechargesService.getDailySummary(this.operationDate()),
       sales: this.rechargesService.getSales(this.operationDate()),
+      purchases: this.rechargesService.getPurchases(this.operationDate()),
       simStocks: this.simsService.getDailyStock(this.operationDate()),
     }).subscribe({
-      next: ({ balances, sales, simStocks }) => {
+      next: ({ balances, sales, purchases, simStocks }) => {
         this.balances.set(balances);
         this.sales.set(sales);
+        this.purchases.set(purchases);
         this.simStocks.set(simStocks);
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.purchasesLoading.set(false);
         this.simLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
+        this.purchasesLoading.set(false);
         this.simLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
       },
@@ -349,6 +371,20 @@ export class RechargesPageComponent {
     });
   }
 
+  private fetchPurchases(): void {
+    this.purchasesLoading.set(true);
+    this.rechargesService.getPurchases(this.operationDate()).subscribe({
+      next: (purchases) => {
+        this.purchases.set(purchases);
+        this.purchasesLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.purchasesLoading.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudieron cargar las compras de recargas.'));
+      },
+    });
+  }
+
   private upsertBalance(balance: RechargeDailyBalance): void {
     this.balances.update((list) => {
       const exists = list.some((b) => b.id === balance.id);
@@ -368,6 +404,43 @@ export class RechargesPageComponent {
 
   onPurchaseRegistered(balance: RechargeDailyBalance): void {
     this.upsertBalance(balance);
+    this.fetchPurchases();
+  }
+
+  requestVoidPurchase(purchase: RechargePurchase): void {
+    this.voidPurchaseTarget.set(purchase);
+    this.isVoidPurchaseModalOpen.set(true);
+  }
+
+  cancelVoidPurchase(): void {
+    if (this.isVoidingPurchase()) {
+      return;
+    }
+    this.isVoidPurchaseModalOpen.set(false);
+    this.voidPurchaseTarget.set(null);
+  }
+
+  /** Reverting a purchase changes the operator's running balance (decremented by the reverted `creditedAmount`) — refetch the whole date's data so the main table/summary card reflect the compensation immediately, not just the purchases row. */
+  confirmVoidPurchase(reason: string): void {
+    const target = this.voidPurchaseTarget();
+    if (!target) {
+      return;
+    }
+
+    this.isVoidingPurchase.set(true);
+    this.rechargesService.voidPurchase(target.id, reason).subscribe({
+      next: () => {
+        this.isVoidingPurchase.set(false);
+        this.isVoidPurchaseModalOpen.set(false);
+        this.voidPurchaseTarget.set(null);
+        this.fetchBalances();
+        this.notificationService.success(`Compra de ${target.rechargeTypeName} revertida correctamente.`);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isVoidingPurchase.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo revertir la compra.'));
+      },
+    });
   }
 
   /** The backend already reset this date to a fresh cuadre cycle when the closure saved — refetch the table so saldo anterior/compra/saldo final all reflect it instead of the just-closed cycle. Also refreshes the day status: saving a cuadre is what makes "Cerrar Día" become available (`hasSavedCuadreToday`/`canCloseDay`). */

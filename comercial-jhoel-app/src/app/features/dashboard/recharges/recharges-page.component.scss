@@ -101,6 +101,16 @@ app-recharge-table {
   margin-bottom: var(--space-6);
 }
 
+.recharges__purchases-section {
+  margin-bottom: var(--space-8);
+}
+
+.recharges__purchases-title {
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-4);
+}
+
 .recharges__cards-row {
   display: grid;
   grid-template-columns: 1fr;

@@ -1,0 +1,57 @@
+@if (open && purchase) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" [disabled]="isSaving" (click)="onCancel()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      <div class="modal__icon">
+        <app-icon name="rotate-ccw" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">Revertir Compra de Recarga</h2>
+
+      <p class="modal__description">
+        Esta acción anulará la compra y descontará el <strong>Monto Acreditado</strong> del saldo actual del
+        operador. No se elimina el registro — quedará visible en el historial marcado como
+        <strong>Anulada</strong>, con trazabilidad completa.
+      </p>
+
+      <dl class="modal__summary">
+        <div class="modal__summary-row">
+          <dt>Operador</dt>
+          <dd>{{ purchase.rechargeTypeName }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Monto de Compra</dt>
+          <dd>{{ formatCurrency(purchase.amount) }}</dd>
+        </div>
+        <div class="modal__summary-row modal__summary-row--total">
+          <dt>Monto Acreditado</dt>
+          <dd>{{ formatCurrency(purchase.creditedAmount) }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Fecha</dt>
+          <dd>{{ purchase.date | date: 'dd/MM/yyyy' }}</dd>
+        </div>
+      </dl>
+
+      <label class="modal__field">
+        <span>Motivo de la reversión <em>(obligatorio)</em></span>
+        <textarea
+          rows="3"
+          placeholder="Ej: Se registró como TIGO por error, correspondía a CLARO."
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+      </label>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()">Cancelar</app-button>
+        <app-button variant="danger" [disabled]="!canConfirm || isSaving" (click)="onConfirm()">
+          {{ isSaving ? 'Revirtiendo…' : 'Revertir compra' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

@@ -67,6 +67,17 @@
     (requestFinalBalance)="onRequestFinalBalance($event)"
   />
 
+  <section class="recharges__purchases-section">
+    <h2 class="recharges__purchases-title">Compras de Recargas</h2>
+
+    <app-recharge-purchases-table
+      [purchases]="purchases()"
+      [loading]="purchasesLoading()"
+      [isAdmin]="isAdmin()"
+      (revertRequested)="requestVoidPurchase($event)"
+    />
+  </section>
+
   <div class="recharges__cards-row">
     <app-card [hoverable]="false" class="recharges__purchase-card">
       <app-register-purchase-form
@@ -164,4 +175,12 @@
   [isDeleting]="isDeletingSale()"
   (confirmed)="confirmDeleteSale()"
   (cancelled)="cancelDeleteSale()"
+/>
+
+<app-void-purchase-confirm-modal
+  [open]="isVoidPurchaseModalOpen()"
+  [purchase]="voidPurchaseTarget()"
+  [isSaving]="isVoidingPurchase()"
+  (confirmed)="confirmVoidPurchase($event)"
+  (cancelled)="cancelVoidPurchase()"
 />

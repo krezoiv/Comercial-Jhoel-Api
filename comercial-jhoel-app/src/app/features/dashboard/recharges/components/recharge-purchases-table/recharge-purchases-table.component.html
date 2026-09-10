@@ -1,0 +1,156 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="purchases-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Operador</th>
+          <th class="align-right">Monto de Compra</th>
+          <th class="align-right">Monto Acreditado</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="align-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track row) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="loading-note">
+    <app-icon name="clock" [size]="16" />
+    Cargando compras de recargas…
+  </p>
+} @else if (purchases.length === 0) {
+  <p class="empty-note">
+    <app-icon name="shopping-bag" [size]="16" />
+    Aún no se han registrado compras de recargas para esta fecha.
+  </p>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="purchases-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Operador</th>
+          <th class="align-right">Monto de Compra</th>
+          <th class="align-right">Monto Acreditado</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="align-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (purchase of purchases; track purchase.id; let i = $index) {
+          <tr [class.purchases-table__row--voided]="purchase.isVoided">
+            <td>{{ i + 1 }}</td>
+            <td>{{ purchase.rechargeTypeName }}</td>
+            <td class="align-right">{{ formatCurrency(purchase.amount) }}</td>
+            <td class="align-right purchases-table__credited">{{ formatCurrency(purchase.creditedAmount) }}</td>
+            <td>{{ purchase.date | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (purchase.isVoided) {
+                <span class="status-badge status-badge--voided" [title]="purchase.voidReason ?? ''">
+                  <app-icon name="x-circle" [size]="13" />
+                  Anulada
+                </span>
+              } @else {
+                <span class="status-badge status-badge--active">
+                  <app-icon name="check-circle" [size]="13" />
+                  Vigente
+                </span>
+              }
+            </td>
+            <td class="align-center">
+              @if (isAdmin) {
+                @if (purchase.canRevert) {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--danger"
+                    (click)="revertRequested.emit(purchase)"
+                    [attr.aria-label]="'Revertir compra de ' + purchase.rechargeTypeName"
+                    title="Revertir compra"
+                  >
+                    <app-icon name="rotate-ccw" [size]="16" />
+                  </button>
+                } @else if (!purchase.isVoided) {
+                  <span class="locked-hint">
+                    <app-icon name="lock" [size]="14" />
+                    Cuadre cerrado
+                  </span>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (purchase of purchases; track purchase.id; let i = $index) {
+      <div class="purchase-card" [class.purchase-card--voided]="purchase.isVoided">
+        <div class="purchase-card__header">
+          <p class="purchase-card__operator">#{{ i + 1 }} — {{ purchase.rechargeTypeName }}</p>
+          @if (purchase.isVoided) {
+            <span class="status-badge status-badge--voided" [title]="purchase.voidReason ?? ''">
+              <app-icon name="x-circle" [size]="13" />
+              Anulada
+            </span>
+          } @else {
+            <span class="status-badge status-badge--active">
+              <app-icon name="check-circle" [size]="13" />
+              Vigente
+            </span>
+          }
+        </div>
+
+        <dl class="purchase-card__grid">
+          <div>
+            <dt>Monto de Compra</dt>
+            <dd>{{ formatCurrency(purchase.amount) }}</dd>
+          </div>
+          <div>
+            <dt>Monto Acreditado</dt>
+            <dd>{{ formatCurrency(purchase.creditedAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Fecha</dt>
+            <dd>{{ purchase.date | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+        </dl>
+
+        @if (isAdmin) {
+          @if (purchase.canRevert) {
+            <div class="actions">
+              <button
+                type="button"
+                class="action-btn action-btn--danger"
+                (click)="revertRequested.emit(purchase)"
+                [attr.aria-label]="'Revertir compra de ' + purchase.rechargeTypeName"
+              >
+                <app-icon name="rotate-ccw" [size]="16" />
+                Revertir compra
+              </button>
+            </div>
+          } @else if (!purchase.isVoided) {
+            <span class="locked-hint">
+              <app-icon name="lock" [size]="14" />
+              Cuadre cerrado — no se puede revertir.
+            </span>
+          }
+        }
+      </div>
+    }
+  </div>
+}
