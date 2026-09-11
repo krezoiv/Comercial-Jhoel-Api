@@ -41,6 +41,10 @@
   --color-gold-soft: rgba(245, 166, 35, 0.14);
   --color-neutral-soft: var(--color-ink-100);
 
+  // Subtítulo de PageHeaderComponent — verde musgo en modo claro, dorado en
+  // modo oscuro (ver el bloque [data-theme='dark'] más abajo).
+  --color-header-subtitle: #8a9a5b;
+
   // ---- Neutral / surface ramps --------------------------------------------
   --color-ink-950: #05070c;
   --color-ink-900: #0a0e17;
@@ -223,6 +227,8 @@
   --color-text-on-light: var(--color-text-on-dark);
   --color-text-on-light-muted: var(--color-text-on-dark-muted);
   --color-text-on-light-subtle: var(--color-text-on-dark-subtle);
+
+  --color-header-subtitle: var(--color-accent-gold);
 
   --color-page-bg: var(--color-bg-dark);
   // Mismo tinte de --color-primary-900 que ya ancla el navbar público al

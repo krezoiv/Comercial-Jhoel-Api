@@ -41,7 +41,7 @@
   font-family: var(--font-heading);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  color: var(--color-text-on-light);
+  color: var(--color-accent-magenta);
   line-height: var(--lh-tight);
 
   @include bp.respond(sm) {
@@ -52,7 +52,7 @@
 .page-header__subtitle {
   margin-top: var(--space-1);
   font-size: var(--fs-sm);
-  color: var(--color-text-on-light-muted);
+  color: var(--color-header-subtitle);
 
   @include bp.respond(sm) {
     font-size: var(--fs-md);
