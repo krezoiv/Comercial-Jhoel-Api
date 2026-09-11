@@ -85,8 +85,8 @@
           />
         }
 
-        @if (todayMarkerX(); as todayX) {
-          <polygon [attr.points]="todayMarkerPoints(todayX)" class="chart-svg__today-marker" />
+        @if (todayMarker(); as today) {
+          <polygon [attr.points]="todayMarkerPoints(today.x, today.y)" class="chart-svg__today-marker" />
         }
       </svg>
 

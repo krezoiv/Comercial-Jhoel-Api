@@ -172,16 +172,16 @@ export class TransactionMonthlyChartComponent {
   });
 
   /**
-   * The x-position of today's column, independent of that day's value —
-   * never a fabricated data point, just a marker over the existing axis.
-   * `null` whenever today genuinely isn't part of the rendered month (a
-   * client/server clock skew right at a month boundary), in which case the
-   * template simply omits the marker rather than guessing a position.
+   * Today's point on the line itself (same x/y the curve already plots at
+   * that index) — the marker rides the trend line, never a fabricated
+   * value. `null` whenever today genuinely isn't part of the rendered
+   * month (a client/server clock skew right at a month boundary), in
+   * which case the template simply omits the marker rather than guessing.
    */
-  readonly todayMarkerX = computed(() => {
+  readonly todayMarker = computed(() => {
     const todayIso = todayIsoDate();
     const index = this.days().findIndex((d) => d.date === todayIso);
-    return index >= 0 ? (this.points()[index]?.x ?? null) : null;
+    return index >= 0 ? (this.points()[index] ?? null) : null;
   });
 
   constructor() {
@@ -223,11 +223,11 @@ export class TransactionMonthlyChartComponent {
     this.hoveredIndex.set(null);
   }
 
-  /** Small upward-pointing triangle sitting just under the baseline, centered on `x` — the "today" marker's shape, independent of any data value. */
-  todayMarkerPoints(x: number): string {
-    const base = this.plotBottom + 7;
-    const tip = this.plotBottom + 1;
-    return `${(x - 4).toFixed(2)},${base} ${(x + 4).toFixed(2)},${base} ${x.toFixed(2)},${tip}`;
+  /** Small downward-pointing triangle hovering just above the trend line at (x, y) — rides the curve's own height at today's column, like a pin marking that exact point from above. */
+  todayMarkerPoints(x: number, y: number): string {
+    const top = y - 11;
+    const tip = y - 5;
+    return `${(x - 4).toFixed(2)},${top} ${(x + 4).toFixed(2)},${top} ${x.toFixed(2)},${tip}`;
   }
 
   leftPercent(x: number): number {
