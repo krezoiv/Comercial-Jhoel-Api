@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.comercialjhoel.com/api',
+  apiUrl: 'https://comercial-jhoel-api-production.up.railway.app/api',
 };
