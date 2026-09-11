@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiSuccessResponse,
+  BankDepositDailyStats,
   BankDepositMonthlyCount,
   BankDepositOperation,
   BankDepositTransactionSummary,
@@ -48,6 +49,13 @@ export class BankDepositService {
   getTransactionSummary(): Observable<BankDepositTransactionSummary> {
     return this.http
       .get<ApiSuccessResponse<BankDepositTransactionSummary>>(`${BASE_URL}/summary`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs the "Transacciones del mes" chart on both Resumen and Reporte de Transacciones, always the server's current calendar month. */
+  getDailyStats(): Observable<BankDepositDailyStats> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositDailyStats>>(`${BASE_URL}/daily-stats`)
       .pipe(map((response) => response.data));
   }
 }

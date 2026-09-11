@@ -22,7 +22,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { downloadBlob } from '../../../../core/utils/download-blob';
 import { extractBlobErrorMessage } from '../../../../core/utils/extract-blob-error-message';
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../../shared/ui';
+import { ButtonComponent, IconComponent, PageHeaderComponent, TransactionMonthlyChartComponent } from '../../../../shared/ui';
 import { ReportSummaryComponent, ReportSummaryTile } from '../components/report-summary/report-summary.component';
 import { ReportPaginationComponent } from '../components/report-pagination/report-pagination.component';
 import { BankDepositDetailModalComponent } from './components/bank-deposit-detail-modal/bank-deposit-detail-modal.component';
@@ -81,6 +81,7 @@ function defaultFilterFields(): FilterFieldsState {
     PageHeaderComponent,
     ButtonComponent,
     IconComponent,
+    TransactionMonthlyChartComponent,
     ReportSummaryComponent,
     ReportPaginationComponent,
     BankDepositDetailModalComponent,

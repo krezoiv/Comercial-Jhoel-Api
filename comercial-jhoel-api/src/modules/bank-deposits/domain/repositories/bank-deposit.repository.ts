@@ -62,6 +62,12 @@ export interface BankDepositReportSummary {
   byBank: BankDepositReportByBank[];
 }
 
+export interface BankDepositDailyTransactionCount {
+  /** `yyyy-MM-dd` — only dates with at least one non-voided operation are returned; the caller zero-fills the rest of the month. */
+  date: string;
+  transactionCount: number;
+}
+
 export interface BankDepositRepository {
   /** Invokes the `register_bank_deposit_operation` Postgres function — the operation, its cash details, and its transactions all commit (or none do) atomically inside it. */
   registerOperation(
@@ -76,6 +82,11 @@ export interface BankDepositRepository {
   getReportSummary(
     filters: BankDepositReportFilters,
   ): Promise<BankDepositReportSummary>;
+  /** `SUM(transaction_count)` grouped by `operation_date`, `is_voided = false` — one row per date that had at least one non-voided operation. Backs the "Transacciones del mes" chart on Resumen/Reporte de Transacciones; the caller zero-fills any date in range with no row. */
+  getDailyTransactionCounts(
+    startDate: string,
+    endDate: string,
+  ): Promise<BankDepositDailyTransactionCount[]>;
   /** Marks the operation voided — never a physical DELETE, never rewrites `totalAmount`/cash/transactions. The caller (`VoidBankDepositOperationUseCase`) has already checked the operation exists and isn't already voided. */
   voidOperation(
     id: string,

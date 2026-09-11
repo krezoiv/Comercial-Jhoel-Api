@@ -106,6 +106,20 @@ export interface BankDepositTransactionSummary {
   monthly: BankDepositPeriodSummary;
 }
 
+/** One entry per calendar day of the current month — a day with no non-voided operation is `transactionCount: 0`, never omitted. See `BankDepositService.getDailyStats()`. */
+export interface BankDepositDailyStat {
+  /** `yyyy-MM-dd` */
+  date: string;
+  transactionCount: number;
+}
+
+/** `GET /bank-deposits/daily-stats` — backs the "Transacciones del mes" chart shared by Resumen and Reporte de Transacciones. Always the server's current calendar month (`America/Guatemala`), never derived from the browser's clock; excludes anuladas. Both screens read this exact same call so they can never disagree. */
+export interface BankDepositDailyStats {
+  /** `yyyy-MM` */
+  month: string;
+  days: BankDepositDailyStat[];
+}
+
 export interface BankDepositsReportFilters {
   startDate?: string;
   endDate?: string;

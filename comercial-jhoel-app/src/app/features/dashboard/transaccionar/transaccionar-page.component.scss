@@ -129,6 +129,11 @@
   }
 }
 
+app-transaction-monthly-chart {
+  display: block;
+  margin-bottom: var(--space-6);
+}
+
 // The "Resumen Diario"/"Resumen Mes en Curso"/"Comisión Estimada" cards on
 // the type-picker dashboard — one column on mobile, two on tablet (the
 // third simply wraps to its own row), all three side by side once there's

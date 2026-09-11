@@ -10,15 +10,7 @@
     </div>
   </header>
 
-  <div class="home__grid">
-    @for (item of summary$ | async; track item.id) {
-      <app-card padding="lg">
-        <a class="summary-card" [routerLink]="['/dashboard', item.path]">
-          <app-summary-tile [icon]="item.icon" [title]="item.title" [value]="item.value" [description]="item.description" tone="primary" />
-        </a>
-      </app-card>
-    }
-  </div>
+  <app-transaction-monthly-chart />
 
   <section class="home__daily-transactions">
     <app-transaction-summary-card
@@ -33,6 +25,16 @@
       [loading]="loadingDailyTransactionSummary()"
     />
   </section>
+
+  <div class="home__grid">
+    @for (item of summary$ | async; track item.id) {
+      <app-card padding="lg">
+        <a class="summary-card" [routerLink]="['/dashboard', item.path]">
+          <app-summary-tile [icon]="item.icon" [title]="item.title" [value]="item.value" [description]="item.description" tone="primary" />
+        </a>
+      </app-card>
+    }
+  </div>
 
   @if (isAdmin()) {
     <app-financial-indicators

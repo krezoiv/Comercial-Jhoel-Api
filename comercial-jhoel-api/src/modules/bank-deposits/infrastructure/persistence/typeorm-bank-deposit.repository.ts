@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository, SelectQueryBuilder } from 'typeorm';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import {
+  BankDepositDailyTransactionCount,
   BankDepositRepository,
   BankDepositReportFilters,
   BankDepositReportSummary,
@@ -165,6 +166,27 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         totalAmount: parseFloat(row.totalAmount),
       })),
     };
+  }
+
+  /** One row per date with at least one non-voided operation in range — `to_char` avoids the raw-`getRawMany` date/timestamp OID ambiguity `GetDashboardSummaryUseCase` already hit for this exact reason (see that use case's own doc comment); `operation_date` is a plain `DATE` column here too. */
+  async getDailyTransactionCounts(
+    startDate: string,
+    endDate: string,
+  ): Promise<BankDepositDailyTransactionCount[]> {
+    const qb = this.repository.createQueryBuilder('operation');
+    this.applyFilters(qb, { startDate, endDate });
+    qb.andWhere('operation.isVoided = false');
+    qb.select("to_char(operation.operationDate, 'YYYY-MM-DD')", 'date').addSelect(
+      'COALESCE(SUM(operation.transactionCount), 0)',
+      'transactionCount',
+    );
+    qb.groupBy('operation.operationDate').orderBy('operation.operationDate', 'ASC');
+
+    const rows = await qb.getRawMany<{ date: string; transactionCount: string }>();
+    return rows.map((row) => ({
+      date: row.date,
+      transactionCount: parseInt(row.transactionCount, 10),
+    }));
   }
 
   async voidOperation(

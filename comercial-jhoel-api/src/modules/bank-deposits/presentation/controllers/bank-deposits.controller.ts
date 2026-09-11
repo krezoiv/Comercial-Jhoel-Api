@@ -18,11 +18,13 @@ import { GetBankDepositOperationByIdUseCase } from '../../application/use-cases/
 import { VoidBankDepositOperationUseCase } from '../../application/use-cases/void-bank-deposit-operation.use-case';
 import { GetBankDepositMonthlyCountUseCase } from '../../application/use-cases/get-bank-deposit-monthly-count.use-case';
 import { GetBankDepositTransactionSummaryUseCase } from '../../application/use-cases/get-bank-deposit-transaction-summary.use-case';
+import { GetBankDepositDailyStatsUseCase } from '../../application/use-cases/get-bank-deposit-daily-stats.use-case';
 import { CreateBankDepositRequestDto } from '../dtos/create-bank-deposit.request.dto';
 import { VoidBankDepositOperationRequestDto } from '../dtos/void-bank-deposit-operation.request.dto';
 import { BankDepositOperationResponseDto } from '../dtos/bank-deposit.response.dto';
 import { BankDepositMonthlyCountResponseDto } from '../dtos/bank-deposit-monthly-count.response.dto';
 import { BankDepositTransactionSummaryResponseDto } from '../dtos/bank-deposit-transaction-summary.response.dto';
+import { BankDepositDailyStatsResponseDto } from '../dtos/bank-deposit-daily-stats.response.dto';
 
 /**
  * No class-level `@Roles(...)` — registering a Transaccionar deposit is an
@@ -48,6 +50,7 @@ export class BankDepositsController {
     private readonly voidBankDepositOperationUseCase: VoidBankDepositOperationUseCase,
     private readonly getBankDepositMonthlyCountUseCase: GetBankDepositMonthlyCountUseCase,
     private readonly getBankDepositTransactionSummaryUseCase: GetBankDepositTransactionSummaryUseCase,
+    private readonly getBankDepositDailyStatsUseCase: GetBankDepositDailyStatsUseCase,
   ) {}
 
   @Post()
@@ -78,6 +81,12 @@ export class BankDepositsController {
   @Get('summary')
   transactionSummary(): Promise<BankDepositTransactionSummaryResponseDto> {
     return this.getBankDepositTransactionSummaryUseCase.execute();
+  }
+
+  /** Backs the "Transacciones del mes" chart on Resumen and Reporte de Transacciones — same reasoning as `monthly-count`/`summary` above, must be declared before `:id`. Open to any authenticated account. */
+  @Get('daily-stats')
+  dailyStats(): Promise<BankDepositDailyStatsResponseDto> {
+    return this.getBankDepositDailyStatsUseCase.execute();
   }
 
   @Get(':id')
