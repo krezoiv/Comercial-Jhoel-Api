@@ -84,6 +84,10 @@
             (mouseleave)="onPointLeave()"
           />
         }
+
+        @if (todayMarkerX(); as todayX) {
+          <polygon [attr.points]="todayMarkerPoints(todayX)" class="chart-svg__today-marker" />
+        }
       </svg>
 
       @if (hoveredPoint(); as hovered) {

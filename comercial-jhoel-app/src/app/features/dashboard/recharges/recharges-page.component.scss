@@ -8,6 +8,11 @@
   flex-wrap: wrap;
 }
 
+.recharges__total-collected-card {
+  max-width: 24rem;
+  margin-bottom: var(--space-6);
+}
+
 .info-banner {
   display: flex;
   align-items: center;

@@ -68,6 +68,8 @@ export class SalesSummaryCardComponent implements OnChanges {
   @Input() lockReason: 'closed' | 'not_opened' | null = null;
   /** Emitted after a successful save — the backend has already reset this date to a fresh cuadre cycle, so the parent's own table (saldo anterior, compra, etc.) needs a refetch too. */
   @Output() closureSaved = new EventEmitter<void>();
+  /** Emitted every time `summary` changes (fetch or save) — lets the parent page surface `totalCollected` in its own "Total Recaudado" card without a second fetch of the same endpoint. */
+  @Output() summaryLoaded = new EventEmitter<RechargeSalesSummary | null>();
 
   private readonly rechargesService = inject(RechargesService);
   private readonly notificationService = inject(NotificationService);
@@ -177,6 +179,7 @@ export class SalesSummaryCardComponent implements OnChanges {
     this.rechargesService.getSalesSummary(this.operationDate).subscribe({
       next: (summary) => {
         this.summary.set(summary);
+        this.summaryLoaded.emit(summary);
         this.loading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -208,6 +211,7 @@ export class SalesSummaryCardComponent implements OnChanges {
         next: (summary) => {
           this.isSaving.set(false);
           this.summary.set(summary);
+          this.summaryLoaded.emit(summary);
           // Reset for a new operation, per the ticket's explicit requirement — the just-saved
           // figures stay visible in the read-only block above, driven by `summary` itself.
           this.totalCollectedDraft.set(null);

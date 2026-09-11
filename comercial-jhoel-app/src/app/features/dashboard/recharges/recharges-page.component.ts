@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
+import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeSalesSummary, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
@@ -23,7 +23,7 @@ import { CloseRechargeDayConfirmModalComponent } from './components/close-rechar
 import { SimStockTableComponent } from './components/sim-stock-table/sim-stock-table.component';
 import { RegisterSimPurchaseFormComponent } from './components/register-sim-purchase-form/register-sim-purchase-form.component';
 import { RegisterSimSaleFormComponent } from './components/register-sim-sale-form/register-sim-sale-form.component';
-import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
 function todayIsoDate(): string {
@@ -56,6 +56,7 @@ function todayIsoDate(): string {
     CardComponent,
     ButtonComponent,
     IconComponent,
+    SummaryTileComponent,
   ],
   templateUrl: './recharges-page.component.html',
   styleUrl: './recharges-page.component.scss',
@@ -157,6 +158,11 @@ export class RechargesPageComponent {
 
   /** Bumped after a final-balance save OR any recarga-vendida create/edit/delete so `SalesSummaryCardComponent` refetches — those are the only actions that change a day's sale figures besides picking a different date. */
   readonly salesSummaryRefreshTick = signal(0);
+
+  /** Mirrors whatever `SalesSummaryCardComponent` last fetched/saved (via its `summaryLoaded` output) — feeds the "Total Recaudado" tile at the top of the page without a second call to the same endpoint. `null` until that card's own first fetch resolves for the current `operationDate`. */
+  readonly salesSummary = signal<RechargeSalesSummary | null>(null);
+
+  formatCurrency = formatCurrency;
 
   /** "Recargas Vendidas" — the individual customer top-ups for the current operation date, feeding the new table and (via `salesSummaryRefreshTick`) the Total Claro/Tigo/General cards. */
   readonly sales = signal<RechargeSale[]>([]);
@@ -399,6 +405,7 @@ export class RechargesPageComponent {
       return;
     }
     this.operationDate.set(date);
+    this.salesSummary.set(null);
     this.fetchBalances();
     this.fetchPastDateStatusIfNeeded();
   }

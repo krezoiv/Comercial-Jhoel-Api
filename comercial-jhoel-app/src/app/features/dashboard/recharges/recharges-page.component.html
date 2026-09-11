@@ -32,6 +32,16 @@
     </div>
   </app-page-header>
 
+  <app-card padding="lg" class="recharges__total-collected-card">
+    <app-summary-tile
+      icon="wallet"
+      title="Total Recaudado"
+      [value]="salesSummary()?.totalCollected != null ? formatCurrency(salesSummary()!.totalCollected!) : '—'"
+      [description]="salesSummary()?.savedClosure ? ('Cuadre guardado · ' + operationDate()) : ('Cuadre pendiente de guardar · ' + operationDate())"
+      tone="success"
+    />
+  </app-card>
+
   @if (effectiveDayClosed()) {
     <p class="info-banner info-banner--locked">
       <app-icon name="lock" [size]="16" />
@@ -93,6 +103,7 @@
         [refreshTrigger]="salesSummaryRefreshTick()"
         [lockReason]="dayLockReason()"
         (closureSaved)="onClosureSaved()"
+        (summaryLoaded)="salesSummary.set($event)"
       />
     </app-card>
   </div>

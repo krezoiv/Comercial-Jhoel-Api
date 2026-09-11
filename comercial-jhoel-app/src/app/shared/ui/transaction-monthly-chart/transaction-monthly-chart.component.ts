@@ -38,6 +38,15 @@ function buildYAxisTicks(axisMax: number): number[] {
   return [0, Math.round(axisMax / 2), axisMax];
 }
 
+/** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique every other date-driven piece of this codebase uses. Purely a presentational "which column is today" lookup, not a data/business-date decision (the series itself is always the server's own current month, see `BankDepositService.getDailyStats()`). */
+function todayIsoDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /** Catmull-Rom → cubic Bezier, uniform tension — passes exactly through every point (peaks/valleys stay numerically exact), only the connecting segments are curved instead of straight. Standard 1/6 control-point scaling. */
 function buildSmoothPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return '';
@@ -162,6 +171,19 @@ export class TransactionMonthlyChartComponent {
     return index === null ? null : (this.points()[index] ?? null);
   });
 
+  /**
+   * The x-position of today's column, independent of that day's value —
+   * never a fabricated data point, just a marker over the existing axis.
+   * `null` whenever today genuinely isn't part of the rendered month (a
+   * client/server clock skew right at a month boundary), in which case the
+   * template simply omits the marker rather than guessing a position.
+   */
+  readonly todayMarkerX = computed(() => {
+    const todayIso = todayIsoDate();
+    const index = this.days().findIndex((d) => d.date === todayIso);
+    return index >= 0 ? (this.points()[index]?.x ?? null) : null;
+  });
+
   constructor() {
     this.fetch();
   }
@@ -199,6 +221,13 @@ export class TransactionMonthlyChartComponent {
 
   onPointLeave(): void {
     this.hoveredIndex.set(null);
+  }
+
+  /** Small upward-pointing triangle sitting just under the baseline, centered on `x` — the "today" marker's shape, independent of any data value. */
+  todayMarkerPoints(x: number): string {
+    const base = this.plotBottom + 7;
+    const tip = this.plotBottom + 1;
+    return `${(x - 4).toFixed(2)},${base} ${(x + 4).toFixed(2)},${base} ${x.toFixed(2)},${tip}`;
   }
 
   leftPercent(x: number): number {
