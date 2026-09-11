@@ -6,6 +6,8 @@ export class AccountReceivableResponseDto {
   amount: number;
   movementType: 'CARGO' | 'ABONO';
   description: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

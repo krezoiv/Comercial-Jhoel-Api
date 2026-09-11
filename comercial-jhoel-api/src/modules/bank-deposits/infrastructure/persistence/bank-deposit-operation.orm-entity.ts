@@ -77,6 +77,10 @@ export class BankDepositOperationOrmEntity {
   @Column({ name: 'client_name', type: 'varchar', length: 150, nullable: true })
   clientName: string | null;
 
+  /** A REGISTERED client — plain FK column, no navigable relation (nothing needs to load the full `Client` graph from a deposit; `clientName` already carries the display value). */
+  @Column({ name: 'client_id', type: 'uuid', nullable: true })
+  clientId: string | null;
+
   @Column({ name: 'transaction_type_id' })
   transactionTypeId: string;
 

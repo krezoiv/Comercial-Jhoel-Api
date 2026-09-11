@@ -42,6 +42,13 @@ import { AccountsReceivableController } from './presentation/controllers/account
   // backs its own summary use case, and ListAccountsReceivableUseCase is reused directly
   // for the report's list endpoint — identical filtering/pagination, no reason to
   // duplicate it. Same reuse-over-duplicate reasoning as RechargesModule's own exports.
-  exports: [ACCOUNT_RECEIVABLE_REPOSITORY, ListAccountsReceivableUseCase],
+  // RegisterAccountReceivableChargeUseCase is exported for BankDepositsModule — Transaccionar's
+  // "Enviar a cuentas por cobrar" reuses this use case as-is (client validation, description
+  // normalization, CARGO creation) rather than duplicating any of that logic.
+  exports: [
+    ACCOUNT_RECEIVABLE_REPOSITORY,
+    ListAccountsReceivableUseCase,
+    RegisterAccountReceivableChargeUseCase,
+  ],
 })
 export class AccountsReceivableModule {}

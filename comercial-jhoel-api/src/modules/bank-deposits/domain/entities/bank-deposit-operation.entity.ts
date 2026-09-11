@@ -13,6 +13,8 @@ export interface BankDepositOperationProps {
   /** "Vuelto" — always `0` for an operation that didn't need one. `totalCash - changeGiven` is the net amount actually applied to the deposit. */
   changeGiven: number;
   clientName: string | null;
+  /** A REGISTERED client (the `clients` table also used by Cuentas por Cobrar/Activos) — `null` unless one was picked. Independent of `clientName`, which stays free-text for every other case. */
+  clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
   userId: string;
@@ -84,6 +86,10 @@ export class BankDepositOperation {
 
   get clientName(): string | null {
     return this.props.clientName;
+  }
+
+  get clientId(): string | null {
+    return this.props.clientId;
   }
 
   get transactionTypeId(): string {

@@ -11,6 +11,7 @@ import {
   AccountReceivableOutput,
   toAccountReceivableOutput,
 } from '../dtos/account-receivable-output';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export interface RegisterAccountReceivableChargeInput {
   clientId: string;
@@ -18,6 +19,11 @@ export interface RegisterAccountReceivableChargeInput {
   date: string;
   description?: string;
   createdBy: string;
+  /** Polymorphic origin tag — omitted by the standalone "Registrar Cargo" endpoint (the only caller before Transaccionar's own integration). Set together when this charge is a side effect of another module's write. */
+  referenceType?: string;
+  referenceId?: string;
+  /** Present when the caller (e.g. `RegisterBankDepositOperationUseCase`) needs this write to commit or roll back atomically alongside another module's write, via `TransactionManager.runInTransaction`. Omitted by every other caller. */
+  context?: TransactionContext;
 }
 
 /** "Registrar Cargo" for Cuentas por Cobrar — an independent Kardex movement, never a rewrite of a prior one (see the migration's own doc comment for the full reasoning). */
@@ -43,14 +49,19 @@ export class RegisterAccountReceivableChargeUseCase {
 
     const description = input.description?.trim().replace(/\s+/g, ' ') || null;
 
-    const movement = await this.accountReceivableRepository.registerMovement({
-      clientId: input.clientId,
-      movementType: 'CARGO',
-      amount: input.amount,
-      date: input.date,
-      description,
-      createdBy: input.createdBy,
-    });
+    const movement = await this.accountReceivableRepository.registerMovement(
+      {
+        clientId: input.clientId,
+        movementType: 'CARGO',
+        amount: input.amount,
+        date: input.date,
+        description,
+        createdBy: input.createdBy,
+        referenceType: input.referenceType ?? null,
+        referenceId: input.referenceId ?? null,
+      },
+      input.context,
+    );
 
     return toAccountReceivableOutput(movement);
   }

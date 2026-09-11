@@ -2,6 +2,7 @@ import {
   AccountReceivable,
   AccountReceivableMovementType,
 } from '../entities/account-receivable.entity';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export const ACCOUNT_RECEIVABLE_REPOSITORY = Symbol(
   'ACCOUNT_RECEIVABLE_REPOSITORY',
@@ -69,6 +70,9 @@ export interface RegisterAccountReceivableMovementData {
   date: string;
   description: string | null;
   createdBy: string;
+  /** Polymorphic origin tag — `null`/omitted for a movement registered directly through Cuentas por Cobrar (every existing caller). Set together (e.g. `'BANK_DEPOSIT'` + a `bank_deposit_operations.id`) when a movement was generated as a side effect of another module's write — see Transaccionar's "Enviar a cuentas por cobrar". */
+  referenceType?: string | null;
+  referenceId?: string | null;
 }
 
 export interface StatementMovement {
@@ -107,16 +111,20 @@ export interface AccountReceivableRepository {
   getReportSummary(
     options: FindAccountsReceivableReportSummaryOptions,
   ): Promise<AccountsReceivableReportSummary>;
-  findById(id: string): Promise<AccountReceivable | null>;
+  findById(
+    id: string,
+    context?: TransactionContext,
+  ): Promise<AccountReceivable | null>;
   create(data: CreateAccountReceivableData): Promise<AccountReceivable>;
   update(
     id: string,
     data: UpdateAccountReceivableData,
   ): Promise<AccountReceivable>;
   deactivate(id: string): Promise<void>;
-  /** Invokes the `register_account_receivable_movement` Postgres function — validation (including the `ABONO_EXCEEDS_BALANCE` rejection, unlike Activos), balance computation, and the insert all happen atomically, serialized per client via an advisory lock. */
+  /** Invokes the `register_account_receivable_movement` Postgres function — validation (including the `ABONO_EXCEEDS_BALANCE` rejection, unlike Activos), balance computation, and the insert all happen atomically, serialized per client via an advisory lock. `context`, when provided, is used instead of this repository's own connection — lets a caller (e.g. Transaccionar's deposit registration) wrap this call and another module's write in one shared DB transaction. Omitted by every caller that doesn't need that. */
   registerMovement(
     data: RegisterAccountReceivableMovementData,
+    context?: TransactionContext,
   ): Promise<AccountReceivable>;
   /** The client's current signed balance — a single bounded aggregate, never a full-history fetch. */
   getCurrentBalance(clientId: string): Promise<number>;

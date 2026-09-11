@@ -28,6 +28,7 @@ export interface BankDepositOperationOutput {
   /** `totalCash - changeGiven` — el efectivo realmente aplicado al depósito, siempre igual a `totalAmount` en una operación guardada. */
   netCashApplied: number;
   clientName: string | null;
+  clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
   userId: string;
@@ -52,6 +53,7 @@ export interface BankDepositOperationSummaryOutput {
   transactionCount: number;
   operationDate: string;
   clientName: string | null;
+  clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
   userId: string;
@@ -78,6 +80,7 @@ export function toBankDepositOperationOutput(
     changeGiven: operation.changeGiven,
     netCashApplied: operation.netCashApplied,
     clientName: operation.clientName,
+    clientId: operation.clientId,
     transactionTypeId: operation.transactionTypeId,
     transactionTypeName: operation.transactionTypeName,
     userId: operation.userId,
@@ -114,6 +117,7 @@ export function toBankDepositOperationSummaryOutput(
     transactionCount: operation.transactionCount,
     operationDate: operation.operationDate,
     clientName: operation.clientName,
+    clientId: operation.clientId,
     transactionTypeId: operation.transactionTypeId,
     transactionTypeName: operation.transactionTypeName,
     userId: operation.userId,

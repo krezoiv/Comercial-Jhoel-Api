@@ -23,6 +23,7 @@ export class BankDepositOperationResponseDto {
   changeGiven: number;
   netCashApplied: number;
   clientName: string | null;
+  clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
   userId: string;
@@ -46,6 +47,7 @@ export class BankDepositOperationSummaryResponseDto {
   transactionCount: number;
   operationDate: string;
   clientName: string | null;
+  clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
   userId: string;

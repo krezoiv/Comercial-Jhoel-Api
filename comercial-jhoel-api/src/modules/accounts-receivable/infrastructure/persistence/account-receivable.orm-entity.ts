@@ -40,6 +40,15 @@ export class AccountReceivableOrmEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   description: string | null;
 
+  // Polymorphic origin tag, always set together (or not at all) — see the
+  // migration's own doc comment. No FK on reference_id: it can't point at a
+  // single table by construction.
+  @Column({ name: 'reference_type', type: 'varchar', length: 50, nullable: true })
+  referenceType: string | null;
+
+  @Column({ name: 'reference_id', type: 'uuid', nullable: true })
+  referenceId: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

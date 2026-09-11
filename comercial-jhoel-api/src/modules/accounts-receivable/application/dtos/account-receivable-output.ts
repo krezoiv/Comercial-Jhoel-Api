@@ -11,6 +11,8 @@ export interface AccountReceivableOutput {
   amount: number;
   movementType: AccountReceivableMovementType;
   description: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +33,8 @@ export function toAccountReceivableOutput(
     amount: record.amount,
     movementType: record.movementType,
     description: record.description,
+    referenceType: record.referenceType,
+    referenceId: record.referenceId,
     isActive: record.isActive,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,

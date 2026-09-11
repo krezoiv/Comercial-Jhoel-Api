@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
+import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { RegisterBankDepositOperationUseCase } from '../../application/use-cases/register-bank-deposit-operation.use-case';
 import { GetBankDepositOperationByIdUseCase } from '../../application/use-cases/get-bank-deposit-operation-by-id.use-case';
 import { VoidBankDepositOperationUseCase } from '../../application/use-cases/void-bank-deposit-operation.use-case';
@@ -25,6 +26,8 @@ import { BankDepositOperationResponseDto } from '../dtos/bank-deposit.response.d
 import { BankDepositMonthlyCountResponseDto } from '../dtos/bank-deposit-monthly-count.response.dto';
 import { BankDepositTransactionSummaryResponseDto } from '../dtos/bank-deposit-transaction-summary.response.dto';
 import { BankDepositDailyStatsResponseDto } from '../dtos/bank-deposit-daily-stats.response.dto';
+
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
 /**
  * No class-level `@Roles(...)` — registering a Transaccionar deposit is an
@@ -57,7 +60,7 @@ export class BankDepositsController {
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateBankDepositRequestDto,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser() user: RequestUser,
   ): Promise<BankDepositOperationResponseDto> {
     return this.registerBankDepositOperationUseCase.execute({
       transactionBankId: dto.transactionBankId,
@@ -65,8 +68,11 @@ export class BankDepositsController {
       totalAmount: dto.totalAmount,
       cashDetails: dto.cashDetails,
       transactionAmounts: dto.transactionAmounts,
-      userId,
+      userId: user.userId,
       clientName: dto.clientName ?? null,
+      clientId: dto.clientId ?? null,
+      sendToAccountsReceivable: dto.sendToAccountsReceivable ?? false,
+      isAdmin: ADMIN_ROLES.includes(user.role),
       changeGiven: dto.changeGiven ?? 0,
     });
   }

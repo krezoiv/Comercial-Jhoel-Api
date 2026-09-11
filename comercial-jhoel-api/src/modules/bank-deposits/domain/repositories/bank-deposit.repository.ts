@@ -1,4 +1,5 @@
 import { BankDepositOperation } from '../entities/bank-deposit-operation.entity';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export const BANK_DEPOSIT_REPOSITORY = Symbol('BANK_DEPOSIT_REPOSITORY');
 
@@ -16,6 +17,8 @@ export interface RegisterBankDepositOperationData {
   userId: string;
   /** Free-text — never looked up against the `clients` table, see the entity's own doc comment. */
   clientName: string | null;
+  /** A REGISTERED client, validated (exists + active) before this is ever called — `null`/omitted for every transaction type/deposit not linked to one. Independent of `clientName`: both are set together when a registered client is picked (the resolved client's name is what's persisted as `clientName` for display — see `RegisterBankDepositOperationUseCase`). */
+  clientId?: string | null;
   transactionTypeId: string;
   /** "Vuelto" — omitted/`0` means no vuelto, byte-identical to this operation's behavior before vuelto existed. The SQL function recomputes/validates this server-side regardless of what's sent. */
   changeGiven?: number;
@@ -69,15 +72,19 @@ export interface BankDepositDailyTransactionCount {
 }
 
 export interface BankDepositRepository {
-  /** Invokes the `register_bank_deposit_operation` Postgres function — the operation, its cash details, and its transactions all commit (or none do) atomically inside it. */
+  /** Invokes the `register_bank_deposit_operation` Postgres function — the operation, its cash details, and its transactions all commit (or none do) atomically inside it. `context`, when provided (a `TransactionContext` from `TransactionManager.runInTransaction`), is used instead of this repository's own connection — so a caller can wrap this call and another module's write (e.g. an accounts-receivable CARGO) in one shared DB transaction. Omitted by every caller that doesn't need that. */
   registerOperation(
     data: RegisterBankDepositOperationData,
+    context?: TransactionContext,
   ): Promise<BankDepositOperation>;
   /** Never restricted by ownership, unlike Sales/Purchases — a shared operational record, same access policy as Bancos/Recargas. */
   findAll(
     options: FindBankDepositOperationsOptions,
   ): Promise<PaginatedResult<BankDepositOperation>>;
-  findById(id: string): Promise<BankDepositOperation | null>;
+  findById(
+    id: string,
+    context?: TransactionContext,
+  ): Promise<BankDepositOperation | null>;
   /** Excludes voided operations — a report is about real deposited money, see `TypeOrmBankDepositRepository.getReportSummary`'s own doc comment. */
   getReportSummary(
     filters: BankDepositReportFilters,

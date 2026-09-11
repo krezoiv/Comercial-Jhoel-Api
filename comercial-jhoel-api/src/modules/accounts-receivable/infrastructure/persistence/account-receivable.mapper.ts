@@ -12,6 +12,8 @@ export class AccountReceivableMapper {
       movementType: orm.movementType,
       sequence: Number(orm.sequence),
       description: orm.description,
+      referenceType: orm.referenceType,
+      referenceId: orm.referenceId,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, QueryFailedError, Repository, SelectQueryBuilder } from 'typeorm';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import {
   BankDepositDailyTransactionCount,
@@ -11,6 +11,7 @@ import {
   PaginatedResult,
   RegisterBankDepositOperationData,
 } from '../../domain/repositories/bank-deposit.repository';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 import { InvalidTransactionBankError } from '../../domain/errors/invalid-transaction-bank.error';
 import { InvalidTransactionTypeError } from '../../domain/errors/invalid-transaction-type.error';
 import { InvalidChangeGivenError } from '../../domain/errors/invalid-change-given.error';
@@ -18,6 +19,7 @@ import { InvalidDepositAmountError } from '../../domain/errors/invalid-deposit-a
 import { InvalidCashQuantityError } from '../../domain/errors/invalid-cash-quantity.error';
 import { CashTotalMismatchError } from '../../domain/errors/cash-total-mismatch.error';
 import { TransactionTotalMismatchError } from '../../domain/errors/transaction-total-mismatch.error';
+import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-deposit-client.error';
 import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
 import { BankDepositOperationMapper } from './bank-deposit-operation.mapper';
 
@@ -30,7 +32,9 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
 
   async registerOperation(
     data: RegisterBankDepositOperationData,
+    context?: TransactionContext,
   ): Promise<BankDepositOperation> {
+    const manager = this.getManager(context);
     const cashDetailsJson = JSON.stringify(
       data.cashDetails.map((detail) => ({
         denomination: detail.denomination,
@@ -41,10 +45,10 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
 
     let operationId: string;
     try {
-      const rows = await this.repository.manager.query<
+      const rows = await manager.query<
         { register_bank_deposit_operation: string }[]
       >(
-        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9)',
+        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10)',
         [
           data.transactionBankId,
           data.totalAmount,
@@ -55,6 +59,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
           data.transactionTypeId,
           data.clientName,
           data.changeGiven ?? 0,
+          data.clientId ?? null,
         ],
       );
       operationId = rows[0].register_bank_deposit_operation;
@@ -62,7 +67,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       throw this.translateBankDepositError(error);
     }
 
-    const operation = await this.findById(operationId);
+    const operation = await this.findById(operationId, context);
     if (!operation) {
       // The function just committed it — this would only happen on a bug.
       throw new InternalServerErrorException(
@@ -70,6 +75,11 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       );
     }
     return operation;
+  }
+
+  /** Resolves the connection to use for a call: the shared transactional `EntityManager` when a `TransactionContext` was passed in, or this repository's own default connection otherwise — every caller that doesn't pass one gets byte-identical behavior to before this parameter existed. */
+  private getManager(context?: TransactionContext): EntityManager {
+    return (context as EntityManager | undefined) ?? this.repository.manager;
   }
 
   async findAll(
@@ -99,11 +109,17 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
     };
   }
 
-  async findById(id: string): Promise<BankDepositOperation | null> {
-    const orm = await this.repository.findOne({
-      where: { id },
-      relations: { cashDetails: true, transactions: true },
-    });
+  async findById(
+    id: string,
+    context?: TransactionContext,
+  ): Promise<BankDepositOperation | null> {
+    const orm = await this.getManager(context).findOne(
+      BankDepositOperationOrmEntity,
+      {
+        where: { id },
+        relations: { cashDetails: true, transactions: true },
+      },
+    );
     return orm ? BankDepositOperationMapper.toDomain(orm) : null;
   }
 
@@ -276,6 +292,8 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         return new TransactionTotalMismatchError();
       case 'INVALID_CHANGE_GIVEN':
         return new InvalidChangeGivenError();
+      case 'BANK_DEPOSIT_CLIENT_INVALID':
+        return new InvalidBankDepositClientError();
       default:
         return error;
     }

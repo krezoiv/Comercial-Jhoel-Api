@@ -16,6 +16,9 @@ import { BankDepositsController } from './presentation/controllers/bank-deposits
 import { TransactionBanksModule } from '../transaction-banks/transaction-banks.module';
 import { TransactionTypesModule } from '../transaction-types/transaction-types.module';
 import { BanksModule } from '../banks/banks.module';
+import { ClientsModule } from '../clients/clients.module';
+import { AccountsReceivableModule } from '../accounts-receivable/accounts-receivable.module';
+import { SharedModule } from '../../shared/shared.module';
 
 @Module({
   imports: [
@@ -26,11 +29,22 @@ import { BanksModule } from '../banks/banks.module';
     ]),
     // Validates transactionBankId the same way PurchasesModule reaches SuppliersModule.
     TransactionBanksModule,
-    // For the TransactionTypeOrmEntity relation (eager-loaded on BankDepositOperationOrmEntity).
+    // For the TransactionTypeOrmEntity relation (eager-loaded on BankDepositOperationOrmEntity)
+    // and, since the "Enviar a cuentas por cobrar" follow-up, to resolve/confirm a transaction
+    // type's name really is "Depósito" before allowing that flow.
     TransactionTypesModule,
     // For DAY_OPENING_REPOSITORY — Transaccionar reuses Banks' own día-abierto/cerrado
     // cycle rather than a parallel one, see RegisterBankDepositOperationUseCase.
     BanksModule,
+    // Validates a deposit's optional registered clientId the same way PurchasesModule
+    // reaches SuppliersModule — added for "Enviar a cuentas por cobrar".
+    ClientsModule,
+    // For RegisterAccountReceivableChargeUseCase — reused as-is when a deposit is sent
+    // to Cuentas por Cobrar, rather than duplicating its validation/SQL call.
+    AccountsReceivableModule,
+    // For TRANSACTION_MANAGER — lets the deposit + its optional CxC cargo commit or
+    // roll back atomically in one DB transaction.
+    SharedModule,
   ],
   controllers: [BankDepositsController],
   providers: [

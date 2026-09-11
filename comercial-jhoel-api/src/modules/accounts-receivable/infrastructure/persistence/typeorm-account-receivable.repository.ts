@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { EntityManager, QueryFailedError, Repository } from 'typeorm';
 import { AccountReceivable } from '../../domain/entities/account-receivable.entity';
 import {
   AccountReceivableRepository,
@@ -16,6 +16,7 @@ import {
   StatementMovement,
   UpdateAccountReceivableData,
 } from '../../domain/repositories/account-receivable.repository';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 import { AbonoExceedsBalanceError } from '../../domain/errors/abono-exceeds-balance.error';
 import {
   InvalidMovementAmountError,
@@ -149,9 +150,20 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
     };
   }
 
-  async findById(id: string): Promise<AccountReceivable | null> {
-    const orm = await this.repository.findOne({ where: { id } });
+  async findById(
+    id: string,
+    context?: TransactionContext,
+  ): Promise<AccountReceivable | null> {
+    const orm = await this.getManager(context).findOne(
+      AccountReceivableOrmEntity,
+      { where: { id } },
+    );
     return orm ? AccountReceivableMapper.toDomain(orm) : null;
+  }
+
+  /** Resolves the connection to use for a call: the shared transactional `EntityManager` when a `TransactionContext` was passed in, or this repository's own default connection otherwise — every caller that doesn't pass one gets byte-identical behavior to before this parameter existed. */
+  private getManager(context?: TransactionContext): EntityManager {
+    return (context as EntityManager | undefined) ?? this.repository.manager;
   }
 
   async create(data: CreateAccountReceivableData): Promise<AccountReceivable> {
@@ -179,25 +191,32 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
   /** Invokes `register_account_receivable_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for the `ABONO_EXCEEDS_BALANCE` rule this table enforces, unlike Activos. */
   async registerMovement(
     data: RegisterAccountReceivableMovementData,
+    context?: TransactionContext,
   ): Promise<AccountReceivable> {
+    const manager = this.getManager(context);
     let movementId: string;
     try {
-      const rows = await this.repository.manager.query<
+      const rows = await manager.query<
         { register_account_receivable_movement: string }[]
-      >('SELECT register_account_receivable_movement($1, $2, $3, $4, $5, $6)', [
-        data.clientId,
-        data.movementType,
-        data.amount,
-        data.date,
-        data.description,
-        data.createdBy,
-      ]);
+      >(
+        'SELECT register_account_receivable_movement($1, $2, $3, $4, $5, $6, $7, $8)',
+        [
+          data.clientId,
+          data.movementType,
+          data.amount,
+          data.date,
+          data.description,
+          data.createdBy,
+          data.referenceType ?? null,
+          data.referenceId ?? null,
+        ],
+      );
       movementId = rows[0].register_account_receivable_movement;
     } catch (error) {
       throw this.translateMovementError(error);
     }
 
-    const record = await this.findById(movementId);
+    const record = await this.findById(movementId, context);
     if (!record) {
       throw new InternalServerErrorException(
         'No se pudo recuperar el movimiento recién registrado.',
