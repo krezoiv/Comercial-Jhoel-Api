@@ -12,6 +12,7 @@ import {
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { RechargeCashBoxService } from '../../../../../core/services/recharge-cash-box.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
+import { refetchOnTabVisible } from '../../../../../core/utils/refetch-on-tab-visible';
 import { CardComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 
@@ -44,6 +45,12 @@ const DEFAULT_LIMIT = 20;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CashBoxHistoryComponent implements OnChanges {
+  // Also refetches via `refetchOnTabVisible()` — same reasoning as
+  // `CashBoxCardComponent`'s own doc comment: a recarga sale/purchase
+  // registered on a different route never reaches this component through
+  // `refreshTrigger` (that `@Input()` only ever gets bumped by an
+  // aporte/salida registered elsewhere ON this same page), so without this
+  // a tab left open here can show a stale history list indefinitely.
   /** `yyyy-MM-dd` — the page's operation-date picker's max selectable value, so the range filters can't reach into the future either. */
   @Input() maxSelectableDate = '';
   /** Bumped by the parent after a withdrawal is registered elsewhere on the page — triggers a refetch of whichever page is currently shown. */
@@ -66,6 +73,10 @@ export class CashBoxHistoryComponent implements OnChanges {
   readonly loading = signal(true);
 
   formatCurrency = formatCurrency;
+
+  constructor() {
+    refetchOnTabVisible(() => this.fetch());
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['refreshTrigger'] && !changes['refreshTrigger'].firstChange) {

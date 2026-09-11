@@ -6,6 +6,7 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { RechargeCashBoxService } from '../../../../../core/services/recharge-cash-box.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
+import { refetchOnTabVisible } from '../../../../../core/utils/refetch-on-tab-visible';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../../../shared/ui';
 import { CashBoxWithdrawalModalComponent } from '../cash-box-withdrawal-modal/cash-box-withdrawal-modal.component';
 import { CashBoxContributionModalComponent } from '../cash-box-contribution-modal/cash-box-contribution-modal.component';
@@ -19,6 +20,15 @@ import { CashBoxContributionModalComponent } from '../cash-box-contribution-moda
  * module). "+ Aporte"/"− Salida de Ganancia" are both admin-only —
  * registering/anulando either kind of manual movement is gated
  * server-side (`@Roles`), this is UX only.
+ *
+ * Also refetches via `refetchOnTabVisible()` — this card has no cross-page
+ * signal at all (unlike `SalesSummaryCardComponent`'s `refreshTrigger`,
+ * which only ever reaches within the SAME page tree): a recarga sale or
+ * purchase registered on `/dashboard/recargas` never notifies this
+ * component, since they're separate routes/component trees. Without this,
+ * a tab left open on this page shows a stale "Saldo Actual" indefinitely
+ * once something changes it elsewhere — confirmed live by registering a
+ * recarga in a second tab while this one stayed mounted.
  */
 @Component({
   selector: 'app-recharge-cash-box-card',
@@ -47,6 +57,10 @@ export class CashBoxCardComponent implements OnChanges {
   readonly contributionModalOpen = signal(false);
 
   formatCurrency = formatCurrency;
+
+  constructor() {
+    refetchOnTabVisible(() => this.fetchBalance());
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['operationDate']) {

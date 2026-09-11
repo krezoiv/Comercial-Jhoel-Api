@@ -36,8 +36,8 @@
     <app-summary-tile
       icon="wallet"
       title="Total Recaudado"
-      [value]="salesSummary()?.totalCollected != null ? formatCurrency(salesSummary()!.totalCollected!) : '—'"
-      [description]="salesSummary()?.savedClosure ? ('Cuadre guardado · ' + operationDate()) : ('Cuadre pendiente de guardar · ' + operationDate())"
+      [value]="salesSummary() ? formatCurrency(salesSummary()!.totalSales) : '—'"
+      [description]="'Recargas vendidas · ' + operationDate()"
       tone="success"
     />
   </app-card>
