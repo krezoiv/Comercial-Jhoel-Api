@@ -159,7 +159,7 @@ export class TypeOrmRechargeSimDailyStockRepository implements RechargeSimDailyS
     const saleRows = await this.repository.manager.query<
       { daily_stock_id: string; quantity: string; total: string }[]
     >(
-      `SELECT daily_stock_id, SUM(quantity) AS quantity, SUM(total_amount) AS total FROM recharge_sim_sales WHERE daily_stock_id = ANY($1) GROUP BY daily_stock_id`,
+      `SELECT daily_stock_id, SUM(quantity) AS quantity, SUM(total_amount) AS total FROM recharge_sim_sales WHERE daily_stock_id = ANY($1) AND is_voided = false GROUP BY daily_stock_id`,
       [dailyStockIds],
     );
 

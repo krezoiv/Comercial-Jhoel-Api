@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeSalesSummary, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
+import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeSalesSummary, RechargeType, SimDailyStock, SimSale, SimType, formatCurrency } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
@@ -25,6 +25,8 @@ import { SimStockTableComponent } from './components/sim-stock-table/sim-stock-t
 import { RegisterSimPurchaseFormComponent } from './components/register-sim-purchase-form/register-sim-purchase-form.component';
 import { RegisterSimSaleFormComponent } from './components/register-sim-sale-form/register-sim-sale-form.component';
 import { RegisterSimSaleRegistrationFormComponent } from './components/register-sim-sale-registration-form/register-sim-sale-registration-form.component';
+import { SimSalesTableComponent } from './components/sim-sales-table/sim-sales-table.component';
+import { VoidSimSaleConfirmModalComponent } from './components/void-sim-sale-confirm-modal/void-sim-sale-confirm-modal.component';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
@@ -57,6 +59,8 @@ function todayIsoDate(): string {
     RegisterSimPurchaseFormComponent,
     RegisterSimSaleFormComponent,
     RegisterSimSaleRegistrationFormComponent,
+    SimSalesTableComponent,
+    VoidSimSaleConfirmModalComponent,
     CardComponent,
     ButtonComponent,
     IconComponent,
@@ -146,6 +150,14 @@ export class RechargesPageComponent {
   readonly simTypes = signal<SimType[]>([]);
   readonly simStocks = signal<SimDailyStock[]>([]);
   readonly simLoading = signal(true);
+
+  /** "Vender SIM" (por cantidad) — every quick sale for the current operation date, feeding the new admin table and its own "Revertir" action. Deliberately separate from `simStocks`' own per-type aggregate. */
+  readonly simSales = signal<SimSale[]>([]);
+  readonly simSalesLoading = signal(true);
+
+  readonly isVoidSimSaleModalOpen = signal(false);
+  readonly voidSimSaleTarget = signal<SimSale | null>(null);
+  readonly isVoidingSimSale = signal(false);
 
   readonly simStockByTypeId = computed<Record<string, number>>(() => {
     const map: Record<string, number> = {};
@@ -292,6 +304,7 @@ export class RechargesPageComponent {
     this.salesLoading.set(true);
     this.simLoading.set(true);
     this.purchasesLoading.set(true);
+    this.simSalesLoading.set(true);
     forkJoin({
       types: this.rechargesService.getTypes(),
       balances: this.rechargesService.getDailySummary(this.operationDate()),
@@ -299,24 +312,28 @@ export class RechargesPageComponent {
       purchases: this.rechargesService.getPurchases(this.operationDate()),
       simTypes: this.simsService.getTypes(),
       simStocks: this.simsService.getDailyStock(this.operationDate()),
+      simSales: this.simsService.getSales(this.operationDate()),
     }).subscribe({
-      next: ({ types, balances, sales, purchases, simTypes, simStocks }) => {
+      next: ({ types, balances, sales, purchases, simTypes, simStocks, simSales }) => {
         this.types.set(types);
         this.balances.set(balances);
         this.sales.set(sales);
         this.purchases.set(purchases);
         this.simTypes.set(simTypes);
         this.simStocks.set(simStocks);
+        this.simSales.set(simSales);
         this.loading.set(false);
         this.salesLoading.set(false);
         this.purchasesLoading.set(false);
         this.simLoading.set(false);
+        this.simSalesLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
         this.purchasesLoading.set(false);
         this.simLoading.set(false);
+        this.simSalesLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
       },
     });
@@ -327,28 +344,47 @@ export class RechargesPageComponent {
     this.salesLoading.set(true);
     this.simLoading.set(true);
     this.purchasesLoading.set(true);
+    this.simSalesLoading.set(true);
     forkJoin({
       balances: this.rechargesService.getDailySummary(this.operationDate()),
       sales: this.rechargesService.getSales(this.operationDate()),
       purchases: this.rechargesService.getPurchases(this.operationDate()),
       simStocks: this.simsService.getDailyStock(this.operationDate()),
+      simSales: this.simsService.getSales(this.operationDate()),
     }).subscribe({
-      next: ({ balances, sales, purchases, simStocks }) => {
+      next: ({ balances, sales, purchases, simStocks, simSales }) => {
         this.balances.set(balances);
         this.sales.set(sales);
         this.purchases.set(purchases);
         this.simStocks.set(simStocks);
+        this.simSales.set(simSales);
         this.loading.set(false);
         this.salesLoading.set(false);
         this.purchasesLoading.set(false);
         this.simLoading.set(false);
+        this.simSalesLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
         this.salesLoading.set(false);
         this.purchasesLoading.set(false);
         this.simLoading.set(false);
+        this.simSalesLoading.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo cargar la información de recargas.'));
+      },
+    });
+  }
+
+  private fetchSimSales(): void {
+    this.simSalesLoading.set(true);
+    this.simsService.getSales(this.operationDate()).subscribe({
+      next: (simSales) => {
+        this.simSales.set(simSales);
+        this.simSalesLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.simSalesLoading.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudieron cargar las ventas de SIM.'));
       },
     });
   }
@@ -366,6 +402,8 @@ export class RechargesPageComponent {
 
   onSimSaleRegistered(stock: SimDailyStock): void {
     this.upsertSimStock(stock);
+    this.fetchSimSales();
+    this.salesSummaryRefreshTick.update((tick) => tick + 1);
   }
 
   /**
@@ -587,6 +625,43 @@ export class RechargesPageComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeletingSale.set(false);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo eliminar la recarga.'));
+      },
+    });
+  }
+
+  requestVoidSimSale(sale: SimSale): void {
+    this.voidSimSaleTarget.set(sale);
+    this.isVoidSimSaleModalOpen.set(true);
+  }
+
+  cancelVoidSimSale(): void {
+    if (this.isVoidingSimSale()) {
+      return;
+    }
+    this.isVoidSimSaleModalOpen.set(false);
+    this.voidSimSaleTarget.set(null);
+  }
+
+  /** Reverting a quick SIM sale restores its stock and drops its amount out of "Total Recaudado" — refetch the whole date's data (stock, sim sales) and bump `salesSummaryRefreshTick` so the summary card reflects it immediately. */
+  confirmVoidSimSale(reason: string): void {
+    const target = this.voidSimSaleTarget();
+    if (!target) {
+      return;
+    }
+
+    this.isVoidingSimSale.set(true);
+    this.simsService.voidSale(target.id, reason).subscribe({
+      next: () => {
+        this.isVoidingSimSale.set(false);
+        this.isVoidSimSaleModalOpen.set(false);
+        this.voidSimSaleTarget.set(null);
+        this.fetchBalances();
+        this.salesSummaryRefreshTick.update((tick) => tick + 1);
+        this.notificationService.success(`Venta de ${target.simTypeName} revertida correctamente.`);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isVoidingSimSale.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo revertir la venta de SIM.'));
       },
     });
   }

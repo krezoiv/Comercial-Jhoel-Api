@@ -99,3 +99,32 @@ export interface PaginatedSimSaleRegistrations {
   page: number;
   limit: number;
 }
+
+/**
+ * One by-quantity "Vender SIM" sale — the original quick-sale flow (no DPI
+ * capture), listed here only for "Administrar Ventas de SIM (por cantidad)".
+ * Never physically deleted: a mistaken sale is corrected via
+ * `canRevert`/"Revertir", which marks it `isVoided` forever and restores the
+ * SIM stock, never by editing this row in place. `hasActiveRegistration` is
+ * always `false` for a row that reaches this list — a sale that has an
+ * identity registration belongs to the *other* "Administrar Ventas de SIM"
+ * screen instead (see the backend's own doc comment for why the two never
+ * overlap); it's still exposed for defense-in-depth display, not omitted.
+ */
+export interface SimSale {
+  id: string;
+  simTypeId: string;
+  simTypeName: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  saleDate: string;
+  hasActiveRegistration: boolean;
+  isVoided: boolean;
+  voidedAt: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
+  /** `true` only while not already voided and its recharge day isn't closed — mirrors the backend's own `void_recharge_sim_sale` guards exactly. */
+  canRevert: boolean;
+  createdByUsername: string;
+}

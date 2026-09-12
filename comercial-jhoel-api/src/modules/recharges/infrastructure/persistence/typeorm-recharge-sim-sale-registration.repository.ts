@@ -150,13 +150,15 @@ export class TypeOrmRechargeSimSaleRegistrationRepository
     // a non-voided registration's own sale_price overrides the catalog
     // total_amount (it may be a negotiated price), a voided one contributes
     // 0, and a sale with no registration at all (the pre-existing
-    // by-quantity flow) always counts at its own total_amount.
+    // by-quantity flow) counts at its own total_amount unless it was voided
+    // via void_recharge_sim_sale, in which case it also contributes 0.
     const rows = await this.dataSource.manager.query<{ total: string }[]>(
       `SELECT COALESCE(SUM(
          CASE
            WHEN r.id IS NOT NULL AND r.is_voided = false THEN r.sale_price
            WHEN r.id IS NOT NULL AND r.is_voided = true THEN 0
-           ELSE rss.total_amount
+           WHEN r.id IS NULL AND rss.is_voided = false THEN rss.total_amount
+           ELSE 0
          END
        ), 0) AS total
        FROM recharge_sim_sales rss

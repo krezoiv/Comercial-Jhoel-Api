@@ -28,14 +28,19 @@ import { VoidRechargeSimSaleRegistrationUseCase } from '../../application/use-ca
 import { GetRechargeSimSaleRegistrationByIdUseCase } from '../../application/use-cases/get-recharge-sim-sale-registration-by-id.use-case';
 import { ListRechargeSimSaleRegistrationsUseCase } from '../../application/use-cases/list-recharge-sim-sale-registrations.use-case';
 import { GetRechargeSimSaleRegistrationDpiImageUseCase } from '../../application/use-cases/get-recharge-sim-sale-registration-dpi-image.use-case';
+import { ListRechargeSimSalesUseCase } from '../../application/use-cases/list-recharge-sim-sales.use-case';
+import { VoidRechargeSimSaleUseCase } from '../../application/use-cases/void-recharge-sim-sale.use-case';
 import { RechargeSimDailyQueryDto } from '../dtos/recharge-sim-daily.query.dto';
 import { RegisterRechargeSimPurchaseRequestDto } from '../dtos/register-recharge-sim-purchase.request.dto';
 import { RegisterRechargeSimSaleRequestDto } from '../dtos/register-recharge-sim-sale.request.dto';
 import { RegisterRechargeSimSaleRegistrationRequestDto } from '../dtos/register-recharge-sim-sale-registration.request.dto';
 import { VoidRechargeSimSaleRegistrationRequestDto } from '../dtos/void-recharge-sim-sale-registration.request.dto';
 import { ListRechargeSimSaleRegistrationsQueryDto } from '../dtos/list-recharge-sim-sale-registrations.query.dto';
+import { RechargeSimSalesQueryDto } from '../dtos/recharge-sim-sales.query.dto';
+import { VoidRechargeSimSaleRequestDto } from '../dtos/void-recharge-sim-sale.request.dto';
 import { RechargeSimTypeOutput } from '../../application/dtos/recharge-sim-type-output';
 import { RechargeSimDailyStockOutput } from '../../application/dtos/recharge-sim-daily-stock-output';
+import { RechargeSimSaleOutput } from '../../application/dtos/recharge-sim-sale-output';
 import {
   PaginatedRechargeSimSaleRegistrationsResponseDto,
   RechargeSimSaleRegistrationResponseDto,
@@ -76,6 +81,8 @@ export class RechargeSimsController {
     private readonly getRechargeSimSaleRegistrationByIdUseCase: GetRechargeSimSaleRegistrationByIdUseCase,
     private readonly listRechargeSimSaleRegistrationsUseCase: ListRechargeSimSaleRegistrationsUseCase,
     private readonly getRechargeSimSaleRegistrationDpiImageUseCase: GetRechargeSimSaleRegistrationDpiImageUseCase,
+    private readonly listRechargeSimSalesUseCase: ListRechargeSimSalesUseCase,
+    private readonly voidRechargeSimSaleUseCase: VoidRechargeSimSaleUseCase,
   ) {}
 
   @Get('types')
@@ -117,6 +124,39 @@ export class RechargeSimsController {
       quantity: dto.quantity,
       operationDate: dto.operationDate,
       userId,
+    });
+  }
+
+  /** "Administrar Ventas de SIM (por cantidad)" listing — the by-quantity "Vender SIM" flow's own admin screen, separate from `GET sale-registrations` above (see `TypeOrmRechargeSimSaleRepository`'s own doc comment for why the two never overlap). */
+  @Get('sales')
+  findSales(
+    @Query() query: RechargeSimSalesQueryDto,
+  ): Promise<RechargeSimSaleOutput[]> {
+    return this.listRechargeSimSalesUseCase.execute(query.date);
+  }
+
+  /**
+   * "Revertir" for the by-quantity "Vender SIM" flow — admin-only, same
+   * elevated policy as `POST /purchases/:id/void` and
+   * `POST sale-registrations/:id/void`. Never a physical delete/edit: the
+   * original row stays exactly as sold, marked anulada by
+   * `void_recharge_sim_sale`, which also atomically restores the SIM
+   * stock it decremented and enforces every other guard (day-closed,
+   * already-voided, has-active-registration, missing reason).
+   */
+  @Post('sales/:id/void')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  voidSale(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidRechargeSimSaleRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<RechargeSimSaleOutput> {
+    return this.voidRechargeSimSaleUseCase.execute({
+      id,
+      voidedBy: userId,
+      reason: dto.reason,
     });
   }
 

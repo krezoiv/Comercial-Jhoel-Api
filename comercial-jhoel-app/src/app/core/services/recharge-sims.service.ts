@@ -11,6 +11,7 @@ import {
   RegisterSimSaleInput,
   RegisterSimSaleRegistrationInput,
   SimDailyStock,
+  SimSale,
   SimSaleRegistration,
   SimType,
 } from '../models';
@@ -45,6 +46,21 @@ export class RechargeSimsService {
   registerSale(input: RegisterSimSaleInput): Observable<SimDailyStock> {
     return this.http
       .post<ApiSuccessResponse<SimDailyStock>>(`${BASE_URL}/sales`, input)
+      .pipe(map((response) => response.data));
+  }
+
+  /** "Administrar Ventas de SIM (por cantidad)" listing — the by-quantity flow's own admin screen, separate from `getSaleRegistrations()` above. `date` defaults to today server-side when omitted. */
+  getSales(date?: string): Observable<SimSale[]> {
+    const params = date ? new HttpParams().set('date', date) : undefined;
+    return this.http
+      .get<ApiSuccessResponse<SimSale[]>>(`${BASE_URL}/sales`, { params })
+      .pipe(map((response) => response.data));
+  }
+
+  /** "Revertir" — admin-only server-side; never a physical delete/edit, restores the SIM stock it decremented. */
+  voidSale(id: string, reason: string): Observable<SimSale> {
+    return this.http
+      .post<ApiSuccessResponse<SimSale>>(`${BASE_URL}/sales/${id}/void`, { reason })
       .pipe(map((response) => response.data));
   }
 

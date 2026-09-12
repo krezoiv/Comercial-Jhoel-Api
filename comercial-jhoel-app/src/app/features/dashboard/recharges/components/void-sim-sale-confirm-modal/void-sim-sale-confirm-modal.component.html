@@ -1,0 +1,56 @@
+@if (open && sale) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" [disabled]="isSaving" (click)="onCancel()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      <div class="modal__icon">
+        <app-icon name="rotate-ccw" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">Revertir Venta de SIM</h2>
+
+      <p class="modal__description">
+        Esta acción anulará la venta y restaurará el stock del SIM. No se elimina el registro — quedará
+        visible en el historial marcado como <strong>Anulada</strong>, con trazabilidad completa.
+      </p>
+
+      <dl class="modal__summary">
+        <div class="modal__summary-row">
+          <dt>Tipo de SIM</dt>
+          <dd>{{ sale.simTypeName }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Cantidad</dt>
+          <dd>{{ sale.quantity }}</dd>
+        </div>
+        <div class="modal__summary-row modal__summary-row--total">
+          <dt>Total</dt>
+          <dd>{{ formatCurrency(sale.totalAmount) }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Fecha</dt>
+          <dd>{{ sale.saleDate | date: 'dd/MM/yyyy' }}</dd>
+        </div>
+      </dl>
+
+      <label class="modal__field">
+        <span>Motivo de la reversión <em>(obligatorio)</em></span>
+        <textarea
+          rows="3"
+          placeholder="Ej: Se vendió por error, el cliente no llegó a confirmar la compra."
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+      </label>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()">Cancelar</app-button>
+        <app-button variant="danger" [disabled]="!canConfirm || isSaving" (click)="onConfirm()">
+          {{ isSaving ? 'Revirtiendo…' : 'Revertir venta' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

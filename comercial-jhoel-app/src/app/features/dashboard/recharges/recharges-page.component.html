@@ -133,6 +133,13 @@
 
     <app-sim-stock-table [stocks]="simStocks()" [loading]="simLoading()" />
 
+    <app-sim-sales-table
+      [sales]="simSales()"
+      [loading]="simSalesLoading()"
+      [isAdmin]="isAdmin()"
+      (revertRequested)="requestVoidSimSale($event)"
+    />
+
     <div class="recharges__cards-row">
       <app-card [hoverable]="false" class="recharges__purchase-card">
         <app-register-sim-purchase-form
@@ -212,4 +219,12 @@
   [isSaving]="isVoidingPurchase()"
   (confirmed)="confirmVoidPurchase($event)"
   (cancelled)="cancelVoidPurchase()"
+/>
+
+<app-void-sim-sale-confirm-modal
+  [open]="isVoidSimSaleModalOpen()"
+  [sale]="voidSimSaleTarget()"
+  [isSaving]="isVoidingSimSale()"
+  (confirmed)="confirmVoidSimSale($event)"
+  (cancelled)="cancelVoidSimSale()"
 />

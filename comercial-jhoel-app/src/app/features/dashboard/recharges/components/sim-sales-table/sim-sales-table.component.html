@@ -1,0 +1,156 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="sales-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tipo de SIM</th>
+          <th class="align-right">Cantidad</th>
+          <th class="align-right">Total</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="align-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track row) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="loading-note">
+    <app-icon name="clock" [size]="16" />
+    Cargando ventas de SIM…
+  </p>
+} @else if (sales.length === 0) {
+  <p class="empty-note">
+    <app-icon name="smartphone" [size]="16" />
+    Aún no se han registrado ventas de SIM (por cantidad) para esta fecha.
+  </p>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="sales-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tipo de SIM</th>
+          <th class="align-right">Cantidad</th>
+          <th class="align-right">Total</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="align-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of sales; track sale.id; let i = $index) {
+          <tr [class.sales-table__row--voided]="sale.isVoided">
+            <td>{{ i + 1 }}</td>
+            <td>{{ sale.simTypeName }}</td>
+            <td class="align-right">{{ sale.quantity }}</td>
+            <td class="align-right sales-table__total">{{ formatCurrency(sale.totalAmount) }}</td>
+            <td>{{ sale.saleDate | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (sale.isVoided) {
+                <span class="status-badge status-badge--voided" [title]="sale.voidReason ?? ''">
+                  <app-icon name="x-circle" [size]="13" />
+                  Anulada
+                </span>
+              } @else {
+                <span class="status-badge status-badge--active">
+                  <app-icon name="check-circle" [size]="13" />
+                  Vigente
+                </span>
+              }
+            </td>
+            <td class="align-center">
+              @if (isAdmin) {
+                @if (sale.canRevert) {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--danger"
+                    (click)="revertRequested.emit(sale)"
+                    [attr.aria-label]="'Revertir venta de ' + sale.simTypeName"
+                    title="Revertir venta"
+                  >
+                    <app-icon name="rotate-ccw" [size]="16" />
+                  </button>
+                } @else if (!sale.isVoided) {
+                  <span class="locked-hint">
+                    <app-icon name="lock" [size]="14" />
+                    Día cerrado
+                  </span>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (sale of sales; track sale.id; let i = $index) {
+      <div class="sale-card" [class.sale-card--voided]="sale.isVoided">
+        <div class="sale-card__header">
+          <p class="sale-card__type">#{{ i + 1 }} — {{ sale.simTypeName }}</p>
+          @if (sale.isVoided) {
+            <span class="status-badge status-badge--voided" [title]="sale.voidReason ?? ''">
+              <app-icon name="x-circle" [size]="13" />
+              Anulada
+            </span>
+          } @else {
+            <span class="status-badge status-badge--active">
+              <app-icon name="check-circle" [size]="13" />
+              Vigente
+            </span>
+          }
+        </div>
+
+        <dl class="sale-card__grid">
+          <div>
+            <dt>Cantidad</dt>
+            <dd>{{ sale.quantity }}</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd>{{ formatCurrency(sale.totalAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Fecha</dt>
+            <dd>{{ sale.saleDate | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+        </dl>
+
+        @if (isAdmin) {
+          @if (sale.canRevert) {
+            <div class="actions">
+              <button
+                type="button"
+                class="action-btn action-btn--danger"
+                (click)="revertRequested.emit(sale)"
+                [attr.aria-label]="'Revertir venta de ' + sale.simTypeName"
+              >
+                <app-icon name="rotate-ccw" [size]="16" />
+                Revertir venta
+              </button>
+            </div>
+          } @else if (!sale.isVoided) {
+            <span class="locked-hint">
+              <app-icon name="lock" [size]="14" />
+              Día cerrado — no se puede revertir.
+            </span>
+          }
+        }
+      </div>
+    }
+  </div>
+}
