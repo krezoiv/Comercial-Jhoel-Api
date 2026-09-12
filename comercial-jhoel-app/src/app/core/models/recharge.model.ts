@@ -53,7 +53,12 @@ export interface RechargeSalesSummary {
   date: string;
   totalClaro: number;
   totalTigo: number;
+  /** Recargas electrónicas only. */
   totalSales: number;
+  /** Ventas de SIM (ambos flujos: por cantidad y con registro de identidad) para esta fecha, excluyendo anuladas. */
+  totalSimSales: number;
+  /** `totalSales + totalSimSales` — el único número que "Total Recaudado" debe mostrar; nunca se recalcula en el frontend. */
+  totalRecaudado: number;
   totalCollected: number | null;
   difference: number | null;
   savedClosure: boolean;

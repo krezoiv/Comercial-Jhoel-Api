@@ -1,0 +1,131 @@
+<div class="admin-page">
+  <app-page-header
+    icon="shield-check"
+    title="Administrar Ventas de SIM"
+    subtitle="Localiza una venta de SIM ya registrada, consulta su detalle (incluida la imagen del DPI) y anúlala si corresponde."
+  />
+
+  <div class="admin-page__filters">
+    <div class="admin-page__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field">
+        <label for="ssa-start-date">Desde</label>
+        <input id="ssa-start-date" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="ssa-end-date">Hasta</label>
+        <input id="ssa-end-date" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="ssa-type">Producto</label>
+        <select id="ssa-type" [ngModel]="draftSimTypeId()" (ngModelChange)="draftSimTypeId.set($event)">
+          <option value="">Todos</option>
+          @for (type of simTypes(); track type.id) {
+            <option [value]="type.id">{{ type.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="ssa-status">Estado</label>
+        <select id="ssa-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          <option value="">Todas</option>
+          <option value="ACTIVE">Activa</option>
+          <option value="VOIDED">Anulada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
+  </div>
+
+  @if (!loading() && registrations().length === 0) {
+    <p class="empty-note">
+      <app-icon name="shield-check" [size]="16" />
+      No se encontraron ventas de SIM con los filtros indicados.
+    </p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Número de SIM</th>
+            <th>Producto</th>
+            <th>DPI</th>
+            <th>Cliente</th>
+            <th class="align-right">Precio</th>
+            <th>Estado</th>
+            <th>Usuario</th>
+            <th class="align-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (row of [0, 1, 2]; track row) {
+              <tr class="skeleton-row">
+                <td colspan="9"><span class="skeleton"></span></td>
+              </tr>
+            }
+          } @else {
+            @for (registration of registrations(); track registration.id) {
+              <tr [class.admin-table__row--voided]="registration.isVoided">
+                <td>{{ registration.saleDate | date: 'dd/MM/yyyy' }}</td>
+                <td class="admin-table__invoice">{{ registration.simNumber }}</td>
+                <td>{{ registration.simTypeName }}</td>
+                <td>{{ registration.clientDpi }}</td>
+                <td>{{ registration.clientName || '—' }}</td>
+                <td class="align-right">{{ formatCurrency(registration.salePrice) }}</td>
+                <td>
+                  @if (registration.isVoided) {
+                    <app-badge tone="danger">Anulada</app-badge>
+                  } @else {
+                    <app-badge tone="success">Activa</app-badge>
+                  }
+                </td>
+                <td>{{ registration.createdByUsername }}</td>
+                <td class="align-right">
+                  <div class="actions">
+                    <button type="button" class="action-btn" (click)="viewDetail(registration)" title="Ver detalle">
+                      <app-icon name="eye" [size]="16" />
+                    </button>
+                    <button
+                      type="button"
+                      class="action-btn action-btn--danger"
+                      [disabled]="registration.isVoided"
+                      (click)="requestVoid(registration)"
+                      title="Anular venta"
+                    >
+                      <app-icon name="x-circle" [size]="16" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+  }
+</div>
+
+<app-sim-sale-registration-detail-modal [registrationId]="detailRegistrationId()" (closed)="closeDetail()" />
+
+<app-void-sim-sale-registration-confirm-modal
+  [open]="voidTarget() !== null"
+  [registration]="voidTarget()"
+  [isSaving]="isVoiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="cancelVoid()"
+/>

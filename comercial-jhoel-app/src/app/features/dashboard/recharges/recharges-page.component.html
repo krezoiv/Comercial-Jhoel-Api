@@ -36,8 +36,8 @@
     <app-summary-tile
       icon="wallet"
       title="Total Recaudado"
-      [value]="salesSummary() ? formatCurrency(salesSummary()!.totalSales) : '—'"
-      [description]="'Recargas vendidas · ' + operationDate()"
+      [value]="salesSummary() ? formatCurrency(salesSummary()!.totalRecaudado) : '—'"
+      [description]="'Recargas + ventas de SIM · ' + operationDate()"
       tone="success"
     />
   </app-card>
@@ -115,11 +115,21 @@
     Vendidas"/el cuadre de saldo electrónico.
   -->
   <section class="recharges__sim-section">
-    <h2 class="recharges__sim-title">
-      <app-icon name="smartphone" [size]="18" />
-      SIM
-    </h2>
-    <p class="recharges__sim-subtitle">Inventario físico de SIM — independiente del saldo electrónico de Claro y Tigo.</p>
+    <div class="recharges__sim-header">
+      <div>
+        <h2 class="recharges__sim-title">
+          <app-icon name="smartphone" [size]="18" />
+          SIM
+        </h2>
+        <p class="recharges__sim-subtitle">Inventario físico de SIM — independiente del saldo electrónico de Claro y Tigo.</p>
+      </div>
+      @if (isAdmin()) {
+        <app-button variant="ghost" routerLink="/dashboard/administrar-ventas-sim">
+          <app-icon name="shield-check" [size]="16" />
+          Administrar Ventas de SIM
+        </app-button>
+      }
+    </div>
 
     <app-sim-stock-table [stocks]="simStocks()" [loading]="simLoading()" />
 
@@ -140,6 +150,15 @@
           [operationDate]="operationDate()"
           [lockReason]="dayLockReason()"
           (registered)="onSimSaleRegistered($event)"
+        />
+      </app-card>
+
+      <app-card [hoverable]="false" class="recharges__purchase-card">
+        <app-register-sim-sale-registration-form
+          [types]="simTypes()"
+          [operationDate]="operationDate()"
+          [lockReason]="dayLockReason()"
+          (registered)="onSimSaleRegistrationCreated()"
         />
       </app-card>
     </div>

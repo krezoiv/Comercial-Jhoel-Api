@@ -1,4 +1,11 @@
+import { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 import { RechargeSimDailyStock } from '../entities/recharge-sim-daily-stock.entity';
+
+export interface RegisterRechargeSimSaleUnitData {
+  simTypeId: string;
+  date: string;
+  userId: string;
+}
 
 export const RECHARGE_SIM_DAILY_STOCK_REPOSITORY = Symbol(
   'RECHARGE_SIM_DAILY_STOCK_REPOSITORY',
@@ -36,4 +43,9 @@ export interface RechargeSimDailyStockRepository {
   registerSale(
     data: RegisterRechargeSimSaleData,
   ): Promise<RechargeSimDailyStock>;
+  /** Invokes `register_recharge_sim_sale_unit` — the single-unit (quantity always 1) variant used by the "venta de SIM con registro" flow, returning the new `recharge_sim_sales.id` (never `daily_stock_id`) so the caller can link a `recharge_sim_sale_registrations` row to it. Accepts a shared `TransactionContext` so both inserts commit/rollback together — see `RegisterRechargeSimSaleWithRegistrationUseCase`. */
+  registerSingleUnitSale(
+    data: RegisterRechargeSimSaleUnitData,
+    context?: TransactionContext,
+  ): Promise<string>;
 }

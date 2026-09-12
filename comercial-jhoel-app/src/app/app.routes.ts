@@ -82,6 +82,15 @@ export const routes: Routes = [
         title: 'Administrar Facturas de Ventas — Sistema',
       },
       {
+        path: 'administrar-ventas-sim',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/recharges-sim-sales-admin/recharges-sim-sales-admin-page.component').then(
+            (m) => m.RechargesSimSalesAdminPageComponent,
+          ),
+        title: 'Administrar Ventas de SIM — Sistema',
+      },
+      {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>

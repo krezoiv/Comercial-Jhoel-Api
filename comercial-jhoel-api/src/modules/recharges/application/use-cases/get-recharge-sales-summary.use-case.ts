@@ -5,6 +5,8 @@ import { RECHARGE_SALES_CLOSURE_REPOSITORY } from '../../domain/repositories/rec
 import type { RechargeSalesClosureRepository } from '../../domain/repositories/recharge-sales-closure.repository';
 import { RECHARGE_SALE_REPOSITORY } from '../../domain/repositories/recharge-sale.repository';
 import type { RechargeSaleRepository } from '../../domain/repositories/recharge-sale.repository';
+import { RECHARGE_SIM_SALE_REGISTRATION_REPOSITORY } from '../../domain/repositories/recharge-sim-sale-registration.repository';
+import type { RechargeSimSaleRegistrationRepository } from '../../domain/repositories/recharge-sim-sale-registration.repository';
 import { todayIsoDate } from '../utils/today-iso-date';
 import { assertValidOperationDate } from '../utils/assert-valid-operation-date';
 import { RechargeSalesSummaryOutput } from '../dtos/recharge-sales-summary-output';
@@ -32,6 +34,8 @@ export class GetRechargeSalesSummaryUseCase {
     private readonly closureRepository: RechargeSalesClosureRepository,
     @Inject(RECHARGE_SALE_REPOSITORY)
     private readonly saleRepository: RechargeSaleRepository,
+    @Inject(RECHARGE_SIM_SALE_REGISTRATION_REPOSITORY)
+    private readonly simSaleRegistrationRepository: RechargeSimSaleRegistrationRepository,
   ) {}
 
   async execute(
@@ -58,6 +62,14 @@ export class GetRechargeSalesSummaryUseCase {
         ?.total ?? 0;
     const totalSales = totals.reduce((sum, t) => sum + t.total, 0);
 
+    // "Ventas de SIM" — both the pre-existing by-quantity "Vender SIM" flow
+    // and the new identity-registration flow count here (see
+    // `RechargeSimSaleRegistrationRepository.getTotalByDate`'s own doc
+    // comment for exactly how each is weighted) — this is the one and only
+    // place SIM revenue enters Total Recaudado.
+    const totalSimSales = await this.simSaleRegistrationRepository.getTotalByDate(date);
+    const totalRecaudado = totalSales + totalSimSales;
+
     // Still needed to resolve the CURRENT cycle's own sequence number (to
     // look up a saved closure) — `findAllByDate` already resolves each
     // type's highest-`sequence` row, so a date that's already had one or
@@ -80,6 +92,8 @@ export class GetRechargeSalesSummaryUseCase {
       totalClaro,
       totalTigo,
       totalSales,
+      totalSimSales,
+      totalRecaudado,
       totalCollected: closure ? closure.totalCollected : null,
       difference: closure ? closure.result : null,
       savedClosure: closure !== null,

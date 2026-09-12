@@ -1,0 +1,90 @@
+<form class="purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2 class="purchase-form__title">
+    <app-icon name="shield-check" [size]="18" />
+    Venta de SIM con registro
+  </h2>
+  <p class="purchase-form__subtitle">Registra la venta de una SIM física con su número, SKU y DPI del comprador.</p>
+
+  <div class="field">
+    <label for="sim-reg-type">Producto</label>
+    <select id="sim-reg-type" formControlName="simTypeId" (change)="onTypeChange($any($event.target).value)">
+      @for (type of types; track type.id) {
+        <option [value]="type.id">{{ type.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="sim-reg-number">Número de SIM</label>
+    <input id="sim-reg-number" type="text" formControlName="simNumber" placeholder="Ej. 8850200012345678901" />
+    @if (form.controls.simNumber.invalid && form.controls.simNumber.touched) {
+      <span class="field__error">El número de SIM es obligatorio.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="sim-reg-sku">SKU</label>
+    <input id="sim-reg-sku" type="text" formControlName="sku" placeholder="Ej. SIM-CLARO-PREPAGO" />
+    @if (form.controls.sku.invalid && form.controls.sku.touched) {
+      <span class="field__error">El SKU es obligatorio.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="sim-reg-dpi">DPI del cliente</label>
+    <input id="sim-reg-dpi" type="text" inputmode="numeric" formControlName="clientDpi" placeholder="Ej. 2589631470101" />
+    @if (form.controls.clientDpi.invalid && form.controls.clientDpi.touched) {
+      <span class="field__error">El DPI es obligatorio.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label>Cliente registrado <span class="field__optional">(opcional)</span></label>
+    <app-client-search-select placeholder="Buscar cliente…" (selectionChange)="onClientChange($event)" />
+  </div>
+
+  <div class="field">
+    <label for="sim-reg-price">Precio de venta</label>
+    <input id="sim-reg-price" type="number" min="0" step="0.01" formControlName="salePrice" />
+    @if (form.controls.salePrice.invalid && form.controls.salePrice.touched) {
+      <span class="field__error">Ingresa un precio válido.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label>Imagen del DPI <span class="field__optional">(opcional)</span></label>
+    @if (dpiImagePreviewUrl()) {
+      <div class="dpi-preview">
+        <img [src]="dpiImagePreviewUrl()" alt="Vista previa del DPI" />
+        <app-button type="button" variant="ghost" (click)="removeDpiImage()">
+          <app-icon name="x-circle" [size]="14" />
+          Quitar
+        </app-button>
+      </div>
+    } @else {
+      <label class="file-input">
+        <app-icon name="upload" [size]="16" />
+        Seleccionar imagen…
+        <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onDpiImageSelected($event)" hidden />
+      </label>
+    }
+    @if (imageError()) {
+      <span class="field__error">{{ imageError() }}</span>
+    }
+  </div>
+
+  <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting() || lockReason !== null">
+    {{ isSubmitting() ? 'Registrando…' : 'Registrar venta' }}
+  </app-button>
+  @if (lockReason === 'closed') {
+    <p class="purchase-form__lock-hint">
+      <app-icon name="lock" [size]="12" />
+      Día de recargas cerrado.
+    </p>
+  } @else if (lockReason === 'not_opened') {
+    <p class="purchase-form__lock-hint">
+      <app-icon name="lock" [size]="12" />
+      Día de recargas sin aperturar.
+    </p>
+  }
+</form>

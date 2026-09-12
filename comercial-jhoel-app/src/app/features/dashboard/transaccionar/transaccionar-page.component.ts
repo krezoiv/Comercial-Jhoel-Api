@@ -4,7 +4,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 
-import { BankDepositTransactionSummary, TransactionBank, TransactionType } from '../../../core/models';
+import { BankDepositTransactionSummary, Client, TransactionBank, TransactionType } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
@@ -14,6 +15,7 @@ import { TransactionTypeService } from '../../../core/services/transaction-type.
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { ButtonComponent, IconComponent, PageHeaderComponent, TransactionMonthlyChartComponent } from '../../../shared/ui';
+import { ClientSearchSelectComponent } from '../accounts-receivable/components/client-search-select/client-search-select.component';
 import { CashBreakdownTableComponent } from './components/cash-breakdown-table/cash-breakdown-table.component';
 import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-confirm-modal.component';
 import { StatusIndicatorComponent } from './components/status-indicator/status-indicator.component';
@@ -24,6 +26,9 @@ import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadr
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 
 type TransaccionarView = 'dashboard' | 'form';
+
+/** Same accepted-hardcoded-name pattern this app already uses for a handful of business rules tied to one specific catalog row (e.g. Recargas' `KNOWN_RECHARGE_TYPE_NAMES`) — the backend independently re-validates this exact rule (`RegisterBankDepositOperationUseCase`'s own `DEPOSIT_TRANSACTION_TYPE_NAME`), this is only a proactive UX echo so the checkbox never renders for the wrong type. */
+const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
 
 /**
  * "Transaccionar" — a two-step flow. Step one is a dashboard of cards, one
@@ -61,6 +66,7 @@ type TransaccionarView = 'dashboard' | 'form';
     CommissionSummaryCardComponent,
     CuadreResultCardComponent,
     ChangeConfirmModalComponent,
+    ClientSearchSelectComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -72,8 +78,10 @@ export class TransaccionarPageComponent {
   private readonly bankDepositService = inject(BankDepositService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
+  private readonly authService = inject(AuthService);
 
   readonly draft = inject(BankDepositDraftStore);
+  readonly isAdmin = this.authService.isAdmin;
 
   readonly transactionBanks = signal<TransactionBank[]>([]);
   readonly loadingBanks = signal(true);
@@ -104,6 +112,12 @@ export class TransaccionarPageComponent {
   readonly selectedTypeIcon = computed(
     () => this.transactionTypes().find((t) => t.id === this.draft.transactionTypeId())?.icon ?? 'arrow-left-right',
   );
+
+  /** Gates both the "Cliente registrado" picker and the "Enviar a cuentas por cobrar" checkbox — neither renders for any other tipo de transacción. */
+  readonly isDepositType = computed(() => this.draft.transactionTypeName() === DEPOSIT_TRANSACTION_TYPE_NAME);
+
+  /** The checkbox is only ever offered enabled once both conditions hold — a non-admin sees it hidden entirely (the backend rejects the operation outright otherwise, see `BankDepositAccountsReceivableForbiddenError`), and no registered client means there's nothing to charge. */
+  readonly canSendToAccountsReceivable = computed(() => this.isAdmin() && this.draft.clientId() !== null);
 
   readonly overallStatusText = computed(() => {
     switch (this.draft.overallStatus()) {
@@ -176,6 +190,14 @@ export class TransaccionarPageComponent {
 
   onClientNameInput(value: string): void {
     this.draft.setClientName(value);
+  }
+
+  onRegisteredClientChange(client: Client | null): void {
+    this.draft.setRegisteredClient(client);
+  }
+
+  onSendToAccountsReceivableChange(checked: boolean): void {
+    this.draft.setSendToAccountsReceivable(checked);
   }
 
   onTotalAmountInput(value: string): void {
@@ -255,6 +277,8 @@ export class TransaccionarPageComponent {
           .filter((row) => row.quantity > 0),
         transactionAmounts: this.draft.transactionAmounts(),
         clientName: this.draft.clientName().trim() || null,
+        clientId: this.draft.clientId(),
+        sendToAccountsReceivable: this.draft.sendToAccountsReceivable(),
         changeGiven: this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
       })
       .subscribe({

@@ -1,11 +1,13 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { EntityManager, QueryFailedError, Repository } from 'typeorm';
+import { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 import { RechargeSimDailyStock } from '../../domain/entities/recharge-sim-daily-stock.entity';
 import {
   RechargeSimDailyStockRepository,
   RegisterRechargeSimPurchaseData,
   RegisterRechargeSimSaleData,
+  RegisterRechargeSimSaleUnitData,
 } from '../../domain/repositories/recharge-sim-daily-stock.repository';
 import { SimTypeNotFoundError } from '../../domain/errors/sim-type-not-found.error';
 import { SimTypeInactiveError } from '../../domain/errors/sim-type-inactive.error';
@@ -121,6 +123,22 @@ export class TypeOrmRechargeSimDailyStockRepository implements RechargeSimDailyS
       throw this.translateSimError(error);
     }
     return this.fetchOrThrow(dailyStockId);
+  }
+
+  async registerSingleUnitSale(
+    data: RegisterRechargeSimSaleUnitData,
+    context?: TransactionContext,
+  ): Promise<string> {
+    const manager = (context as EntityManager) ?? this.repository.manager;
+    try {
+      const rows = await manager.query<{ register_recharge_sim_sale_unit: string }[]>(
+        'SELECT register_recharge_sim_sale_unit($1, $2, $3)',
+        [data.simTypeId, data.date, data.userId],
+      );
+      return rows[0].register_recharge_sim_sale_unit;
+    } catch (error) {
+      throw this.translateSimError(error);
+    }
   }
 
   /** Real `SUM(quantity)`/`SUM(total)` per `daily_stock_id`, one bulk query per table — raw SQL (no ORM entity exists for these write-heavy movement tables, same "no ORM entity for a movement audit trail" precedent `recharge_purchases` already established) rather than a QueryBuilder join. */

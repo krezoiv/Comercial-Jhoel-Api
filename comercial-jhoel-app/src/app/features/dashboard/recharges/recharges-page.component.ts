@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeSalesSummary, RechargeType, SimDailyStock, SimType, formatCurrency } from '../../../core/models';
@@ -23,6 +24,7 @@ import { CloseRechargeDayConfirmModalComponent } from './components/close-rechar
 import { SimStockTableComponent } from './components/sim-stock-table/sim-stock-table.component';
 import { RegisterSimPurchaseFormComponent } from './components/register-sim-purchase-form/register-sim-purchase-form.component';
 import { RegisterSimSaleFormComponent } from './components/register-sim-sale-form/register-sim-sale-form.component';
+import { RegisterSimSaleRegistrationFormComponent } from './components/register-sim-sale-registration-form/register-sim-sale-registration-form.component';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
@@ -38,6 +40,7 @@ function todayIsoDate(): string {
   selector: 'app-recharges-page',
   standalone: true,
   imports: [
+    RouterLink,
     PageHeaderComponent,
     RechargeTableComponent,
     RegisterPurchaseFormComponent,
@@ -53,6 +56,7 @@ function todayIsoDate(): string {
     SimStockTableComponent,
     RegisterSimPurchaseFormComponent,
     RegisterSimSaleFormComponent,
+    RegisterSimSaleRegistrationFormComponent,
     CardComponent,
     ButtonComponent,
     IconComponent,
@@ -362,6 +366,27 @@ export class RechargesPageComponent {
 
   onSimSaleRegistered(stock: SimDailyStock): void {
     this.upsertSimStock(stock);
+  }
+
+  /**
+   * A "venta de SIM con registro de identidad" returns the registration
+   * itself, not a `SimDailyStock` — unlike `onSimSaleRegistered`'s upsert,
+   * there's no single row to merge in locally, so this refetches SIM stock
+   * for the current date directly. Also bumps `salesSummaryRefreshTick` —
+   * this sale's price now counts toward "Total Recaudado"
+   * (`totalSimSales`), the same signal `onClosureSaved`/`onSaleSaved`
+   * already use to tell `SalesSummaryCardComponent` to refetch.
+   */
+  onSimSaleRegistrationCreated(): void {
+    this.simsService.getDailyStock(this.operationDate()).subscribe({
+      next: (simStocks) => this.simStocks.set(simStocks),
+      error: () => {
+        // A transient failure here just leaves the stock table showing its
+        // last-known values — the registration itself already succeeded and
+        // was already confirmed to the user by the form's own toast.
+      },
+    });
+    this.salesSummaryRefreshTick.update((tick) => tick + 1);
   }
 
   private fetchSales(): void {
