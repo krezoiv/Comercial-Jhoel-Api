@@ -11,67 +11,75 @@
       />
     </label>
 
-    <label class="category-select" for="inventory-category">
-      <span class="visually-hidden">Filtrar por categoría</span>
-      <select
-        id="inventory-category"
-        [ngModel]="selectedCategory"
-        (ngModelChange)="selectedCategoryChange.emit($event)"
-      >
-        <option value="">Todas las categorías</option>
-        @for (category of categories; track category) {
-          <option [value]="category">{{ category }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="category-select" for="inventory-business">
-      <span class="visually-hidden">Filtrar por negocio</span>
-      <select
-        id="inventory-business"
-        [ngModel]="selectedBusiness"
-        (ngModelChange)="selectedBusinessChange.emit($event)"
-      >
-        <option value="">Todos los negocios</option>
-        @for (business of businesses; track business) {
-          <option [value]="business">{{ business }}</option>
-        }
-      </select>
-    </label>
-
-    <app-button variant="ghost" (click)="transferInventory.emit()">
-      <app-icon name="arrow-right" [size]="16" />
-      Trasladar inventario
-    </app-button>
-
-    <app-button variant="ghost" (click)="exportPdf.emit()">
-      <app-icon name="download" [size]="16" />
-      Exportar PDF
-    </app-button>
-
-    <app-button variant="ghost" (click)="exportExcel.emit()">
-      <app-icon name="download" [size]="16" />
-      Exportar Excel
-    </app-button>
-
     @if (canManage) {
-      <input
-        #importFileInput
-        type="file"
-        accept=".xlsx"
-        class="visually-hidden"
-        (change)="onFileSelected($event)"
-      />
-      <app-button variant="ghost" [disabled]="importing" (click)="importFileInput.click()">
-        <app-icon name="upload" [size]="16" />
-        {{ importing ? 'Importando…' : 'Importar Excel' }}
-      </app-button>
-
       <app-button variant="primary" (click)="addProduct.emit()">
         <app-icon name="plus" [size]="16" />
         Agregar producto
       </app-button>
     }
+  </div>
+
+  <div class="toolbar__controls-row">
+    <div class="toolbar__selects">
+      <label class="category-select" for="inventory-category">
+        <span class="visually-hidden">Filtrar por categoría</span>
+        <select
+          id="inventory-category"
+          [ngModel]="selectedCategory"
+          (ngModelChange)="selectedCategoryChange.emit($event)"
+        >
+          <option value="">Todas las categorías</option>
+          @for (category of categories; track category) {
+            <option [value]="category">{{ category }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="category-select" for="inventory-business">
+        <span class="visually-hidden">Filtrar por negocio</span>
+        <select
+          id="inventory-business"
+          [ngModel]="selectedBusiness"
+          (ngModelChange)="selectedBusinessChange.emit($event)"
+        >
+          <option value="">Todos los negocios</option>
+          @for (business of businesses; track business) {
+            <option [value]="business">{{ business }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="toolbar__actions">
+      <app-button variant="ghost" (click)="transferInventory.emit()">
+        <app-icon name="arrow-right" [size]="16" />
+        Trasladar inventario
+      </app-button>
+
+      <app-button variant="ghost" (click)="exportPdf.emit()">
+        <app-icon name="download" [size]="16" />
+        Exportar PDF
+      </app-button>
+
+      <app-button variant="ghost" (click)="exportExcel.emit()">
+        <app-icon name="download" [size]="16" />
+        Exportar Excel
+      </app-button>
+
+      @if (canManage) {
+        <input
+          #importFileInput
+          type="file"
+          accept=".xlsx"
+          class="visually-hidden"
+          (change)="onFileSelected($event)"
+        />
+        <app-button variant="ghost" [disabled]="importing" (click)="importFileInput.click()">
+          <app-icon name="upload" [size]="16" />
+          {{ importing ? 'Importando…' : 'Importar Excel' }}
+        </app-button>
+      }
+    </div>
   </div>
 
   @if (canManage) {

@@ -43,6 +43,15 @@ export interface CreateProductData {
 
 export type UpdateProductData = Partial<CreateProductData>;
 
+export interface InventoryStats {
+  totalProducts: number;
+  totalStock: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  totalPublicValue: number;
+  totalCostValue: number;
+}
+
 export interface ProductRepository {
   findAll(options: FindProductsOptions): Promise<PaginatedResult<Product>>;
   findById(id: string): Promise<Product | null>;
@@ -51,4 +60,16 @@ export interface ProductRepository {
   create(data: CreateProductData): Promise<Product>;
   update(id: string, data: UpdateProductData): Promise<Product>;
   deactivate(id: string): Promise<void>;
+  /**
+   * Real SQL aggregates over the WHOLE active catalog — never derived by
+   * fetching a page of products into the app and summing client-side,
+   * which silently truncated at whatever page size the list screen asked
+   * for (the exact bug this method replaces: "Total de productos" showing
+   * a capped 100 instead of the real count once the catalog grew past the
+   * list's own page size). `lowStockCount`/`outOfStockCount` mirror
+   * `getStockStatus()`'s own thresholds on the frontend exactly (`stock <=
+   * 0` out, `0 < stock <= 10` low) — keep both in sync if that threshold
+   * ever changes.
+   */
+  getInventoryStats(): Promise<InventoryStats>;
 }

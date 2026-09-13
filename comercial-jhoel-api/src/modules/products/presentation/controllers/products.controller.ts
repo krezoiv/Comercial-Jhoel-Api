@@ -30,6 +30,8 @@ import { DeactivateProductUseCase } from '../../application/use-cases/deactivate
 import { ExportProductsPdfUseCase } from '../../application/use-cases/export-products-pdf.use-case';
 import { ExportProductsExcelUseCase } from '../../application/use-cases/export-products-excel.use-case';
 import { ImportProductsFromExcelUseCase } from '../../application/use-cases/import-products-from-excel.use-case';
+import { GetInventoryStatsUseCase } from '../../application/use-cases/get-inventory-stats.use-case';
+import { InventoryStatsOutput } from '../../application/dtos/inventory-stats-output';
 import { buildProductsImportTemplate } from '../../infrastructure/excel/products-excel.builder';
 import { CreateProductRequestDto } from '../dtos/create-product.request.dto';
 import { UpdateProductRequestDto } from '../dtos/update-product.request.dto';
@@ -71,6 +73,7 @@ export class ProductsController {
     private readonly exportProductsPdfUseCase: ExportProductsPdfUseCase,
     private readonly exportProductsExcelUseCase: ExportProductsExcelUseCase,
     private readonly importProductsFromExcelUseCase: ImportProductsFromExcelUseCase,
+    private readonly getInventoryStatsUseCase: GetInventoryStatsUseCase,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -86,6 +89,21 @@ export class ProductsController {
     @Query() query: ListProductsQueryDto,
   ): Promise<PaginatedProductsResponseDto> {
     return this.listProductsUseCase.execute(query);
+  }
+
+  /**
+   * Declared before `:id` — same route-ordering discipline as every other
+   * export/summary route in this codebase (Sales/Purchases/Reportería):
+   * otherwise Nest would match `GET /products/stats` as `GET /products/:id`
+   * with `id="stats"` and fail `ParseUUIDPipe` before ever reaching this
+   * handler. Real SQL aggregates over the whole active catalog — see
+   * `GetInventoryStatsUseCase`'s own doc comment for the bug this replaces
+   * (the Inventario summary tiles silently capping at whatever page size
+   * `GET /products` itself was fetching).
+   */
+  @Get('stats')
+  getStats(): Promise<InventoryStatsOutput> {
+    return this.getInventoryStatsUseCase.execute();
   }
 
   /**

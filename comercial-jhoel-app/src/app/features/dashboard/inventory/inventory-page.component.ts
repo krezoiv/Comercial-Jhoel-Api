@@ -6,6 +6,7 @@ import {
   Business,
   Category,
   ImportProductsResult,
+  InventoryStats,
   Product,
   UnitOfMeasureListItem,
   getStockStatus,
@@ -82,6 +83,9 @@ export class InventoryPageComponent {
   readonly products = signal<Product[]>([]);
   readonly loading = signal(true);
 
+  /** Real aggregates over the whole active catalog (`GET /products/stats`) — never derived from `products` above, which is only ever one fetched page. Refetched after any mutation that could change the count/stock/value (create/edit/delete/transfer/import). */
+  readonly stats = signal<InventoryStats | null>(null);
+
   /** Real categories from the backend, for the product form's dropdown — never hardcoded. */
   readonly categoryOptions = signal<Category[]>([]);
   /** Real businesses (líneas de negocio) from the backend, for the product form's dropdown — never hardcoded. */
@@ -146,6 +150,8 @@ export class InventoryPageComponent {
       },
     });
 
+    this.fetchStats();
+
     this.categoryService.getCategories().subscribe({
       next: (categories) => this.categoryOptions.set(categories),
       error: () => this.notificationService.error('No se pudieron cargar las categorías.'),
@@ -159,6 +165,18 @@ export class InventoryPageComponent {
     this.unitOfMeasureService.getUnitsOfMeasure().subscribe({
       next: (unitsOfMeasure) => this.unitOfMeasureOptions.set(unitsOfMeasure),
       error: () => this.notificationService.error('No se pudieron cargar las unidades de medida.'),
+    });
+  }
+
+  private fetchStats(): void {
+    this.inventoryService.getInventoryStats().subscribe({
+      next: (stats) => this.stats.set(stats),
+      error: () => {
+        // A transient failure here just leaves the tiles at their last-known
+        // values (or blank on first load) — never blocks the rest of the
+        // page, same resilience reasoning as every other summary tile in
+        // this app.
+      },
     });
   }
 
@@ -187,6 +205,7 @@ export class InventoryPageComponent {
     this.notificationService.success(
       wasEditing ? `"${product.name}" se actualizó correctamente.` : `"${product.name}" se agregó al inventario.`
     );
+    this.fetchStats();
   }
 
   requestDelete(product: Product): void {
@@ -213,6 +232,7 @@ export class InventoryPageComponent {
         this.deletingProduct.set(null);
         this.products.update((list) => list.filter((p) => p.id !== product.id));
         this.notificationService.success(`"${product.name}" se desactivó del inventario.`);
+        this.fetchStats();
       },
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);
@@ -302,8 +322,12 @@ export class InventoryPageComponent {
     this.isTransferOpen.set(false);
     this.notificationService.success('Traslado registrado correctamente.');
     // Stock breakdown per product changed — the table's own Bodega/Vitrina
-    // columns need the fresh totals, not just a toast.
+    // columns need the fresh totals, not just a toast. A transfer never
+    // changes the running total (`stockAt`'s own doc comment), so the
+    // aggregate tiles don't strictly need a refetch here, but it's kept for
+    // consistency with every other mutation on this page.
     this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+    this.fetchStats();
   }
 
   onDownloadImportTemplate(): void {
@@ -332,6 +356,7 @@ export class InventoryPageComponent {
         this.isImportResultsOpen.set(true);
         if (result.created > 0) {
           this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+          this.fetchStats();
         }
       },
       error: (error: HttpErrorResponse) => {

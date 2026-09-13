@@ -99,3 +99,19 @@ export interface ImportProductsResult {
   /** The product itself was created — only its optional extra presentation (Caja, Paquete, ...) failed. */
   presentationWarnings: ImportProductsSkippedRow[];
 }
+
+/**
+ * `GET /products/stats`'s response shape — real SQL aggregates over the
+ * WHOLE active catalog, computed server-side. Never derive these by
+ * summing/counting a fetched `Product[]` page client-side again — that's
+ * exactly what silently capped "Total de productos" at the list's own
+ * page size once the catalog grew past it.
+ */
+export interface InventoryStats {
+  totalProducts: number;
+  totalStock: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  totalPublicValue: number;
+  totalCostValue: number;
+}

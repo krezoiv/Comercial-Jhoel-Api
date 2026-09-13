@@ -12,6 +12,11 @@
   margin-bottom: var(--space-6);
 }
 
+// Row 1: search bar (fills the whole available width) + the one primary
+// action ("Agregar producto") — same shape `CategoryToolbarComponent`/every
+// other admin toolbar in this app already uses. Everything else (filters,
+// export/import/traslado) moves to its own row below, never crowding this
+// one, which is what used to squeeze the search input down to a sliver.
 .toolbar__row {
   display: flex;
   flex-direction: column;
@@ -27,14 +32,18 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   background: var(--color-surface-light);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
   color: var(--color-text-on-light-subtle);
   @include focus-ring;
+
+  @include bp.respond(md) {
+    flex: 1;
+    min-width: 0;
+  }
 
   &:focus-within {
     border-color: var(--color-primary-500);
@@ -55,6 +64,34 @@
   }
 }
 
+// Row 2: the two filter dropdowns on one side, the traslado/exportar/
+// importar actions on the other — wraps as a whole on narrow widths rather
+// than every control fighting the search bar for the same line.
+.toolbar__controls-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  @include bp.respond(lg) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+.toolbar__selects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .category-select {
   select {
     width: 100%;
@@ -66,7 +103,7 @@
     font-size: var(--fs-sm);
     @include focus-ring;
 
-    @include bp.respond(md) {
+    @include bp.respond(sm) {
       width: 12rem;
     }
   }

@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   ApiSuccessResponse,
   ImportProductsResult,
+  InventoryStats,
   PaginatedResponse,
   Product,
   ProductInput,
@@ -77,15 +78,27 @@ export interface ProductExportFilters {
  * asks for a generous page size since the inventory screen still does its own
  * client-side search/filter/sort over the full active list (see
  * InventoryPageComponent); swapping this for real server-side pagination
- * later only means changing this one method.
+ * later only means changing this one method. `200` matches the backend's own
+ * `MAX_LIMIT` ceiling (`ListProductsUseCase`) — asking for more would just
+ * get silently clamped back down to it, so this is already the largest
+ * single page this endpoint will ever hand back. A catalog that grows past
+ * 200 active products needs the real server-side pagination this comment
+ * already flags, not a bigger number here.
  */
-const LIST_LIMIT = 100;
+const LIST_LIMIT = 200;
 /** Small on purpose — this is a live-search dropdown (Ventas), not a management list. */
 const SEARCH_LIMIT = 8;
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   private readonly http = inject(HttpClient);
+
+  /** Real aggregates over the whole active catalog — see `InventoryStats`'s own doc comment for why this must never be derived by summing a fetched page client-side. */
+  getInventoryStats(): Observable<InventoryStats> {
+    return this.http
+      .get<ApiSuccessResponse<InventoryStats>>(`${environment.apiUrl}/products/stats`)
+      .pipe(map((response) => response.data));
+  }
 
   getProducts(): Observable<Product[]> {
     return this.http

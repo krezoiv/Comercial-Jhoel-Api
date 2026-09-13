@@ -5,6 +5,7 @@ import { Product } from '../../domain/entities/product.entity';
 import {
   CreateProductData,
   FindProductsOptions,
+  InventoryStats,
   PaginatedResult,
   ProductRepository,
   ProductSortField,
@@ -144,6 +145,39 @@ export class TypeOrmProductRepository implements ProductRepository {
 
   async deactivate(id: string): Promise<void> {
     await this.repository.update({ id }, { isActive: false });
+  }
+
+  /** One raw aggregate query, scoped to active products — never a full fetch-then-sum in TypeScript, which is exactly what silently broke at scale before this method existed. `10` mirrors the frontend's own `LOW_STOCK_THRESHOLD` (`core/models/product.model.ts`). */
+  async getInventoryStats(): Promise<InventoryStats> {
+    const row = await this.repository.manager.query<
+      {
+        total_products: string;
+        total_stock: string;
+        low_stock_count: string;
+        out_of_stock_count: string;
+        total_public_value: string;
+        total_cost_value: string;
+      }[]
+    >(`
+      SELECT
+        COUNT(*) AS total_products,
+        COALESCE(SUM(stock), 0) AS total_stock,
+        COUNT(*) FILTER (WHERE stock > 0 AND stock <= 10) AS low_stock_count,
+        COUNT(*) FILTER (WHERE stock <= 0) AS out_of_stock_count,
+        COALESCE(SUM(stock * public_price), 0) AS total_public_value,
+        COALESCE(SUM(stock * cost_price), 0) AS total_cost_value
+      FROM products
+      WHERE is_active = true
+    `);
+
+    return {
+      totalProducts: parseInt(row[0].total_products, 10),
+      totalStock: parseInt(row[0].total_stock, 10),
+      lowStockCount: parseInt(row[0].low_stock_count, 10),
+      outOfStockCount: parseInt(row[0].out_of_stock_count, 10),
+      totalPublicValue: parseFloat(row[0].total_public_value),
+      totalCostValue: parseFloat(row[0].total_cost_value),
+    };
   }
 
   /** Two independent partial unique indexes to check against, unlike the single-constraint version this pattern has elsewhere (e.g. `TypeOrmCategoryRepository`) — `name` and `sku` are validated by the use case beforehand, this is only the race-safety net for both. */
