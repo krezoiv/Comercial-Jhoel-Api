@@ -17,7 +17,7 @@ import { InventoryLocationsService } from '../../../../../core/services/inventor
 import { PresentationTypeService } from '../../../../../core/services/presentation-type.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 
 /**
@@ -30,7 +30,7 @@ import { DecimalInputDirective } from '../../../../../shared/directives/decimal-
 @Component({
   selector: 'app-presentation-form-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective],
+  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective, BarcodeScannerModalComponent],
   templateUrl: './presentation-form-modal.component.html',
   styleUrl: './presentation-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +53,7 @@ export class PresentationFormModalComponent implements OnChanges {
   readonly errorMessage = signal<string | null>(null);
   /** Active catalog entries for the dropdown — loaded once when the modal opens, never free text. */
   readonly presentationTypes = signal<PresentationTypeListItem[]>([]);
+  readonly scannerOpen = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     presentationTypeId: ['', Validators.required],
@@ -107,6 +108,16 @@ export class PresentationFormModalComponent implements OnChanges {
         // Purely informational load failure — the form still renders, just with an empty dropdown; the user can retry by reopening.
       },
     });
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.form.controls.barcode.setValue(code);
+    this.form.controls.barcode.markAsDirty();
   }
 
   async submit(): Promise<void> {

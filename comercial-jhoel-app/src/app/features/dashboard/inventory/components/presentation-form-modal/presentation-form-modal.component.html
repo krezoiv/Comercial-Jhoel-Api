@@ -45,12 +45,22 @@
 
         <div class="field">
           <label for="presentation-barcode">Código de barras (opcional)</label>
-          <input
-            id="presentation-barcode"
-            type="text"
-            formControlName="barcode"
-            placeholder="Ej. 123456789012"
-          />
+          <div class="field__input-row">
+            <input
+              id="presentation-barcode"
+              type="text"
+              formControlName="barcode"
+              placeholder="Ej. 123456789012"
+            />
+            <button
+              type="button"
+              class="field__scan-btn"
+              title="Escanear código de barras"
+              (click)="openScanner()"
+            >
+              <app-icon name="camera" [size]="16" />
+            </button>
+          </div>
           <p class="field__hint">Propio de esta presentación — distinto del código del producto.</p>
         </div>
 
@@ -96,4 +106,10 @@
       </form>
     </div>
   </div>
+
+  <app-barcode-scanner-modal
+    [open]="scannerOpen()"
+    (scanned)="onBarcodeScanned($event)"
+    (closed)="scannerOpen.set(false)"
+  />
 }

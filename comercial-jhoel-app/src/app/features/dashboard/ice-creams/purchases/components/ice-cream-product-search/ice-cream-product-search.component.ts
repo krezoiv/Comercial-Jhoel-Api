@@ -5,13 +5,13 @@ import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap 
 
 import { IceCream, formatIceCreamCurrency, formatQuantity } from '../../../../../../core/models';
 import { IceCreamService } from '../../../../../../core/services/ice-cream.service';
-import { IconComponent } from '../../../../../../shared/ui';
+import { BarcodeScannerModalComponent, IconComponent } from '../../../../../../shared/ui';
 
 /** Same live-search pattern as Compras' `PurchaseProductSearchComponent` — its own doc comment explains why this is a feature-local copy, not a shared one. */
 @Component({
   selector: 'app-ice-cream-purchase-product-search',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, BarcodeScannerModalComponent],
   templateUrl: './ice-cream-product-search.component.html',
   styleUrl: './ice-cream-product-search.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +26,7 @@ export class IceCreamProductSearchComponent {
   readonly loading = signal(false);
   readonly open = signal(false);
   readonly hasSearched = signal(false);
+  readonly scannerOpen = signal(false);
 
   formatCurrency = formatIceCreamCurrency;
   formatQuantity = formatQuantity;
@@ -89,5 +90,25 @@ export class IceCreamProductSearchComponent {
     if (first) {
       this.select(first);
     }
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.query.set(code);
+    this.open.set(true);
+    this.loading.set(true);
+    this.iceCreamService
+      .searchIceCreams(code)
+      .pipe(catchError(() => of<IceCream[]>([])))
+      .subscribe((results) => {
+        this.loading.set(false);
+        this.hasSearched.set(true);
+        this.results.set(results);
+        this.onEnter();
+      });
   }
 }

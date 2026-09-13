@@ -19,7 +19,17 @@
 
         <div class="field">
           <label for="product-sku">SKU / Código de barras (opcional)</label>
-          <input id="product-sku" type="text" formControlName="sku" placeholder="Ej. 7501234567890" />
+          <div class="field__input-row">
+            <input id="product-sku" type="text" formControlName="sku" placeholder="Ej. 7501234567890" />
+            <button
+              type="button"
+              class="field__scan-btn"
+              title="Escanear código de barras"
+              (click)="openSkuScanner()"
+            >
+              <app-icon name="camera" [size]="16" />
+            </button>
+          </div>
           @if (form.controls.sku.invalid && form.controls.sku.touched) {
             <span class="field__error">Solo letras, números y guiones, máximo 64 caracteres.</span>
           }
@@ -178,12 +188,22 @@
 
                 <div class="field">
                   <label [for]="'presentation-barcode-' + i">Código de barras (opcional)</label>
-                  <input
-                    [id]="'presentation-barcode-' + i"
-                    type="text"
-                    formControlName="barcode"
-                    placeholder="Ej. 123456789012"
-                  />
+                  <div class="field__input-row">
+                    <input
+                      [id]="'presentation-barcode-' + i"
+                      type="text"
+                      formControlName="barcode"
+                      placeholder="Ej. 123456789012"
+                    />
+                    <button
+                      type="button"
+                      class="field__scan-btn"
+                      title="Escanear código de barras"
+                      (click)="openPresentationScanner(i)"
+                    >
+                      <app-icon name="camera" [size]="16" />
+                    </button>
+                  </div>
                 </div>
 
                 <div class="field-row">
@@ -242,4 +262,10 @@
       </form>
     </div>
   </div>
+
+  <app-barcode-scanner-modal
+    [open]="scannerTarget() !== null"
+    (scanned)="onBarcodeScanned($event)"
+    (closed)="scannerTarget.set(null)"
+  />
 }

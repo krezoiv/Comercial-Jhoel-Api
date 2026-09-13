@@ -1,0 +1,18 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="cancel()">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <h2 class="modal__title">Escanear código de barras</h2>
+
+      <div class="scanner-frame">
+        <video #videoElement class="scanner-frame__video" autoplay muted playsinline></video>
+        <div class="scanner-frame__guide"></div>
+      </div>
+
+      <p class="modal__description">Coloca el código dentro del área de escaneo.</p>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" (click)="cancel()">Cancelar</app-button>
+      </div>
+    </div>
+  </div>
+}

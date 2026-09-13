@@ -90,6 +90,35 @@
   }
 }
 
+.field__input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  input {
+    flex: 1;
+  }
+}
+
+.field__scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-on-light-subtle);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-primary-600);
+    border-color: var(--color-primary-300);
+  }
+}
+
 .field__error {
   font-size: var(--fs-xs);
   color: var(--color-danger);

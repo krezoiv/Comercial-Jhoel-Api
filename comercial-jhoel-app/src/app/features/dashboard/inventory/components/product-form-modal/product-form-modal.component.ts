@@ -34,7 +34,7 @@ import { UnitOfMeasureService } from '../../../../../core/services/unit-of-measu
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 
 type PresentationRow = FormGroup<{
@@ -48,7 +48,7 @@ type PresentationRow = FormGroup<{
 @Component({
   selector: 'app-product-form-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective],
+  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective, BarcodeScannerModalComponent],
   templateUrl: './product-form-modal.component.html',
   styleUrl: './product-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +80,8 @@ export class ProductFormModalComponent implements OnChanges {
   readonly existingPresentationNames = signal<string[]>([]);
   /** Active catalog entries for each new-presentation row's dropdown — "Unidad" excluded, it's auto-created and never picked here. */
   readonly presentationTypeOptions = signal<PresentationTypeListItem[]>([]);
+  /** Which barcode field the scanner modal is currently filling — `'sku'` for the product's own field, a number for that index in `presentationRows`, `null` when the modal is closed. Only ever fills the field, no search — this form is creating a code, not looking one up. */
+  readonly scannerTarget = signal<'sku' | number | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
@@ -185,6 +187,26 @@ export class ProductFormModalComponent implements OnChanges {
 
   removePresentationRow(index: number): void {
     this.presentationRows.removeAt(index);
+  }
+
+  openSkuScanner(): void {
+    this.scannerTarget.set('sku');
+  }
+
+  openPresentationScanner(index: number): void {
+    this.scannerTarget.set(index);
+  }
+
+  onBarcodeScanned(code: string): void {
+    const target = this.scannerTarget();
+    this.scannerTarget.set(null);
+    if (target === 'sku') {
+      this.form.controls.sku.setValue(code);
+      this.form.controls.sku.markAsDirty();
+    } else if (typeof target === 'number') {
+      this.presentationRows.at(target)?.controls.barcode.setValue(code);
+      this.presentationRows.at(target)?.controls.barcode.markAsDirty();
+    }
   }
 
   async submit(): Promise<void> {

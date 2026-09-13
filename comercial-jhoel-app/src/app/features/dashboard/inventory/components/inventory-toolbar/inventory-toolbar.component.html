@@ -9,7 +9,21 @@
         [ngModel]="searchTerm"
         (ngModelChange)="searchTermChange.emit($event)"
       />
+      <button
+        type="button"
+        class="search__scan-btn"
+        title="Escanear código de barras"
+        (click)="openScanner()"
+      >
+        <app-icon name="camera" [size]="18" />
+      </button>
     </label>
+
+    <app-barcode-scanner-modal
+      [open]="scannerOpen()"
+      (scanned)="onBarcodeScanned($event)"
+      (closed)="scannerOpen.set(false)"
+    />
 
     @if (canManage) {
       <app-button variant="primary" (click)="addProduct.emit()">

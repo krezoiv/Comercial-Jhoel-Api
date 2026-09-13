@@ -15,7 +15,21 @@
     @if (loading()) {
       <app-icon name="clock" [size]="16" class="search__spinner" />
     }
+    <button
+      type="button"
+      class="search__scan-btn"
+      title="Escanear código de barras"
+      (click)="openScanner()"
+    >
+      <app-icon name="camera" [size]="16" />
+    </button>
   </label>
+
+  <app-barcode-scanner-modal
+    [open]="scannerOpen()"
+    (scanned)="onBarcodeScanned($event)"
+    (closed)="scannerOpen.set(false)"
+  />
 
   @if (open() && (results().length > 0 || hasSearched())) {
     <div class="search__dropdown">

@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { StockStatus } from '../../../../../core/models';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 export type StockFilterValue = 'all' | StockStatus;
 
@@ -21,7 +21,7 @@ const STOCK_FILTER_OPTIONS: StockFilterOption[] = [
 @Component({
   selector: 'app-inventory-toolbar',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, IconComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent, BarcodeScannerModalComponent],
   templateUrl: './inventory-toolbar.component.html',
   styleUrl: './inventory-toolbar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +50,7 @@ export class InventoryToolbarComponent {
   @Output() downloadImportTemplate = new EventEmitter<void>();
 
   readonly stockFilterOptions = STOCK_FILTER_OPTIONS;
+  readonly scannerOpen = signal(false);
 
   /** The hidden `<input type="file">` is the real picker — this only forwards whatever it resolves, and always clears it after so selecting the exact same file twice in a row still fires a `change` event. */
   onFileSelected(event: Event): void {
@@ -59,5 +60,15 @@ export class InventoryToolbarComponent {
       this.importFile.emit(file);
     }
     input.value = '';
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  /** Same `searchTerm` the user would get from typing — the existing client-side filter (which already matches `sku`) does the rest, no new search logic here. */
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.searchTermChange.emit(code);
   }
 }

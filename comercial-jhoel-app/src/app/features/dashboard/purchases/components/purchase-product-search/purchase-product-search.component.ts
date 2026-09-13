@@ -5,7 +5,7 @@ import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap 
 
 import { Product, formatCurrency, formatQuantity } from '../../../../../core/models';
 import { InventoryService } from '../../../../../core/services/inventory.service';
-import { IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, IconComponent } from '../../../../../shared/ui';
 
 /**
  * Purchases' own product picker — structurally the same live-search pattern
@@ -20,7 +20,7 @@ import { IconComponent } from '../../../../../shared/ui';
 @Component({
   selector: 'app-purchase-product-search',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, BarcodeScannerModalComponent],
   templateUrl: './purchase-product-search.component.html',
   styleUrl: './purchase-product-search.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +35,7 @@ export class PurchaseProductSearchComponent {
   readonly loading = signal(false);
   readonly open = signal(false);
   readonly hasSearched = signal(false);
+  readonly scannerOpen = signal(false);
 
   formatCurrency = formatCurrency;
   formatQuantity = formatQuantity;
@@ -100,5 +101,25 @@ export class PurchaseProductSearchComponent {
     if (first) {
       this.select(first);
     }
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.query.set(code);
+    this.open.set(true);
+    this.loading.set(true);
+    this.inventoryService
+      .searchProducts(code)
+      .pipe(catchError(() => of<Product[]>([])))
+      .subscribe((results) => {
+        this.loading.set(false);
+        this.hasSearched.set(true);
+        this.results.set(results);
+        this.onEnter();
+      });
   }
 }

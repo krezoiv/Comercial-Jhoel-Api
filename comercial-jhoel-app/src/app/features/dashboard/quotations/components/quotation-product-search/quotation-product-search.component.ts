@@ -5,7 +5,7 @@ import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap 
 
 import { Product, formatCurrency } from '../../../../../core/models';
 import { InventoryService } from '../../../../../core/services/inventory.service';
-import { IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, IconComponent } from '../../../../../shared/ui';
 
 /**
  * Own small copy of Tickets' `TicketProductSearchComponent` (itself a copy of
@@ -17,7 +17,7 @@ import { IconComponent } from '../../../../../shared/ui';
 @Component({
   selector: 'app-quotation-product-search',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, BarcodeScannerModalComponent],
   templateUrl: './quotation-product-search.component.html',
   styleUrl: './quotation-product-search.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +32,7 @@ export class QuotationProductSearchComponent {
   readonly loading = signal(false);
   readonly open = signal(false);
   readonly hasSearched = signal(false);
+  readonly scannerOpen = signal(false);
 
   formatCurrency = formatCurrency;
 
@@ -93,5 +94,25 @@ export class QuotationProductSearchComponent {
     if (first) {
       this.select(first);
     }
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.query.set(code);
+    this.open.set(true);
+    this.loading.set(true);
+    this.inventoryService
+      .searchProducts(code)
+      .pipe(catchError(() => of<Product[]>([])))
+      .subscribe((results) => {
+        this.loading.set(false);
+        this.hasSearched.set(true);
+        this.results.set(results);
+        this.onEnter();
+      });
   }
 }
