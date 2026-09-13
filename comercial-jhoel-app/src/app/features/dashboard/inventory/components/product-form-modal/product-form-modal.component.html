@@ -23,6 +23,7 @@
           @if (form.controls.sku.invalid && form.controls.sku.touched) {
             <span class="field__error">Solo letras, números y guiones, máximo 64 caracteres.</span>
           }
+          <p class="field__hint">Este será también el código de la presentación "Unidad" — agrega un código distinto para "Caja" u otras presentaciones abajo.</p>
         </div>
 
         <div class="field-row">
@@ -173,6 +174,16 @@
                       <span class="field__error">Ingresa un factor mayor a 0.</span>
                     }
                   </div>
+                </div>
+
+                <div class="field">
+                  <label [for]="'presentation-barcode-' + i">Código de barras (opcional)</label>
+                  <input
+                    [id]="'presentation-barcode-' + i"
+                    type="text"
+                    formControlName="barcode"
+                    placeholder="Ej. 123456789012"
+                  />
                 </div>
 
                 <div class="field-row">

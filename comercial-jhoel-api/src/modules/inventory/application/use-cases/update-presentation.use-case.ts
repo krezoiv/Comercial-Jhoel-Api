@@ -19,6 +19,7 @@ export interface UpdatePresentationInput {
   conversionFactor?: number;
   costPrice?: number;
   publicPrice?: number;
+  barcode?: string | null;
   isActive?: boolean;
 }
 
@@ -87,6 +88,7 @@ export class UpdatePresentationUseCase {
         conversionFactor: input.conversionFactor,
         costPrice: input.costPrice,
         publicPrice: input.publicPrice,
+        barcode: input.barcode,
         isActive: input.isActive,
       },
     );

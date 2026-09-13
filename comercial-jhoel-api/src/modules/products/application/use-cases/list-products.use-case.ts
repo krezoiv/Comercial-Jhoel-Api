@@ -7,9 +7,13 @@ import {
 import type { ProductRepository } from '../../domain/repositories/product.repository';
 import { INVENTORY_STOCK_REPOSITORY } from '../../../inventory/domain/repositories/inventory-stock.repository';
 import type { InventoryStockRepository } from '../../../inventory/domain/repositories/inventory-stock.repository';
+import { PRODUCT_PRESENTATION_REPOSITORY } from '../../../inventory/domain/repositories/product-presentation.repository';
+import type { ProductPresentationRepository } from '../../../inventory/domain/repositories/product-presentation.repository';
+import type { ProductPresentation } from '../../../inventory/domain/entities/product-presentation.entity';
 import {
   ProductOutput,
   toProductOutput,
+  withMatchedPresentation,
   withStockByLocation,
 } from '../dtos/product-output';
 
@@ -48,6 +52,8 @@ export class ListProductsUseCase {
     private readonly productRepository: ProductRepository,
     @Inject(INVENTORY_STOCK_REPOSITORY)
     private readonly stockRepository: InventoryStockRepository,
+    @Inject(PRODUCT_PRESENTATION_REPOSITORY)
+    private readonly presentationRepository: ProductPresentationRepository,
   ) {}
 
   async execute(input: ListProductsInput = {}): Promise<ListProductsOutput> {
@@ -56,10 +62,11 @@ export class ListProductsUseCase {
       input.limit && input.limit > 0
         ? Math.min(input.limit, MAX_LIMIT)
         : DEFAULT_LIMIT;
+    const search = input.search?.trim() || undefined;
 
     const result = await this.productRepository.findAll({
       activeOnly: !input.includeInactive,
-      search: input.search?.trim() || undefined,
+      search,
       categoryId: input.categoryId,
       businessId: input.businessId,
       sortBy: input.sortBy ?? 'createdAt',
@@ -68,17 +75,28 @@ export class ListProductsUseCase {
       limit,
     });
 
-    const stockByProduct = await this.stockRepository.findByProductIds(
-      result.items.map((item) => item.id),
-    );
+    const productIds = result.items.map((item) => item.id);
+    const [stockByProduct, matchedPresentationByProduct] = await Promise.all([
+      this.stockRepository.findByProductIds(productIds),
+      // Only worth a query when there's actually a search term to match a
+      // barcode against — an unfiltered list never needs this.
+      search
+        ? this.presentationRepository.findMatchingByBarcode(productIds, search)
+        : Promise.resolve(new Map<string, ProductPresentation>()),
+    ]);
 
     return {
-      items: result.items.map((item) =>
-        withStockByLocation(
+      items: result.items.map((item) => {
+        let output = withStockByLocation(
           toProductOutput(item),
           stockByProduct.get(item.id) ?? [],
-        ),
-      ),
+        );
+        const matchedPresentation = matchedPresentationByProduct.get(item.id);
+        if (matchedPresentation) {
+          output = withMatchedPresentation(output, matchedPresentation);
+        }
+        return output;
+      }),
       total: result.total,
       page: result.page,
       limit: result.limit,

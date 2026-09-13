@@ -26,6 +26,14 @@ export interface Product {
   stock: number;
   /** Per-location breakdown (Bodega/Vitrina/...) — present whenever the API resolved it alongside the product. */
   stockByLocation?: StockByLocation[];
+  /** Present only on a search result whose match came from a presentation's own barcode (e.g. scanning a box's code, not the product's own `sku`) — lets the caller pre-select that presentation (e.g. "Caja") instead of defaulting to "Unidad". */
+  matchedPresentation?: {
+    id: string;
+    name: string;
+    conversionFactor: number;
+    costPrice: number;
+    publicPrice: number;
+  };
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

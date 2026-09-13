@@ -1,5 +1,6 @@
 import { Product } from '../../domain/entities/product.entity';
 import { InventoryStock } from '../../../inventory/domain/entities/inventory-stock.entity';
+import { ProductPresentation } from '../../../inventory/domain/entities/product-presentation.entity';
 
 export interface StockByLocationOutput {
   locationId: string;
@@ -25,6 +26,14 @@ export interface ProductOutput {
   stock: number;
   /** Present only when the caller resolved locations alongside the product (see `withStockByLocation`) — `stock` above remains the always-present running total. */
   stockByLocation?: StockByLocationOutput[];
+  /** Present only on a search result whose match came from a presentation's own barcode (not the product's name/sku) — see `withMatchedPresentation`. Lets a caller (e.g. Compras' item row) pre-select the scanned presentation instead of defaulting to "Unidad". */
+  matchedPresentation?: {
+    id: string;
+    name: string;
+    conversionFactor: number;
+    costPrice: number;
+    publicPrice: number;
+  };
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +58,22 @@ export function toProductOutput(product: Product): ProductOutput {
     isActive: product.isActive,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+  };
+}
+
+export function withMatchedPresentation(
+  output: ProductOutput,
+  presentation: ProductPresentation,
+): ProductOutput {
+  return {
+    ...output,
+    matchedPresentation: {
+      id: presentation.id,
+      name: presentation.name,
+      conversionFactor: presentation.conversionFactor,
+      costPrice: presentation.costPrice,
+      publicPrice: presentation.publicPrice,
+    },
   };
 }
 

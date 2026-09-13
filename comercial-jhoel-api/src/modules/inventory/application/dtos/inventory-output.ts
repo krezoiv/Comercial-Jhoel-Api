@@ -23,6 +23,7 @@ export interface ProductPresentationOutput {
   conversionFactor: number;
   costPrice: number;
   publicPrice: number;
+  barcode: string | null;
   isActive: boolean;
 }
 
@@ -37,6 +38,7 @@ export function toProductPresentationOutput(
     conversionFactor: presentation.conversionFactor,
     costPrice: presentation.costPrice,
     publicPrice: presentation.publicPrice,
+    barcode: presentation.barcode,
     isActive: presentation.isActive,
   };
 }

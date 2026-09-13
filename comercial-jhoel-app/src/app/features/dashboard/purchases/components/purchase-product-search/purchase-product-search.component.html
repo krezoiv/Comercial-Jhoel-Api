@@ -25,7 +25,12 @@
         @for (product of results(); track product.id) {
           <button type="button" class="search__result" (click)="select(product)">
             <div class="search__result-info">
-              <span class="search__result-name">{{ product.name }}</span>
+              <span class="search__result-name">
+                {{ product.name }}
+                @if (product.matchedPresentation) {
+                  <span class="search__result-badge">{{ product.matchedPresentation.name }}</span>
+                }
+              </span>
               <span class="search__result-meta">{{ product.sku || 'Sin SKU' }} · Stock: {{ formatQuantity(product.stock) }}</span>
             </div>
             <div class="search__result-stats">

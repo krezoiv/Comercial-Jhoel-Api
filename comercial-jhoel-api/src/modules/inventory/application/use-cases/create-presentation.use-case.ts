@@ -18,6 +18,7 @@ export interface CreatePresentationInput {
   conversionFactor: number;
   costPrice: number;
   publicPrice: number;
+  barcode?: string | null;
 }
 
 /**
@@ -75,6 +76,7 @@ export class CreatePresentationUseCase {
       conversionFactor: input.conversionFactor,
       costPrice: input.costPrice,
       publicPrice: input.publicPrice,
+      barcode: input.barcode,
     });
 
     return toProductPresentationOutput(presentation);

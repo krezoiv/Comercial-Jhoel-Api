@@ -42,6 +42,7 @@ type PresentationRow = FormGroup<{
   conversionFactor: FormControl<number>;
   costPrice: FormControl<number>;
   publicPrice: FormControl<number>;
+  barcode: FormControl<string>;
 }>;
 
 @Component({
@@ -177,6 +178,7 @@ export class ProductFormModalComponent implements OnChanges {
       conversionFactor: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
       costPrice: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       publicPrice: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      barcode: this.fb.nonNullable.control('', Validators.maxLength(64)),
     });
     this.presentationRows.push(row);
   }

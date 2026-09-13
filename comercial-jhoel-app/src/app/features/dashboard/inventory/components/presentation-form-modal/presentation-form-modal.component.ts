@@ -59,6 +59,7 @@ export class PresentationFormModalComponent implements OnChanges {
     conversionFactor: [1, [Validators.required, Validators.min(1)]],
     costPrice: [0, [Validators.required, Validators.min(0)]],
     publicPrice: [0, [Validators.required, Validators.min(0)]],
+    barcode: ['', Validators.maxLength(64)],
   });
 
   get isEditMode(): boolean {
@@ -79,10 +80,10 @@ export class PresentationFormModalComponent implements OnChanges {
     this.isSubmitting.set(false);
 
     if (this.presentation) {
-      const { presentationTypeId, conversionFactor, costPrice, publicPrice } = this.presentation;
-      this.form.reset({ presentationTypeId, conversionFactor, costPrice, publicPrice });
+      const { presentationTypeId, conversionFactor, costPrice, publicPrice, barcode } = this.presentation;
+      this.form.reset({ presentationTypeId, conversionFactor, costPrice, publicPrice, barcode: barcode ?? '' });
     } else {
-      this.form.reset({ presentationTypeId: '', conversionFactor: 1, costPrice: 0, publicPrice: 0 });
+      this.form.reset({ presentationTypeId: '', conversionFactor: 1, costPrice: 0, publicPrice: 0, barcode: '' });
     }
 
     if (this.isUnidad) {

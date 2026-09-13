@@ -3,7 +3,9 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -26,6 +28,12 @@ export class UpdatePresentationRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   publicPrice?: number;
+
+  /** Send an empty string to clear it. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  barcode?: string;
 
   @IsOptional()
   @IsBoolean()

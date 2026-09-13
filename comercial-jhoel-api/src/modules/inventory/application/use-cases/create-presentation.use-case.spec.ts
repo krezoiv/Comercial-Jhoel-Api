@@ -59,6 +59,7 @@ function buildPresentation(
     conversionFactor: overrides.conversionFactor ?? 12,
     costPrice: 14.25,
     publicPrice: 21,
+    barcode: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),

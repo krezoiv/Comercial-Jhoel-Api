@@ -38,3 +38,12 @@ export class PresentationNameAlreadyExistsError extends DomainError {
     super('Este producto ya tiene una presentación activa de ese tipo.');
   }
 }
+
+/** Mirrors `ProductSkuAlreadyExistsError` — barcodes are unique across every active presentation, not just within one product. */
+export class PresentationBarcodeAlreadyExistsError extends DomainError {
+  readonly status = 409;
+
+  constructor() {
+    super('Ya existe una presentación activa con ese código de barras.');
+  }
+}

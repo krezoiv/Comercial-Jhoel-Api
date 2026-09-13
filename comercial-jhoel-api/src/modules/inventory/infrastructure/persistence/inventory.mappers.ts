@@ -33,6 +33,7 @@ export function presentationToDomain(
     conversionFactor: orm.conversionFactor,
     costPrice: orm.costPrice,
     publicPrice: orm.publicPrice,
+    barcode: orm.barcode,
     isActive: orm.isActive,
     createdAt: orm.createdAt,
     updatedAt: orm.updatedAt,

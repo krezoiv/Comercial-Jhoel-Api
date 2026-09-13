@@ -14,6 +14,8 @@ export interface ProductPresentation {
   conversionFactor: number;
   costPrice: number;
   publicPrice: number;
+  /** This presentation's own barcode — distinct from the product's own `sku` (e.g. a box's code vs. the unit's code). Unique among active presentations, `null` if not set. */
+  barcode: string | null;
   isActive: boolean;
 }
 
@@ -62,6 +64,7 @@ export interface CreatePresentationInput {
   conversionFactor: number;
   costPrice: number;
   publicPrice: number;
+  barcode?: string | null;
 }
 
 export interface UpdatePresentationInput {
@@ -69,6 +72,7 @@ export interface UpdatePresentationInput {
   conversionFactor?: number;
   costPrice?: number;
   publicPrice?: number;
+  barcode?: string | null;
   isActive?: boolean;
 }
 

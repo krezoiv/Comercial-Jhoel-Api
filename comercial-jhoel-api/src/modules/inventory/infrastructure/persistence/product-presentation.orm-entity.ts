@@ -51,6 +51,9 @@ export class ProductPresentationOrmEntity {
   })
   publicPrice: number;
 
+  @Column({ name: 'barcode', type: 'varchar', length: 64, nullable: true })
+  barcode: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

@@ -7,7 +7,10 @@ import {
   ProductPresentationRepository,
   UpdatePresentationData,
 } from '../../domain/repositories/product-presentation.repository';
-import { PresentationNameAlreadyExistsError } from '../../domain/errors/presentation.errors';
+import {
+  PresentationBarcodeAlreadyExistsError,
+  PresentationNameAlreadyExistsError,
+} from '../../domain/errors/presentation.errors';
 import { ProductPresentationOrmEntity } from './product-presentation.orm-entity';
 import { presentationToDomain } from './inventory.mappers';
 
@@ -36,6 +39,28 @@ export class TypeOrmProductPresentationRepository implements ProductPresentation
     return orm ? presentationToDomain(orm) : null;
   }
 
+  /**
+   * Scoped to presentations whose PARENT PRODUCT is also active, not just
+   * the presentation row itself — deactivating a product never cascades to
+   * deactivate its own presentations (a deliberate, separate lifecycle), so
+   * without this join a barcode left behind by a deactivated product's
+   * still-"active" presentation would permanently block reuse of that
+   * barcode even though nothing scannable is actually using it anymore.
+   * No `ProductOrmEntity` relation exists on this entity, so this joins the
+   * `products` table directly by raw condition.
+   */
+  async findActiveByBarcode(barcode: string): Promise<ProductPresentation | null> {
+    const orm = await this.repository
+      .createQueryBuilder('presentation')
+      .leftJoinAndSelect('presentation.presentationType', 'presentationType')
+      .innerJoin('products', 'product', 'product.id = presentation.productId')
+      .where('presentation.barcode = :barcode', { barcode })
+      .andWhere('presentation.isActive = true')
+      .andWhere('product.isActive = true')
+      .getOne();
+    return orm ? presentationToDomain(orm) : null;
+  }
+
   async create(data: CreatePresentationData): Promise<ProductPresentation> {
     const orm = this.repository.create({
       productId: data.productId,
@@ -43,6 +68,7 @@ export class TypeOrmProductPresentationRepository implements ProductPresentation
       conversionFactor: data.conversionFactor,
       costPrice: data.costPrice,
       publicPrice: data.publicPrice,
+      barcode: data.barcode?.trim() || null,
     });
     try {
       const saved = await this.repository.save(orm);
@@ -64,7 +90,14 @@ export class TypeOrmProductPresentationRepository implements ProductPresentation
     data: UpdatePresentationData,
   ): Promise<ProductPresentation> {
     try {
-      await this.repository.update({ id }, data);
+      await this.repository.update(
+        { id },
+        {
+          ...data,
+          barcode:
+            data.barcode === undefined ? undefined : data.barcode?.trim() || null,
+        },
+      );
     } catch (error) {
       throw this.translateError(error);
     }
@@ -72,13 +105,44 @@ export class TypeOrmProductPresentationRepository implements ProductPresentation
     return presentationToDomain(updated);
   }
 
+  async findMatchingByBarcode(
+    productIds: string[],
+    search: string,
+  ): Promise<Map<string, ProductPresentation>> {
+    const map = new Map<string, ProductPresentation>();
+    const trimmed = search.trim();
+    if (productIds.length === 0 || !trimmed) {
+      return map;
+    }
+    const orms = await this.repository
+      .createQueryBuilder('presentation')
+      .leftJoinAndSelect('presentation.presentationType', 'presentationType')
+      .where('presentation.productId IN (:...productIds)', { productIds })
+      .andWhere('presentation.isActive = true')
+      .andWhere('presentation.barcode ILIKE :search', { search: `%${trimmed}%` })
+      .getMany();
+    for (const orm of orms) {
+      if (!map.has(orm.productId)) {
+        map.set(orm.productId, presentationToDomain(orm));
+      }
+    }
+    return map;
+  }
+
+  async deactivateAllForProduct(productId: string): Promise<void> {
+    await this.repository.update({ productId, isActive: true }, { isActive: false });
+  }
+
   private translateError(error: unknown): unknown {
-    if (
-      error instanceof QueryFailedError &&
-      (error.driverError as { constraint?: string } | undefined)?.constraint ===
-        'UQ_product_presentations_product_type_active'
-    ) {
-      return new PresentationNameAlreadyExistsError();
+    if (error instanceof QueryFailedError) {
+      const constraint = (error.driverError as { constraint?: string } | undefined)
+        ?.constraint;
+      if (constraint === 'UQ_product_presentations_product_type_active') {
+        return new PresentationNameAlreadyExistsError();
+      }
+      if (constraint === 'UQ_product_presentations_barcode_active') {
+        return new PresentationBarcodeAlreadyExistsError();
+      }
     }
     return error;
   }

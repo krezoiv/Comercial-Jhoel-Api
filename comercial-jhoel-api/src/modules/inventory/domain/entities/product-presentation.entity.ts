@@ -7,6 +7,8 @@ export interface ProductPresentationProps {
   conversionFactor: number;
   costPrice: number;
   publicPrice: number;
+  /** Unique among active presentations, global (never scoped per-product) — mirrors `products.sku`'s own uniqueness. `null` when this presentation has no barcode of its own yet. */
+  barcode: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -59,6 +61,10 @@ export class ProductPresentation {
 
   get publicPrice(): number {
     return this.props.publicPrice;
+  }
+
+  get barcode(): string | null {
+    return this.props.barcode;
   }
 
   get isActive(): boolean {

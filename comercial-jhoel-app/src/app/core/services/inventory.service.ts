@@ -29,6 +29,13 @@ interface ProductApiModel {
   wholesalePrice: number;
   stock: number;
   stockByLocation?: StockByLocation[];
+  matchedPresentation?: {
+    id: string;
+    name: string;
+    conversionFactor: number;
+    costPrice: number;
+    publicPrice: number;
+  };
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -51,6 +58,7 @@ function toProduct(api: ProductApiModel): Product {
     wholesalePrice: api.wholesalePrice,
     stock: api.stock,
     stockByLocation: api.stockByLocation,
+    matchedPresentation: api.matchedPresentation,
     isActive: api.isActive,
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,

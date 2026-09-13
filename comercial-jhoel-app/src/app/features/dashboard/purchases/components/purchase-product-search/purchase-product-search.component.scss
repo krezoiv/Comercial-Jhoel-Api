@@ -106,6 +106,18 @@
   color: var(--color-text-on-light);
 }
 
+/** Shown when the scanned/typed code matched a presentation's own barcode (not the product's name/sku) — tells the cashier which presentation is about to be pre-selected. */
+.search__result-badge {
+  display: inline-flex;
+  margin-left: var(--space-2);
+  padding: 0.1rem var(--space-2);
+  border-radius: var(--radius-full);
+  background: rgba(47, 131, 224, 0.12);
+  color: var(--color-primary-600);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
 .search__result-meta {
   font-size: var(--fs-xs);
   color: var(--color-text-on-light-subtle);

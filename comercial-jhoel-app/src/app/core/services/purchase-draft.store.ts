@@ -159,13 +159,21 @@ export class PurchaseDraftStore {
         };
       }
 
+      // When the scan matched a presentation's own barcode (e.g. a "Caja"
+      // code distinct from the product's `sku`), pre-select that
+      // presentation and its own prices instead of defaulting to the
+      // implicit "Unidad" — the row's dropdown (see
+      // `PurchaseItemsTableComponent`) still lets the user correct it.
+      const matched = product.matchedPresentation;
       const draftItem: PurchaseDraftItem = {
         productId: product.id,
         sku: product.sku,
         name: product.name,
         quantity: 1,
-        costPrice: product.costPrice,
-        publicPrice: product.publicPrice,
+        costPrice: matched?.costPrice ?? product.costPrice,
+        publicPrice: matched?.publicPrice ?? product.publicPrice,
+        presentationId: matched?.id,
+        presentationName: matched?.name,
       };
       return { ...draft, items: [draftItem, ...draft.items] };
     });

@@ -58,7 +58,7 @@
                   [attr.aria-label]="'Presentación de ' + item.name"
                 >
                   @for (presentation of presentationsFor(item.productId); track presentation.id) {
-                    <option [value]="presentation.id">
+                    <option [value]="presentation.id" [selected]="presentation.id === (item.presentationId || '')">
                       {{ presentation.name }} (factor {{ presentation.conversionFactor }})
                     </option>
                   }
@@ -146,7 +146,7 @@
               [attr.aria-label]="'Presentación de ' + item.name"
             >
               @for (presentation of presentationsFor(item.productId); track presentation.id) {
-                <option [value]="presentation.id">
+                <option [value]="presentation.id" [selected]="presentation.id === (item.presentationId || '')">
                   {{ presentation.name }} (factor {{ presentation.conversionFactor }})
                 </option>
               }

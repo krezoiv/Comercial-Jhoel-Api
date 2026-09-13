@@ -52,13 +52,27 @@ export class TypeOrmProductRepository implements ProductRepository {
     if (options.activeOnly) {
       qb.andWhere('product.isActive = true');
     }
-    // Matches against both name and SKU with one ILIKE pair — this is what
-    // lets scanning or typing a barcode into the Inventario search box
-    // find the product, not just searching by its display name.
+    // Matches name, the product's own SKU, OR any of its active
+    // presentations' own barcode (e.g. a "Caja" barcode distinct from the
+    // product's sku) — an EXISTS subquery, never a JOIN, so a product with
+    // several presentations still comes back as exactly one row (same
+    // "EXISTS over JOIN to avoid row fan-out" convention Reports' own
+    // category/product filters already established). Which presentation
+    // actually matched (if any) is resolved separately by
+    // `ListProductsUseCase` via `findMatchingByBarcode` — this WHERE
+    // clause only decides whether the product is included at all.
     if (options.search) {
-      qb.andWhere('(product.name ILIKE :search OR product.sku ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      qb.andWhere(
+        `(product.name ILIKE :search
+          OR product.sku ILIKE :search
+          OR EXISTS (
+            SELECT 1 FROM product_presentations pp
+            WHERE pp.product_id = product.id
+              AND pp.is_active = true
+              AND pp.barcode ILIKE :search
+          ))`,
+        { search: `%${options.search}%` },
+      );
     }
     if (options.categoryId) {
       qb.andWhere('product.categoryId = :categoryId', {

@@ -102,6 +102,19 @@ export class CreateProductUseCase {
       if (existingSku) {
         throw new ProductSkuAlreadyExistsError(sku);
       }
+
+      // `sku` doubles as the auto-created "Unidad" presentation's own
+      // barcode below — pre-checked here (not just left to the DB
+      // constraint) because a collision caught *after* the product row
+      // already exists would leave it without its required "Unidad"
+      // presentation, an inconsistent state this use case has no
+      // transaction wrapping it to roll back (see this method's own
+      // sequential create() calls).
+      const existingBarcode =
+        await this.presentationRepository.findActiveByBarcode(sku);
+      if (existingBarcode) {
+        throw new ProductSkuAlreadyExistsError(sku);
+      }
     }
 
     const product = await this.productRepository.create({
@@ -135,12 +148,17 @@ export class CreateProductUseCase {
         'No se encontró el tipo de presentación base "Unidad" — la migración del catálogo debió sembrarlo.',
       );
     }
+    // "Unidad"'s own barcode defaults to the product's own sku, when given —
+    // this is what keeps "scan the code you already had" working with zero
+    // extra admin steps for the unit-level flow (Ventas always sells at
+    // "Unidad"); a distinct "Caja" barcode is added separately afterward.
     await this.presentationRepository.create({
       productId: product.id,
       presentationTypeId: unidadPresentationType.id,
       conversionFactor: 1,
       costPrice: input.costPrice,
       publicPrice: input.publicPrice,
+      barcode: sku,
     });
 
     const locations = await this.locationRepository.findAll({
