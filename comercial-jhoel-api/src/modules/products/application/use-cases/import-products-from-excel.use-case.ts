@@ -47,10 +47,11 @@ type PresentationRequestResult =
       conversionFactor: number;
       costPrice: number;
       publicPrice: number;
+      barcode?: string;
     };
 
 /**
- * Reads an `.xlsx` built to `PRODUCTS_IMPORT_HEADERS`'s exact 13-column
+ * Reads an `.xlsx` built to `PRODUCTS_IMPORT_HEADERS`'s exact 14-column
  * shape and creates one product per valid row — always by delegating to
  * `CreateProductUseCase.execute()`, the *same* use case the manual
  * "Agregar producto" form already calls, never a parallel copy of its
@@ -135,7 +136,7 @@ export class ImportProductsFromExcelUseCase {
 
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
-      const cellValues = Array.from({ length: 13 }, (_, i) => row.getCell(i + 1).value);
+      const cellValues = Array.from({ length: 14 }, (_, i) => row.getCell(i + 1).value);
       const isBlankRow = cellValues.every((value) => value === null || value === undefined || value === '');
       if (isBlankRow) {
         continue;
@@ -252,6 +253,7 @@ export class ImportProductsFromExcelUseCase {
             conversionFactor: presentationRequest.conversionFactor,
             costPrice: presentationRequest.costPrice,
             publicPrice: presentationRequest.publicPrice,
+            barcode: presentationRequest.barcode,
           });
         } catch (error) {
           const reason = error instanceof DomainError ? error.message : 'No se pudo crear la presentación adicional.';
@@ -270,27 +272,32 @@ export class ImportProductsFromExcelUseCase {
   }
 
   /**
-   * Columns 10-13 are a single optional group. `kind: 'none'` is the common
+   * Columns 10-14 are a single optional group. `kind: 'none'` is the common
    * case — every one of them is blank, so the row only needs the base
    * "Unidad" presentation, auto-created regardless by `CreateProductUseCase`
-   * itself. `kind: 'error'` means at least one is filled but the group as a
-   * whole doesn't resolve to something `CreatePresentationUseCase` could
-   * accept — the caller turns that into a warning, never a reason to skip
-   * the base product. `kind: 'valid'` carries the resolved, ready-to-use
-   * fields.
+   * itself (its own barcode is simply the SKU column, set automatically —
+   * no column here is needed for that). `kind: 'error'` means at least one
+   * is filled but the group as a whole doesn't resolve to something
+   * `CreatePresentationUseCase` could accept — the caller turns that into a
+   * warning, never a reason to skip the base product. `kind: 'valid'`
+   * carries the resolved, ready-to-use fields — `barcode` (column 14)
+   * within this group is itself optional: a Caja can be requested without
+   * its own barcode, added later via "Editar presentación".
    */
   private async resolvePresentationRequest(cellValues: unknown[]): Promise<PresentationRequestResult> {
     const presentationTypeName = this.cellText(cellValues[9]);
     const factorRaw = cellValues[10];
     const costPriceRaw = cellValues[11];
     const publicPriceRaw = cellValues[12];
+    const barcode = this.cellText(cellValues[13]) || undefined;
     const isBlank = (value: unknown) => value === null || value === undefined || value === '';
 
     if (
       !presentationTypeName &&
       isBlank(factorRaw) &&
       isBlank(costPriceRaw) &&
-      isBlank(publicPriceRaw)
+      isBlank(publicPriceRaw) &&
+      !barcode
     ) {
       return { kind: 'none' };
     }
@@ -334,6 +341,7 @@ export class ImportProductsFromExcelUseCase {
       conversionFactor,
       costPrice,
       publicPrice,
+      barcode,
     };
   }
 

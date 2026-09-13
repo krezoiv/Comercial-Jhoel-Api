@@ -30,14 +30,19 @@ const MONEY_FORMAT = '"Q"#,##0.00';
  * Stock) — a file exported from this same screen already looks like a
  * filled-in import template.
  *
- * The last 4 columns are for one **optional additional presentation**
+ * The last 5 columns are for one **optional additional presentation**
  * (Caja, Paquete, ...) — the product's own base "Unidad" presentation
  * (factor 1) is still always auto-created regardless, exactly like a
- * manually-created product. Leave all 4 blank for a row that only needs
- * "Unidad"; fill all 4 together to also create one more presentation for
- * that product. This never supports more than one extra presentation per
- * row — a product needing several (Unidad + Caja + Paquete, say) still gets
- * the rest added afterward through the existing "Agregar presentación" UI.
+ * manually-created product, and its own barcode is simply the SKU column
+ * above (see `CreateProductUseCase`'s own doc comment — this happens
+ * automatically, no separate column needed for it). Leave all 5 blank for
+ * a row that only needs "Unidad"; fill in Tipo/Factor/Precio Costo/Precio
+ * Público together to also create one more presentation for that product
+ * — "Código de Barras Presentación" within that group is itself optional
+ * (a Caja can be added without its own barcode, set later via "Editar").
+ * This never supports more than one extra presentation per row — a
+ * product needing several (Unidad + Caja + Paquete, say) still gets the
+ * rest added afterward through the existing "Agregar presentación" UI.
  */
 export const PRODUCTS_IMPORT_HEADERS = [
   'Producto',
@@ -53,6 +58,7 @@ export const PRODUCTS_IMPORT_HEADERS = [
   'Factor de Presentación',
   'Precio Costo Presentación',
   'Precio Público Presentación',
+  'Código de Barras Presentación',
 ] as const;
 
 /**
@@ -131,7 +137,7 @@ export async function buildProductsExcel(
  * one filled-in example row so the expected format (numbers as plain
  * numbers, not text; empty SKU/Stock/presentation columns allowed) is
  * obvious without a separate instructions sheet. `ImportProductsFromExcelUseCase`
- * reads columns purely by position (1-13, matching this exact order), never
+ * reads columns purely by position (1-14, matching this exact order), never
  * by header text matching beyond the one initial "does this look like our
  * template" check.
  */
@@ -156,6 +162,7 @@ export async function buildProductsImportTemplate(): Promise<Buffer> {
     { header: PRODUCTS_IMPORT_HEADERS[10], key: 'presentationFactor', width: 20 },
     { header: PRODUCTS_IMPORT_HEADERS[11], key: 'presentationCostPrice', width: 22 },
     { header: PRODUCTS_IMPORT_HEADERS[12], key: 'presentationPublicPrice', width: 24 },
+    { header: PRODUCTS_IMPORT_HEADERS[13], key: 'presentationBarcode', width: 24 },
   ];
 
   const headerRow = sheet.getRow(1);
@@ -174,13 +181,17 @@ export async function buildProductsImportTemplate(): Promise<Buffer> {
     publicPrice: 1.5,
     wholesalePrice: 1.25,
     stock: 100,
-    // Optional — deja estas 4 celdas vacías si el producto solo se vende
+    // Optional — deja estas 5 celdas vacías si el producto solo se vende
     // por "Unidad". Aquí se muestra un ejemplo con una presentación
-    // adicional: una "Caja" de 12 unidades con su propio precio.
+    // adicional: una "Caja" de 12 unidades con su propio precio y su
+    // propio código de barras (distinto del SKU de arriba, que ya es el
+    // código de la "Unidad"). El código de barras de la presentación
+    // adicional es opcional — puedes dejarlo vacío y agregarlo después.
     presentationTypeName: 'Caja',
     presentationFactor: 12,
     presentationCostPrice: 9,
     presentationPublicPrice: 16,
+    presentationBarcode: '7501014511030',
   });
 
   ['costPrice', 'publicPrice', 'wholesalePrice', 'presentationCostPrice', 'presentationPublicPrice'].forEach(
