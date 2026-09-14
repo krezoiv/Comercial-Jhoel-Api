@@ -10,21 +10,29 @@ const HEADER_FILL: ExcelJS.Fill = {
  * The exact, ordered header row `ImportPurchaseFromExcelUseCase` expects —
  * defined once here, imported by that use case, so the parser and the
  * template it hands out can never silently drift apart. Deliberately only
- * 4 columns (unlike Products' own 14-column import) — this feature has one
+ * 5 columns (unlike Products' own 14-column import) — this feature has one
  * narrow purpose: register initial stock as a real purchase, reusing each
  * presentation's already-loaded price, never asking for anything else.
  *
- * One row per product+presentation — the SAME product can (and, for a
- * product bought in more than one presentation, should) appear across
- * several rows. E.g. "2 Cajas + 5 Unidades sueltas" of one product is two
- * rows, not one row with a pre-converted quantity — the conversion factor
- * is applied server-side, exactly like a normal purchase.
+ * One row per product+presentation+destino — the SAME product can (and,
+ * for a product bought in more than one presentation, should) appear
+ * across several rows. E.g. "2 Cajas + 5 Unidades sueltas" of one product
+ * is two rows, not one row with a pre-converted quantity — the conversion
+ * factor is applied server-side, exactly like a normal purchase.
+ *
+ * "Ubicación Destino" (Bodega/Vitrina, defaults to Bodega if left blank) —
+ * every purchase always enters Bodega first (the only destination
+ * `confirm_purchase` ever writes to, unchanged here); a row asking for
+ * Vitrina is relocated there immediately afterward via the same
+ * "Trasladar inventario" mechanism already used for that, not a second
+ * purchase destination.
  */
 export const PURCHASE_IMPORT_HEADERS = [
   'SKU',
   'Producto',
   'Presentación',
   'Cantidad',
+  'Ubicación Destino',
 ] as const;
 
 /**
@@ -46,6 +54,7 @@ export async function buildPurchaseImportTemplate(): Promise<Buffer> {
     { header: PURCHASE_IMPORT_HEADERS[1], key: 'productName', width: 32 },
     { header: PURCHASE_IMPORT_HEADERS[2], key: 'presentationName', width: 18 },
     { header: PURCHASE_IMPORT_HEADERS[3], key: 'quantity', width: 12 },
+    { header: PURCHASE_IMPORT_HEADERS[4], key: 'destinationLocationName', width: 20 },
   ];
 
   const headerRow = sheet.getRow(1);
@@ -59,12 +68,14 @@ export async function buildPurchaseImportTemplate(): Promise<Buffer> {
     productName: 'Lapicero BIC Negro',
     presentationName: 'Caja',
     quantity: 2,
+    destinationLocationName: 'Bodega',
   });
   sheet.addRow({
     sku: 'LAP-001',
     productName: 'Lapicero BIC Negro',
     presentationName: 'Unidad',
     quantity: 5,
+    destinationLocationName: 'Vitrina',
   });
 
   sheet.getColumn('quantity').numFmt = '#,##0';

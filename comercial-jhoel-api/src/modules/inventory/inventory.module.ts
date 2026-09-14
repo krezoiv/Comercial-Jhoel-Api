@@ -75,11 +75,19 @@ import { PresentationTypesModule } from '../presentation-types/presentation-type
   // Paquete, ...) per imported row must be validated/created through the
   // exact same use case the manual "Agregar presentación" form already
   // calls, never a second copy of its factor/price validation.
+  // `RegisterInventoryTransferUseCase` is exported for
+  // `ImportPurchaseFromExcelUseCase` (`PurchasesModule`) — a row whose
+  // "Ubicación Destino" is Vitrina registers the purchase into Bodega (the
+  // only destination `confirm_purchase` ever writes to) and then relocates
+  // it via the exact same transfer mechanism "Trasladar inventario" already
+  // uses, rather than teaching Purchases' own stored function a second
+  // destination.
   exports: [
     PRODUCT_PRESENTATION_REPOSITORY,
     INVENTORY_STOCK_REPOSITORY,
     INVENTORY_LOCATION_REPOSITORY,
     CreatePresentationUseCase,
+    RegisterInventoryTransferUseCase,
   ],
 })
 export class InventoryModule {}

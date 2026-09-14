@@ -89,7 +89,10 @@ export interface ImportPurchaseResult {
   totalRows: number;
   productsAffected: number;
   purchasesCreated: number;
+  transfersToVitrina: number;
   skipped: ImportPurchaseSkippedRow[];
+  /** The row's purchase already succeeded — only its follow-up relocation to Vitrina failed. */
+  transferWarnings: ImportPurchaseSkippedRow[];
 }
 
 export type PurchaseStatusFilter = 'ACTIVE' | 'VOIDED';

@@ -6,6 +6,9 @@ import type { ProductRepository } from '../../../products/domain/repositories/pr
 import { PRODUCT_PRESENTATION_REPOSITORY } from '../../../inventory/domain/repositories/product-presentation.repository';
 import type { ProductPresentationRepository } from '../../../inventory/domain/repositories/product-presentation.repository';
 import type { ProductPresentation } from '../../../inventory/domain/entities/product-presentation.entity';
+import { INVENTORY_LOCATION_REPOSITORY } from '../../../inventory/domain/repositories/inventory-location.repository';
+import type { InventoryLocationRepository } from '../../../inventory/domain/repositories/inventory-location.repository';
+import { RegisterInventoryTransferUseCase } from '../../../inventory/application/use-cases/register-inventory-transfer.use-case';
 import { SUPPLIER_REPOSITORY } from '../../../suppliers/domain/repositories/supplier.repository';
 import type { SupplierRepository } from '../../../suppliers/domain/repositories/supplier.repository';
 import { DomainError } from '../../../../shared/domain/domain-error';
@@ -21,8 +24,14 @@ export interface ImportPurchaseFromExcelOutput {
   totalRows: number;
   productsAffected: number;
   purchasesCreated: number;
+  /** How many rows were relocated to Vitrina after their purchase — see `transferWarnings` for the ones that couldn't be. */
+  transfersToVitrina: number;
   skipped: ImportPurchaseRowResult[];
+  /** The row's purchase already succeeded (stock is in Bodega, real and saved) — only the follow-up relocation to Vitrina failed. Never a reason to re-import the row; a manual "Trasladar inventario" finishes the job. */
+  transferWarnings: ImportPurchaseRowResult[];
 }
+
+type DestinationLocationName = 'Bodega' | 'Vitrina';
 
 interface ResolvedItem {
   row: number;
@@ -32,6 +41,7 @@ interface ResolvedItem {
   quantity: number;
   costPrice: number;
   publicPrice: number;
+  destination: DestinationLocationName;
 }
 
 /** Defensive ceiling, higher than Products' own 500 — here a single product can legitimately span several rows (one per presentation), so 1,000+ products realistically need more rows than products. */
@@ -49,15 +59,18 @@ const PURCHASE_BATCH_SIZE = 200;
 /** Seeded once by migration `SeedInitialStockSupplier` — every purchase this import creates is attributed to it, so the resulting stock is identifiable in Reportería/Kardex as coming from the initial catalog load, not a real supplier invoice. */
 const INITIAL_STOCK_SUPPLIER_NAME = 'Carga Inicial de Inventario';
 
+const DEFAULT_DESTINATION: DestinationLocationName = 'Bodega';
+
 /**
- * Reads an `.xlsx` built to `PURCHASE_IMPORT_HEADERS`'s 4-column shape
- * (SKU, Producto, Presentación, Cantidad) and registers the described
- * quantities as one or more real purchases — always by delegating to
- * `CreatePurchaseUseCase.execute()`, the same use case "Registrar compra"
- * already calls, never a parallel copy of its conversion/stock logic. This
- * is what guarantees the presentation→base-units conversion (`quantity ×
- * conversionFactor`) happens exactly the way it already does for a normal
- * purchase — this use case never computes that math itself.
+ * Reads an `.xlsx` built to `PURCHASE_IMPORT_HEADERS`'s 5-column shape
+ * (SKU, Producto, Presentación, Cantidad, Ubicación Destino) and registers
+ * the described quantities as one or more real purchases — always by
+ * delegating to `CreatePurchaseUseCase.execute()`, the same use case
+ * "Registrar compra" already calls, never a parallel copy of its
+ * conversion/stock logic. This is what guarantees the presentation→base-
+ * units conversion (`quantity × conversionFactor`) happens exactly the way
+ * it already does for a normal purchase — this use case never computes
+ * that math itself.
  *
  * A product can span several rows — one per presentation ("2 Cajas" +
  * "5 Unidades" of the same product is two rows) — resolved independently
@@ -70,23 +83,36 @@ const INITIAL_STOCK_SUPPLIER_NAME = 'Carga Inicial de Inventario';
  * `confirm_purchase()`'s side effect of overwriting the product/presentation
  * price on write is always a no-op (same value in, same value out).
  *
+ * `confirm_purchase()` always writes into Bodega, unconditionally — that
+ * never changes here. A row whose "Ubicación Destino" is Vitrina is
+ * relocated there immediately after its batch's purchase succeeds, via
+ * `RegisterInventoryTransferUseCase` — the exact same mechanism "Trasladar
+ * inventario" already uses, not a second purchase destination taught to
+ * the stored function.
+ *
  * Rows are resolved sequentially and never abort the whole file — an
- * unresolvable row (unknown SKU/nombre, unknown presentación, invalid
- * cantidad) is recorded in `skipped` with a reason and processing
- * continues. Successfully-resolved items are grouped into batches of
- * `PURCHASE_BATCH_SIZE` and registered as separate purchases; a batch that
- * fails to confirm (a genuinely unexpected condition, since every item was
- * already validated to exist) reports its own rows as skipped too, without
- * touching batches already committed.
+ * unresolvable row (unknown SKU/nombre, unknown presentación, cantidad o
+ * ubicación destino inválida) is recorded in `skipped` with a reason and
+ * processing continues. Successfully-resolved items are grouped into
+ * batches of `PURCHASE_BATCH_SIZE` and registered as separate purchases; a
+ * batch that fails to confirm (a genuinely unexpected condition, since
+ * every item was already validated to exist) reports its own rows as
+ * skipped too, without touching batches already committed. A row destined
+ * for Vitrina whose purchase succeeded but whose follow-up transfer failed
+ * goes to `transferWarnings` instead — the stock is real either way, only
+ * its current location differs from what was requested.
  */
 @Injectable()
 export class ImportPurchaseFromExcelUseCase {
   constructor(
     private readonly createPurchaseUseCase: CreatePurchaseUseCase,
+    private readonly registerInventoryTransferUseCase: RegisterInventoryTransferUseCase,
     @Inject(PRODUCT_REPOSITORY)
     private readonly productRepository: ProductRepository,
     @Inject(PRODUCT_PRESENTATION_REPOSITORY)
     private readonly productPresentationRepository: ProductPresentationRepository,
+    @Inject(INVENTORY_LOCATION_REPOSITORY)
+    private readonly inventoryLocationRepository: InventoryLocationRepository,
     @Inject(SUPPLIER_REPOSITORY)
     private readonly supplierRepository: SupplierRepository,
   ) {}
@@ -131,7 +157,7 @@ export class ImportPurchaseFromExcelUseCase {
 
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
-      const cellValues = Array.from({ length: 4 }, (_, i) => row.getCell(i + 1).value);
+      const cellValues = Array.from({ length: 5 }, (_, i) => row.getCell(i + 1).value);
       const isBlankRow = cellValues.every((value) => value === null || value === undefined || value === '');
       if (isBlankRow) {
         continue;
@@ -155,6 +181,17 @@ export class ImportPurchaseFromExcelUseCase {
       const quantity = this.cellNumber(cellValues[3]);
       if (quantity === null || !Number.isInteger(quantity) || quantity <= 0) {
         skipped.push({ row: rowNumber, identifier, reason: 'La cantidad debe ser un número entero mayor a 0.' });
+        continue;
+      }
+
+      const destinationRaw = this.cellText(cellValues[4]);
+      const destination = this.resolveDestination(destinationRaw);
+      if (!destination) {
+        skipped.push({
+          row: rowNumber,
+          identifier,
+          reason: `La ubicación destino "${destinationRaw}" no es válida — debe ser "Bodega" o "Vitrina".`,
+        });
         continue;
       }
 
@@ -196,16 +233,23 @@ export class ImportPurchaseFromExcelUseCase {
         quantity,
         costPrice: presentation.costPrice,
         publicPrice: presentation.publicPrice,
+        destination,
       });
     }
 
     if (resolvedItems.length === 0) {
-      return { totalRows, productsAffected: 0, purchasesCreated: 0, skipped };
+      return { totalRows, productsAffected: 0, purchasesCreated: 0, transfersToVitrina: 0, skipped, transferWarnings: [] };
     }
 
     const supplierId = await this.resolveInitialStockSupplierId();
+    const needsVitrina = resolvedItems.some((item) => item.destination === 'Vitrina');
+    const { bodegaId, vitrinaId } = needsVitrina
+      ? await this.resolveLocationIds()
+      : { bodegaId: '', vitrinaId: '' };
 
     let purchasesCreated = 0;
+    let transfersToVitrina = 0;
+    const transferWarnings: ImportPurchaseRowResult[] = [];
     const successfulProductIds = new Set<string>();
     for (let i = 0; i < resolvedItems.length; i += PURCHASE_BATCH_SIZE) {
       const batch = resolvedItems.slice(i, i + PURCHASE_BATCH_SIZE);
@@ -233,6 +277,36 @@ export class ImportPurchaseFromExcelUseCase {
         for (const item of batch) {
           skipped.push({ row: item.row, identifier: item.identifier, reason });
         }
+        continue;
+      }
+
+      // The batch's purchase is already real and saved (every line just
+      // entered Bodega) — a row asking for Vitrina now gets relocated,
+      // one transfer per line (the transfer mechanism has no bulk form).
+      // A failure here never undoes the purchase; it only means the stock
+      // stays in Bodega instead of moving, reported separately below.
+      for (const item of batch) {
+        if (item.destination !== 'Vitrina') {
+          continue;
+        }
+        try {
+          await this.registerInventoryTransferUseCase.execute({
+            productId: item.productId,
+            presentationId: item.presentationId,
+            fromLocationId: bodegaId,
+            toLocationId: vitrinaId,
+            quantity: item.quantity,
+            userId,
+            reason: 'Carga inicial de inventario',
+          });
+          transfersToVitrina += 1;
+        } catch (error) {
+          const reason =
+            error instanceof DomainError
+              ? `Se compró correctamente, pero no se pudo trasladar a Vitrina: ${error.message}`
+              : 'Se compró correctamente, pero no se pudo trasladar a Vitrina.';
+          transferWarnings.push({ row: item.row, identifier: item.identifier, reason });
+        }
       }
     }
 
@@ -240,7 +314,9 @@ export class ImportPurchaseFromExcelUseCase {
       totalRows,
       productsAffected: successfulProductIds.size,
       purchasesCreated,
+      transfersToVitrina,
       skipped,
+      transferWarnings,
     };
   }
 
@@ -254,6 +330,32 @@ export class ImportPurchaseFromExcelUseCase {
       );
     }
     return supplier.id;
+  }
+
+  private async resolveLocationIds(): Promise<{ bodegaId: string; vitrinaId: string }> {
+    const locations = await this.inventoryLocationRepository.findAll({ activeOnly: true });
+    const bodega = locations.find((l) => l.name.trim().toLowerCase() === 'bodega');
+    const vitrina = locations.find((l) => l.name.trim().toLowerCase() === 'vitrina');
+    if (!bodega || !vitrina) {
+      throw new InternalServerErrorException(
+        'No se encontraron las ubicaciones "Bodega"/"Vitrina" — verifica que las migraciones se hayan ejecutado.',
+      );
+    }
+    return { bodegaId: bodega.id, vitrinaId: vitrina.id };
+  }
+
+  private resolveDestination(raw: string): DestinationLocationName | null {
+    const normalized = raw.trim().toLowerCase();
+    if (!normalized) {
+      return DEFAULT_DESTINATION;
+    }
+    if (normalized === 'bodega') {
+      return 'Bodega';
+    }
+    if (normalized === 'vitrina') {
+      return 'Vitrina';
+    }
+    return null;
   }
 
   private cellText(value: unknown): string {

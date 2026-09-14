@@ -1,8 +1,14 @@
 @if (open && result) {
   <div class="modal-backdrop" (click)="closed.emit()">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal__icon" [class.modal__icon--warning]="result.skipped.length > 0">
-        <app-icon [name]="result.skipped.length > 0 ? 'alert-triangle' : 'check-circle'" [size]="24" />
+      <div
+        class="modal__icon"
+        [class.modal__icon--warning]="result.skipped.length > 0 || result.transferWarnings.length > 0"
+      >
+        <app-icon
+          [name]="result.skipped.length > 0 || result.transferWarnings.length > 0 ? 'alert-triangle' : 'check-circle'"
+          [size]="24"
+        />
       </div>
 
       <h2 class="modal__title">Carga de stock inicial completada</h2>
@@ -12,9 +18,18 @@
         <strong>{{ result.purchasesCreated }}</strong>
         {{ result.purchasesCreated === 1 ? 'compra' : 'compras' }}, de <strong>{{ result.totalRows }}</strong>
         {{ result.totalRows === 1 ? 'fila procesada' : 'filas procesadas' }}.
+        @if (result.transfersToVitrina > 0) {
+          <strong>{{ result.transfersToVitrina }}</strong>
+          {{ result.transfersToVitrina === 1 ? 'fila se trasladó' : 'filas se trasladaron' }} a Vitrina.
+        }
         @if (result.skipped.length > 0) {
           <strong>{{ result.skipped.length }}</strong> fila{{ result.skipped.length === 1 ? '' : 's' }} se
           omitieron.
+        }
+        @if (result.transferWarnings.length > 0) {
+          <strong>{{ result.transferWarnings.length }}</strong>
+          {{ result.transferWarnings.length === 1 ? 'fila se compró' : 'filas se compraron' }} pero no se pudo
+          trasladar a Vitrina.
         }
       </p>
 
@@ -36,6 +51,30 @@
             </thead>
             <tbody>
               @for (row of result.skipped; track row.row) {
+                <tr>
+                  <td>{{ row.row }}</td>
+                  <td>{{ row.identifier }}</td>
+                  <td>{{ row.reason }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (result.transferWarnings.length > 0) {
+        <p class="modal__section-title">Compradas pero no trasladadas a Vitrina</p>
+        <div class="modal__table-wrapper">
+          <table class="modal__table">
+            <thead>
+              <tr>
+                <th>Fila</th>
+                <th>Producto</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result.transferWarnings; track row.row) {
                 <tr>
                   <td>{{ row.row }}</td>
                   <td>{{ row.identifier }}</td>
