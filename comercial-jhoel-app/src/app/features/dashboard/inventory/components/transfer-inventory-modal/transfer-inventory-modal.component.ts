@@ -10,7 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
@@ -23,8 +23,11 @@ import {
 import { InventoryLocationsService } from '../../../../../core/services/inventory-locations.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
+
+/** How many matches the product search dropdown shows at once — the full `products` list can be sizable, and a picker never needs to render more than a screenful of rows. */
+const MAX_PRODUCT_RESULTS = 20;
 
 /**
  * "Trasladar inventario" — Bodega ↔ Vitrina (or any two active locations),
@@ -38,7 +41,14 @@ import { DecimalInputDirective } from '../../../../../shared/directives/decimal-
 @Component({
   selector: 'app-transfer-inventory-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, IconComponent, DecimalInputDirective],
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    ButtonComponent,
+    IconComponent,
+    DecimalInputDirective,
+    BarcodeScannerModalComponent,
+  ],
   templateUrl: './transfer-inventory-modal.component.html',
   styleUrl: './transfer-inventory-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +66,11 @@ export class TransferInventoryModalComponent implements OnChanges {
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  /** Text the user has typed/scanned into the product picker — independent of `form.controls.productId`, which only holds the chosen id once a result is actually picked. */
+  readonly productQuery = signal('');
+  readonly productDropdownOpen = signal(false);
+  readonly scannerOpen = signal(false);
 
   readonly locations = signal<InventoryLocation[]>([]);
   readonly presentations = signal<ProductPresentation[]>([]);
@@ -83,6 +98,57 @@ export class TransferInventoryModalComponent implements OnChanges {
   get selectedProduct(): Product | null {
     const id = this.form.controls.productId.value;
     return this.products.find((p) => p.id === id) ?? null;
+  }
+
+  /** Client-side filter over the already-loaded `products` input — same "por SKU o nombre" matching the main Inventario search already uses, no new endpoint or debounce needed since the full list is already in memory. */
+  filteredProducts(): Product[] {
+    const term = this.productQuery().trim().toLowerCase();
+    if (!term) {
+      return [];
+    }
+    return this.products
+      .filter((p) => p.name.toLowerCase().includes(term) || (p.sku ?? '').toLowerCase().includes(term))
+      .slice(0, MAX_PRODUCT_RESULTS);
+  }
+
+  onProductQueryInput(value: string): void {
+    this.productQuery.set(value);
+    this.productDropdownOpen.set(true);
+    if (this.form.controls.productId.value) {
+      this.form.controls.productId.setValue('');
+    }
+  }
+
+  onProductFocus(): void {
+    if (this.productQuery().trim()) {
+      this.productDropdownOpen.set(true);
+    }
+  }
+
+  onProductBlur(): void {
+    // Delay so a click on a result registers before the dropdown closes.
+    setTimeout(() => this.productDropdownOpen.set(false), 150);
+  }
+
+  selectProduct(product: Product): void {
+    this.productQuery.set(product.name);
+    this.productDropdownOpen.set(false);
+    this.form.controls.productId.setValue(product.id);
+  }
+
+  openScanner(): void {
+    this.scannerOpen.set(true);
+  }
+
+  onBarcodeScanned(code: string): void {
+    this.scannerOpen.set(false);
+    this.productQuery.set(code);
+    const first = this.filteredProducts()[0];
+    if (first) {
+      this.selectProduct(first);
+    } else {
+      this.productDropdownOpen.set(true);
+    }
   }
 
   get selectedPresentation(): ProductPresentation | null {
@@ -180,6 +246,8 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.isSubmitting.set(false);
     this.presentations.set([]);
     this.productInventory.set(null);
+    this.productQuery.set('');
+    this.productDropdownOpen.set(false);
     this.form.reset({
       productId: '',
       presentationId: '',
