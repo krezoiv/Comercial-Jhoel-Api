@@ -12,6 +12,7 @@
     [stockFilter]="stockFilter()"
     [canManage]="isAdmin()"
     [importing]="isImporting()"
+    [importingInitialStock]="isImportingInitialStock()"
     (searchTermChange)="searchTerm.set($event)"
     (selectedCategoryChange)="selectedCategory.set($event)"
     (selectedBusinessChange)="selectedBusiness.set($event)"
@@ -22,6 +23,8 @@
     (exportExcel)="onExportExcel()"
     (importFile)="onImportFile($event)"
     (downloadImportTemplate)="onDownloadImportTemplate()"
+    (importInitialStockFile)="onImportInitialStockFile($event)"
+    (downloadInitialStockTemplate)="onDownloadInitialStockTemplate()"
   />
 
   <app-product-table
@@ -66,4 +69,10 @@
   [open]="isImportResultsOpen()"
   [result]="importResult()"
   (closed)="closeImportResults()"
+/>
+
+<app-import-purchase-results-modal
+  [open]="isImportInitialStockResultsOpen()"
+  [result]="importInitialStockResult()"
+  (closed)="closeImportInitialStockResults()"
 />

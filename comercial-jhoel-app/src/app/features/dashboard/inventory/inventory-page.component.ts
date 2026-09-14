@@ -6,6 +6,7 @@ import {
   Business,
   Category,
   ImportProductsResult,
+  ImportPurchaseResult,
   InventoryStats,
   Product,
   UnitOfMeasureListItem,
@@ -16,6 +17,7 @@ import { CategoryService } from '../../../core/services/category.service';
 import { BusinessService } from '../../../core/services/business.service';
 import { UnitOfMeasureService } from '../../../core/services/unit-of-measure.service';
 import { InventoryService } from '../../../core/services/inventory.service';
+import { PurchasesService } from '../../../core/services/purchases.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { downloadBlob } from '../../../core/utils/download-blob';
@@ -28,6 +30,7 @@ import { ProductFormModalComponent } from './components/product-form-modal/produ
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
 import { TransferInventoryModalComponent } from './components/transfer-inventory-modal/transfer-inventory-modal.component';
 import { ImportResultsModalComponent } from './components/import-results-modal/import-results-modal.component';
+import { ImportPurchaseResultsModalComponent } from './components/import-purchase-results-modal/import-purchase-results-modal.component';
 
 @Component({
   selector: 'app-inventory-page',
@@ -41,6 +44,7 @@ import { ImportResultsModalComponent } from './components/import-results-modal/i
     DeleteConfirmModalComponent,
     TransferInventoryModalComponent,
     ImportResultsModalComponent,
+    ImportPurchaseResultsModalComponent,
   ],
   templateUrl: './inventory-page.component.html',
   styleUrl: './inventory-page.component.scss',
@@ -64,6 +68,7 @@ import { ImportResultsModalComponent } from './components/import-results-modal/i
  */
 export class InventoryPageComponent {
   private readonly inventoryService = inject(InventoryService);
+  private readonly purchasesService = inject(PurchasesService);
   private readonly categoryService = inject(CategoryService);
   private readonly businessService = inject(BusinessService);
   private readonly unitOfMeasureService = inject(UnitOfMeasureService);
@@ -76,6 +81,10 @@ export class InventoryPageComponent {
   readonly isImporting = signal(false);
   readonly isImportResultsOpen = signal(false);
   readonly importResult = signal<ImportProductsResult | null>(null);
+
+  readonly isImportingInitialStock = signal(false);
+  readonly isImportInitialStockResultsOpen = signal(false);
+  readonly importInitialStockResult = signal<ImportPurchaseResult | null>(null);
 
   /** ADMIN/SUPER_ADMIN only — passed down to hide add/edit/delete for USER. The backend enforces this regardless. */
   readonly isAdmin = this.authService.isAdmin;
@@ -369,5 +378,45 @@ export class InventoryPageComponent {
   closeImportResults(): void {
     this.isImportResultsOpen.set(false);
     this.importResult.set(null);
+  }
+
+  onDownloadInitialStockTemplate(): void {
+    this.purchasesService.downloadInitialStockTemplate().subscribe({
+      next: (blob) => downloadBlob(blob, 'plantilla-compra-inicial.xlsx'),
+      error: async (error: HttpErrorResponse) =>
+        this.notificationService.error(
+          await extractBlobErrorMessage(error, 'No se pudo descargar la plantilla.'),
+        ),
+    });
+  }
+
+  /**
+   * Every row `POST /purchases/import` accepted already registered a real
+   * purchase (stock included) by the time this resolves — same "show the
+   * result, then refetch once" follow-up as `onImportFile`, since this
+   * mutation changes stock, not just the catalog.
+   */
+  onImportInitialStockFile(file: File): void {
+    this.isImportingInitialStock.set(true);
+    this.purchasesService.importInitialStockExcel(file).subscribe({
+      next: (result) => {
+        this.isImportingInitialStock.set(false);
+        this.importInitialStockResult.set(result);
+        this.isImportInitialStockResultsOpen.set(true);
+        if (result.purchasesCreated > 0) {
+          this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+          this.fetchStats();
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isImportingInitialStock.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo importar el archivo.'));
+      },
+    });
+  }
+
+  closeImportInitialStockResults(): void {
+    this.isImportInitialStockResultsOpen.set(false);
+    this.importInitialStockResult.set(null);
   }
 }

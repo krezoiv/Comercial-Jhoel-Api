@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -9,8 +10,11 @@ import {
   Post,
   Query,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
@@ -23,15 +27,27 @@ import { GetPurchaseByIdUseCase } from '../../application/use-cases/get-purchase
 import { MarkPurchaseAsPaidUseCase } from '../../application/use-cases/mark-purchase-as-paid.use-case';
 import { GetPurchasePdfUseCase } from '../../application/use-cases/get-purchase-pdf.use-case';
 import { VoidPurchaseUseCase } from '../../application/use-cases/void-purchase.use-case';
+import { ImportPurchaseFromExcelUseCase } from '../../application/use-cases/import-purchase-from-excel.use-case';
+import { buildPurchaseImportTemplate } from '../../infrastructure/excel/purchase-import.builder';
 import { CreatePurchaseRequestDto } from '../dtos/create-purchase.request.dto';
 import { ListPurchasesQueryDto } from '../dtos/list-purchases.query.dto';
 import { VoidPurchaseRequestDto } from '../dtos/void-purchase.request.dto';
+import { ImportPurchaseResultResponseDto } from '../dtos/import-purchase-result.response.dto';
 import {
   PaginatedPurchasesResponseDto,
   PurchaseResponseDto,
 } from '../dtos/purchase.response.dto';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+
+/** The minimal shape actually read off an uploaded file — same as `ProductsController`'s own, avoids a dependency on `@types/multer` for a single-field usage. */
+interface UploadedExcelFile {
+  buffer: Buffer;
+  originalname: string;
+  size: number;
+}
+
+const MAX_IMPORT_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /**
  * No `@Roles(...)` restriction — same policy as Sales, applied consistently
@@ -52,6 +68,7 @@ export class PurchasesController {
     private readonly markPurchaseAsPaidUseCase: MarkPurchaseAsPaidUseCase,
     private readonly getPurchasePdfUseCase: GetPurchasePdfUseCase,
     private readonly voidPurchaseUseCase: VoidPurchaseUseCase,
+    private readonly importPurchaseFromExcelUseCase: ImportPurchaseFromExcelUseCase,
   ) {}
 
   @Post()
@@ -69,6 +86,29 @@ export class PurchasesController {
       paymentDueDate: dto.paymentDueDate,
       invoiceNumber: dto.invoiceNumber,
     });
+  }
+
+  /**
+   * "Cargar stock inicial (Excel)" — registers one or more real purchases
+   * (see `ImportPurchaseFromExcelUseCase`'s own doc comment) attributed to
+   * the fixed "Carga Inicial de Inventario" supplier. Admin-only, like
+   * Products' own bulk import — registering hundreds of purchases at once
+   * is a heavier action than the operational, any-authenticated-account
+   * `POST /purchases` above. Declared before `POST /:id/void`/`:id/pay` so
+   * "import" is never swallowed as an `:id` value.
+   */
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_FILE_SIZE_BYTES } }))
+  importExcel(
+    @UploadedFile() file: UploadedExcelFile,
+    @CurrentUser('userId') userId: string,
+  ): Promise<ImportPurchaseResultResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Debes adjuntar un archivo Excel (.xlsx).');
+    }
+    return this.importPurchaseFromExcelUseCase.execute(file.buffer, userId);
   }
 
   /**
@@ -113,6 +153,20 @@ export class PurchasesController {
       isAdmin: ADMIN_ROLES.includes(user.role),
       ...query,
     });
+  }
+
+  /** Downloads the blank Excel template for "Cargar stock inicial" — declared before `GET /:id/pdf`/`:id` for the same route-ordering reason as the import route above. */
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Get('import/template')
+  async importTemplate(@Res() res: Response): Promise<void> {
+    const buffer = await buildPurchaseImportTemplate();
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="plantilla-compra-inicial.xlsx"',
+      'Content-Length': String(buffer.length),
+    });
+    res.send(buffer);
   }
 
   /**

@@ -92,17 +92,36 @@
           <app-icon name="upload" [size]="16" />
           {{ importing ? 'Importando…' : 'Importar Excel' }}
         </app-button>
+
+        <input
+          #importInitialStockFileInput
+          type="file"
+          accept=".xlsx"
+          class="visually-hidden"
+          (change)="onInitialStockFileSelected($event)"
+        />
+        <app-button
+          variant="ghost"
+          [disabled]="importingInitialStock"
+          (click)="importInitialStockFileInput.click()"
+        >
+          <app-icon name="upload" [size]="16" />
+          {{ importingInitialStock ? 'Cargando…' : 'Cargar stock inicial' }}
+        </app-button>
       }
     </div>
   </div>
 
   @if (canManage) {
     <div class="toolbar__import-hint">
-      ¿Primera vez importando?
+      ¿Primera vez importando productos?
       <button type="button" class="template-link" (click)="downloadImportTemplate.emit()">
         Descarga la plantilla
       </button>
-      con el formato exacto.
+      con el formato exacto. Para cargar el stock inicial de productos ya existentes (como una compra real),
+      <button type="button" class="template-link" (click)="downloadInitialStockTemplate.emit()">
+        descarga esta otra plantilla
+      </button>.
     </div>
   }
 

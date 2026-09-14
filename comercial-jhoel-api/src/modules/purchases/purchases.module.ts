@@ -10,15 +10,23 @@ import { GetPurchaseByIdUseCase } from './application/use-cases/get-purchase-by-
 import { MarkPurchaseAsPaidUseCase } from './application/use-cases/mark-purchase-as-paid.use-case';
 import { GetPurchasePdfUseCase } from './application/use-cases/get-purchase-pdf.use-case';
 import { VoidPurchaseUseCase } from './application/use-cases/void-purchase.use-case';
+import { ImportPurchaseFromExcelUseCase } from './application/use-cases/import-purchase-from-excel.use-case';
 import { PurchasesController } from './presentation/controllers/purchases.controller';
 import { SuppliersModule } from '../suppliers/suppliers.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
+import { ProductsModule } from '../products/products.module';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PurchaseOrmEntity, PurchaseDetailOrmEntity]),
     SuppliersModule,
     CompanySettingsModule,
+    // Both needed only by `ImportPurchaseFromExcelUseCase` — resolving a
+    // SKU/nombre column to a productId, and a presentación name to one of
+    // that product's own presentations.
+    ProductsModule,
+    InventoryModule,
   ],
   controllers: [PurchasesController],
   providers: [
@@ -29,6 +37,7 @@ import { CompanySettingsModule } from '../company-settings/company-settings.modu
     MarkPurchaseAsPaidUseCase,
     GetPurchasePdfUseCase,
     VoidPurchaseUseCase,
+    ImportPurchaseFromExcelUseCase,
   ],
   // Exported for ReportsModule's `GetPurchaseReportDetailUseCase` — same
   // reuse-over-duplicate reasoning as `SalesModule`.

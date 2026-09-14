@@ -37,6 +37,8 @@ export class InventoryToolbarComponent {
   @Input() canManage = true;
   /** True while `POST /products/import` is in flight — disables the button so a slow upload can't be double-submitted. */
   @Input() importing = false;
+  /** True while `POST /purchases/import` ("Cargar stock inicial") is in flight — same double-submit guard as `importing`. */
+  @Input() importingInitialStock = false;
 
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() selectedCategoryChange = new EventEmitter<string>();
@@ -48,6 +50,8 @@ export class InventoryToolbarComponent {
   @Output() exportExcel = new EventEmitter<void>();
   @Output() importFile = new EventEmitter<File>();
   @Output() downloadImportTemplate = new EventEmitter<void>();
+  @Output() importInitialStockFile = new EventEmitter<File>();
+  @Output() downloadInitialStockTemplate = new EventEmitter<void>();
 
   readonly stockFilterOptions = STOCK_FILTER_OPTIONS;
   readonly scannerOpen = signal(false);
@@ -58,6 +62,16 @@ export class InventoryToolbarComponent {
     const file = input.files?.[0];
     if (file) {
       this.importFile.emit(file);
+    }
+    input.value = '';
+  }
+
+  /** Same forward-and-clear pattern as `onFileSelected`, for the separate "Cargar stock inicial" upload. */
+  onInitialStockFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.importInitialStockFile.emit(file);
     }
     input.value = '';
   }

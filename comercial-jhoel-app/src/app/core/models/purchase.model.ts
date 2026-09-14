@@ -78,6 +78,20 @@ export interface CreatePurchaseInput {
   invoiceNumber?: string;
 }
 
+export interface ImportPurchaseSkippedRow {
+  row: number;
+  identifier: string;
+  reason: string;
+}
+
+/** `POST /purchases/import`'s response shape ("Cargar stock inicial") — mirrors `ImportPurchaseResultResponseDto` on the backend exactly. */
+export interface ImportPurchaseResult {
+  totalRows: number;
+  productsAffected: number;
+  purchasesCreated: number;
+  skipped: ImportPurchaseSkippedRow[];
+}
+
 export type PurchaseStatusFilter = 'ACTIVE' | 'VOIDED';
 
 /** Filters for "Administrar Facturas de Compras" — matches `GET /purchases`'s own query params exactly. */

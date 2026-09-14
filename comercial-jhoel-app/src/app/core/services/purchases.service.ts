@@ -3,7 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, CreatePurchaseInput, ListPurchasesFilters, PaginatedResponse, Purchase } from '../models';
+import {
+  ApiSuccessResponse,
+  CreatePurchaseInput,
+  ImportPurchaseResult,
+  ListPurchasesFilters,
+  PaginatedResponse,
+  Purchase,
+} from '../models';
 
 const BASE_URL = `${environment.apiUrl}/purchases`;
 
@@ -51,6 +58,26 @@ export class PurchasesService {
   voidPurchase(id: string, reason: string): Observable<Purchase> {
     return this.http
       .post<ApiSuccessResponse<Purchase>>(`${BASE_URL}/${id}/void`, { reason })
+      .pipe(map((response) => response.data));
+  }
+
+  /** The blank `.xlsx` template `ImportPurchaseFromExcelUseCase` expects — same blob-download shape as Products' own import template. */
+  downloadInitialStockTemplate(): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/import/template`, { responseType: 'blob' });
+  }
+
+  /**
+   * "Cargar stock inicial (Excel)" — `POST /purchases/import`, a plain JSON
+   * response (counts + skipped rows), not a file, so unlike the template
+   * download this is a normal `FormData` upload with no `responseType:
+   * 'blob'`. Every row the backend accepted is already a real, saved
+   * purchase by the time this resolves.
+   */
+  importInitialStockExcel(file: File): Observable<ImportPurchaseResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<ApiSuccessResponse<ImportPurchaseResult>>(`${BASE_URL}/import`, formData)
       .pipe(map((response) => response.data));
   }
 }
