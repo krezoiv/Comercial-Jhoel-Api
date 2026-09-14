@@ -29,6 +29,9 @@ import { DecimalInputDirective } from '../../../../../shared/directives/decimal-
 /** How many matches the product search dropdown shows at once — the full `products` list can be sizable, and a picker never needs to render more than a screenful of rows. */
 const MAX_PRODUCT_RESULTS = 20;
 
+/** Minimal shape needed to pre-lock the product picker — a caller that already knows exactly which product (e.g. the product detail page) doesn't need to hand over a whole `Product`. */
+export type LockedProduct = Pick<Product, 'id' | 'name'>;
+
 /**
  * "Trasladar inventario" — Bodega ↔ Vitrina (or any two active locations),
  * by any presentation, with a live conversion preview and an exact-wording
@@ -56,6 +59,8 @@ const MAX_PRODUCT_RESULTS = 20;
 export class TransferInventoryModalComponent implements OnChanges {
   @Input() open = false;
   @Input() products: Product[] = [];
+  /** When set, the product picker is skipped entirely — used from the product detail page, which already knows exactly which product to transfer and shouldn't make the user search for it again. */
+  @Input() lockedProduct: LockedProduct | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() completed = new EventEmitter<void>();
@@ -95,8 +100,11 @@ export class TransferInventoryModalComponent implements OnChanges {
       .subscribe((productId) => this.onProductChange(productId));
   }
 
-  get selectedProduct(): Product | null {
+  get selectedProduct(): Product | LockedProduct | null {
     const id = this.form.controls.productId.value;
+    if (this.lockedProduct?.id === id) {
+      return this.lockedProduct;
+    }
     return this.products.find((p) => p.id === id) ?? null;
   }
 
@@ -246,10 +254,10 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.isSubmitting.set(false);
     this.presentations.set([]);
     this.productInventory.set(null);
-    this.productQuery.set('');
+    this.productQuery.set(this.lockedProduct?.name ?? '');
     this.productDropdownOpen.set(false);
     this.form.reset({
-      productId: '',
+      productId: this.lockedProduct?.id ?? '',
       presentationId: '',
       fromLocationId: '',
       toLocationId: '',

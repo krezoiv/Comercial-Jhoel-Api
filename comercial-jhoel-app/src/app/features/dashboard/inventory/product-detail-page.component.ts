@@ -17,6 +17,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, BadgeComponent, CardComponent, IconComponent, EmptyStateComponent, PageHeaderComponent } from '../../../shared/ui';
 import { PresentationFormModalComponent } from './components/presentation-form-modal/presentation-form-modal.component';
+import { TransferInventoryModalComponent } from './components/transfer-inventory-modal/transfer-inventory-modal.component';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 
 /**
@@ -40,6 +41,7 @@ import { DecimalInputDirective } from '../../../shared/directives/decimal-input.
     IconComponent,
     EmptyStateComponent,
     PresentationFormModalComponent,
+    TransferInventoryModalComponent,
     DecimalInputDirective,
   ],
   templateUrl: './product-detail-page.component.html',
@@ -65,6 +67,7 @@ export class ProductDetailPageComponent {
 
   readonly isPresentationFormOpen = signal(false);
   readonly editingPresentation = signal<ProductPresentation | null>(null);
+  readonly isTransferOpen = signal(false);
 
   /** The active, non-"Unidad" presentation with the largest factor — the natural "bulk" unit (e.g. Caja) to show a per-location equivalence for. `null` when a product only has "Unidad" (factor 1), since showing "X unidades (X unidades)" would be redundant noise. */
   get bulkPresentation(): ProductPresentation | null {
@@ -138,6 +141,23 @@ export class ProductDetailPageComponent {
   onPresentationSaved(): void {
     this.isPresentationFormOpen.set(false);
     this.notificationService.success('Presentación guardada correctamente.');
+    this.fetchDetail();
+  }
+
+  openTransferModal(): void {
+    this.isTransferOpen.set(true);
+  }
+
+  closeTransferModal(): void {
+    this.isTransferOpen.set(false);
+  }
+
+  onTransferCompleted(): void {
+    this.isTransferOpen.set(false);
+    this.notificationService.success('Traslado registrado correctamente.');
+    // Same reason `InventoryPageComponent.onTransferCompleted()` refetches —
+    // the per-location breakdown (and the recent-movements table) just
+    // changed, not only the running total.
     this.fetchDetail();
   }
 

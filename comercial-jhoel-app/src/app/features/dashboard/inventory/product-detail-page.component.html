@@ -16,7 +16,12 @@
   } @else {
     @let d = detail()!;
 
-    <app-page-header icon="package" [title]="d.productName" [subtitle]="d.categoryName + (d.sku ? ' · SKU: ' + d.sku : '')" />
+    <app-page-header icon="package" [title]="d.productName" [subtitle]="d.categoryName + (d.sku ? ' · SKU: ' + d.sku : '')">
+      <app-button variant="ghost" (click)="openTransferModal()">
+        <app-icon name="arrow-right" [size]="16" />
+        Trasladar inventario
+      </app-button>
+    </app-page-header>
 
     <div class="detail__grid">
       <app-card>
@@ -239,6 +244,13 @@
         }
       </app-card>
     </div>
+
+    <app-transfer-inventory-modal
+      [open]="isTransferOpen()"
+      [lockedProduct]="{ id: d.productId, name: d.productName }"
+      (closed)="closeTransferModal()"
+      (completed)="onTransferCompleted()"
+    />
   }
 </div>
 

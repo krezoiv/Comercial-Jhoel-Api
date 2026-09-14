@@ -90,6 +90,24 @@
   }
 }
 
+/** Shown instead of the search box when `lockedProduct` is set (opened from the product detail page) — same visual weight as the other fields, but plainly non-interactive since there's nothing to pick. */
+.product-locked {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-bg-light-muted);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-on-light);
+  font-size: var(--fs-sm);
+
+  app-icon {
+    color: var(--color-text-on-light-subtle);
+    flex-shrink: 0;
+  }
+}
+
 .product-search {
   position: relative;
 }

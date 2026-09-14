@@ -11,51 +11,58 @@
       <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="field">
           <label for="transfer-product">Producto</label>
-          <div class="product-search">
-            <label class="product-search__box" for="transfer-product">
-              <app-icon name="search" [size]="18" />
-              <input
-                id="transfer-product"
-                type="text"
-                placeholder="Buscar por SKU o nombre…"
-                autocomplete="off"
-                [ngModel]="productQuery()"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onProductQueryInput($event)"
-                (focus)="onProductFocus()"
-                (blur)="onProductBlur()"
-              />
-              <button
-                type="button"
-                class="product-search__scan-btn"
-                title="Escanear código de barras"
-                (click)="openScanner()"
-              >
-                <app-icon name="camera" [size]="16" />
-              </button>
-            </label>
+          @if (lockedProduct) {
+            <div class="product-locked">
+              <app-icon name="package" [size]="16" />
+              <span>{{ lockedProduct.name }}</span>
+            </div>
+          } @else {
+            <div class="product-search">
+              <label class="product-search__box" for="transfer-product">
+                <app-icon name="search" [size]="18" />
+                <input
+                  id="transfer-product"
+                  type="text"
+                  placeholder="Buscar por SKU o nombre…"
+                  autocomplete="off"
+                  [ngModel]="productQuery()"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onProductQueryInput($event)"
+                  (focus)="onProductFocus()"
+                  (blur)="onProductBlur()"
+                />
+                <button
+                  type="button"
+                  class="product-search__scan-btn"
+                  title="Escanear código de barras"
+                  (click)="openScanner()"
+                >
+                  <app-icon name="camera" [size]="16" />
+                </button>
+              </label>
 
-            @if (productDropdownOpen() && productQuery().trim()) {
-              <div class="product-search__dropdown">
-                @if (filteredProducts().length === 0) {
-                  <p class="product-search__empty">No se encontraron productos.</p>
-                } @else {
-                  @for (product of filteredProducts(); track product.id) {
-                    <button type="button" class="product-search__result" (click)="selectProduct(product)">
-                      <span class="product-search__result-name">{{ product.name }}</span>
-                      <span class="product-search__result-meta">{{ product.sku || 'Sin SKU' }}</span>
-                    </button>
+              @if (productDropdownOpen() && productQuery().trim()) {
+                <div class="product-search__dropdown">
+                  @if (filteredProducts().length === 0) {
+                    <p class="product-search__empty">No se encontraron productos.</p>
+                  } @else {
+                    @for (product of filteredProducts(); track product.id) {
+                      <button type="button" class="product-search__result" (click)="selectProduct(product)">
+                        <span class="product-search__result-name">{{ product.name }}</span>
+                        <span class="product-search__result-meta">{{ product.sku || 'Sin SKU' }}</span>
+                      </button>
+                    }
                   }
-                }
-              </div>
-            }
-          </div>
+                </div>
+              }
+            </div>
 
-          <app-barcode-scanner-modal
-            [open]="scannerOpen()"
-            (scanned)="onBarcodeScanned($event)"
-            (closed)="scannerOpen.set(false)"
-          />
+            <app-barcode-scanner-modal
+              [open]="scannerOpen()"
+              (scanned)="onBarcodeScanned($event)"
+              (closed)="scannerOpen.set(false)"
+            />
+          }
 
           @if (form.controls.productId.invalid && form.controls.productId.touched) {
             <span class="field__error">Selecciona un producto.</span>
