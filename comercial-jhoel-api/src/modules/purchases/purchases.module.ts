@@ -11,6 +11,9 @@ import { MarkPurchaseAsPaidUseCase } from './application/use-cases/mark-purchase
 import { GetPurchasePdfUseCase } from './application/use-cases/get-purchase-pdf.use-case';
 import { VoidPurchaseUseCase } from './application/use-cases/void-purchase.use-case';
 import { ImportPurchaseFromExcelUseCase } from './application/use-cases/import-purchase-from-excel.use-case';
+import { GetPurchasesDailyStatsUseCase } from './application/use-cases/get-purchases-daily-stats.use-case';
+import { GetPurchasesWeeklyStatsUseCase } from './application/use-cases/get-purchases-weekly-stats.use-case';
+import { GetPurchasesYearlyStatsUseCase } from './application/use-cases/get-purchases-yearly-stats.use-case';
 import { PurchasesController } from './presentation/controllers/purchases.controller';
 import { SuppliersModule } from '../suppliers/suppliers.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
@@ -38,6 +41,9 @@ import { InventoryModule } from '../inventory/inventory.module';
     GetPurchasePdfUseCase,
     VoidPurchaseUseCase,
     ImportPurchaseFromExcelUseCase,
+    GetPurchasesDailyStatsUseCase,
+    GetPurchasesWeeklyStatsUseCase,
+    GetPurchasesYearlyStatsUseCase,
   ],
   // Exported for ReportsModule's `GetPurchaseReportDetailUseCase` — same
   // reuse-over-duplicate reasoning as `SalesModule`.

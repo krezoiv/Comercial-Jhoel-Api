@@ -52,6 +52,18 @@ export interface RechargeReportSummary {
   totalSales: number;
 }
 
+export interface RechargeDailySalesAmount {
+  /** `yyyy-MM-dd` — only dates with at least one closed cycle are returned; the caller zero-fills the rest of the range. */
+  date: string;
+  amount: number;
+}
+
+export interface RechargeMonthlySalesAmount {
+  /** `yyyy-MM` — only months with at least one closed cycle are returned; the caller zero-fills the rest of the range. */
+  month: string;
+  amount: number;
+}
+
 export interface RechargeDailyBalanceRepository {
   /** Invokes `ensure_recharge_daily_balance` — finds this date's CURRENT cycle row for this type, or lazily creates it with `previousBalance` copied from the most recent closed cycle. */
   ensureDailyBalance(
@@ -84,4 +96,25 @@ export interface RechargeDailyBalanceRepository {
   getReportSummary(
     options: FindRechargeReportSummaryOptions,
   ): Promise<RechargeReportSummary>;
+  /**
+   * "Venta" (`SUM(daily_balance - final_balance)`, solo ciclos cerrados —
+   * `final_balance IS NOT NULL`) agrupada por día calendario, sumando
+   * **todos** los tipos de recarga (Claro+Tigo combinado, ya confirmado
+   * con el usuario) y **todos** los ciclos de cuadre de ese día — mismo
+   * criterio exacto que `TypeOrmDashboardRepository.getRechargeSalesByDay`
+   * ya usa para su propio indicador de Resumen, ahora expuesto como un
+   * método propio de este repositorio para que Gráficas lo reutilice sin
+   * duplicar la consulta. Nunca excluye días anulados — a diferencia de
+   * `getReportSummary`, no hay ningún caller de este método que necesite
+   * esa exclusión.
+   */
+  getDailySalesTotals(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeDailySalesAmount[]>;
+  /** Igual que `getDailySalesTotals`, agrupado por mes (`yyyy-MM`) — backs "Recargas por mes" (anual) en Gráficas. */
+  getMonthlySalesTotals(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeMonthlySalesAmount[]>;
 }

@@ -7,6 +7,8 @@ import {
   FindRechargeReportSummaryOptions,
   PaginatedResult,
   RechargeDailyBalanceRepository,
+  RechargeDailySalesAmount,
+  RechargeMonthlySalesAmount,
   RechargeReportSummary,
   RegisterRechargeFinalBalanceData,
   RegisterRechargePurchaseData,
@@ -322,5 +324,37 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
       default:
         return error;
     }
+  }
+
+  async getDailySalesTotals(startDate: string, endDate: string): Promise<RechargeDailySalesAmount[]> {
+    const dateExpr = "to_char(balance.date, 'YYYY-MM-DD')";
+    const rows = await this.repository
+      .createQueryBuilder('balance')
+      .select(dateExpr, 'date')
+      .addSelect('COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)', 'amount')
+      .where('balance.finalBalance IS NOT NULL')
+      .andWhere('balance.date >= :startDate', { startDate })
+      .andWhere('balance.date <= :endDate', { endDate })
+      .groupBy(dateExpr)
+      .orderBy(dateExpr, 'ASC')
+      .getRawMany<{ date: string; amount: string }>();
+
+    return rows.map((row) => ({ date: row.date, amount: parseFloat(row.amount) }));
+  }
+
+  async getMonthlySalesTotals(startDate: string, endDate: string): Promise<RechargeMonthlySalesAmount[]> {
+    const monthExpr = "to_char(balance.date, 'YYYY-MM')";
+    const rows = await this.repository
+      .createQueryBuilder('balance')
+      .select(monthExpr, 'month')
+      .addSelect('COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)', 'amount')
+      .where('balance.finalBalance IS NOT NULL')
+      .andWhere('balance.date >= :startDate', { startDate })
+      .andWhere('balance.date <= :endDate', { endDate })
+      .groupBy(monthExpr)
+      .orderBy(monthExpr, 'ASC')
+      .getRawMany<{ month: string; amount: string }>();
+
+    return rows.map((row) => ({ month: row.month, amount: parseFloat(row.amount) }));
   }
 }

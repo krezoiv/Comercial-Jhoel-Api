@@ -51,6 +51,18 @@ export interface PaginatedResult<T> {
   limit: number;
 }
 
+export interface PurchaseDailyAmount {
+  /** `yyyy-MM-dd` — only dates with at least one non-voided purchase are returned; the caller zero-fills the rest of the range. */
+  date: string;
+  amount: number;
+}
+
+export interface PurchaseMonthlyAmount {
+  /** `yyyy-MM` — only months with at least one non-voided purchase are returned; the caller zero-fills the rest of the range. */
+  month: string;
+  amount: number;
+}
+
 export interface PurchaseRepository {
   /** Invokes the `confirm_purchase` Postgres function — the purchase, its details, the stock increase, and the product price update all happen atomically inside it. */
   confirmPurchase(data: ConfirmPurchaseData): Promise<Purchase>;
@@ -65,4 +77,8 @@ export interface PurchaseRepository {
   }): Promise<Purchase[]>;
   /** Invokes the `void_purchase` Postgres function — reverses the exact inventory effect the original purchase applied and marks it `ANULADA`, atomically. Never a physical delete/edit. */
   voidPurchase(id: string, voidedBy: string, reason: string): Promise<Purchase>;
+  /** `SUM(total)` grouped by calendar day (`purchase.purchaseDate`, local server timezone), `is_voided = false` — backs "Compras del mes" en Gráficas. `startDate`/`endDate` are exact instants, never bare date strings, so the `timestamptz` column is never truncated to local midnight. */
+  getDailyPurchaseTotals(startDate: Date, endDate: Date): Promise<PurchaseDailyAmount[]>;
+  /** Same as `getDailyPurchaseTotals`, grouped by month (`yyyy-MM`) instead — backs "Compras por mes" (anual) en Gráficas. */
+  getMonthlyPurchaseTotals(startDate: Date, endDate: Date): Promise<PurchaseMonthlyAmount[]>;
 }

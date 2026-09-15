@@ -8,6 +8,8 @@ import {
   ConfirmSaleData,
   FindSalesOptions,
   PaginatedResult,
+  SaleDailyAmount,
+  SaleMonthlyAmount,
   SaleRepository,
   SaleSortField,
 } from '../../domain/repositories/sale.repository';
@@ -328,5 +330,39 @@ export class TypeOrmSaleRepository implements SaleRepository {
       default:
         return error;
     }
+  }
+
+  async getDailySalesTotals(startDate: Date, endDate: Date): Promise<SaleDailyAmount[]> {
+    const dateExpr = "to_char(sale.saleDate, 'YYYY-MM-DD')";
+    const rows = await this.repository
+      .createQueryBuilder('sale')
+      .select(dateExpr, 'date')
+      .addSelect('COALESCE(SUM(sale.total), 0)', 'amount')
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.isVoided = false')
+      .andWhere('sale.saleDate >= :startDate', { startDate })
+      .andWhere('sale.saleDate <= :endDate', { endDate })
+      .groupBy(dateExpr)
+      .orderBy(dateExpr, 'ASC')
+      .getRawMany<{ date: string; amount: string }>();
+
+    return rows.map((row) => ({ date: row.date, amount: parseFloat(row.amount) }));
+  }
+
+  async getMonthlySalesTotals(startDate: Date, endDate: Date): Promise<SaleMonthlyAmount[]> {
+    const monthExpr = "to_char(sale.saleDate, 'YYYY-MM')";
+    const rows = await this.repository
+      .createQueryBuilder('sale')
+      .select(monthExpr, 'month')
+      .addSelect('COALESCE(SUM(sale.total), 0)', 'amount')
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.isVoided = false')
+      .andWhere('sale.saleDate >= :startDate', { startDate })
+      .andWhere('sale.saleDate <= :endDate', { endDate })
+      .groupBy(monthExpr)
+      .orderBy(monthExpr, 'ASC')
+      .getRawMany<{ month: string; amount: string }>();
+
+    return rows.map((row) => ({ month: row.month, amount: parseFloat(row.amount) }));
   }
 }

@@ -47,6 +47,18 @@ export interface PaginatedResult<T> {
   limit: number;
 }
 
+export interface SaleDailyAmount {
+  /** `yyyy-MM-dd` — only dates with at least one CONFIRMED, non-voided sale are returned; the caller zero-fills the rest of the range. */
+  date: string;
+  amount: number;
+}
+
+export interface SaleMonthlyAmount {
+  /** `yyyy-MM` — only months with at least one CONFIRMED, non-voided sale are returned; the caller zero-fills the rest of the range. */
+  month: string;
+  amount: number;
+}
+
 export interface AdjustSaleItemData {
   userId: string;
   productId: string;
@@ -87,4 +99,8 @@ export interface SaleRepository {
   configureOpenSale(data: ConfigureSalePricingData): Promise<Sale>;
   /** Invokes the `void_sale` Postgres function — reverses the exact inventory effect the original CONFIRMED sale applied and marks it `ANULADA`, atomically. Never a physical delete/edit. */
   voidSale(id: string, voidedBy: string, reason: string): Promise<Sale>;
+  /** `SUM(total)` grouped by calendar day (`sale.saleDate`, local server timezone), `status = 'CONFIRMED' AND is_voided = false` — backs "Ventas del mes" en Gráficas. `startDate`/`endDate` are exact instants (mirrors `GetDashboardSummaryUseCase.buildPeriod()`'s own technique), never bare date strings, so a `timestamptz` column is never truncated to local midnight. */
+  getDailySalesTotals(startDate: Date, endDate: Date): Promise<SaleDailyAmount[]>;
+  /** Same as `getDailySalesTotals`, grouped by month (`yyyy-MM`) instead — backs "Ventas por mes" (anual) en Gráficas. */
+  getMonthlySalesTotals(startDate: Date, endDate: Date): Promise<SaleMonthlyAmount[]>;
 }

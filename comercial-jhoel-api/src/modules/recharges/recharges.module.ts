@@ -62,6 +62,9 @@ import { ListRechargeSimSaleRegistrationsUseCase } from './application/use-cases
 import { GetRechargeSimSaleRegistrationDpiImageUseCase } from './application/use-cases/get-recharge-sim-sale-registration-dpi-image.use-case';
 import { GetRechargePurchasesUseCase } from './application/use-cases/get-recharge-purchases.use-case';
 import { VoidRechargePurchaseUseCase } from './application/use-cases/void-recharge-purchase.use-case';
+import { GetRechargesDailyStatsUseCase } from './application/use-cases/get-recharges-daily-stats.use-case';
+import { GetRechargesWeeklyStatsUseCase } from './application/use-cases/get-recharges-weekly-stats.use-case';
+import { GetRechargesYearlyStatsUseCase } from './application/use-cases/get-recharges-yearly-stats.use-case';
 import { ListRechargeSimSalesUseCase } from './application/use-cases/list-recharge-sim-sales.use-case';
 import { VoidRechargeSimSaleUseCase } from './application/use-cases/void-recharge-sim-sale.use-case';
 import { RechargesController } from './presentation/controllers/recharges.controller';
@@ -165,6 +168,9 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
     VoidRechargePurchaseUseCase,
     ListRechargeSimSalesUseCase,
     VoidRechargeSimSaleUseCase,
+    GetRechargesDailyStatsUseCase,
+    GetRechargesWeeklyStatsUseCase,
+    GetRechargesYearlyStatsUseCase,
   ],
   // Exported for `ReportsModule`'s new Recargas report: `RECHARGE_TYPE_REPOSITORY`
   // resolves the `rechargeTypeId` filter into a display name for the PDF,

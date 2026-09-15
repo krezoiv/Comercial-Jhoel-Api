@@ -29,6 +29,9 @@ import { CancelOpenSaleUseCase } from '../../application/use-cases/cancel-open-s
 import { ConfigureSalePricingUseCase } from '../../application/use-cases/configure-sale-pricing.use-case';
 import { GetSalePdfUseCase } from '../../application/use-cases/get-sale-pdf.use-case';
 import { VoidSaleUseCase } from '../../application/use-cases/void-sale.use-case';
+import { GetSalesDailyStatsUseCase } from '../../application/use-cases/get-sales-daily-stats.use-case';
+import { GetSalesWeeklyStatsUseCase } from '../../application/use-cases/get-sales-weekly-stats.use-case';
+import { GetSalesYearlyStatsUseCase } from '../../application/use-cases/get-sales-yearly-stats.use-case';
 import { CreateSaleRequestDto } from '../dtos/create-sale.request.dto';
 import { ListSalesQueryDto } from '../dtos/list-sales.query.dto';
 import { AdjustSaleItemRequestDto } from '../dtos/adjust-sale-item.request.dto';
@@ -40,6 +43,9 @@ import {
   PaginatedSalesResponseDto,
   SaleResponseDto,
 } from '../dtos/sale.response.dto';
+import { SalesDailyStatsResponseDto } from '../dtos/sales-daily-stats.response.dto';
+import { SalesWeeklyStatsResponseDto } from '../dtos/sales-weekly-stats.response.dto';
+import { SalesYearlyStatsResponseDto } from '../dtos/sales-yearly-stats.response.dto';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
@@ -70,6 +76,9 @@ export class SalesController {
     private readonly configureSalePricingUseCase: ConfigureSalePricingUseCase,
     private readonly getSalePdfUseCase: GetSalePdfUseCase,
     private readonly voidSaleUseCase: VoidSaleUseCase,
+    private readonly getSalesDailyStatsUseCase: GetSalesDailyStatsUseCase,
+    private readonly getSalesWeeklyStatsUseCase: GetSalesWeeklyStatsUseCase,
+    private readonly getSalesYearlyStatsUseCase: GetSalesYearlyStatsUseCase,
   ) {}
 
   /** Bulk, one-shot sale creation — unchanged, still fully atomic via `confirm_sale`. Independent of the incremental draft flow below. */
@@ -175,6 +184,24 @@ export class SalesController {
     @CurrentUser('userId') userId: string,
   ): Promise<void> {
     return this.cancelOpenSaleUseCase.execute(userId, query.draftKey);
+  }
+
+  /** Backs "Ventas del mes" en Gráficas → Indicadores de Ventas — must be declared before `:id`, same route-ordering discipline as `current`. Open to any authenticated account. */
+  @Get('daily-stats')
+  dailyStats(): Promise<SalesDailyStatsResponseDto> {
+    return this.getSalesDailyStatsUseCase.execute();
+  }
+
+  /** Backs "Ventas por semana" en Gráficas → Indicadores de Ventas. */
+  @Get('weekly-stats')
+  weeklyStats(): Promise<SalesWeeklyStatsResponseDto> {
+    return this.getSalesWeeklyStatsUseCase.execute();
+  }
+
+  /** Backs "Ventas por mes" (anual) en Gráficas → Indicadores de Ventas. */
+  @Get('yearly-stats')
+  yearlyStats(): Promise<SalesYearlyStatsResponseDto> {
+    return this.getSalesYearlyStatsUseCase.execute();
   }
 
   /**

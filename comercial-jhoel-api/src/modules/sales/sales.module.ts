@@ -14,6 +14,9 @@ import { CancelOpenSaleUseCase } from './application/use-cases/cancel-open-sale.
 import { ConfigureSalePricingUseCase } from './application/use-cases/configure-sale-pricing.use-case';
 import { GetSalePdfUseCase } from './application/use-cases/get-sale-pdf.use-case';
 import { VoidSaleUseCase } from './application/use-cases/void-sale.use-case';
+import { GetSalesDailyStatsUseCase } from './application/use-cases/get-sales-daily-stats.use-case';
+import { GetSalesWeeklyStatsUseCase } from './application/use-cases/get-sales-weekly-stats.use-case';
+import { GetSalesYearlyStatsUseCase } from './application/use-cases/get-sales-yearly-stats.use-case';
 import { SalesController } from './presentation/controllers/sales.controller';
 import { ClientsModule } from '../clients/clients.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
@@ -37,6 +40,9 @@ import { CompanySettingsModule } from '../company-settings/company-settings.modu
     ConfigureSalePricingUseCase,
     GetSalePdfUseCase,
     VoidSaleUseCase,
+    GetSalesDailyStatsUseCase,
+    GetSalesWeeklyStatsUseCase,
+    GetSalesYearlyStatsUseCase,
   ],
   // Exported for ReportsModule's `GetSaleReportDetailUseCase`, which reuses
   // `findById` instead of re-querying the same sale a second time.

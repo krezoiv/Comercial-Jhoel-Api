@@ -6,6 +6,8 @@ import {
   ConfirmPurchaseData,
   FindPurchasesOptions,
   PaginatedResult,
+  PurchaseDailyAmount,
+  PurchaseMonthlyAmount,
   PurchaseRepository,
   PurchaseSortField,
 } from '../../domain/repositories/purchase.repository';
@@ -273,5 +275,37 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
       default:
         return error;
     }
+  }
+
+  async getDailyPurchaseTotals(startDate: Date, endDate: Date): Promise<PurchaseDailyAmount[]> {
+    const dateExpr = "to_char(purchase.purchaseDate, 'YYYY-MM-DD')";
+    const rows = await this.repository
+      .createQueryBuilder('purchase')
+      .select(dateExpr, 'date')
+      .addSelect('COALESCE(SUM(purchase.total), 0)', 'amount')
+      .where('purchase.isVoided = false')
+      .andWhere('purchase.purchaseDate >= :startDate', { startDate })
+      .andWhere('purchase.purchaseDate <= :endDate', { endDate })
+      .groupBy(dateExpr)
+      .orderBy(dateExpr, 'ASC')
+      .getRawMany<{ date: string; amount: string }>();
+
+    return rows.map((row) => ({ date: row.date, amount: parseFloat(row.amount) }));
+  }
+
+  async getMonthlyPurchaseTotals(startDate: Date, endDate: Date): Promise<PurchaseMonthlyAmount[]> {
+    const monthExpr = "to_char(purchase.purchaseDate, 'YYYY-MM')";
+    const rows = await this.repository
+      .createQueryBuilder('purchase')
+      .select(monthExpr, 'month')
+      .addSelect('COALESCE(SUM(purchase.total), 0)', 'amount')
+      .where('purchase.isVoided = false')
+      .andWhere('purchase.purchaseDate >= :startDate', { startDate })
+      .andWhere('purchase.purchaseDate <= :endDate', { endDate })
+      .groupBy(monthExpr)
+      .orderBy(monthExpr, 'ASC')
+      .getRawMany<{ month: string; amount: string }>();
+
+    return rows.map((row) => ({ month: row.month, amount: parseFloat(row.amount) }));
   }
 }

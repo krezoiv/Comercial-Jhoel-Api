@@ -28,11 +28,17 @@ import { MarkPurchaseAsPaidUseCase } from '../../application/use-cases/mark-purc
 import { GetPurchasePdfUseCase } from '../../application/use-cases/get-purchase-pdf.use-case';
 import { VoidPurchaseUseCase } from '../../application/use-cases/void-purchase.use-case';
 import { ImportPurchaseFromExcelUseCase } from '../../application/use-cases/import-purchase-from-excel.use-case';
+import { GetPurchasesDailyStatsUseCase } from '../../application/use-cases/get-purchases-daily-stats.use-case';
+import { GetPurchasesWeeklyStatsUseCase } from '../../application/use-cases/get-purchases-weekly-stats.use-case';
+import { GetPurchasesYearlyStatsUseCase } from '../../application/use-cases/get-purchases-yearly-stats.use-case';
 import { buildPurchaseImportTemplate } from '../../infrastructure/excel/purchase-import.builder';
 import { CreatePurchaseRequestDto } from '../dtos/create-purchase.request.dto';
 import { ListPurchasesQueryDto } from '../dtos/list-purchases.query.dto';
 import { VoidPurchaseRequestDto } from '../dtos/void-purchase.request.dto';
 import { ImportPurchaseResultResponseDto } from '../dtos/import-purchase-result.response.dto';
+import { PurchasesDailyStatsResponseDto } from '../dtos/purchases-daily-stats.response.dto';
+import { PurchasesWeeklyStatsResponseDto } from '../dtos/purchases-weekly-stats.response.dto';
+import { PurchasesYearlyStatsResponseDto } from '../dtos/purchases-yearly-stats.response.dto';
 import {
   PaginatedPurchasesResponseDto,
   PurchaseResponseDto,
@@ -69,6 +75,9 @@ export class PurchasesController {
     private readonly getPurchasePdfUseCase: GetPurchasePdfUseCase,
     private readonly voidPurchaseUseCase: VoidPurchaseUseCase,
     private readonly importPurchaseFromExcelUseCase: ImportPurchaseFromExcelUseCase,
+    private readonly getPurchasesDailyStatsUseCase: GetPurchasesDailyStatsUseCase,
+    private readonly getPurchasesWeeklyStatsUseCase: GetPurchasesWeeklyStatsUseCase,
+    private readonly getPurchasesYearlyStatsUseCase: GetPurchasesYearlyStatsUseCase,
   ) {}
 
   @Post()
@@ -167,6 +176,24 @@ export class PurchasesController {
       'Content-Length': String(buffer.length),
     });
     res.send(buffer);
+  }
+
+  /** Backs "Compras del mes" en Gráficas → Indicadores de Compras — must be declared before `:id`. Open to any authenticated account. */
+  @Get('daily-stats')
+  dailyStats(): Promise<PurchasesDailyStatsResponseDto> {
+    return this.getPurchasesDailyStatsUseCase.execute();
+  }
+
+  /** Backs "Compras por semana" en Gráficas → Indicadores de Compras. */
+  @Get('weekly-stats')
+  weeklyStats(): Promise<PurchasesWeeklyStatsResponseDto> {
+    return this.getPurchasesWeeklyStatsUseCase.execute();
+  }
+
+  /** Backs "Compras por mes" (anual) en Gráficas → Indicadores de Compras. */
+  @Get('yearly-stats')
+  yearlyStats(): Promise<PurchasesYearlyStatsResponseDto> {
+    return this.getPurchasesYearlyStatsUseCase.execute();
   }
 
   /**

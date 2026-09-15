@@ -37,6 +37,9 @@ import { OpenRechargeDayUseCase } from '../../application/use-cases/open-recharg
 import { CloseRechargeDayUseCase } from '../../application/use-cases/close-recharge-day.use-case';
 import { GetRechargePurchasesUseCase } from '../../application/use-cases/get-recharge-purchases.use-case';
 import { VoidRechargePurchaseUseCase } from '../../application/use-cases/void-recharge-purchase.use-case';
+import { GetRechargesDailyStatsUseCase } from '../../application/use-cases/get-recharges-daily-stats.use-case';
+import { GetRechargesWeeklyStatsUseCase } from '../../application/use-cases/get-recharges-weekly-stats.use-case';
+import { GetRechargesYearlyStatsUseCase } from '../../application/use-cases/get-recharges-yearly-stats.use-case';
 import { RegisterRechargePurchaseRequestDto } from '../dtos/register-recharge-purchase.request.dto';
 import { RegisterRechargeFinalBalanceRequestDto } from '../dtos/register-recharge-final-balance.request.dto';
 import { RegisterRechargeSalesClosureRequestDto } from '../dtos/register-recharge-sales-closure.request.dto';
@@ -58,6 +61,9 @@ import { RechargeSalesSummaryOutput } from '../../application/dtos/recharge-sale
 import { RechargeSaleOutput } from '../../application/dtos/recharge-sale-output';
 import { RechargeDayStatusOutput } from '../../application/dtos/recharge-day-status-output';
 import { RechargePurchaseOutput } from '../../application/dtos/recharge-purchase-output';
+import { RechargesDailyStatsResponseDto } from '../dtos/recharges-daily-stats.response.dto';
+import { RechargesWeeklyStatsResponseDto } from '../dtos/recharges-weekly-stats.response.dto';
+import { RechargesYearlyStatsResponseDto } from '../dtos/recharges-yearly-stats.response.dto';
 import { todayIsoDate } from '../../application/utils/today-iso-date';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -93,6 +99,9 @@ export class RechargesController {
     private readonly updateRechargeTypeMinBalanceUseCase: UpdateRechargeTypeMinBalanceUseCase,
     private readonly getRechargePurchasesUseCase: GetRechargePurchasesUseCase,
     private readonly voidRechargePurchaseUseCase: VoidRechargePurchaseUseCase,
+    private readonly getRechargesDailyStatsUseCase: GetRechargesDailyStatsUseCase,
+    private readonly getRechargesWeeklyStatsUseCase: GetRechargesWeeklyStatsUseCase,
+    private readonly getRechargesYearlyStatsUseCase: GetRechargesYearlyStatsUseCase,
   ) {}
 
   /**
@@ -242,6 +251,24 @@ export class RechargesController {
     @Query() query: RechargeSalesSummaryQueryDto,
   ): Promise<RechargeSalesSummaryOutput> {
     return this.getRechargeSalesSummaryUseCase.execute(query.date);
+  }
+
+  /** Backs "Recargas del mes" en Gráficas → Indicadores de Recargas. Sin `:id` en este controlador, no hay conflicto de orden de rutas que cuidar. */
+  @Get('daily-stats')
+  dailyStats(): Promise<RechargesDailyStatsResponseDto> {
+    return this.getRechargesDailyStatsUseCase.execute();
+  }
+
+  /** Backs "Recargas por semana" en Gráficas → Indicadores de Recargas. */
+  @Get('weekly-stats')
+  weeklyStats(): Promise<RechargesWeeklyStatsResponseDto> {
+    return this.getRechargesWeeklyStatsUseCase.execute();
+  }
+
+  /** Backs "Recargas por mes" (anual) en Gráficas → Indicadores de Recargas. */
+  @Get('yearly-stats')
+  yearlyStats(): Promise<RechargesYearlyStatsResponseDto> {
+    return this.getRechargesYearlyStatsUseCase.execute();
   }
 
   @Post('sales-closure')
