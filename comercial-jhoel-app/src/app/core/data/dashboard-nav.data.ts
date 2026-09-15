@@ -111,6 +111,9 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     path: 'graficas',
     roles: ['SUPER_ADMIN', 'ADMIN'],
     children: [
+      { label: 'Indicadores de Ventas', icon: 'receipt', path: 'graficas-indicadores-ventas' },
+      { label: 'Indicadores de Compras', icon: 'arrow-down-circle', path: 'graficas-indicadores-compras' },
+      { label: 'Indicadores de Recargas', icon: 'smartphone', path: 'graficas-indicadores-recargas' },
       { label: 'Indicadores de Transacciones', icon: 'trending-up', path: 'graficas-indicadores-transacciones' },
     ],
   },

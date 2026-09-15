@@ -17,13 +17,13 @@
         @if (maxPoint(); as max) {
           <span class="stat-pill stat-pill--max">
             <app-icon name="arrow-up-circle" [size]="13" />
-            Pico {{ max.label }} · {{ max.value }}
+            Pico {{ max.label }} · {{ formatValue(max.value) }}
           </span>
         }
         @if (minPoint(); as min) {
           <span class="stat-pill stat-pill--min">
             <app-icon name="arrow-down-circle" [size]="13" />
-            Mínimo {{ min.label }} · {{ min.value }}
+            Mínimo {{ min.label }} · {{ formatValue(min.value) }}
           </span>
         }
       </div>
@@ -95,7 +95,7 @@
       @if (hoveredPoint(); as hovered) {
         <div class="chart-tooltip" [style.left.%]="leftPercent(hovered.x)" [style.top.%]="topPercent(hovered.y)">
           <span class="chart-tooltip__date">{{ hovered.point.tooltipLabel }}</span>
-          <span class="chart-tooltip__value">{{ hovered.point.value }} {{ valueLabel }}</span>
+          <span class="chart-tooltip__value">{{ formatValue(hovered.point.value) }} {{ valueLabel }}</span>
         </div>
       }
     </div>

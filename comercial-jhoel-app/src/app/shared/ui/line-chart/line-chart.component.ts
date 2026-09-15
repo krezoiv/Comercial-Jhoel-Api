@@ -101,8 +101,10 @@ export class LineChartComponent {
   @Input({ required: true }) title!: string;
   @Input() subtitle?: string;
   @Input() icon = 'trending-up';
-  /** Appended after the raw number in the tooltip: "38 {{valueLabel}}". */
+  /** Appended after the formatted number in the tooltip: "38 {{valueLabel}}". Ignored when `formatValue` already embeds its own unit (e.g. currency) — pass `''` in that case. */
   @Input() valueLabel = 'transacciones';
+  /** How `LineChartPoint.value` is rendered in the tooltip and the Pico/Mínimo pills — defaults to the plain number (counts). Pass `formatCurrency` for a money series. */
+  @Input() formatValue: (value: number) => string = (value) => String(value);
   @Input() loading = false;
   @Input() loadError = false;
   @Input() emptyTitle = 'Sin datos registrados';

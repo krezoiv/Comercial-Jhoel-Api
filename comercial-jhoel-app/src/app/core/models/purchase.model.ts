@@ -95,6 +95,50 @@ export interface ImportPurchaseResult {
   transferWarnings: ImportPurchaseSkippedRow[];
 }
 
+export interface PurchasesDailyStat {
+  /** `yyyy-MM-dd` */
+  date: string;
+  amount: number;
+}
+
+/** `GET /purchases/daily-stats` — backs "Compras del mes" en Gráficas → Indicadores de Compras. Monto total comprado (`SUM(total)`), no anuladas. Siempre el mes actual del servidor. */
+export interface PurchasesDailyStats {
+  /** `yyyy-MM` */
+  month: string;
+  days: PurchasesDailyStat[];
+}
+
+export interface PurchasesWeeklyStat {
+  weekNumber: number;
+  /** "Semana N" */
+  label: string;
+  /** `yyyy-MM-dd` */
+  startDate: string;
+  /** `yyyy-MM-dd` */
+  endDate: string;
+  amount: number;
+}
+
+/** `GET /purchases/weekly-stats` — backs "Compras por semana". Buckets fijos de 7 días desde el día 1 del mes, nunca semana ISO. */
+export interface PurchasesWeeklyStats {
+  /** `yyyy-MM` */
+  month: string;
+  weeks: PurchasesWeeklyStat[];
+}
+
+export interface PurchasesMonthlyStat {
+  /** `yyyy-MM` */
+  month: string;
+  label: string;
+  amount: number;
+}
+
+/** `GET /purchases/yearly-stats` — backs "Compras por mes" (anual). Enero hasta el mes actual, acumulativo — nunca se reinicia dentro del año. */
+export interface PurchasesYearlyStats {
+  year: number;
+  months: PurchasesMonthlyStat[];
+}
+
 export type PurchaseStatusFilter = 'ACTIVE' | 'VOIDED';
 
 /** Filters for "Administrar Facturas de Compras" — matches `GET /purchases`'s own query params exactly. */

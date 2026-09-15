@@ -10,6 +10,9 @@ import {
   PaginatedResponse,
   PriceListType,
   Sale,
+  SalesDailyStats,
+  SalesWeeklyStats,
+  SalesYearlyStats,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/sales`;
@@ -109,6 +112,27 @@ export class SalesService {
   voidSale(id: string, reason: string): Observable<Sale> {
     return this.http
       .post<ApiSuccessResponse<Sale>>(`${BASE_URL}/${id}/void`, { reason })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Ventas del mes" en Gráficas → Indicadores de Ventas, siempre el mes actual del servidor. */
+  getDailyStats(): Observable<SalesDailyStats> {
+    return this.http
+      .get<ApiSuccessResponse<SalesDailyStats>>(`${BASE_URL}/daily-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Ventas por semana". */
+  getWeeklyStats(): Observable<SalesWeeklyStats> {
+    return this.http
+      .get<ApiSuccessResponse<SalesWeeklyStats>>(`${BASE_URL}/weekly-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Ventas por mes" (anual). */
+  getYearlyStats(): Observable<SalesYearlyStats> {
+    return this.http
+      .get<ApiSuccessResponse<SalesYearlyStats>>(`${BASE_URL}/yearly-stats`)
       .pipe(map((response) => response.data));
   }
 }

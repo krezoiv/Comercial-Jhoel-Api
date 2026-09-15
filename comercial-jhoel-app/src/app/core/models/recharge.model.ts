@@ -126,6 +126,50 @@ export interface RechargePurchase {
   createdByUsername: string;
 }
 
+export interface RechargesDailyStat {
+  /** `yyyy-MM-dd` */
+  date: string;
+  amount: number;
+}
+
+/** `GET /recharges/daily-stats` — backs "Recargas del mes" en Gráficas → Indicadores de Recargas. Venta total combinada Claro+Tigo (`daily_balance - final_balance` de todos los ciclos cerrados), siempre el mes actual del servidor. */
+export interface RechargesDailyStats {
+  /** `yyyy-MM` */
+  month: string;
+  days: RechargesDailyStat[];
+}
+
+export interface RechargesWeeklyStat {
+  weekNumber: number;
+  /** "Semana N" */
+  label: string;
+  /** `yyyy-MM-dd` */
+  startDate: string;
+  /** `yyyy-MM-dd` */
+  endDate: string;
+  amount: number;
+}
+
+/** `GET /recharges/weekly-stats` — backs "Recargas por semana". Buckets fijos de 7 días desde el día 1 del mes, nunca semana ISO. */
+export interface RechargesWeeklyStats {
+  /** `yyyy-MM` */
+  month: string;
+  weeks: RechargesWeeklyStat[];
+}
+
+export interface RechargesMonthlyStat {
+  /** `yyyy-MM` */
+  month: string;
+  label: string;
+  amount: number;
+}
+
+/** `GET /recharges/yearly-stats` — backs "Recargas por mes" (anual). Enero hasta el mes actual, acumulativo — nunca se reinicia dentro del año. */
+export interface RechargesYearlyStats {
+  year: number;
+  months: RechargesMonthlyStat[];
+}
+
 export type SalesClosureStatus = 'zero' | 'positive' | 'negative';
 
 /** Zero = correct cuadre, positive = still owed/uncollected (pending difference), negative = over-collected. */

@@ -10,6 +10,9 @@ import {
   ListPurchasesFilters,
   PaginatedResponse,
   Purchase,
+  PurchasesDailyStats,
+  PurchasesWeeklyStats,
+  PurchasesYearlyStats,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/purchases`;
@@ -78,6 +81,27 @@ export class PurchasesService {
     formData.append('file', file);
     return this.http
       .post<ApiSuccessResponse<ImportPurchaseResult>>(`${BASE_URL}/import`, formData)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Compras del mes" en Gráficas → Indicadores de Compras, siempre el mes actual del servidor. */
+  getDailyStats(): Observable<PurchasesDailyStats> {
+    return this.http
+      .get<ApiSuccessResponse<PurchasesDailyStats>>(`${BASE_URL}/daily-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Compras por semana". */
+  getWeeklyStats(): Observable<PurchasesWeeklyStats> {
+    return this.http
+      .get<ApiSuccessResponse<PurchasesWeeklyStats>>(`${BASE_URL}/weekly-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Compras por mes" (anual). */
+  getYearlyStats(): Observable<PurchasesYearlyStats> {
+    return this.http
+      .get<ApiSuccessResponse<PurchasesYearlyStats>>(`${BASE_URL}/yearly-stats`)
       .pipe(map((response) => response.data));
   }
 }

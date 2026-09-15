@@ -379,6 +379,33 @@ export const routes: Routes = [
         title: 'Reportería de Heladería — Sistema',
       },
       {
+        path: 'graficas-indicadores-ventas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/graphs/sales-indicators/sales-indicators-page.component').then(
+            (m) => m.SalesIndicatorsPageComponent
+          ),
+        title: 'Indicadores de Ventas — Sistema',
+      },
+      {
+        path: 'graficas-indicadores-compras',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/graphs/purchases-indicators/purchases-indicators-page.component').then(
+            (m) => m.PurchasesIndicatorsPageComponent
+          ),
+        title: 'Indicadores de Compras — Sistema',
+      },
+      {
+        path: 'graficas-indicadores-recargas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/graphs/recharges-indicators/recharges-indicators-page.component').then(
+            (m) => m.RechargesIndicatorsPageComponent
+          ),
+        title: 'Indicadores de Recargas — Sistema',
+      },
+      {
         path: 'graficas-indicadores-transacciones',
         canActivate: [adminGuard],
         loadComponent: () =>
