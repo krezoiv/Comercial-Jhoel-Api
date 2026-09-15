@@ -1,8 +1,8 @@
-<app-card padding="lg" class="gauge-card">
+<app-card padding="lg" class="gauge-card" [class.gauge-card--compact]="compact">
   <div class="gauge-card__header">
     <div class="gauge-card__identity">
       <div class="gauge-card__icon">
-        <app-icon [name]="icon" [size]="18" />
+        <app-icon [name]="icon" [size]="compact ? 15 : 18" />
       </div>
       <div>
         <h2 class="gauge-card__title">{{ title }}</h2>
@@ -27,6 +27,16 @@
     <div class="gauge-card__body">
       <div class="gauge-card__plot">
         <svg [attr.viewBox]="viewBox" class="gauge-svg">
+          <defs>
+            <linearGradient [attr.id]="gradientId" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" [attr.stop-color]="gradientStart()" />
+              <stop offset="100%" [attr.stop-color]="gradientEnd()" />
+            </linearGradient>
+            <filter [attr.id]="glowId" x="-60%" y="-60%" width="220%" height="220%">
+              <feDropShadow dx="0" dy="0" stdDeviation="3.5" [attr.flood-color]="glowColor()" flood-opacity="0.45" />
+            </filter>
+          </defs>
+
           <g [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'">
             <circle [attr.cx]="center" [attr.cy]="center" [attr.r]="radius" class="gauge-svg__track" [attr.stroke-width]="strokeWidth" />
             <circle
@@ -34,7 +44,8 @@
               [attr.cy]="center"
               [attr.r]="radius"
               fill="none"
-              [attr.stroke]="ringColor()"
+              [attr.stroke]="'url(#' + gradientId + ')'"
+              [attr.filter]="'url(#' + glowId + ')'"
               [attr.stroke-width]="strokeWidth"
               stroke-linecap="round"
               [attr.stroke-dasharray]="ringDashArray()"
@@ -57,18 +68,24 @@
 
         <div class="gauge-card__center">
           <span class="gauge-card__percentage">{{ displayPercentage() }}</span>
-          <span class="gauge-card__current">{{ formatValue(currentValue) }} {{ currentLabel }}</span>
+          @if (!compact) {
+            <span class="gauge-card__current">{{ formatValue(currentValue) }} {{ currentLabel }}</span>
+          }
         </div>
       </div>
 
       <div class="gauge-card__footer">
         @if (isOverLimit()) {
           <span class="gauge-card__badge">
-            <app-icon name="arrow-up-circle" [size]="13" />
-            Por encima del límite
+            <app-icon name="arrow-up-circle" [size]="12" />
+            {{ compact ? 'Sobre límite' : 'Por encima del límite' }}
           </span>
         }
-        <span class="gauge-card__limit">{{ limitLabel }}: {{ formatValue(limitValue) }}</span>
+        @if (compact) {
+          <span class="gauge-card__limit">{{ formatValue(currentValue) }} / {{ formatValue(limitValue) }}</span>
+        } @else {
+          <span class="gauge-card__limit">{{ limitLabel }}: {{ formatValue(limitValue) }}</span>
+        }
       </div>
     </div>
   }

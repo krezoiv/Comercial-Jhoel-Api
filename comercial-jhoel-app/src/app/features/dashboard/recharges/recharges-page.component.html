@@ -32,15 +32,43 @@
     </div>
   </app-page-header>
 
-  <app-card padding="lg" class="recharges__total-collected-card">
-    <app-summary-tile
-      icon="wallet"
-      title="Total Recaudado"
-      [value]="salesSummary() ? formatCurrency(salesSummary()!.totalRecaudado) : '—'"
-      [description]="'Recargas + ventas de SIM · ' + operationDate()"
-      tone="success"
+  <div class="recharges__kpi-row">
+    <app-card padding="lg" class="recharges__total-collected-card">
+      <app-summary-tile
+        icon="wallet"
+        title="Total Recaudado"
+        [value]="salesSummary() ? formatCurrency(salesSummary()!.totalRecaudado) : '—'"
+        [description]="'Recargas + ventas de SIM · ' + operationDate()"
+        tone="success"
+      />
+    </app-card>
+
+    <app-gauge-ring
+      title="Saldo Claro"
+      icon="smartphone"
+      [compact]="true"
+      [percentage]="claroPercentage()"
+      [currentValue]="claroStat().currentBalance"
+      [limitValue]="claroStat().balanceLimit"
+      [formatValue]="formatCurrency"
+      [loading]="operatorsSummaryLoading()"
+      [loadError]="operatorsSummaryError()"
+      (retry)="fetchOperatorsSummary()"
     />
-  </app-card>
+
+    <app-gauge-ring
+      title="Saldo Tigo"
+      icon="smartphone"
+      [compact]="true"
+      [percentage]="tigoPercentage()"
+      [currentValue]="tigoStat().currentBalance"
+      [limitValue]="tigoStat().balanceLimit"
+      [formatValue]="formatCurrency"
+      [loading]="operatorsSummaryLoading()"
+      [loadError]="operatorsSummaryError()"
+      (retry)="fetchOperatorsSummary()"
+    />
+  </div>
 
   @if (effectiveDayClosed()) {
     <p class="info-banner info-banner--locked">

@@ -133,10 +133,10 @@
 }
 
 .donut-svg__segment {
-  stroke-linecap: butt;
   cursor: pointer;
   transition:
     stroke-width var(--duration-fast, 0.15s) ease-out,
+    stroke-dasharray var(--duration-slow, 0.6s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     opacity var(--duration-fast, 0.15s) ease-out;
 }
 
@@ -155,8 +155,10 @@
   font-family: var(--font-heading);
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
   color: var(--color-text-on-light);
   line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .donut-card__center-label {
@@ -199,6 +201,11 @@
   height: 0.65rem;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentcolor 16%, transparent);
+}
+
+.donut-legend__item--hover .donut-legend__swatch {
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentcolor 24%, transparent);
 }
 
 .donut-legend__label {
@@ -253,4 +260,48 @@
 
 .donut-tooltip__percent {
   color: rgba(255, 255, 255, 0.6);
+}
+
+// ---- Compact modifier ----------------------------------------------------
+
+.donut-card--compact {
+  .donut-card__header {
+    margin-bottom: var(--space-3);
+  }
+
+  .donut-card__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .donut-card__title {
+    font-size: var(--fs-sm);
+  }
+
+  .donut-card__body {
+    gap: var(--space-3);
+  }
+
+  .donut-card__plot {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .donut-card__center-value {
+    font-size: var(--fs-md);
+  }
+
+  .donut-legend__item {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .donut-legend__label,
+  .donut-legend__value {
+    font-size: var(--fs-xs);
+  }
+
+  .donut-card__skeleton,
+  .donut-card__error {
+    height: 6rem;
+  }
 }

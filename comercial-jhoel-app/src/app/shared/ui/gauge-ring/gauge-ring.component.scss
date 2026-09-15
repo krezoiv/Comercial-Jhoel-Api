@@ -1,5 +1,6 @@
 :host {
   display: block;
+  height: 100%;
 }
 
 .gauge-card__header {
@@ -59,8 +60,8 @@
   background: linear-gradient(90deg, var(--color-bg-light-muted) 25%, var(--color-border-light) 50%, var(--color-bg-light-muted) 75%);
   background-size: 200% 100%;
   animation: gauge-ring-skeleton-pulse 1.4s ease-in-out infinite;
-  mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 20px), #000 calc(100% - 20px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 20px), #000 calc(100% - 20px));
 }
 
 @keyframes gauge-ring-skeleton-pulse {
@@ -124,15 +125,42 @@
 }
 
 .gauge-svg__fill {
+  // NOTE: never set `stroke-dasharray` as a static CSS rule here — SVG
+  // presentation attributes are overridden by any CSS declaration for the
+  // same property, so a static value would permanently clobber the
+  // `[attr.stroke-dasharray]` binding. The `transition` below is what
+  // animates it smoothly whenever the bound value changes, with no static
+  // value of its own to conflict.
+  animation: gauge-ring-fade-in var(--duration-slow, 0.6s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
   transition:
-    stroke-dasharray var(--duration-slow, 0.45s) var(--ease-out, ease-out),
+    stroke-dasharray var(--duration-slow, 0.6s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     stroke var(--duration-slow, 0.45s) var(--ease-out, ease-out);
+}
+
+@keyframes gauge-ring-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .gauge-svg__overflow {
   stroke: var(--color-gauge-green);
-  opacity: 0.4;
+  opacity: 0.5;
+  animation: gauge-ring-overflow-pulse 2.4s ease-in-out infinite;
   transition: stroke-dasharray var(--duration-slow, 0.45s) var(--ease-out, ease-out);
+}
+
+@keyframes gauge-ring-overflow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.65;
+  }
 }
 
 .gauge-card__center {
@@ -151,8 +179,10 @@
   font-family: var(--font-heading);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
   color: var(--color-text-on-light);
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .gauge-card__current {
@@ -179,11 +209,63 @@
   background: var(--color-success-soft);
   color: var(--color-success);
   font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
 .gauge-card__limit {
   font-size: var(--fs-sm);
   color: var(--color-text-on-light-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- Compact modifier ----------------------------------------------------
+// Same data/visual language, denser footprint — for embedding several
+// instances side by side (e.g. next to "Total Recaudado" in Recargas
+// Electrónicas) rather than as a full standalone Resumen card.
+
+.gauge-card--compact {
+  .gauge-card__header {
+    margin-bottom: var(--space-3);
+  }
+
+  .gauge-card__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .gauge-card__title {
+    font-size: var(--fs-sm);
+  }
+
+  .gauge-card__body {
+    gap: var(--space-2);
+  }
+
+  .gauge-card__plot {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .gauge-card__percentage {
+    font-size: var(--fs-md);
+  }
+
+  .gauge-card__footer {
+    gap: var(--space-1);
+  }
+
+  .gauge-card__badge {
+    padding: 2px var(--space-2);
+    font-size: 0.6875rem;
+  }
+
+  .gauge-card__limit {
+    font-size: var(--fs-xs);
+  }
+
+  .gauge-card__skeleton,
+  .gauge-card__error {
+    height: 6rem;
+  }
 }

@@ -1,9 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
-import { RechargeDailyBalance, RechargeDayStatus, RechargePurchase, RechargeSale, RechargeSalesSummary, RechargeType, SimDailyStock, SimSale, SimType, formatCurrency } from '../../../core/models';
+import {
+  RechargeDailyBalance,
+  RechargeDayStatus,
+  RechargeOperatorStat,
+  RechargePurchase,
+  RechargeSale,
+  RechargeSalesSummary,
+  RechargeType,
+  SimDailyStock,
+  SimSale,
+  SimType,
+  calculateBalancePercentage,
+  formatCurrency,
+} from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RechargesService } from '../../../core/services/recharges.service';
@@ -27,7 +40,15 @@ import { RegisterSimSaleFormComponent } from './components/register-sim-sale-for
 import { RegisterSimSaleRegistrationFormComponent } from './components/register-sim-sale-registration-form/register-sim-sale-registration-form.component';
 import { SimSalesTableComponent } from './components/sim-sales-table/sim-sales-table.component';
 import { VoidSimSaleConfirmModalComponent } from './components/void-sim-sale-confirm-modal/void-sim-sale-confirm-modal.component';
-import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
+import { ButtonComponent, CardComponent, GaugeRingComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
+
+/** Same name-matching convention `RechargeIndicatorsSectionComponent` (Resumen) and the backend's own `GetRechargeSalesSummaryUseCase` already use. */
+const CLARO_NAME = 'Claro';
+const TIGO_NAME = 'Tigo';
+
+function emptyOperatorStat(name: string): RechargeOperatorStat {
+  return { rechargeTypeId: '', rechargeTypeName: name, salesThisMonth: 0, purchasesThisMonth: 0, currentBalance: 0, balanceLimit: 0 };
+}
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique as Reports' own `todayIsoDate()`. */
 function todayIsoDate(): string {
@@ -65,6 +86,7 @@ function todayIsoDate(): string {
     ButtonComponent,
     IconComponent,
     SummaryTileComponent,
+    GaugeRingComponent,
   ],
   templateUrl: './recharges-page.component.html',
   styleUrl: './recharges-page.component.scss',
@@ -200,9 +222,27 @@ export class RechargesPageComponent {
   readonly voidPurchaseTarget = signal<RechargePurchase | null>(null);
   readonly isVoidingPurchase = signal(false);
 
+  /**
+   * Saldo actual/límite por operadora, para los dos medidores compactos
+   * junto a "Total Recaudado" — misma fuente (`GET /recharges/operators-summary`,
+   * `findLatestPerType()` de verdad) que ya usa la sección homónima en
+   * Resumen, nunca recalculado aquí. Deliberadamente independiente de
+   * `operationDate`/`fetchAll()`: el saldo mostrado es el real actual, no
+   * el de la fecha que se esté navegando en esta página.
+   */
+  readonly operatorsSummaryLoading = signal(true);
+  readonly operatorsSummaryError = signal(false);
+  private readonly operators = signal<RechargeOperatorStat[]>([]);
+
+  readonly claroStat = computed(() => this.operators().find((op) => op.rechargeTypeName === CLARO_NAME) ?? emptyOperatorStat(CLARO_NAME));
+  readonly tigoStat = computed(() => this.operators().find((op) => op.rechargeTypeName === TIGO_NAME) ?? emptyOperatorStat(TIGO_NAME));
+  readonly claroPercentage = computed(() => calculateBalancePercentage(this.claroStat().currentBalance, this.claroStat().balanceLimit));
+  readonly tigoPercentage = computed(() => calculateBalancePercentage(this.tigoStat().currentBalance, this.tigoStat().balanceLimit));
+
   constructor() {
     this.fetchAll();
     this.fetchPastDateStatusIfNeeded();
+    this.fetchOperatorsSummary();
 
     // Opens the "Apertura del Día" modal the first time it's confirmed
     // (once `RechargeDayStatusService` is done loading) that today still
@@ -297,6 +337,22 @@ export class RechargesPageComponent {
       next: (status) => this.pastDateStatus.set(status),
       error: () => this.pastDateStatus.set(null),
     });
+  }
+
+  fetchOperatorsSummary(): void {
+    this.operatorsSummaryLoading.set(true);
+    this.operatorsSummaryError.set(false);
+    this.rechargesService
+      .getOperatorsSummary()
+      .pipe(catchError(() => of(null)))
+      .subscribe((response) => {
+        this.operatorsSummaryLoading.set(false);
+        if (!response) {
+          this.operatorsSummaryError.set(true);
+          return;
+        }
+        this.operators.set(response.operators);
+      });
   }
 
   private fetchAll(): void {

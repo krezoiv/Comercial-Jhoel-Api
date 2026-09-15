@@ -8,9 +8,16 @@
   flex-wrap: wrap;
 }
 
-.recharges__total-collected-card {
-  max-width: 24rem;
+.recharges__kpi-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
+  align-items: stretch;
+
+  @include bp.respond(sm) {
+    grid-template-columns: minmax(0, 20rem) repeat(2, minmax(0, 11rem));
+  }
 }
 
 .info-banner {
