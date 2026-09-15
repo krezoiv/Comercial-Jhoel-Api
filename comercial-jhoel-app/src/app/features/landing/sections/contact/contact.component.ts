@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { catchError, of } from 'rxjs';
 
-import { SITE } from '../../../../core/data';
+import { ContactChannel, SocialLink } from '../../../../core/models';
 import { ContactService } from '../../../../core/services/contact.service';
 import { ButtonComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 
@@ -17,9 +18,15 @@ export class ContactComponent {
   private readonly fb = inject(FormBuilder);
   private readonly contactService = inject(ContactService);
 
-  readonly site = SITE;
-  readonly channels = this.contactService.getChannels();
   readonly interests = this.contactService.getInterests();
+
+  /** Datos reales de la empresa (`company_settings`, vía `/company-info` público) — nunca hardcodeados. */
+  readonly loadingInfo = signal(true);
+  readonly infoLoadError = signal(false);
+  readonly businessName = signal<string | null>(null);
+  readonly businessHours = signal<string | null>(null);
+  readonly channels = signal<ContactChannel[]>([]);
+  readonly socialLinks = signal<SocialLink[]>([]);
 
   readonly isSubmitting = signal(false);
   readonly isSubmitted = signal(false);
@@ -30,6 +37,29 @@ export class ContactComponent {
     interest: [this.interests[0], Validators.required],
     message: ['', Validators.required],
   });
+
+  constructor() {
+    this.fetchContactInfo();
+  }
+
+  fetchContactInfo(): void {
+    this.loadingInfo.set(true);
+    this.infoLoadError.set(false);
+    this.contactService
+      .getContactInfo()
+      .pipe(catchError(() => of(null)))
+      .subscribe((info) => {
+        this.loadingInfo.set(false);
+        if (!info) {
+          this.infoLoadError.set(true);
+          return;
+        }
+        this.businessName.set(info.businessName || null);
+        this.businessHours.set(info.businessHours);
+        this.channels.set(info.channels);
+        this.socialLinks.set(info.socialLinks);
+      });
+  }
 
   submit(): void {
     if (this.form.invalid || this.isSubmitting()) {

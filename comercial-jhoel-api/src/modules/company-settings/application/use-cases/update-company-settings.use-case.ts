@@ -14,6 +14,12 @@ export interface UpdateCompanySettingsInput {
   taxId?: string | null;
   logoBase64?: string | null;
   socialMedia?: string | null;
+  whatsapp?: string | null;
+  website?: string | null;
+  businessHours?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
   updatedBy: string;
 }
 

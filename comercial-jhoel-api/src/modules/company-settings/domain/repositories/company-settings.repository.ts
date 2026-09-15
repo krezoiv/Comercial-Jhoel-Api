@@ -1,6 +1,8 @@
 import { CompanySettings } from '../entities/company-settings.entity';
 
-export const COMPANY_SETTINGS_REPOSITORY = Symbol('COMPANY_SETTINGS_REPOSITORY');
+export const COMPANY_SETTINGS_REPOSITORY = Symbol(
+  'COMPANY_SETTINGS_REPOSITORY',
+);
 
 export interface UpdateCompanySettingsData {
   businessName?: string;
@@ -10,6 +12,12 @@ export interface UpdateCompanySettingsData {
   taxId?: string | null;
   logoBase64?: string | null;
   socialMedia?: string | null;
+  whatsapp?: string | null;
+  website?: string | null;
+  businessHours?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
   updatedBy: string;
 }
 

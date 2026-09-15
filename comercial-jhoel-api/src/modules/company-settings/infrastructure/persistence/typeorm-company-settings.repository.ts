@@ -10,9 +10,7 @@ import { CompanySettingsOrmEntity } from './company-settings.orm-entity';
 import { CompanySettingsMapper } from './company-settings.mapper';
 
 @Injectable()
-export class TypeOrmCompanySettingsRepository
-  implements CompanySettingsRepository
-{
+export class TypeOrmCompanySettingsRepository implements CompanySettingsRepository {
   constructor(
     @InjectRepository(CompanySettingsOrmEntity)
     private readonly repository: Repository<CompanySettingsOrmEntity>,
@@ -31,7 +29,9 @@ export class TypeOrmCompanySettingsRepository
 
   async update(data: UpdateCompanySettingsData): Promise<CompanySettings> {
     const current = await this.get();
-    const patch: Partial<CompanySettingsOrmEntity> = { updatedBy: data.updatedBy };
+    const patch: Partial<CompanySettingsOrmEntity> = {
+      updatedBy: data.updatedBy,
+    };
     if (data.businessName !== undefined) patch.businessName = data.businessName;
     if (data.address !== undefined) patch.address = data.address;
     if (data.phone !== undefined) patch.phone = data.phone;
@@ -39,6 +39,13 @@ export class TypeOrmCompanySettingsRepository
     if (data.taxId !== undefined) patch.taxId = data.taxId;
     if (data.logoBase64 !== undefined) patch.logoBase64 = data.logoBase64;
     if (data.socialMedia !== undefined) patch.socialMedia = data.socialMedia;
+    if (data.whatsapp !== undefined) patch.whatsapp = data.whatsapp;
+    if (data.website !== undefined) patch.website = data.website;
+    if (data.businessHours !== undefined)
+      patch.businessHours = data.businessHours;
+    if (data.facebookUrl !== undefined) patch.facebookUrl = data.facebookUrl;
+    if (data.instagramUrl !== undefined) patch.instagramUrl = data.instagramUrl;
+    if (data.tiktokUrl !== undefined) patch.tiktokUrl = data.tiktokUrl;
 
     await this.repository.update({ id: current.id }, patch);
     return this.get();

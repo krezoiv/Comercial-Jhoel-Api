@@ -7,6 +7,14 @@ export interface CompanySettingsProps {
   taxId: string | null;
   logoBase64: string | null;
   socialMedia: string | null;
+  /** Separado de `phone` a propósito — un negocio puede llamar a un número y atender WhatsApp en otro. */
+  whatsapp: string | null;
+  website: string | null;
+  /** Texto libre multilínea, tal como el admin lo escribe — no un modelo estructurado día-por-día. */
+  businessHours: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  tiktokUrl: string | null;
   updatedAt: Date;
   updatedBy: string | null;
   updatedByUsername: string | null;
@@ -50,6 +58,30 @@ export class CompanySettings {
 
   get socialMedia(): string | null {
     return this.props.socialMedia;
+  }
+
+  get whatsapp(): string | null {
+    return this.props.whatsapp;
+  }
+
+  get website(): string | null {
+    return this.props.website;
+  }
+
+  get businessHours(): string | null {
+    return this.props.businessHours;
+  }
+
+  get facebookUrl(): string | null {
+    return this.props.facebookUrl;
+  }
+
+  get instagramUrl(): string | null {
+    return this.props.instagramUrl;
+  }
+
+  get tiktokUrl(): string | null {
+    return this.props.tiktokUrl;
   }
 
   get updatedAt(): Date {

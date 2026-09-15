@@ -29,7 +29,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorizedReq).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest(req.url)) {
+      // Only a real "session expired" case forces a logout+redirect — that
+      // requires a token to have existed in the first place. A 401 with no
+      // token at all is just an anonymous request hitting a guarded
+      // endpoint (e.g. `KeyboardShortcutsService` refreshing from the
+      // public landing page) — there is no session to expire, and
+      // redirecting an anonymous visitor to `/login` would break whatever
+      // public page they were on. Let it propagate normally instead, same
+      // as any other error each caller already handles on its own.
+      if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest(req.url) && token) {
         authService.logout();
         void router.navigateByUrl('/login');
       }

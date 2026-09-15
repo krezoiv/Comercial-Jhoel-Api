@@ -4,23 +4,58 @@
       <app-section-heading
         align="left"
         eyebrow="Contacto"
-        title="Conversemos sobre lo que necesitas"
+        [title]="businessName() ? 'Conversemos, ' + businessName() : 'Conversemos sobre lo que necesitas'"
         subtitle="Escríbenos y te respondemos el mismo día. También puedes visitarnos o llamarnos directamente."
       />
 
-      <ul class="contact__channels">
-        @for (channel of channels; track channel.id) {
-          <li>
-            <a class="contact__channel" [href]="channel.href">
-              <span class="contact__channel-icon"><app-icon [name]="channel.icon" [size]="18" /></span>
-              <span>
-                <strong>{{ channel.label }}</strong>
-                <span class="contact__channel-value">{{ channel.value }}</span>
-              </span>
-            </a>
-          </li>
+      @if (loadingInfo()) {
+        <div class="contact__channels contact__channels--skeleton" aria-hidden="true">
+          @for (i of [1, 2, 3]; track i) {
+            <span class="contact__skeleton-row"></span>
+          }
+        </div>
+      } @else if (infoLoadError()) {
+        <p class="contact__fallback">
+          <app-icon name="alert-triangle" [size]="16" />
+          Información de contacto no disponible temporalmente.
+        </p>
+      } @else {
+        @if (channels().length) {
+          <ul class="contact__channels">
+            @for (channel of channels(); track channel.id) {
+              <li>
+                <a class="contact__channel" [href]="channel.href" [attr.target]="channel.id === 'direccion' || channel.id === 'website' ? '_blank' : null" [attr.rel]="channel.id === 'direccion' || channel.id === 'website' ? 'noopener' : null">
+                  <span class="contact__channel-icon"><app-icon [name]="channel.icon" [size]="18" /></span>
+                  <span>
+                    <strong>{{ channel.label }}</strong>
+                    <span class="contact__channel-value">{{ channel.value }}</span>
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
         }
-      </ul>
+
+        @if (businessHours(); as hours) {
+          <div class="contact__hours">
+            <span class="contact__channel-icon"><app-icon name="clock" [size]="18" /></span>
+            <div>
+              <strong>Horario de atención</strong>
+              <p class="contact__hours-text">{{ hours }}</p>
+            </div>
+          </div>
+        }
+
+        @if (socialLinks().length) {
+          <div class="contact__social">
+            @for (link of socialLinks(); track link.id) {
+              <a class="contact__social-link" [href]="link.href" target="_blank" rel="noopener" [attr.aria-label]="link.label">
+                <app-icon [name]="link.icon" [size]="18" />
+              </a>
+            }
+          </div>
+        }
+      }
     </div>
 
     <div class="contact__form-wrap">

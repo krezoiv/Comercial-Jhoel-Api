@@ -43,6 +43,12 @@ export class CompanySettingsController {
       taxId: dto.taxId,
       logoBase64: dto.logoBase64,
       socialMedia: dto.socialMedia,
+      whatsapp: dto.whatsapp,
+      website: dto.website,
+      businessHours: dto.businessHours,
+      facebookUrl: dto.facebookUrl,
+      instagramUrl: dto.instagramUrl,
+      tiktokUrl: dto.tiktokUrl,
       updatedBy: userId,
     });
   }

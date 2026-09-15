@@ -31,8 +31,41 @@ export class CompanySettingsOrmEntity {
   @Column({ name: 'logo_base64', type: 'text', nullable: true })
   logoBase64: string | null;
 
-  @Column({ name: 'social_media', type: 'varchar', length: 255, nullable: true })
+  @Column({
+    name: 'social_media',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   socialMedia: string | null;
+
+  @Column({ name: 'whatsapp', type: 'varchar', length: 20, nullable: true })
+  whatsapp: string | null;
+
+  @Column({ name: 'website', type: 'varchar', length: 255, nullable: true })
+  website: string | null;
+
+  @Column({ name: 'business_hours', type: 'text', nullable: true })
+  businessHours: string | null;
+
+  @Column({
+    name: 'facebook_url',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  facebookUrl: string | null;
+
+  @Column({
+    name: 'instagram_url',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  instagramUrl: string | null;
+
+  @Column({ name: 'tiktok_url', type: 'varchar', length: 255, nullable: true })
+  tiktokUrl: string | null;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

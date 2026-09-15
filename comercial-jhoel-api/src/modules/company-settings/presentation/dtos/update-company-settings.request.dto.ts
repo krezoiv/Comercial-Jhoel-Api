@@ -1,9 +1,4 @@
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateCompanySettingsRequestDto {
   @IsOptional()
@@ -39,4 +34,34 @@ export class UpdateCompanySettingsRequestDto {
   @IsString()
   @MaxLength(255)
   socialMedia?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  whatsapp?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  website?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  businessHours?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  facebookUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  instagramUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  tiktokUrl?: string | null;
 }

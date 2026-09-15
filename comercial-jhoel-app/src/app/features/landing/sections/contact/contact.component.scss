@@ -56,6 +56,97 @@
   color: var(--color-text-on-dark-subtle);
 }
 
+// ---- Loading / error ----------------------------------------------------
+
+.contact__channels--skeleton {
+  gap: var(--space-3);
+}
+
+.contact__skeleton-row {
+  display: block;
+  height: 4.25rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, var(--color-surface-dark) 25%, var(--color-surface-dark-hover) 50%, var(--color-surface-dark) 75%);
+  background-size: 200% 100%;
+  animation: contact-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes contact-skeleton-pulse {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.contact__fallback {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text-on-dark-muted);
+  font-size: var(--fs-sm);
+}
+
+// ---- Horario ----------------------------------------------------------
+
+.contact__hours {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  margin-top: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-dark);
+
+  strong {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-dark);
+    margin-bottom: var(--space-1);
+  }
+}
+
+.contact__hours-text {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-dark-subtle);
+  white-space: pre-line;
+  line-height: var(--lh-normal);
+}
+
+// ---- Redes sociales ----------------------------------------------------
+
+.contact__social {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.contact__social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text-on-dark-muted);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+
+  &:hover {
+    border-color: var(--color-accent-cyan);
+    background: var(--color-surface-dark-hover);
+    color: var(--color-accent-cyan);
+  }
+}
+
 .contact__form-wrap {
   background: var(--color-surface-dark);
   border: 1px solid var(--color-border-dark);
@@ -105,7 +196,7 @@
 
 .field__error {
   font-size: var(--fs-xs);
-  color: #ff8080;
+  color: var(--color-danger);
 }
 
 .contact__success {

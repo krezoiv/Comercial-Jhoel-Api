@@ -1,41 +1,39 @@
 import { CompanySettings } from '../../domain/entities/company-settings.entity';
 
-export interface CompanySettingsOutput {
+/**
+ * Deliberately narrow — backs the PUBLIC landing page's "Contacto"
+ * section. Excludes `id`, `taxId`, `logoBase64` (sensitive/heavy),
+ * `socialMedia` (the older generic free-text field, superseded here by
+ * the structured `facebookUrl`/`instagramUrl`/`tiktokUrl`), and
+ * `updatedAt`/`updatedBy*` (internal bookkeeping) — nothing administrative
+ * ever leaves this shape.
+ */
+export interface PublicCompanyInfoOutput {
   businessName: string;
   address: string | null;
   phone: string | null;
-  email: string | null;
-  taxId: string | null;
-  logoBase64: string | null;
-  socialMedia: string | null;
   whatsapp: string | null;
+  email: string | null;
   website: string | null;
   businessHours: string | null;
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
-  updatedAt: Date;
-  updatedByUsername: string | null;
 }
 
-export function toCompanySettingsOutput(
+export function toPublicCompanyInfoOutput(
   settings: CompanySettings,
-): CompanySettingsOutput {
+): PublicCompanyInfoOutput {
   return {
     businessName: settings.businessName,
     address: settings.address,
     phone: settings.phone,
-    email: settings.email,
-    taxId: settings.taxId,
-    logoBase64: settings.logoBase64,
-    socialMedia: settings.socialMedia,
     whatsapp: settings.whatsapp,
+    email: settings.email,
     website: settings.website,
     businessHours: settings.businessHours,
     facebookUrl: settings.facebookUrl,
     instagramUrl: settings.instagramUrl,
     tiktokUrl: settings.tiktokUrl,
-    updatedAt: settings.updatedAt,
-    updatedByUsername: settings.updatedByUsername,
   };
 }

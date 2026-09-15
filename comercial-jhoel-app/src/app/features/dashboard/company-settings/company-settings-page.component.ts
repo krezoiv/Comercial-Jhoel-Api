@@ -50,6 +50,12 @@ export class CompanySettingsPageComponent {
     email: ['', [Validators.email, Validators.maxLength(150)]],
     taxId: ['', [Validators.maxLength(50)]],
     socialMedia: ['', [Validators.maxLength(255)]],
+    whatsapp: ['', [Validators.maxLength(20)]],
+    website: ['', [Validators.maxLength(255)]],
+    businessHours: ['', [Validators.maxLength(2000)]],
+    facebookUrl: ['', [Validators.maxLength(255)]],
+    instagramUrl: ['', [Validators.maxLength(255)]],
+    tiktokUrl: ['', [Validators.maxLength(255)]],
   });
 
   constructor() {
@@ -62,6 +68,12 @@ export class CompanySettingsPageComponent {
           email: settings.email ?? '',
           taxId: settings.taxId ?? '',
           socialMedia: settings.socialMedia ?? '',
+          whatsapp: settings.whatsapp ?? '',
+          website: settings.website ?? '',
+          businessHours: settings.businessHours ?? '',
+          facebookUrl: settings.facebookUrl ?? '',
+          instagramUrl: settings.instagramUrl ?? '',
+          tiktokUrl: settings.tiktokUrl ?? '',
         });
         this.logoBase64.set(settings.logoBase64);
         this.updatedByUsername.set(settings.updatedByUsername);
@@ -133,6 +145,12 @@ export class CompanySettingsPageComponent {
         email: raw.email.trim() || null,
         taxId: raw.taxId.trim() || null,
         socialMedia: raw.socialMedia.trim() || null,
+        whatsapp: raw.whatsapp.trim() || null,
+        website: raw.website.trim() || null,
+        businessHours: raw.businessHours.trim() || null,
+        facebookUrl: raw.facebookUrl.trim() || null,
+        instagramUrl: raw.instagramUrl.trim() || null,
+        tiktokUrl: raw.tiktokUrl.trim() || null,
         logoBase64: this.logoBase64(),
       })
       .subscribe({

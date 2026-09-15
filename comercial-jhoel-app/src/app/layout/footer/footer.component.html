@@ -8,7 +8,7 @@
         </div>
         <p class="footer__tagline">{{ site.tagline }}</p>
         <div class="footer__socials">
-          @for (social of socialLinks; track social.id) {
+          @for (social of socialLinks(); track social.id) {
             <a class="footer__social" [href]="social.href" [attr.aria-label]="social.label" target="_blank" rel="noopener noreferrer">
               <app-icon [name]="social.icon" [size]="18" />
             </a>
@@ -28,7 +28,7 @@
       <div class="footer__col">
         <h3 class="footer__heading">Contacto</h3>
         <ul class="footer__list">
-          @for (channel of channels; track channel.id) {
+          @for (channel of channels(); track channel.id) {
             <li>
               <a [href]="channel.href">
                 <app-icon [name]="channel.icon" [size]="16" />
@@ -41,8 +41,12 @@
 
       <div class="footer__col">
         <h3 class="footer__heading">Horario</h3>
-        <p class="footer__text">{{ site.schedule }}</p>
-        <p class="footer__text">{{ site.address }}</p>
+        @if (businessHours(); as hours) {
+          <p class="footer__text">{{ hours }}</p>
+        }
+        @if (address(); as addr) {
+          <p class="footer__text">{{ addr }}</p>
+        }
       </div>
     </div>
 

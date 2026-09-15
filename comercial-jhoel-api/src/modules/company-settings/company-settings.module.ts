@@ -5,11 +5,13 @@ import { TypeOrmCompanySettingsRepository } from './infrastructure/persistence/t
 import { COMPANY_SETTINGS_REPOSITORY } from './domain/repositories/company-settings.repository';
 import { GetCompanySettingsUseCase } from './application/use-cases/get-company-settings.use-case';
 import { UpdateCompanySettingsUseCase } from './application/use-cases/update-company-settings.use-case';
+import { GetPublicCompanyInfoUseCase } from './application/use-cases/get-public-company-info.use-case';
 import { CompanySettingsController } from './presentation/controllers/company-settings.controller';
+import { PublicCompanyController } from './presentation/controllers/public-company.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CompanySettingsOrmEntity])],
-  controllers: [CompanySettingsController],
+  controllers: [CompanySettingsController, PublicCompanyController],
   providers: [
     {
       provide: COMPANY_SETTINGS_REPOSITORY,
@@ -17,6 +19,7 @@ import { CompanySettingsController } from './presentation/controllers/company-se
     },
     GetCompanySettingsUseCase,
     UpdateCompanySettingsUseCase,
+    GetPublicCompanyInfoUseCase,
   ],
   // Exported so the Sales/Purchases/Tickets/Cotizaciones PDF builders can read the letterhead data without duplicating this repository.
   exports: [COMPANY_SETTINGS_REPOSITORY],

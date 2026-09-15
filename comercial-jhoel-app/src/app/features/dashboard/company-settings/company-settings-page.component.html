@@ -2,7 +2,7 @@
   <app-page-header
     icon="briefcase"
     title="Configuración de Empresa"
-    subtitle="Estos datos (logo, nombre, dirección, teléfono, correo, NIT y redes sociales) aparecen en el encabezado de todos los documentos PDF: Ventas, Compras, Tickets y Cotizaciones."
+    subtitle="Estos datos (logo, nombre, dirección, teléfono, correo, NIT) aparecen en el encabezado de todos los documentos PDF. Teléfono, WhatsApp, correo, sitio web, horario y redes sociales también se muestran en la sección Contacto de la página pública."
   />
 
   @if (loading()) {
@@ -62,9 +62,50 @@
           </div>
 
           <div class="form-field">
-            <label for="socialMedia">Redes sociales</label>
+            <label for="whatsapp">WhatsApp</label>
+            <input id="whatsapp" type="text" formControlName="whatsapp" maxlength="20" placeholder="Ej. 50212345678" />
+          </div>
+
+          <div class="form-field">
+            <label for="website">Sitio web</label>
+            <input id="website" type="text" formControlName="website" maxlength="255" placeholder="https://…" />
+          </div>
+
+          <div class="form-field">
+            <label for="socialMedia">Redes sociales (nota general)</label>
             <input id="socialMedia" type="text" formControlName="socialMedia" maxlength="255" />
           </div>
+        </div>
+
+        <div class="form-section">
+          <h2 class="section-title">Redes sociales (enlaces para la página pública)</h2>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="facebookUrl">Facebook</label>
+              <input id="facebookUrl" type="text" formControlName="facebookUrl" maxlength="255" placeholder="https://facebook.com/…" />
+            </div>
+
+            <div class="form-field">
+              <label for="instagramUrl">Instagram</label>
+              <input id="instagramUrl" type="text" formControlName="instagramUrl" maxlength="255" placeholder="https://instagram.com/…" />
+            </div>
+
+            <div class="form-field">
+              <label for="tiktokUrl">TikTok</label>
+              <input id="tiktokUrl" type="text" formControlName="tiktokUrl" maxlength="255" placeholder="https://tiktok.com/@…" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field form-field--full">
+          <label for="businessHours">Horario de atención</label>
+          <textarea
+            id="businessHours"
+            formControlName="businessHours"
+            maxlength="2000"
+            rows="4"
+            placeholder="Lunes a Viernes: 8:00 AM - 5:00 PM&#10;Sábado: 8:00 AM - 12:00 PM&#10;Domingo: Cerrado"
+          ></textarea>
         </div>
 
         @if (updatedByUsername()) {
