@@ -71,6 +71,12 @@ export interface BankDepositDailyTransactionCount {
   transactionCount: number;
 }
 
+export interface BankDepositMonthlyTransactionCount {
+  /** `yyyy-MM` — only months with at least one non-voided operation are returned; the caller zero-fills the rest of the year. */
+  month: string;
+  transactionCount: number;
+}
+
 export interface BankDepositRepository {
   /** Invokes the `register_bank_deposit_operation` Postgres function — the operation, its cash details, and its transactions all commit (or none do) atomically inside it. `context`, when provided (a `TransactionContext` from `TransactionManager.runInTransaction`), is used instead of this repository's own connection — so a caller can wrap this call and another module's write (e.g. an accounts-receivable CARGO) in one shared DB transaction. Omitted by every caller that doesn't need that. */
   registerOperation(
@@ -94,6 +100,11 @@ export interface BankDepositRepository {
     startDate: string,
     endDate: string,
   ): Promise<BankDepositDailyTransactionCount[]>;
+  /** `SUM(transaction_count)` grouped by month (`yyyy-MM`), `is_voided = false` — one row per month that had at least one non-voided operation. Backs the "Transacciones por mes" yearly chart; the caller zero-fills any month in range with no row. */
+  getMonthlyTransactionCounts(
+    startDate: string,
+    endDate: string,
+  ): Promise<BankDepositMonthlyTransactionCount[]>;
   /** Marks the operation voided — never a physical DELETE, never rewrites `totalAmount`/cash/transactions. The caller (`VoidBankDepositOperationUseCase`) has already checked the operation exists and isn't already voided. */
   voidOperation(
     id: string,

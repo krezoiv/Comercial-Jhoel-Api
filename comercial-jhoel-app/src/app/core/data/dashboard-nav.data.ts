@@ -106,6 +106,15 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     ],
   },
   {
+    label: 'Gráficas',
+    icon: 'bar-chart',
+    path: 'graficas',
+    roles: ['SUPER_ADMIN', 'ADMIN'],
+    children: [
+      { label: 'Indicadores de Transacciones', icon: 'trending-up', path: 'graficas-indicadores-transacciones' },
+    ],
+  },
+  {
     label: 'Agentes Bancarios',
     icon: 'bank',
     path: 'agentes-bancarios',

@@ -379,6 +379,15 @@ export const routes: Routes = [
         title: 'Reportería de Heladería — Sistema',
       },
       {
+        path: 'graficas-indicadores-transacciones',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/graphs/transaction-indicators/transaction-indicators-page.component').then(
+            (m) => m.TransactionIndicatorsPageComponent
+          ),
+        title: 'Indicadores de Transacciones — Sistema',
+      },
+      {
         path: 'agentes-bancarios-bancos',
         loadComponent: () =>
           import('./features/dashboard/bank-agents/bank-agents-page.component').then(

@@ -4,6 +4,7 @@ import { EntityManager, QueryFailedError, Repository, SelectQueryBuilder } from 
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import {
   BankDepositDailyTransactionCount,
+  BankDepositMonthlyTransactionCount,
   BankDepositRepository,
   BankDepositReportFilters,
   BankDepositReportSummary,
@@ -201,6 +202,26 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
     const rows = await qb.getRawMany<{ date: string; transactionCount: string }>();
     return rows.map((row) => ({
       date: row.date,
+      transactionCount: parseInt(row.transactionCount, 10),
+    }));
+  }
+
+  async getMonthlyTransactionCounts(
+    startDate: string,
+    endDate: string,
+  ): Promise<BankDepositMonthlyTransactionCount[]> {
+    const qb = this.repository.createQueryBuilder('operation');
+    this.applyFilters(qb, { startDate, endDate });
+    qb.andWhere('operation.isVoided = false');
+    qb.select("to_char(operation.operationDate, 'YYYY-MM')", 'month').addSelect(
+      'COALESCE(SUM(operation.transactionCount), 0)',
+      'transactionCount',
+    );
+    qb.groupBy("to_char(operation.operationDate, 'YYYY-MM')").orderBy('month', 'ASC');
+
+    const rows = await qb.getRawMany<{ month: string; transactionCount: string }>();
+    return rows.map((row) => ({
+      month: row.month,
       transactionCount: parseInt(row.transactionCount, 10),
     }));
   }

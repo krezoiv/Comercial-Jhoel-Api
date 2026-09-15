@@ -9,6 +9,8 @@ import {
   BankDepositMonthlyCount,
   BankDepositOperation,
   BankDepositTransactionSummary,
+  BankDepositWeeklyStats,
+  BankDepositYearlyStats,
   RegisterBankDepositInput,
 } from '../models';
 
@@ -56,6 +58,20 @@ export class BankDepositService {
   getDailyStats(): Observable<BankDepositDailyStats> {
     return this.http
       .get<ApiSuccessResponse<BankDepositDailyStats>>(`${BASE_URL}/daily-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Transacciones por semana" en Gráficas → Indicadores de Transacciones, siempre el mes actual del servidor. */
+  getWeeklyStats(): Observable<BankDepositWeeklyStats> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositWeeklyStats>>(`${BASE_URL}/weekly-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs "Transacciones por mes" (anual) en Gráficas → Indicadores de Transacciones, enero hasta el mes actual del año en curso. */
+  getYearlyStats(): Observable<BankDepositYearlyStats> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositYearlyStats>>(`${BASE_URL}/yearly-stats`)
       .pipe(map((response) => response.data));
   }
 }

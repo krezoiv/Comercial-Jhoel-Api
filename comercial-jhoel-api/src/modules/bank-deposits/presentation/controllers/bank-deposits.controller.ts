@@ -20,12 +20,16 @@ import { VoidBankDepositOperationUseCase } from '../../application/use-cases/voi
 import { GetBankDepositMonthlyCountUseCase } from '../../application/use-cases/get-bank-deposit-monthly-count.use-case';
 import { GetBankDepositTransactionSummaryUseCase } from '../../application/use-cases/get-bank-deposit-transaction-summary.use-case';
 import { GetBankDepositDailyStatsUseCase } from '../../application/use-cases/get-bank-deposit-daily-stats.use-case';
+import { GetBankDepositWeeklyStatsUseCase } from '../../application/use-cases/get-bank-deposit-weekly-stats.use-case';
+import { GetBankDepositYearlyStatsUseCase } from '../../application/use-cases/get-bank-deposit-yearly-stats.use-case';
 import { CreateBankDepositRequestDto } from '../dtos/create-bank-deposit.request.dto';
 import { VoidBankDepositOperationRequestDto } from '../dtos/void-bank-deposit-operation.request.dto';
 import { BankDepositOperationResponseDto } from '../dtos/bank-deposit.response.dto';
 import { BankDepositMonthlyCountResponseDto } from '../dtos/bank-deposit-monthly-count.response.dto';
 import { BankDepositTransactionSummaryResponseDto } from '../dtos/bank-deposit-transaction-summary.response.dto';
 import { BankDepositDailyStatsResponseDto } from '../dtos/bank-deposit-daily-stats.response.dto';
+import { BankDepositWeeklyStatsResponseDto } from '../dtos/bank-deposit-weekly-stats.response.dto';
+import { BankDepositYearlyStatsResponseDto } from '../dtos/bank-deposit-yearly-stats.response.dto';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
@@ -54,6 +58,8 @@ export class BankDepositsController {
     private readonly getBankDepositMonthlyCountUseCase: GetBankDepositMonthlyCountUseCase,
     private readonly getBankDepositTransactionSummaryUseCase: GetBankDepositTransactionSummaryUseCase,
     private readonly getBankDepositDailyStatsUseCase: GetBankDepositDailyStatsUseCase,
+    private readonly getBankDepositWeeklyStatsUseCase: GetBankDepositWeeklyStatsUseCase,
+    private readonly getBankDepositYearlyStatsUseCase: GetBankDepositYearlyStatsUseCase,
   ) {}
 
   @Post()
@@ -93,6 +99,18 @@ export class BankDepositsController {
   @Get('daily-stats')
   dailyStats(): Promise<BankDepositDailyStatsResponseDto> {
     return this.getBankDepositDailyStatsUseCase.execute();
+  }
+
+  /** Backs "Transacciones por semana" on Gráficas → Indicadores de Transacciones — same reasoning as `daily-stats` above, must be declared before `:id`. Open to any authenticated account (the "Gráficas" menu itself is admin-only on the frontend; this endpoint carries nothing more sensitive than `daily-stats` already does). */
+  @Get('weekly-stats')
+  weeklyStats(): Promise<BankDepositWeeklyStatsResponseDto> {
+    return this.getBankDepositWeeklyStatsUseCase.execute();
+  }
+
+  /** Backs "Transacciones por mes" (anual) on Gráficas → Indicadores de Transacciones — same reasoning as `daily-stats`/`weekly-stats` above, must be declared before `:id`. */
+  @Get('yearly-stats')
+  yearlyStats(): Promise<BankDepositYearlyStatsResponseDto> {
+    return this.getBankDepositYearlyStatsUseCase.execute();
   }
 
   @Get(':id')

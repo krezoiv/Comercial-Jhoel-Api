@@ -127,6 +127,40 @@ export interface BankDepositDailyStats {
   days: BankDepositDailyStat[];
 }
 
+/** One 7-day bucket of the current month, día 1 en adelante (nunca semana ISO) — ver `BankDepositService.getWeeklyStats()`. */
+export interface BankDepositWeeklyStat {
+  weekNumber: number;
+  /** "Semana N" */
+  label: string;
+  /** `yyyy-MM-dd` */
+  startDate: string;
+  /** `yyyy-MM-dd` */
+  endDate: string;
+  transactionCount: number;
+}
+
+/** `GET /bank-deposits/weekly-stats` — backs "Transacciones por semana" en Gráficas → Indicadores de Transacciones. Siempre el mes actual del servidor, se reinicia solo cada mes (por filtro de fecha, nunca borrando historial). */
+export interface BankDepositWeeklyStats {
+  /** `yyyy-MM` */
+  month: string;
+  weeks: BankDepositWeeklyStat[];
+}
+
+/** Un mes del año actual — permanece en la lista aunque tenga 0 transacciones, nunca se oculta. Ver `BankDepositService.getYearlyStats()`. */
+export interface BankDepositMonthlyStat {
+  /** `yyyy-MM` */
+  month: string;
+  /** Nombre del mes en español, ej. "Septiembre". */
+  label: string;
+  transactionCount: number;
+}
+
+/** `GET /bank-deposits/yearly-stats` — backs "Transacciones por mes" en Gráficas → Indicadores de Transacciones. Enero hasta el mes actual, acumulativo — nunca se reinicia dentro del año. */
+export interface BankDepositYearlyStats {
+  year: number;
+  months: BankDepositMonthlyStat[];
+}
+
 export interface BankDepositsReportFilters {
   startDate?: string;
   endDate?: string;
