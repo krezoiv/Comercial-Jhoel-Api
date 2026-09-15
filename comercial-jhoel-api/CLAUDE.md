@@ -26,8 +26,11 @@ npm run test:e2e                 # jest against test/*.e2e-spec.ts — boots the
                                   # retrying the DB connection
 
 npm run migration:generate -- src/database/migrations/<Name>   # diff entities vs DB, write a migration
-npm run migration:run            # apply pending migrations
-npm run migration:revert         # revert the last migration
+npm run migration:run            # apply pending migrations — DEV ONLY, needs src/ (ts-node); see below
+npm run migration:revert         # revert the last migration  — DEV ONLY, same reason
+npm run migration:run:prod       # apply pending migrations against a PRODUCTION deploy (compiled dist/,
+                                  # no ts-node) — this is the one that actually works there, see below
+npm run migration:revert:prod    # revert the last migration against a PRODUCTION deploy
 npm run seed:admin               # create the seed admin user (SEED_ADMIN_EMAIL/PASSWORD env, defaults
                                   # to admin@comercialjhoel.com / admin123)
 ```
@@ -64,6 +67,37 @@ container still has the old volume contents. After adding a dependency, run
 `docker compose exec api npm install` (updates the volume in place) then `docker compose restart api`
 (the long-lived `nest start --watch` process resolves modules once at boot and won't notice new
 `node_modules` entries on its own, even though it does hot-reload on source-file changes).
+
+### Running migrations against production (Railway) — use `:prod`, never the plain command
+
+The production deploy (Railway) runs the `production` Dockerfile stage, which copies **only**
+`dist/` + `production-dependencies` — there is no `src/` directory in that container at all, and
+`ts-node`-based tooling isn't meaningfully usable there. `npm run migration:run` (`typeorm-ts-node-commonjs
+-d src/database/data-source.ts`) hard-depends on `src/database/data-source.ts` existing, so running it
+against a production deploy doesn't just fail loudly — `AppDataSource`'s `entities`/`migrations` globs
+used to be hardcoded to `src/...*.ts` paths, which silently resolved to **zero files** in that container,
+making `migration:run` print "No migrations are pending" even when several genuinely weren't applied. This
+already caused one real incident (2026-09-15): a new column existed in the deployed code's entity but not
+in the actual production table, breaking every query that touched it, for a stretch where "no migrations
+pending" gave a false all-clear.
+
+Fixed two ways, both required:
+- `AppDataSource` (`src/database/data-source.ts`) now builds its globs from `` `${__dirname}/...` `` with
+  a `{ts,js}` extension, not a hardcoded `src/*.ts` string — the exact same compiled file then correctly
+  resolves against `.ts` sources when run via `ts-node` from `src/database/` (dev) **and** against `.js`
+  output when run via plain `node`/`typeorm` from `dist/database/` (production), with no path to fall
+  silently, so an unresolvable glob's failure mode is real errors, not a false "up to date."
+- **`npm run migration:run:prod`** / **`migration:revert:prod`** (`typeorm -d dist/database/data-source.js
+  ...`, no `ts-node`) are the actual commands to run against a Railway deploy — via
+  `railway ssh --service Comercial-Jhoel-Api "npm run migration:run:prod"` (private network; never expose
+  Postgres publicly for this). The plain `migration:run`/`migration:revert` scripts stay `ts-node`-based
+  and dev-only — don't "fix" them to also work in prod, keep the dev/prod split explicit via the `:prod`
+  suffix, matching `start:prod`'s own naming.
+- Always follow a production migration with a real verification, not just "no error was printed" — the
+  cheapest reliable check is running the actual affected use case end-to-end
+  (`NestFactory.createApplicationContext(AppModule)` inside the container, call the use case, inspect
+  real output) exactly the way local dev verification already does elsewhere in this file, since that
+  exercises the live entity metadata against the live table, not just a raw column-existence check.
 
 ## Architecture
 

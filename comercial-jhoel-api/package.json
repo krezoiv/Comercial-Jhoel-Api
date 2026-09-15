@@ -22,6 +22,9 @@
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
+    "typeorm:prod": "typeorm -d dist/database/data-source.js",
+    "migration:run:prod": "npm run typeorm:prod -- migration:run",
+    "migration:revert:prod": "npm run typeorm:prod -- migration:revert",
     "seed:admin": "ts-node -r tsconfig-paths/register src/database/seeds/admin-user.seed.ts"
   },
   "dependencies": {
