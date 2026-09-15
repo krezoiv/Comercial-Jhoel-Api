@@ -6,6 +6,7 @@ import {
   FindRechargeHistoryOptions,
   FindRechargeReportSummaryOptions,
   PaginatedResult,
+  RechargeAmountByType,
   RechargeDailyBalanceRepository,
   RechargeDailySalesAmount,
   RechargeMonthlySalesAmount,
@@ -326,12 +327,18 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
     }
   }
 
-  async getDailySalesTotals(startDate: string, endDate: string): Promise<RechargeDailySalesAmount[]> {
+  async getDailySalesTotals(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeDailySalesAmount[]> {
     const dateExpr = "to_char(balance.date, 'YYYY-MM-DD')";
     const rows = await this.repository
       .createQueryBuilder('balance')
       .select(dateExpr, 'date')
-      .addSelect('COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)', 'amount')
+      .addSelect(
+        'COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)',
+        'amount',
+      )
       .where('balance.finalBalance IS NOT NULL')
       .andWhere('balance.date >= :startDate', { startDate })
       .andWhere('balance.date <= :endDate', { endDate })
@@ -339,15 +346,24 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
       .orderBy(dateExpr, 'ASC')
       .getRawMany<{ date: string; amount: string }>();
 
-    return rows.map((row) => ({ date: row.date, amount: parseFloat(row.amount) }));
+    return rows.map((row) => ({
+      date: row.date,
+      amount: parseFloat(row.amount),
+    }));
   }
 
-  async getMonthlySalesTotals(startDate: string, endDate: string): Promise<RechargeMonthlySalesAmount[]> {
+  async getMonthlySalesTotals(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeMonthlySalesAmount[]> {
     const monthExpr = "to_char(balance.date, 'YYYY-MM')";
     const rows = await this.repository
       .createQueryBuilder('balance')
       .select(monthExpr, 'month')
-      .addSelect('COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)', 'amount')
+      .addSelect(
+        'COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)',
+        'amount',
+      )
       .where('balance.finalBalance IS NOT NULL')
       .andWhere('balance.date >= :startDate', { startDate })
       .andWhere('balance.date <= :endDate', { endDate })
@@ -355,6 +371,70 @@ export class TypeOrmRechargeDailyBalanceRepository implements RechargeDailyBalan
       .orderBy(monthExpr, 'ASC')
       .getRawMany<{ month: string; amount: string }>();
 
-    return rows.map((row) => ({ month: row.month, amount: parseFloat(row.amount) }));
+    return rows.map((row) => ({
+      month: row.month,
+      amount: parseFloat(row.amount),
+    }));
+  }
+
+  async getMonthlySalesTotalsByType(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeAmountByType[]> {
+    const rows = await this.repository
+      .createQueryBuilder('balance')
+      .innerJoin('balance.rechargeType', 'rechargeType')
+      .select('balance.rechargeTypeId', 'rechargeTypeId')
+      .addSelect('rechargeType.name', 'rechargeTypeName')
+      .addSelect(
+        'COALESCE(SUM(balance.dailyBalance - balance.finalBalance), 0)',
+        'amount',
+      )
+      .where('balance.finalBalance IS NOT NULL')
+      .andWhere('balance.date >= :startDate', { startDate })
+      .andWhere('balance.date <= :endDate', { endDate })
+      .groupBy('balance.rechargeTypeId')
+      .addGroupBy('rechargeType.name')
+      .getRawMany<{
+        rechargeTypeId: string;
+        rechargeTypeName: string;
+        amount: string;
+      }>();
+
+    return rows.map((row) => ({
+      rechargeTypeId: row.rechargeTypeId,
+      rechargeTypeName: row.rechargeTypeName,
+      amount: parseFloat(row.amount),
+    }));
+  }
+
+  async getMonthlyPurchaseTotalsByType(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeAmountByType[]> {
+    const rows = await this.repository
+      .createQueryBuilder('balance')
+      .innerJoin('balance.rechargeType', 'rechargeType')
+      .select('balance.rechargeTypeId', 'rechargeTypeId')
+      .addSelect('rechargeType.name', 'rechargeTypeName')
+      .addSelect(
+        'COALESCE(SUM(balance.dailyBalance - balance.previousBalance), 0)',
+        'amount',
+      )
+      .where('balance.date >= :startDate', { startDate })
+      .andWhere('balance.date <= :endDate', { endDate })
+      .groupBy('balance.rechargeTypeId')
+      .addGroupBy('rechargeType.name')
+      .getRawMany<{
+        rechargeTypeId: string;
+        rechargeTypeName: string;
+        amount: string;
+      }>();
+
+    return rows.map((row) => ({
+      rechargeTypeId: row.rechargeTypeId,
+      rechargeTypeName: row.rechargeTypeName,
+      amount: parseFloat(row.amount),
+    }));
   }
 }

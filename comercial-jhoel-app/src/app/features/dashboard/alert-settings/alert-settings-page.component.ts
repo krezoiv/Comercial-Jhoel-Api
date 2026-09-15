@@ -42,6 +42,10 @@ export class AlertSettingsPageComponent {
   readonly minBalanceDraft = signal<Record<string, string>>({});
   readonly savingTypeId = signal<string | null>(null);
 
+  /** Keyed by recharge type id — el techo de referencia (100%) de la gráfica de anillo de saldo en Resumen, distinto de `minBalanceDraft` (el umbral de alerta). */
+  readonly balanceLimitDraft = signal<Record<string, string>>({});
+  readonly savingLimitTypeId = signal<string | null>(null);
+
   constructor() {
     this.fetchAll();
   }
@@ -62,6 +66,9 @@ export class AlertSettingsPageComponent {
         this.rechargeTypes.set(types);
         this.minBalanceDraft.set(
           Object.fromEntries(types.map((type) => [type.id, String(type.minBalance)])),
+        );
+        this.balanceLimitDraft.set(
+          Object.fromEntries(types.map((type) => [type.id, String(type.balanceLimit)])),
         );
         this.loading.set(false);
       },
@@ -128,6 +135,38 @@ export class AlertSettingsPageComponent {
       error: (error: HttpErrorResponse) => {
         this.savingTypeId.set(null);
         this.notificationService.error(extractErrorMessage(error, 'No se pudo actualizar el saldo mínimo.'));
+      },
+    });
+  }
+
+  onBalanceLimitInput(typeId: string, value: string): void {
+    this.balanceLimitDraft.update((draft) => ({ ...draft, [typeId]: value }));
+  }
+
+  canSaveBalanceLimit(typeId: string): boolean {
+    const raw = this.balanceLimitDraft()[typeId];
+    if (raw === undefined) {
+      return false;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0;
+  }
+
+  saveBalanceLimit(typeId: string): void {
+    if (!this.canSaveBalanceLimit(typeId) || this.savingLimitTypeId()) {
+      return;
+    }
+    const balanceLimit = Number(this.balanceLimitDraft()[typeId]);
+    this.savingLimitTypeId.set(typeId);
+    this.rechargesService.updateTypeBalanceLimit(typeId, balanceLimit).subscribe({
+      next: (updated) => {
+        this.savingLimitTypeId.set(null);
+        this.rechargeTypes.update((types) => types.map((type) => (type.id === typeId ? updated : type)));
+        this.notificationService.success('Límite de saldo actualizado correctamente.');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.savingLimitTypeId.set(null);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo actualizar el límite de saldo.'));
       },
     });
   }

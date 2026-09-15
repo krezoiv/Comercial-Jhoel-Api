@@ -10,6 +10,7 @@ export class RechargeTypeMapper {
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       minBalance: orm.minBalance,
+      balanceLimit: orm.balanceLimit,
     });
   }
 }

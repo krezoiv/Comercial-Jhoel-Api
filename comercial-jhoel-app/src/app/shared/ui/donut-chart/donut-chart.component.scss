@@ -1,0 +1,256 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+.donut-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.donut-card__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.donut-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary-600);
+}
+
+.donut-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  line-height: 1.2;
+}
+
+.donut-card__subtitle {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+// ---- Loading ----------------------------------------------------------
+
+.donut-card__skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 12rem;
+}
+
+.skeleton-ring {
+  display: block;
+  width: 11rem;
+  height: 11rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-bg-light-muted) 25%, var(--color-border-light) 50%, var(--color-bg-light-muted) 75%);
+  background-size: 200% 100%;
+  animation: donut-chart-skeleton-pulse 1.4s ease-in-out infinite;
+  mask: radial-gradient(farthest-side, transparent calc(100% - 26px), #000 calc(100% - 26px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 26px), #000 calc(100% - 26px));
+}
+
+@keyframes donut-chart-skeleton-pulse {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Error --------------------------------------------------------------
+
+.donut-card__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 12rem;
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.donut-card__retry {
+  color: var(--color-primary-600);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ---- Body ----------------------------------------------------------------
+
+.donut-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+
+  @include bp.respond(sm) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.donut-card__plot {
+  position: relative;
+  width: 11rem;
+  height: 11rem;
+  flex-shrink: 0;
+}
+
+.donut-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donut-svg__track {
+  fill: none;
+  stroke: var(--color-border-light);
+}
+
+.donut-svg__segment {
+  stroke-linecap: butt;
+  cursor: pointer;
+  transition:
+    stroke-width var(--duration-fast, 0.15s) ease-out,
+    opacity var(--duration-fast, 0.15s) ease-out;
+}
+
+.donut-card__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-card__center-value {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  line-height: 1.15;
+}
+
+.donut-card__center-label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+  margin-top: 2px;
+}
+
+// ---- Legend ----------------------------------------------------------
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  width: 100%;
+
+  @include bp.respond(sm) {
+    width: auto;
+  }
+}
+
+.donut-legend__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast, 0.15s) ease-out;
+}
+
+.donut-legend__item--hover {
+  background: var(--color-bg-light-muted);
+}
+
+.donut-legend__swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.donut-legend__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donut-legend__value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+  white-space: nowrap;
+}
+
+.donut-legend__percent {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+  white-space: nowrap;
+}
+
+// ---- Tooltip ----------------------------------------------------------
+
+.donut-tooltip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-ink-800);
+  color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.donut-tooltip__label {
+  font-weight: var(--fw-semibold);
+}
+
+.donut-tooltip__value {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.donut-tooltip__percent {
+  color: rgba(255, 255, 255, 0.6);
+}

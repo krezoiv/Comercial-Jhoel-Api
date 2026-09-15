@@ -11,6 +11,7 @@ function makeType(minBalance: number): RechargeType {
     createdAt: new Date(),
     updatedAt: new Date(),
     minBalance,
+    balanceLimit: 0,
   });
 }
 

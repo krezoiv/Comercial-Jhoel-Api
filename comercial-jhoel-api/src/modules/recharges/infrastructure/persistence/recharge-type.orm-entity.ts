@@ -30,6 +30,16 @@ export class RechargeTypeOrmEntity {
   })
   minBalance: number;
 
+  @Column({
+    name: 'balance_limit',
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: new DecimalColumnTransformer(),
+  })
+  balanceLimit: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

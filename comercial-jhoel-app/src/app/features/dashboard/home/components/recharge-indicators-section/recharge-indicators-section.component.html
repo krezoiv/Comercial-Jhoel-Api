@@ -1,0 +1,57 @@
+<section class="recharge-indicators">
+  <h2 class="recharge-indicators__title">Indicadores de Recargas Electrónicas</h2>
+
+  <div class="recharge-indicators__grid">
+    <app-donut-chart
+      title="Ventas de Recargas"
+      subtitle="Mes actual"
+      icon="receipt"
+      centerLabel="Total vendido"
+      [segments]="salesSegments()"
+      [formatValue]="formatCurrency"
+      [loading]="loading()"
+      [loadError]="loadError()"
+      emptyTitle="Sin ventas este mes"
+      emptyDescription="Aquí verás la comparación Claro vs. Tigo en cuanto haya ventas registradas."
+      (retry)="fetch()"
+    />
+
+    <app-gauge-ring
+      title="Saldo Claro"
+      icon="smartphone"
+      [percentage]="claroPercentage()"
+      [currentValue]="claro().currentBalance"
+      [limitValue]="claro().balanceLimit"
+      [formatValue]="formatCurrency"
+      [loading]="loading()"
+      [loadError]="loadError()"
+      (retry)="fetch()"
+    />
+
+    <app-gauge-ring
+      title="Saldo Tigo"
+      icon="smartphone"
+      [percentage]="tigoPercentage()"
+      [currentValue]="tigo().currentBalance"
+      [limitValue]="tigo().balanceLimit"
+      [formatValue]="formatCurrency"
+      [loading]="loading()"
+      [loadError]="loadError()"
+      (retry)="fetch()"
+    />
+
+    <app-donut-chart
+      title="Compras de Saldo"
+      subtitle="Mes actual"
+      icon="arrow-down-circle"
+      centerLabel="Compras del mes"
+      [segments]="purchaseSegments()"
+      [formatValue]="formatCurrency"
+      [loading]="loading()"
+      [loadError]="loadError()"
+      emptyTitle="Sin compras este mes"
+      emptyDescription="Aquí verás la comparación Claro vs. Tigo en cuanto haya compras registradas."
+      (retry)="fetch()"
+    />
+  </div>
+</section>

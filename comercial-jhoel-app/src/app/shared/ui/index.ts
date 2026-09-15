@@ -16,3 +16,5 @@ export * from './summary-tile/summary-tile.component';
 export * from './transaction-monthly-chart/transaction-monthly-chart.component';
 export * from './barcode-scanner-modal/barcode-scanner-modal.component';
 export * from './line-chart/line-chart.component';
+export * from './donut-chart/donut-chart.component';
+export * from './gauge-ring/gauge-ring.component';

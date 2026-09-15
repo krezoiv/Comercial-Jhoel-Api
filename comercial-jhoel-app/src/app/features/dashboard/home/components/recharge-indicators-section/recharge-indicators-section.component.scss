@@ -1,0 +1,24 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  margin-top: var(--space-8);
+}
+
+.recharge-indicators__title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-5);
+}
+
+.recharge-indicators__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

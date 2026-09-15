@@ -64,6 +64,12 @@ export interface RechargeMonthlySalesAmount {
   amount: number;
 }
 
+export interface RechargeAmountByType {
+  rechargeTypeId: string;
+  rechargeTypeName: string;
+  amount: number;
+}
+
 export interface RechargeDailyBalanceRepository {
   /** Invokes `ensure_recharge_daily_balance` — finds this date's CURRENT cycle row for this type, or lazily creates it with `previousBalance` copied from the most recent closed cycle. */
   ensureDailyBalance(
@@ -117,4 +123,28 @@ export interface RechargeDailyBalanceRepository {
     startDate: string,
     endDate: string,
   ): Promise<RechargeMonthlySalesAmount[]>;
+  /**
+   * "Venta" (`SUM(daily_balance - final_balance)`, solo ciclos cerrados),
+   * agrupada por tipo de recarga (Claro/Tigo) dentro del rango de fechas —
+   * a diferencia de `getMonthlySalesTotals`, que combina ambos operadores a
+   * propósito, este método existe específicamente para separarlos. Backs
+   * "Ventas de Recargas" (Gráfica 1) en Resumen → Indicadores de Recargas
+   * Electrónicas. Un tipo sin ningún ciclo cerrado en el rango simplemente
+   * no aparece en el resultado — el caller decide el valor por defecto.
+   */
+  getMonthlySalesTotalsByType(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeAmountByType[]>;
+  /**
+   * "Acreditado" (`SUM(daily_balance - previous_balance)`), agrupado por
+   * tipo de recarga dentro del rango de fechas — nunca filtra por
+   * `final_balance IS NOT NULL`: una compra de saldo se acredita de
+   * inmediato, no depende de que se cierre el cuadre. Backs "Compras de
+   * Saldo" (Gráfica 4) en Resumen → Indicadores de Recargas Electrónicas.
+   */
+  getMonthlyPurchaseTotalsByType(
+    startDate: string,
+    endDate: string,
+  ): Promise<RechargeAmountByType[]>;
 }

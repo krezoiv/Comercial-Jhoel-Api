@@ -43,4 +43,21 @@ export class TypeOrmRechargeTypeRepository implements RechargeTypeRepository {
     }
     return RechargeTypeMapper.toDomain(orm);
   }
+
+  async updateBalanceLimit(
+    id: string,
+    balanceLimit: number,
+  ): Promise<RechargeType> {
+    const result = await this.repository.update({ id }, { balanceLimit });
+    if (!result.affected) {
+      throw new RechargeTypeNotFoundError(id);
+    }
+    const orm = await this.repository.findOne({ where: { id } });
+    if (!orm) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar el tipo de recarga recién actualizado.',
+      );
+    }
+    return RechargeTypeMapper.toDomain(orm);
+  }
 }

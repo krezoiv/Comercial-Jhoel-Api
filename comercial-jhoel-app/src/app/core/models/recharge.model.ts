@@ -4,6 +4,8 @@ export interface RechargeType {
   isActive: boolean;
   /** `0` means "no threshold configured" — the Alerts module never alerts for this type until an admin sets a real minimum. */
   minBalance: number;
+  /** `0` means "no limit configured" — the 100% reference point for the Resumen saldo gauge charts; distinct from `minBalance` (a floor, not a ceiling). */
+  balanceLimit: number;
 }
 
 /**
@@ -168,6 +170,35 @@ export interface RechargesMonthlyStat {
 export interface RechargesYearlyStats {
   year: number;
   months: RechargesMonthlyStat[];
+}
+
+export interface RechargeOperatorStat {
+  rechargeTypeId: string;
+  rechargeTypeName: string;
+  /** Acumulado del mes actual, combinado por cuadres cerrados — mismo criterio que `RechargesDailyStats`, separado por operadora. */
+  salesThisMonth: number;
+  /** Acumulado del mes actual — se acredita de inmediato, no depende de que se cierre el cuadre. */
+  purchasesThisMonth: number;
+  /** La misma fuente de verdad que ya usa el módulo de Alertas para "saldo bajo" — nunca recalculado en el frontend. */
+  currentBalance: number;
+  balanceLimit: number;
+}
+
+/** `GET /recharges/operators-summary` — backs las 4 gráficas de anillo de "Indicadores de Recargas Electrónicas" en Resumen. */
+export interface RechargeOperatorsSummaryResponse {
+  /** `yyyy-MM` */
+  month: string;
+  operators: RechargeOperatorStat[];
+}
+
+/**
+ * `currentBalance / balanceLimit * 100` — nunca `Math.min(pct, 100)`, el
+ * saldo puede superar el límite configurado (p. ej. tras una compra grande)
+ * y el gauge debe mostrarlo tal cual. `limit <= 0` (sin configurar) devuelve
+ * `0` en vez de `NaN`/`Infinity`.
+ */
+export function calculateBalancePercentage(currentBalance: number, balanceLimit: number): number {
+  return balanceLimit > 0 ? (currentBalance / balanceLimit) * 100 : 0;
 }
 
 export type SalesClosureStatus = 'zero' | 'positive' | 'negative';

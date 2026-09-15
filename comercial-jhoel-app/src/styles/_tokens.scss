@@ -45,6 +45,23 @@
   // modo oscuro (ver el bloque [data-theme='dark'] más abajo).
   --color-header-subtitle: #8a9a5b;
 
+  // ---- Identidad de operadoras (Recargas Electrónicas) --------------------
+  // Primera convención de color para Claro/Tigo en todo el proyecto —
+  // reutilizar en cualquier gráfica/leyenda/tooltip/etiqueta futura que
+  // distinga entre ambas operadoras, nunca definir un color nuevo por
+  // módulo.
+  --color-operator-claro: #e4002b;
+  --color-operator-tigo: #0057b8;
+
+  // ---- Medidor de saldo (gauge, Resumen → Recargas) ------------------------
+  // Degradado rojo→naranja→amarillo→verde según % de saldo disponible.
+  // Rojo/verde reutilizan los tokens de estado ya existentes; naranja/
+  // amarillo son nuevos, no había ningún tono de esos en la paleta.
+  --color-gauge-red: var(--color-danger-strong);
+  --color-gauge-orange: #f97316;
+  --color-gauge-yellow: #f4c430;
+  --color-gauge-green: var(--color-accent-green);
+
   // ---- Neutral / surface ramps --------------------------------------------
   --color-ink-950: #05070c;
   --color-ink-900: #0a0e17;

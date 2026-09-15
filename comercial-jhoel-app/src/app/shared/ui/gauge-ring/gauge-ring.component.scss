@@ -1,0 +1,189 @@
+:host {
+  display: block;
+}
+
+.gauge-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.gauge-card__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.gauge-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary-600);
+}
+
+.gauge-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  line-height: 1.2;
+}
+
+.gauge-card__subtitle {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+// ---- Loading ----------------------------------------------------------
+
+.gauge-card__skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 12rem;
+}
+
+.skeleton-ring {
+  display: block;
+  width: 11rem;
+  height: 11rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-bg-light-muted) 25%, var(--color-border-light) 50%, var(--color-bg-light-muted) 75%);
+  background-size: 200% 100%;
+  animation: gauge-ring-skeleton-pulse 1.4s ease-in-out infinite;
+  mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
+}
+
+@keyframes gauge-ring-skeleton-pulse {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Error --------------------------------------------------------------
+
+.gauge-card__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 12rem;
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.gauge-card__retry {
+  color: var(--color-primary-600);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ---- Body ----------------------------------------------------------------
+
+.gauge-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.gauge-card__plot {
+  position: relative;
+  width: 11rem;
+  height: 11rem;
+}
+
+.gauge-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gauge-svg__track {
+  fill: none;
+  stroke: var(--color-border-light);
+}
+
+.gauge-svg__fill {
+  transition:
+    stroke-dasharray var(--duration-slow, 0.45s) var(--ease-out, ease-out),
+    stroke var(--duration-slow, 0.45s) var(--ease-out, ease-out);
+}
+
+.gauge-svg__overflow {
+  stroke: var(--color-gauge-green);
+  opacity: 0.4;
+  transition: stroke-dasharray var(--duration-slow, 0.45s) var(--ease-out, ease-out);
+}
+
+.gauge-card__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 var(--space-2);
+}
+
+.gauge-card__percentage {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-on-light);
+  line-height: 1.1;
+}
+
+.gauge-card__current {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+  margin-top: var(--space-1);
+}
+
+// ---- Footer ----------------------------------------------------------
+
+.gauge-card__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gauge-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.gauge-card__limit {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}

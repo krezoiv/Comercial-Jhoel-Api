@@ -5,6 +5,7 @@ export interface RechargeTypeOutput {
   name: string;
   isActive: boolean;
   minBalance: number;
+  balanceLimit: number;
 }
 
 export function toRechargeTypeOutput(type: RechargeType): RechargeTypeOutput {
@@ -13,5 +14,6 @@ export function toRechargeTypeOutput(type: RechargeType): RechargeTypeOutput {
     name: type.name,
     isActive: type.isActive,
     minBalance: type.minBalance,
+    balanceLimit: type.balanceLimit,
   };
 }

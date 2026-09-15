@@ -60,6 +60,34 @@
           </div>
         }
       </app-card>
+
+      <app-card>
+        <h2 class="section-title">Límite de saldo (gráficas de Resumen)</h2>
+        <p class="section-hint">
+          El techo de referencia (100%) del medidor de saldo en Resumen → Indicadores de Recargas
+          Electrónicas — el saldo puede superarlo (más de 100%) sin problema. Distinto del saldo
+          mínimo de arriba, que solo activa alertas.
+        </p>
+        @for (type of rechargeTypes(); track type.id) {
+          <div class="field-row">
+            <label [attr.for]="'balance-limit-' + type.id">{{ type.name }}</label>
+            <input
+              [id]="'balance-limit-' + type.id"
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="balanceLimitDraft()[type.id]"
+              (input)="onBalanceLimitInput(type.id, $any($event.target).value)"
+            />
+            <app-button
+              [disabled]="!canSaveBalanceLimit(type.id) || savingLimitTypeId() === type.id"
+              (click)="saveBalanceLimit(type.id)"
+            >
+              {{ savingLimitTypeId() === type.id ? 'Guardando...' : 'Guardar' }}
+            </app-button>
+          </div>
+        }
+      </app-card>
     </div>
   }
 </div>

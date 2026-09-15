@@ -6,6 +6,8 @@ export interface RechargeTypeProps {
   updatedAt: Date;
   /** `0` means "no threshold configured" — the Alerts module never alerts for this type until an admin sets a real minimum. */
   minBalance: number;
+  /** `0` means "no limit configured" — the 100% reference point for the Resumen saldo gauge charts; distinct from `minBalance` (a floor, not a ceiling). */
+  balanceLimit: number;
 }
 
 /** Claro/Tigo today — a normalized lookup row, not a hardcoded string, so a future operator is a new seeded row rather than a code change. */
@@ -38,5 +40,9 @@ export class RechargeType {
 
   get minBalance(): number {
     return this.props.minBalance;
+  }
+
+  get balanceLimit(): number {
+    return this.props.balanceLimit;
   }
 }

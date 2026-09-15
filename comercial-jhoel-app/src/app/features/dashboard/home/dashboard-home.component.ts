@@ -11,6 +11,7 @@ import { DashboardMetricsService } from '../../../core/services/dashboard-metric
 import { DashboardSummaryService } from '../../../core/services/dashboard-summary.service';
 import { CardComponent, IconComponent, SummaryTileComponent, TransactionMonthlyChartComponent } from '../../../shared/ui';
 import { FinancialIndicatorsComponent } from './components/financial-indicators/financial-indicators.component';
+import { RechargeIndicatorsSectionComponent } from './components/recharge-indicators-section/recharge-indicators-section.component';
 import { TransactionSummaryCardComponent } from '../transaccionar/components/transaction-summary-card/transaction-summary-card.component';
 
 /** Every card is still mock (see `DASHBOARD_SUMMARY`'s own doc comment) EXCEPT this one, which "Bancos" is overridden to. */
@@ -30,6 +31,7 @@ const BANCOS_CARD_ID = 'bancos';
     TransactionMonthlyChartComponent,
     FinancialIndicatorsComponent,
     TransactionSummaryCardComponent,
+    RechargeIndicatorsSectionComponent,
   ],
   templateUrl: './dashboard-home.component.html',
   styleUrl: './dashboard-home.component.scss',

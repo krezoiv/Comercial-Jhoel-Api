@@ -1,0 +1,75 @@
+<app-card padding="lg" class="gauge-card">
+  <div class="gauge-card__header">
+    <div class="gauge-card__identity">
+      <div class="gauge-card__icon">
+        <app-icon [name]="icon" [size]="18" />
+      </div>
+      <div>
+        <h2 class="gauge-card__title">{{ title }}</h2>
+        @if (subtitle) {
+          <p class="gauge-card__subtitle">{{ subtitle }}</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="gauge-card__skeleton" aria-hidden="true">
+      <span class="skeleton-ring"></span>
+    </div>
+  } @else if (loadError) {
+    <div class="gauge-card__error">
+      <app-icon name="alert-triangle" [size]="20" />
+      <p>No se pudo cargar el saldo.</p>
+      <button type="button" class="gauge-card__retry" (click)="onRetry()">Reintentar</button>
+    </div>
+  } @else {
+    <div class="gauge-card__body">
+      <div class="gauge-card__plot">
+        <svg [attr.viewBox]="viewBox" class="gauge-svg">
+          <g [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'">
+            <circle [attr.cx]="center" [attr.cy]="center" [attr.r]="radius" class="gauge-svg__track" [attr.stroke-width]="strokeWidth" />
+            <circle
+              [attr.cx]="center"
+              [attr.cy]="center"
+              [attr.r]="radius"
+              fill="none"
+              [attr.stroke]="ringColor()"
+              [attr.stroke-width]="strokeWidth"
+              stroke-linecap="round"
+              [attr.stroke-dasharray]="ringDashArray()"
+              class="gauge-svg__fill"
+            />
+            @if (isOverLimit()) {
+              <circle
+                [attr.cx]="center"
+                [attr.cy]="center"
+                [attr.r]="overflowRadius"
+                fill="none"
+                class="gauge-svg__overflow"
+                [attr.stroke-width]="overflowStrokeWidth"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="overflowDashArray()"
+              />
+            }
+          </g>
+        </svg>
+
+        <div class="gauge-card__center">
+          <span class="gauge-card__percentage">{{ displayPercentage() }}</span>
+          <span class="gauge-card__current">{{ formatValue(currentValue) }} {{ currentLabel }}</span>
+        </div>
+      </div>
+
+      <div class="gauge-card__footer">
+        @if (isOverLimit()) {
+          <span class="gauge-card__badge">
+            <app-icon name="arrow-up-circle" [size]="13" />
+            Por encima del límite
+          </span>
+        }
+        <span class="gauge-card__limit">{{ limitLabel }}: {{ formatValue(limitValue) }}</span>
+      </div>
+    </div>
+  }
+</app-card>

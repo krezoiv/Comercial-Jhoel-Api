@@ -47,6 +47,8 @@ import { GetRechargeDayStatusUseCase } from './application/use-cases/get-recharg
 import { OpenRechargeDayUseCase } from './application/use-cases/open-recharge-day.use-case';
 import { CloseRechargeDayUseCase } from './application/use-cases/close-recharge-day.use-case';
 import { UpdateRechargeTypeMinBalanceUseCase } from './application/use-cases/update-recharge-type-min-balance.use-case';
+import { UpdateRechargeTypeBalanceLimitUseCase } from './application/use-cases/update-recharge-type-balance-limit.use-case';
+import { GetRechargeOperatorsSummaryUseCase } from './application/use-cases/get-recharge-operators-summary.use-case';
 import { ListClosedRechargeDaysUseCase } from './application/use-cases/list-closed-recharge-days.use-case';
 import { GetRechargeDayDetailUseCase } from './application/use-cases/get-recharge-day-detail.use-case';
 import { ReopenRechargeDayUseCase } from './application/use-cases/reopen-recharge-day.use-case';
@@ -171,6 +173,8 @@ import { RechargeSimsController } from './presentation/controllers/recharge-sims
     GetRechargesDailyStatsUseCase,
     GetRechargesWeeklyStatsUseCase,
     GetRechargesYearlyStatsUseCase,
+    UpdateRechargeTypeBalanceLimitUseCase,
+    GetRechargeOperatorsSummaryUseCase,
   ],
   // Exported for `ReportsModule`'s new Recargas report: `RECHARGE_TYPE_REPOSITORY`
   // resolves the `rechargeTypeId` filter into a display name for the PDF,

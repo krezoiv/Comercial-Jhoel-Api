@@ -33,6 +33,8 @@ import { UpdateRechargeSaleUseCase } from '../../application/use-cases/update-re
 import { DeleteRechargeSaleUseCase } from '../../application/use-cases/delete-recharge-sale.use-case';
 import { GetRechargeDayStatusUseCase } from '../../application/use-cases/get-recharge-day-status.use-case';
 import { UpdateRechargeTypeMinBalanceUseCase } from '../../application/use-cases/update-recharge-type-min-balance.use-case';
+import { UpdateRechargeTypeBalanceLimitUseCase } from '../../application/use-cases/update-recharge-type-balance-limit.use-case';
+import { GetRechargeOperatorsSummaryUseCase } from '../../application/use-cases/get-recharge-operators-summary.use-case';
 import { OpenRechargeDayUseCase } from '../../application/use-cases/open-recharge-day.use-case';
 import { CloseRechargeDayUseCase } from '../../application/use-cases/close-recharge-day.use-case';
 import { GetRechargePurchasesUseCase } from '../../application/use-cases/get-recharge-purchases.use-case';
@@ -52,6 +54,7 @@ import { RechargeSalesQueryDto } from '../dtos/recharge-sales.query.dto';
 import { RechargeDayStatusQueryDto } from '../dtos/recharge-day-status.query.dto';
 import { OpenRechargeDayRequestDto } from '../dtos/open-recharge-day.request.dto';
 import { UpdateRechargeTypeMinBalanceRequestDto } from '../dtos/update-recharge-type-min-balance.request.dto';
+import { UpdateRechargeTypeBalanceLimitRequestDto } from '../dtos/update-recharge-type-balance-limit.request.dto';
 import { CloseRechargeDayRequestDto } from '../dtos/close-recharge-day.request.dto';
 import { RechargePurchasesQueryDto } from '../dtos/recharge-purchases.query.dto';
 import { VoidRechargePurchaseRequestDto } from '../dtos/void-recharge-purchase.request.dto';
@@ -64,6 +67,7 @@ import { RechargePurchaseOutput } from '../../application/dtos/recharge-purchase
 import { RechargesDailyStatsResponseDto } from '../dtos/recharges-daily-stats.response.dto';
 import { RechargesWeeklyStatsResponseDto } from '../dtos/recharges-weekly-stats.response.dto';
 import { RechargesYearlyStatsResponseDto } from '../dtos/recharges-yearly-stats.response.dto';
+import { RechargeOperatorsSummaryResponseDto } from '../dtos/recharge-operators-summary.response.dto';
 import { todayIsoDate } from '../../application/utils/today-iso-date';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -102,6 +106,8 @@ export class RechargesController {
     private readonly getRechargesDailyStatsUseCase: GetRechargesDailyStatsUseCase,
     private readonly getRechargesWeeklyStatsUseCase: GetRechargesWeeklyStatsUseCase,
     private readonly getRechargesYearlyStatsUseCase: GetRechargesYearlyStatsUseCase,
+    private readonly updateRechargeTypeBalanceLimitUseCase: UpdateRechargeTypeBalanceLimitUseCase,
+    private readonly getRechargeOperatorsSummaryUseCase: GetRechargeOperatorsSummaryUseCase,
   ) {}
 
   /**
@@ -269,6 +275,26 @@ export class RechargesController {
   @Get('yearly-stats')
   yearlyStats(): Promise<RechargesYearlyStatsResponseDto> {
     return this.getRechargesYearlyStatsUseCase.execute();
+  }
+
+  /** Backs las 4 gráficas de anillo de "Indicadores de Recargas Electrónicas" en Resumen — ventas/compras del mes y saldo actual/límite, separados por operadora. */
+  @Get('operators-summary')
+  operatorsSummary(): Promise<RechargeOperatorsSummaryResponseDto> {
+    return this.getRechargeOperatorsSummaryUseCase.execute();
+  }
+
+  /** "Límite de saldo" — el techo de referencia (100%) de la gráfica de anillo de saldo en Resumen. Admin-only, distinto de `min-balance` (el umbral de alerta). */
+  @Patch('types/:id/balance-limit')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  updateBalanceLimit(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRechargeTypeBalanceLimitRequestDto,
+  ): Promise<RechargeTypeOutput> {
+    return this.updateRechargeTypeBalanceLimitUseCase.execute({
+      id,
+      balanceLimit: dto.balanceLimit,
+    });
   }
 
   @Post('sales-closure')

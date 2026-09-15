@@ -7,6 +7,7 @@ import {
   ApiSuccessResponse,
   RechargeDailyBalance,
   RechargeDayStatus,
+  RechargeOperatorsSummaryResponse,
   RechargePurchase,
   RechargeSale,
   RechargeSalesSummary,
@@ -37,6 +38,13 @@ export class RechargesService {
   updateTypeMinBalance(id: string, minBalance: number): Observable<RechargeType> {
     return this.http
       .patch<ApiSuccessResponse<RechargeType>>(`${BASE_URL}/types/${id}/min-balance`, { minBalance })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Admin-only — el techo de referencia (100%) de la gráfica de anillo de saldo en Resumen. Distinto de `updateTypeMinBalance` (el umbral de alerta). */
+  updateTypeBalanceLimit(id: string, balanceLimit: number): Observable<RechargeType> {
+    return this.http
+      .patch<ApiSuccessResponse<RechargeType>>(`${BASE_URL}/types/${id}/balance-limit`, { balanceLimit })
       .pipe(map((response) => response.data));
   }
 
@@ -153,6 +161,13 @@ export class RechargesService {
   getYearlyStats(): Observable<RechargesYearlyStats> {
     return this.http
       .get<ApiSuccessResponse<RechargesYearlyStats>>(`${BASE_URL}/yearly-stats`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Open to any authenticated account — backs las 4 gráficas de anillo de "Indicadores de Recargas Electrónicas" en Resumen. */
+  getOperatorsSummary(): Observable<RechargeOperatorsSummaryResponse> {
+    return this.http
+      .get<ApiSuccessResponse<RechargeOperatorsSummaryResponse>>(`${BASE_URL}/operators-summary`)
       .pipe(map((response) => response.data));
   }
 }

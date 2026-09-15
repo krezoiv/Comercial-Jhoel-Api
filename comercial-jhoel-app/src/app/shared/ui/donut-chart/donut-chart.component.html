@@ -1,0 +1,89 @@
+<app-card padding="lg" class="donut-card">
+  <div class="donut-card__header">
+    <div class="donut-card__identity">
+      <div class="donut-card__icon">
+        <app-icon [name]="icon" [size]="18" />
+      </div>
+      <div>
+        <h2 class="donut-card__title">{{ title }}</h2>
+        @if (subtitle) {
+          <p class="donut-card__subtitle">{{ subtitle }}</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="donut-card__skeleton" aria-hidden="true">
+      <span class="skeleton-ring"></span>
+    </div>
+  } @else if (loadError) {
+    <div class="donut-card__error">
+      <app-icon name="alert-triangle" [size]="20" />
+      <p>No se pudieron cargar las estadísticas.</p>
+      <button type="button" class="donut-card__retry" (click)="onRetry()">Reintentar</button>
+    </div>
+  } @else if (!hasActivity()) {
+    <app-empty-state icon="bar-chart" [title]="emptyTitle" [description]="emptyDescription" />
+  } @else {
+    <div class="donut-card__body">
+      <div class="donut-card__plot">
+        <svg [attr.viewBox]="viewBox" class="donut-svg">
+          <g [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'">
+            <circle
+              [attr.cx]="center"
+              [attr.cy]="center"
+              [attr.r]="radius"
+              class="donut-svg__track"
+              [attr.stroke-width]="strokeWidth"
+            />
+            @for (rendered of renderedSegments(); track rendered.segment.label; let i = $index) {
+              <circle
+                [attr.cx]="center"
+                [attr.cy]="center"
+                [attr.r]="radius"
+                fill="none"
+                [attr.stroke]="rendered.segment.color"
+                [attr.stroke-width]="hoveredIndex() === i ? strokeWidth + 3 : strokeWidth"
+                [attr.stroke-dasharray]="rendered.dashArray"
+                [attr.stroke-dashoffset]="rendered.dashOffset"
+                class="donut-svg__segment"
+                (mouseenter)="onSegmentHover(i)"
+                (mouseleave)="onSegmentLeave()"
+              />
+            }
+          </g>
+        </svg>
+
+        <div class="donut-card__center">
+          <span class="donut-card__center-value">{{ formatValue(total()) }}</span>
+          <span class="donut-card__center-label">{{ centerLabel }}</span>
+        </div>
+
+        @if (hoveredSegment(); as hovered) {
+          <div class="donut-tooltip" [style.left.%]="leftPercent(hovered.anchorX)" [style.top.%]="topPercent(hovered.anchorY)">
+            <span class="donut-tooltip__label">{{ hovered.segment.label }}</span>
+            <span class="donut-tooltip__value">{{ formatValue(hovered.segment.value) }}</span>
+            <span class="donut-tooltip__percent">{{ hovered.percent | number: '1.0-1' }}%</span>
+          </div>
+        }
+      </div>
+
+      <ul class="donut-legend">
+        @for (rendered of renderedSegments(); track rendered.segment.label; let i = $index) {
+          <li
+            class="donut-legend__item"
+            [class.donut-legend__item--hover]="hoveredIndex() === i"
+            (mouseenter)="onSegmentHover(i)"
+            (mouseleave)="onSegmentLeave()"
+          >
+            <span class="donut-legend__swatch" [style.background]="rendered.segment.color"></span>
+            <span class="donut-legend__label">{{ rendered.segment.label }}</span>
+            <span class="donut-legend__value">{{ formatValue(rendered.segment.value) }}</span>
+            <span class="donut-legend__percent">{{ rendered.percent | number: '1.0-1' }}%</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</app-card>
