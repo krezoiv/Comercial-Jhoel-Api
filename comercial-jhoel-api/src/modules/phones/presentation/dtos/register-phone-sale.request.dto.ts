@@ -1,11 +1,9 @@
-import { Type } from 'class-transformer';
 import {
   IsDateString,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
-  Min,
+  Matches,
   MinLength,
 } from 'class-validator';
 
@@ -13,9 +11,9 @@ import {
  * `multipart/form-data` body — the DPI photo travels alongside as the
  * `dpiImage` file field (read via `@UploadedFile()`, see
  * `PhoneSalesController.registerSale`), optional (see the plan's own
- * "foto opcional, igual que SIM" decision). Every text field arrives as a
- * string regardless of its logical type, hence `@Type(() => Number)` on
- * `salePrice`, same pattern SIM's own registration DTO uses.
+ * "foto opcional, igual que SIM" decision). No `salePrice` field — the
+ * server always computes it from the phone's own `publicPrice`
+ * (`register_phone_sale`), never from a caller-supplied value.
  */
 export class RegisterPhoneSaleRequestDto {
   @IsUUID()
@@ -29,10 +27,13 @@ export class RegisterPhoneSaleRequestDto {
   @MinLength(1, { message: 'El DPI del cliente es obligatorio.' })
   clientDpi: string;
 
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  salePrice: number;
+  /** El número que se activa al vender — mismo patrón de validación ya usado en `suppliers`/`users`/`recharges` para un campo `phone`. */
+  @IsString()
+  @Matches(/^\+?[0-9]{7,15}$/, {
+    message:
+      'El número de teléfono asignado debe contener entre 7 y 15 dígitos, con un + inicial opcional',
+  })
+  phoneNumber: string;
 
   @IsDateString()
   saleDate: string;

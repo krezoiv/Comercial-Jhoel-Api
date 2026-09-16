@@ -10,6 +10,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { extractErrorMessage } from '../../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../../shared/ui';
 import { ClientSearchSelectComponent } from '../../accounts-receivable/components/client-search-select/client-search-select.component';
+import { PhoneSearchSelectComponent } from './components/phone-search-select/phone-search-select.component';
 import { PhoneSaleConfirmModalComponent } from './components/phone-sale-confirm-modal/phone-sale-confirm-modal.component';
 import { PhoneSaleVoidConfirmModalComponent } from './components/phone-sale-void-confirm-modal/phone-sale-void-confirm-modal.component';
 import { PhoneSalesTableComponent } from './components/phone-sales-table/phone-sales-table.component';
@@ -17,6 +18,8 @@ import { PhoneSaleDetailModalComponent } from '../components/phone-sale-detail-m
 
 const MAX_DPI_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+/** Mismo patrón de validación ya usado en `suppliers`/`users`/`recharges` para un campo `phone`. */
+const PHONE_NUMBER_PATTERN = /^\+?[0-9]{7,15}$/;
 
 /** Local-time `yyyy-MM-dd`. */
 function todayIsoDate(): string {
@@ -28,10 +31,13 @@ function todayIsoDate(): string {
 }
 
 /**
- * Venta de teléfonos — selects a DISPONIBLE phone, captures cliente/DPI
- * (foto opcional, número obligatorio — same real rule as SIM sale), shows a
- * structured confirmation summary, then registers the sale. Below the form,
- * the full sales history with Ver detalle/Anular actions.
+ * Venta de teléfonos — busca un teléfono DISPONIBLE por modelo/IMEI/SIM,
+ * captura el número telefónico que se activa en este momento, cliente/DPI
+ * (foto opcional, número obligatorio — same real rule as SIM sale). El
+ * precio de venta es siempre el precio público ya guardado del teléfono —
+ * de sólo lectura, nunca editable ni enviado por el frontend (el backend ya
+ * no acepta ese campo). Muestra un resumen estructurado antes de confirmar,
+ * y debajo, el historial completo con acciones Ver detalle/Anular.
  */
 @Component({
   selector: 'app-phones-sale-page',
@@ -43,6 +49,7 @@ function todayIsoDate(): string {
     ButtonComponent,
     IconComponent,
     ClientSearchSelectComponent,
+    PhoneSearchSelectComponent,
     PhoneSaleConfirmModalComponent,
     PhoneSaleVoidConfirmModalComponent,
     PhoneSalesTableComponent,
@@ -77,8 +84,8 @@ export class PhonesSalePageComponent {
 
   readonly form = this.fb.nonNullable.group({
     phoneId: ['', Validators.required],
+    phoneNumber: ['', [Validators.required, Validators.pattern(PHONE_NUMBER_PATTERN)]],
     clientDpi: ['', [Validators.required, Validators.maxLength(20)]],
-    salePrice: this.fb.control<number | null>(null, [Validators.required, Validators.min(0)]),
     saleDate: [todayIsoDate(), Validators.required],
   });
 
@@ -107,13 +114,9 @@ export class PhonesSalePageComponent {
       });
   }
 
-  onPhoneChange(id: string): void {
-    const phone = this.availablePhones().find((p) => p.id === id) ?? null;
+  onPhoneChange(phone: Phone | null): void {
     this.selectedPhone.set(phone);
-    if (phone) {
-      this.form.controls.phoneId.setValue(phone.id);
-      this.form.controls.salePrice.setValue(phone.publicPrice);
-    }
+    this.form.controls.phoneId.setValue(phone?.id ?? '');
   }
 
   onClientChange(client: Client | null): void {
@@ -175,7 +178,7 @@ export class PhonesSalePageComponent {
       return;
     }
 
-    const { clientDpi, salePrice, saleDate } = this.form.getRawValue();
+    const { phoneNumber, clientDpi, saleDate } = this.form.getRawValue();
     this.isSubmitting.set(true);
 
     this.phonesService
@@ -183,7 +186,7 @@ export class PhonesSalePageComponent {
         phoneId: phone.id,
         clientId: this.selectedClient()?.id ?? null,
         clientDpi: clientDpi.trim(),
-        salePrice: salePrice!,
+        phoneNumber: phoneNumber.trim(),
         saleDate,
         dpiImage: this.dpiImageFile(),
       })
@@ -192,7 +195,7 @@ export class PhonesSalePageComponent {
           this.isSubmitting.set(false);
           this.confirmOpen.set(false);
           this.notificationService.success(
-            `Venta de ${this.operatorLabel[sale.phoneOperator]} ${sale.phoneNumber} registrada correctamente (${formatCurrency(sale.salePrice)}).`,
+            `Venta de ${this.operatorLabel[sale.phoneOperator]} ${sale.phoneModel} registrada correctamente (${formatCurrency(sale.salePrice)}).`,
           );
           this.sales.update((sales) => [sale, ...sales]);
           this.availablePhones.update((phones) => phones.filter((p) => p.id !== phone.id));
@@ -207,7 +210,7 @@ export class PhonesSalePageComponent {
   }
 
   private resetForm(): void {
-    this.form.reset({ phoneId: '', clientDpi: '', salePrice: null, saleDate: todayIsoDate() });
+    this.form.reset({ phoneId: '', phoneNumber: '', clientDpi: '', saleDate: todayIsoDate() });
     this.selectedPhone.set(null);
     this.selectedClient.set(null);
     this.clearDpiImagePreview();

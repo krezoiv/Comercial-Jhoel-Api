@@ -4,8 +4,11 @@ export interface PhoneSaleProps {
   id: string;
   phoneId: string;
   phoneOperator: PhoneOperator;
+  phoneModel: string;
+  /** The número asignado AT THIS SALE — frozen in `phone_sales.phone_number`, independent of `phones.phone_number`'s current (possibly since-cleared) value. */
   phoneNumber: string;
   phoneImei: string;
+  phoneSimNumber: string;
   phoneCostPrice: number;
   clientId: string | null;
   clientName: string | null;
@@ -28,10 +31,14 @@ export interface PhoneSaleProps {
 /**
  * One sale of one physical phone — mirrors
  * `RechargeSimSaleRegistration`'s shape (identity capture at the moment of
- * sale, void-only correction). The phone's own operator/número/IMEI/costo
- * are denormalized onto this entity (via the repository's own JOIN) since
- * every consumer of a sale — the historial table, the detail view, the
- * ganancia calculation — needs them alongside the sale itself.
+ * sale, void-only correction). The phone's own operator/modelo/IMEI/SIM/
+ * costo are denormalized onto this entity (via the repository's own JOIN,
+ * read from `phones` — they never change after purchase) since every
+ * consumer of a sale — the historial table, the detail view, the ganancia
+ * calculation — needs them alongside the sale itself. `phoneNumber` is the
+ * one exception: it's read from `phone_sales`' own column (frozen at the
+ * moment of sale), never from `phones` — voiding later clears the phone's
+ * own number, but this sale's history must keep showing what it assigned.
  */
 export class PhoneSale {
   private constructor(private readonly props: PhoneSaleProps) {}
@@ -52,12 +59,20 @@ export class PhoneSale {
     return this.props.phoneOperator;
   }
 
+  get phoneModel(): string {
+    return this.props.phoneModel;
+  }
+
   get phoneNumber(): string {
     return this.props.phoneNumber;
   }
 
   get phoneImei(): string {
     return this.props.phoneImei;
+  }
+
+  get phoneSimNumber(): string {
+    return this.props.phoneSimNumber;
   }
 
   get phoneCostPrice(): number {

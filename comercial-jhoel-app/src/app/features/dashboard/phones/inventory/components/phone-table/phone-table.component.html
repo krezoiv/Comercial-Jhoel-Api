@@ -4,8 +4,10 @@
       <thead>
         <tr>
           <th>Operadora</th>
+          <th>Modelo</th>
           <th>Número</th>
           <th>IMEI</th>
+          <th>SIM</th>
           <th class="align-right">Costo</th>
           <th class="align-right">Público</th>
           <th>Estado</th>
@@ -21,6 +23,8 @@
             @for (cell of skeletonRows; track $index) {
               <td><span class="skeleton skeleton--sm"></span></td>
             }
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
           </tr>
         }
@@ -51,8 +55,10 @@
       <thead>
         <tr>
           <th>Operadora</th>
+          <th>Modelo</th>
           <th>Número</th>
           <th>IMEI</th>
+          <th>SIM</th>
           <th class="align-right">Costo</th>
           <th class="align-right">Público</th>
           <th>Estado</th>
@@ -66,8 +72,10 @@
         @for (row of rows; track row.id) {
           <tr>
             <td>{{ operatorLabel[row.operator] }}</td>
-            <td>{{ row.phoneNumber }}</td>
-            <td class="ellipsis-cell" [title]="row.imei">{{ compactImei(row.imei) }}</td>
+            <td class="ellipsis-cell" [title]="row.model">{{ row.model }}</td>
+            <td>{{ row.phoneNumber || '—' }}</td>
+            <td class="ellipsis-cell" [title]="row.imei">{{ compactId(row.imei) }}</td>
+            <td class="ellipsis-cell" [title]="row.simNumber">{{ compactId(row.simNumber) }}</td>
             <td class="align-right">{{ formatCurrency(row.costPrice) }}</td>
             <td class="align-right">{{ formatCurrency(row.publicPrice) }}</td>
             <td><app-badge [tone]="statusTone(row)">{{ statusLabel[row.status] }}</app-badge></td>
@@ -94,8 +102,11 @@
       <div class="phone-card">
         <div class="phone-card__header">
           <div>
-            <p class="phone-card__title">{{ operatorLabel[row.operator] }} · {{ row.phoneNumber }}</p>
-            <p class="phone-card__imei">IMEI: {{ row.imei }}</p>
+            <p class="phone-card__title">{{ operatorLabel[row.operator] }} · {{ row.model }}</p>
+            <p class="phone-card__imei">IMEI: {{ row.imei }} · SIM: {{ row.simNumber }}</p>
+            @if (row.phoneNumber) {
+              <p class="phone-card__imei">Número: {{ row.phoneNumber }}</p>
+            }
           </div>
           <app-badge [tone]="statusTone(row)">{{ statusLabel[row.status] }}</app-badge>
         </div>

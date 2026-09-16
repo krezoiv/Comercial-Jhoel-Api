@@ -4,8 +4,10 @@ export class PhoneSaleResponseDto {
   id: string;
   phoneId: string;
   phoneOperator: PhoneOperator;
+  phoneModel: string;
   phoneNumber: string;
   phoneImei: string;
+  phoneSimNumber: string;
   phoneCostPrice: number;
   clientId: string | null;
   clientName: string | null;

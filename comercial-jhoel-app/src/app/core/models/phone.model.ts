@@ -11,12 +11,19 @@ export const PHONE_STATUS_LABEL: Record<PhoneStatus, string> = {
   VENDIDO: 'Vendido',
 };
 
-/** One individually-identified physical phone unit — mirrors the backend's `PhoneResponseDto` exactly. */
+/**
+ * One individually-identified physical phone unit — mirrors the backend's
+ * `PhoneResponseDto` exactly. `phoneNumber` is `null` while `DISPONIBLE` — a
+ * bought phone has no active line yet, it's only assigned at the moment of
+ * sale (activation). `model`/`simNumber` are captured at purchase time.
+ */
 export interface Phone {
   id: string;
   operator: PhoneOperator;
-  phoneNumber: string;
+  model: string;
+  phoneNumber: string | null;
   imei: string;
+  simNumber: string;
   costPrice: number;
   publicPrice: number;
   status: PhoneStatus;
@@ -30,23 +37,35 @@ export interface Phone {
   updatedByUsername: string | null;
 }
 
+/** No `phoneNumber` here — see `Phone`'s own doc comment. */
 export interface CreatePhoneInput {
   operator: PhoneOperator;
-  phoneNumber: string;
+  model: string;
   imei: string;
+  simNumber: string;
   costPrice: number;
   publicPrice: number;
   /** `yyyy-MM-dd`. */
   purchaseDate: string;
 }
 
-/** Mirrors the backend's `PhoneSaleResponseDto` — `profit`/`phoneCostPrice` are server-computed, never recomputed on the frontend. */
+/**
+ * Mirrors the backend's `PhoneSaleResponseDto` — `profit`/`phoneCostPrice`/
+ * `salePrice` are server-computed (always the phone's `publicPrice` at the
+ * moment of sale), never recomputed or supplied by the frontend.
+ * `phoneNumber` is the number assigned/activated at THIS specific sale,
+ * frozen in `phone_sales` — independent of the phone's current live number
+ * (e.g. after this sale is voided, `phone.phoneNumber` goes back to `null`
+ * but this historical record keeps showing what it was).
+ */
 export interface PhoneSale {
   id: string;
   phoneId: string;
   phoneOperator: PhoneOperator;
+  phoneModel: string;
   phoneNumber: string;
   phoneImei: string;
+  phoneSimNumber: string;
   phoneCostPrice: number;
   clientId: string | null;
   clientName: string | null;
@@ -66,12 +85,19 @@ export interface PhoneSale {
   createdAt: string;
 }
 
-/** DPI photo (`dpiImage`) is optional — same real behavior as SIM sale, confirmed with the user rather than assumed from the literal spec. Sent as `multipart/form-data`, see `PhonesService.registerSale`. */
+/**
+ * DPI photo (`dpiImage`) is optional — same real behavior as SIM sale,
+ * confirmed with the user rather than assumed from the literal spec. Sent as
+ * `multipart/form-data`, see `PhonesService.registerSale`. No `salePrice` —
+ * the backend always computes it from the phone's own `publicPrice`, never
+ * from a caller-supplied value. `phoneNumber` is the number being
+ * activated for this sale.
+ */
 export interface RegisterPhoneSaleInput {
   phoneId: string;
   clientId: string | null;
   clientDpi: string;
-  salePrice: number;
+  phoneNumber: string;
   /** `yyyy-MM-dd`. */
   saleDate: string;
   dpiImage: File | null;

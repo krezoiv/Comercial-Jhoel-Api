@@ -9,7 +9,9 @@ import { ButtonComponent, IconComponent } from '../../../../../../shared/ui';
  * pattern as `FinalBalanceConfirmModalComponent`, rather than the generic
  * `ConfirmDialogService` text dialog SIM sale uses for its own equivalent
  * step (a deliberate deviation, see the plan's own "Modal de confirmación de
- * venta dedicado" decision).
+ * venta dedicado" decision). The price shown is always `phone.publicPrice`
+ * directly — never a separately-passed value — since the backend no longer
+ * accepts a caller-supplied sale price at all.
  */
 @Component({
   selector: 'app-phone-sale-confirm-modal',
@@ -22,8 +24,8 @@ import { ButtonComponent, IconComponent } from '../../../../../../shared/ui';
 export class PhoneSaleConfirmModalComponent {
   @Input() open = false;
   @Input() phone: Phone | null = null;
+  @Input() phoneNumber = '';
   @Input() clientName: string | null = null;
-  @Input() salePrice = 0;
   @Input() saleDate = '';
   @Input() hasDpiImage = false;
   @Input() isSaving = false;

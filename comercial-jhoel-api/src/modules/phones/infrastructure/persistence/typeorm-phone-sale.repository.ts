@@ -10,7 +10,8 @@ import {
 import { PhoneNotFoundError } from '../../domain/errors/phone-not-found.error';
 import { PhoneAlreadySoldError } from '../../domain/errors/phone-already-sold.error';
 import { ClientDpiRequiredError } from '../../domain/errors/client-dpi-required.error';
-import { InvalidPhoneSalePriceError } from '../../domain/errors/invalid-phone-sale-price.error';
+import { PhoneNumberRequiredError } from '../../domain/errors/phone-number-required.error';
+import { PhoneNumberAlreadyAssignedError } from '../../domain/errors/phone-number-already-assigned.error';
 import { InvalidPhoneSaleClientError } from '../../domain/errors/invalid-phone-sale-client.error';
 import { PhoneSaleNotFoundError } from '../../domain/errors/phone-sale-not-found.error';
 import { PhoneSaleAlreadyVoidedError } from '../../domain/errors/phone-sale-already-voided.error';
@@ -18,7 +19,8 @@ import { PhoneSaleVoidReasonRequiredError } from '../../domain/errors/phone-sale
 import { PhoneSaleMapper, PhoneSaleRow } from './phone-sale.mapper';
 
 const SELECT_COLUMNS = `
-  s.id, s.phone_id, p.operator AS phone_operator, p.phone_number, p.imei AS phone_imei,
+  s.id, s.phone_id, p.operator AS phone_operator, p.model AS phone_model,
+  s.phone_number, p.imei AS phone_imei, p.sim_number AS phone_sim_number,
   p.cost_price AS phone_cost_price,
   s.client_id, c.name AS client_name, s.client_dpi, s.sale_price,
   to_char(s.sale_date, 'YYYY-MM-DD') AS sale_date,
@@ -47,7 +49,7 @@ export class TypeOrmPhoneSaleRepository implements PhoneSaleRepository {
         data.phoneId,
         data.clientId,
         data.clientDpi,
-        data.salePrice,
+        data.phoneNumber,
         data.saleDate,
         data.dpiImage?.data ?? null,
         data.dpiImage?.mimeType ?? null,
@@ -139,8 +141,10 @@ export class TypeOrmPhoneSaleRepository implements PhoneSaleRepository {
         return new PhoneAlreadySoldError(extra ?? '');
       case 'CLIENT_DPI_REQUIRED':
         return new ClientDpiRequiredError();
-      case 'INVALID_PHONE_SALE_PRICE':
-        return new InvalidPhoneSalePriceError();
+      case 'PHONE_NUMBER_REQUIRED':
+        return new PhoneNumberRequiredError();
+      case 'PHONE_NUMBER_ALREADY_ASSIGNED':
+        return new PhoneNumberAlreadyAssignedError(extra ?? '');
       case 'PHONE_SALE_CLIENT_INVALID':
         return new InvalidPhoneSaleClientError();
       case 'VOID_REASON_REQUIRED':

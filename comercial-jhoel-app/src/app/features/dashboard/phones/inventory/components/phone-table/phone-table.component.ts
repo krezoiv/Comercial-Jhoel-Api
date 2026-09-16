@@ -44,8 +44,8 @@ export class PhoneTableComponent {
     return STATUS_BADGE_TONE[row.status];
   }
 
-  /** Compact IMEI (last 6 digits) — the full value is always available via the native `title` tooltip. */
-  compactImei(imei: string): string {
-    return imei.length > 8 ? `…${imei.slice(-6)}` : imei;
+  /** Compact IMEI/SIM (last 6 digits) — the full value is always available via the native `title` tooltip. SIM numbers run ~19-20 digits, same treatment IMEI already had. */
+  compactId(value: string): string {
+    return value.length > 8 ? `…${value.slice(-6)}` : value;
   }
 }

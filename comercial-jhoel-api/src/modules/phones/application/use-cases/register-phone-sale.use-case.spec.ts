@@ -13,8 +13,10 @@ function makeSale(
     id: 'sale-1',
     phoneId: 'phone-1',
     phoneOperator: 'CLARO',
+    phoneModel: 'Samsung Galaxy A15',
     phoneNumber: '12345678',
     phoneImei: '111111111111111',
+    phoneSimNumber: '8950200000000000001',
     phoneCostPrice: 800,
     clientId: null,
     clientName: null,
@@ -81,7 +83,7 @@ describe('RegisterPhoneSaleUseCase', () => {
         phoneId: 'phone-1',
         clientId: null,
         clientDpi: '1234567890101',
-        salePrice: 1000,
+        phoneNumber: '12345678',
         saleDate: '2026-09-15',
         userId: 'user-1',
         dpiImage: {
@@ -102,7 +104,7 @@ describe('RegisterPhoneSaleUseCase', () => {
         phoneId: 'phone-1',
         clientId: 'client-1',
         clientDpi: '1234567890101',
-        salePrice: 1000,
+        phoneNumber: '12345678',
         saleDate: '2026-09-15',
         userId: 'user-1',
         dpiImage: null,
@@ -119,7 +121,7 @@ describe('RegisterPhoneSaleUseCase', () => {
         phoneId: 'phone-1',
         clientId: 'client-1',
         clientDpi: '1234567890101',
-        salePrice: 1000,
+        phoneNumber: '12345678',
         saleDate: '2026-09-15',
         userId: 'user-1',
         dpiImage: null,
@@ -127,14 +129,14 @@ describe('RegisterPhoneSaleUseCase', () => {
     ).rejects.toThrow(InvalidPhoneSaleClientError);
   });
 
-  it('registers a sale with no client and no DPI image (both optional)', async () => {
+  it('registers a sale with no client and no DPI image (both optional), passing phoneNumber through and never a price', async () => {
     phoneSaleRepository.create.mockResolvedValue(makeSale());
 
     const result = await useCase.execute({
       phoneId: 'phone-1',
       clientId: null,
       clientDpi: '1234567890101',
-      salePrice: 1000,
+      phoneNumber: '12345678',
       saleDate: '2026-09-15',
       userId: 'user-1',
       dpiImage: null,
@@ -142,12 +144,19 @@ describe('RegisterPhoneSaleUseCase', () => {
 
     expect(clientRepository.findById).not.toHaveBeenCalled();
     expect(phoneSaleRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: null, dpiImage: null }),
+      expect.objectContaining({
+        clientId: null,
+        dpiImage: null,
+        phoneNumber: '12345678',
+      }),
+    );
+    expect(phoneSaleRepository.create.mock.calls[0][0]).not.toHaveProperty(
+      'salePrice',
     );
     expect(result.profit).toBe(200);
   });
 
-  it('computes profit as salePrice - phoneCostPrice', async () => {
+  it('computes profit from the server-returned salePrice/phoneCostPrice — never from a caller-supplied price', async () => {
     phoneSaleRepository.create.mockResolvedValue(
       makeSale({ salePrice: 1200, phoneCostPrice: 800 }),
     );
@@ -156,12 +165,13 @@ describe('RegisterPhoneSaleUseCase', () => {
       phoneId: 'phone-1',
       clientId: null,
       clientDpi: '1234567890101',
-      salePrice: 1200,
+      phoneNumber: '12345678',
       saleDate: '2026-09-15',
       userId: 'user-1',
       dpiImage: null,
     });
 
+    expect(result.salePrice).toBe(1200);
     expect(result.profit).toBe(400);
   });
 });

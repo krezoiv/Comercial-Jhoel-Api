@@ -62,7 +62,7 @@ export class PhoneSalesController {
       phoneId: dto.phoneId,
       clientId: dto.clientId ?? null,
       clientDpi: dto.clientDpi,
-      salePrice: dto.salePrice,
+      phoneNumber: dto.phoneNumber,
       saleDate: dto.saleDate,
       userId,
       dpiImage: dpiImage

@@ -1,13 +1,15 @@
 import { PhoneOperator } from '../../domain/entities/phone.entity';
 import { PhoneSale } from '../../domain/entities/phone-sale.entity';
 
-/** Shape of one row from the hand-written JOIN query in `TypeOrmPhoneSaleRepository` — no TypeORM entity exists for `phone_sales` (it's written exclusively through `register_phone_sale`/`void_phone_sale`), same "raw SQL, no ORM entity" precedent already established for `recharge_sim_sale_registrations`. */
+/** Shape of one row from the hand-written JOIN query in `TypeOrmPhoneSaleRepository` — no TypeORM entity exists for `phone_sales` (it's written exclusively through `register_phone_sale`/`void_phone_sale`), same "raw SQL, no ORM entity" precedent already established for `recharge_sim_sale_registrations`. `phone_number` is the one column read from `phone_sales` itself (frozen at sale time); every other `phone_*` field is denormalized from the joined `phones` row, since those never change after purchase. */
 export interface PhoneSaleRow {
   id: string;
   phone_id: string;
   phone_operator: PhoneOperator;
+  phone_model: string;
   phone_number: string;
   phone_imei: string;
+  phone_sim_number: string;
   phone_cost_price: string;
   client_id: string | null;
   client_name: string | null;
@@ -31,8 +33,10 @@ export const PhoneSaleMapper = {
       id: row.id,
       phoneId: row.phone_id,
       phoneOperator: row.phone_operator,
+      phoneModel: row.phone_model,
       phoneNumber: row.phone_number,
       phoneImei: row.phone_imei,
+      phoneSimNumber: row.phone_sim_number,
       phoneCostPrice: parseFloat(row.phone_cost_price),
       clientId: row.client_id,
       clientName: row.client_name,

@@ -17,12 +17,20 @@
           <dd>{{ operatorLabel[phone.operator] }}</dd>
         </div>
         <div class="modal__summary-row">
-          <dt>Número</dt>
-          <dd>{{ phone.phoneNumber }}</dd>
+          <dt>Modelo</dt>
+          <dd>{{ phone.model }}</dd>
         </div>
         <div class="modal__summary-row">
           <dt>IMEI</dt>
           <dd>{{ phone.imei }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>SIM</dt>
+          <dd>{{ phone.simNumber }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Número asignado</dt>
+          <dd>{{ phoneNumber }}</dd>
         </div>
         <div class="modal__summary-row">
           <dt>Cliente</dt>
@@ -38,7 +46,7 @@
         </div>
         <div class="modal__summary-row modal__summary-row--total">
           <dt>Precio</dt>
-          <dd>{{ formatCurrency(salePrice) }}</dd>
+          <dd>{{ formatCurrency(phone.publicPrice) }}</dd>
         </div>
       </dl>
 

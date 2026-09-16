@@ -14,11 +14,12 @@ import type {
 } from '../../domain/entities/phone.entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 
-// UQ_phones_imei (global) and UQ_phones_phone_number_available (partial,
-// WHERE status = 'DISPONIBLE') are both raw SQL in the migration — TypeORM's
-// @Index decorator can express the plain one but not the partial one, so
-// neither is mirrored here as a decorator, matching this codebase's own
-// `clients`/`products` precedent for functional/partial indexes.
+// UQ_phones_imei (global), UQ_phones_sim_number (global), and
+// UQ_phones_phone_number_active (partial, WHERE status = 'VENDIDO') are all
+// raw SQL in the migrations — TypeORM's @Index decorator can express the
+// plain ones but not the partial one, so none are mirrored here as
+// decorators, matching this codebase's own `clients`/`products` precedent
+// for functional/partial indexes.
 @Entity('phones')
 export class PhoneOrmEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -27,11 +28,18 @@ export class PhoneOrmEntity {
   @Column({ type: 'varchar', length: 10 })
   operator: PhoneOperator;
 
-  @Column({ name: 'phone_number', type: 'varchar', length: 20 })
-  phoneNumber: string;
+  @Column({ type: 'varchar', length: 150 })
+  model: string;
+
+  /** `null` until sold — see `phone.entity.ts`'s own doc comment. */
+  @Column({ name: 'phone_number', type: 'varchar', length: 20, nullable: true })
+  phoneNumber: string | null;
 
   @Column({ type: 'varchar', length: 20 })
   imei: string;
+
+  @Column({ name: 'sim_number', type: 'varchar', length: 30 })
+  simNumber: string;
 
   @Column({
     name: 'cost_price',

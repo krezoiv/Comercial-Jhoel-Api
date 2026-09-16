@@ -12,7 +12,8 @@ export interface RegisterPhoneSaleData {
   phoneId: string;
   clientId: string | null;
   clientDpi: string;
-  salePrice: number;
+  /** The línea being activated — `register_phone_sale` always computes `salePrice` itself from the phone's own `publicPrice`, never from a caller-supplied value. */
+  phoneNumber: string;
   saleDate: string;
   dpiImage: RegisterPhoneSaleDpiImage | null;
   createdBy: string;

@@ -99,7 +99,13 @@ export class PhonesInventoryPageComponent {
       if (saleTo && (!row.saleDate || row.saleDate > saleTo)) {
         return false;
       }
-      if (search && !row.phoneNumber.toLowerCase().includes(search) && !row.imei.toLowerCase().includes(search)) {
+      if (
+        search &&
+        !(row.phoneNumber ?? '').toLowerCase().includes(search) &&
+        !row.model.toLowerCase().includes(search) &&
+        !row.imei.toLowerCase().includes(search) &&
+        !row.simNumber.toLowerCase().includes(search)
+      ) {
         return false;
       }
       return true;

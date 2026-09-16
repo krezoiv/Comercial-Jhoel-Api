@@ -8,36 +8,62 @@
 .phones-purchase {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-6);
 }
 
-.phones-purchase__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-  align-items: start;
-
-  @include bp.respond(lg) {
-    grid-template-columns: minmax(0, 26rem) 1fr;
-  }
+// Single centered card, same max-width whether the "recently registered"
+// card below it exists or not — this is what fixes the old off-center look
+// (a 2-column grid whose second column only sometimes rendered).
+.phones-purchase__card {
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
 }
 
 .purchase-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
-.field-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.form-section {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
+
+  &:not(:first-child) {
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border-light);
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 
   label {
     font-size: var(--fs-sm);
@@ -47,6 +73,7 @@
 
   select,
   input {
+    width: 100%;
     background: var(--color-bg-light-muted);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);

@@ -4,8 +4,11 @@ export type PhoneStatus = 'DISPONIBLE' | 'VENDIDO';
 export interface PhoneProps {
   id: string;
   operator: PhoneOperator;
-  phoneNumber: string;
+  model: string;
+  /** `null` until the phone is sold — assigned by `register_phone_sale`, cleared again by `void_phone_sale`. */
+  phoneNumber: string | null;
   imei: string;
+  simNumber: string;
   costPrice: number;
   publicPrice: number;
   status: PhoneStatus;
@@ -24,7 +27,9 @@ export interface PhoneProps {
  * `products` row with a numeric stock (an explicit requirement for this
  * module). `status` starts `DISPONIBLE` and only ever changes via
  * `register_phone_sale`/`void_phone_sale` (see the migration's own doc
- * comment) — never set directly by application code.
+ * comment) — never set directly by application code. `phoneNumber` is
+ * `null` until sold — a bought phone has no active line yet, the number is
+ * assigned at the moment of sale (activation), not at purchase.
  */
 export class Phone {
   private constructor(private readonly props: PhoneProps) {}
@@ -41,12 +46,20 @@ export class Phone {
     return this.props.operator;
   }
 
-  get phoneNumber(): string {
+  get model(): string {
+    return this.props.model;
+  }
+
+  get phoneNumber(): string | null {
     return this.props.phoneNumber;
   }
 
   get imei(): string {
     return this.props.imei;
+  }
+
+  get simNumber(): string {
+    return this.props.simNumber;
   }
 
   get costPrice(): number {

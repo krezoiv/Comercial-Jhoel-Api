@@ -12,7 +12,7 @@ describe('GetPhoneByIdUseCase', () => {
       findAll: jest.fn(),
       findById: jest.fn(),
       findByImei: jest.fn(),
-      findAvailableByPhoneNumber: jest.fn(),
+      findBySimNumber: jest.fn(),
       create: jest.fn(),
     };
     useCase = new GetPhoneByIdUseCase(repository);
@@ -31,8 +31,10 @@ describe('GetPhoneByIdUseCase', () => {
       Phone.create({
         id: 'phone-1',
         operator: 'CLARO',
+        model: 'Samsung Galaxy A15',
         phoneNumber: '12345678',
         imei: '111111111111111',
+        simNumber: '8950200000000000001',
         costPrice: 800,
         publicPrice: 1000,
         status: 'DISPONIBLE',

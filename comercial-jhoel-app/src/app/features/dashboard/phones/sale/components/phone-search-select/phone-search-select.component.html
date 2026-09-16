@@ -1,0 +1,41 @@
+@if (selectedPhone(); as phone) {
+  <div class="search__selected">
+    <span class="search__selected-name">
+      {{ operatorLabel[phone.operator] }} · {{ phone.model }} · IMEI {{ phone.imei }}
+    </span>
+    <button type="button" class="search__selected-clear" (click)="clear()" title="Cambiar teléfono">
+      <app-icon name="close" [size]="14" />
+    </button>
+  </div>
+} @else {
+  <div class="search">
+    <label class="search__box" [for]="inputId">
+      <app-icon name="search" [size]="16" />
+      <input
+        [id]="inputId"
+        type="text"
+        [placeholder]="placeholder"
+        autocomplete="off"
+        [ngModel]="query()"
+        (ngModelChange)="onInput($event)"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+      />
+    </label>
+
+    @if (open()) {
+      <div class="search__dropdown">
+        @if (filteredPhones().length === 0) {
+          <p class="search__empty">No se encontraron teléfonos disponibles.</p>
+        } @else {
+          @for (phone of filteredPhones(); track phone.id) {
+            <button type="button" class="search__result" (click)="select(phone)">
+              <span class="search__result-name">{{ operatorLabel[phone.operator] }} · {{ phone.model }}</span>
+              <span class="search__result-meta">IMEI {{ phone.imei }} · SIM {{ phone.simNumber }}</span>
+            </button>
+          }
+        }
+      </div>
+    }
+  </div>
+}

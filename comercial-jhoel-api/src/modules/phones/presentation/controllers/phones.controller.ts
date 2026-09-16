@@ -39,8 +39,9 @@ export class PhonesController {
   ): Promise<PhoneResponseDto> {
     return this.createPhoneUseCase.execute({
       operator: dto.operator,
-      phoneNumber: dto.phoneNumber,
+      model: dto.model,
       imei: dto.imei,
+      simNumber: dto.simNumber,
       costPrice: dto.costPrice,
       publicPrice: dto.publicPrice,
       purchaseDate: dto.purchaseDate,

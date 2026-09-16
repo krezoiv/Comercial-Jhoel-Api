@@ -2,37 +2,57 @@
   <app-page-header
     icon="arrow-down-circle"
     title="Compras de Teléfonos"
-    subtitle="Registra el ingreso de un teléfono al inventario — queda disponible de inmediato."
+    subtitle="Registra el ingreso de un teléfono al inventario — queda disponible de inmediato, sin línea activa todavía."
   />
 
-  <div class="phones-purchase__grid">
-    <app-card padding="lg">
-      <form class="purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <div class="field">
-          <label for="phone-operator">Operadora</label>
-          <select id="phone-operator" formControlName="operator">
-            <option value="CLARO">Claro</option>
-            <option value="TIGO">Tigo</option>
-          </select>
-        </div>
+  <app-card padding="lg" class="phones-purchase__card">
+    <form class="purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-section">
+        <h2 class="section-title">
+          <app-icon name="smartphone" [size]="16" />
+          Información del teléfono
+        </h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="phone-operator">Operadora</label>
+            <select id="phone-operator" formControlName="operator">
+              <option value="CLARO">Claro</option>
+              <option value="TIGO">Tigo</option>
+            </select>
+          </div>
 
-        <div class="field">
-          <label for="phone-number">Número de teléfono</label>
-          <input id="phone-number" type="text" formControlName="phoneNumber" placeholder="Ej. 55512345" />
-          @if (form.controls.phoneNumber.invalid && form.controls.phoneNumber.touched) {
-            <span class="field__error">El número de teléfono es obligatorio.</span>
-          }
-        </div>
+          <div class="field">
+            <label for="phone-model">Modelo</label>
+            <input id="phone-model" type="text" formControlName="model" placeholder="Ej. Samsung Galaxy A15" />
+            @if (form.controls.model.invalid && form.controls.model.touched) {
+              <span class="field__error">El modelo es obligatorio.</span>
+            }
+          </div>
 
-        <div class="field">
-          <label for="phone-imei">IMEI</label>
-          <input id="phone-imei" type="text" formControlName="imei" placeholder="Ej. 356938035643809" />
-          @if (form.controls.imei.invalid && form.controls.imei.touched) {
-            <span class="field__error">El IMEI es obligatorio.</span>
-          }
-        </div>
+          <div class="field">
+            <label for="phone-imei">IMEI</label>
+            <input id="phone-imei" type="text" formControlName="imei" placeholder="Ej. 356938035643809" />
+            @if (form.controls.imei.invalid && form.controls.imei.touched) {
+              <span class="field__error">El IMEI es obligatorio.</span>
+            }
+          </div>
 
-        <div class="field-row">
+          <div class="field">
+            <label for="phone-sim">SIM</label>
+            <input id="phone-sim" type="text" formControlName="simNumber" placeholder="Ej. 8950200000000000000" />
+            @if (form.controls.simNumber.invalid && form.controls.simNumber.touched) {
+              <span class="field__error">El número de SIM es obligatorio.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2 class="section-title">
+          <app-icon name="credit-card" [size]="16" />
+          Información comercial
+        </h2>
+        <div class="form-grid">
           <div class="field">
             <label for="phone-cost-price">Precio costo</label>
             <input id="phone-cost-price" type="number" min="0" step="0.01" formControlName="costPrice" />
@@ -49,30 +69,38 @@
             }
           </div>
         </div>
+      </div>
 
-        <div class="field">
-          <label for="phone-purchase-date">Fecha de compra</label>
-          <input id="phone-purchase-date" type="date" [max]="maxDate" formControlName="purchaseDate" />
+      <div class="form-section">
+        <h2 class="section-title">
+          <app-icon name="arrow-down-circle" [size]="16" />
+          Información de compra
+        </h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="phone-purchase-date">Fecha de compra</label>
+            <input id="phone-purchase-date" type="date" [max]="maxDate" formControlName="purchaseDate" />
+          </div>
         </div>
+      </div>
 
-        <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting()">
-          {{ isSubmitting() ? 'Guardando…' : 'Guardar teléfono' }}
-        </app-button>
-      </form>
+      <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Guardando…' : '+ Registrar teléfono' }}
+      </app-button>
+    </form>
+  </app-card>
+
+  @if (recentlyRegistered().length > 0) {
+    <app-card padding="lg" class="phones-purchase__card">
+      <h2 class="recent-title">Registrados en esta sesión</h2>
+      <ul class="recent-list">
+        @for (phone of recentlyRegistered(); track phone.id) {
+          <li class="recent-item">
+            <span class="recent-item__main">{{ operatorLabel[phone.operator] }} · {{ phone.model }}</span>
+            <span class="recent-item__meta">IMEI {{ phone.imei }} · SIM {{ phone.simNumber }} · {{ formatCurrency(phone.publicPrice) }}</span>
+          </li>
+        }
+      </ul>
     </app-card>
-
-    @if (recentlyRegistered().length > 0) {
-      <app-card padding="lg">
-        <h2 class="recent-title">Registrados en esta sesión</h2>
-        <ul class="recent-list">
-          @for (phone of recentlyRegistered(); track phone.id) {
-            <li class="recent-item">
-              <span class="recent-item__main">{{ operatorLabel[phone.operator] }} · {{ phone.phoneNumber }}</span>
-              <span class="recent-item__meta">IMEI {{ phone.imei }} · {{ formatCurrency(phone.publicPrice) }}</span>
-            </li>
-          }
-        </ul>
-      </app-card>
-    }
-  </div>
+  }
 </div>

@@ -6,8 +6,10 @@ export class PhoneMapper {
     return Phone.create({
       id: orm.id,
       operator: orm.operator,
+      model: orm.model,
       phoneNumber: orm.phoneNumber,
       imei: orm.imei,
+      simNumber: orm.simNumber,
       costPrice: orm.costPrice,
       publicPrice: orm.publicPrice,
       status: orm.status,

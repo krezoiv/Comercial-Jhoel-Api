@@ -4,8 +4,10 @@
       <tr>
         <th>Fecha</th>
         <th>Operadora</th>
+        <th>Modelo</th>
         <th>Número</th>
         <th>IMEI</th>
+        <th>SIM</th>
         <th>Cliente</th>
         <th class="align-right">Costo</th>
         <th class="align-right">Venta</th>
@@ -29,15 +31,17 @@
         }
       } @else if (sales.length === 0) {
         <tr>
-          <td colspan="11" class="empty-cell">Aún no hay ventas de teléfonos registradas.</td>
+          <td colspan="13" class="empty-cell">Aún no hay ventas de teléfonos registradas.</td>
         </tr>
       } @else {
         @for (sale of sales; track sale.id) {
           <tr [class.sale-row--voided]="sale.isVoided">
             <td>{{ sale.saleDate }}</td>
             <td>{{ operatorLabel[sale.phoneOperator] }}</td>
+            <td class="ellipsis-cell" [title]="sale.phoneModel">{{ sale.phoneModel }}</td>
             <td>{{ sale.phoneNumber }}</td>
             <td class="ellipsis-cell" [title]="sale.phoneImei">{{ sale.phoneImei }}</td>
+            <td class="ellipsis-cell" [title]="sale.phoneSimNumber">{{ sale.phoneSimNumber }}</td>
             <td>{{ sale.clientName || '—' }}</td>
             <td class="align-right">{{ formatCurrency(sale.phoneCostPrice) }}</td>
             <td class="align-right">{{ formatCurrency(sale.salePrice) }}</td>

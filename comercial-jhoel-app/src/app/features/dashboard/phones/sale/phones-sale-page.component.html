@@ -2,25 +2,18 @@
   <app-page-header
     icon="shopping-bag"
     title="Ventas de Teléfonos"
-    subtitle="Selecciona un teléfono disponible, registra al cliente y su DPI, y confirma la venta."
+    subtitle="Busca un teléfono disponible, activa su número, registra al cliente y su DPI, y confirma la venta."
   />
 
   <app-card padding="lg">
     <form class="sale-form" [formGroup]="form" (ngSubmit)="requestSale()" novalidate>
       <div class="field">
-        <label for="phone-select">Teléfono disponible</label>
-        <select
-          id="phone-select"
-          formControlName="phoneId"
-          (change)="onPhoneChange($any($event.target).value)"
-        >
-          <option value="" disabled>Selecciona un teléfono…</option>
-          @for (phone of availablePhones(); track phone.id) {
-            <option [value]="phone.id">
-              {{ operatorLabel[phone.operator] }} · {{ phone.phoneNumber }} · IMEI {{ phone.imei }}
-            </option>
-          }
-        </select>
+        <label>Teléfono disponible</label>
+        <app-phone-search-select
+          [phones]="availablePhones()"
+          [selectedPhoneId]="selectedPhone()?.id ?? null"
+          (selectionChange)="onPhoneChange($event)"
+        />
         @if (availablePhones().length === 0 && !loading()) {
           <span class="field__hint">No hay teléfonos disponibles para vender.</span>
         }
@@ -33,23 +26,43 @@
             <dd>{{ operatorLabel[phone.operator] }}</dd>
           </div>
           <div>
-            <dt>Número</dt>
-            <dd>{{ phone.phoneNumber }}</dd>
+            <dt>Modelo</dt>
+            <dd>{{ phone.model }}</dd>
           </div>
           <div>
             <dt>IMEI</dt>
             <dd>{{ phone.imei }}</dd>
           </div>
           <div>
+            <dt>SIM</dt>
+            <dd>{{ phone.simNumber }}</dd>
+          </div>
+          <div>
             <dt>Precio costo</dt>
             <dd>{{ formatCurrency(phone.costPrice) }}</dd>
           </div>
           <div>
-            <dt>Precio público</dt>
+            <dt>Precio de venta</dt>
             <dd>{{ formatCurrency(phone.publicPrice) }}</dd>
           </div>
         </dl>
       }
+
+      <div class="field">
+        <label for="sale-phone-number">Número de teléfono asignado</label>
+        <input
+          id="sale-phone-number"
+          type="text"
+          inputmode="tel"
+          formControlName="phoneNumber"
+          placeholder="Ej. 55512345"
+        />
+        @if (form.controls.phoneNumber.invalid && form.controls.phoneNumber.touched) {
+          <span class="field__error">
+            Ingresa un número válido (7 a 15 dígitos, con un + inicial opcional).
+          </span>
+        }
+      </div>
 
       <div class="field">
         <label>Cliente registrado <span class="field__optional">(opcional)</span></label>
@@ -86,19 +99,9 @@
         }
       </div>
 
-      <div class="field-row">
-        <div class="field">
-          <label for="sale-price">Precio de venta</label>
-          <input id="sale-price" type="number" min="0" step="0.01" formControlName="salePrice" />
-          @if (form.controls.salePrice.invalid && form.controls.salePrice.touched) {
-            <span class="field__error">Ingresa un precio válido.</span>
-          }
-        </div>
-
-        <div class="field">
-          <label for="sale-date">Fecha de venta</label>
-          <input id="sale-date" type="date" formControlName="saleDate" />
-        </div>
+      <div class="field">
+        <label for="sale-date">Fecha de venta</label>
+        <input id="sale-date" type="date" formControlName="saleDate" />
       </div>
 
       <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting() || !selectedPhone()">
@@ -122,8 +125,8 @@
 <app-phone-sale-confirm-modal
   [open]="confirmOpen()"
   [phone]="selectedPhone()"
+  [phoneNumber]="form.controls.phoneNumber.value"
   [clientName]="selectedClient()?.name ?? null"
-  [salePrice]="form.controls.salePrice.value ?? 0"
   [saleDate]="form.controls.saleDate.value"
   [hasDpiImage]="!!dpiImageFile()"
   [isSaving]="isSubmitting()"

@@ -39,7 +39,7 @@ export class PhonesService {
       formData.set('clientId', input.clientId);
     }
     formData.set('clientDpi', input.clientDpi);
-    formData.set('salePrice', String(input.salePrice));
+    formData.set('phoneNumber', input.phoneNumber);
     formData.set('saleDate', input.saleDate);
     if (input.dpiImage) {
       formData.set('dpiImage', input.dpiImage);

@@ -8,8 +8,10 @@ import {
 export interface PhoneOutput {
   id: string;
   operator: PhoneOperator;
-  phoneNumber: string;
+  model: string;
+  phoneNumber: string | null;
   imei: string;
+  simNumber: string;
   costPrice: number;
   publicPrice: number;
   status: PhoneStatus;
@@ -26,8 +28,10 @@ export function toPhoneOutput(phone: Phone): PhoneOutput {
   return {
     id: phone.id,
     operator: phone.operator,
+    model: phone.model,
     phoneNumber: phone.phoneNumber,
     imei: phone.imei,
+    simNumber: phone.simNumber,
     costPrice: phone.costPrice,
     publicPrice: phone.publicPrice,
     status: phone.status,
