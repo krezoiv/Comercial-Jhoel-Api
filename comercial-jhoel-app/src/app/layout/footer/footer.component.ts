@@ -26,7 +26,6 @@ export class FooterComponent {
   readonly channels = signal<ContactChannel[]>([]);
   readonly socialLinks = signal<SocialLink[]>([]);
   readonly businessHours = signal<string | null>(null);
-  readonly address = signal<string | null>(null);
 
   constructor() {
     this.contactService
@@ -39,7 +38,6 @@ export class FooterComponent {
         this.channels.set(info.channels);
         this.socialLinks.set(info.socialLinks);
         this.businessHours.set(info.businessHours);
-        this.address.set(info.address);
       });
   }
 }
