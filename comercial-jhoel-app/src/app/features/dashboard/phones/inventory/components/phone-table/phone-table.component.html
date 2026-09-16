@@ -1,0 +1,130 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="phone-table">
+      <thead>
+        <tr>
+          <th>Operadora</th>
+          <th>Número</th>
+          <th>IMEI</th>
+          <th class="align-right">Costo</th>
+          <th class="align-right">Público</th>
+          <th>Estado</th>
+          <th>Fecha compra</th>
+          <th>Fecha venta</th>
+          <th>Cliente</th>
+          <th class="align-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            @for (cell of skeletonRows; track $index) {
+              <td><span class="skeleton skeleton--sm"></span></td>
+            }
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="loading-note">
+    <app-icon name="clock" [size]="16" />
+    Cargando teléfonos…
+  </p>
+} @else if (rows.length === 0) {
+  <app-empty-state
+    icon="smartphone"
+    [title]="hasActiveFilters ? 'No se encontraron teléfonos' : 'Aún no tienes teléfonos'"
+    [description]="
+      hasActiveFilters
+        ? 'Intenta con otro término de búsqueda o ajusta los filtros aplicados.'
+        : 'Registra tu primera compra de teléfonos para comenzar.'
+    "
+  >
+    @if (hasActiveFilters) {
+      <button type="button" class="clear-link" (click)="clearFilters.emit()">Limpiar filtros</button>
+    }
+  </app-empty-state>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="phone-table">
+      <thead>
+        <tr>
+          <th>Operadora</th>
+          <th>Número</th>
+          <th>IMEI</th>
+          <th class="align-right">Costo</th>
+          <th class="align-right">Público</th>
+          <th>Estado</th>
+          <th>Fecha compra</th>
+          <th>Fecha venta</th>
+          <th>Cliente</th>
+          <th class="align-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track row.id) {
+          <tr>
+            <td>{{ operatorLabel[row.operator] }}</td>
+            <td>{{ row.phoneNumber }}</td>
+            <td class="ellipsis-cell" [title]="row.imei">{{ compactImei(row.imei) }}</td>
+            <td class="align-right">{{ formatCurrency(row.costPrice) }}</td>
+            <td class="align-right">{{ formatCurrency(row.publicPrice) }}</td>
+            <td><app-badge [tone]="statusTone(row)">{{ statusLabel[row.status] }}</app-badge></td>
+            <td>{{ row.purchaseDate }}</td>
+            <td>{{ row.saleDate || '—' }}</td>
+            <td class="ellipsis-cell" [title]="row.clientName || ''">{{ row.clientName || '—' }}</td>
+            <td class="align-right">
+              @if (row.status === 'VENDIDO' && row.saleId) {
+                <button type="button" class="action-btn" (click)="viewSale.emit(row)" aria-label="Ver detalle de venta">
+                  <app-icon name="eye" [size]="16" />
+                </button>
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (row of rows; track row.id) {
+      <div class="phone-card">
+        <div class="phone-card__header">
+          <div>
+            <p class="phone-card__title">{{ operatorLabel[row.operator] }} · {{ row.phoneNumber }}</p>
+            <p class="phone-card__imei">IMEI: {{ row.imei }}</p>
+          </div>
+          <app-badge [tone]="statusTone(row)">{{ statusLabel[row.status] }}</app-badge>
+        </div>
+
+        <div class="phone-card__prices">
+          <div>
+            <span class="phone-card__price-label">Costo</span>
+            <span class="phone-card__price-value">{{ formatCurrency(row.costPrice) }}</span>
+          </div>
+          <div>
+            <span class="phone-card__price-label">Público</span>
+            <span class="phone-card__price-value">{{ formatCurrency(row.publicPrice) }}</span>
+          </div>
+        </div>
+
+        <div class="phone-card__footer">
+          <div>
+            <p class="phone-card__meta">Compra: {{ row.purchaseDate }}</p>
+            @if (row.saleDate) {
+              <p class="phone-card__meta">Venta: {{ row.saleDate }} · {{ row.clientName || 'Sin cliente' }}</p>
+            }
+          </div>
+          @if (row.status === 'VENDIDO' && row.saleId) {
+            <button type="button" class="action-btn" (click)="viewSale.emit(row)" aria-label="Ver detalle de venta">
+              <app-icon name="eye" [size]="16" />
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -128,4 +128,14 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   },
   { label: 'Librería', icon: 'book', path: 'libreria' },
   { label: 'Inventario', icon: 'package', path: 'inventario' },
+  {
+    label: 'Teléfonos',
+    icon: 'smartphone',
+    path: 'telefonos',
+    children: [
+      { label: 'Inventario', icon: 'package', path: 'telefonos-inventario' },
+      { label: 'Compras', icon: 'arrow-down-circle', path: 'telefonos-compras' },
+      { label: 'Ventas', icon: 'shopping-bag', path: 'telefonos-ventas' },
+    ],
+  },
 ];

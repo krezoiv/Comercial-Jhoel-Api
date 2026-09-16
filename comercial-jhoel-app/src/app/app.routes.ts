@@ -437,6 +437,30 @@ export const routes: Routes = [
         title: 'Inventario — Sistema',
       },
       {
+        path: 'telefonos-inventario',
+        loadComponent: () =>
+          import('./features/dashboard/phones/inventory/phones-inventory-page.component').then(
+            (m) => m.PhonesInventoryPageComponent
+          ),
+        title: 'Inventario de Teléfonos — Sistema',
+      },
+      {
+        path: 'telefonos-compras',
+        loadComponent: () =>
+          import('./features/dashboard/phones/purchase/phones-purchase-page.component').then(
+            (m) => m.PhonesPurchasePageComponent
+          ),
+        title: 'Compras de Teléfonos — Sistema',
+      },
+      {
+        path: 'telefonos-ventas',
+        loadComponent: () =>
+          import('./features/dashboard/phones/sale/phones-sale-page.component').then(
+            (m) => m.PhonesSalePageComponent
+          ),
+        title: 'Ventas de Teléfonos — Sistema',
+      },
+      {
         path: 'inventario/:id',
         loadComponent: () =>
           import('./features/dashboard/inventory/product-detail-page.component').then(

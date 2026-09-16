@@ -1,0 +1,19 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include bp.respond(xl) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

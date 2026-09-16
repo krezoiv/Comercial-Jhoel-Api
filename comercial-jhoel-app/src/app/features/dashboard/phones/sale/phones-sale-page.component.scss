@@ -1,0 +1,143 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+.phones-sale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.sale-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 32rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+  }
+
+  .field__optional {
+    font-weight: var(--fw-regular, 400);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  select,
+  input {
+    background: var(--color-bg-light-muted);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-on-light);
+    font-size: var(--fs-sm);
+    font-family: var(--font-body);
+    @include focus-ring;
+
+    &:focus {
+      border-color: var(--color-primary-500);
+    }
+  }
+
+  input[type='number'] {
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    -moz-appearance: textfield;
+  }
+}
+
+.field__error {
+  font-size: var(--fs-xs);
+  color: var(--color-danger);
+}
+
+.field__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.phone-preview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  background: var(--color-bg-light-muted);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+    margin-bottom: var(--space-1);
+  }
+
+  dd {
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+    font-weight: var(--fw-medium);
+  }
+}
+
+.file-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-light-muted);
+  border: 1px dashed var(--color-border-light);
+  border-radius: var(--radius-md);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-600);
+  }
+}
+
+.dpi-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  img {
+    width: 4.5rem;
+    height: 4.5rem;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+  }
+}
+
+.phones-sale__history-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-4);
+}

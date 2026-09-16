@@ -1,0 +1,70 @@
+<div class="table-wrapper">
+  <table class="sales-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Operadora</th>
+        <th>Número</th>
+        <th>IMEI</th>
+        <th>Cliente</th>
+        <th class="align-right">Costo</th>
+        <th class="align-right">Venta</th>
+        <th class="align-right">Ganancia</th>
+        <th>Usuario</th>
+        <th>Estado</th>
+        <th class="align-right">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading) {
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            @for (cell of skeletonRows; track $index) {
+              <td><span class="skeleton"></span></td>
+            }
+            <td><span class="skeleton"></span></td>
+            <td><span class="skeleton"></span></td>
+            <td><span class="skeleton"></span></td>
+          </tr>
+        }
+      } @else if (sales.length === 0) {
+        <tr>
+          <td colspan="11" class="empty-cell">Aún no hay ventas de teléfonos registradas.</td>
+        </tr>
+      } @else {
+        @for (sale of sales; track sale.id) {
+          <tr [class.sale-row--voided]="sale.isVoided">
+            <td>{{ sale.saleDate }}</td>
+            <td>{{ operatorLabel[sale.phoneOperator] }}</td>
+            <td>{{ sale.phoneNumber }}</td>
+            <td class="ellipsis-cell" [title]="sale.phoneImei">{{ sale.phoneImei }}</td>
+            <td>{{ sale.clientName || '—' }}</td>
+            <td class="align-right">{{ formatCurrency(sale.phoneCostPrice) }}</td>
+            <td class="align-right">{{ formatCurrency(sale.salePrice) }}</td>
+            <td class="align-right">{{ formatCurrency(sale.profit) }}</td>
+            <td>{{ sale.createdByUsername }}</td>
+            <td>
+              @if (sale.isVoided) {
+                <app-badge tone="danger">Anulada</app-badge>
+              } @else {
+                <app-badge tone="success">Vigente</app-badge>
+              }
+            </td>
+            <td class="align-right">
+              <div class="actions">
+                <button type="button" class="action-btn" (click)="viewDetail.emit(sale)" aria-label="Ver detalle">
+                  <app-icon name="eye" [size]="16" />
+                </button>
+                @if (canVoid && !sale.isVoided) {
+                  <button type="button" class="action-btn action-btn--danger" (click)="voidSale.emit(sale)" aria-label="Anular venta">
+                    <app-icon name="x-circle" [size]="16" />
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

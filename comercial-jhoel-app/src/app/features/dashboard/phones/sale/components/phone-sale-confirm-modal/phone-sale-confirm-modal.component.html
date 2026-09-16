@@ -1,0 +1,53 @@
+@if (open && phone) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" [disabled]="isSaving" (click)="onCancel()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      <div class="modal__icon">
+        <app-icon name="smartphone" [size]="24" />
+      </div>
+
+      <h2 class="modal__title">Venta de teléfono</h2>
+
+      <dl class="modal__summary">
+        <div class="modal__summary-row">
+          <dt>Operadora</dt>
+          <dd>{{ operatorLabel[phone.operator] }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Número</dt>
+          <dd>{{ phone.phoneNumber }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>IMEI</dt>
+          <dd>{{ phone.imei }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Cliente</dt>
+          <dd>{{ clientName || 'Sin cliente registrado' }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>Fecha</dt>
+          <dd>{{ saleDate }}</dd>
+        </div>
+        <div class="modal__summary-row">
+          <dt>DPI</dt>
+          <dd>{{ hasDpiImage ? '✓ Documento adjunto' : 'Sin documento adjunto' }}</dd>
+        </div>
+        <div class="modal__summary-row modal__summary-row--total">
+          <dt>Precio</dt>
+          <dd>{{ formatCurrency(salePrice) }}</dd>
+        </div>
+      </dl>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="isSaving" (click)="onConfirm()">
+          {{ isSaving ? 'Confirmando…' : 'Confirmar venta' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

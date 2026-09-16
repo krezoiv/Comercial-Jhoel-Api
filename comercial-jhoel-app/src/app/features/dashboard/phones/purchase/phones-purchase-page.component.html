@@ -1,0 +1,78 @@
+<div class="phones-purchase">
+  <app-page-header
+    icon="arrow-down-circle"
+    title="Compras de Teléfonos"
+    subtitle="Registra el ingreso de un teléfono al inventario — queda disponible de inmediato."
+  />
+
+  <div class="phones-purchase__grid">
+    <app-card padding="lg">
+      <form class="purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="phone-operator">Operadora</label>
+          <select id="phone-operator" formControlName="operator">
+            <option value="CLARO">Claro</option>
+            <option value="TIGO">Tigo</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="phone-number">Número de teléfono</label>
+          <input id="phone-number" type="text" formControlName="phoneNumber" placeholder="Ej. 55512345" />
+          @if (form.controls.phoneNumber.invalid && form.controls.phoneNumber.touched) {
+            <span class="field__error">El número de teléfono es obligatorio.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="phone-imei">IMEI</label>
+          <input id="phone-imei" type="text" formControlName="imei" placeholder="Ej. 356938035643809" />
+          @if (form.controls.imei.invalid && form.controls.imei.touched) {
+            <span class="field__error">El IMEI es obligatorio.</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="phone-cost-price">Precio costo</label>
+            <input id="phone-cost-price" type="number" min="0" step="0.01" formControlName="costPrice" />
+            @if (form.controls.costPrice.invalid && form.controls.costPrice.touched) {
+              <span class="field__error">Ingresa un precio válido.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="phone-public-price">Precio público</label>
+            <input id="phone-public-price" type="number" min="0" step="0.01" formControlName="publicPrice" />
+            @if (form.controls.publicPrice.invalid && form.controls.publicPrice.touched) {
+              <span class="field__error">Ingresa un precio válido.</span>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="phone-purchase-date">Fecha de compra</label>
+          <input id="phone-purchase-date" type="date" [max]="maxDate" formControlName="purchaseDate" />
+        </div>
+
+        <app-button variant="primary" type="submit" fullWidth [disabled]="isSubmitting()">
+          {{ isSubmitting() ? 'Guardando…' : 'Guardar teléfono' }}
+        </app-button>
+      </form>
+    </app-card>
+
+    @if (recentlyRegistered().length > 0) {
+      <app-card padding="lg">
+        <h2 class="recent-title">Registrados en esta sesión</h2>
+        <ul class="recent-list">
+          @for (phone of recentlyRegistered(); track phone.id) {
+            <li class="recent-item">
+              <span class="recent-item__main">{{ operatorLabel[phone.operator] }} · {{ phone.phoneNumber }}</span>
+              <span class="recent-item__meta">IMEI {{ phone.imei }} · {{ formatCurrency(phone.publicPrice) }}</span>
+            </li>
+          }
+        </ul>
+      </app-card>
+    }
+  </div>
+</div>

@@ -1,0 +1,211 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+.table-wrapper--desktop {
+  display: none;
+
+  @include bp.respond(lg) {
+    display: block;
+    overflow-x: auto;
+    background: var(--color-surface-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.phone-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    text-align: center;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  thead {
+    background: var(--color-table-header-bg);
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-table-header-text);
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--color-border-light);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--color-surface-light-hover);
+    }
+  }
+
+  td {
+    color: var(--color-text-on-light-muted);
+    max-width: 10rem;
+  }
+}
+
+.ellipsis-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.align-right {
+  text-align: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: rgba(47, 131, 224, 0.1);
+  color: var(--color-primary-600);
+  @include focus-ring;
+
+  &:hover {
+    background: rgba(47, 131, 224, 0.18);
+  }
+}
+
+.clear-link {
+  color: var(--color-primary-600);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  @include focus-ring;
+}
+
+// ---- Mobile card list -------------------------------------------------------
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  @include bp.respond(md) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+  }
+
+  @include bp.respond(lg) {
+    display: none;
+  }
+}
+
+.phone-card {
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.phone-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.phone-card__title {
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-sm);
+}
+
+.phone-card__imei {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.phone-card__prices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--color-border-light);
+  margin-bottom: var(--space-3);
+}
+
+.phone-card__price-label {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  margin-bottom: var(--space-1);
+}
+
+.phone-card__price-value {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+}
+
+.phone-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.phone-card__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+// ---- Loading skeleton --------------------------------------------------------
+
+.loading-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: center;
+  padding: var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-subtle);
+
+  @include bp.respond(lg) {
+    display: none;
+  }
+}
+
+.skeleton {
+  display: inline-block;
+  height: 0.9rem;
+  width: 3.5rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-bg-light-muted) 25%, var(--color-border-light) 50%, var(--color-bg-light-muted) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}

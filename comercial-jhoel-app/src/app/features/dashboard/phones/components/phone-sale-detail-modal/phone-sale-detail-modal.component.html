@@ -1,0 +1,87 @@
+@if (saleId) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+        <app-icon name="x-circle" [size]="20" />
+      </button>
+
+      @if (loading()) {
+        <p class="modal__loading">Cargando…</p>
+      } @else if (sale()) {
+        @let s = sale()!;
+
+        <div class="modal__header">
+          <h2 class="modal__title">Venta de teléfono — {{ s.phoneNumber }}</h2>
+          @if (s.isVoided) {
+            <app-badge tone="danger">Anulada</app-badge>
+          } @else {
+            <app-badge tone="success">Vigente</app-badge>
+          }
+        </div>
+
+        @if (s.isVoided) {
+          <div class="modal__void-banner">
+            <app-icon name="alert-triangle" [size]="16" />
+            Anulada por {{ s.voidedByUsername }} el {{ s.voidedAt | date: 'dd/MM/yyyy HH:mm' }} — {{ s.voidReason }}
+          </div>
+        }
+
+        <dl class="modal__summary-grid">
+          <div>
+            <dt>Operadora</dt>
+            <dd>{{ operatorLabel[s.phoneOperator] }}</dd>
+          </div>
+          <div>
+            <dt>Número</dt>
+            <dd>{{ s.phoneNumber }}</dd>
+          </div>
+          <div>
+            <dt>IMEI</dt>
+            <dd>{{ s.phoneImei }}</dd>
+          </div>
+          <div>
+            <dt>Fecha de venta</dt>
+            <dd>{{ s.saleDate }}</dd>
+          </div>
+          <div>
+            <dt>Cliente</dt>
+            <dd>{{ s.clientName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>DPI del cliente</dt>
+            <dd>{{ s.clientDpi }}</dd>
+          </div>
+          <div>
+            <dt>Precio costo</dt>
+            <dd>{{ formatCurrency(s.phoneCostPrice) }}</dd>
+          </div>
+          <div>
+            <dt>Precio de venta</dt>
+            <dd>{{ formatCurrency(s.salePrice) }}</dd>
+          </div>
+          <div>
+            <dt>Ganancia</dt>
+            <dd class="modal__profit">{{ formatCurrency(s.profit) }}</dd>
+          </div>
+          <div>
+            <dt>Usuario</dt>
+            <dd>{{ s.createdByUsername }}</dd>
+          </div>
+        </dl>
+
+        <div class="modal__section">
+          <h3 class="modal__section-title">Imagen del DPI</h3>
+          @if (!s.hasDpiImage) {
+            <p class="modal__no-image">No se adjuntó una imagen del DPI para esta venta.</p>
+          } @else if (imageLoading()) {
+            <p class="modal__no-image">Cargando imagen…</p>
+          } @else if (dpiImageUrl()) {
+            <img class="modal__dpi-image" [src]="dpiImageUrl()" alt="Imagen del DPI" />
+          } @else {
+            <p class="modal__no-image">No se pudo cargar la imagen.</p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

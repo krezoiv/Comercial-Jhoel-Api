@@ -1,0 +1,7 @@
+<div class="summary-grid">
+  @for (tile of tiles(); track tile.title) {
+    <app-card padding="lg">
+      <app-summary-tile [icon]="tile.icon" [title]="tile.title" [value]="tile.value" [description]="tile.description" [tone]="tile.tone" />
+    </app-card>
+  }
+</div>

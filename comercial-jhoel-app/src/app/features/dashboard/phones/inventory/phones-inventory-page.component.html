@@ -1,0 +1,37 @@
+<div class="phones-inventory">
+  <app-page-header
+    icon="smartphone"
+    title="Inventario de Teléfonos"
+    subtitle="Cada teléfono es una unidad individual — controla su estado, precio y disponibilidad."
+  />
+
+  <app-phones-summary [phones]="summaryPhones()" />
+
+  <app-phone-toolbar
+    [searchTerm]="searchTerm()"
+    [operatorFilter]="operatorFilter()"
+    [statusFilter]="statusFilter()"
+    [purchaseDateFrom]="purchaseDateFrom()"
+    [purchaseDateTo]="purchaseDateTo()"
+    [saleDateFrom]="saleDateFrom()"
+    [saleDateTo]="saleDateTo()"
+    (searchTermChange)="searchTerm.set($event)"
+    (operatorFilterChange)="operatorFilter.set($event)"
+    (statusFilterChange)="statusFilter.set($event)"
+    (purchaseDateFromChange)="purchaseDateFrom.set($event)"
+    (purchaseDateToChange)="purchaseDateTo.set($event)"
+    (saleDateFromChange)="saleDateFrom.set($event)"
+    (saleDateToChange)="saleDateTo.set($event)"
+    (clearFilters)="clearFilters()"
+  />
+
+  <app-phone-table
+    [rows]="filteredRows()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (viewSale)="onViewSale($event)"
+    (clearFilters)="clearFilters()"
+  />
+</div>
+
+<app-phone-sale-detail-modal [saleId]="detailSaleId()" (closed)="closeDetail()" />
