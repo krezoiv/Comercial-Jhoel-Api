@@ -1,0 +1,44 @@
+<div class="catalog-product-requests">
+  <app-page-header
+    icon="shopping-bag"
+    title="Solicitudes de Variedades"
+    subtitle="Leads de interés ('Lo quiero') capturados desde la sección Variedades y Accesorios de la landing pública. Librería es puramente informativa y no genera solicitudes."
+  />
+
+  <div class="summary-grid">
+    <app-card padding="lg">
+      <app-summary-tile icon="alert-circle" title="Nuevas" [value]="newCount().toString()" description="sin atender" tone="gold" />
+    </app-card>
+    <app-card padding="lg">
+      <app-summary-tile icon="clock" title="En proceso" [value]="inProgressCount().toString()" description="contactadas / en gestión" tone="primary" />
+    </app-card>
+    <app-card padding="lg">
+      <app-summary-tile icon="check-circle" title="Atendidas" [value]="attendedCount().toString()" description="cerradas correctamente" tone="success" />
+    </app-card>
+  </div>
+
+  <div class="toolbar__filters" role="group" aria-label="Filtrar por estado">
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'all'" (click)="statusFilter.set('all')">
+      Todas
+    </button>
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'NUEVA'" (click)="statusFilter.set('NUEVA')">
+      Nuevas
+    </button>
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'CONTACTADA'" (click)="statusFilter.set('CONTACTADA')">
+      Contactadas
+    </button>
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'EN_PROCESO'" (click)="statusFilter.set('EN_PROCESO')">
+      En proceso
+    </button>
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'ATENDIDA'" (click)="statusFilter.set('ATENDIDA')">
+      Atendidas
+    </button>
+    <button type="button" class="filter-chip" [class.filter-chip--active]="statusFilter() === 'CANCELADA'" (click)="statusFilter.set('CANCELADA')">
+      Canceladas
+    </button>
+  </div>
+
+  <app-catalog-product-request-table [requests]="filteredRequests()" [loading]="loading()" (viewDetail)="openDetail($event)" />
+</div>
+
+<app-catalog-product-request-detail-modal [request]="selectedRequest()" (closed)="closeDetail()" (updated)="onRequestUpdated($event)" />

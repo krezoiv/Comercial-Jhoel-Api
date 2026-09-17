@@ -1,0 +1,131 @@
+@use 'mixins' as *;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(5, 7, 12, 0.6);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 30rem;
+  background: var(--color-surface-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+  margin-block: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal__title {
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+}
+
+.modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-on-light-subtle);
+
+  &:hover {
+    color: var(--color-text-on-light);
+  }
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-bg-light-muted);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.summary__label {
+  color: var(--color-text-on-light-subtle);
+}
+
+.summary__value {
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-medium);
+  text-align: right;
+}
+
+.whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: rgba(37, 211, 102, 0.12);
+  color: #1f9e4d;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  @include focus-ring;
+
+  &:hover {
+    background: rgba(37, 211, 102, 0.2);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+  }
+
+  select,
+  textarea {
+    background: var(--color-bg-light-muted);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-on-light);
+    font-size: var(--fs-sm);
+    font-family: inherit;
+    @include focus-ring;
+
+    &:focus {
+      border-color: var(--color-primary-500);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

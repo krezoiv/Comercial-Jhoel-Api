@@ -1,0 +1,251 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.product-card {
+  width: 100%;
+  height: 100%;
+  perspective: 1800px;
+}
+
+.product-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.product-card--flipped .product-card__inner {
+  transform: rotateY(180deg);
+}
+
+.product-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface-light);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transition: box-shadow var(--duration-base) var(--ease-out);
+}
+
+.product-card__face--front {
+  cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow:
+        0 32px 56px -20px rgba(10, 14, 23, 0.32),
+        var(--shadow-glow-primary);
+    }
+  }
+}
+
+// Header and CTAs are always fully visible, regardless of how many specs a
+// phone has — only `.product-card__specs-scroll` (the middle section) ever
+// scrolls internally. This is what keeps "Lo quiero"/"Comprar a crédito"
+// reachable without hunting, per the requirement that the flip must never
+// block access to those actions.
+.product-card__face--back {
+  transform: rotateY(180deg);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  gap: var(--space-3);
+}
+
+.product-card__back-header,
+.product-card__actions {
+  flex-shrink: 0;
+}
+
+// `contain`, never `cover` — a catalog photo can arrive in any orientation
+// or crop from the admin (portrait product shot, landscape lifestyle
+// photo, a screenshot...); this is what guarantees the full phone is
+// always visible, centered, never awkwardly cropped, regardless of what
+// gets uploaded. The soft brand gradient + generous padding reads as a
+// deliberate "product stage" rather than an empty letterbox.
+.product-card__image-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(255, 255, 255, 0.9) 0%, transparent 60%),
+    var(--gradient-brand-soft);
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 18px 20px rgba(10, 14, 23, 0.16));
+}
+
+.product-card__image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-400);
+}
+
+.product-card__body {
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.product-card__category {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary-500);
+}
+
+.product-card__name {
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+  line-height: 1.15;
+  font-weight: var(--fw-semibold);
+
+  @include bp.respond(lg) {
+    font-size: var(--fs-xl);
+  }
+}
+
+.product-card__price {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--color-primary-600);
+  margin-top: var(--space-1);
+
+  @include bp.respond(lg) {
+    font-size: var(--fs-2xl);
+  }
+}
+
+.product-card__flip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0 var(--space-5) var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light-muted);
+  color: var(--color-primary-600);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+  @include focus-ring;
+
+  app-icon {
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  &:hover {
+    background: var(--gradient-brand-soft);
+    color: var(--color-primary-700);
+
+    app-icon {
+      transform: translateX(2px);
+    }
+  }
+}
+
+.product-card__back-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+// The one part of the back face allowed to grow/shrink and scroll — a
+// top/bottom fade mask hints there's more to scroll without needing a
+// visible scrollbar (same "don't just clip, hint it" instinct as
+// `overflow-x: auto` wide-table containers elsewhere in this codebase).
+.product-card__description-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
+}
+
+.product-card__description {
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--color-text-on-light-muted);
+  white-space: pre-line;
+}
+
+.product-card__description--empty {
+  color: var(--color-text-on-light-subtle);
+  font-style: italic;
+}
+
+.product-card__presentation {
+  margin-top: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.product-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+
+  app-button {
+    display: block;
+
+    ::ng-deep .btn {
+      width: 100%;
+    }
+  }
+}
+
+.product-card__back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  margin-top: var(--space-1);
+  color: var(--color-text-on-light-subtle);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-text-on-light);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card__inner {
+    transition: none;
+  }
+}

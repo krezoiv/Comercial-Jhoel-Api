@@ -1,0 +1,149 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="news-table">
+      <thead>
+        <tr>
+          <th>Noticia</th>
+          <th>Fecha</th>
+          <th>Imagen</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (articles.length === 0) {
+  <app-empty-state
+    icon="newspaper"
+    [title]="hasActiveFilters ? 'No se encontraron noticias' : 'Aún no hay noticias'"
+    [description]="
+      hasActiveFilters
+        ? 'Intenta con otro término de búsqueda o ajusta los filtros aplicados.'
+        : 'Agrega la primera noticia para comenzar a construir esta sección.'
+    "
+  >
+    @if (hasActiveFilters) {
+      <app-button variant="ghost" (click)="clearFilters.emit()">Limpiar filtros</app-button>
+    } @else {
+      <app-button variant="primary" (click)="addArticle.emit()">
+        <app-icon name="plus" [size]="16" />
+        Agregar noticia
+      </app-button>
+    }
+  </app-empty-state>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="news-table">
+      <thead>
+        <tr>
+          <th>Noticia</th>
+          <th>Fecha</th>
+          <th>Imagen</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (article of articles; track article.id; let first = $first; let last = $last) {
+          <tr [class.news-table__row--inactive]="!article.isActive">
+            <td class="news-table__title">{{ article.title }}</td>
+            <td>{{ article.publishedAt | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (article.hasImage) {
+                <app-badge tone="brand">Sí</app-badge>
+              } @else {
+                <span class="muted">Sin imagen</span>
+              }
+            </td>
+            <td>
+              <app-badge [tone]="article.isActive ? 'success' : 'danger'">
+                {{ article.isActive ? 'Activa' : 'Inactiva' }}
+              </app-badge>
+            </td>
+            <td>
+              <div class="order-controls">
+                <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(article)" aria-label="Subir orden">
+                  <app-icon name="chevron-up" [size]="16" />
+                </button>
+                <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(article)" aria-label="Bajar orden">
+                  <app-icon name="chevron-down" [size]="16" />
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="actions">
+                <button type="button" class="action-btn" (click)="edit.emit(article)" [attr.aria-label]="'Editar ' + article.title">
+                  <app-icon name="edit-2" [size]="16" />
+                </button>
+                <button type="button" class="action-btn" (click)="manageImage.emit(article)" [attr.aria-label]="'Imagen de ' + article.title">
+                  <app-icon name="camera" [size]="16" />
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="article.isActive"
+                  (click)="toggleActive.emit(article)"
+                  [attr.aria-label]="(article.isActive ? 'Desactivar ' : 'Activar ') + article.title"
+                >
+                  <app-icon [name]="article.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (article of articles; track article.id; let first = $first; let last = $last) {
+      <div class="news-card" [class.news-card--inactive]="!article.isActive">
+        <div class="news-card__header">
+          <div>
+            <p class="news-card__title">{{ article.title }}</p>
+            <p class="news-card__date">{{ article.publishedAt | date: 'dd/MM/yyyy' }}</p>
+          </div>
+          <app-badge [tone]="article.isActive ? 'success' : 'danger'">{{ article.isActive ? 'Activa' : 'Inactiva' }}</app-badge>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(article)" aria-label="Subir orden">
+            <app-icon name="chevron-up" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(article)" aria-label="Bajar orden">
+            <app-icon name="chevron-down" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" (click)="edit.emit(article)" [attr.aria-label]="'Editar ' + article.title">
+            <app-icon name="edit-2" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" (click)="manageImage.emit(article)" [attr.aria-label]="'Imagen de ' + article.title">
+            <app-icon name="camera" [size]="16" />
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            [class.action-btn--danger]="article.isActive"
+            (click)="toggleActive.emit(article)"
+            [attr.aria-label]="(article.isActive ? 'Desactivar ' : 'Activar ') + article.title"
+          >
+            <app-icon [name]="article.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -27,6 +27,30 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         path: 'catalogo-solicitudes',
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
+      {
+        label: 'Catálogo de Librería',
+        icon: 'book',
+        path: 'catalogo-libreria',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Variedades y Accesorios',
+        icon: 'gift',
+        path: 'catalogo-variedades',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Solicitudes de Variedades',
+        icon: 'shopping-bag',
+        path: 'catalogo-variedades-solicitudes',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Noticias',
+        icon: 'newspaper',
+        path: 'noticias',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
       {

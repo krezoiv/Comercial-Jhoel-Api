@@ -1,0 +1,45 @@
+@use 'breakpoints' as bp;
+
+.varieties-catalog__glow {
+  position: absolute;
+  top: -6rem;
+  right: -8rem;
+  width: 26rem;
+  height: 26rem;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle, var(--color-accent-gold-soft) 0%, transparent 70%);
+  opacity: 0.3;
+}
+
+.varieties-catalog__grid {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-10);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: var(--space-12);
+  }
+
+  @include bp.respond(xl) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.varieties-catalog__item {
+  height: 28rem;
+
+  @include bp.respond(sm) {
+    height: 30rem;
+  }
+}

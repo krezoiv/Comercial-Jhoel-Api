@@ -1,0 +1,81 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="request-table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (requests.length === 0) {
+  <app-empty-state
+    icon="shopping-bag"
+    title="No hay solicitudes"
+    description="Cuando un cliente presione 'Lo quiero' en la sección Variedades y Accesorios de la landing, la solicitud aparecerá aquí."
+  />
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="request-table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (request of requests; track request.id) {
+          <tr>
+            <td class="request-table__name">
+              {{ request.customerName }}
+              <span class="request-table__phone">{{ request.customerPhone }}</span>
+            </td>
+            <td>{{ request.productName }}</td>
+            <td>{{ formatPrice(request.price) }}</td>
+            <td>{{ request.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td><app-badge [tone]="statusTone[request.status]">{{ statusLabel[request.status] }}</app-badge></td>
+            <td>
+              <button type="button" class="action-btn" (click)="viewDetail.emit(request)" aria-label="Ver detalle">
+                <app-icon name="eye" [size]="16" />
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (request of requests; track request.id) {
+      <button type="button" class="request-card" (click)="viewDetail.emit(request)">
+        <div class="request-card__header">
+          <p class="request-card__name">{{ request.customerName }}</p>
+          <app-badge [tone]="statusTone[request.status]">{{ statusLabel[request.status] }}</app-badge>
+        </div>
+        <p class="request-card__model">{{ request.productName }} · {{ formatPrice(request.price) }}</p>
+        <p class="request-card__meta">{{ request.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+      </button>
+    }
+  </div>
+}

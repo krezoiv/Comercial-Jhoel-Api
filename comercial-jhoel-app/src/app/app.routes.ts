@@ -180,6 +180,42 @@ export const routes: Routes = [
         title: 'Solicitudes del Catálogo — Sistema',
       },
       {
+        path: 'catalogo-libreria',
+        canActivate: [adminGuard],
+        data: { section: 'LIBRERIA' },
+        loadComponent: () =>
+          import('./features/dashboard/catalog-products/catalog-products-page.component').then(
+            (m) => m.CatalogProductsPageComponent,
+          ),
+        title: 'Catálogo de Librería — Sistema',
+      },
+      {
+        path: 'catalogo-variedades',
+        canActivate: [adminGuard],
+        data: { section: 'VARIEDADES_ACCESORIOS' },
+        loadComponent: () =>
+          import('./features/dashboard/catalog-products/catalog-products-page.component').then(
+            (m) => m.CatalogProductsPageComponent,
+          ),
+        title: 'Variedades y Accesorios — Sistema',
+      },
+      {
+        path: 'catalogo-variedades-solicitudes',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/catalog-product-requests/catalog-product-requests-page.component').then(
+            (m) => m.CatalogProductRequestsPageComponent,
+          ),
+        title: 'Solicitudes de Variedades — Sistema',
+      },
+      {
+        path: 'noticias',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/news/news-page.component').then((m) => m.NewsPageComponent),
+        title: 'Noticias — Sistema',
+      },
+      {
         path: 'bancos',
         loadComponent: () =>
           import('./features/dashboard/banks/banks-page.component').then((m) => m.BanksPageComponent),

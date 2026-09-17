@@ -1,0 +1,23 @@
+@if (products().length > 0) {
+  <app-section sectionId="variedades" tone="light" spacing="lg">
+    <div class="varieties-catalog__glow" aria-hidden="true"></div>
+
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Variedades y Accesorios"
+        title="Detalles que marcan la diferencia"
+        subtitle="Descubre nuestra selección de variedades y accesorios — escríbenos por WhatsApp y te ayudamos a conseguir el tuyo."
+      />
+    </div>
+
+    <div class="varieties-catalog__grid" appRevealOnScroll [revealDelay]="80">
+      @for (product of products(); track product.id) {
+        <div class="varieties-catalog__item">
+          <app-catalog-product-card [product]="product" [showInterestButton]="true" (interest)="onRequestInterest(product)" />
+        </div>
+      }
+    </div>
+  </app-section>
+}
+
+<app-product-interest-modal [product]="selectedProduct()" (closed)="closeInterestModal()" />

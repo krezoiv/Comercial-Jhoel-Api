@@ -1,0 +1,54 @@
+import { NewsArticle } from '../../domain/entities/news-article.entity';
+
+export interface NewsArticleOutput {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  isActive: boolean;
+  sortOrder: number;
+  hasImage: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  createdByUsername: string;
+  updatedBy: string | null;
+  updatedByUsername: string | null;
+}
+
+/** Backs Noticias en la landing — sin isActive/audit, solo lo que un visitante puede ver. */
+export interface PublicNewsArticleOutput {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  hasImage: boolean;
+}
+
+export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
+  return {
+    id: article.id,
+    title: article.title,
+    description: article.description,
+    publishedAt: article.publishedAt,
+    isActive: article.isActive,
+    sortOrder: article.sortOrder,
+    hasImage: article.hasImage,
+    createdAt: article.createdAt,
+    updatedAt: article.updatedAt,
+    createdBy: article.createdBy,
+    createdByUsername: article.createdByUsername,
+    updatedBy: article.updatedBy,
+    updatedByUsername: article.updatedByUsername,
+  };
+}
+
+export function toPublicNewsArticleOutput(article: NewsArticle): PublicNewsArticleOutput {
+  return {
+    id: article.id,
+    title: article.title,
+    description: article.description,
+    publishedAt: article.publishedAt,
+    hasImage: article.hasImage,
+  };
+}

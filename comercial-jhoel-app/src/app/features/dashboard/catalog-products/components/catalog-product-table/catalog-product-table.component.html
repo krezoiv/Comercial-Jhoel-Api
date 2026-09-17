@@ -1,0 +1,158 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Categoría</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="loading-note">
+    <app-icon name="clock" [size]="16" />
+    Cargando productos…
+  </p>
+} @else if (products.length === 0) {
+  <app-empty-state
+    icon="gift"
+    [title]="hasActiveFilters ? 'No se encontraron productos' : emptyTitle"
+    [description]="
+      hasActiveFilters ? 'Intenta con otro término de búsqueda o ajusta los filtros aplicados.' : emptyDescription
+    "
+  >
+    @if (hasActiveFilters) {
+      <app-button variant="ghost" (click)="clearFilters.emit()">Limpiar filtros</app-button>
+    } @else {
+      <app-button variant="primary" (click)="addProduct.emit()">
+        <app-icon name="plus" [size]="16" />
+        Publicar producto
+      </app-button>
+    }
+  </app-empty-state>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Categoría</th>
+          <th>Imagen</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products; track product.id; let first = $first; let last = $last) {
+          <tr [class.product-table__row--inactive]="!product.isActive">
+            <td class="product-table__name">
+              {{ product.productName }}
+              @if (!product.productIsActive) {
+                <span class="product-table__warning">Producto inactivo en Inventario</span>
+              }
+            </td>
+            <td>{{ formatPrice(product.productPrice) }}</td>
+            <td>{{ product.categoryName }}</td>
+            <td>
+              @if (product.hasImage) {
+                <app-badge tone="brand">Sí</app-badge>
+              } @else {
+                <span class="muted">Sin imagen</span>
+              }
+            </td>
+            <td>
+              <app-badge [tone]="product.isActive ? 'success' : 'danger'">
+                {{ product.isActive ? 'Activo' : 'Inactivo' }}
+              </app-badge>
+            </td>
+            <td>
+              <div class="order-controls">
+                <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(product)" aria-label="Subir orden">
+                  <app-icon name="chevron-up" [size]="16" />
+                </button>
+                <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(product)" aria-label="Bajar orden">
+                  <app-icon name="chevron-down" [size]="16" />
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="actions">
+                <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.productName">
+                  <app-icon name="edit-2" [size]="16" />
+                </button>
+                <button type="button" class="action-btn" (click)="manageImage.emit(product)" [attr.aria-label]="'Imagen de ' + product.productName">
+                  <app-icon name="camera" [size]="16" />
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="product.isActive"
+                  (click)="toggleActive.emit(product)"
+                  [attr.aria-label]="(product.isActive ? 'Desactivar ' : 'Activar ') + product.productName"
+                >
+                  <app-icon [name]="product.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (product of products; track product.id; let first = $first; let last = $last) {
+      <div class="product-card" [class.product-card--inactive]="!product.isActive">
+        <div class="product-card__header">
+          <div>
+            <p class="product-card__name">{{ product.productName }}</p>
+            <p class="product-card__price">{{ formatPrice(product.productPrice) }} · {{ product.categoryName }}</p>
+          </div>
+          <app-badge [tone]="product.isActive ? 'success' : 'danger'">{{ product.isActive ? 'Activo' : 'Inactivo' }}</app-badge>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(product)" aria-label="Subir orden">
+            <app-icon name="chevron-up" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(product)" aria-label="Bajar orden">
+            <app-icon name="chevron-down" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" (click)="edit.emit(product)" [attr.aria-label]="'Editar ' + product.productName">
+            <app-icon name="edit-2" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" (click)="manageImage.emit(product)" [attr.aria-label]="'Imagen de ' + product.productName">
+            <app-icon name="camera" [size]="16" />
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            [class.action-btn--danger]="product.isActive"
+            (click)="toggleActive.emit(product)"
+            [attr.aria-label]="(product.isActive ? 'Desactivar ' : 'Activar ') + product.productName"
+          >
+            <app-icon [name]="product.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

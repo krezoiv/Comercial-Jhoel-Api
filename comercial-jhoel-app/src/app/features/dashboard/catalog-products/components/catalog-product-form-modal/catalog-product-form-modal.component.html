@@ -1,0 +1,90 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">{{ isEditMode ? 'Editar publicación' : 'Publicar producto' }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (isEditMode) {
+          <div class="product-readonly">
+            <p class="product-readonly__name">{{ product!.productName }}</p>
+            <p class="product-readonly__meta">
+              Q{{ product!.productPrice.toFixed(2) }} · {{ product!.categoryName }} · {{ product!.businessName }}
+            </p>
+          </div>
+        } @else {
+          <div class="field">
+            <label for="catalog-product-search">Producto de Inventario *</label>
+
+            @if (selectedProduct()) {
+              <div class="selected-product">
+                <div>
+                  <p class="selected-product__name">{{ selectedProduct()!.name }}</p>
+                  <p class="selected-product__meta">Q{{ selectedProduct()!.publicPrice.toFixed(2) }} · {{ selectedProduct()!.category }}</p>
+                </div>
+                <button type="button" class="selected-product__clear" (click)="clearSelectedProduct()" aria-label="Quitar selección">
+                  <app-icon name="close" [size]="14" />
+                </button>
+              </div>
+            } @else {
+              <div class="search">
+                <input
+                  id="catalog-product-search"
+                  type="text"
+                  placeholder="Buscar por nombre o SKU…"
+                  autocomplete="off"
+                  [ngModel]="query()"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onQueryInput($event)"
+                  (focus)="dropdownOpen.set(true)"
+                />
+                @if (dropdownOpen() && (results().length > 0 || searching())) {
+                  <div class="search__dropdown">
+                    @if (searching()) {
+                      <p class="search__empty">Buscando…</p>
+                    } @else if (results().length === 0) {
+                      <p class="search__empty">No se encontraron productos activos.</p>
+                    } @else {
+                      @for (result of results(); track result.id) {
+                        <button type="button" class="search__result" (click)="selectProduct(result)">
+                          <span class="search__result-name">{{ result.name }}</span>
+                          <span class="search__result-meta">Q{{ result.publicPrice.toFixed(2) }} · {{ result.category }}</span>
+                        </button>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <div class="field">
+          <label for="catalog-product-description">Descripción de catálogo</label>
+          <textarea
+            id="catalog-product-description"
+            formControlName="catalogDescription"
+            rows="4"
+            maxlength="2000"
+            placeholder="Descripción que verán los clientes en la landing (opcional)…"
+          ></textarea>
+        </div>
+
+        @if (errorMessage()) {
+          <p class="modal__error">{{ errorMessage() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" type="button" [disabled]="isSubmitting()" (click)="close()">Cancelar</app-button>
+          <app-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+          </app-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

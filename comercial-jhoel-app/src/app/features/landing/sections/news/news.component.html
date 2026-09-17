@@ -1,0 +1,19 @@
+@if (articles().length > 0) {
+  <app-section sectionId="noticias" tone="dark" spacing="lg">
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Noticias"
+        title="Lo último de Comercial Jhoel"
+        subtitle="Promociones, novedades y anuncios importantes."
+      />
+    </div>
+
+    <div class="news__grid" appRevealOnScroll [revealDelay]="80">
+      @for (article of articles(); track article.id) {
+        <app-news-card [article]="article" (opened)="openDetail(article)" />
+      }
+    </div>
+  </app-section>
+}
+
+<app-news-detail-modal [article]="selectedArticle()" (closed)="closeDetail()" />

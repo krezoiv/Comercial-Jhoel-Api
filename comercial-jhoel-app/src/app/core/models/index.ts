@@ -50,3 +50,5 @@ export * from './quotation.model';
 export * from './phone.model';
 export * from './catalog-phone.model';
 export * from './catalog-request.model';
+export * from './catalog-product.model';
+export * from './news-article.model';

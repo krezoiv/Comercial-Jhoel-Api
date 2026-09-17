@@ -40,6 +40,8 @@ import { QuotationsModule } from './modules/quotations/quotations.module';
 import { KeyboardShortcutsModule } from './modules/keyboard-shortcuts/keyboard-shortcuts.module';
 import { PhonesModule } from './modules/phones/phones.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { ProductCatalogModule } from './modules/product-catalog/product-catalog.module';
+import { NewsModule } from './modules/news/news.module';
 
 @Module({
   imports: [
@@ -99,6 +101,8 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     KeyboardShortcutsModule,
     PhonesModule,
     CatalogModule,
+    ProductCatalogModule,
+    NewsModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

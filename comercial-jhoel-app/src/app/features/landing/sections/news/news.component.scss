@@ -1,0 +1,17 @@
+@use 'breakpoints' as bp;
+
+.news__grid {
+  margin-top: var(--space-10);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: var(--space-12);
+  }
+}

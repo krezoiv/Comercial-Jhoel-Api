@@ -1,0 +1,21 @@
+@if (products().length > 0) {
+  <app-section sectionId="libreria" tone="light" spacing="lg">
+    <div class="library-catalog__glow" aria-hidden="true"></div>
+
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Librería"
+        title="Todo para tus útiles y oficina"
+        subtitle="Explora nuestro catálogo de productos de librería — información completa, sin compromiso de compra en línea."
+      />
+    </div>
+
+    <div class="library-catalog__grid" appRevealOnScroll [revealDelay]="80">
+      @for (product of products(); track product.id) {
+        <div class="library-catalog__item">
+          <app-catalog-product-card [product]="product" [showInterestButton]="false" />
+        </div>
+      }
+    </div>
+  </app-section>
+}
