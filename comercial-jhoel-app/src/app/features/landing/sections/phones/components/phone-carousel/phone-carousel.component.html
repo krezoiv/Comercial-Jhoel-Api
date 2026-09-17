@@ -20,6 +20,7 @@
   </button>
 
   <div class="carousel__viewport">
+    <div class="carousel__stage" aria-hidden="true"></div>
     <div class="carousel__track">
       @for (phone of phones; track phone.id; let i = $index) {
         @let offset = offsetOf(i);

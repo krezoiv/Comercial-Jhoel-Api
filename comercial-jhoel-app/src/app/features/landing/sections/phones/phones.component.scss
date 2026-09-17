@@ -1,5 +1,46 @@
+@use 'breakpoints' as bp;
+
+// Section itself has `position: relative` already (see SectionComponent) —
+// these glows just need to sit behind everything and never intercept
+// clicks/scroll. Same soft-blur-blob technique the dark Hero section uses
+// (`.hero__glow`), tuned way down in opacity for a light/white background
+// so it reads as an ambient premium tint, not a colored blob.
+.phones__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phones__glow--primary {
+  width: 26rem;
+  height: 26rem;
+  top: -6rem;
+  right: -8rem;
+  background: radial-gradient(circle, var(--color-primary-300) 0%, transparent 70%);
+  opacity: 0.35;
+}
+
+.phones__glow--gold {
+  width: 22rem;
+  height: 22rem;
+  bottom: -4rem;
+  left: -6rem;
+  background: radial-gradient(circle, var(--color-accent-gold-soft) 0%, transparent 70%);
+  opacity: 0.3;
+}
+
 .phones__carousel {
-  margin-top: var(--space-8);
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-10);
   width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
   overflow: hidden;
+
+  @include bp.respond(lg) {
+    margin-top: var(--space-12);
+  }
 }

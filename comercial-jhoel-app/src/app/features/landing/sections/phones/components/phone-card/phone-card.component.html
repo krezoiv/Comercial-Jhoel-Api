@@ -44,18 +44,22 @@
         <p class="phone-card__price">Q{{ phone.price | number: '1.2-2' }}</p>
       </div>
 
-      <ul class="phone-card__specs">
-        @for (spec of specs(); track spec.label) {
-          <li>
-            <span>{{ spec.label }}</span>
-            <strong>{{ spec.value }}</strong>
-          </li>
-        }
-      </ul>
+      <div class="phone-card__specs-scroll">
+        <ul class="phone-card__specs">
+          @for (spec of specs(); track spec.label) {
+            <li>
+              <span>{{ spec.label }}</span>
+              <strong>{{ spec.value }}</strong>
+            </li>
+          }
+        </ul>
+      </div>
 
       @if (phone.creditAvailable) {
         <p class="phone-card__credit-note">
-          <app-icon name="check" [size]="14" />
+          <span class="phone-card__credit-note-icon">
+            <app-icon name="check" [size]="14" />
+          </span>
           Crédito disponible con Krediya
         </p>
       }
