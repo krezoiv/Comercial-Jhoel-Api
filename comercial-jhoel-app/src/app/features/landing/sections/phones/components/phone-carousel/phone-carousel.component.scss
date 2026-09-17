@@ -1,0 +1,122 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  width: 100%;
+  // The page must never scroll horizontally because of this component —
+  // every transform below stays confined inside `.carousel__viewport`'s
+  // own `overflow: hidden`.
+  max-width: 100%;
+}
+
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  touch-action: pan-y;
+  @include focus-ring;
+}
+
+.carousel__viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  perspective: 1600px;
+  padding-block: var(--space-6);
+}
+
+.carousel__track {
+  position: relative;
+  height: 22rem;
+
+  @include bp.respond(sm) {
+    height: 24rem;
+  }
+
+  @include bp.respond(lg) {
+    height: 26rem;
+  }
+}
+
+.carousel__slide {
+  position: absolute;
+  inset: 0;
+  margin-inline: auto;
+  width: 78%;
+  max-width: 20rem;
+  transition:
+    transform var(--duration-slow) var(--ease-out),
+    opacity var(--duration-slow) var(--ease-out);
+  pointer-events: none;
+
+  @include bp.respond(sm) {
+    width: 60%;
+    max-width: 18rem;
+  }
+}
+
+.carousel__slide--active {
+  pointer-events: auto;
+}
+
+.carousel__nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-light);
+  color: var(--color-primary-600);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-light);
+  @include focus-ring;
+
+  @include bp.respond(sm) {
+    display: flex;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-light-hover);
+    border-color: var(--color-primary-300);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
+  @include focus-ring;
+
+  &:hover {
+    background: var(--color-primary-300);
+  }
+}
+
+.dot--active {
+  width: 1.5rem;
+  background: var(--gradient-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel__slide {
+    transition: none;
+  }
+}

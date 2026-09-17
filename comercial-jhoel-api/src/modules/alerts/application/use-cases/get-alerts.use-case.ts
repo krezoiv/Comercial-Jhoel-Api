@@ -12,11 +12,14 @@ import type { AlertSettingsRepository } from '../../../alert-settings/domain/rep
 import { GetCashBoxBalanceUseCase } from '../../../recharge-cash-box/application/use-cases/get-cash-box-balance.use-case';
 import { ALERT_READ_MARK_REPOSITORY } from '../../domain/repositories/alert-read-mark.repository';
 import type { AlertReadMarkRepository } from '../../domain/repositories/alert-read-mark.repository';
+import { CATALOG_REQUEST_REPOSITORY } from '../../../catalog/domain/repositories/catalog-request.repository';
+import type { CatalogRequestRepository } from '../../../catalog/domain/repositories/catalog-request.repository';
 import { Alert } from '../../domain/entities/alert.entity';
 import { AlertsOutput, sortAlerts, toAlertOutput } from '../dtos/alerts-output';
 import { todayIsoDate } from '../utils/today-iso-date';
 import {
   buildCashBoxBalanceAlert,
+  buildCatalogRequestAlert,
   buildInventoryAlert,
   buildPurchaseAlert,
   buildRechargeBalanceAlert,
@@ -56,6 +59,8 @@ export class GetAlertsUseCase {
     private readonly alertSettingsRepository: AlertSettingsRepository,
     @Inject(ALERT_READ_MARK_REPOSITORY)
     private readonly alertReadMarkRepository: AlertReadMarkRepository,
+    @Inject(CATALOG_REQUEST_REPOSITORY)
+    private readonly catalogRequestRepository: CatalogRequestRepository,
     private readonly getCashBoxBalanceUseCase: GetCashBoxBalanceUseCase,
   ) {}
 
@@ -69,6 +74,7 @@ export class GetAlertsUseCase {
       rechargeTypes,
       latestBalances,
       cashBoxBalance,
+      newCatalogRequestsCount,
     ] = await Promise.all([
       this.alertSettingsRepository.get(),
       this.purchaseRepository.findPendingCreditPurchases(
@@ -78,6 +84,7 @@ export class GetAlertsUseCase {
       this.rechargeTypeRepository.findAll({ activeOnly: true }),
       this.rechargeDailyBalanceRepository.findLatestPerType(),
       this.getCashBoxBalanceUseCase.execute({}),
+      this.catalogRequestRepository.countByStatus('NUEVA'),
     ]);
 
     const latestBalanceByType = new Map(
@@ -101,6 +108,7 @@ export class GetAlertsUseCase {
         )
         .filter((alert): alert is Alert => alert !== null),
       buildCashBoxBalanceAlert(cashBoxBalance.currentBalance),
+      buildCatalogRequestAlert(newCatalogRequestsCount),
     ].filter((alert): alert is Alert => alert !== null);
 
     const sorted = sortAlerts(alerts);

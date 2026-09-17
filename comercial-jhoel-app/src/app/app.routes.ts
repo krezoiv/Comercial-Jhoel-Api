@@ -162,6 +162,24 @@ export const routes: Routes = [
         title: 'Configuración de Alertas — Sistema',
       },
       {
+        path: 'catalogo-telefonos',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/catalog-phones/catalog-phones-page.component').then(
+            (m) => m.CatalogPhonesPageComponent,
+          ),
+        title: 'Catálogo de Teléfonos — Sistema',
+      },
+      {
+        path: 'catalogo-solicitudes',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/catalog-requests/catalog-requests-page.component').then(
+            (m) => m.CatalogRequestsPageComponent,
+          ),
+        title: 'Solicitudes del Catálogo — Sistema',
+      },
+      {
         path: 'bancos',
         loadComponent: () =>
           import('./features/dashboard/banks/banks-page.component').then((m) => m.BanksPageComponent),

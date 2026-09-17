@@ -1,0 +1,55 @@
+@if (open && phone) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">Imágenes — {{ phone.brand }} {{ phone.model }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (phone.images.length === 0) {
+        <p class="modal__hint">
+          Este teléfono no tiene imágenes todavía. Debe agregar al menos una foto antes de poder publicarlo.
+        </p>
+      }
+
+      <div class="image-grid">
+        @for (image of phone.images; track image.id) {
+          <div class="image-tile">
+            <img [src]="imageUrl(image.id)" [alt]="phone.brand + ' ' + phone.model" />
+            @if (image.isPrimary) {
+              <span class="image-tile__badge">Principal</span>
+            }
+            <div class="image-tile__actions">
+              @if (!image.isPrimary) {
+                <button type="button" (click)="setPrimary(image.id)" title="Marcar como principal">
+                  <app-icon name="star" [size]="14" />
+                </button>
+              }
+              <button
+                type="button"
+                class="image-tile__remove"
+                [disabled]="removingImageId() === image.id"
+                (click)="removeImage(image.id)"
+                title="Eliminar"
+              >
+                <app-icon name="trash-2" [size]="14" />
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <label class="upload-btn">
+        <app-icon name="upload" [size]="16" />
+        {{ isUploading() ? 'Subiendo…' : 'Subir imagen' }}
+        <input type="file" accept="image/*" [disabled]="isUploading()" (change)="onFileSelected($event)" hidden />
+      </label>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" type="button" (click)="close()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

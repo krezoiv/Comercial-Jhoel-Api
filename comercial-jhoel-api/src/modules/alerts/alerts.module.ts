@@ -12,6 +12,7 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { RechargesModule } from '../recharges/recharges.module';
 import { RechargeCashBoxModule } from '../recharge-cash-box/recharge-cash-box.module';
 import { AlertSettingsModule } from '../alert-settings/alert-settings.module';
+import { CatalogModule } from '../catalog/catalog.module';
 
 /**
  * Reads across five unrelated modules' own domain tokens/use cases
@@ -33,6 +34,7 @@ import { AlertSettingsModule } from '../alert-settings/alert-settings.module';
     RechargesModule,
     RechargeCashBoxModule,
     AlertSettingsModule,
+    CatalogModule,
   ],
   controllers: [AlertsController],
   providers: [

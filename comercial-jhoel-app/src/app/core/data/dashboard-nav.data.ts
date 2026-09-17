@@ -15,6 +15,18 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Banco Agente', icon: 'bank', path: 'banco-agente' },
       { label: 'Tipo de Transacción', icon: 'arrow-left-right', path: 'tipo-transaccion' },
       { label: 'Clientes', icon: 'users', path: 'clientes' },
+      {
+        label: 'Catálogo de Teléfonos',
+        icon: 'smartphone',
+        path: 'catalogo-telefonos',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
+        label: 'Solicitudes del Catálogo',
+        icon: 'shopping-bag',
+        path: 'catalogo-solicitudes',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
       {

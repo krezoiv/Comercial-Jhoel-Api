@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateCompanySettingsRequestDto {
   @IsOptional()
@@ -64,4 +71,10 @@ export class UpdateCompanySettingsRequestDto {
   @IsString()
   @MaxLength(255)
   tiktokUrl?: string | null;
+
+  /** "Monto mínimo para crédito Krediya" — única fuente de verdad de la regla `precio >= Q1,000`, ver `isKrediyaCreditAvailable`. `null` desactiva la oferta de crédito sin perder el valor configurado previamente. */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  krediyaMinAmount?: number | null;
 }

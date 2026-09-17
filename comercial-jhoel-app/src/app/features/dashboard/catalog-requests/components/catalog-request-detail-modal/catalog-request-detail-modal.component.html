@@ -1,0 +1,74 @@
+@if (open && request) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">Solicitud de {{ request.customerName }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="summary">
+        <div class="summary__row">
+          <span class="summary__label">Teléfono de interés</span>
+          <span class="summary__value">{{ request.brand }} {{ request.model }}</span>
+        </div>
+        <div class="summary__row">
+          <span class="summary__label">Precio</span>
+          <span class="summary__value">Q{{ request.price.toFixed(2) }}</span>
+        </div>
+        <div class="summary__row">
+          <span class="summary__label">Tipo de solicitud</span>
+          <span class="summary__value">{{ typeLabel[request.requestType] }}</span>
+        </div>
+        <div class="summary__row">
+          <span class="summary__label">Crédito Krediya</span>
+          <span class="summary__value">{{ request.creditAvailable ? 'Calificaba al momento de la solicitud' : 'No calificaba' }}</span>
+        </div>
+        <div class="summary__row">
+          <span class="summary__label">Cliente</span>
+          <span class="summary__value">{{ request.customerName }} · {{ request.customerPhone }}</span>
+        </div>
+        <div class="summary__row">
+          <span class="summary__label">Fecha</span>
+          <span class="summary__value">{{ request.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+
+      @if (whatsappHref) {
+        <a class="whatsapp-link" [href]="whatsappHref" target="_blank" rel="noopener">
+          <app-icon name="whatsapp" [size]="16" />
+          Contactar por WhatsApp
+        </a>
+      }
+
+      <div class="field">
+        <label for="request-status">Estado</label>
+        <select id="request-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          @for (status of statusOptions; track status) {
+            <option [value]="status">{{ statusLabel[status] }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="request-observation">Observación</label>
+        <textarea
+          id="request-observation"
+          rows="3"
+          maxlength="500"
+          placeholder="Notas internas sobre el seguimiento…"
+          [ngModel]="draftObservation()"
+          (ngModelChange)="draftObservation.set($event)"
+        ></textarea>
+      </div>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" type="button" (click)="close()">Cerrar</app-button>
+        <app-button variant="primary" type="button" [disabled]="isSaving()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

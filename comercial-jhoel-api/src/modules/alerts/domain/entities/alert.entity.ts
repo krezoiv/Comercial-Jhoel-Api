@@ -8,7 +8,8 @@ export type AlertType =
   | 'PURCHASE_PAYMENT_OVERDUE'
   | 'LOW_INVENTORY'
   | 'LOW_RECHARGE_BALANCE'
-  | 'NEGATIVE_CASH_BOX_BALANCE';
+  | 'NEGATIVE_CASH_BOX_BALANCE'
+  | 'CATALOG_REQUEST_NEW';
 
 export type AlertPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM';
 

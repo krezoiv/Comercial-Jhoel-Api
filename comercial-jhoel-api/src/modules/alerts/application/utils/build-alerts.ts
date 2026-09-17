@@ -143,6 +143,35 @@ export function buildRechargeBalanceAlert(
  * one Caja) — no `referenceId` row to point at, so it reuses the same
  * fixed string.
  */
+/**
+ * `CATALOG_REQUEST_NEW` — one summary alert (never one per lead) covering
+ * every `catalog_requests` row still in `NUEVA` status. A `key` fixed to
+ * the literal string `'catalog-request:new'` (there's only ever one such
+ * alert, same shape as `buildCashBoxBalanceAlert`'s own single fixed key)
+ * — it simply stops being produced the moment an admin moves every `NUEVA`
+ * request to another status, same "no dismiss action, recomputed fresh
+ * every call" mechanism as every other alert in this module.
+ */
+export function buildCatalogRequestAlert(
+  newRequestsCount: number,
+): Alert | null {
+  if (newRequestsCount === 0) {
+    return null;
+  }
+
+  return {
+    key: 'catalog-request:new',
+    type: 'CATALOG_REQUEST_NEW',
+    priority: 'MEDIUM',
+    title: 'Nuevas solicitudes del catálogo',
+    description: `${newRequestsCount} ${newRequestsCount === 1 ? 'solicitud nueva' : 'solicitudes nuevas'} sin atender`,
+    amount: null,
+    date: null,
+    route: '/dashboard/catalogo-solicitudes',
+    referenceId: 'catalog-requests',
+  };
+}
+
 export function buildCashBoxBalanceAlert(currentBalance: number): Alert | null {
   if (currentBalance >= 0) {
     return null;

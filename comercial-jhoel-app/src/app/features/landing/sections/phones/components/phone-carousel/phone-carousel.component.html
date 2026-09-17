@@ -1,0 +1,66 @@
+<div
+  class="carousel"
+  tabindex="0"
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="Catálogo de teléfonos"
+  (keydown)="onKeydown($event)"
+  (pointerdown)="onPointerDown($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointercancel)="onPointerCancel()"
+>
+  <button
+    type="button"
+    class="carousel__nav carousel__nav--prev"
+    [disabled]="isFirst"
+    (click)="prev()"
+    aria-label="Teléfono anterior"
+  >
+    <app-icon name="chevron-left" [size]="22" />
+  </button>
+
+  <div class="carousel__viewport">
+    <div class="carousel__track">
+      @for (phone of phones; track phone.id; let i = $index) {
+        @let offset = offsetOf(i);
+        @if (isVisible(offset)) {
+          <div
+            class="carousel__slide"
+            [class.carousel__slide--active]="offset === 0"
+            [style.transform]="slideTransform(offset)"
+            [style.opacity]="slideOpacity(offset)"
+            [style.z-index]="slideZIndex(offset)"
+            [attr.aria-hidden]="offset !== 0"
+            [inert]="offset !== 0"
+          >
+            <app-phone-card [phone]="phone" (interest)="onInterest(phone, $event)" />
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="carousel__nav carousel__nav--next"
+    [disabled]="isLast"
+    (click)="next()"
+    aria-label="Siguiente teléfono"
+  >
+    <app-icon name="chevron-right" [size]="22" />
+  </button>
+</div>
+
+<div class="carousel__dots" role="tablist" aria-label="Seleccionar teléfono">
+  @for (phone of phones; track phone.id; let i = $index) {
+    <button
+      type="button"
+      class="dot"
+      role="tab"
+      [class.dot--active]="i === activeIndex()"
+      [attr.aria-selected]="i === activeIndex()"
+      [attr.aria-label]="'Ver ' + phone.brand + ' ' + phone.model"
+      (click)="goTo(i)"
+    ></button>
+  }
+</div>

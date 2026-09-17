@@ -49,6 +49,7 @@ export class CompanySettingsController {
       facebookUrl: dto.facebookUrl,
       instagramUrl: dto.instagramUrl,
       tiktokUrl: dto.tiktokUrl,
+      krediyaMinAmount: dto.krediyaMinAmount,
       updatedBy: userId,
     });
   }

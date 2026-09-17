@@ -1,0 +1,58 @@
+<div class="catalog-phones">
+  <app-page-header
+    icon="smartphone"
+    title="Catálogo de Teléfonos"
+    subtitle="Administra los teléfonos publicados en la landing pública: marca, modelo, precio, especificaciones, imágenes y orden."
+  >
+    <app-button variant="primary" (click)="openCreateForm()">
+      <app-icon name="plus" [size]="16" />
+      Agregar teléfono
+    </app-button>
+  </app-page-header>
+
+  <div class="toolbar">
+    <div class="toolbar__row">
+      <label class="search" for="catalog-phone-search">
+        <app-icon name="search" [size]="18" />
+        <input
+          id="catalog-phone-search"
+          type="text"
+          placeholder="Buscar por marca o modelo…"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
+      </label>
+    </div>
+
+    <div class="toolbar__filters" role="group" aria-label="Filtrar por estado">
+      @for (option of statusOptions; track option.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.filter-chip--active]="statusFilter() === option.value"
+          (click)="statusFilter.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-catalog-phone-table
+    [phones]="filteredPhones()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (edit)="openEditForm($event)"
+    (manageImages)="openImages($event)"
+    (toggleActive)="toggleActive($event)"
+    (togglePublish)="togglePublish($event)"
+    (moveUp)="moveUp($event)"
+    (moveDown)="moveDown($event)"
+    (clearFilters)="clearFilters()"
+    (addPhone)="openCreateForm()"
+  />
+</div>
+
+<app-catalog-phone-form-modal [open]="isFormOpen()" [phone]="editingPhone()" (closed)="closeForm()" (saved)="onPhoneSaved($event)" />
+
+<app-catalog-phone-images-modal [phone]="imagesPhone()" (closed)="closeImages()" (changed)="onImagesChanged($event)" />

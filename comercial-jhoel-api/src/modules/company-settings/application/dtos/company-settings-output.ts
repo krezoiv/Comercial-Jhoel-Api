@@ -14,6 +14,7 @@ export interface CompanySettingsOutput {
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
+  krediyaMinAmount: number | null;
   updatedAt: Date;
   updatedByUsername: string | null;
 }
@@ -35,6 +36,7 @@ export function toCompanySettingsOutput(
     facebookUrl: settings.facebookUrl,
     instagramUrl: settings.instagramUrl,
     tiktokUrl: settings.tiktokUrl,
+    krediyaMinAmount: settings.krediyaMinAmount,
     updatedAt: settings.updatedAt,
     updatedByUsername: settings.updatedByUsername,
   };

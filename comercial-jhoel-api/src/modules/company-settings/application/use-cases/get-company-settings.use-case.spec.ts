@@ -21,6 +21,7 @@ describe('GetCompanySettingsUseCase', () => {
           facebookUrl: null,
           instagramUrl: null,
           tiktokUrl: null,
+          krediyaMinAmount: 1000,
           updatedAt: new Date('2026-09-01T00:00:00Z'),
           updatedBy: 'user-1',
           updatedByUsername: 'admin1',

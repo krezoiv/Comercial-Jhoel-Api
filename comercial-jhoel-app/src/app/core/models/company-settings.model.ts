@@ -16,6 +16,8 @@ export interface CompanySettings {
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
+  /** Monto mínimo de precio para ofrecer "Crédito con Krediya" en el Catálogo de Teléfonos — `null` desactiva la oferta. Única fuente de verdad para esa regla, ver `PublicCatalogPhone.creditAvailable`. */
+  krediyaMinAmount: number | null;
   updatedAt: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
@@ -36,6 +38,7 @@ export interface UpdateCompanySettingsPayload {
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   tiktokUrl?: string | null;
+  krediyaMinAmount?: number | null;
 }
 
 /**

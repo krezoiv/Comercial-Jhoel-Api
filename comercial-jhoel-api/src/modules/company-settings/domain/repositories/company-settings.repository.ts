@@ -18,6 +18,7 @@ export interface UpdateCompanySettingsData {
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   tiktokUrl?: string | null;
+  krediyaMinAmount?: number | null;
   updatedBy: string;
 }
 

@@ -97,6 +97,25 @@
           </div>
         </div>
 
+        <div class="form-section">
+          <h2 class="section-title">Catálogo de Teléfonos</h2>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="krediyaMinAmount">Monto mínimo para crédito Krediya (Q)</label>
+              <input
+                id="krediyaMinAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="krediyaMinAmount"
+              />
+              <p class="field-hint">
+                Un teléfono muestra "Crédito con Krediya" cuando su precio es mayor o igual a este monto.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div class="form-field form-field--full">
           <label for="businessHours">Horario de atención</label>
           <textarea

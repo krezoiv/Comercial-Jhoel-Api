@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
+import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 
 @Entity('company_settings')
 export class CompanySettingsOrmEntity {
@@ -66,6 +67,16 @@ export class CompanySettingsOrmEntity {
 
   @Column({ name: 'tiktok_url', type: 'varchar', length: 255, nullable: true })
   tiktokUrl: string | null;
+
+  @Column({
+    name: 'krediya_min_amount',
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: new DecimalColumnTransformer(),
+  })
+  krediyaMinAmount: number | null;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

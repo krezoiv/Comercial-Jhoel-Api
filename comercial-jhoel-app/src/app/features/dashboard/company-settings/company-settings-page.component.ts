@@ -56,6 +56,7 @@ export class CompanySettingsPageComponent {
     facebookUrl: ['', [Validators.maxLength(255)]],
     instagramUrl: ['', [Validators.maxLength(255)]],
     tiktokUrl: ['', [Validators.maxLength(255)]],
+    krediyaMinAmount: [1000, [Validators.min(0)]],
   });
 
   constructor() {
@@ -74,6 +75,7 @@ export class CompanySettingsPageComponent {
           facebookUrl: settings.facebookUrl ?? '',
           instagramUrl: settings.instagramUrl ?? '',
           tiktokUrl: settings.tiktokUrl ?? '',
+          krediyaMinAmount: settings.krediyaMinAmount ?? 1000,
         });
         this.logoBase64.set(settings.logoBase64);
         this.updatedByUsername.set(settings.updatedByUsername);
@@ -151,6 +153,7 @@ export class CompanySettingsPageComponent {
         facebookUrl: raw.facebookUrl.trim() || null,
         instagramUrl: raw.instagramUrl.trim() || null,
         tiktokUrl: raw.tiktokUrl.trim() || null,
+        krediyaMinAmount: raw.krediyaMinAmount,
         logoBase64: this.logoBase64(),
       })
       .subscribe({

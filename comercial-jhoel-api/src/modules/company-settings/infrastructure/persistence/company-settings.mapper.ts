@@ -18,6 +18,7 @@ export class CompanySettingsMapper {
       facebookUrl: orm.facebookUrl,
       instagramUrl: orm.instagramUrl,
       tiktokUrl: orm.tiktokUrl,
+      krediyaMinAmount: orm.krediyaMinAmount,
       updatedAt: orm.updatedAt,
       updatedBy: orm.updatedBy,
       updatedByUsername: orm.updatedByUser?.username ?? null,

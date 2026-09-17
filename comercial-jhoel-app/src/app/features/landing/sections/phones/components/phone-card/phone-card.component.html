@@ -1,0 +1,79 @@
+<div class="phone-card" [class.phone-card--flipped]="flipped()">
+  <div class="phone-card__inner">
+    <div class="phone-card__face phone-card__face--front" (click)="toggleFlip()">
+      <div class="phone-card__image-wrap">
+        @if (primaryImageUrl(); as src) {
+          <img class="phone-card__image" [src]="src" [alt]="phone.brand + ' ' + phone.model" loading="lazy" />
+        } @else {
+          <div class="phone-card__image-placeholder">
+            <app-icon name="smartphone" [size]="48" />
+          </div>
+        }
+      </div>
+
+      <div class="phone-card__body">
+        <p class="phone-card__brand">{{ phone.brand }}</p>
+        <h3 class="phone-card__model">{{ phone.model }}</h3>
+        <p class="phone-card__price">Q{{ phone.price | number: '1.2-2' }}</p>
+
+        <div class="phone-card__badges">
+          <app-badge tone="success">Disponible</app-badge>
+          @if (phone.creditAvailable) {
+            <app-badge tone="gold">Crédito con Krediya</app-badge>
+          }
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="phone-card__flip-btn"
+        (click)="toggleFlip(); $event.stopPropagation()"
+        [attr.aria-label]="'Ver especificaciones de ' + phone.brand + ' ' + phone.model"
+      >
+        Ver especificaciones
+        <app-icon name="chevron-right" [size]="14" />
+      </button>
+    </div>
+
+    <div class="phone-card__face phone-card__face--back">
+      <div class="phone-card__back-header">
+        <div>
+          <p class="phone-card__brand">{{ phone.brand }}</p>
+          <h3 class="phone-card__model">{{ phone.model }}</h3>
+        </div>
+        <p class="phone-card__price">Q{{ phone.price | number: '1.2-2' }}</p>
+      </div>
+
+      <ul class="phone-card__specs">
+        @for (spec of specs(); track spec.label) {
+          <li>
+            <span>{{ spec.label }}</span>
+            <strong>{{ spec.value }}</strong>
+          </li>
+        }
+      </ul>
+
+      @if (phone.creditAvailable) {
+        <p class="phone-card__credit-note">
+          <app-icon name="check" [size]="14" />
+          Crédito disponible con Krediya
+        </p>
+      }
+
+      <div class="phone-card__actions">
+        <app-button variant="primary" size="sm" type="button" (click)="requestInterest('INTERES_COMPRA')">
+          Lo quiero
+        </app-button>
+        @if (phone.creditAvailable) {
+          <app-button variant="secondary" size="sm" type="button" (click)="requestInterest('INTERES_CREDITO')">
+            Comprar a crédito
+          </app-button>
+        }
+        <button type="button" class="phone-card__back-btn" (click)="toggleFlip()">
+          <app-icon name="chevron-left" [size]="14" />
+          Volver
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

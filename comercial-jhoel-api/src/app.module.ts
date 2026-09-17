@@ -39,6 +39,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
 import { KeyboardShortcutsModule } from './modules/keyboard-shortcuts/keyboard-shortcuts.module';
 import { PhonesModule } from './modules/phones/phones.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { PhonesModule } from './modules/phones/phones.module';
     QuotationsModule,
     KeyboardShortcutsModule,
     PhonesModule,
+    CatalogModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

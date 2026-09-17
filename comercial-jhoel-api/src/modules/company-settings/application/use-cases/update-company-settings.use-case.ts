@@ -20,6 +20,7 @@ export interface UpdateCompanySettingsInput {
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   tiktokUrl?: string | null;
+  krediyaMinAmount?: number | null;
   updatedBy: string;
 }
 

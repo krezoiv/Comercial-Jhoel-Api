@@ -48,3 +48,5 @@ export * from './unit-of-measure.model';
 export * from './ticket.model';
 export * from './quotation.model';
 export * from './phone.model';
+export * from './catalog-phone.model';
+export * from './catalog-request.model';

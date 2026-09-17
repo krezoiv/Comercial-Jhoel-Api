@@ -5,6 +5,7 @@ import { RechargeTypeRepository } from '../../../recharges/domain/repositories/r
 import { RechargeDailyBalanceRepository } from '../../../recharges/domain/repositories/recharge-daily-balance.repository';
 import { AlertSettingsRepository } from '../../../alert-settings/domain/repositories/alert-settings.repository';
 import { AlertReadMarkRepository } from '../../domain/repositories/alert-read-mark.repository';
+import { CatalogRequestRepository } from '../../../catalog/domain/repositories/catalog-request.repository';
 import { Purchase } from '../../../purchases/domain/entities/purchase.entity';
 import { AlertSettings } from '../../../alert-settings/domain/entities/alert-settings.entity';
 import { GetCashBoxBalanceUseCase } from '../../../recharge-cash-box/application/use-cases/get-cash-box-balance.use-case';
@@ -37,6 +38,7 @@ describe('GetAlertsUseCase', () => {
   let rechargeDailyBalanceRepository: jest.Mocked<RechargeDailyBalanceRepository>;
   let alertSettingsRepository: jest.Mocked<AlertSettingsRepository>;
   let alertReadMarkRepository: jest.Mocked<AlertReadMarkRepository>;
+  let catalogRequestRepository: jest.Mocked<CatalogRequestRepository>;
   let getCashBoxBalanceUseCase: jest.Mocked<GetCashBoxBalanceUseCase>;
   let useCase: GetAlertsUseCase;
 
@@ -67,6 +69,9 @@ describe('GetAlertsUseCase', () => {
     alertReadMarkRepository = {
       findReadKeys: jest.fn().mockResolvedValue(new Set()),
     } as unknown as jest.Mocked<AlertReadMarkRepository>;
+    catalogRequestRepository = {
+      countByStatus: jest.fn().mockResolvedValue(0),
+    } as unknown as jest.Mocked<CatalogRequestRepository>;
     getCashBoxBalanceUseCase = {
       execute: jest.fn().mockResolvedValue({
         date: '2026-09-10',
@@ -92,6 +97,7 @@ describe('GetAlertsUseCase', () => {
       rechargeDailyBalanceRepository,
       alertSettingsRepository,
       alertReadMarkRepository,
+      catalogRequestRepository,
       getCashBoxBalanceUseCase,
     );
   });

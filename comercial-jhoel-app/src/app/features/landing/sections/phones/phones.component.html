@@ -1,0 +1,17 @@
+@if (phones().length > 0) {
+  <app-section sectionId="telefonos" tone="light" spacing="lg">
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Teléfonos"
+        title="Encuentra tu próximo teléfono"
+        subtitle="Explora nuestro catálogo y descubre las opciones de compra directa o a crédito con Krediya."
+      />
+    </div>
+
+    <div class="phones__carousel" appRevealOnScroll [revealDelay]="80">
+      <app-phone-carousel [phones]="phones()" (requestInterest)="onRequestInterest($event)" />
+    </div>
+  </app-section>
+}
+
+<app-phone-interest-modal [phone]="selectedPhone()" [requestType]="selectedRequestType()" (closed)="closeInterestModal()" />

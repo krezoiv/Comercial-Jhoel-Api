@@ -15,6 +15,8 @@ export interface CompanySettingsProps {
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
+  /** Monto mínimo de precio para ofrecer "Crédito con Krediya" en el Catálogo de Teléfonos — `null`/`<= 0` significa que el crédito no está ofrecido. Única fuente de verdad leída por `isKrediyaCreditAvailable` (`modules/catalog`) — nunca duplicada en otro lugar. */
+  krediyaMinAmount: number | null;
   updatedAt: Date;
   updatedBy: string | null;
   updatedByUsername: string | null;
@@ -82,6 +84,10 @@ export class CompanySettings {
 
   get tiktokUrl(): string | null {
     return this.props.tiktokUrl;
+  }
+
+  get krediyaMinAmount(): number | null {
+    return this.props.krediyaMinAmount;
   }
 
   get updatedAt(): Date {

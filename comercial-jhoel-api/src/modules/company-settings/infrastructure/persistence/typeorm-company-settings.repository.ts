@@ -46,6 +46,8 @@ export class TypeOrmCompanySettingsRepository implements CompanySettingsReposito
     if (data.facebookUrl !== undefined) patch.facebookUrl = data.facebookUrl;
     if (data.instagramUrl !== undefined) patch.instagramUrl = data.instagramUrl;
     if (data.tiktokUrl !== undefined) patch.tiktokUrl = data.tiktokUrl;
+    if (data.krediyaMinAmount !== undefined)
+      patch.krediyaMinAmount = data.krediyaMinAmount;
 
     await this.repository.update({ id: current.id }, patch);
     return this.get();

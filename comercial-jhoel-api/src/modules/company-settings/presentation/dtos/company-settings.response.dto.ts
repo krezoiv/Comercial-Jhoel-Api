@@ -12,6 +12,7 @@ export class CompanySettingsResponseDto {
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
+  krediyaMinAmount: number | null;
   updatedAt: Date;
   updatedByUsername: string | null;
 }
