@@ -78,7 +78,7 @@ export class DashboardLayoutComponent {
     this.salesDraftStore.resetOnLogout();
     this.purchaseDraftStore.reset();
     this.authService.logout();
-    this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/');
   }
 
   /**

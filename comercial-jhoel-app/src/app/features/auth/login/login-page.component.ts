@@ -28,12 +28,6 @@ export class LoginPageComponent {
     password: ['', Validators.required],
   });
 
-  constructor() {
-    if (this.authService.isAuthenticated()) {
-      this.router.navigateByUrl('/dashboard');
-    }
-  }
-
   submit(): void {
     this.errorMessage.set(null);
 

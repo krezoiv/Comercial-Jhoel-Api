@@ -2,10 +2,12 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   {
     path: '',
+    canActivate: [guestGuard],
     loadComponent: () => import('./features/landing/landing-page.component').then((m) => m.LandingPageComponent),
     title: 'Comercial Jhoel — Librería, Útiles Escolares y Agente Bancario',
   },
@@ -16,6 +18,7 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login-page.component').then((m) => m.LoginPageComponent),
     title: 'Iniciar sesión — Comercial Jhoel',
   },
