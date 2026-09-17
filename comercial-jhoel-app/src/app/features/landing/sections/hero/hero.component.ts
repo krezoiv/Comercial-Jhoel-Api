@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { catchError, of } from 'rxjs';
 
 import { SITE } from '../../../../core/data';
+import { ContactService } from '../../../../core/services/contact.service';
 import { BadgeComponent, ButtonComponent, ContainerComponent, IconComponent } from '../../../../shared/ui';
 import { HeroShowcaseComponent } from './hero-showcase.component';
 
@@ -13,5 +15,20 @@ import { HeroShowcaseComponent } from './hero-showcase.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeroComponent {
+  private readonly contactService = inject(ContactService);
+
   readonly site = SITE;
+
+  /** Real WhatsApp link (`company_settings.whatsapp`, via the same `ContactService` the Contacto section/Footer already use) — `null` (button hidden) until the admin configures a real number, never the old hardcoded placeholder. */
+  readonly whatsappHref = signal<string | null>(null);
+
+  constructor() {
+    this.contactService
+      .getContactInfo()
+      .pipe(catchError(() => of(null)))
+      .subscribe((info) => {
+        const whatsapp = info?.channels.find((channel) => channel.id === 'whatsapp');
+        this.whatsappHref.set(whatsapp?.href ?? null);
+      });
+  }
 }

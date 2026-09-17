@@ -8,6 +8,5 @@ export const SITE = {
   schedule: 'Lun. a Sáb. · 8:00 am – 8:00 pm',
   phoneDisplay: '+51 999 999 999',
   phoneHref: 'tel:+51999999999',
-  whatsappHref: 'https://wa.me/51999999999',
   email: 'contacto@comercialjhoel.com',
 } as const;

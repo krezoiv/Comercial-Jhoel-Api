@@ -17,9 +17,11 @@
         }
       </ul>
 
-      <app-button variant="secondary" size="lg" [href]="site.whatsappHref" target="_blank">
-        Consultar una operación
-      </app-button>
+      @if (whatsappHref(); as href) {
+        <app-button variant="secondary" size="lg" [href]="href" target="_blank">
+          Consultar una operación
+        </app-button>
+      }
     </div>
 
     <div class="bank-agents__operations">

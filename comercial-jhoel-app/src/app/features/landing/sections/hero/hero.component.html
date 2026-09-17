@@ -20,10 +20,12 @@
             Ver catálogo completo
             <app-icon name="arrow-right" [size]="18" />
           </app-button>
-          <app-button variant="outline" size="lg" [href]="site.whatsappHref" target="_blank">
-            <app-icon name="whatsapp" [size]="18" />
-            Escríbenos por WhatsApp
-          </app-button>
+          @if (whatsappHref(); as href) {
+            <app-button variant="outline" size="lg" [href]="href" target="_blank">
+              <app-icon name="whatsapp" [size]="18" />
+              Escríbenos por WhatsApp
+            </app-button>
+          }
         </div>
 
         <div class="hero__trust">
