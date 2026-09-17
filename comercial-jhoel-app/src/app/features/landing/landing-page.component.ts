@@ -10,7 +10,6 @@ import { NewsComponent } from './sections/news/news.component';
 import { CatalogPreviewComponent } from './sections/catalog-preview/catalog-preview.component';
 import { BankAgentsComponent } from './sections/bank-agents/bank-agents.component';
 import { AboutComponent } from './sections/about/about.component';
-import { TestimonialsComponent } from './sections/testimonials/testimonials.component';
 import { ContactComponent } from './sections/contact/contact.component';
 
 @Component({
@@ -27,7 +26,6 @@ import { ContactComponent } from './sections/contact/contact.component';
     CatalogPreviewComponent,
     BankAgentsComponent,
     AboutComponent,
-    TestimonialsComponent,
     ContactComponent,
   ],
   templateUrl: './landing-page.component.html',

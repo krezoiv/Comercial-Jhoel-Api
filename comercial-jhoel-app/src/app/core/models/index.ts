@@ -2,7 +2,6 @@ export * from './nav-link.model';
 export * from './service-item.model';
 export * from './stat-item.model';
 export * from './catalog-category.model';
-export * from './testimonial.model';
 export * from './bank-operation.model';
 export * from './contact-channel.model';
 export * from './dashboard-nav-item.model';

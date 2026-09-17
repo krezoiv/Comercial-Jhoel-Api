@@ -4,7 +4,6 @@ export * from './services.data';
 export * from './stats.data';
 export * from './catalog-categories.data';
 export * from './bank-operations.data';
-export * from './testimonials.data';
 export * from './contact-channels.data';
 export * from './dashboard-nav.data';
 export * from './dashboard-summary.data';

@@ -8,6 +8,10 @@
   (pointerdown)="onPointerDown($event)"
   (pointerup)="onPointerUp($event)"
   (pointercancel)="onPointerCancel()"
+  (mouseenter)="pauseAutoplay()"
+  (mouseleave)="resumeAutoplay()"
+  (focusin)="pauseAutoplay()"
+  (focusout)="resumeAutoplay()"
 >
   <button
     type="button"
