@@ -4,6 +4,7 @@
       <thead>
         <tr>
           <th>Noticia</th>
+          <th>Tipo</th>
           <th>Fecha</th>
           <th>Imagen</th>
           <th>Estado</th>
@@ -15,6 +16,7 @@
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
             <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
@@ -50,6 +52,7 @@
       <thead>
         <tr>
           <th>Noticia</th>
+          <th>Tipo</th>
           <th>Fecha</th>
           <th>Imagen</th>
           <th>Estado</th>
@@ -61,6 +64,7 @@
         @for (article of articles; track article.id; let first = $first; let last = $last) {
           <tr [class.news-table__row--inactive]="!article.isActive">
             <td class="news-table__title">{{ article.title }}</td>
+            <td><app-badge tone="brand">{{ article.newsTypeName }}</app-badge></td>
             <td>{{ article.publishedAt | date: 'dd/MM/yyyy' }}</td>
             <td>
               @if (article.hasImage) {
@@ -115,7 +119,7 @@
         <div class="news-card__header">
           <div>
             <p class="news-card__title">{{ article.title }}</p>
-            <p class="news-card__date">{{ article.publishedAt | date: 'dd/MM/yyyy' }}</p>
+            <p class="news-card__date">{{ article.publishedAt | date: 'dd/MM/yyyy' }} · {{ article.newsTypeName }}</p>
           </div>
           <app-badge [tone]="article.isActive ? 'success' : 'danger'">{{ article.isActive ? 'Activa' : 'Inactiva' }}</app-badge>
         </div>

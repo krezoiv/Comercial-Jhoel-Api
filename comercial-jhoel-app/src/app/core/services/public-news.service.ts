@@ -29,6 +29,15 @@ export class PublicNewsService {
       .pipe(map((response) => response.data));
   }
 
+  /** Backs la URL pública real `/noticias/:slug` — la que se manda en el mensaje de WhatsApp. */
+  getArticleBySlug(slug: string): Observable<PublicNewsArticle> {
+    return this.http
+      .get<ApiSuccessResponse<PublicNewsArticle>>(`${BASE_URL}/by-slug/${slug}`, {
+        headers: { 'X-Visitor-Id': getVisitorId() },
+      })
+      .pipe(map((response) => response.data));
+  }
+
   getImageUrl(newsArticleId: string): string {
     return `${BASE_URL}/images/${newsArticleId}`;
   }

@@ -20,6 +20,18 @@
         </div>
 
         <div class="field">
+          <label for="news-type">Tipo de noticia *</label>
+          <select id="news-type" formControlName="newsTypeId">
+            <option value="" disabled>Selecciona un tipo…</option>
+            @for (type of allTypes(); track type.id) {
+              <option [value]="type.id" [disabled]="!isSelectableType(type)">
+                {{ type.name }}{{ !type.isActive ? ' (inactivo)' : '' }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
           <label for="news-description">Descripción *</label>
           <textarea id="news-description" formControlName="description" rows="6" placeholder="Contenido de la noticia…"></textarea>
         </div>

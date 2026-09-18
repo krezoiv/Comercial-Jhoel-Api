@@ -12,8 +12,9 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { NewsArticle } from '../../../../../core/models';
+import { NewsArticle, NewsType } from '../../../../../core/models';
 import { NewsService } from '../../../../../core/services/news.service';
+import { NewsTypeService } from '../../../../../core/services/news-type.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
@@ -43,16 +44,28 @@ export class NewsFormModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly newsService = inject(NewsService);
+  private readonly newsTypeService = inject(NewsTypeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  /** Todos los tipos (activos + inactivos) — el template solo permite elegir uno activo, salvo el que la noticia ya tenía asignado (se muestra deshabilitado, con etiqueta "(inactivo)", para no ocultar el valor real). */
+  readonly allTypes = signal<NewsType[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['', [Validators.required]],
     publishedAt: [todayIsoDate(), [Validators.required]],
+    newsTypeId: ['', [Validators.required]],
   });
+
+  constructor() {
+    this.newsTypeService.getTypes(true).subscribe((types) => this.allTypes.set(types));
+  }
+
+  isSelectableType(type: NewsType): boolean {
+    return type.isActive || type.id === this.article?.newsTypeId;
+  }
 
   get isEditMode(): boolean {
     return this.article !== null;
@@ -71,6 +84,7 @@ export class NewsFormModalComponent implements OnChanges {
       title: article?.title ?? '',
       description: article?.description ?? '',
       publishedAt: article?.publishedAt ?? todayIsoDate(),
+      newsTypeId: article?.newsTypeId ?? '',
     });
   }
 
@@ -92,6 +106,7 @@ export class NewsFormModalComponent implements OnChanges {
       title: raw.title.trim(),
       description: raw.description.trim(),
       publishedAt: raw.publishedAt,
+      newsTypeId: raw.newsTypeId,
     };
 
     this.isSubmitting.set(true);
