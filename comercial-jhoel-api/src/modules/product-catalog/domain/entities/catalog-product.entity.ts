@@ -8,6 +8,7 @@ export interface CatalogProductProps {
   hasImage: boolean;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
@@ -71,6 +72,10 @@ export class CatalogProduct {
 
   get sortOrder(): number {
     return this.props.sortOrder;
+  }
+
+  get likesCount(): number {
+    return this.props.likesCount;
   }
 
   get createdAt(): Date {

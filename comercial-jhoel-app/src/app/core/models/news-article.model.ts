@@ -6,6 +6,7 @@ export interface NewsArticle {
   publishedAt: string;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   hasImage: boolean;
   createdAt: string;
   updatedAt: string;
@@ -34,4 +35,5 @@ export interface PublicNewsArticle {
   description: string;
   publishedAt: string;
   hasImage: boolean;
+  likesCount: number;
 }

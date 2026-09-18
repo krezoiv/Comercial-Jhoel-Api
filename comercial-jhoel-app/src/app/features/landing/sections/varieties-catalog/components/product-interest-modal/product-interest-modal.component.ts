@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -18,6 +17,7 @@ import { PublicCatalogProduct } from '../../../../../../core/models';
 import { ContactService } from '../../../../../../core/services/contact.service';
 import { PublicProductCatalogService } from '../../../../../../core/services/public-product-catalog.service';
 import { extractErrorMessage } from '../../../../../../core/utils/extract-error-message';
+import { formatCurrency } from '../../../../../../core/utils/number-format.util';
 import { ButtonComponent, IconComponent } from '../../../../../../shared/ui';
 
 /** Mismo criterio de `digitsOnly` que `ContactService`/`PhoneInterestModalComponent` — un enlace `wa.me` necesita un string numérico limpio. */
@@ -34,7 +34,7 @@ function digitsOnly(value: string): string {
 @Component({
   selector: 'app-product-interest-modal',
   standalone: true,
-  imports: [DecimalPipe, ReactiveFormsModule, ButtonComponent, IconComponent],
+  imports: [ReactiveFormsModule, ButtonComponent, IconComponent],
   templateUrl: './product-interest-modal.component.html',
   styleUrl: './product-interest-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +51,7 @@ export class ProductInterestModalComponent implements OnChanges {
   private whatsappNumber: string | null = null;
 
   readonly isSubmitting = signal(false);
+  formatCurrency = formatCurrency;
   readonly isSubmitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly whatsappHref = signal<string | null>(null);
@@ -126,7 +127,7 @@ export class ProductInterestModalComponent implements OnChanges {
       return null;
     }
 
-    const priceText = `Q${product.price.toFixed(2)}`;
+    const priceText = formatCurrency(product.price);
     const message = `Hola, soy ${customerName}. Estoy interesado en el producto "${product.name}" (${priceText}) que vi en el catálogo de Comercial Jhoel.`;
 
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;

@@ -14,6 +14,7 @@ import { ListPublishedCatalogPhonesUseCase } from '../../application/use-cases/l
 import { GetPublishedCatalogPhoneByIdUseCase } from '../../application/use-cases/get-published-catalog-phone-by-id.use-case';
 import { GetCatalogPhoneImageUseCase } from '../../application/use-cases/get-catalog-phone-image.use-case';
 import { CreateCatalogRequestUseCase } from '../../application/use-cases/create-catalog-request.use-case';
+import { LikeCatalogPhoneUseCase } from '../../application/use-cases/like-catalog-phone.use-case';
 import { CreateCatalogRequestRequestDto } from '../dtos/create-catalog-request.request.dto';
 import { CatalogRequestResponseDto } from '../dtos/catalog-request.response.dto';
 import { PublicCatalogPhoneResponseDto } from '../dtos/public-catalog-phone.response.dto';
@@ -43,6 +44,7 @@ export class PublicCatalogController {
     private readonly getPublishedCatalogPhoneByIdUseCase: GetPublishedCatalogPhoneByIdUseCase,
     private readonly getCatalogPhoneImageUseCase: GetCatalogPhoneImageUseCase,
     private readonly createCatalogRequestUseCase: CreateCatalogRequestUseCase,
+    private readonly likeCatalogPhoneUseCase: LikeCatalogPhoneUseCase,
   ) {}
 
   @Get('phones')
@@ -102,5 +104,17 @@ export class PublicCatalogController {
       customerName: dto.customerName,
       customerPhone: dto.customerPhone,
     });
+  }
+
+  @Post('phones/:id/like')
+  @HttpCode(HttpStatus.OK)
+  like(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeCatalogPhoneUseCase.execute(id, 1);
+  }
+
+  @Post('phones/:id/unlike')
+  @HttpCode(HttpStatus.OK)
+  unlike(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeCatalogPhoneUseCase.execute(id, -1);
   }
 }

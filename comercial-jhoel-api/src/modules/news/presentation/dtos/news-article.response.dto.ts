@@ -5,6 +5,7 @@ export class NewsArticleResponseDto {
   publishedAt: string;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   hasImage: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -9,12 +9,21 @@
             <app-icon name="smartphone" [size]="48" />
           </div>
         }
+
+        <app-like-button
+          class="phone-card__like"
+          [liked]="liked()"
+          [count]="likesCount()"
+          [disabled]="likeBusy()"
+          [label]="phone.brand + ' ' + phone.model"
+          (toggled)="toggleLike()"
+        />
       </div>
 
       <div class="phone-card__body">
         <p class="phone-card__brand">{{ phone.brand }}</p>
         <h3 class="phone-card__model">{{ phone.model }}</h3>
-        <p class="phone-card__price">Q{{ phone.price | number: '1.2-2' }}</p>
+        <p class="phone-card__price">{{ formatCurrency(phone.price) }}</p>
 
         <div class="phone-card__badges">
           <app-badge tone="success">Disponible</app-badge>
@@ -41,7 +50,7 @@
           <p class="phone-card__brand">{{ phone.brand }}</p>
           <h3 class="phone-card__model">{{ phone.model }}</h3>
         </div>
-        <p class="phone-card__price">Q{{ phone.price | number: '1.2-2' }}</p>
+        <p class="phone-card__price">{{ formatCurrency(phone.price) }}</p>
       </div>
 
       <div class="phone-card__specs-scroll">

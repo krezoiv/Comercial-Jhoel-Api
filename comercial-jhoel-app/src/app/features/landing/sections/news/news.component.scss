@@ -1,22 +1,13 @@
 @use 'breakpoints' as bp;
 
-.news__grid {
+.news__carousel {
   margin-top: var(--space-8);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  overflow: hidden;
 
-  @include bp.respond(sm) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include bp.respond(md) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-5);
-  }
-
-  @include bp.respond(xl) {
-    grid-template-columns: repeat(4, 1fr);
+  @include bp.respond(lg) {
     margin-top: var(--space-10);
   }
 }

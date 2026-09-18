@@ -28,6 +28,7 @@ export interface CatalogPhone {
   isActive: boolean;
   isPublished: boolean;
   sortOrder: number;
+  likesCount: number;
   /** Calculado por el backend (`isKrediyaCreditAvailable`) — solo para referencia visual en el panel, nunca la fuente de verdad. */
   creditAvailable: boolean;
   images: CatalogPhoneImage[];
@@ -71,5 +72,6 @@ export interface PublicCatalogPhone {
   operatingSystem: string | null;
   extraSpecs: CatalogPhoneExtraSpec[];
   creditAvailable: boolean;
+  likesCount: number;
   images: CatalogPhoneImage[];
 }

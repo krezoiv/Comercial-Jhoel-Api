@@ -112,6 +112,18 @@ export class TypeOrmCatalogProductRepository implements CatalogProductRepository
     });
   }
 
+  async adjustLikes(id: string, delta: number): Promise<number> {
+    // `manager.query()` for an UPDATE ... RETURNING returns a `[rows, affectedCount]` tuple
+    // in this driver, not a bare rows array — confirmed directly, not assumed (a SELECT
+    // returns rows directly, but UPDATE/INSERT/DELETE always wrap them alongside the
+    // affected-row count, RETURNING or not).
+    const [rows]: [Array<{ likes_count: number }>, number] = await this.repository.manager.query(
+      `UPDATE catalog_products SET likes_count = GREATEST(0, likes_count + $1) WHERE id = $2 RETURNING likes_count`,
+      [delta, id],
+    );
+    return rows[0]?.likes_count ?? 0;
+  }
+
   async setImage(
     id: string,
     image: { data: Buffer; mimeType: string; sizeBytes: number },

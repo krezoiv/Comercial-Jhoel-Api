@@ -18,7 +18,7 @@
             <p class="product-summary__category">{{ product.categoryName }}</p>
             <p class="product-summary__name">{{ product.name }}</p>
           </div>
-          <p class="product-summary__price">Q{{ product.price | number: '1.2-2' }}</p>
+          <p class="product-summary__price">{{ formatCurrency(product.price) }}</p>
         </div>
 
         <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>

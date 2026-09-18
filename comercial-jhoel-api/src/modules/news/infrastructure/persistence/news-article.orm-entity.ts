@@ -30,6 +30,9 @@ export class NewsArticleOrmEntity {
   @Column({ name: 'sort_order', type: 'integer', default: 0 })
   sortOrder: number;
 
+  @Column({ name: 'likes_count', type: 'integer', default: 0 })
+  likesCount: number;
+
   @Column({ name: 'image_data', type: 'bytea', nullable: true, select: false })
   imageData: Buffer | null;
 

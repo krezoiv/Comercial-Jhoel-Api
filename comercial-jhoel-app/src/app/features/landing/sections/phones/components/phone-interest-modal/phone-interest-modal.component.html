@@ -20,7 +20,7 @@
             <p class="phone-summary__brand">{{ phone.brand }}</p>
             <p class="phone-summary__model">{{ phone.model }}</p>
           </div>
-          <p class="phone-summary__price">Q{{ phone.price | number: '1.2-2' }}</p>
+          <p class="phone-summary__price">{{ formatCurrency(phone.price) }}</p>
         </div>
 
         <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>

@@ -22,6 +22,7 @@ export class CatalogPhoneMapper {
       isActive: orm.isActive,
       isPublished: orm.isPublished,
       sortOrder: orm.sortOrder,
+      likesCount: orm.likesCount,
       images: (orm.images ?? []).map((image) =>
         CatalogPhoneImageMapper.toDomain(image),
       ),

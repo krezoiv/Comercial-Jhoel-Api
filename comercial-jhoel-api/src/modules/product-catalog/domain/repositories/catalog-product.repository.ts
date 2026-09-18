@@ -45,6 +45,8 @@ export interface CatalogProductRepository {
   update(id: string, data: UpdateCatalogProductData): Promise<CatalogProduct>;
   setActive(id: string, isActive: boolean, updatedBy: string): Promise<void>;
   reorder(items: ReorderCatalogProductItem[]): Promise<void>;
+  /** Incremento atómico (`delta` +1/-1) — nunca lee-modifica-escribe desde la aplicación. Nunca baja de 0. Devuelve el conteo resultante. */
+  adjustLikes(id: string, delta: number): Promise<number>;
   setImage(
     id: string,
     image: { data: Buffer; mimeType: string; sizeBytes: number },

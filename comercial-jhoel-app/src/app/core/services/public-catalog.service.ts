@@ -33,4 +33,16 @@ export class PublicCatalogService {
       .post<ApiSuccessResponse<CatalogRequest>>(`${BASE_URL}/requests`, payload)
       .pipe(map((response) => response.data));
   }
+
+  likePhone(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/phones/${id}/like`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
+
+  unlikePhone(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/phones/${id}/unlike`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
 }

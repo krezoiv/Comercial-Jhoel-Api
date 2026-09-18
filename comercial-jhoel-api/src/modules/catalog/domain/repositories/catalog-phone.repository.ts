@@ -80,6 +80,8 @@ export interface CatalogPhoneRepository {
     updatedBy: string,
   ): Promise<void>;
   reorder(items: ReorderCatalogPhoneItem[]): Promise<void>;
+  /** Incremento atómico (`delta` +1/-1) — nunca lee-modifica-escribe desde la aplicación, así dos likes concurrentes nunca se pisan. Nunca baja de 0. Devuelve el conteo resultante. */
+  adjustLikes(id: string, delta: number): Promise<number>;
   listImages(catalogPhoneId: string): Promise<CatalogPhoneImage[]>;
   addImage(data: AddCatalogPhoneImageData): Promise<CatalogPhoneImage>;
   removeImage(catalogPhoneId: string, imageId: string): Promise<void>;

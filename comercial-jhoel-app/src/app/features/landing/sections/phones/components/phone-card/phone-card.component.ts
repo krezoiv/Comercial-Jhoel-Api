@@ -1,9 +1,10 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, computed, inject, signal } from '@angular/core';
 
 import { CatalogRequestType, PublicCatalogPhone } from '../../../../../../core/models';
 import { PublicCatalogService } from '../../../../../../core/services/public-catalog.service';
-import { BadgeComponent, ButtonComponent, IconComponent } from '../../../../../../shared/ui';
+import { formatCurrency } from '../../../../../../core/utils/number-format.util';
+import { hasLiked, setLiked } from '../../../../../../core/utils/local-likes.util';
+import { BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent } from '../../../../../../shared/ui';
 
 interface DisplaySpec {
   label: string;
@@ -22,12 +23,12 @@ interface DisplaySpec {
 @Component({
   selector: 'app-phone-card',
   standalone: true,
-  imports: [DecimalPipe, BadgeComponent, ButtonComponent, IconComponent],
+  imports: [BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent],
   templateUrl: './phone-card.component.html',
   styleUrl: './phone-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PhoneCardComponent {
+export class PhoneCardComponent implements OnInit {
   @Input({ required: true }) phone!: PublicCatalogPhone;
 
   @Output() interest = new EventEmitter<CatalogRequestType>();
@@ -35,6 +36,16 @@ export class PhoneCardComponent {
   private readonly publicCatalogService = inject(PublicCatalogService);
 
   readonly flipped = signal(false);
+  readonly liked = signal(false);
+  readonly likesCount = signal(0);
+  readonly likeBusy = signal(false);
+
+  formatCurrency = formatCurrency;
+
+  ngOnInit(): void {
+    this.liked.set(hasLiked('phone', this.phone.id));
+    this.likesCount.set(this.phone.likesCount);
+  }
 
   readonly primaryImageUrl = computed(() => {
     const images = this.phone.images;
@@ -66,5 +77,34 @@ export class PhoneCardComponent {
 
   requestInterest(type: CatalogRequestType): void {
     this.interest.emit(type);
+  }
+
+  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla — un "like" nunca debe sentirse lento. */
+  toggleLike(): void {
+    if (this.likeBusy()) {
+      return;
+    }
+    const next = !this.liked();
+    this.liked.set(next);
+    this.likesCount.update((count) => Math.max(0, count + (next ? 1 : -1)));
+    setLiked('phone', this.phone.id, next);
+    this.likeBusy.set(true);
+
+    const request$ = next
+      ? this.publicCatalogService.likePhone(this.phone.id)
+      : this.publicCatalogService.unlikePhone(this.phone.id);
+
+    request$.subscribe({
+      next: (count) => {
+        this.likesCount.set(count);
+        this.likeBusy.set(false);
+      },
+      error: () => {
+        this.liked.set(!next);
+        this.likesCount.update((count) => Math.max(0, count + (next ? -1 : 1)));
+        setLiked('phone', this.phone.id, !next);
+        this.likeBusy.set(false);
+      },
+    });
   }
 }

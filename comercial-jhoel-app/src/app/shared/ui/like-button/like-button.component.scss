@@ -1,0 +1,79 @@
+@use 'mixins' as *;
+
+:host {
+  display: inline-block;
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light-muted);
+  color: var(--color-text-on-light-subtle);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  transition:
+    background var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+  @include focus-ring;
+
+  app-icon {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 68, 0.1);
+    color: #dc2644;
+  }
+
+  &:active:not(:disabled) app-icon {
+    transform: scale(0.85);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.like-button--liked {
+  background: rgba(220, 38, 68, 0.12);
+  color: #dc2644;
+
+  app-icon {
+    animation: like-pop var(--duration-base) var(--ease-out);
+  }
+
+  // El heart es un ícono de solo trazo (`fill="none"` a nivel global en
+  // IconComponent) — "relleno" se simula superponiendo una segunda copia
+  // rellena con `fill: currentColor` en vez de trazo, más barato que darle
+  // un segundo path relleno al registro de íconos solo para este caso.
+  :host ::ng-deep app-icon svg {
+    fill: currentColor;
+  }
+}
+
+.like-button__count {
+  min-width: 0.75rem;
+  text-align: left;
+}
+
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .like-button--liked app-icon {
+    animation: none;
+  }
+}

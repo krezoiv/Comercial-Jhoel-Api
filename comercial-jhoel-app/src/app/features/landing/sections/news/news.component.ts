@@ -5,19 +5,20 @@ import { PublicNewsArticle } from '../../../../core/models';
 import { PublicNewsService } from '../../../../core/services/public-news.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
-import { NewsCardComponent } from './components/news-card/news-card.component';
+import { NewsCarouselComponent } from './components/news-carousel/news-carousel.component';
 import { NewsDetailModalComponent } from './components/news-detail-modal/news-detail-modal.component';
 
 /**
  * Sección "NOTICIAS" de la landing pública — contenido editorial, NO un
- * producto (sin precio, sin WhatsApp, sin Krediya, sin flip). Cada card
- * abre un modal de detalle al hacer click. Si no hay noticias activas, la
- * sección no se renderiza.
+ * producto (sin precio, sin WhatsApp, sin Krediya). Carousel 3D centrado
+ * (misma mecánica que Teléfonos: autoplay cada 5s, swipe, teclado); cada
+ * card abre un modal de detalle al hacer click. Si no hay noticias
+ * activas, la sección no se renderiza.
  */
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, NewsCardComponent, NewsDetailModalComponent],
+  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, NewsCarouselComponent, NewsDetailModalComponent],
   templateUrl: './news.component.html',
   styleUrl: './news.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

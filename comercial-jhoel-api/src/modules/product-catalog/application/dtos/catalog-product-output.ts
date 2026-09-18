@@ -9,6 +9,7 @@ export interface CatalogProductOutput {
   hasImage: boolean;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   productName: string;
   productPrice: number;
   productIsActive: boolean;
@@ -38,6 +39,7 @@ export interface PublicCatalogProductOutput {
   categoryName: string;
   description: string | null;
   hasImage: boolean;
+  likesCount: number;
   unitOfMeasureAbbreviation: string | null;
 }
 
@@ -50,6 +52,7 @@ export function toCatalogProductOutput(product: CatalogProduct): CatalogProductO
     hasImage: product.hasImage,
     isActive: product.isActive,
     sortOrder: product.sortOrder,
+    likesCount: product.likesCount,
     productName: product.productName,
     productPrice: product.productPrice,
     productIsActive: product.productIsActive,
@@ -76,6 +79,7 @@ export function toPublicCatalogProductOutput(
     categoryName: product.categoryName,
     description: product.catalogDescription,
     hasImage: product.hasImage,
+    likesCount: product.likesCount,
     unitOfMeasureAbbreviation: product.unitOfMeasureAbbreviation,
   };
 }

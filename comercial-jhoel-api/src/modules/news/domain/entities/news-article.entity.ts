@@ -5,6 +5,7 @@ export interface NewsArticleProps {
   publishedAt: string;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   hasImage: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +50,10 @@ export class NewsArticle {
 
   get sortOrder(): number {
     return this.props.sortOrder;
+  }
+
+  get likesCount(): number {
+    return this.props.likesCount;
   }
 
   get hasImage(): boolean {

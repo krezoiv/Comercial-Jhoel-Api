@@ -11,6 +11,7 @@ export class CatalogProductMapper {
       hasImage: orm.imageMimeType !== null,
       isActive: orm.isActive,
       sortOrder: orm.sortOrder,
+      likesCount: orm.likesCount,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       createdBy: orm.createdBy,

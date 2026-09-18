@@ -1,0 +1,150 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  width: 100%;
+  // The page must never scroll horizontally because of this component —
+  // every transform below stays confined inside `.carousel__viewport`'s
+  // own `overflow: hidden`.
+  max-width: 100%;
+}
+
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  touch-action: pan-y;
+  @include focus-ring;
+}
+
+.carousel__viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  perspective: 1800px;
+  padding-block: var(--space-8);
+}
+
+// A soft elliptical "stage" plate under the cards — the same trick a
+// product photography table/spotlight gives: grounds the floating cards
+// with a sense of depth instead of them just sitting on bare white.
+.carousel__stage {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-4);
+  width: min(90%, 34rem);
+  height: 3rem;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(10, 14, 23, 0.1) 0%, transparent 72%);
+  pointer-events: none;
+}
+
+.carousel__track {
+  position: relative;
+  height: 28rem;
+
+  @include bp.respond(sm) {
+    height: 31rem;
+  }
+
+  @include bp.respond(lg) {
+    height: 34rem;
+  }
+}
+
+.carousel__slide {
+  position: absolute;
+  inset: 0;
+  margin-inline: auto;
+  width: 84%;
+  max-width: 20rem;
+  transition:
+    transform var(--duration-slow) var(--ease-out),
+    opacity var(--duration-slow) var(--ease-out);
+  pointer-events: none;
+
+  @include bp.respond(sm) {
+    width: 62%;
+    max-width: 21rem;
+  }
+
+  @include bp.respond(lg) {
+    max-width: 23rem;
+  }
+}
+
+.carousel__slide--active {
+  pointer-events: auto;
+}
+
+.carousel__nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-light);
+  color: var(--color-primary-600);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-light);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+  @include focus-ring;
+
+  @include bp.respond(sm) {
+    display: flex;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-white);
+    border-color: var(--color-primary-300);
+    transform: scale(1.06);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
+  @include focus-ring;
+
+  &:hover {
+    background: var(--color-primary-300);
+  }
+}
+
+.dot--active {
+  width: 1.5rem;
+  background: var(--gradient-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel__slide {
+    transition: none;
+  }
+}

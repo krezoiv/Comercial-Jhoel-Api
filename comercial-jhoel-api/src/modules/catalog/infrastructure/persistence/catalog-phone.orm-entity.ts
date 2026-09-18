@@ -73,6 +73,9 @@ export class CatalogPhoneOrmEntity {
   @Column({ name: 'sort_order', type: 'integer', default: 0 })
   sortOrder: number;
 
+  @Column({ name: 'likes_count', type: 'integer', default: 0 })
+  likesCount: number;
+
   @OneToMany(() => CatalogPhoneImageOrmEntity, (image) => image.catalogPhone)
   images: CatalogPhoneImageOrmEntity[];
 

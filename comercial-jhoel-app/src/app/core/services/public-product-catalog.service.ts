@@ -39,4 +39,16 @@ export class PublicProductCatalogService {
       .post<ApiSuccessResponse<CatalogProductRequest>>(`${BASE_URL}/product-requests`, payload)
       .pipe(map((response) => response.data));
   }
+
+  likeProduct(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/products/${id}/like`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
+
+  unlikeProduct(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/products/${id}/unlike`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
 }

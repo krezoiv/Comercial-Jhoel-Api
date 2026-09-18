@@ -10,6 +10,7 @@ export class NewsArticleMapper {
       publishedAt: orm.publishedAt,
       isActive: orm.isActive,
       sortOrder: orm.sortOrder,
+      likesCount: orm.likesCount,
       hasImage: orm.imageMimeType !== null,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

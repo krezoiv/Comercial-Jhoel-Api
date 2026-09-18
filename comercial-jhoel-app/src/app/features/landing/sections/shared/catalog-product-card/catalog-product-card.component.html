@@ -9,12 +9,21 @@
             <app-icon name="gift" [size]="48" />
           </div>
         }
+
+        <app-like-button
+          class="product-card__like"
+          [liked]="liked()"
+          [count]="likesCount()"
+          [disabled]="likeBusy()"
+          [label]="product.name"
+          (toggled)="toggleLike()"
+        />
       </div>
 
       <div class="product-card__body">
         <p class="product-card__category">{{ product.categoryName }}</p>
         <h3 class="product-card__name">{{ product.name }}</h3>
-        <p class="product-card__price">Q{{ product.price | number: '1.2-2' }}</p>
+        <p class="product-card__price">{{ formatCurrency(product.price) }}</p>
       </div>
 
       <button
@@ -34,7 +43,7 @@
           <p class="product-card__category">{{ product.categoryName }}</p>
           <h3 class="product-card__name">{{ product.name }}</h3>
         </div>
-        <p class="product-card__price">Q{{ product.price | number: '1.2-2' }}</p>
+        <p class="product-card__price">{{ formatCurrency(product.price) }}</p>
       </div>
 
       <div class="product-card__description-scroll">

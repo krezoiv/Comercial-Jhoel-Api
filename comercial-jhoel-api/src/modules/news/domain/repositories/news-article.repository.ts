@@ -39,6 +39,8 @@ export interface NewsArticleRepository {
   update(id: string, data: UpdateNewsArticleData): Promise<NewsArticle>;
   setActive(id: string, isActive: boolean, updatedBy: string): Promise<void>;
   reorder(items: ReorderNewsArticleItem[]): Promise<void>;
+  /** Incremento atómico (`delta` +1/-1) — nunca lee-modifica-escribe desde la aplicación. Nunca baja de 0. Devuelve el conteo resultante. */
+  adjustLikes(id: string, delta: number): Promise<number>;
   setImage(id: string, image: { data: Buffer; mimeType: string; sizeBytes: number }, updatedBy: string): Promise<void>;
   removeImage(id: string, updatedBy: string): Promise<void>;
   getImage(id: string): Promise<NewsArticleImageBytes | null>;

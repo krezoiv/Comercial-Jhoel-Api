@@ -9,6 +9,7 @@ export interface CatalogProduct {
   hasImage: boolean;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   productName: string;
   productPrice: number;
   productIsActive: boolean;
@@ -42,6 +43,7 @@ export interface PublicCatalogProduct {
   categoryName: string;
   description: string | null;
   hasImage: boolean;
+  likesCount: number;
   unitOfMeasureAbbreviation: string | null;
 }
 

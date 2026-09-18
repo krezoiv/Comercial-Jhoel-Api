@@ -5,4 +5,5 @@ export class PublicNewsArticleResponseDto {
   description: string;
   publishedAt: string;
   hasImage: boolean;
+  likesCount: number;
 }

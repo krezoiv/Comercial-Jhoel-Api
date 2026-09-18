@@ -15,6 +15,7 @@ import { ListPublishedCatalogProductsUseCase } from '../../application/use-cases
 import { GetPublishedCatalogProductByIdUseCase } from '../../application/use-cases/get-published-catalog-product-by-id.use-case';
 import { GetCatalogProductImageUseCase } from '../../application/use-cases/get-catalog-product-image.use-case';
 import { CreateCatalogProductRequestUseCase } from '../../application/use-cases/create-catalog-product-request.use-case';
+import { LikeCatalogProductUseCase } from '../../application/use-cases/like-catalog-product.use-case';
 import { CreateCatalogProductRequestRequestDto } from '../dtos/create-catalog-product-request.request.dto';
 import { PublicCatalogProductResponseDto } from '../dtos/public-catalog-product.response.dto';
 import { CatalogProductRequestResponseDto } from '../dtos/catalog-product-request.response.dto';
@@ -35,6 +36,7 @@ export class PublicProductCatalogController {
     private readonly getPublishedCatalogProductByIdUseCase: GetPublishedCatalogProductByIdUseCase,
     private readonly getCatalogProductImageUseCase: GetCatalogProductImageUseCase,
     private readonly createCatalogProductRequestUseCase: CreateCatalogProductRequestUseCase,
+    private readonly likeCatalogProductUseCase: LikeCatalogProductUseCase,
   ) {}
 
   @Get('products')
@@ -76,5 +78,17 @@ export class PublicProductCatalogController {
       customerName: dto.customerName,
       customerPhone: dto.customerPhone,
     });
+  }
+
+  @Post('products/:id/like')
+  @HttpCode(HttpStatus.OK)
+  like(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeCatalogProductUseCase.execute(id, 1);
+  }
+
+  @Post('products/:id/unlike')
+  @HttpCode(HttpStatus.OK)
+  unlike(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeCatalogProductUseCase.execute(id, -1);
   }
 }

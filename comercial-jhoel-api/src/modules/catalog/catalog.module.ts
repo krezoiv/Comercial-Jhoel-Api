@@ -27,6 +27,7 @@ import { ListPublishedCatalogPhonesUseCase } from './application/use-cases/list-
 import { GetPublishedCatalogPhoneByIdUseCase } from './application/use-cases/get-published-catalog-phone-by-id.use-case';
 import { GetCatalogPhoneImageUseCase } from './application/use-cases/get-catalog-phone-image.use-case';
 import { CreateCatalogRequestUseCase } from './application/use-cases/create-catalog-request.use-case';
+import { LikeCatalogPhoneUseCase } from './application/use-cases/like-catalog-phone.use-case';
 import { CatalogPhonesController } from './presentation/controllers/catalog-phones.controller';
 import { CatalogRequestsController } from './presentation/controllers/catalog-requests.controller';
 import { PublicCatalogController } from './presentation/controllers/public-catalog.controller';
@@ -74,6 +75,7 @@ import { PublicCatalogController } from './presentation/controllers/public-catal
     GetPublishedCatalogPhoneByIdUseCase,
     GetCatalogPhoneImageUseCase,
     CreateCatalogRequestUseCase,
+    LikeCatalogPhoneUseCase,
   ],
   // Exported so AlertsModule can count NUEVA requests for the "Nuevas solicitudes del catálogo" bell alert, without duplicating this repository.
   exports: [CATALOG_REQUEST_REPOSITORY],

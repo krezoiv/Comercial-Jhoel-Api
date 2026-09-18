@@ -1,4 +1,11 @@
-<button type="button" class="news-card" (click)="open()">
+<div
+  class="news-card"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Leer ' + article.title"
+  (click)="open()"
+  (keydown)="onKeydownOpen($event)"
+>
   <div class="news-card__image-wrap">
     @if (imageUrl(); as src) {
       <img class="news-card__image" [src]="src" [alt]="article.title" loading="lazy" />
@@ -7,6 +14,15 @@
         <app-icon name="newspaper" [size]="40" />
       </div>
     }
+
+    <app-like-button
+      class="news-card__like"
+      [liked]="liked()"
+      [count]="likesCount()"
+      [disabled]="likeBusy()"
+      [label]="article.title"
+      (toggled)="toggleLike()"
+    />
   </div>
 
   <div class="news-card__body">
@@ -18,4 +34,4 @@
       <app-icon name="chevron-right" [size]="14" />
     </span>
   </div>
-</button>
+</div>

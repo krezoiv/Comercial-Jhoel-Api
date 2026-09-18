@@ -24,6 +24,7 @@ export class CatalogPhoneResponseDto {
   isActive: boolean;
   isPublished: boolean;
   sortOrder: number;
+  likesCount: number;
   creditAvailable: boolean;
   images: CatalogPhoneImageResponseDto[];
   createdAt: Date;

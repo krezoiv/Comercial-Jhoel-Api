@@ -7,6 +7,7 @@ export interface NewsArticleOutput {
   publishedAt: string;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   hasImage: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -23,6 +24,7 @@ export interface PublicNewsArticleOutput {
   description: string;
   publishedAt: string;
   hasImage: boolean;
+  likesCount: number;
 }
 
 export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
@@ -33,6 +35,7 @@ export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
     publishedAt: article.publishedAt,
     isActive: article.isActive,
     sortOrder: article.sortOrder,
+    likesCount: article.likesCount,
     hasImage: article.hasImage,
     createdAt: article.createdAt,
     updatedAt: article.updatedAt,
@@ -50,5 +53,6 @@ export function toPublicNewsArticleOutput(article: NewsArticle): PublicNewsArtic
     description: article.description,
     publishedAt: article.publishedAt,
     hasImage: article.hasImage,
+    likesCount: article.likesCount,
   };
 }

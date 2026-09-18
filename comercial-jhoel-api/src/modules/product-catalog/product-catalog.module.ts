@@ -19,6 +19,7 @@ import { ListPublishedCatalogProductsUseCase } from './application/use-cases/lis
 import { GetPublishedCatalogProductByIdUseCase } from './application/use-cases/get-published-catalog-product-by-id.use-case';
 import { GetCatalogProductImageUseCase } from './application/use-cases/get-catalog-product-image.use-case';
 import { CreateCatalogProductRequestUseCase } from './application/use-cases/create-catalog-product-request.use-case';
+import { LikeCatalogProductUseCase } from './application/use-cases/like-catalog-product.use-case';
 import { ListCatalogProductRequestsUseCase } from './application/use-cases/list-catalog-product-requests.use-case';
 import { GetCatalogProductRequestByIdUseCase } from './application/use-cases/get-catalog-product-request-by-id.use-case';
 import { UpdateCatalogProductRequestStatusUseCase } from './application/use-cases/update-catalog-product-request-status.use-case';
@@ -59,6 +60,7 @@ import { PublicProductCatalogController } from './presentation/controllers/publi
     GetPublishedCatalogProductByIdUseCase,
     GetCatalogProductImageUseCase,
     CreateCatalogProductRequestUseCase,
+    LikeCatalogProductUseCase,
     ListCatalogProductRequestsUseCase,
     GetCatalogProductRequestByIdUseCase,
     UpdateCatalogProductRequestStatusUseCase,

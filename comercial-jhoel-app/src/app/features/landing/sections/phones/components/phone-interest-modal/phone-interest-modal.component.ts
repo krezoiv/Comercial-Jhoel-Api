@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -18,6 +17,7 @@ import { CatalogRequestType, PublicCatalogPhone } from '../../../../../../core/m
 import { ContactService } from '../../../../../../core/services/contact.service';
 import { PublicCatalogService } from '../../../../../../core/services/public-catalog.service';
 import { extractErrorMessage } from '../../../../../../core/utils/extract-error-message';
+import { formatCurrency } from '../../../../../../core/utils/number-format.util';
 import { ButtonComponent, IconComponent } from '../../../../../../shared/ui';
 
 /** Mismo criterio de `digitsOnly` que `ContactService` — un enlace `wa.me` necesita un string numérico limpio. */
@@ -37,7 +37,7 @@ function digitsOnly(value: string): string {
 @Component({
   selector: 'app-phone-interest-modal',
   standalone: true,
-  imports: [DecimalPipe, ReactiveFormsModule, ButtonComponent, IconComponent],
+  imports: [ReactiveFormsModule, ButtonComponent, IconComponent],
   templateUrl: './phone-interest-modal.component.html',
   styleUrl: './phone-interest-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +55,7 @@ export class PhoneInterestModalComponent implements OnChanges {
   private whatsappNumber: string | null = null;
 
   readonly isSubmitting = signal(false);
+  formatCurrency = formatCurrency;
   readonly isSubmitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly whatsappHref = signal<string | null>(null);
@@ -139,7 +140,7 @@ export class PhoneInterestModalComponent implements OnChanges {
       return null;
     }
 
-    const priceText = `Q${phone.price.toFixed(2)}`;
+    const priceText = formatCurrency(phone.price);
     const message =
       requestType === 'INTERES_CREDITO'
         ? `Hola, soy ${customerName}. Vi el ${phone.brand} ${phone.model} (${priceText}) en el catálogo de Comercial Jhoel y me interesa adquirirlo mediante crédito con Krediya. ¿Me pueden brindar más información?`

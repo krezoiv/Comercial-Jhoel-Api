@@ -28,6 +28,7 @@ export interface CatalogPhoneOutput {
   isActive: boolean;
   isPublished: boolean;
   sortOrder: number;
+  likesCount: number;
   /** Computed via `isKrediyaCreditAvailable` — shown in the admin table for reference, but the frontend must never treat this as authoritative for anything other than display (the public endpoint recomputes it independently, and request creation always recomputes it server-side again). */
   creditAvailable: boolean;
   images: CatalogPhoneImageOutput[];
@@ -61,6 +62,7 @@ export interface PublicCatalogPhoneOutput {
   operatingSystem: string | null;
   extraSpecs: CatalogPhoneExtraSpec[];
   creditAvailable: boolean;
+  likesCount: number;
   images: CatalogPhoneImageOutput[];
 }
 
@@ -95,6 +97,7 @@ export function toCatalogPhoneOutput(
     isActive: phone.isActive,
     isPublished: phone.isPublished,
     sortOrder: phone.sortOrder,
+    likesCount: phone.likesCount,
     creditAvailable: isKrediyaCreditAvailable(phone.price, krediyaMinAmount),
     images: toImageOutputs(phone),
     createdAt: phone.createdAt,
@@ -125,6 +128,7 @@ export function toPublicCatalogPhoneOutput(
     operatingSystem: phone.operatingSystem,
     extraSpecs: phone.extraSpecs,
     creditAvailable: isKrediyaCreditAvailable(phone.price, krediyaMinAmount),
+    likesCount: phone.likesCount,
     images: toImageOutputs(phone),
   };
 }

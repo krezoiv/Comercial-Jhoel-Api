@@ -1,0 +1,12 @@
+<button
+  type="button"
+  class="like-button"
+  [class.like-button--liked]="liked"
+  [disabled]="disabled"
+  [attr.aria-pressed]="liked"
+  [attr.aria-label]="(liked ? 'Quitar like a ' : 'Dar like a ') + label"
+  (click)="onClick($event)"
+>
+  <app-icon name="heart" [size]="16" />
+  <span class="like-button__count">{{ count }}</span>
+</button>

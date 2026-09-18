@@ -58,6 +58,9 @@ export class CatalogProductOrmEntity {
   @Column({ name: 'sort_order', type: 'integer', default: 0 })
   sortOrder: number;
 
+  @Column({ name: 'likes_count', type: 'integer', default: 0 })
+  likesCount: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

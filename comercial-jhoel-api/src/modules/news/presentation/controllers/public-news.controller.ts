@@ -1,8 +1,9 @@
-import { Controller, Get, Param, ParseUUIDPipe, Res } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ListPublishedNewsArticlesUseCase } from '../../application/use-cases/list-published-news-articles.use-case';
 import { GetPublishedNewsArticleByIdUseCase } from '../../application/use-cases/get-published-news-article-by-id.use-case';
 import { GetNewsArticleImageUseCase } from '../../application/use-cases/get-news-article-image.use-case';
+import { LikeNewsArticleUseCase } from '../../application/use-cases/like-news-article.use-case';
 import { PublicNewsArticleResponseDto } from '../dtos/public-news-article.response.dto';
 
 /** Público, sin guard — backs "Noticias" en la landing. Mismo header `Cross-Origin-Resource-Policy` que Teléfonos/Librería/Variedades para que `<img>` cargue entre orígenes. */
@@ -12,6 +13,7 @@ export class PublicNewsController {
     private readonly listPublishedNewsArticlesUseCase: ListPublishedNewsArticlesUseCase,
     private readonly getPublishedNewsArticleByIdUseCase: GetPublishedNewsArticleByIdUseCase,
     private readonly getNewsArticleImageUseCase: GetNewsArticleImageUseCase,
+    private readonly likeNewsArticleUseCase: LikeNewsArticleUseCase,
   ) {}
 
   @Get()
@@ -37,5 +39,17 @@ export class PublicNewsController {
       'Cross-Origin-Resource-Policy': 'cross-origin',
     });
     res.send(image.data);
+  }
+
+  @Post(':id/like')
+  @HttpCode(HttpStatus.OK)
+  like(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeNewsArticleUseCase.execute(id, 1);
+  }
+
+  @Post(':id/unlike')
+  @HttpCode(HttpStatus.OK)
+  unlike(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
+    return this.likeNewsArticleUseCase.execute(id, -1);
   }
 }

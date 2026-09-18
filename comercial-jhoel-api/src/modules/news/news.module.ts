@@ -14,6 +14,7 @@ import { RemoveNewsArticleImageUseCase } from './application/use-cases/remove-ne
 import { ListPublishedNewsArticlesUseCase } from './application/use-cases/list-published-news-articles.use-case';
 import { GetPublishedNewsArticleByIdUseCase } from './application/use-cases/get-published-news-article-by-id.use-case';
 import { GetNewsArticleImageUseCase } from './application/use-cases/get-news-article-image.use-case';
+import { LikeNewsArticleUseCase } from './application/use-cases/like-news-article.use-case';
 import { NewsController } from './presentation/controllers/news.controller';
 import { PublicNewsController } from './presentation/controllers/public-news.controller';
 
@@ -38,6 +39,7 @@ import { PublicNewsController } from './presentation/controllers/public-news.con
     ListPublishedNewsArticlesUseCase,
     GetPublishedNewsArticleByIdUseCase,
     GetNewsArticleImageUseCase,
+    LikeNewsArticleUseCase,
   ],
 })
 export class NewsModule {}

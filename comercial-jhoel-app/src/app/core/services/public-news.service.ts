@@ -25,4 +25,16 @@ export class PublicNewsService {
   getImageUrl(newsArticleId: string): string {
     return `${BASE_URL}/images/${newsArticleId}`;
   }
+
+  likeArticle(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/${id}/like`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
+
+  unlikeArticle(id: string): Observable<number> {
+    return this.http
+      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/${id}/unlike`, {})
+      .pipe(map((response) => response.data.likesCount));
+  }
 }

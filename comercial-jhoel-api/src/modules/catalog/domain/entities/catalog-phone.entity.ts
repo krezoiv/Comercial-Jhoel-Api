@@ -23,6 +23,7 @@ export interface CatalogPhoneProps {
   isActive: boolean;
   isPublished: boolean;
   sortOrder: number;
+  likesCount: number;
   images: CatalogPhoneImage[];
   createdAt: Date;
   updatedAt: Date;
@@ -110,6 +111,10 @@ export class CatalogPhone {
 
   get sortOrder(): number {
     return this.props.sortOrder;
+  }
+
+  get likesCount(): number {
+    return this.props.likesCount;
   }
 
   get images(): CatalogPhoneImage[] {

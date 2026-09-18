@@ -8,6 +8,7 @@ export class CatalogProductResponseDto {
   hasImage: boolean;
   isActive: boolean;
   sortOrder: number;
+  likesCount: number;
   productName: string;
   productPrice: number;
   productIsActive: boolean;
