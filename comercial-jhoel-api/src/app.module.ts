@@ -44,6 +44,7 @@ import { ProductCatalogModule } from './modules/product-catalog/product-catalog.
 import { NewsModule } from './modules/news/news.module';
 import { NewsTypesModule } from './modules/news-types/news-types.module';
 import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subscriptions.module';
+import { CatalogBanksModule } from './modules/catalog-banks/catalog-banks.module';
 
 @Module({
   imports: [
@@ -107,6 +108,7 @@ import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subsc
     NewsModule,
     NewsTypesModule,
     NewsSubscriptionsModule,
+    CatalogBanksModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

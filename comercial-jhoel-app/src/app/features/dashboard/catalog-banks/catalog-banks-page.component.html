@@ -1,0 +1,60 @@
+<div class="banks">
+  <app-page-header
+    icon="bank"
+    title="Catálogo de Bancos"
+    subtitle="Administra el catálogo público de bancos: imagen, nombre, descripción, información adicional, orden y estado."
+  >
+    <app-button variant="primary" (click)="openCreateForm()">
+      <app-icon name="plus" [size]="16" />
+      Agregar banco
+    </app-button>
+  </app-page-header>
+
+  <div class="toolbar">
+    <div class="toolbar__row">
+      <label class="search" for="bank-search">
+        <app-icon name="search" [size]="18" />
+        <input
+          id="bank-search"
+          type="text"
+          placeholder="Buscar por nombre…"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
+      </label>
+    </div>
+
+    <div class="toolbar__filters" role="group" aria-label="Filtrar por estado">
+      @for (option of statusOptions; track option.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.filter-chip--active]="statusFilter() === option.value"
+          (click)="statusFilter.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-catalog-bank-table
+    [banks]="filteredBanks()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (edit)="openEditForm($event)"
+    (manageImage)="openImage($event)"
+    (preview)="openPreview($event)"
+    (toggleActive)="toggleActive($event)"
+    (moveUp)="moveUp($event)"
+    (moveDown)="moveDown($event)"
+    (clearFilters)="clearFilters()"
+    (addBank)="openCreateForm()"
+  />
+</div>
+
+<app-bank-form-modal [open]="isFormOpen()" [bank]="editingBank()" (closed)="closeForm()" (saved)="onBankSaved($event)" />
+
+<app-bank-image-modal [bank]="imageBank()" (closed)="closeImage()" (changed)="onImageChanged($event)" />
+
+<app-bank-preview-modal [bank]="previewBank()" (closed)="closePreview()" />

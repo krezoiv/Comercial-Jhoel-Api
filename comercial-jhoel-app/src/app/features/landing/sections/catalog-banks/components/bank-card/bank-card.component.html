@@ -1,0 +1,61 @@
+<div class="bank-card" [class.bank-card--flipped]="flipped()">
+  <div class="bank-card__inner">
+    <div class="bank-card__face bank-card__face--front" (click)="toggleFlip()">
+      <div class="bank-card__image-wrap">
+        @if (imageUrl(); as src) {
+          <img class="bank-card__image" [src]="src" [alt]="bank.name" loading="lazy" (click)="onImageClick($event)" />
+          <button
+            type="button"
+            class="bank-card__zoom"
+            (click)="onImageClick($event)"
+            [attr.aria-label]="'Ampliar imagen de ' + bank.name"
+          >
+            <app-icon name="search" [size]="16" />
+          </button>
+        } @else {
+          <div class="bank-card__image-placeholder">
+            <app-icon name="bank" [size]="48" />
+          </div>
+        }
+      </div>
+
+      <div class="bank-card__body">
+        <h3 class="bank-card__name">{{ bank.name }}</h3>
+      </div>
+
+      <button
+        type="button"
+        class="bank-card__flip-btn"
+        (click)="toggleFlip(); $event.stopPropagation()"
+        [attr.aria-label]="'Ver información de ' + bank.name"
+      >
+        Ver información
+        <app-icon name="chevron-right" [size]="14" />
+      </button>
+    </div>
+
+    <div class="bank-card__face bank-card__face--back">
+      <div class="bank-card__back-header">
+        <h3 class="bank-card__name">{{ bank.name }}</h3>
+      </div>
+
+      <div class="bank-card__content-scroll">
+        @if (bank.description) {
+          <p class="bank-card__description">{{ bank.description }}</p>
+        }
+        @if (bank.additionalInfo) {
+          <p class="bank-card__additional-info-label">Información adicional</p>
+          <p class="bank-card__additional-info">{{ bank.additionalInfo }}</p>
+        }
+        @if (!bank.description && !bank.additionalInfo) {
+          <p class="bank-card__description bank-card__description--empty">Sin información adicional.</p>
+        }
+      </div>
+
+      <button type="button" class="bank-card__back-btn" (click)="toggleFlip()">
+        <app-icon name="chevron-left" [size]="14" />
+        Volver
+      </button>
+    </div>
+  </div>
+</div>

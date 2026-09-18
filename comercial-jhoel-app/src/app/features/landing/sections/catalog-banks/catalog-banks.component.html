@@ -1,0 +1,23 @@
+@if (banks().length > 0) {
+  <app-section sectionId="bancos" tone="light" spacing="lg">
+    <div class="catalog-banks__glow" aria-hidden="true"></div>
+
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Bancos"
+        title="Bancos con los que trabajamos"
+        subtitle="Conoce las entidades bancarias con las que puedes operar a través de Comercial Jhoel."
+      />
+    </div>
+
+    <div class="catalog-banks__grid" appRevealOnScroll [revealDelay]="80">
+      @for (bank of banks(); track bank.id) {
+        <div class="catalog-banks__item">
+          <app-bank-card [bank]="bank" (imageZoom)="onImageZoom($event)" />
+        </div>
+      }
+    </div>
+  </app-section>
+}
+
+<app-image-lightbox [imageUrl]="zoomedImageUrl()" [alt]="zoomedImageAlt()" (closed)="closeImageLightbox()" />

@@ -46,6 +46,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
       {
+        label: 'Catálogo de Bancos',
+        icon: 'bank',
+        path: 'catalogo-bancos',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
         label: 'Noticias',
         icon: 'newspaper',
         path: 'noticias',

@@ -1,0 +1,45 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">{{ isEditMode ? 'Editar banco' : 'Agregar banco' }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="bank-name">Nombre *</label>
+          <input id="bank-name" type="text" formControlName="name" placeholder="Ej. Banco Industrial" maxlength="150" />
+        </div>
+
+        <div class="field">
+          <label for="bank-description">Descripción</label>
+          <textarea id="bank-description" formControlName="description" rows="4" placeholder="Descripción del banco…"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="bank-additional-info">Información adicional</label>
+          <textarea
+            id="bank-additional-info"
+            formControlName="additionalInfo"
+            rows="4"
+            placeholder="Servicios disponibles, horarios, contacto…"
+          ></textarea>
+        </div>
+
+        @if (errorMessage()) {
+          <p class="modal__error">{{ errorMessage() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" type="button" [disabled]="isSubmitting()" (click)="close()">Cancelar</app-button>
+          <app-button variant="primary" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+          </app-button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

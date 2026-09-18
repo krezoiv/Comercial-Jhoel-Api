@@ -223,6 +223,15 @@ export const routes: Routes = [
         title: 'Solicitudes de Variedades — Sistema',
       },
       {
+        path: 'catalogo-bancos',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/catalog-banks/catalog-banks-page.component').then(
+            (m) => m.CatalogBanksPageComponent,
+          ),
+        title: 'Catálogo de Bancos — Sistema',
+      },
+      {
         path: 'noticias',
         canActivate: [adminGuard],
         loadComponent: () =>
