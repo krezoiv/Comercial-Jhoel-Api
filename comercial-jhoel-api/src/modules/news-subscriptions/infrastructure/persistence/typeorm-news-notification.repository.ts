@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import {
   CreateNewsNotificationsForArticleData,
   NewsNotificationRepository,
+  PendingNewsNotification,
 } from '../../domain/repositories/news-notification.repository';
 import { NewsNotificationOrmEntity } from './news-notification.orm-entity';
 
@@ -45,5 +46,35 @@ export class TypeOrmNewsNotificationRepository implements NewsNotificationReposi
     // `manager.query()` para un INSERT devuelve `[rows, affectedCount]` en este driver — mismo patrón ya documentado en `adjustLikes`.
     const affected = result[1];
     return { created: typeof affected === 'number' ? affected : 0 };
+  }
+
+  async findPendingWithRecipient(articleId?: string): Promise<PendingNewsNotification[]> {
+    const rows: { id: string; whatsapp_number: string; message_preview: string }[] = await this.repository.manager.query(
+      `SELECT n.id, s.whatsapp_number, n.message_preview
+       FROM news_notifications n
+       JOIN news_subscribers s ON s.id = n.subscriber_id
+       WHERE n.status = 'PENDING' AND s.is_active = true
+         ${articleId ? 'AND n.news_article_id = $1' : ''}
+       ORDER BY n.created_at ASC`,
+      articleId ? [articleId] : [],
+    );
+    return rows.map((row) => ({ id: row.id, whatsappNumber: row.whatsapp_number, messagePreview: row.message_preview }));
+  }
+
+  async markSent(id: string, externalId: string | undefined): Promise<void> {
+    await this.repository.update(id, {
+      status: 'SENT',
+      externalId: externalId ?? null,
+      sentAt: new Date(),
+      attempts: () => 'attempts + 1',
+    });
+  }
+
+  async markFailed(id: string, errorMessage: string): Promise<void> {
+    await this.repository.update(id, {
+      status: 'FAILED',
+      errorMessage,
+      attempts: () => 'attempts + 1',
+    });
   }
 }

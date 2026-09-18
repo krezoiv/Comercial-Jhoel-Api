@@ -17,6 +17,9 @@ import { ListNewsSubscribersUseCase } from './application/use-cases/list-news-su
 import { GetNewsSubscriberByIdUseCase } from './application/use-cases/get-news-subscriber-by-id.use-case';
 import { SetNewsSubscriberActiveUseCase } from './application/use-cases/set-news-subscriber-active.use-case';
 import { CreateNewsNotificationsForArticleUseCase } from './application/use-cases/create-news-notifications-for-article.use-case';
+import { SendPendingNewsNotificationsUseCase } from './application/use-cases/send-pending-news-notifications.use-case';
+import { WHATSAPP_SENDER } from './application/ports/whatsapp-sender.port';
+import { MetaCloudApiWhatsAppSender } from './infrastructure/services/meta-cloud-api-whatsapp-sender.service';
 import { NewsSubscribersController } from './presentation/controllers/news-subscribers.controller';
 import { PublicNewsSubscriptionController } from './presentation/controllers/public-news-subscription.controller';
 
@@ -52,7 +55,9 @@ import { PublicNewsSubscriptionController } from './presentation/controllers/pub
     GetNewsSubscriberByIdUseCase,
     SetNewsSubscriberActiveUseCase,
     CreateNewsNotificationsForArticleUseCase,
+    SendPendingNewsNotificationsUseCase,
+    { provide: WHATSAPP_SENDER, useClass: MetaCloudApiWhatsAppSender },
   ],
-  exports: [CreateNewsNotificationsForArticleUseCase],
+  exports: [CreateNewsNotificationsForArticleUseCase, SendPendingNewsNotificationsUseCase],
 })
 export class NewsSubscriptionsModule {}
