@@ -8,7 +8,45 @@
 
       <nav class="navbar__links" aria-label="Navegación principal">
         @for (link of navLinks; track link.label) {
-          <a class="navbar__link" [routerLink]="link.path" [fragment]="link.fragment">{{ link.label }}</a>
+          @if (link.children) {
+            <div class="navbar__dropdown">
+              <button
+                type="button"
+                class="navbar__link navbar__dropdown-trigger"
+                [class.navbar__link--active]="isDropdownOpen(link.label)"
+                (click)="toggleDropdown(link.label)"
+                aria-haspopup="true"
+                [attr.aria-expanded]="isDropdownOpen(link.label)"
+              >
+                {{ link.label }}
+                <app-icon class="navbar__dropdown-arrow" [class.navbar__dropdown-arrow--open]="isDropdownOpen(link.label)" name="chevron-down" [size]="16" />
+              </button>
+
+              @if (isDropdownOpen(link.label)) {
+                <div class="navbar__dropdown-panel" role="menu" [attr.aria-label]="link.label">
+                  @for (child of link.children; track child.label) {
+                    @if (child.dividerBefore) {
+                      <div class="navbar__dropdown-divider" role="separator"></div>
+                    }
+                    <a
+                      class="navbar__dropdown-item"
+                      role="menuitem"
+                      [routerLink]="child.path"
+                      [fragment]="child.fragment"
+                      (click)="closeDropdown()"
+                    >
+                      @if (child.icon) {
+                        <app-icon class="navbar__dropdown-item-icon" [name]="child.icon" [size]="18" />
+                      }
+                      <span>{{ child.label }}</span>
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <a class="navbar__link" [routerLink]="link.path" [fragment]="link.fragment">{{ link.label }}</a>
+          }
         }
       </nav>
 
@@ -37,13 +75,53 @@
       <app-container wide>
         <nav class="navbar__mobile-links" aria-label="Navegación móvil">
           @for (link of navLinks; track link.label) {
-            <a
-              class="navbar__mobile-link"
-              [routerLink]="link.path"
-              [fragment]="link.fragment"
-              (click)="closeMenu()"
-              >{{ link.label }}</a
-            >
+            @if (link.children) {
+              <div class="navbar__mobile-group">
+                <button
+                  type="button"
+                  class="navbar__mobile-link navbar__mobile-group-trigger"
+                  (click)="toggleMobileGroup(link.label)"
+                  [attr.aria-expanded]="isMobileGroupOpen(link.label)"
+                >
+                  {{ link.label }}
+                  <app-icon
+                    class="navbar__dropdown-arrow"
+                    [class.navbar__dropdown-arrow--open]="isMobileGroupOpen(link.label)"
+                    name="chevron-down"
+                    [size]="18"
+                  />
+                </button>
+
+                @if (isMobileGroupOpen(link.label)) {
+                  <div class="navbar__mobile-submenu">
+                    @for (child of link.children; track child.label) {
+                      @if (child.dividerBefore) {
+                        <div class="navbar__dropdown-divider" role="separator"></div>
+                      }
+                      <a
+                        class="navbar__mobile-submenu-link"
+                        [routerLink]="child.path"
+                        [fragment]="child.fragment"
+                        (click)="closeMenu()"
+                      >
+                        @if (child.icon) {
+                          <app-icon [name]="child.icon" [size]="18" />
+                        }
+                        <span>{{ child.label }}</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <a
+                class="navbar__mobile-link"
+                [routerLink]="link.path"
+                [fragment]="link.fragment"
+                (click)="closeMenu()"
+                >{{ link.label }}</a
+              >
+            }
           }
           <a class="navbar__mobile-link" [routerLink]="accountLink().path" (click)="closeMenu()">{{
             accountLink().label

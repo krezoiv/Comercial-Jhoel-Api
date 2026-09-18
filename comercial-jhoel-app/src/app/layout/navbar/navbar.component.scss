@@ -1,4 +1,5 @@
 @use 'breakpoints' as bp;
+@use 'mixins' as *;
 
 :host {
   display: block;
@@ -8,9 +9,17 @@
 }
 
 .navbar {
-  height: var(--navbar-height);
+  // `min-height`, not `height`: the header row itself is pinned to
+  // `--navbar-height` below (`.navbar__row`), but the header must be free to
+  // grow when the mobile panel (`.navbar__mobile`) is present as its second
+  // flex item, or that panel gets clipped to the row's own fixed height.
+  min-height: var(--navbar-height);
   display: flex;
-  align-items: center;
+  // Column, not row: with two possible children (the row, and — only while
+  // open — the mobile panel) a row-direction flex placed them side by side
+  // instead of stacked, squeezing the mobile menu into a narrow strip next
+  // to the header instead of a full-width panel below it.
+  flex-direction: column;
   // Antes era un negro neutro puro (rgba(5,7,12,…)) — sin ninguna relación
   // con el resto del sistema de color. Este degradado usa el mismo azul
   // primario que ya vertebra el sitio (--color-primary-900, la base de
@@ -42,7 +51,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  height: 100%;
+  // Fixed directly (not `height: 100%`, which needs `.navbar` itself to
+  // have a fixed height — `.navbar` can no longer be fixed-height now that
+  // it must also grow to fit the mobile panel below this row).
+  height: var(--navbar-height);
+  flex-shrink: 0;
 }
 
 .navbar__brand {
@@ -83,15 +96,113 @@
 }
 
 .navbar__link {
+  display: flex;
+  align-items: center;
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
+  line-height: 1;
   color: var(--color-text-on-dark-muted);
   padding-block: var(--space-2);
   transition: color var(--duration-base) var(--ease-out);
+  @include focus-ring;
 
   &:hover {
     color: var(--color-text-on-dark);
   }
+}
+
+.navbar__link--active {
+  color: var(--color-text-on-dark);
+}
+
+// --- Dropdown ("Servicios ▼") -----------------------------------------------
+// Same trigger + full-screen backdrop-button + absolute panel pattern already
+// used by `AlertBellComponent`'s notification panel — kept consistent rather
+// than inventing a second dropdown mechanism.
+
+.navbar__dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.navbar__dropdown-trigger {
+  // `button` already gets background/border/cursor/font reset globally
+  // (see `_base.scss`) — only margin/padding need closing here so this
+  // <button> lines up exactly with its sibling <a> elements.
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline: 0;
+}
+
+.navbar__dropdown-arrow {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.navbar__dropdown-arrow--open {
+  transform: rotate(180deg);
+}
+
+.navbar__dropdown-panel {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-modal);
+  width: max-content;
+  min-width: 15rem;
+  max-width: calc(100vw - 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top center;
+  animation: navbar-dropdown-in var(--duration-fast) var(--ease-out);
+}
+
+@keyframes navbar-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.navbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  color: var(--color-text-on-light);
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-out);
+  @include focus-ring;
+
+  &:hover {
+    background: var(--color-bg-light-muted);
+  }
+}
+
+.navbar__dropdown-item-icon {
+  flex-shrink: 0;
+  color: var(--color-primary-600);
+}
+
+.navbar__dropdown-divider {
+  height: 1px;
+  margin-block: var(--space-2);
+  background: var(--color-border-light);
 }
 
 .navbar__actions {
@@ -149,11 +260,53 @@
 }
 
 .navbar__mobile-link {
+  display: flex;
+  align-items: center;
   padding: var(--space-3) 0;
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   color: var(--color-text-on-dark-muted);
   border-bottom: 1px solid var(--color-border-dark);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-text-on-dark);
+  }
+}
+
+.navbar__mobile-group {
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.navbar__mobile-group-trigger {
+  width: 100%;
+  justify-content: space-between;
+  gap: var(--space-2);
+  // `.navbar__mobile-link` gives every item a bottom border for the list's
+  // row dividers — the group wrapper (`.navbar__mobile-group`) already
+  // supplies that same border once, so the trigger itself opts out.
+  border-bottom: none;
+}
+
+.navbar__mobile-submenu {
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--space-4);
+  padding-bottom: var(--space-3);
+
+  .navbar__dropdown-divider {
+    background: var(--color-border-dark);
+  }
+}
+
+.navbar__mobile-submenu-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-dark-muted);
+  @include focus-ring;
 
   &:hover {
     color: var(--color-text-on-dark);
