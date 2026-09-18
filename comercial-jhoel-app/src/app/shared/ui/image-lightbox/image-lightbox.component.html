@@ -1,0 +1,8 @@
+@if (open && imageUrl) {
+  <div class="lightbox-backdrop" (click)="close()">
+    <button type="button" class="lightbox__close" (click)="close()" aria-label="Cerrar imagen ampliada">
+      <app-icon name="close" [size]="20" />
+    </button>
+    <img class="lightbox__image" [src]="imageUrl" [alt]="alt" (click)="$event.stopPropagation()" />
+  </div>
+}

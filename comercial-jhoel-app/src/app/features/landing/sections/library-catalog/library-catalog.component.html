@@ -13,9 +13,15 @@
     <div class="library-catalog__grid" appRevealOnScroll [revealDelay]="80">
       @for (product of products(); track product.id) {
         <div class="library-catalog__item">
-          <app-catalog-product-card [product]="product" [showInterestButton]="false" />
+          <app-catalog-product-card
+            [product]="product"
+            [showInterestButton]="false"
+            (imageZoom)="onImageZoom($event)"
+          />
         </div>
       }
     </div>
   </app-section>
 }
+
+<app-image-lightbox [imageUrl]="zoomedImageUrl()" [alt]="zoomedImageAlt()" (closed)="closeImageLightbox()" />

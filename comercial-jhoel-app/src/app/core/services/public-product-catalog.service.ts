@@ -10,6 +10,7 @@ import {
   CreateCatalogProductRequestPayload,
   PublicCatalogProduct,
 } from '../models';
+import { getVisitorId } from '../utils/visitor-id.util';
 
 const BASE_URL = `${environment.apiUrl}/public-catalog`;
 
@@ -20,13 +21,18 @@ export class PublicProductCatalogService {
 
   getPublishedProducts(section: CatalogProductSection): Observable<PublicCatalogProduct[]> {
     return this.http
-      .get<ApiSuccessResponse<PublicCatalogProduct[]>>(`${BASE_URL}/products`, { params: { section } })
+      .get<ApiSuccessResponse<PublicCatalogProduct[]>>(`${BASE_URL}/products`, {
+        params: { section },
+        headers: { 'X-Visitor-Id': getVisitorId() },
+      })
       .pipe(map((response) => response.data));
   }
 
   getProductById(id: string): Observable<PublicCatalogProduct> {
     return this.http
-      .get<ApiSuccessResponse<PublicCatalogProduct>>(`${BASE_URL}/products/${id}`)
+      .get<ApiSuccessResponse<PublicCatalogProduct>>(`${BASE_URL}/products/${id}`, {
+        headers: { 'X-Visitor-Id': getVisitorId() },
+      })
       .pipe(map((response) => response.data));
   }
 
@@ -40,15 +46,23 @@ export class PublicProductCatalogService {
       .pipe(map((response) => response.data));
   }
 
-  likeProduct(id: string): Observable<number> {
+  likeProduct(id: string): Observable<{ likesCount: number; liked: boolean }> {
     return this.http
-      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/products/${id}/like`, {})
-      .pipe(map((response) => response.data.likesCount));
+      .post<ApiSuccessResponse<{ likesCount: number; liked: boolean }>>(
+        `${BASE_URL}/products/${id}/like`,
+        {},
+        { headers: { 'X-Visitor-Id': getVisitorId() } },
+      )
+      .pipe(map((response) => response.data));
   }
 
-  unlikeProduct(id: string): Observable<number> {
+  unlikeProduct(id: string): Observable<{ likesCount: number; liked: boolean }> {
     return this.http
-      .post<ApiSuccessResponse<{ likesCount: number }>>(`${BASE_URL}/products/${id}/unlike`, {})
-      .pipe(map((response) => response.data.likesCount));
+      .post<ApiSuccessResponse<{ likesCount: number; liked: boolean }>>(
+        `${BASE_URL}/products/${id}/unlike`,
+        {},
+        { headers: { 'X-Visitor-Id': getVisitorId() } },
+      )
+      .pipe(map((response) => response.data));
   }
 }

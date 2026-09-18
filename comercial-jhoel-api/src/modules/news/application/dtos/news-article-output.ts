@@ -25,6 +25,8 @@ export interface PublicNewsArticleOutput {
   publishedAt: string;
   hasImage: boolean;
   likesCount: number;
+  /** Si el visitante actual (header `X-Visitor-Id`) ya le dio like — `false` sin header (primera visita). */
+  liked: boolean;
 }
 
 export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
@@ -46,13 +48,18 @@ export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
   };
 }
 
-export function toPublicNewsArticleOutput(article: NewsArticle): PublicNewsArticleOutput {
+export function toPublicNewsArticleOutput(
+  article: NewsArticle,
+  likesCount: number,
+  liked: boolean,
+): PublicNewsArticleOutput {
   return {
     id: article.id,
     title: article.title,
     description: article.description,
     publishedAt: article.publishedAt,
     hasImage: article.hasImage,
-    likesCount: article.likesCount,
+    likesCount,
+    liked,
   };
 }

@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { PublicCatalogProduct } from '../../../../../core/models';
 import { PublicProductCatalogService } from '../../../../../core/services/public-product-catalog.service';
 import { formatCurrency } from '../../../../../core/utils/number-format.util';
-import { hasLiked, setLiked } from '../../../../../core/utils/local-likes.util';
 import { ButtonComponent, IconComponent, LikeButtonComponent } from '../../../../../shared/ui';
 
 /**
@@ -27,6 +26,8 @@ export class CatalogProductCardComponent implements OnInit {
   @Input() showInterestButton = false;
 
   @Output() interest = new EventEmitter<void>();
+  /** El zoom de imagen se abre desde un componente de sección (montado fuera del árbol con flip 3D) — ver `ImageLightboxComponent`. */
+  @Output() imageZoom = new EventEmitter<{ url: string; alt: string }>();
 
   private readonly publicProductCatalogService = inject(PublicProductCatalogService);
 
@@ -42,7 +43,8 @@ export class CatalogProductCardComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.liked.set(hasLiked('product', this.product.id));
+    // El estado del like siempre viene del backend (fuente de verdad en PostgreSQL) — nunca de localStorage.
+    this.liked.set(this.product.liked);
     this.likesCount.set(this.product.likesCount);
   }
 
@@ -54,7 +56,16 @@ export class CatalogProductCardComponent implements OnInit {
     this.interest.emit();
   }
 
-  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla. */
+  onImageClick(event: Event): void {
+    event.stopPropagation();
+    const url = this.imageUrl();
+    if (!url) {
+      return;
+    }
+    this.imageZoom.emit({ url, alt: this.product.name });
+  }
+
+  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla. El backend es siempre la fuente de verdad final del contador. */
   toggleLike(): void {
     if (this.likeBusy()) {
       return;
@@ -62,7 +73,6 @@ export class CatalogProductCardComponent implements OnInit {
     const next = !this.liked();
     this.liked.set(next);
     this.likesCount.update((count) => Math.max(0, count + (next ? 1 : -1)));
-    setLiked('product', this.product.id, next);
     this.likeBusy.set(true);
 
     const request$ = next
@@ -70,14 +80,14 @@ export class CatalogProductCardComponent implements OnInit {
       : this.publicProductCatalogService.unlikeProduct(this.product.id);
 
     request$.subscribe({
-      next: (count) => {
-        this.likesCount.set(count);
+      next: (result) => {
+        this.likesCount.set(result.likesCount);
+        this.liked.set(result.liked);
         this.likeBusy.set(false);
       },
       error: () => {
         this.liked.set(!next);
         this.likesCount.update((count) => Math.max(0, count + (next ? -1 : 1)));
-        setLiked('product', this.product.id, !next);
         this.likeBusy.set(false);
       },
     });

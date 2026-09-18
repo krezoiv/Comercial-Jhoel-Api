@@ -44,6 +44,8 @@ export interface PublicCatalogProduct {
   description: string | null;
   hasImage: boolean;
   likesCount: number;
+  /** Si este visitante (identificado por `getVisitorId()`) ya le dio like — viene siempre del backend, nunca de `localStorage`. */
+  liked: boolean;
   unitOfMeasureAbbreviation: string | null;
 }
 

@@ -38,7 +38,7 @@
             [attr.aria-hidden]="offset !== 0"
             [inert]="offset !== 0"
           >
-            <app-phone-card [phone]="phone" (interest)="onInterest(phone, $event)" />
+            <app-phone-card [phone]="phone" (interest)="onInterest(phone, $event)" (imageZoom)="onImageZoom($event)" />
           </div>
         }
       }

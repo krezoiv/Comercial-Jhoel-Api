@@ -10,5 +10,6 @@ export class PublicCatalogProductResponseDto {
   description: string | null;
   hasImage: boolean;
   likesCount: number;
+  liked: boolean;
   unitOfMeasureAbbreviation: string | null;
 }

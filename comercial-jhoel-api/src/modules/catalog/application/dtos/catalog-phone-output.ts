@@ -63,6 +63,8 @@ export interface PublicCatalogPhoneOutput {
   extraSpecs: CatalogPhoneExtraSpec[];
   creditAvailable: boolean;
   likesCount: number;
+  /** Si el visitante actual (header `X-Visitor-Id`) ya le dio like — `false` sin header (primera visita). */
+  liked: boolean;
   images: CatalogPhoneImageOutput[];
 }
 
@@ -112,6 +114,8 @@ export function toCatalogPhoneOutput(
 export function toPublicCatalogPhoneOutput(
   phone: CatalogPhone,
   krediyaMinAmount: number | null,
+  likesCount: number,
+  liked: boolean,
 ): PublicCatalogPhoneOutput {
   return {
     id: phone.id,
@@ -128,7 +132,8 @@ export function toPublicCatalogPhoneOutput(
     operatingSystem: phone.operatingSystem,
     extraSpecs: phone.extraSpecs,
     creditAvailable: isKrediyaCreditAvailable(phone.price, krediyaMinAmount),
-    likesCount: phone.likesCount,
+    likesCount,
+    liked,
     images: toImageOutputs(phone),
   };
 }

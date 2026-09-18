@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { CatalogRequestType, PublicCatalogPhone } from '../../../../../../core/models';
 import { PublicCatalogService } from '../../../../../../core/services/public-catalog.service';
 import { formatCurrency } from '../../../../../../core/utils/number-format.util';
-import { hasLiked, setLiked } from '../../../../../../core/utils/local-likes.util';
 import { BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent } from '../../../../../../shared/ui';
 
 interface DisplaySpec {
@@ -32,6 +31,8 @@ export class PhoneCardComponent implements OnInit {
   @Input({ required: true }) phone!: PublicCatalogPhone;
 
   @Output() interest = new EventEmitter<CatalogRequestType>();
+  /** El zoom de imagen se abre desde un componente de sección (montado fuera del árbol con flip 3D) — ver `ImageLightboxComponent`. */
+  @Output() imageZoom = new EventEmitter<{ url: string; alt: string }>();
 
   private readonly publicCatalogService = inject(PublicCatalogService);
 
@@ -43,7 +44,8 @@ export class PhoneCardComponent implements OnInit {
   formatCurrency = formatCurrency;
 
   ngOnInit(): void {
-    this.liked.set(hasLiked('phone', this.phone.id));
+    // El estado del like siempre viene del backend (fuente de verdad en PostgreSQL) — nunca de localStorage.
+    this.liked.set(this.phone.liked);
     this.likesCount.set(this.phone.likesCount);
   }
 
@@ -79,7 +81,16 @@ export class PhoneCardComponent implements OnInit {
     this.interest.emit(type);
   }
 
-  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla — un "like" nunca debe sentirse lento. */
+  onImageClick(event: Event): void {
+    event.stopPropagation();
+    const url = this.primaryImageUrl();
+    if (!url) {
+      return;
+    }
+    this.imageZoom.emit({ url, alt: `${this.phone.brand} ${this.phone.model}` });
+  }
+
+  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla — un "like" nunca debe sentirse lento. El backend es siempre la fuente de verdad final del contador. */
   toggleLike(): void {
     if (this.likeBusy()) {
       return;
@@ -87,7 +98,6 @@ export class PhoneCardComponent implements OnInit {
     const next = !this.liked();
     this.liked.set(next);
     this.likesCount.update((count) => Math.max(0, count + (next ? 1 : -1)));
-    setLiked('phone', this.phone.id, next);
     this.likeBusy.set(true);
 
     const request$ = next
@@ -95,14 +105,14 @@ export class PhoneCardComponent implements OnInit {
       : this.publicCatalogService.unlikePhone(this.phone.id);
 
     request$.subscribe({
-      next: (count) => {
-        this.likesCount.set(count);
+      next: (result) => {
+        this.likesCount.set(result.likesCount);
+        this.liked.set(result.liked);
         this.likeBusy.set(false);
       },
       error: () => {
         this.liked.set(!next);
         this.likesCount.update((count) => Math.max(0, count + (next ? -1 : 1)));
-        setLiked('phone', this.phone.id, !next);
         this.likeBusy.set(false);
       },
     });

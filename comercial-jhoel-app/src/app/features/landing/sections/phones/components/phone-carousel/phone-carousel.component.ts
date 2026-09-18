@@ -45,6 +45,7 @@ export class PhoneCarouselComponent implements OnInit {
   @Input({ required: true }) phones: PublicCatalogPhone[] = [];
 
   @Output() requestInterest = new EventEmitter<PhoneInterestEvent>();
+  @Output() imageZoom = new EventEmitter<{ url: string; alt: string }>();
 
   readonly activeIndex = signal(0);
 
@@ -163,6 +164,10 @@ export class PhoneCarouselComponent implements OnInit {
 
   onInterest(phone: PublicCatalogPhone, requestType: CatalogRequestType): void {
     this.requestInterest.emit({ phone, requestType });
+  }
+
+  onImageZoom(event: { url: string; alt: string }): void {
+    this.imageZoom.emit(event);
   }
 
   onPointerDown(event: PointerEvent): void {

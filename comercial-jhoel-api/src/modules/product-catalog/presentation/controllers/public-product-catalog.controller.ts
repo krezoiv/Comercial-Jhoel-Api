@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -9,7 +10,9 @@ import {
   Post,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ListPublishedCatalogProductsUseCase } from '../../application/use-cases/list-published-catalog-products.use-case';
 import { GetPublishedCatalogProductByIdUseCase } from '../../application/use-cases/get-published-catalog-product-by-id.use-case';
@@ -20,6 +23,10 @@ import { CreateCatalogProductRequestRequestDto } from '../dtos/create-catalog-pr
 import { PublicCatalogProductResponseDto } from '../dtos/public-catalog-product.response.dto';
 import { CatalogProductRequestResponseDto } from '../dtos/catalog-product-request.response.dto';
 import type { CatalogProductSection } from '../../domain/entities/catalog-product.entity';
+import {
+  parseOptionalVisitorId,
+  parseRequiredVisitorId,
+} from '../../../likes/application/utils/parse-visitor-id';
 
 const CATALOG_PRODUCT_SECTIONS: CatalogProductSection[] = ['LIBRERIA', 'VARIEDADES_ACCESORIOS'];
 
@@ -40,16 +47,28 @@ export class PublicProductCatalogController {
   ) {}
 
   @Get('products')
-  findAll(@Query('section') section: string): Promise<PublicCatalogProductResponseDto[]> {
+  findAll(
+    @Query('section') section: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<PublicCatalogProductResponseDto[]> {
     const normalized = CATALOG_PRODUCT_SECTIONS.includes(section as CatalogProductSection)
       ? (section as CatalogProductSection)
       : 'LIBRERIA';
-    return this.listPublishedCatalogProductsUseCase.execute(normalized);
+    return this.listPublishedCatalogProductsUseCase.execute(
+      normalized,
+      parseOptionalVisitorId(visitorIdHeader),
+    );
   }
 
   @Get('products/:id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PublicCatalogProductResponseDto> {
-    return this.getPublishedCatalogProductByIdUseCase.execute(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<PublicCatalogProductResponseDto> {
+    return this.getPublishedCatalogProductByIdUseCase.execute(
+      id,
+      parseOptionalVisitorId(visitorIdHeader),
+    );
   }
 
   /** Mismo header `Cross-Origin-Resource-Policy: cross-origin` que Teléfonos — sin él, Helmet bloquea el `<img>` entre orígenes. */
@@ -82,13 +101,23 @@ export class PublicProductCatalogController {
 
   @Post('products/:id/like')
   @HttpCode(HttpStatus.OK)
-  like(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
-    return this.likeCatalogProductUseCase.execute(id, 1);
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  like(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<{ likesCount: number; liked: boolean }> {
+    return this.likeCatalogProductUseCase.execute(id, parseRequiredVisitorId(visitorIdHeader), 'LIKE');
   }
 
   @Post('products/:id/unlike')
   @HttpCode(HttpStatus.OK)
-  unlike(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
-    return this.likeCatalogProductUseCase.execute(id, -1);
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  unlike(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<{ likesCount: number; liked: boolean }> {
+    return this.likeCatalogProductUseCase.execute(id, parseRequiredVisitorId(visitorIdHeader), 'UNLIKE');
   }
 }

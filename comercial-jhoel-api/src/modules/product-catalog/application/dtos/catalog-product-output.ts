@@ -40,6 +40,8 @@ export interface PublicCatalogProductOutput {
   description: string | null;
   hasImage: boolean;
   likesCount: number;
+  /** Si el visitante actual (header `X-Visitor-Id`) ya le dio like — `false` sin header (primera visita). */
+  liked: boolean;
   unitOfMeasureAbbreviation: string | null;
 }
 
@@ -70,6 +72,8 @@ export function toCatalogProductOutput(product: CatalogProduct): CatalogProductO
 
 export function toPublicCatalogProductOutput(
   product: CatalogProduct,
+  likesCount: number,
+  liked: boolean,
 ): PublicCatalogProductOutput {
   return {
     id: product.id,
@@ -79,7 +83,8 @@ export function toPublicCatalogProductOutput(
     categoryName: product.categoryName,
     description: product.catalogDescription,
     hasImage: product.hasImage,
-    likesCount: product.likesCount,
+    likesCount,
+    liked,
     unitOfMeasureAbbreviation: product.unitOfMeasureAbbreviation,
   };
 }

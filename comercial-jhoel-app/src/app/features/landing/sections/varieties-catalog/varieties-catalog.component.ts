@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { PublicCatalogProduct } from '../../../../core/models';
 import { PublicProductCatalogService } from '../../../../core/services/public-product-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
-import { SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
+import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { CatalogProductCardComponent } from '../shared/catalog-product-card/catalog-product-card.component';
 import { ProductInterestModalComponent } from './components/product-interest-modal/product-interest-modal.component';
 
@@ -23,6 +23,7 @@ import { ProductInterestModalComponent } from './components/product-interest-mod
     RevealOnScrollDirective,
     CatalogProductCardComponent,
     ProductInterestModalComponent,
+    ImageLightboxComponent,
   ],
   templateUrl: './varieties-catalog.component.html',
   styleUrl: './varieties-catalog.component.scss',
@@ -35,6 +36,9 @@ export class VarietiesCatalogComponent {
   readonly loading = signal(true);
 
   readonly selectedProduct = signal<PublicCatalogProduct | null>(null);
+
+  readonly zoomedImageUrl = signal<string | null>(null);
+  readonly zoomedImageAlt = signal('');
 
   constructor() {
     this.publicProductCatalogService.getPublishedProducts('VARIEDADES_ACCESORIOS').subscribe({
@@ -54,5 +58,14 @@ export class VarietiesCatalogComponent {
 
   closeInterestModal(): void {
     this.selectedProduct.set(null);
+  }
+
+  onImageZoom(event: { url: string; alt: string }): void {
+    this.zoomedImageUrl.set(event.url);
+    this.zoomedImageAlt.set(event.alt);
+  }
+
+  closeImageLightbox(): void {
+    this.zoomedImageUrl.set(null);
   }
 }

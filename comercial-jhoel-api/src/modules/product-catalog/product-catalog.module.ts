@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from '../products/products.module';
+import { LikesModule } from '../likes/likes.module';
 import { CatalogProductOrmEntity } from './infrastructure/persistence/catalog-product.orm-entity';
 import { CatalogProductRequestOrmEntity } from './infrastructure/persistence/catalog-product-request.orm-entity';
 import { TypeOrmCatalogProductRepository } from './infrastructure/persistence/typeorm-catalog-product.repository';
@@ -39,6 +40,7 @@ import { PublicProductCatalogController } from './presentation/controllers/publi
   imports: [
     TypeOrmModule.forFeature([CatalogProductOrmEntity, CatalogProductRequestOrmEntity]),
     ProductsModule,
+    LikesModule,
   ],
   controllers: [
     CatalogProductsController,

@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 
 import { PublicNewsArticle } from '../../../../../../core/models';
 import { PublicNewsService } from '../../../../../../core/services/public-news.service';
-import { hasLiked, setLiked } from '../../../../../../core/utils/local-likes.util';
 import { IconComponent, LikeButtonComponent } from '../../../../../../shared/ui';
 
 const EXCERPT_LENGTH = 140;
@@ -46,7 +45,8 @@ export class NewsCardComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.liked.set(hasLiked('news', this.article.id));
+    // El estado del like siempre viene del backend (fuente de verdad en PostgreSQL) — nunca de localStorage.
+    this.liked.set(this.article.liked);
     this.likesCount.set(this.article.likesCount);
   }
 
@@ -61,7 +61,7 @@ export class NewsCardComponent implements OnInit {
     }
   }
 
-  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla. */
+  /** Optimista: refleja el nuevo estado de inmediato y lo revierte si la llamada falla. El backend es siempre la fuente de verdad final del contador. */
   toggleLike(): void {
     if (this.likeBusy()) {
       return;
@@ -69,7 +69,6 @@ export class NewsCardComponent implements OnInit {
     const next = !this.liked();
     this.liked.set(next);
     this.likesCount.update((count) => Math.max(0, count + (next ? 1 : -1)));
-    setLiked('news', this.article.id, next);
     this.likeBusy.set(true);
 
     const request$ = next
@@ -77,14 +76,14 @@ export class NewsCardComponent implements OnInit {
       : this.publicNewsService.unlikeArticle(this.article.id);
 
     request$.subscribe({
-      next: (count) => {
-        this.likesCount.set(count);
+      next: (result) => {
+        this.likesCount.set(result.likesCount);
+        this.liked.set(result.liked);
         this.likeBusy.set(false);
       },
       error: () => {
         this.liked.set(!next);
         this.likesCount.update((count) => Math.max(0, count + (next ? -1 : 1)));
-        setLiked('news', this.article.id, !next);
         this.likeBusy.set(false);
       },
     });

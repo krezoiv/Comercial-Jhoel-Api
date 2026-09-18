@@ -47,13 +47,6 @@
   overflow: hidden;
 }
 
-.news-card__like {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  z-index: 1;
-}
-
 .news-card__image {
   width: 100%;
   height: 100%;
@@ -97,16 +90,27 @@
   margin-top: 0.125rem;
 }
 
+// Like (compacto, izquierda) + "Leer más" (derecha) comparten una sola
+// fila al pie de la card — mismo criterio de `phone-card`/`product-card`:
+// el Like queda integrado a la card en vez de flotar sobre la imagen.
+.news-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
 .news-card__cta {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  margin-top: var(--space-1);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--color-primary-600);
+  white-space: nowrap;
 
   app-icon {
     transition: transform var(--duration-base) var(--ease-out);

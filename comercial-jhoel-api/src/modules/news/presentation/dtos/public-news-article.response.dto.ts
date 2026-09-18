@@ -6,4 +6,5 @@ export class PublicNewsArticleResponseDto {
   publishedAt: string;
   hasImage: boolean;
   likesCount: number;
+  liked: boolean;
 }

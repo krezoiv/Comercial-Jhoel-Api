@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
+import { LikesModule } from '../likes/likes.module';
 import { CatalogPhoneOrmEntity } from './infrastructure/persistence/catalog-phone.orm-entity';
 import { CatalogPhoneImageOrmEntity } from './infrastructure/persistence/catalog-phone-image.orm-entity';
 import { CatalogRequestOrmEntity } from './infrastructure/persistence/catalog-request.orm-entity';
@@ -41,6 +42,7 @@ import { PublicCatalogController } from './presentation/controllers/public-catal
       CatalogRequestOrmEntity,
     ]),
     CompanySettingsModule,
+    LikesModule,
   ],
   controllers: [
     CatalogPhonesController,

@@ -3,21 +3,26 @@
     <div class="phone-card__face phone-card__face--front" (click)="toggleFlip()">
       <div class="phone-card__image-wrap">
         @if (primaryImageUrl(); as src) {
-          <img class="phone-card__image" [src]="src" [alt]="phone.brand + ' ' + phone.model" loading="lazy" />
+          <img
+            class="phone-card__image"
+            [src]="src"
+            [alt]="phone.brand + ' ' + phone.model"
+            loading="lazy"
+            (click)="onImageClick($event)"
+          />
+          <button
+            type="button"
+            class="phone-card__zoom"
+            (click)="onImageClick($event)"
+            [attr.aria-label]="'Ampliar imagen de ' + phone.brand + ' ' + phone.model"
+          >
+            <app-icon name="search" [size]="16" />
+          </button>
         } @else {
           <div class="phone-card__image-placeholder">
             <app-icon name="smartphone" [size]="48" />
           </div>
         }
-
-        <app-like-button
-          class="phone-card__like"
-          [liked]="liked()"
-          [count]="likesCount()"
-          [disabled]="likeBusy()"
-          [label]="phone.brand + ' ' + phone.model"
-          (toggled)="toggleLike()"
-        />
       </div>
 
       <div class="phone-card__body">
@@ -33,20 +38,31 @@
         </div>
       </div>
 
-      <button
-        type="button"
-        class="phone-card__flip-btn"
-        (click)="toggleFlip(); $event.stopPropagation()"
-        [attr.aria-label]="'Ver especificaciones de ' + phone.brand + ' ' + phone.model"
-      >
-        Ver especificaciones
-        <app-icon name="chevron-right" [size]="14" />
-      </button>
+      <div class="phone-card__footer">
+        <app-like-button
+          class="phone-card__like"
+          [liked]="liked()"
+          [count]="likesCount()"
+          [disabled]="likeBusy()"
+          [label]="phone.brand + ' ' + phone.model"
+          (toggled)="toggleLike()"
+        />
+
+        <button
+          type="button"
+          class="phone-card__flip-btn"
+          (click)="toggleFlip(); $event.stopPropagation()"
+          [attr.aria-label]="'Ver especificaciones de ' + phone.brand + ' ' + phone.model"
+        >
+          Ver especificaciones
+          <app-icon name="chevron-right" [size]="14" />
+        </button>
+      </div>
     </div>
 
     <div class="phone-card__face phone-card__face--back">
       <div class="phone-card__back-header">
-        <div>
+        <div class="phone-card__back-header-info">
           <p class="phone-card__brand">{{ phone.brand }}</p>
           <h3 class="phone-card__model">{{ phone.model }}</h3>
         </div>

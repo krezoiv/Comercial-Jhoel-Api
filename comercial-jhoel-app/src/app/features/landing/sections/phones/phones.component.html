@@ -12,9 +12,11 @@
     </div>
 
     <div class="phones__carousel" appRevealOnScroll [revealDelay]="80">
-      <app-phone-carousel [phones]="phones()" (requestInterest)="onRequestInterest($event)" />
+      <app-phone-carousel [phones]="phones()" (requestInterest)="onRequestInterest($event)" (imageZoom)="onImageZoom($event)" />
     </div>
   </app-section>
 }
 
 <app-phone-interest-modal [phone]="selectedPhone()" [requestType]="selectedRequestType()" (closed)="closeInterestModal()" />
+
+<app-image-lightbox [imageUrl]="zoomedImageUrl()" [alt]="zoomedImageAlt()" (closed)="closeImageLightbox()" />

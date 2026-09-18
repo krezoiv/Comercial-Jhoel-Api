@@ -3,6 +3,8 @@ import { CATALOG_PHONE_REPOSITORY } from '../../domain/repositories/catalog-phon
 import type { CatalogPhoneRepository } from '../../domain/repositories/catalog-phone.repository';
 import { COMPANY_SETTINGS_REPOSITORY } from '../../../company-settings/domain/repositories/company-settings.repository';
 import type { CompanySettingsRepository } from '../../../company-settings/domain/repositories/company-settings.repository';
+import { CATALOG_LIKE_REPOSITORY } from '../../../likes/domain/repositories/catalog-like.repository';
+import type { CatalogLikeRepository } from '../../../likes/domain/repositories/catalog-like.repository';
 import { CatalogPhoneNotPublishedError } from '../../domain/errors/catalog-phone-not-published.error';
 import {
   PublicCatalogPhoneOutput,
@@ -17,9 +19,11 @@ export class GetPublishedCatalogPhoneByIdUseCase {
     private readonly catalogPhoneRepository: CatalogPhoneRepository,
     @Inject(COMPANY_SETTINGS_REPOSITORY)
     private readonly companySettingsRepository: CompanySettingsRepository,
+    @Inject(CATALOG_LIKE_REPOSITORY)
+    private readonly catalogLikeRepository: CatalogLikeRepository,
   ) {}
 
-  async execute(id: string): Promise<PublicCatalogPhoneOutput> {
+  async execute(id: string, visitorId?: string): Promise<PublicCatalogPhoneOutput> {
     const [phone, settings] = await Promise.all([
       this.catalogPhoneRepository.findById(id),
       this.companySettingsRepository.get(),
@@ -27,6 +31,12 @@ export class GetPublishedCatalogPhoneByIdUseCase {
     if (!phone || !phone.isPublished || !phone.isActive) {
       throw new CatalogPhoneNotPublishedError();
     }
-    return toPublicCatalogPhoneOutput(phone, settings.krediyaMinAmount);
+    const [likesCount, likedIds] = await Promise.all([
+      this.catalogLikeRepository.getCount('PHONE', id),
+      visitorId
+        ? this.catalogLikeRepository.getLikedEntityIds('PHONE', visitorId, [id])
+        : Promise.resolve(new Set<string>()),
+    ]);
+    return toPublicCatalogPhoneOutput(phone, settings.krediyaMinAmount, likesCount, likedIds.has(id));
   }
 }

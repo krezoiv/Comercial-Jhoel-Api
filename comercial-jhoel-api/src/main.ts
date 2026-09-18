@@ -65,7 +65,10 @@ async function bootstrap() {
       callback(null, allowed);
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    // `X-Visitor-Id`: identificador anónimo opaco que el frontend manda en
+    // las llamadas públicas de like/unlike/listado — ver `getVisitorId()`
+    // en el frontend y `parseVisitorId` en `modules/likes`.
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Visitor-Id'],
   });
 
   // Global request-body validation for every DTO in the app:

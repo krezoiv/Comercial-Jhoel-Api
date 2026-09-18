@@ -2,13 +2,16 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ListPublishedCatalogPhonesUseCase } from '../../application/use-cases/list-published-catalog-phones.use-case';
 import { GetPublishedCatalogPhoneByIdUseCase } from '../../application/use-cases/get-published-catalog-phone-by-id.use-case';
@@ -18,6 +21,10 @@ import { LikeCatalogPhoneUseCase } from '../../application/use-cases/like-catalo
 import { CreateCatalogRequestRequestDto } from '../dtos/create-catalog-request.request.dto';
 import { CatalogRequestResponseDto } from '../dtos/catalog-request.response.dto';
 import { PublicCatalogPhoneResponseDto } from '../dtos/public-catalog-phone.response.dto';
+import {
+  parseOptionalVisitorId,
+  parseRequiredVisitorId,
+} from '../../../likes/application/utils/parse-visitor-id';
 
 /**
  * Public, unauthenticated — backs the landing page's "Teléfonos" section.
@@ -48,15 +55,18 @@ export class PublicCatalogController {
   ) {}
 
   @Get('phones')
-  findAllPublished(): Promise<PublicCatalogPhoneResponseDto[]> {
-    return this.listPublishedCatalogPhonesUseCase.execute();
+  findAllPublished(
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<PublicCatalogPhoneResponseDto[]> {
+    return this.listPublishedCatalogPhonesUseCase.execute(parseOptionalVisitorId(visitorIdHeader));
   }
 
   @Get('phones/:id')
   findOnePublished(
     @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
   ): Promise<PublicCatalogPhoneResponseDto> {
-    return this.getPublishedCatalogPhoneByIdUseCase.execute(id);
+    return this.getPublishedCatalogPhoneByIdUseCase.execute(id, parseOptionalVisitorId(visitorIdHeader));
   }
 
   /**
@@ -108,13 +118,23 @@ export class PublicCatalogController {
 
   @Post('phones/:id/like')
   @HttpCode(HttpStatus.OK)
-  like(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
-    return this.likeCatalogPhoneUseCase.execute(id, 1);
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  like(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<{ likesCount: number; liked: boolean }> {
+    return this.likeCatalogPhoneUseCase.execute(id, parseRequiredVisitorId(visitorIdHeader), 'LIKE');
   }
 
   @Post('phones/:id/unlike')
   @HttpCode(HttpStatus.OK)
-  unlike(@Param('id', ParseUUIDPipe) id: string): Promise<{ likesCount: number }> {
-    return this.likeCatalogPhoneUseCase.execute(id, -1);
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  unlike(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<{ likesCount: number; liked: boolean }> {
+    return this.likeCatalogPhoneUseCase.execute(id, parseRequiredVisitorId(visitorIdHeader), 'UNLIKE');
   }
 }

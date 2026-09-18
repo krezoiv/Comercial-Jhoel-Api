@@ -13,7 +13,12 @@
     <div class="varieties-catalog__grid" appRevealOnScroll [revealDelay]="80">
       @for (product of products(); track product.id) {
         <div class="varieties-catalog__item">
-          <app-catalog-product-card [product]="product" [showInterestButton]="true" (interest)="onRequestInterest(product)" />
+          <app-catalog-product-card
+            [product]="product"
+            [showInterestButton]="true"
+            (interest)="onRequestInterest(product)"
+            (imageZoom)="onImageZoom($event)"
+          />
         </div>
       }
     </div>
@@ -21,3 +26,5 @@
 }
 
 <app-product-interest-modal [product]="selectedProduct()" (closed)="closeInterestModal()" />
+
+<app-image-lightbox [imageUrl]="zoomedImageUrl()" [alt]="zoomedImageAlt()" (closed)="closeImageLightbox()" />

@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CatalogRequestType, PublicCatalogPhone } from '../../../../core/models';
 import { PublicCatalogService } from '../../../../core/services/public-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
-import { SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
+import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { PhoneCarouselComponent, PhoneInterestEvent } from './components/phone-carousel/phone-carousel.component';
 import { PhoneInterestModalComponent } from './components/phone-interest-modal/phone-interest-modal.component';
 
@@ -18,7 +18,14 @@ import { PhoneInterestModalComponent } from './components/phone-interest-modal/p
 @Component({
   selector: 'app-phones',
   standalone: true,
-  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, PhoneCarouselComponent, PhoneInterestModalComponent],
+  imports: [
+    SectionComponent,
+    SectionHeadingComponent,
+    RevealOnScrollDirective,
+    PhoneCarouselComponent,
+    PhoneInterestModalComponent,
+    ImageLightboxComponent,
+  ],
   templateUrl: './phones.component.html',
   styleUrl: './phones.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +38,9 @@ export class PhonesComponent {
 
   readonly selectedPhone = signal<PublicCatalogPhone | null>(null);
   readonly selectedRequestType = signal<CatalogRequestType | null>(null);
+
+  readonly zoomedImageUrl = signal<string | null>(null);
+  readonly zoomedImageAlt = signal('');
 
   constructor() {
     this.publicCatalogService.getPublishedPhones().subscribe({
@@ -53,5 +63,14 @@ export class PhonesComponent {
   closeInterestModal(): void {
     this.selectedPhone.set(null);
     this.selectedRequestType.set(null);
+  }
+
+  onImageZoom(event: { url: string; alt: string }): void {
+    this.zoomedImageUrl.set(event.url);
+    this.zoomedImageAlt.set(event.alt);
+  }
+
+  closeImageLightbox(): void {
+    this.zoomedImageUrl.set(null);
   }
 }

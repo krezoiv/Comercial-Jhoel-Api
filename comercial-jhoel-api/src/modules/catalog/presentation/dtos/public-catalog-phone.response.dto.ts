@@ -26,5 +26,6 @@ export class PublicCatalogPhoneResponseDto {
   extraSpecs: CatalogPhoneExtraSpec[];
   creditAvailable: boolean;
   likesCount: number;
+  liked: boolean;
   images: CatalogPhoneImageResponseDto[];
 }
