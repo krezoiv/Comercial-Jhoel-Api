@@ -14,6 +14,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ListPublishedNewsArticlesUseCase } from '../../application/use-cases/list-published-news-articles.use-case';
 import { GetPublishedNewsArticleByIdUseCase } from '../../application/use-cases/get-published-news-article-by-id.use-case';
+import { GetPublishedNewsArticleBySlugUseCase } from '../../application/use-cases/get-published-news-article-by-slug.use-case';
 import { GetNewsArticleImageUseCase } from '../../application/use-cases/get-news-article-image.use-case';
 import { LikeNewsArticleUseCase } from '../../application/use-cases/like-news-article.use-case';
 import { PublicNewsArticleResponseDto } from '../dtos/public-news-article.response.dto';
@@ -28,6 +29,7 @@ export class PublicNewsController {
   constructor(
     private readonly listPublishedNewsArticlesUseCase: ListPublishedNewsArticlesUseCase,
     private readonly getPublishedNewsArticleByIdUseCase: GetPublishedNewsArticleByIdUseCase,
+    private readonly getPublishedNewsArticleBySlugUseCase: GetPublishedNewsArticleBySlugUseCase,
     private readonly getNewsArticleImageUseCase: GetNewsArticleImageUseCase,
     private readonly likeNewsArticleUseCase: LikeNewsArticleUseCase,
   ) {}
@@ -37,6 +39,14 @@ export class PublicNewsController {
     @Headers('x-visitor-id') visitorIdHeader?: string,
   ): Promise<PublicNewsArticleResponseDto[]> {
     return this.listPublishedNewsArticlesUseCase.execute(parseOptionalVisitorId(visitorIdHeader));
+  }
+
+  @Get('by-slug/:slug')
+  findOneBySlug(
+    @Param('slug') slug: string,
+    @Headers('x-visitor-id') visitorIdHeader?: string,
+  ): Promise<PublicNewsArticleResponseDto> {
+    return this.getPublishedNewsArticleBySlugUseCase.execute(slug, parseOptionalVisitorId(visitorIdHeader));
   }
 
   @Get(':id')

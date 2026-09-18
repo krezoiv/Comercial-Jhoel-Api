@@ -1,0 +1,54 @@
+<div class="news-types">
+  <app-page-header
+    icon="tag"
+    title="Tipos de Noticias"
+    subtitle="Clasificaciones configurables para las noticias (Comercial, Educativa, Promociones, ...) — crea nuevas categorías sin necesidad de modificar el sistema."
+  >
+    <app-button variant="primary" (click)="openCreateForm()">
+      <app-icon name="plus" [size]="16" />
+      Agregar tipo de noticia
+    </app-button>
+  </app-page-header>
+
+  <div class="toolbar">
+    <div class="toolbar__row">
+      <label class="search" for="news-type-search">
+        <app-icon name="search" [size]="18" />
+        <input
+          id="news-type-search"
+          type="text"
+          placeholder="Buscar por nombre…"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
+      </label>
+    </div>
+
+    <div class="toolbar__filters" role="group" aria-label="Filtrar por estado">
+      @for (option of statusOptions; track option.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.filter-chip--active]="statusFilter() === option.value"
+          (click)="statusFilter.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-news-type-table
+    [types]="filteredTypes()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (edit)="openEditForm($event)"
+    (toggleActive)="toggleActive($event)"
+    (moveUp)="moveUp($event)"
+    (moveDown)="moveDown($event)"
+    (clearFilters)="clearFilters()"
+    (addType)="openCreateForm()"
+  />
+</div>
+
+<app-news-type-form-modal [open]="isFormOpen()" [type]="editingType()" (closed)="closeForm()" (saved)="onTypeSaved($event)" />

@@ -1,0 +1,55 @@
+<app-section tone="light" spacing="lg">
+  <div class="wrap">
+    @if (displayedSubscription(); as sub) {
+      <h1 class="title">Tus preferencias de noticias</h1>
+      <p class="subtitle">WhatsApp: {{ sub.whatsappNumber }}</p>
+
+      <div class="type-list">
+        @for (type of availableTypes(); track type.id) {
+          <label class="type-option">
+            <input type="checkbox" [checked]="isChecked(type.id)" (change)="toggleType(type.id)" />
+            <span>{{ type.isWildcard ? 'Todas las noticias' : type.name }}</span>
+          </label>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p class="error-message">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="success-message">{{ successMessage() }}</p>
+      }
+
+      <div class="actions">
+        <app-button variant="primary" type="button" [disabled]="isSaving() || !hasChanges()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
+        </app-button>
+      </div>
+
+      <div class="cancel-zone">
+        <p>¿Ya no deseas recibir noticias?</p>
+        <app-button variant="danger" type="button" [disabled]="isCancelling()" (click)="cancelSubscription()">
+          {{ isCancelling() ? 'Cancelando…' : 'Cancelar mi suscripción' }}
+        </app-button>
+      </div>
+    } @else if (loading()) {
+      <div class="state-message">Cargando tu suscripción…</div>
+    } @else if (notFound()) {
+      <div class="state-message">
+        <h1>Enlace no válido</h1>
+        <p>Este enlace de preferencias no existe o ya no es válido.</p>
+        <app-button variant="primary" routerLink="/">
+          <app-icon name="chevron-left" [size]="14" />
+          Volver al inicio
+        </app-button>
+      </div>
+    } @else if (cancelled()) {
+      <div class="state-message">
+        <app-icon name="check" [size]="32" />
+        <h1>Suscripción cancelada</h1>
+        <p>Ya no recibirás noticias por WhatsApp. Puedes volver a suscribirte cuando quieras desde la página principal.</p>
+        <app-button variant="primary" routerLink="/">Volver al inicio</app-button>
+      </div>
+    }
+  </div>
+</app-section>

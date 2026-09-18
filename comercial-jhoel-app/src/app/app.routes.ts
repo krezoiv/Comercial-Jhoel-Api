@@ -17,6 +17,20 @@ export const routes: Routes = [
     title: 'Catálogo — Comercial Jhoel',
   },
   {
+    path: 'noticias/preferencias/:token',
+    loadComponent: () =>
+      import('./features/news-preferences/news-preferences-page.component').then(
+        (m) => m.NewsPreferencesPageComponent,
+      ),
+    title: 'Mis preferencias de noticias — Comercial Jhoel',
+  },
+  {
+    path: 'noticias/:slug',
+    loadComponent: () =>
+      import('./features/news-detail/news-detail-page.component').then((m) => m.NewsDetailPageComponent),
+    title: 'Noticia — Comercial Jhoel',
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login-page.component').then((m) => m.LoginPageComponent),
@@ -214,6 +228,23 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/news/news-page.component').then((m) => m.NewsPageComponent),
         title: 'Noticias — Sistema',
+      },
+      {
+        path: 'tipos-noticias',
+        loadComponent: () =>
+          import('./features/dashboard/news-types/news-types-page.component').then(
+            (m) => m.NewsTypesPageComponent,
+          ),
+        title: 'Tipos de Noticias — Sistema',
+      },
+      {
+        path: 'suscriptores-noticias',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/news-subscribers/news-subscribers-page.component').then(
+            (m) => m.NewsSubscribersPageComponent,
+          ),
+        title: 'Suscriptores de Noticias — Sistema',
       },
       {
         path: 'bancos',

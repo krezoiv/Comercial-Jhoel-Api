@@ -1,0 +1,69 @@
+@if (open && subscriber) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">{{ subscriber.name || subscriber.whatsappMasked }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <dl class="details">
+        <div class="details__row">
+          <dt>WhatsApp</dt>
+          <dd>{{ subscriber.whatsappMasked }}</dd>
+        </div>
+        <div class="details__row">
+          <dt>Estado</dt>
+          <dd><app-badge [tone]="subscriber.isActive ? 'success' : 'danger'">{{ subscriber.isActive ? 'Activo' : 'Inactivo' }}</app-badge></dd>
+        </div>
+        <div class="details__row">
+          <dt>Consentimiento</dt>
+          <dd>
+            <app-badge [tone]="subscriber.consentGiven ? 'success' : 'danger'">{{ subscriber.consentGiven ? 'Otorgado' : 'No otorgado' }}</app-badge>
+            @if (subscriber.consentAt) {
+              <span class="details__hint">{{ subscriber.consentAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            }
+          </dd>
+        </div>
+        <div class="details__row">
+          <dt>Categorías</dt>
+          <dd>
+            <div class="type-badges">
+              @for (t of subscriber.types; track t.id) {
+                <app-badge [tone]="t.isWildcard ? 'gold' : 'brand'">{{ t.name }}</app-badge>
+              } @empty {
+                <span class="muted">Sin categorías</span>
+              }
+            </div>
+          </dd>
+        </div>
+        <div class="details__row">
+          <dt>Registro</dt>
+          <dd>{{ subscriber.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="modal__subtitle">Historial</h3>
+      <ul class="timeline">
+        @for (entry of subscriber.auditLog; track entry.id) {
+          <li class="timeline__item">
+            <p class="timeline__action">{{ actionLabel(entry.action) }}</p>
+            <p class="timeline__meta">
+              {{ entry.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              @if (entry.performedByUsername) {
+                · por {{ entry.performedByUsername }}
+              }
+            </p>
+          </li>
+        } @empty {
+          <li class="muted">Sin historial todavía.</li>
+        }
+      </ul>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" type="button" (click)="close()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

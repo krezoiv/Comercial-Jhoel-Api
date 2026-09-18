@@ -51,6 +51,13 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         path: 'noticias',
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
+      { label: 'Tipos de Noticias', icon: 'tag', path: 'tipos-noticias' },
+      {
+        label: 'Suscriptores de Noticias',
+        icon: 'bell',
+        path: 'suscriptores-noticias',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
       {

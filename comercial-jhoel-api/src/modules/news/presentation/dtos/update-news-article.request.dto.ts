@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpdateNewsArticleRequestDto {
   @IsOptional()
@@ -15,4 +15,8 @@ export class UpdateNewsArticleRequestDto {
   @IsOptional()
   @IsDateString()
   publishedAt?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  newsTypeId?: string;
 }

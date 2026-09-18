@@ -1,8 +1,11 @@
 export class NewsArticleResponseDto {
   id: string;
   title: string;
+  slug: string;
   description: string;
   publishedAt: string;
+  newsTypeId: string;
+  newsTypeName: string;
   isActive: boolean;
   sortOrder: number;
   likesCount: number;

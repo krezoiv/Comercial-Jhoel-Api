@@ -1,0 +1,137 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="subscribers-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>WhatsApp</th>
+          <th>Categorías</th>
+          <th>Consentimiento</th>
+          <th>Estado</th>
+          <th>Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (subscribers.length === 0) {
+  <app-empty-state
+    icon="bell"
+    [title]="hasActiveFilters ? 'No se encontraron suscriptores' : 'Aún no hay suscriptores'"
+    [description]="
+      hasActiveFilters
+        ? 'Intenta con otro filtro aplicado.'
+        : 'Cuando un cliente se suscriba desde la landing pública, aparecerá aquí.'
+    "
+  >
+    @if (hasActiveFilters) {
+      <app-button variant="ghost" (click)="clearFilters.emit()">Limpiar filtros</app-button>
+    }
+  </app-empty-state>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="subscribers-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>WhatsApp</th>
+          <th>Categorías</th>
+          <th>Consentimiento</th>
+          <th>Estado</th>
+          <th>Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (subscriber of subscribers; track subscriber.id) {
+          <tr [class.subscribers-table__row--inactive]="!subscriber.isActive">
+            <td class="subscribers-table__name">{{ subscriber.name || '—' }}</td>
+            <td>{{ subscriber.whatsappMasked }}</td>
+            <td>
+              <div class="type-badges">
+                @for (t of subscriber.types; track t.id) {
+                  <app-badge [tone]="t.isWildcard ? 'gold' : 'brand'">{{ t.name }}</app-badge>
+                }
+              </div>
+            </td>
+            <td>
+              <app-badge [tone]="subscriber.consentGiven ? 'success' : 'danger'">
+                {{ subscriber.consentGiven ? 'Sí' : 'No' }}
+              </app-badge>
+            </td>
+            <td>
+              <app-badge [tone]="subscriber.isActive ? 'success' : 'danger'">
+                {{ subscriber.isActive ? 'Activo' : 'Inactivo' }}
+              </app-badge>
+            </td>
+            <td>{{ subscriber.createdAt | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <div class="actions">
+                <button type="button" class="action-btn" (click)="view.emit(subscriber)" [attr.aria-label]="'Ver ' + (subscriber.name || subscriber.whatsappMasked)">
+                  <app-icon name="eye" [size]="16" />
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="subscriber.isActive"
+                  (click)="toggleActive.emit(subscriber)"
+                  [attr.aria-label]="(subscriber.isActive ? 'Desactivar ' : 'Activar ') + (subscriber.name || subscriber.whatsappMasked)"
+                >
+                  <app-icon [name]="subscriber.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (subscriber of subscribers; track subscriber.id) {
+      <div class="subscriber-card" [class.subscriber-card--inactive]="!subscriber.isActive">
+        <div class="subscriber-card__header">
+          <div>
+            <p class="subscriber-card__name">{{ subscriber.name || subscriber.whatsappMasked }}</p>
+            <p class="subscriber-card__meta">{{ subscriber.whatsappMasked }} · {{ subscriber.createdAt | date: 'dd/MM/yyyy' }}</p>
+          </div>
+          <app-badge [tone]="subscriber.isActive ? 'success' : 'danger'">{{ subscriber.isActive ? 'Activo' : 'Inactivo' }}</app-badge>
+        </div>
+
+        <div class="type-badges">
+          @for (t of subscriber.types; track t.id) {
+            <app-badge [tone]="t.isWildcard ? 'gold' : 'brand'">{{ t.name }}</app-badge>
+          }
+        </div>
+
+        <div class="actions">
+          <button type="button" class="action-btn" (click)="view.emit(subscriber)" aria-label="Ver detalle">
+            <app-icon name="eye" [size]="16" />
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            [class.action-btn--danger]="subscriber.isActive"
+            (click)="toggleActive.emit(subscriber)"
+            [attr.aria-label]="subscriber.isActive ? 'Desactivar' : 'Activar'"
+          >
+            <app-icon [name]="subscriber.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

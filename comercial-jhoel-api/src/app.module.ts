@@ -42,6 +42,8 @@ import { PhonesModule } from './modules/phones/phones.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { ProductCatalogModule } from './modules/product-catalog/product-catalog.module';
 import { NewsModule } from './modules/news/news.module';
+import { NewsTypesModule } from './modules/news-types/news-types.module';
+import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subscriptions.module';
 
 @Module({
   imports: [
@@ -103,6 +105,8 @@ import { NewsModule } from './modules/news/news.module';
     CatalogModule,
     ProductCatalogModule,
     NewsModule,
+    NewsTypesModule,
+    NewsSubscriptionsModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

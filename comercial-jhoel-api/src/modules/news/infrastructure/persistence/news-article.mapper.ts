@@ -6,8 +6,11 @@ export class NewsArticleMapper {
     return NewsArticle.create({
       id: orm.id,
       title: orm.title,
+      slug: orm.slug,
       description: orm.description,
       publishedAt: orm.publishedAt,
+      newsTypeId: orm.newsTypeId,
+      newsTypeName: orm.newsType?.name ?? '',
       isActive: orm.isActive,
       sortOrder: orm.sortOrder,
       likesCount: orm.likesCount,

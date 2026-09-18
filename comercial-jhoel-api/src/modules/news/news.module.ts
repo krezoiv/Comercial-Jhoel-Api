@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LikesModule } from '../likes/likes.module';
+import { NewsTypesModule } from '../news-types/news-types.module';
+import { NewsSubscriptionsModule } from '../news-subscriptions/news-subscriptions.module';
 import { NewsArticleOrmEntity } from './infrastructure/persistence/news-article.orm-entity';
 import { TypeOrmNewsArticleRepository } from './infrastructure/persistence/typeorm-news-article.repository';
 import { NEWS_ARTICLE_REPOSITORY } from './domain/repositories/news-article.repository';
@@ -14,6 +16,7 @@ import { SetNewsArticleImageUseCase } from './application/use-cases/set-news-art
 import { RemoveNewsArticleImageUseCase } from './application/use-cases/remove-news-article-image.use-case';
 import { ListPublishedNewsArticlesUseCase } from './application/use-cases/list-published-news-articles.use-case';
 import { GetPublishedNewsArticleByIdUseCase } from './application/use-cases/get-published-news-article-by-id.use-case';
+import { GetPublishedNewsArticleBySlugUseCase } from './application/use-cases/get-published-news-article-by-slug.use-case';
 import { GetNewsArticleImageUseCase } from './application/use-cases/get-news-article-image.use-case';
 import { LikeNewsArticleUseCase } from './application/use-cases/like-news-article.use-case';
 import { NewsController } from './presentation/controllers/news.controller';
@@ -25,7 +28,7 @@ import { PublicNewsController } from './presentation/controllers/public-news.con
  * WhatsApp, sin Krediya. `description` es siempre texto plano.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsArticleOrmEntity]), LikesModule],
+  imports: [TypeOrmModule.forFeature([NewsArticleOrmEntity]), LikesModule, NewsTypesModule, NewsSubscriptionsModule],
   controllers: [NewsController, PublicNewsController],
   providers: [
     { provide: NEWS_ARTICLE_REPOSITORY, useClass: TypeOrmNewsArticleRepository },
@@ -39,6 +42,7 @@ import { PublicNewsController } from './presentation/controllers/public-news.con
     RemoveNewsArticleImageUseCase,
     ListPublishedNewsArticlesUseCase,
     GetPublishedNewsArticleByIdUseCase,
+    GetPublishedNewsArticleBySlugUseCase,
     GetNewsArticleImageUseCase,
     LikeNewsArticleUseCase,
   ],

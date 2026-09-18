@@ -24,7 +24,8 @@ export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
     return this.repository
       .createQueryBuilder('n')
       .leftJoinAndSelect('n.createdByUser', 'createdByUser')
-      .leftJoinAndSelect('n.updatedByUser', 'updatedByUser');
+      .leftJoinAndSelect('n.updatedByUser', 'updatedByUser')
+      .leftJoinAndSelect('n.newsType', 'newsType');
   }
 
   async findAll(options?: ListNewsArticlesOptions): Promise<NewsArticle[]> {
@@ -45,6 +46,11 @@ export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
     return orm ? NewsArticleMapper.toDomain(orm) : null;
   }
 
+  async findBySlug(slug: string): Promise<NewsArticle | null> {
+    const orm = await this.baseQuery().andWhere('n.slug = :slug', { slug }).getOne();
+    return orm ? NewsArticleMapper.toDomain(orm) : null;
+  }
+
   async findPublished(): Promise<NewsArticle[]> {
     const orms = await this.baseQuery()
       .andWhere('n.isActive = true')
@@ -54,11 +60,21 @@ export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
     return orms.map((orm) => NewsArticleMapper.toDomain(orm));
   }
 
+  async findPublishedBySlug(slug: string): Promise<NewsArticle | null> {
+    const orm = await this.baseQuery()
+      .andWhere('n.slug = :slug', { slug })
+      .andWhere('n.isActive = true')
+      .getOne();
+    return orm ? NewsArticleMapper.toDomain(orm) : null;
+  }
+
   async create(data: CreateNewsArticleData): Promise<NewsArticle> {
     const orm = this.repository.create({
       title: data.title,
+      slug: data.slug,
       description: data.description,
       publishedAt: data.publishedAt,
+      newsTypeId: data.newsTypeId,
       createdBy: data.createdBy,
     });
     const saved = await this.repository.save(orm);
@@ -77,6 +93,9 @@ export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
     }
     if (data.publishedAt !== undefined) {
       patch.publishedAt = data.publishedAt;
+    }
+    if (data.newsTypeId !== undefined) {
+      patch.newsTypeId = data.newsTypeId;
     }
     await this.repository.update({ id }, patch);
     const updated = await this.findById(id);

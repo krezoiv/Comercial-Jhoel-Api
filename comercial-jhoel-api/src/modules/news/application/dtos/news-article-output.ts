@@ -3,8 +3,11 @@ import { NewsArticle } from '../../domain/entities/news-article.entity';
 export interface NewsArticleOutput {
   id: string;
   title: string;
+  slug: string;
   description: string;
   publishedAt: string;
+  newsTypeId: string;
+  newsTypeName: string;
   isActive: boolean;
   sortOrder: number;
   likesCount: number;
@@ -21,11 +24,13 @@ export interface NewsArticleOutput {
 export interface PublicNewsArticleOutput {
   id: string;
   title: string;
+  slug: string;
   description: string;
   publishedAt: string;
+  newsTypeName: string;
   hasImage: boolean;
   likesCount: number;
-  /** Si el visitante actual (header `X-Visitor-Id`) ya le dio like — `false` sin header (primera visita). */
+  /** Si este visitante (identificado por `getVisitorId()`) ya le dio like — viene siempre del backend, nunca de `localStorage`. */
   liked: boolean;
 }
 
@@ -33,8 +38,11 @@ export function toNewsArticleOutput(article: NewsArticle): NewsArticleOutput {
   return {
     id: article.id,
     title: article.title,
+    slug: article.slug,
     description: article.description,
     publishedAt: article.publishedAt,
+    newsTypeId: article.newsTypeId,
+    newsTypeName: article.newsTypeName,
     isActive: article.isActive,
     sortOrder: article.sortOrder,
     likesCount: article.likesCount,
@@ -56,8 +64,10 @@ export function toPublicNewsArticleOutput(
   return {
     id: article.id,
     title: article.title,
+    slug: article.slug,
     description: article.description,
     publishedAt: article.publishedAt,
+    newsTypeName: article.newsTypeName,
     hasImage: article.hasImage,
     likesCount,
     liked,

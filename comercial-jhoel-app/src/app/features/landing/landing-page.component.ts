@@ -7,6 +7,7 @@ import { PhonesComponent } from './sections/phones/phones.component';
 import { LibraryCatalogComponent } from './sections/library-catalog/library-catalog.component';
 import { VarietiesCatalogComponent } from './sections/varieties-catalog/varieties-catalog.component';
 import { NewsComponent } from './sections/news/news.component';
+import { NewsSubscriptionComponent } from './sections/news-subscription/news-subscription.component';
 import { CatalogPreviewComponent } from './sections/catalog-preview/catalog-preview.component';
 import { BankAgentsComponent } from './sections/bank-agents/bank-agents.component';
 import { AboutComponent } from './sections/about/about.component';
@@ -23,6 +24,7 @@ import { ContactComponent } from './sections/contact/contact.component';
     LibraryCatalogComponent,
     VarietiesCatalogComponent,
     NewsComponent,
+    NewsSubscriptionComponent,
     CatalogPreviewComponent,
     BankAgentsComponent,
     AboutComponent,

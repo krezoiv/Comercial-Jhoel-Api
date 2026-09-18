@@ -51,3 +51,5 @@ export * from './catalog-phone.model';
 export * from './catalog-request.model';
 export * from './catalog-product.model';
 export * from './news-article.model';
+export * from './news-type.model';
+export * from './news-subscriber.model';

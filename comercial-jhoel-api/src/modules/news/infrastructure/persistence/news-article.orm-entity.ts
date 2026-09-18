@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
+import { NewsTypeOrmEntity } from '../../../news-types/infrastructure/persistence/news-type.orm-entity';
 
 /** `imageData` usa `select: false` — mismo patrón ya usado en Teléfonos/Librería/Variedades: nunca viaja en un listado normal, solo `getImage()` la selecciona explícitamente. */
 @Entity('news_articles')
@@ -18,11 +19,21 @@ export class NewsArticleOrmEntity {
   @Column({ type: 'varchar', length: 200 })
   title: string;
 
+  @Column({ type: 'varchar', length: 220 })
+  slug: string;
+
   @Column({ type: 'text' })
   description: string;
 
   @Column({ name: 'published_at', type: 'date' })
   publishedAt: string;
+
+  @Column({ name: 'news_type_id', type: 'uuid' })
+  newsTypeId: string;
+
+  @ManyToOne(() => NewsTypeOrmEntity, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'news_type_id' })
+  newsType: NewsTypeOrmEntity;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;

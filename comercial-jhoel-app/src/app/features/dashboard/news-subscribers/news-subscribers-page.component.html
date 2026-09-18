@@ -1,0 +1,33 @@
+<div class="subscribers">
+  <app-page-header
+    icon="bell"
+    title="Suscriptores de Noticias"
+    subtitle="Clientes que registraron su WhatsApp para recibir noticias — consulta sus preferencias, consentimiento e historial."
+  />
+
+  <div class="toolbar">
+    <div class="toolbar__filters" role="group" aria-label="Filtrar por estado">
+      @for (option of statusOptions; track option.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.filter-chip--active]="statusFilter() === option.value"
+          (click)="statusFilter.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-news-subscriber-table
+    [subscribers]="filteredSubscribers()"
+    [loading]="loading()"
+    [hasActiveFilters]="hasActiveFilters()"
+    (view)="view($event)"
+    (toggleActive)="toggleActive($event)"
+    (clearFilters)="clearFilters()"
+  />
+</div>
+
+<app-news-subscriber-detail-modal [subscriber]="viewingSubscriber()" (closed)="closeView()" />

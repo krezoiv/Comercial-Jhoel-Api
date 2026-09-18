@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateNewsArticleRequestDto {
   @IsString()
@@ -12,4 +12,7 @@ export class CreateNewsArticleRequestDto {
 
   @IsDateString()
   publishedAt: string;
+
+  @IsUUID('4', { message: 'El tipo de noticia es obligatorio.' })
+  newsTypeId: string;
 }

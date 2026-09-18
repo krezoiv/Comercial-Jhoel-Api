@@ -1,8 +1,12 @@
 export interface NewsArticleProps {
   id: string;
   title: string;
+  slug: string;
   description: string;
   publishedAt: string;
+  newsTypeId: string;
+  /** Leído en vivo del catálogo `news_types` — nunca copiado/desnormalizado en una escritura, mismo criterio que `CatalogProduct.categoryName`. */
+  newsTypeName: string;
   isActive: boolean;
   sortOrder: number;
   likesCount: number;
@@ -36,12 +40,24 @@ export class NewsArticle {
     return this.props.title;
   }
 
+  get slug(): string {
+    return this.props.slug;
+  }
+
   get description(): string {
     return this.props.description;
   }
 
   get publishedAt(): string {
     return this.props.publishedAt;
+  }
+
+  get newsTypeId(): string {
+    return this.props.newsTypeId;
+  }
+
+  get newsTypeName(): string {
+    return this.props.newsTypeName;
   }
 
   get isActive(): boolean {

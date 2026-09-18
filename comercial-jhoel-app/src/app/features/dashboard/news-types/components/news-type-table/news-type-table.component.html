@@ -1,0 +1,153 @@
+@if (loading) {
+  <div class="table-wrapper table-wrapper--desktop" aria-hidden="true">
+    <table class="types-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Uso</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of skeletonRows; track $index) {
+          <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (types.length === 0) {
+  <app-empty-state
+    icon="tag"
+    [title]="hasActiveFilters ? 'No se encontraron tipos de noticia' : 'Aún no hay tipos de noticia'"
+    [description]="
+      hasActiveFilters
+        ? 'Intenta con otro término de búsqueda o ajusta los filtros aplicados.'
+        : 'Agrega el primer tipo de noticia para comenzar a clasificar las noticias.'
+    "
+  >
+    @if (hasActiveFilters) {
+      <app-button variant="ghost" (click)="clearFilters.emit()">Limpiar filtros</app-button>
+    } @else {
+      <app-button variant="primary" (click)="addType.emit()">
+        <app-icon name="plus" [size]="16" />
+        Agregar tipo de noticia
+      </app-button>
+    }
+  </app-empty-state>
+} @else {
+  <div class="table-wrapper table-wrapper--desktop">
+    <table class="types-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Uso</th>
+          <th>Estado</th>
+          <th>Orden</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (type of types; track type.id; let first = $first; let last = $last) {
+          <tr [class.types-table__row--inactive]="!type.isActive">
+            <td class="types-table__name">
+              {{ type.name }}
+              @if (type.isWildcard) {
+                <app-badge tone="gold">Todas las noticias</app-badge>
+              }
+            </td>
+            <td>
+              @if (type.description) {
+                {{ type.description }}
+              } @else {
+                <span class="muted">Sin descripción</span>
+              }
+            </td>
+            <td>{{ type.usageCount }} noticia{{ type.usageCount === 1 ? '' : 's' }}</td>
+            <td>
+              <app-badge [tone]="type.isActive ? 'success' : 'danger'">
+                {{ type.isActive ? 'Activo' : 'Inactivo' }}
+              </app-badge>
+            </td>
+            <td>
+              <div class="order-controls">
+                <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(type)" aria-label="Subir orden">
+                  <app-icon name="chevron-up" [size]="16" />
+                </button>
+                <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(type)" aria-label="Bajar orden">
+                  <app-icon name="chevron-down" [size]="16" />
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="actions">
+                <button type="button" class="action-btn" (click)="edit.emit(type)" [attr.aria-label]="'Editar ' + type.name">
+                  <app-icon name="edit-2" [size]="16" />
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="type.isActive"
+                  (click)="toggleActive.emit(type)"
+                  [attr.aria-label]="(type.isActive ? 'Desactivar ' : 'Activar ') + type.name"
+                >
+                  <app-icon [name]="type.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-list">
+    @for (type of types; track type.id; let first = $first; let last = $last) {
+      <div class="type-card" [class.type-card--inactive]="!type.isActive">
+        <div class="type-card__header">
+          <div>
+            <p class="type-card__name">
+              {{ type.name }}
+              @if (type.isWildcard) {
+                <app-badge tone="gold">Todas</app-badge>
+              }
+            </p>
+            <p class="type-card__meta">{{ type.usageCount }} noticia{{ type.usageCount === 1 ? '' : 's' }}</p>
+          </div>
+          <app-badge [tone]="type.isActive ? 'success' : 'danger'">{{ type.isActive ? 'Activo' : 'Inactivo' }}</app-badge>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="action-btn" [disabled]="first" (click)="moveUp.emit(type)" aria-label="Subir orden">
+            <app-icon name="chevron-up" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" [disabled]="last" (click)="moveDown.emit(type)" aria-label="Bajar orden">
+            <app-icon name="chevron-down" [size]="16" />
+          </button>
+          <button type="button" class="action-btn" (click)="edit.emit(type)" [attr.aria-label]="'Editar ' + type.name">
+            <app-icon name="edit-2" [size]="16" />
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            [class.action-btn--danger]="type.isActive"
+            (click)="toggleActive.emit(type)"
+            [attr.aria-label]="(type.isActive ? 'Desactivar ' : 'Activar ') + type.name"
+          >
+            <app-icon [name]="type.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

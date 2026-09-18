@@ -1,0 +1,32 @@
+<app-section tone="light" spacing="lg">
+  @if (loading()) {
+    <div class="state-message">Cargando noticia…</div>
+  } @else if (notFound() || !article()) {
+    <div class="state-message">
+      <h1>Noticia no encontrada</h1>
+      <p>Es posible que ya no esté disponible.</p>
+      <app-button variant="primary" routerLink="/">
+        <app-icon name="chevron-left" [size]="14" />
+        Volver al inicio
+      </app-button>
+    </div>
+  } @else {
+    <article class="article">
+      <a class="article__back" routerLink="/">
+        <app-icon name="chevron-left" [size]="14" />
+        Volver a Comercial Jhoel
+      </a>
+
+      @if (imageUrl(); as src) {
+        <div class="article__image-wrap">
+          <img class="article__image" [src]="src" [alt]="article()!.title" />
+        </div>
+      }
+
+      <p class="article__date">{{ article()!.publishedAt | date: 'dd/MM/yyyy' }}</p>
+      <app-badge tone="brand">{{ article()!.newsTypeName }}</app-badge>
+      <h1 class="article__title">{{ article()!.title }}</h1>
+      <p class="article__description">{{ article()!.description }}</p>
+    </article>
+  }
+</app-section>

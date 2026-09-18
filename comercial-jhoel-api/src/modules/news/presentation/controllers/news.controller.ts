@@ -65,6 +65,7 @@ export class NewsController {
       title: dto.title,
       description: dto.description,
       publishedAt: dto.publishedAt,
+      newsTypeId: dto.newsTypeId,
       userId,
     });
   }
@@ -92,6 +93,7 @@ export class NewsController {
       title: dto.title,
       description: dto.description,
       publishedAt: dto.publishedAt,
+      newsTypeId: dto.newsTypeId,
       userId,
     });
   }

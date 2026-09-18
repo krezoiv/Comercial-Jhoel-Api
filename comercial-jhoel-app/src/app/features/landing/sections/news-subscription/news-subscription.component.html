@@ -1,0 +1,76 @@
+@if (!loading() && types().length > 0) {
+  <app-section sectionId="noticias-whatsapp" tone="light" spacing="lg">
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="WhatsApp"
+        title="Recibe nuestras noticias por WhatsApp"
+        subtitle="Elige qué tipo de noticias quieres recibir y te avisamos apenas publiquemos algo nuevo."
+      />
+    </div>
+
+    <div class="subscription-card" appRevealOnScroll [revealDelay]="80">
+      @if (submitted()) {
+        <div class="success">
+          <app-icon name="check" [size]="32" />
+          <h3>¡Listo! Quedaste suscrito</h3>
+          <p>Te avisaremos por WhatsApp cuando publiquemos noticias de tu interés.</p>
+          @if (manageUrl(); as url) {
+            <a class="success__manage-link" [routerLink]="url">Administrar mis preferencias</a>
+          }
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="subscription-whatsapp">
+              <app-icon name="whatsapp" [size]="16" />
+              Número de WhatsApp
+            </label>
+            <input
+              id="subscription-whatsapp"
+              type="tel"
+              formControlName="whatsappNumber"
+              placeholder="Ej. +50212345678"
+              autocomplete="tel"
+            />
+            @if (form.controls.whatsappNumber.invalid && form.controls.whatsappNumber.touched) {
+              <span class="field__error">Ingresa un número de WhatsApp válido.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="subscription-name">Nombre (opcional)</label>
+            <input id="subscription-name" type="text" formControlName="name" placeholder="Tu nombre" autocomplete="name" />
+          </div>
+
+          <div class="field">
+            <span class="field__label">¿Qué tipo de noticias deseas recibir?</span>
+            <div class="type-list">
+              @for (type of types(); track type.id) {
+                <label class="type-option">
+                  <input type="checkbox" [checked]="isChecked(type.id)" (change)="toggleType(type.id)" />
+                  <span>{{ typeLabel(type) }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <label class="consent">
+            <input type="checkbox" formControlName="consent" />
+            <span>Acepto recibir noticias de Comercial Jhoel por WhatsApp.</span>
+          </label>
+          @if (form.controls.consent.invalid && form.controls.consent.touched) {
+            <span class="field__error">Debes aceptar para poder suscribirte.</span>
+          }
+
+          @if (errorMessage()) {
+            <p class="form-error">{{ errorMessage() }}</p>
+          }
+
+          <app-button variant="primary" type="submit" [disabled]="isSubmitting()" fullWidth>
+            {{ isSubmitting() ? 'Enviando…' : 'Suscribirme' }}
+          </app-button>
+        </form>
+      }
+    </div>
+  </app-section>
+}
