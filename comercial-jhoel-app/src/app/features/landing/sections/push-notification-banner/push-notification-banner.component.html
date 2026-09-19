@@ -73,6 +73,16 @@
           }
         }
       }
+
+      @if (installPromptService.canInstall()) {
+        <div class="install-prompt">
+          <p>¿Quieres acceso más rápido? Instala Comercial Jhoel como app en tu dispositivo.</p>
+          <app-button variant="ghost" (click)="installApp()">
+            <app-icon name="download" [size]="16" />
+            Instalar app
+          </app-button>
+        </div>
+      }
     </div>
   </app-section>
 }

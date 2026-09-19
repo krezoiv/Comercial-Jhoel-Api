@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { PublicNewsType } from '../../../../core/models';
+import { InstallPromptService } from '../../../../core/services/install-prompt.service';
 import { PublicNewsSubscriptionService } from '../../../../core/services/public-news-subscription.service';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
@@ -32,6 +33,7 @@ import { ButtonComponent, IconComponent, SectionComponent, SectionHeadingCompone
 export class PushNotificationBannerComponent {
   private readonly publicNewsSubscriptionService = inject(PublicNewsSubscriptionService);
   readonly pushService = inject(PushNotificationService);
+  readonly installPromptService = inject(InstallPromptService);
 
   readonly types = signal<PublicNewsType[]>([]);
   readonly loadingTypes = signal(true);
@@ -92,5 +94,9 @@ export class PushNotificationBannerComponent {
       return;
     }
     await this.pushService.unsubscribe();
+  }
+
+  async installApp(): Promise<void> {
+    await this.installPromptService.promptInstall();
   }
 }
