@@ -30,17 +30,6 @@ export interface CorsConfig {
   origins: string[];
 }
 
-export interface WhatsAppConfig {
-  /** Phone Number ID de la cuenta de WhatsApp Business conectada vía Meta Cloud API. `null` = integración no configurada todavía. */
-  phoneNumberId: string | null;
-  /** Token de acceso permanente (System User) — nunca el token temporal de 24h del asistente de Meta. */
-  accessToken: string | null;
-  /** Nombre de la plantilla aprobada por Meta usada para avisos de noticias — debe tener exactamente un parámetro de cuerpo ({{1}}). */
-  templateName: string | null;
-  templateLanguage: string;
-  apiVersion: string;
-}
-
 export default () => ({
   app: {
     port: parseInt(process.env.PORT ?? '3000', 10),
@@ -64,11 +53,4 @@ export default () => ({
     secret: process.env.JWT_SECRET ?? 'change-me',
     expiresIn: parseInt(process.env.JWT_EXPIRES_IN ?? '86400', 10),
   } satisfies JwtConfig,
-  whatsapp: {
-    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ?? null,
-    accessToken: process.env.WHATSAPP_ACCESS_TOKEN ?? null,
-    templateName: process.env.WHATSAPP_TEMPLATE_NAME ?? null,
-    templateLanguage: process.env.WHATSAPP_TEMPLATE_LANGUAGE ?? 'es',
-    apiVersion: process.env.WHATSAPP_API_VERSION ?? 'v23.0',
-  } satisfies WhatsAppConfig,
 });

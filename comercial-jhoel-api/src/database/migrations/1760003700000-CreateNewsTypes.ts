@@ -8,10 +8,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * `clients` para unicidad case-insensitive de `name`/`slug`.
  *
  * `is_wildcard` es el mecanismo central de la regla "Comercial = recibe
- * todas las noticias" (ver `CreateNewsSubscriptions` y
- * `CreateNewsNotificationsForArticleUseCase`) — puesto en `true`
- * únicamente aquí, para la fila semilla "Comercial". Ningún endpoint
- * permite editarlo después.
+ * todas las noticias" (ver `CreateNewsSubscriptions`) — el frontend
+ * público lo usa para preseleccionar "Todas las noticias" en el
+ * formulario de suscripción. Puesto en `true` únicamente aquí, para la
+ * fila semilla "Comercial". Ningún endpoint permite editarlo después.
  */
 export class CreateNewsTypes1760003700000 implements MigrationInterface {
   name = 'CreateNewsTypes1760003700000';

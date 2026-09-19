@@ -18,8 +18,9 @@ export interface NewsTypeProps {
  * Catálogo maestro y configurable de clasificaciones de noticias (Comercial,
  * Educativa, Promociones, ...) — extensible desde el admin sin tocar
  * código. `isWildcard` es el mecanismo central de "Comercial = recibe
- * todas las noticias" (ver `CreateNewsNotificationsForArticleUseCase`),
- * puesto en `true` únicamente por la migración semilla de "Comercial" —
+ * todas las noticias" — el frontend público lo usa para preseleccionar
+ * "Todas las noticias" en el formulario de suscripción. Puesto en `true`
+ * únicamente por la migración semilla de "Comercial" —
  * nunca expuesto para editar desde ningún endpoint, es una decisión
  * arquitectónica fija sobre esa categoría inicial, no una feature general.
  */
