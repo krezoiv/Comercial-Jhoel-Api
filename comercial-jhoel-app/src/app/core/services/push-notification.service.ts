@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
 
@@ -41,16 +41,66 @@ export class PushNotificationService {
   readonly isBusy = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  readonly permissionState = computed<PushPermissionState>(() => this.computePermissionState());
+  /**
+   * Un `signal()` normal, actualizado explícitamente — NO un `computed()`.
+   * `computePermissionState()` solo lee APIs del navegador (`Notification.
+   * permission`, `swPush.isEnabled`), nunca otro `signal()` de Angular; un
+   * `computed()` sobre eso se evalúa UNA sola vez (la primera lectura) y
+   * queda congelado para siempre, porque Angular no tiene forma de saber que
+   * `Notification.permission` cambió — encontrado y corregido en vivo: el
+   * banner podía quedarse mostrando un estado obsoleto (p. ej. "no
+   * compatible" evaluado antes de que el Service Worker terminara de
+   * registrarse) sin volver a evaluarse jamás en esa misma visita. Este
+   * signal se refresca explícitamente en cada momento donde el estado
+   * realmente puede haber cambiado — ver `refreshPermissionState()`.
+   */
+  readonly permissionState = signal<PushPermissionState>(this.computePermissionState());
 
   constructor() {
     if (this.swPush.isEnabled) {
       this.swPush.subscription.subscribe((subscription) => this.isSubscribed.set(subscription !== null));
+
+      // `computePermissionState()` de arriba se evaluó antes de que el
+      // Service Worker necesariamente estuviera activo — `serviceWorker.
+      // ready` confirma el registro real (ver PASO 1/10 del diagnóstico:
+      // "verifica que el Service Worker esté realmente registrado/activo")
+      // y dispara un recálculo en cuanto eso ocurre de verdad.
+      navigator.serviceWorker?.ready.then(
+        () => this.refreshPermissionState(),
+        () => this.refreshPermissionState(),
+      );
+
+      // `Notification.permission` puede cambiar fuera de cualquier acción
+      // nuestra (el visitante lo cambia desde la configuración del propio
+      // navegador mientras la pestaña sigue abierta) — sin esto, el signal
+      // de arriba nunca se enteraría.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.refreshPermissionState();
+        }
+      });
     }
+  }
+
+  private refreshPermissionState(): void {
+    this.permissionState.set(this.computePermissionState());
   }
 
   private computePermissionState(): PushPermissionState {
     if (!this.swPush.isEnabled || typeof Notification === 'undefined') {
+      // DEBUG TEMPORAL — diagnóstico del "navegador no compatible" reportado
+      // en móvil (retirar este bloque una vez confirmada la causa real en el
+      // dispositivo afectado). Imprime exactamente qué capacidad falló, en
+      // vez de asumir cuál es.
+      // eslint-disable-next-line no-console
+      console.warn('[push-debug] permissionState=unsupported —', {
+        isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'n/a',
+        hasNavigatorServiceWorker: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
+        hasPushManager: typeof window !== 'undefined' && 'PushManager' in window,
+        hasNotification: typeof Notification !== 'undefined',
+        swPushIsEnabled: this.swPush.isEnabled,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
+      });
       return 'unsupported';
     }
     if (this.isIosSafariNotInstalled()) {
@@ -121,6 +171,11 @@ export class PushNotificationService {
       throw error;
     } finally {
       this.isBusy.set(false);
+      // El intento de suscripción es exactamente el momento en que
+      // `Notification.permission` cambia (concedido/denegado) — sin este
+      // refresh explícito el signal se habría quedado en `not-requested`
+      // para siempre, sin importar qué haya respondido el visitante.
+      this.refreshPermissionState();
     }
   }
 
@@ -141,6 +196,7 @@ export class PushNotificationService {
       this.isSubscribed.set(false);
     } finally {
       this.isBusy.set(false);
+      this.refreshPermissionState();
     }
   }
 

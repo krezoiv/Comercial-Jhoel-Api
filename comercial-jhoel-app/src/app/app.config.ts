@@ -26,9 +26,26 @@ export const appConfig: ApplicationConfig = {
     // Registrado solo en producción (build), nunca en `ng serve` — el mismo
     // Service Worker sirve como PWA offline shell Y como receptor de Web
     // Push (`SwPush`) — nunca un segundo Service Worker aparte.
+    //
+    // `registerImmediately`, NO `registerWhenStable` (el default de Angular):
+    // verificado en vivo en producción que `registerWhenStable:30000` tardaba
+    // el techo completo de 30s en registrar el Service Worker en esta landing
+    // — `ApplicationRef.whenStable()` nunca "gana" la carrera contra el
+    // timeout, porque la página tiene actividad continua dentro de la zona de
+    // Angular (temporizadores/observers del carrusel de noticias y de
+    // `RevealOnScrollDirective`) que impide que la app se considere
+    // "estable". Con el banner de notificaciones visible desde el primer
+    // segundo, casi cualquier clic en "Activar notificaciones" ocurría ANTES
+    // de que el Service Worker existiera — `SwPush.requestSubscription()`
+    // simplemente se quedaba colgado (nunca resuelve ni rechaza) hasta que el
+    // registro finalmente ocurría, hasta 30s después, lo cual explicaba
+    // activaciones que parecían fallar o quedarse pegadas según qué tan
+    // rápido el visitante hacía clic. `registerImmediately` no bloquea el
+    // arranque de la app (el registro ocurre en segundo plano) y elimina esa
+    // ventana de carrera por completo.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      registrationStrategy: 'registerImmediately',
     }),
   ]
 };

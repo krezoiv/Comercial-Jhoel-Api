@@ -49,6 +49,16 @@ export class WebPushSenderService implements PushSender, OnModuleInit {
         title: payload.title,
         body: payload.body,
         icon: payload.icon,
+        // `requireInteraction`/`vibrate` son opciones estándar de
+        // `NotificationOptions` que Angular reenvía tal cual a
+        // `showNotification()` (ambas están en su propia lista blanca de
+        // campos permitidos, `NOTIFICATION_OPTION_NAMES`). Sin
+        // `requireInteraction`, Android puede mostrar la notificación con
+        // prioridad "silenciosa" (sin heads-up, solo un ícono en la barra de
+        // estado) — fácil de no notar la primera vez, sobre todo en el
+        // primer push que recibe un dispositivo nuevo.
+        requireInteraction: true,
+        vibrate: [200, 100, 200],
         data: {
           onActionClick: {
             default: { operation: 'focusLastFocusedOrOpen', url: payload.onActionClickUrl },
