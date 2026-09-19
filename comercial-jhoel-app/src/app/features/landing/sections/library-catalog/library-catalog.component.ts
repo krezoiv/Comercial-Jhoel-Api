@@ -5,7 +5,7 @@ import { PublicCatalogProduct } from '../../../../core/models';
 import { PublicProductCatalogService } from '../../../../core/services/public-product-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
-import { CatalogProductCardComponent } from '../shared/catalog-product-card/catalog-product-card.component';
+import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
 
 /**
  * Sección "LIBRERÍA" de la landing pública — catálogo puramente informativo
@@ -20,7 +20,7 @@ import { CatalogProductCardComponent } from '../shared/catalog-product-card/cata
     SectionComponent,
     SectionHeadingComponent,
     RevealOnScrollDirective,
-    CatalogProductCardComponent,
+    CatalogProductCarouselComponent,
     ImageLightboxComponent,
   ],
   templateUrl: './library-catalog.component.html',

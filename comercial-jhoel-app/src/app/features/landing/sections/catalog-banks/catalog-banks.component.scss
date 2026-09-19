@@ -7,7 +7,9 @@
 .catalog-banks__glow {
   position: absolute;
   top: -6rem;
-  right: -8rem;
+  // Offset horizontal reducido a propósito (antes -8rem) — ver el mismo
+  // comentario en phones.component.scss.
+  right: -3rem;
   width: 26rem;
   height: 26rem;
   border-radius: 50%;
@@ -18,32 +20,12 @@
   opacity: 0.3;
 }
 
-.catalog-banks__grid {
+.catalog-banks__carousel {
   position: relative;
   z-index: 1;
   margin-top: var(--space-10);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-
-  @include bp.respond(sm) {
-    grid-template-columns: repeat(2, 1fr);
-  }
 
   @include bp.respond(lg) {
-    grid-template-columns: repeat(3, 1fr);
     margin-top: var(--space-12);
-  }
-
-  @include bp.respond(xl) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.catalog-banks__item {
-  height: 26rem;
-
-  @include bp.respond(sm) {
-    height: 28rem;
   }
 }

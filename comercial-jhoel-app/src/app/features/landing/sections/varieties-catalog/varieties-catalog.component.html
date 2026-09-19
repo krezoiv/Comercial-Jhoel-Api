@@ -10,17 +10,14 @@
       />
     </div>
 
-    <div class="varieties-catalog__grid" appRevealOnScroll [revealDelay]="80">
-      @for (product of products(); track product.id) {
-        <div class="varieties-catalog__item">
-          <app-catalog-product-card
-            [product]="product"
-            [showInterestButton]="true"
-            (interest)="onRequestInterest(product)"
-            (imageZoom)="onImageZoom($event)"
-          />
-        </div>
-      }
+    <div class="varieties-catalog__carousel" appRevealOnScroll [revealDelay]="80">
+      <app-catalog-product-carousel
+        [products]="products()"
+        [showInterestButton]="true"
+        ariaLabel="Catálogo de variedades y accesorios"
+        (interest)="onRequestInterest($event)"
+        (imageZoom)="onImageZoom($event)"
+      />
     </div>
   </app-section>
 }

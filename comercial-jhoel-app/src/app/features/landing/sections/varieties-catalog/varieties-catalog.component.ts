@@ -5,7 +5,7 @@ import { PublicCatalogProduct } from '../../../../core/models';
 import { PublicProductCatalogService } from '../../../../core/services/public-product-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
-import { CatalogProductCardComponent } from '../shared/catalog-product-card/catalog-product-card.component';
+import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
 import { ProductInterestModalComponent } from './components/product-interest-modal/product-interest-modal.component';
 
 /**
@@ -21,7 +21,7 @@ import { ProductInterestModalComponent } from './components/product-interest-mod
     SectionComponent,
     SectionHeadingComponent,
     RevealOnScrollDirective,
-    CatalogProductCardComponent,
+    CatalogProductCarouselComponent,
     ProductInterestModalComponent,
     ImageLightboxComponent,
   ],

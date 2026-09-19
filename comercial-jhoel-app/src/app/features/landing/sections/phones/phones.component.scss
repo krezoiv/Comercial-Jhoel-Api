@@ -17,7 +17,13 @@
   width: 26rem;
   height: 26rem;
   top: -6rem;
-  right: -8rem;
+  // Offset horizontal reducido a propósito (antes -8rem) — `.section` ya
+  // recorta con `overflow-x: hidden`, pero un offset grande deja mucho
+  // contenido pintado fuera del viewport que algunos navegadores móviles
+  // pueden seguir revelando al hacer pinch-zoom y desplazarse (peculiaridad
+  // real del compositor, no del layout). Reducir el offset ataca la causa
+  // de raíz en vez de depender solo del recorte.
+  right: -3rem;
   background: radial-gradient(circle, var(--color-primary-300) 0%, transparent 70%);
   opacity: 0.35;
 }
@@ -26,7 +32,7 @@
   width: 22rem;
   height: 22rem;
   bottom: -4rem;
-  left: -6rem;
+  left: -2rem;
   background: radial-gradient(circle, var(--color-accent-gold-soft) 0%, transparent 70%);
   opacity: 0.3;
 }

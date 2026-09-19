@@ -10,16 +10,13 @@
       />
     </div>
 
-    <div class="library-catalog__grid" appRevealOnScroll [revealDelay]="80">
-      @for (product of products(); track product.id) {
-        <div class="library-catalog__item">
-          <app-catalog-product-card
-            [product]="product"
-            [showInterestButton]="false"
-            (imageZoom)="onImageZoom($event)"
-          />
-        </div>
-      }
+    <div class="library-catalog__carousel" appRevealOnScroll [revealDelay]="80">
+      <app-catalog-product-carousel
+        [products]="products()"
+        [showInterestButton]="false"
+        ariaLabel="Catálogo de librería"
+        (imageZoom)="onImageZoom($event)"
+      />
     </div>
   </app-section>
 }

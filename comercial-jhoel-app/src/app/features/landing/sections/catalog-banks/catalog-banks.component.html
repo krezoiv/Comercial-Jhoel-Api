@@ -10,12 +10,8 @@
       />
     </div>
 
-    <div class="catalog-banks__grid" appRevealOnScroll [revealDelay]="80">
-      @for (bank of banks(); track bank.id) {
-        <div class="catalog-banks__item">
-          <app-bank-card [bank]="bank" (imageZoom)="onImageZoom($event)" />
-        </div>
-      }
+    <div class="catalog-banks__carousel" appRevealOnScroll [revealDelay]="80">
+      <app-bank-carousel [banks]="banks()" (imageZoom)="onImageZoom($event)" />
     </div>
   </app-section>
 }

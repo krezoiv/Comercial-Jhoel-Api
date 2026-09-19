@@ -40,7 +40,14 @@
   width: 32rem;
   height: 32rem;
   top: -10rem;
-  right: -8rem;
+  // Offset horizontal reducido a propósito (antes -8rem) — `.hero` ya tiene
+  // `overflow: hidden`, pero un offset tan grande deja mucho contenido
+  // pintado fuera del viewport que el recorte solo oculta a zoom normal;
+  // algunos navegadores móviles pueden seguir revelándolo al hacer
+  // pinch-zoom y desplazarse (una peculiaridad real del compositor, no del
+  // layout — por eso nunca aparecía en `scrollWidth`). Reducir el offset
+  // ataca la causa de raíz en vez de depender solo del recorte.
+  right: -3rem;
   background: radial-gradient(circle, var(--color-primary-600) 0%, transparent 70%);
 }
 
@@ -48,7 +55,7 @@
   width: 24rem;
   height: 24rem;
   bottom: -8rem;
-  left: -6rem;
+  left: -2rem;
   background: radial-gradient(circle, var(--color-accent-gold) 0%, transparent 70%);
   opacity: 0.25;
 }

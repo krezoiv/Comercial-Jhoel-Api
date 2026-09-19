@@ -5,7 +5,7 @@ import { PublicCatalogBank } from '../../../../core/models';
 import { PublicCatalogBankService } from '../../../../core/services/public-catalog-bank.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
-import { BankCardComponent } from './components/bank-card/bank-card.component';
+import { BankCarouselComponent } from './components/bank-carousel/bank-carousel.component';
 
 /**
  * Sección "BANCOS" de la landing pública — catálogo informativo con flip
@@ -17,7 +17,7 @@ import { BankCardComponent } from './components/bank-card/bank-card.component';
 @Component({
   selector: 'app-catalog-banks',
   standalone: true,
-  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, BankCardComponent, ImageLightboxComponent],
+  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, BankCarouselComponent, ImageLightboxComponent],
   templateUrl: './catalog-banks.component.html',
   styleUrl: './catalog-banks.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
