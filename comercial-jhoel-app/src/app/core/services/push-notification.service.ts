@@ -56,9 +56,36 @@ export class PushNotificationService {
    */
   readonly permissionState = signal<PushPermissionState>(this.computePermissionState());
 
+  /**
+   * `true` en cuanto `navigator.serviceWorker.ready` resuelve de verdad —
+   * separado de `swPush.isEnabled` (que solo indica que la API existe, no
+   * que el registro ya esté activo; ver el doc comment de `computePermissionState`).
+   */
+  private swReady = false;
+
+  /**
+   * Clave pública VAPID, pre-cargada al construir el servicio — NUNCA
+   * esperada dentro del handler de clic. Ver el doc comment de `subscribe()`
+   * para la razón exacta: es la causa real de que Safari (iOS/iPadOS/macOS)
+   * rechazara silenciosamente el permiso mientras Chrome/Android sí
+   * funcionaban.
+   */
+  private cachedVapidPublicKey: string | null = null;
+
   constructor() {
     if (this.swPush.isEnabled) {
       this.swPush.subscription.subscribe((subscription) => this.isSubscribed.set(subscription !== null));
+
+      // Se dispara apenas se construye el servicio (típicamente al montar el
+      // banner, muy antes de cualquier clic real — el visitante necesita
+      // tiempo para leer el banner) para que `subscribe()` nunca tenga que
+      // esperar la red dentro del handler de clic.
+      this.publicNewsSubscriptionService.getVapidPublicKey().subscribe({
+        next: (key) => (this.cachedVapidPublicKey = key),
+        error: () => {
+          /* subscribe() reintenta la petición si esta precarga falló */
+        },
+      });
 
       // `computePermissionState()` de arriba se evaluó antes de que el
       // Service Worker necesariamente estuviera activo — `serviceWorker.
@@ -66,7 +93,10 @@ export class PushNotificationService {
       // "verifica que el Service Worker esté realmente registrado/activo")
       // y dispara un recálculo en cuanto eso ocurre de verdad.
       navigator.serviceWorker?.ready.then(
-        () => this.refreshPermissionState(),
+        () => {
+          this.swReady = true;
+          this.refreshPermissionState();
+        },
         () => this.refreshPermissionState(),
       );
 
@@ -87,7 +117,8 @@ export class PushNotificationService {
   }
 
   private computePermissionState(): PushPermissionState {
-    if (!this.swPush.isEnabled || typeof Notification === 'undefined') {
+    const hasPushManager = typeof PushManager !== 'undefined';
+    if (!this.swPush.isEnabled || typeof Notification === 'undefined' || !hasPushManager) {
       // DEBUG TEMPORAL — diagnóstico del "navegador no compatible" reportado
       // en móvil (retirar este bloque una vez confirmada la causa real en el
       // dispositivo afectado). Imprime exactamente qué capacidad falló, en
@@ -96,14 +127,14 @@ export class PushNotificationService {
       console.warn('[push-debug] permissionState=unsupported —', {
         isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'n/a',
         hasNavigatorServiceWorker: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
-        hasPushManager: typeof window !== 'undefined' && 'PushManager' in window,
+        hasPushManager,
         hasNotification: typeof Notification !== 'undefined',
         swPushIsEnabled: this.swPush.isEnabled,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
       });
       return 'unsupported';
     }
-    if (this.isIosSafariNotInstalled()) {
+    if (this.isIosNeedingInstall()) {
       return 'ios-needs-install';
     }
     if (Notification.permission === 'granted') {
@@ -111,6 +142,9 @@ export class PushNotificationService {
     }
     if (Notification.permission === 'denied') {
       return 'denied';
+    }
+    if (!this.swReady) {
+      return 'sw-pending';
     }
     return 'not-requested';
   }
@@ -122,8 +156,16 @@ export class PushNotificationService {
    * el navegador la rechaza silenciosamente sin mostrar ningún prompt.
    * Detectar esto de antemano evita prometerle al visitante un botón que,
    * en pestaña normal, nunca podría funcionar.
+   *
+   * NUNCA aplica a macOS (confirmado, no asumido — ver WebKit/Apple Developer
+   * docs sobre Web Push en Safari 16.1/macOS Ventura): a diferencia de
+   * iOS/iPadOS, Mac Safari SÍ permite pedir el permiso de Push desde una
+   * pestaña normal, sin necesidad de "Agregar al Dock" — por eso el heurístico
+   * de abajo excluye explícitamente un Mac real (`maxTouchPoints === 0`) del
+   * caso "iPad en modo escritorio" (que SÍ reporta un user-agent de
+   * Macintosh pero es táctil).
    */
-  private isIosSafariNotInstalled(): boolean {
+  private isIosNeedingInstall(): boolean {
     const ua = window.navigator.userAgent;
     const isIPadOrIPhone = /iPad|iPhone|iPod/.test(ua);
     const isIPadOsOnMac = ua.includes('Macintosh') && navigator.maxTouchPoints > 1;
@@ -136,11 +178,30 @@ export class PushNotificationService {
     return !isStandalone;
   }
 
+  /**
+   * CRÍTICO para Safari (iOS/iPadOS/macOS), causa raíz real de "funciona en
+   * Chrome/Android pero no en Apple" — confirmado, no asumido: Safari (y
+   * Firefox) exigen que el permiso de Push se pida dentro del mismo "user
+   * activation" del clic; cualquier `await` sobre una operación
+   * genuinamente asíncrona (una petición de red) ANTES de pedir el permiso
+   * hace que WebKit considere que el permiso ya no viene de una acción
+   * directa del usuario y lo rechace en silencio — sin mostrar el prompt
+   * nativo y sin lanzar un error explícito. Chrome es mucho más permisivo
+   * con esto, por eso el bug era invisible en Android/Chrome.
+   *
+   * La corrección es usar `cachedVapidPublicKey` (precargado en el
+   * constructor, mucho antes de que exista un clic real) para que
+   * `swPush.requestSubscription()` — la llamada que internamente dispara
+   * `Notification.requestPermission()`/`PushManager.subscribe()` — sea la
+   * PRIMERA operación asíncrona real de todo este método, sin ningún
+   * `await` de red por delante. El `await` a `getVapidPublicKey()` solo se
+   * usa como último recurso si la precarga todavía no había terminado.
+   */
   async subscribe(typeIds: string[]): Promise<void> {
     this.errorMessage.set(null);
     this.isBusy.set(true);
     try {
-      const publicKey = await firstValueFrom(this.publicNewsSubscriptionService.getVapidPublicKey());
+      const publicKey = this.cachedVapidPublicKey ?? (await firstValueFrom(this.publicNewsSubscriptionService.getVapidPublicKey()));
       if (!publicKey) {
         throw new Error('El servicio de notificaciones no está disponible en este momento. Inténtalo más tarde.');
       }

@@ -19,11 +19,19 @@
         @case ('ios-needs-install') {
           <div class="push-card__message">
             <app-icon name="smartphone" [size]="28" />
-            <p>
-              En iPhone/iPad, primero agrega este sitio a tu pantalla de inicio para poder recibir notificaciones:
-              toca el botón <strong>Compartir</strong> de Safari y luego <strong>"Agregar a pantalla de inicio"</strong>.
-              Después ábrelo desde el ícono que se creó ahí.
-            </p>
+            <p>Para activar notificaciones en iPhone/iPad, agrega Comercial Jhoel a tu pantalla de inicio:</p>
+            <ol class="install-steps">
+              <li>Pulsa <strong>Compartir</strong> en Safari.</li>
+              <li>Selecciona <strong>"Agregar a pantalla de inicio"</strong>.</li>
+              <li>Abre Comercial Jhoel desde el nuevo ícono.</li>
+              <li>Activa las notificaciones desde ahí.</li>
+            </ol>
+          </div>
+        }
+        @case ('sw-pending') {
+          <div class="push-card__message">
+            <app-icon name="clock" [size]="28" />
+            <p>Preparando las notificaciones… esto solo toma un momento.</p>
           </div>
         }
         @case ('denied') {
