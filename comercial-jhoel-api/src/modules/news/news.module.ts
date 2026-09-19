@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LikesModule } from '../likes/likes.module';
 import { NewsTypesModule } from '../news-types/news-types.module';
+import { NewsSubscriptionsModule } from '../news-subscriptions/news-subscriptions.module';
 import { NewsArticleOrmEntity } from './infrastructure/persistence/news-article.orm-entity';
 import { TypeOrmNewsArticleRepository } from './infrastructure/persistence/typeorm-news-article.repository';
 import { NEWS_ARTICLE_REPOSITORY } from './domain/repositories/news-article.repository';
@@ -27,7 +28,7 @@ import { PublicNewsController } from './presentation/controllers/public-news.con
  * WhatsApp, sin Krediya. `description` es siempre texto plano.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsArticleOrmEntity]), LikesModule, NewsTypesModule],
+  imports: [TypeOrmModule.forFeature([NewsArticleOrmEntity]), LikesModule, NewsTypesModule, NewsSubscriptionsModule],
   controllers: [NewsController, PublicNewsController],
   providers: [
     { provide: NEWS_ARTICLE_REPOSITORY, useClass: TypeOrmNewsArticleRepository },

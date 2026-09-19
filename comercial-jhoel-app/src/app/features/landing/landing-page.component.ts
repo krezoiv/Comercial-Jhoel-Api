@@ -8,6 +8,7 @@ import { LibraryCatalogComponent } from './sections/library-catalog/library-cata
 import { VarietiesCatalogComponent } from './sections/varieties-catalog/varieties-catalog.component';
 import { NewsComponent } from './sections/news/news.component';
 import { NewsSubscriptionComponent } from './sections/news-subscription/news-subscription.component';
+import { PushNotificationBannerComponent } from './sections/push-notification-banner/push-notification-banner.component';
 import { CatalogPreviewComponent } from './sections/catalog-preview/catalog-preview.component';
 import { CatalogBanksComponent } from './sections/catalog-banks/catalog-banks.component';
 import { BankAgentsComponent } from './sections/bank-agents/bank-agents.component';
@@ -26,6 +27,7 @@ import { ContactComponent } from './sections/contact/contact.component';
     VarietiesCatalogComponent,
     NewsComponent,
     NewsSubscriptionComponent,
+    PushNotificationBannerComponent,
     CatalogPreviewComponent,
     CatalogBanksComponent,
     BankAgentsComponent,

@@ -5,8 +5,8 @@ export class NewsSubscriberOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'whatsapp_number', type: 'varchar', length: 20 })
-  whatsappNumber: string;
+  @Column({ name: 'whatsapp_number', type: 'varchar', length: 20, nullable: true })
+  whatsappNumber: string | null;
 
   @Column({ type: 'varchar', length: 150, nullable: true })
   name: string | null;

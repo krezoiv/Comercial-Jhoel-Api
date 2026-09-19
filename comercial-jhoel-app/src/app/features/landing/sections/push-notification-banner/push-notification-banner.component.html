@@ -1,0 +1,70 @@
+@if (!loadingTypes() && types().length > 0) {
+  <app-section sectionId="notificaciones-push" tone="light" spacing="lg">
+    <div appRevealOnScroll>
+      <app-section-heading
+        eyebrow="Notificaciones"
+        title="🔔 Mantente informado"
+        subtitle="Recibe una notificación en tu navegador cuando publiquemos noticias nuevas — sin necesidad de WhatsApp."
+      />
+    </div>
+
+    <div class="push-card" appRevealOnScroll [revealDelay]="80">
+      @switch (permissionState()) {
+        @case ('unsupported') {
+          <div class="push-card__message">
+            <app-icon name="alert-circle" [size]="28" />
+            <p>Tu navegador no es compatible con notificaciones push. Prueba con una versión reciente de Chrome, Edge o Firefox.</p>
+          </div>
+        }
+        @case ('ios-needs-install') {
+          <div class="push-card__message">
+            <app-icon name="smartphone" [size]="28" />
+            <p>
+              En iPhone/iPad, primero agrega este sitio a tu pantalla de inicio para poder recibir notificaciones:
+              toca el botón <strong>Compartir</strong> de Safari y luego <strong>"Agregar a pantalla de inicio"</strong>.
+              Después ábrelo desde el ícono que se creó ahí.
+            </p>
+          </div>
+        }
+        @case ('denied') {
+          <div class="push-card__message">
+            <app-icon name="x-circle" [size]="28" />
+            <p>Bloqueaste las notificaciones para este sitio. Para volver a activarlas, habilítalas desde la configuración de permisos de tu navegador para comercialjhoel.com.</p>
+          </div>
+        }
+        @default {
+          @if (isSubscribed()) {
+            <div class="push-card__subscribed">
+              <app-icon name="check-circle" [size]="28" />
+              <p>Ya recibes notificaciones de noticias en este dispositivo.</p>
+              <app-button variant="ghost" [disabled]="pushService.isBusy()" (click)="deactivate()">
+                {{ pushService.isBusy() ? 'Desactivando…' : 'Desactivar notificaciones' }}
+              </app-button>
+            </div>
+          } @else {
+            <div class="field">
+              <span class="field__label">¿Qué tipo de noticias deseas recibir?</span>
+              <div class="type-list">
+                @for (type of types(); track type.id) {
+                  <label class="type-option">
+                    <input type="checkbox" [checked]="isChecked(type.id)" (change)="toggleType(type.id)" />
+                    <span>{{ typeLabel(type) }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            @if (pushService.errorMessage()) {
+              <p class="form-error">{{ pushService.errorMessage() }}</p>
+            }
+
+            <app-button variant="primary" [disabled]="!canActivate" (click)="activate()" fullWidth>
+              <app-icon name="bell" [size]="16" />
+              {{ pushService.isBusy() ? 'Activando…' : 'Activar notificaciones' }}
+            </app-button>
+          }
+        }
+      }
+    </div>
+  </app-section>
+}

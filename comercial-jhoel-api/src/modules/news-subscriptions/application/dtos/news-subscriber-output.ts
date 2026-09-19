@@ -3,12 +3,13 @@ import {
   NewsSubscriberListItem,
   NewsSubscriberTypeSummary,
 } from '../../domain/repositories/news-subscriber.repository';
+import { PushSubscriptionSummary } from '../../domain/repositories/news-push-subscription.repository';
 import { maskWhatsappNumber } from '../utils/mask-whatsapp-number';
 
-/** Shape admin — número siempre enmascarado, nunca completo (punto 30 del pedido). */
+/** Shape admin — número siempre enmascarado, nunca completo (punto 30 del pedido). `null` = suscriptor solo-push, sin WhatsApp. */
 export interface NewsSubscriberOutput {
   id: string;
-  whatsappMasked: string;
+  whatsappMasked: string | null;
   name: string | null;
   isActive: boolean;
   consentGiven: boolean;
@@ -28,13 +29,20 @@ export interface NewsSubscriberAuditEntryOutput {
   createdAt: Date;
 }
 
+/** Detalle admin — igual que el listado, más la bitácora y los dispositivos push registrados (activos e inactivos). */
+export interface NewsSubscriberDetailOutput extends NewsSubscriberOutput {
+  auditLog: NewsSubscriberAuditEntryOutput[];
+  pushDevices: PushSubscriptionSummary[];
+}
+
 /**
  * Shape público — devuelto solo a quien ya posee el `manageToken` secreto
  * (el propio suscriptor). El número completo es seguro aquí: el token es
  * el mecanismo de autenticación, no el número (punto 19 del pedido).
+ * `null` si nunca proporcionó WhatsApp (suscriptor solo-push).
  */
 export interface SubscriptionOutput {
-  whatsappNumber: string;
+  whatsappNumber: string | null;
   name: string | null;
   manageToken: string;
   types: NewsSubscriberTypeSummary[];

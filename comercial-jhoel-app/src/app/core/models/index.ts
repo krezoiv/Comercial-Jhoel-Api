@@ -53,4 +53,5 @@ export * from './catalog-product.model';
 export * from './news-article.model';
 export * from './news-type.model';
 export * from './news-subscriber.model';
+export * from './push-notification.model';
 export * from './catalog-bank.model';

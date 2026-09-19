@@ -5,10 +5,10 @@ export class NewsSubscriberTypeSummaryDto {
   isWildcard: boolean;
 }
 
-/** Shape admin — número siempre enmascarado (punto 30 del pedido). */
+/** Shape admin — número siempre enmascarado (punto 30 del pedido). `null` = suscriptor solo-push, sin WhatsApp. */
 export class NewsSubscriberResponseDto {
   id: string;
-  whatsappMasked: string;
+  whatsappMasked: string | null;
   name: string | null;
   isActive: boolean;
   consentGiven: boolean;
@@ -28,13 +28,22 @@ export class NewsSubscriberAuditEntryResponseDto {
   createdAt: Date;
 }
 
-export class NewsSubscriberDetailResponseDto extends NewsSubscriberResponseDto {
-  auditLog: NewsSubscriberAuditEntryResponseDto[];
+export class PushSubscriptionSummaryResponseDto {
+  id: string;
+  userAgent: string | null;
+  isActive: boolean;
+  lastSeenAt: Date | null;
+  createdAt: Date;
 }
 
-/** Shape público — solo para quien ya posee el `manageToken` secreto. */
+export class NewsSubscriberDetailResponseDto extends NewsSubscriberResponseDto {
+  auditLog: NewsSubscriberAuditEntryResponseDto[];
+  pushDevices: PushSubscriptionSummaryResponseDto[];
+}
+
+/** Shape público — solo para quien ya posee el `manageToken` secreto. `whatsappNumber: null` si nunca proporcionó WhatsApp (suscriptor solo-push). */
 export class SubscriptionResponseDto {
-  whatsappNumber: string;
+  whatsappNumber: string | null;
   name: string | null;
   manageToken: string;
   types: NewsSubscriberTypeSummaryDto[];

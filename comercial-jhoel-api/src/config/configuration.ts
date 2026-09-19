@@ -30,6 +30,15 @@ export interface CorsConfig {
   origins: string[];
 }
 
+export interface PushConfig {
+  /** Clave pública VAPID — no es secreta, se expone al frontend vía `GET /public-news-subscriptions/push/vapid-public-key`. `null` = Web Push no configurado todavía. */
+  vapidPublicKey: string | null;
+  /** Clave privada VAPID — nunca sale de este proceso; firma cada envío, jamás se expone a ningún cliente. */
+  vapidPrivateKey: string | null;
+  /** Contacto exigido por el protocolo Web Push (RFC 8292) — un `mailto:` real, no un dato inventado. */
+  vapidSubject: string;
+}
+
 export default () => ({
   app: {
     port: parseInt(process.env.PORT ?? '3000', 10),
@@ -53,4 +62,9 @@ export default () => ({
     secret: process.env.JWT_SECRET ?? 'change-me',
     expiresIn: parseInt(process.env.JWT_EXPIRES_IN ?? '86400', 10),
   } satisfies JwtConfig,
+  push: {
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? null,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? null,
+    vapidSubject: process.env.VAPID_SUBJECT ?? 'mailto:libreria.jhoel@grupoki.com',
+  } satisfies PushConfig,
 });

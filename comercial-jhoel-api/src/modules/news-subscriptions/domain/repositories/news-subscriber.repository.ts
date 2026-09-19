@@ -33,7 +33,7 @@ export interface NewsSubscriberAuditEntry {
 }
 
 export interface CreateNewsSubscriberData {
-  whatsappNumber: string;
+  whatsappNumber: string | null;
   name: string | null;
   consentAt: Date;
   typeIds: string[];

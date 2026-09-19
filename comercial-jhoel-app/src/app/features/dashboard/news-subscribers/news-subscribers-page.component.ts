@@ -93,8 +93,8 @@ export class NewsSubscribersPageComponent {
       type: activating ? 'UPDATE' : 'DELETE',
       title: activating ? 'Activar suscriptor' : 'Desactivar suscriptor',
       message: activating
-        ? `¿Desea reactivar las notificaciones para "${subscriber.name || subscriber.whatsappMasked}"?`
-        : `¿Desea desactivar las notificaciones para "${subscriber.name || subscriber.whatsappMasked}"? No se eliminará su registro.`,
+        ? `¿Desea reactivar las notificaciones para "${subscriber.name || subscriber.whatsappMasked || 'este suscriptor'}"?`
+        : `¿Desea desactivar las notificaciones para "${subscriber.name || subscriber.whatsappMasked || 'este suscriptor'}"? No se eliminará su registro.`,
     });
     if (!confirmed) {
       return;

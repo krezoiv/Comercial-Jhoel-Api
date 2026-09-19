@@ -24,4 +24,9 @@ export class NewsSubscriberTableComponent {
   @Output() clearFilters = new EventEmitter<void>();
 
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
+
+  /** Nombre para mostrar/aria-label — `whatsappMasked` es `null` para un suscriptor solo-push. */
+  displayName(subscriber: NewsSubscriber): string {
+    return subscriber.name || subscriber.whatsappMasked || 'Suscriptor push';
+  }
 }

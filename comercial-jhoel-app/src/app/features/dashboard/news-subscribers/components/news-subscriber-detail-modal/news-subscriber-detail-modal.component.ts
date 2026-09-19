@@ -35,6 +35,32 @@ export class NewsSubscriberDetailModalComponent {
     return ACTION_LABELS[action] ?? action;
   }
 
+  /** Etiqueta legible corta a partir del user-agent crudo — solo para mostrar "qué dispositivo es", nunca para lógica. */
+  deviceLabel(userAgent: string | null): string {
+    if (!userAgent) {
+      return 'Dispositivo desconocido';
+    }
+    const os = /iPhone|iPad/.test(userAgent)
+      ? 'iOS'
+      : /Android/.test(userAgent)
+        ? 'Android'
+        : /Macintosh/.test(userAgent)
+          ? 'macOS'
+          : /Windows/.test(userAgent)
+            ? 'Windows'
+            : 'Otro sistema';
+    const browser = /Edg\//.test(userAgent)
+      ? 'Edge'
+      : /Chrome\//.test(userAgent)
+        ? 'Chrome'
+        : /Firefox\//.test(userAgent)
+          ? 'Firefox'
+          : /Safari\//.test(userAgent)
+            ? 'Safari'
+            : 'navegador desconocido';
+    return `${browser} · ${os}`;
+  }
+
   close(): void {
     this.closed.emit();
   }

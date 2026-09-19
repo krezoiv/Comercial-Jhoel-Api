@@ -3,13 +3,20 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, PublicNewsType, SubscribeToNewsInput, Subscription } from '../models';
+import {
+  ApiSuccessResponse,
+  PublicNewsType,
+  RegisterPushSubscriptionInput,
+  SubscribeToNewsInput,
+  Subscription,
+} from '../models';
 
 const BASE_URL = `${environment.apiUrl}/public-news-subscriptions`;
 
 /**
  * Público, sin autenticación — backs la sección "Recibe nuestras noticias
- * por WhatsApp" de la landing y la página de autoservicio de preferencias
+ * por WhatsApp" de la landing, el banner de notificaciones push
+ * (`PushNotificationService`), y la página de autoservicio de preferencias
  * (`/noticias/preferencias/:token`). `token` nunca es el número de
  * WhatsApp — es el `manageToken` opaco devuelto al suscribirse.
  */
@@ -43,5 +50,22 @@ export class PublicNewsSubscriptionService {
 
   unsubscribe(token: string): Observable<void> {
     return this.http.post<void>(`${BASE_URL}/${token}/unsubscribe`, {});
+  }
+
+  /** Clave pública VAPID — no es secreta, `SwPush.requestSubscription` la necesita. `null` si el backend aún no la tiene configurada. */
+  getVapidPublicKey(): Observable<string | null> {
+    return this.http
+      .get<ApiSuccessResponse<{ publicKey: string | null }>>(`${BASE_URL}/push/vapid-public-key`)
+      .pipe(map((response) => response.data.publicKey));
+  }
+
+  registerPush(input: RegisterPushSubscriptionInput): Observable<Subscription> {
+    return this.http
+      .post<ApiSuccessResponse<Subscription>>(`${BASE_URL}/push/subscribe`, input)
+      .pipe(map((response) => response.data));
+  }
+
+  unregisterPush(endpoint: string): Observable<void> {
+    return this.http.post<void>(`${BASE_URL}/push/unsubscribe`, { endpoint });
   }
 }

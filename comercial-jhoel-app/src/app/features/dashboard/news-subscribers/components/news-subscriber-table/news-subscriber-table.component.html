@@ -59,7 +59,7 @@
         @for (subscriber of subscribers; track subscriber.id) {
           <tr [class.subscribers-table__row--inactive]="!subscriber.isActive">
             <td class="subscribers-table__name">{{ subscriber.name || '—' }}</td>
-            <td>{{ subscriber.whatsappMasked }}</td>
+            <td>{{ subscriber.whatsappMasked ?? 'Solo push' }}</td>
             <td>
               <div class="type-badges">
                 @for (t of subscriber.types; track t.id) {
@@ -80,7 +80,7 @@
             <td>{{ subscriber.createdAt | date: 'dd/MM/yyyy' }}</td>
             <td>
               <div class="actions">
-                <button type="button" class="action-btn" (click)="view.emit(subscriber)" [attr.aria-label]="'Ver ' + (subscriber.name || subscriber.whatsappMasked)">
+                <button type="button" class="action-btn" (click)="view.emit(subscriber)" [attr.aria-label]="'Ver ' + displayName(subscriber)">
                   <app-icon name="eye" [size]="16" />
                 </button>
                 <button
@@ -88,7 +88,7 @@
                   class="action-btn"
                   [class.action-btn--danger]="subscriber.isActive"
                   (click)="toggleActive.emit(subscriber)"
-                  [attr.aria-label]="(subscriber.isActive ? 'Desactivar ' : 'Activar ') + (subscriber.name || subscriber.whatsappMasked)"
+                  [attr.aria-label]="(subscriber.isActive ? 'Desactivar ' : 'Activar ') + displayName(subscriber)"
                 >
                   <app-icon [name]="subscriber.isActive ? 'trash-2' : 'rotate-ccw'" [size]="16" />
                 </button>
@@ -105,8 +105,8 @@
       <div class="subscriber-card" [class.subscriber-card--inactive]="!subscriber.isActive">
         <div class="subscriber-card__header">
           <div>
-            <p class="subscriber-card__name">{{ subscriber.name || subscriber.whatsappMasked }}</p>
-            <p class="subscriber-card__meta">{{ subscriber.whatsappMasked }} · {{ subscriber.createdAt | date: 'dd/MM/yyyy' }}</p>
+            <p class="subscriber-card__name">{{ displayName(subscriber) }}</p>
+            <p class="subscriber-card__meta">{{ subscriber.whatsappMasked ?? 'Solo push' }} · {{ subscriber.createdAt | date: 'dd/MM/yyyy' }}</p>
           </div>
           <app-badge [tone]="subscriber.isActive ? 'success' : 'danger'">{{ subscriber.isActive ? 'Activo' : 'Inactivo' }}</app-badge>
         </div>

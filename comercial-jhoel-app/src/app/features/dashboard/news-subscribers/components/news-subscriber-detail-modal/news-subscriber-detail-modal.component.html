@@ -2,7 +2,7 @@
   <div class="modal-backdrop" (click)="close()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal__header">
-        <h2 class="modal__title">{{ subscriber.name || subscriber.whatsappMasked }}</h2>
+        <h2 class="modal__title">{{ subscriber.name || subscriber.whatsappMasked || 'Suscriptor push' }}</h2>
         <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
           <app-icon name="close" [size]="18" />
         </button>
@@ -11,7 +11,7 @@
       <dl class="details">
         <div class="details__row">
           <dt>WhatsApp</dt>
-          <dd>{{ subscriber.whatsappMasked }}</dd>
+          <dd>{{ subscriber.whatsappMasked ?? 'Sin WhatsApp (solo notificaciones push)' }}</dd>
         </div>
         <div class="details__row">
           <dt>Estado</dt>
@@ -43,6 +43,26 @@
           <dd>{{ subscriber.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
         </div>
       </dl>
+
+      <h3 class="modal__subtitle">Dispositivos con notificaciones push</h3>
+      <ul class="timeline">
+        @for (device of subscriber.pushDevices; track device.id) {
+          <li class="timeline__item">
+            <p class="timeline__action">
+              {{ deviceLabel(device.userAgent) }}
+              <app-badge [tone]="device.isActive ? 'success' : 'neutral-dark'">{{ device.isActive ? 'Activo' : 'Inactivo' }}</app-badge>
+            </p>
+            <p class="timeline__meta">
+              Registrado {{ device.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              @if (device.lastSeenAt) {
+                · última actividad {{ device.lastSeenAt | date: 'dd/MM/yyyy HH:mm' }}
+              }
+            </p>
+          </li>
+        } @empty {
+          <li class="muted">Sin dispositivos con notificaciones push registrados.</li>
+        }
+      </ul>
 
       <h3 class="modal__subtitle">Historial</h3>
       <ul class="timeline">
