@@ -12,6 +12,15 @@
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
 
+  <!-- Buena práctica de Apple para PWAs instaladas en iOS/iPadOS (no es la
+       causa de que "Agregar a pantalla de inicio" no aparezca en el
+       Compartir de Safari — esa función es nativa del navegador y no
+       depende de estos meta tags — pero sí controla cómo se ve la app una
+       vez instalada y abierta desde el ícono). -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Comercial Jhoel">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
