@@ -20,3 +20,4 @@ export * from './line-chart/line-chart.component';
 export * from './donut-chart/donut-chart.component';
 export * from './gauge-ring/gauge-ring.component';
 export * from './image-lightbox/image-lightbox.component';
+export * from './update-available-banner/update-available-banner.component';

@@ -1,0 +1,10 @@
+@if (visible()) {
+  <div class="update-banner" role="status">
+    <app-icon name="refresh-cw" [size]="20" />
+    <p>Hay una nueva versión disponible.</p>
+    <div class="update-banner__actions">
+      <app-button variant="primary" size="sm" (click)="updateNow()">Actualizar ahora</app-button>
+      <app-button variant="ghost" size="sm" (click)="dismiss()">Más tarde</app-button>
+    </div>
+  </div>
+}

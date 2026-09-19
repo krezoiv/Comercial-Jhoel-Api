@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.update-banner {
+  position: fixed;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: var(--z-toast);
+  margin-inline: auto;
+  max-width: 28rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  background: var(--color-ink-950);
+  color: var(--color-text-on-dark);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4) var(--space-5);
+
+  app-icon {
+    flex-shrink: 0;
+    color: var(--color-accent-cyan);
+  }
+
+  p {
+    flex: 1;
+    min-width: 10rem;
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+}
+
+.update-banner__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}

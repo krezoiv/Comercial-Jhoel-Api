@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
+import { AppUpdateService } from './core/services/app-update.service';
 import { FragmentScrollService } from './core/services/fragment-scroll.service';
 import { KeyboardShortcutsService } from './core/services/keyboard-shortcuts.service';
 import { NavbarComponent } from './layout/navbar/navbar.component';
@@ -17,6 +18,7 @@ import {
   ConfirmDialogComponent,
   PdfPromptModalComponent,
   ToastContainerComponent,
+  UpdateAvailableBannerComponent,
 } from './shared/ui';
 
 const CHROME_LESS_PREFIXES = ['/dashboard', '/login'];
@@ -31,6 +33,7 @@ const CHROME_LESS_PREFIXES = ['/dashboard', '/login'];
     ToastContainerComponent,
     ConfirmDialogComponent,
     PdfPromptModalComponent,
+    UpdateAvailableBannerComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -52,6 +55,9 @@ export class AppComponent {
   constructor() {
     inject(FragmentScrollService).listen();
     inject(KeyboardShortcutsService).listen();
+    // Efecto secundario solo en su constructor (versionUpdates/visibilitychange/
+    // interval) — nunca necesita que nadie llame un método suyo.
+    inject(AppUpdateService);
     this.router.events
       .pipe(
         filter(

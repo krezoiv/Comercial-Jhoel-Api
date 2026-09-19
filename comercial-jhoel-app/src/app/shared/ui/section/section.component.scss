@@ -2,6 +2,23 @@
 
 .section {
   position: relative;
+  // Varias secciones (Teléfonos, Librería, Variedades, Bancos...) proyectan
+  // un "glow" decorativo posicionado con `position: absolute` y offsets
+  // negativos (`left/right: -8rem`) directamente como contenido — dependen
+  // de que ESTE elemento (el `position: relative` de arriba) sea su
+  // contenedor de recorte, igual que ya hacía `.hero` de forma local. Sin
+  // este `overflow-x: hidden`, esos glows agrandaban `document.documentElement.
+  // scrollWidth` más allá del viewport real — confirmado y medido en vivo:
+  // exactamente 128px de overflow horizontal (el mismo valor que `-8rem`)
+  // en producción, reproducible tanto en desktop como en 390px de ancho
+  // móvil. Nunca se nota a zoom 1x (los navegadores no dejan hacer scroll
+  // horizontal con normalidad), pero se vuelve visible/recortable en cuanto
+  // el usuario hace pinch-zoom y puede desplazarse dentro del viewport
+  // visual ampliado — de ahí el padding lateral "perdido" reportado.
+  //
+  // Solo `overflow-x` (no `overflow` completo): deja intacto cualquier
+  // overflow vertical legítimo (p. ej. un futuro dropdown) sin tocarlo.
+  overflow-x: hidden;
   scroll-margin-top: var(--navbar-height, 76px);
 }
 

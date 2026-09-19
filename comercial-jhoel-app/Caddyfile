@@ -4,7 +4,7 @@ root * /usr/share/caddy
 encode gzip
 
 # `no-cache` (revalida siempre con ETag antes de reusar la copia guardada,
-# no "nunca cachear") aplicado a TODO — no solo a una ruta como
+# no "nunca cachear") aplicado por defecto a TODO — no solo a una ruta como
 # `/index.html`, porque `try_files` reescribe internamente `/`, `/dashboard`,
 # etc. hacia index.html *antes* de que un matcher por ruta literal pueda
 # distinguirlos, así que un header condicionado a una sola ruta nunca cubre
@@ -12,11 +12,36 @@ encode gzip
 # carga la URL real del backend (ver src/main.ts) — un navegador que
 # cacheara `runtime-config.js` o `index.html` de forma agresiva seguiría
 # apuntando a una URL vieja después de cambiar `API_URL` y redesplegar;
-# esto fue un bug real en producción, no una precaución teórica. Los
-# bundles con hash (`chunk-XXXX.js`) no sufren por esto — cada build tiene
-# nombres nuevos, y `no-cache` solo agrega una revalidación barata, nunca
-# una recarga completa.
-header Cache-Control "no-cache, must-revalidate"
+# esto fue un bug real en producción, no una precaución teórica.
+#
+# CRÍTICO para que el Service Worker de Angular pueda detectar una versión
+# nueva (`AppUpdateService`/`SwUpdate`): `ngsw-worker.js` y `ngsw.json` NO
+# tienen hash en el nombre (a propósito — el navegador siempre debe pedirlos
+# por ese mismo nombre para poder comparar versiones), así que TAMBIÉN deben
+# quedar bajo `no-cache` — nunca deben cachearse fuerte, o el propio Service
+# Worker se quedaría preguntando por una copia vieja para siempre.
+#
+# Los bundles con hash de contenido en el nombre (outputHashing: all —
+# `main-XXXX.js`, `polyfills-XXXX.js`, `styles-XXXX.css`, `chunk-XXXX.js`)
+# SÍ pueden cachearse fuerte e "immutable": un build nuevo siempre genera
+# nombres nuevos, así que el mismo nombre de archivo JAMÁS cambia de
+# contenido bajo un mismo nombre — cero riesgo de servir una versión vieja.
+#
+# Las dos reglas de abajo usan matchers MUTUAMENTE EXCLUYENTES (`path` /
+# `not path`), nunca "la de abajo pisa a la de arriba" — verificado
+# directamente con `caddy adapt`: Caddy reordena las directivas `header`
+# poniendo primero las que tienen matcher y al final la que no lo tiene,
+# sin importar el orden en que se escriban en este archivo, así que una
+# regla incondicional + una regla específica para el MISMO header nunca se
+# comportan de forma predecible — la incondicional termina ganando siempre.
+@hashed_bundles {
+	path /main-*.js /polyfills-*.js /styles-*.css /chunk-*.js
+}
+@not_hashed_bundles {
+	not path /main-*.js /polyfills-*.js /styles-*.css /chunk-*.js
+}
+header @not_hashed_bundles Cache-Control "no-cache, must-revalidate"
+header @hashed_bundles Cache-Control "public, max-age=31536000, immutable"
 
 # SPA fallback: Angular usa PathLocationStrategy (rutas reales, no /#/...),
 # así que cualquier ruta no reconocida como archivo estático (/dashboard,
