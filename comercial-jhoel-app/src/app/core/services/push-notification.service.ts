@@ -117,12 +117,28 @@ export class PushNotificationService {
   }
 
   private computePermissionState(): PushPermissionState {
+    // CRÍTICO, en ese orden — bug real encontrado en vivo en iPhone: en una
+    // pestaña normal de Safari (sin instalar como PWA), iOS NO expone
+    // `PushManager` (y potencialmente tampoco `Notification` de la forma
+    // que esperamos) como API global — son capacidades que Apple reserva
+    // exclusivamente para un sitio ya agregado a la pantalla de inicio. Si
+    // el chequeo de "unsupported" corre primero (como estaba antes), CUALQUIER
+    // iPhone/iPad en pestaña normal cae ahí y nunca llega a ver el mensaje
+    // correcto de "instala la PWA" — parece "navegador incompatible" cuando
+    // en realidad solo le falta instalarse. Por eso la detección de
+    // iOS/iPadOS-sin-instalar va SIEMPRE primero, sin depender de ninguna de
+    // esas APIs — un iPhone/iPad no instalado nunca debe poder caer en
+    // 'unsupported'.
+    if (this.isIosNeedingInstall()) {
+      return 'ios-needs-install';
+    }
+
     const hasPushManager = typeof PushManager !== 'undefined';
     if (!this.swPush.isEnabled || typeof Notification === 'undefined' || !hasPushManager) {
       // DEBUG TEMPORAL — diagnóstico del "navegador no compatible" reportado
-      // en móvil (retirar este bloque una vez confirmada la causa real en el
-      // dispositivo afectado). Imprime exactamente qué capacidad falló, en
-      // vez de asumir cuál es.
+      // en dispositivos reales (retirar este bloque una vez confirmado que
+      // ya no hace falta). Imprime exactamente qué capacidad falló, en vez
+      // de asumir cuál es.
       // eslint-disable-next-line no-console
       console.warn('[push-debug] permissionState=unsupported —', {
         isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'n/a',
@@ -131,11 +147,13 @@ export class PushNotificationService {
         hasNotification: typeof Notification !== 'undefined',
         swPushIsEnabled: this.swPush.isEnabled,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a',
+        isStandalone:
+          typeof window !== 'undefined'
+            ? window.matchMedia('(display-mode: standalone)').matches ||
+              (window.navigator as unknown as { standalone?: boolean }).standalone === true
+            : 'n/a',
       });
       return 'unsupported';
-    }
-    if (this.isIosNeedingInstall()) {
-      return 'ios-needs-install';
     }
     if (Notification.permission === 'granted') {
       return 'granted';
