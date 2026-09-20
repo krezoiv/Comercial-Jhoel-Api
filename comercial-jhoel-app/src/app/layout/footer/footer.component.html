@@ -49,8 +49,12 @@
     </div>
 
     <div class="footer__bottom">
-      <p>© {{ year }} {{ site.name }}. Todos los derechos reservados.</p>
-      <p style="color: #79a4ff;">© {{ year }} {{ site.developer }}.</p>
+      <p>© {{ year }} {{ site.name }}. Todos los derechos reservados.
+        <br>
+        <span style="color: #79a4ff;">© Desarrollado por {{ site.developer }}.></span>
+      </p>
+
+
 
       @if (visitCount(); as count) {
       <p class="footer__visits">
