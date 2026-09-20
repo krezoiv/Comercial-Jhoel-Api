@@ -6,8 +6,8 @@ export const SITE = {
     'Librería, útiles escolares, fotocopias, agente bancario y servicios administrativos en un solo lugar de confianza.',
   address: 'Jr. Principal 123, tu ciudad',
   schedule: 'Lun. a Sáb. · 8:00 am – 8:00 pm',
-  phoneDisplay: '+51 999 999 999',
-  phoneHref: 'tel:+51999999999',
+  phoneDisplay: '37744023',
+  phoneHref: 'tel:+37744023',
   email: 'contacto@comercialjhoel.com',
   developer: 'kzi Technologies Systems',
 } as const;
