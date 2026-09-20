@@ -9,4 +9,5 @@ export const SITE = {
   phoneDisplay: '+51 999 999 999',
   phoneHref: 'tel:+51999999999',
   email: 'contacto@comercialjhoel.com',
+  developer: 'kzi Technologies Systems',
 } as const;
