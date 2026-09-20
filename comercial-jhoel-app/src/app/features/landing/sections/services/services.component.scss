@@ -1,6 +1,24 @@
 @use 'breakpoints' as bp;
 
+// Mismo "glow" atmosférico que ya usan Hero/Teléfonos/Librería — Servicios
+// no tenía ninguno, lo que lo dejaba plano frente a esas secciones.
+.services__glow {
+  position: absolute;
+  top: -6rem;
+  right: -3rem;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle, var(--color-accent-cyan) 0%, transparent 70%);
+  opacity: 0.32;
+}
+
 .services__grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-6);
@@ -35,8 +53,14 @@
   width: 3.25rem;
   height: 3.25rem;
   border-radius: var(--radius-md);
-  background: var(--gradient-brand-soft);
-  color: var(--color-primary-600);
+  // Antes: gradiente traslúcido + `--color-primary-600` — pensado para
+  // tarjetas CLARAS, se veía apagado/sin contraste sobre la tarjeta oscura
+  // de esta sección. Mismo gradiente sólido + ícono blanco + glow que ya
+  // usa el resto de la identidad oscura de la marca (Hero, botones
+  // primarios), para que el ícono destaque en vez de perderse.
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  box-shadow: var(--shadow-glow-primary);
   margin-bottom: var(--space-2);
 }
 
