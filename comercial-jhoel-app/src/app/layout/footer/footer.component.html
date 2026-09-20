@@ -49,9 +49,12 @@
     </div>
 
     <div class="footer__bottom">
-      <p>© {{ year }} {{ site.name }}. Todos los derechos reservados.
-        <br>
-        <span style="color: #79a4ff;">© Desarrollado por {{ site.developer }}.></span>
+      <p>
+        © {{ year }} {{ site.name }}.<br>
+        <span style="color: #79a4ff; font-size: 12px;">
+          Desarrollado por {{ site.developer }}. <br>
+          <a href="mailto:{{ site.devEmail }}" style="color: #79a4ff; font-size: 8px;">{{ site.devEmail }}</a>
+        </span>
       </p>
 
 

@@ -10,4 +10,5 @@ export const SITE = {
   phoneHref: 'tel:+37744023',
   email: 'contacto@comercialjhoel.com',
   developer: 'kzi Technologies Systems',
+  devEmail: 'erick.garcia@grupokzi.com',
 } as const;
