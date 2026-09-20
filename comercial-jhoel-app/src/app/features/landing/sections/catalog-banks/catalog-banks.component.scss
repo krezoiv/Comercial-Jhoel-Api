@@ -4,6 +4,18 @@
   display: block;
 }
 
+.catalog-banks {
+  // Ancla el `position: absolute` del glow a ESTE fragmento (no a la
+  // sección completa de Agentes Bancarios que ahora lo envuelve) — mismo
+  // rol que antes cumplía el propio `<app-section>` antes de la fusión.
+  position: relative;
+  margin-top: var(--space-16);
+
+  @include bp.respond(lg) {
+    margin-top: var(--space-20);
+  }
+}
+
 .catalog-banks__glow {
   position: absolute;
   top: -6rem;

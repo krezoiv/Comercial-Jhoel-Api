@@ -13,7 +13,19 @@ import {
   SectionHeadingComponent,
 } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { CatalogBanksComponent } from '../catalog-banks/catalog-banks.component';
 
+/**
+ * "Agentes Bancarios" — sección pública única que fusiona lo que antes
+ * eran dos secciones separadas: esta misma (la oferta de servicio propio
+ * como agente bancario) y "Bancos" (el catálogo de entidades con las que
+ * se trabaja, `CatalogBanksComponent`, embebido abajo sin su propio
+ * `<app-section>`/anchor). Un solo destino de navegación
+ * (`agentes-bancarios`) para ambos conceptos — nunca dos anchors para
+ * contenido relacionado. Nada financiero interno (saldos, cuentas,
+ * cuadre) aparece aquí ni apareció nunca: ambas fuentes ya eran
+ * exclusivamente de cara al público antes de la fusión.
+ */
 @Component({
   selector: 'app-bank-agents',
   standalone: true,
@@ -25,6 +37,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
     ButtonComponent,
     IconComponent,
     RevealOnScrollDirective,
+    CatalogBanksComponent,
   ],
   templateUrl: './bank-agents.component.html',
   styleUrl: './bank-agents.component.scss',

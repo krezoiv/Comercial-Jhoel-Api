@@ -15,11 +15,12 @@ import {
   ContainerComponent,
   IconComponent,
 } from '../../shared/ui';
+import { NotificationsModalComponent } from './components/notifications-modal/notifications-modal.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, ContainerComponent, ButtonComponent, IconComponent],
+  imports: [RouterLink, ContainerComponent, ButtonComponent, IconComponent, NotificationsModalComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +33,8 @@ export class NavbarComponent {
 
   readonly isScrolled = signal(false);
   readonly isMenuOpen = signal(false);
+  /** Controla `NotificationsModalComponent`, montado una sola vez aquí — nunca un segundo Navbar ni un segundo menú móvil. */
+  readonly isNotificationsModalOpen = signal(false);
 
   /** Label of the desktop dropdown currently open (`null` = none). At most one at a time. */
   private readonly openDropdownLabel = signal<string | null>(null);
@@ -98,5 +101,14 @@ export class NavbarComponent {
 
   toggleMobileGroup(label: string): void {
     this.openMobileGroupLabel.update((current) => (current === label ? null : label));
+  }
+
+  openNotificationsModal(): void {
+    this.closeMenu();
+    this.isNotificationsModalOpen.set(true);
+  }
+
+  closeNotificationsModal(): void {
+    this.isNotificationsModalOpen.set(false);
   }
 }

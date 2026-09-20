@@ -8,7 +8,14 @@
 
       <nav class="navbar__links" aria-label="Navegación principal">
         @for (link of navLinks; track link.label) {
-          @if (link.children) {
+          @if (link.action === 'notifications') {
+            <button type="button" class="navbar__link" (click)="openNotificationsModal()">
+              @if (link.icon) {
+                <app-icon [name]="link.icon" [size]="16" />
+              }
+              {{ link.label }}
+            </button>
+          } @else if (link.children) {
             <div class="navbar__dropdown">
               <button
                 type="button"
@@ -75,7 +82,14 @@
       <app-container wide>
         <nav class="navbar__mobile-links" aria-label="Navegación móvil">
           @for (link of navLinks; track link.label) {
-            @if (link.children) {
+            @if (link.action === 'notifications') {
+              <button type="button" class="navbar__mobile-link" (click)="openNotificationsModal()">
+                @if (link.icon) {
+                  <app-icon [name]="link.icon" [size]="18" />
+                }
+                {{ link.label }}
+              </button>
+            } @else if (link.children) {
               <div class="navbar__mobile-group">
                 <button
                   type="button"
@@ -134,3 +148,5 @@
     </div>
   }
 </header>
+
+<app-notifications-modal [open]="isNotificationsModalOpen()" (closed)="closeNotificationsModal()" />

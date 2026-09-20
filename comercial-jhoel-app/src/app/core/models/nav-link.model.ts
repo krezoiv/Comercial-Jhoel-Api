@@ -12,4 +12,14 @@ export interface NavLink {
   children?: NavLink[];
   /** Renders a visual divider right before this item within its parent's `children` list. */
   dividerBefore?: boolean;
+  /**
+   * Renders as a plain button that fires an action instead of navigating —
+   * `path`/`fragment` are ignored when this is set. Only `'notifications'`
+   * exists today (opens `NotificationsModalComponent` from the Navbar);
+   * the union stays open for a future action-style item without needing a
+   * new field. `FooterComponent`'s own nav list filters these out — an
+   * action needs a live component (Navbar) to handle its click, which the
+   * footer's plain link list doesn't provide.
+   */
+  action?: 'notifications';
 }

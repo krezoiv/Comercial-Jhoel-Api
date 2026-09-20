@@ -48,3 +48,18 @@
   background: var(--color-bg-dark);
   color: var(--color-text-on-dark);
 }
+
+// Azul marino de marca — variante oscura intermedia, para que secciones
+// consecutivas nunca repitan el mismo negro plano.
+.section--navy {
+  background: var(--color-primary-900);
+  color: var(--color-text-on-dark);
+}
+
+// Superficie oscura elevada (la misma que ya usa el modo oscuro del panel
+// para tarjetas/dropdowns) — un tercer tono, ligeramente más claro que
+// `dark`/`navy`, para la misma jerarquía visual.
+.section--slate {
+  background: var(--color-bg-dark-elevated);
+  color: var(--color-text-on-dark);
+}

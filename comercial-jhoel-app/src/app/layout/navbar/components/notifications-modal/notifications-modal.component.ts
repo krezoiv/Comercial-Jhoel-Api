@@ -1,36 +1,32 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 
 import { PublicNewsType } from '../../../../core/models';
 import { InstallPromptService } from '../../../../core/services/install-prompt.service';
 import { PublicNewsSubscriptionService } from '../../../../core/services/public-news-subscription.service';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
-import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
-import { ButtonComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
+import { ButtonComponent, IconComponent } from '../../../../shared/ui';
 
 /**
- * "🔔 Mantente informado" — invitación NO intrusiva a notificaciones push del
- * navegador (estilo YouTube: aceptar y recibir, sin pedir permiso al cargar
- * la página). Complementa, no reemplaza, `NewsSubscriptionComponent` (la
- * suscripción por WhatsApp) — mismo catálogo dinámico de tipos de noticias
- * (`GET /public-news-subscriptions/types`), nunca duplicado ni hardcodeado.
- *
- * Un solo botón "Activar notificaciones" dispara TODO el flujo (pedir el
- * permiso nativo del navegador y registrar el dispositivo) — nunca se llama
- * `Notification.requestPermission()`/`SwPush.requestSubscription()` fuera de
- * un clic explícito del visitante. Si el visitante rechaza el permiso o
- * cierra el prompt, el banner simplemente vuelve a mostrarse en la próxima
- * visita (no hay lógica de "no volver a preguntar" ni de reintento
- * automático) — nunca insiste dentro de la misma visita.
+ * Modal de "🔔 Notificaciones", abierto desde el Navbar (desktop y menú
+ * móvil) — reemplaza a la antigua sección grande "Mantente informado" que
+ * vivía en medio del scroll de la landing (`PushNotificationBannerComponent`,
+ * eliminada). Ninguna lógica de Push/PWA nueva: es exactamente el mismo
+ * contenido/estado que tenía esa sección, solo reubicado dentro de un
+ * modal — reutiliza `PushNotificationService`/`InstallPromptService` tal
+ * cual, sin duplicar nada del sistema Web Push ya implementado.
  */
 @Component({
-  selector: 'app-push-notification-banner',
+  selector: 'app-notifications-modal',
   standalone: true,
-  imports: [RevealOnScrollDirective, SectionComponent, SectionHeadingComponent, ButtonComponent, IconComponent],
-  templateUrl: './push-notification-banner.component.html',
-  styleUrl: './push-notification-banner.component.scss',
+  imports: [ButtonComponent, IconComponent],
+  templateUrl: './notifications-modal.component.html',
+  styleUrl: './notifications-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PushNotificationBannerComponent {
+export class NotificationsModalComponent {
+  @Input() open = false;
+  @Output() closed = new EventEmitter<void>();
+
   private readonly publicNewsSubscriptionService = inject(PublicNewsSubscriptionService);
   readonly pushService = inject(PushNotificationService);
   readonly installPromptService = inject(InstallPromptService);
@@ -46,7 +42,7 @@ export class PushNotificationBannerComponent {
     this.publicNewsSubscriptionService.getActiveTypes().subscribe({
       next: (types) => {
         this.types.set(types);
-        // "Todas las noticias" (wildcard) viene pre-marcada, igual que el formulario de WhatsApp.
+        // "Todas las noticias" (wildcard) viene pre-marcada, igual que el formulario de WhatsApp que existía antes.
         this.selectedTypeIds.set(new Set(types.filter((t) => t.isWildcard).map((t) => t.id)));
         this.loadingTypes.set(false);
       },
@@ -98,5 +94,9 @@ export class PushNotificationBannerComponent {
 
   async installApp(): Promise<void> {
     await this.installPromptService.promptInstall();
+  }
+
+  close(): void {
+    this.closed.emit();
   }
 }

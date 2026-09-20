@@ -1,0 +1,96 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="notifications-modal-title" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+        <app-icon name="close" [size]="18" />
+      </button>
+
+      <div class="modal__header">
+        <app-icon name="bell" [size]="24" />
+        <h2 class="modal__title" id="notifications-modal-title">🔔 Mantente informado</h2>
+        <p class="modal__subtitle">Recibe una notificación en tu navegador cuando publiquemos noticias nuevas — sin necesidad de WhatsApp.</p>
+      </div>
+
+      @if (loadingTypes()) {
+        <p class="modal__loading">Cargando…</p>
+      } @else if (types().length === 0) {
+        <p class="modal__loading">Las notificaciones no están disponibles en este momento.</p>
+      } @else {
+        @switch (permissionState()) {
+          @case ('unsupported') {
+            <div class="modal__message">
+              <app-icon name="alert-circle" [size]="28" />
+              <p>Tu navegador no es compatible con notificaciones push. Prueba con una versión reciente de Chrome, Edge o Firefox.</p>
+            </div>
+          }
+          @case ('ios-needs-install') {
+            <div class="modal__message">
+              <app-icon name="smartphone" [size]="28" />
+              <p>Para activar notificaciones en iPhone/iPad, agrega Comercial Jhoel a tu pantalla de inicio:</p>
+              <ol class="install-steps">
+                <li>Pulsa <strong>Compartir</strong> en Safari.</li>
+                <li>Selecciona <strong>"Agregar a pantalla de inicio"</strong>.</li>
+                <li>Abre Comercial Jhoel desde el nuevo ícono.</li>
+                <li>Activa las notificaciones desde ahí.</li>
+              </ol>
+            </div>
+          }
+          @case ('sw-pending') {
+            <div class="modal__message">
+              <app-icon name="clock" [size]="28" />
+              <p>Preparando las notificaciones… esto solo toma un momento.</p>
+            </div>
+          }
+          @case ('denied') {
+            <div class="modal__message">
+              <app-icon name="x-circle" [size]="28" />
+              <p>Bloqueaste las notificaciones para este sitio. Para volver a activarlas, habilítalas desde la configuración de permisos de tu navegador para comercialjhoel.com.</p>
+            </div>
+          }
+          @default {
+            @if (isSubscribed()) {
+              <div class="modal__subscribed">
+                <app-icon name="check-circle" [size]="28" />
+                <p>Ya recibes notificaciones de noticias en este dispositivo.</p>
+                <app-button variant="ghost" [disabled]="pushService.isBusy()" (click)="deactivate()">
+                  {{ pushService.isBusy() ? 'Desactivando…' : 'Desactivar notificaciones' }}
+                </app-button>
+              </div>
+            } @else {
+              <div class="field">
+                <span class="field__label">¿Qué tipo de noticias deseas recibir?</span>
+                <div class="type-list">
+                  @for (type of types(); track type.id) {
+                    <label class="type-option">
+                      <input type="checkbox" [checked]="isChecked(type.id)" (change)="toggleType(type.id)" />
+                      <span>{{ typeLabel(type) }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+
+              @if (pushService.errorMessage()) {
+                <p class="form-error">{{ pushService.errorMessage() }}</p>
+              }
+
+              <app-button variant="primary" [disabled]="!canActivate" (click)="activate()" fullWidth>
+                <app-icon name="bell" [size]="16" />
+                {{ pushService.isBusy() ? 'Activando…' : 'Activar notificaciones' }}
+              </app-button>
+            }
+          }
+        }
+
+        @if (installPromptService.canInstall()) {
+          <div class="install-prompt">
+            <p>¿Quieres acceso más rápido? Instala Comercial Jhoel como app en tu dispositivo.</p>
+            <app-button variant="ghost" (click)="installApp()">
+              <app-icon name="download" [size]="16" />
+              Instalar app
+            </app-button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}

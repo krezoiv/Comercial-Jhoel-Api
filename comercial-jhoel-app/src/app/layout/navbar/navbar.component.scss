@@ -115,6 +115,17 @@
   color: var(--color-text-on-dark);
 }
 
+// Cualquier `.navbar__link` que sea un <button> en vez de un <a> — el
+// trigger de "Servicios ▼" y ahora también "Notificaciones" — necesita el
+// mismo reset de margin/padding/gap para quedar alineado exactamente
+// igual que sus hermanos <a>, ya que `button` no hereda esos valores por
+// defecto (ver `_base.scss`).
+.navbar__link:is(button) {
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline: 0;
+}
+
 // --- Dropdown ("Servicios ▼") -----------------------------------------------
 // Same trigger + full-screen backdrop-button + absolute panel pattern already
 // used by `AlertBellComponent`'s notification panel — kept consistent rather
@@ -124,15 +135,6 @@
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.navbar__dropdown-trigger {
-  // `button` already gets background/border/cursor/font reset globally
-  // (see `_base.scss`) — only margin/padding need closing here so this
-  // <button> lines up exactly with its sibling <a> elements.
-  gap: var(--space-1);
-  margin: 0;
-  padding-inline: 0;
 }
 
 .navbar__dropdown-arrow {
@@ -262,12 +264,20 @@
 .navbar__mobile-link {
   display: flex;
   align-items: center;
+  width: 100%;
   padding: var(--space-3) 0;
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   color: var(--color-text-on-dark-muted);
   border-bottom: 1px solid var(--color-border-dark);
   @include focus-ring;
+
+  // "Notificaciones" es un <button> con ícono — un <a> de solo texto no
+  // necesita este espacio, así que se aplica solo a la variante botón.
+  &:is(button) {
+    gap: var(--space-2);
+    text-align: left;
+  }
 
   &:hover {
     color: var(--color-text-on-dark);

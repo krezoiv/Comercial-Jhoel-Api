@@ -49,6 +49,12 @@
 
     <div class="footer__bottom">
       <p>© {{ year }} {{ site.name }}. Todos los derechos reservados.</p>
+      @if (visitCount(); as count) {
+        <p class="footer__visits">
+          <app-icon name="eye" [size]="14" />
+          Visitas: {{ formatQuantity(count) }}
+        </p>
+      }
     </div>
   </app-container>
 </footer>

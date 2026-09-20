@@ -10,13 +10,18 @@ export const NAV_LINKS: NavLink[] = [
       { label: 'Catálogo de Librería', path: '/', fragment: 'libreria', icon: 'book' },
       { label: 'Catálogo de Teléfonos', path: '/', fragment: 'telefonos', icon: 'smartphone' },
       { label: 'Accesorios y Variedades', path: '/', fragment: 'variedades', icon: 'gift' },
-      { label: 'Bancos', path: '/', fragment: 'bancos', icon: 'bank' },
-      { label: 'Quiénes somos', path: '/', fragment: 'quienes-somos', icon: 'users', dividerBefore: true },
+      // "Bancos" (catálogo de entidades) y "Agentes bancarios" (la operación
+      // que ofrecemos) se fusionaron en una sola sección pública — un solo
+      // destino (`agentes-bancarios`), nunca dos entradas para el mismo
+      // lugar.
       { label: 'Agentes bancarios', path: '/', fragment: 'agentes-bancarios', icon: 'bank' },
+      { label: 'Quiénes somos', path: '/', fragment: 'quienes-somos', icon: 'users', dividerBefore: true },
     ],
   },
   { label: 'Noticias', path: '/', fragment: 'noticias' },
-  { label: 'Regístrate', path: '/', fragment: 'noticias-whatsapp' },
+  // Antes apuntaba a la sección de registro por WhatsApp (`noticias-whatsapp`,
+  // eliminada) — ahora abre el modal de notificaciones push, ver `action`.
+  { label: 'Notificaciones', path: '/', action: 'notifications', icon: 'bell' },
   { label: 'Contacto', path: '/', fragment: 'contacto' },
 ];
 
