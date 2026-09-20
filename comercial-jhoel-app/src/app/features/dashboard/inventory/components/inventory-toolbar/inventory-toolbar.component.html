@@ -65,6 +65,11 @@
     </div>
 
     <div class="toolbar__actions">
+      <app-button variant="primary" (click)="quickTransferInventory.emit()">
+        <app-icon name="arrow-left-right" [size]="16" />
+        Transferencia rápida
+      </app-button>
+
       <app-button variant="ghost" (click)="transferInventory.emit()">
         <app-icon name="arrow-right" [size]="16" />
         Trasladar inventario

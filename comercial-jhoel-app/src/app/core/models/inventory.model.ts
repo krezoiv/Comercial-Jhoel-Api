@@ -59,6 +59,20 @@ export interface TransferInventoryInput {
   reason?: string;
 }
 
+/** "Transferencia rápida" — varios productos, un origen/destino, una sola operación atómica (ver `register_inventory_transfer_batch` / `POST /inventory/transfers/batch`). */
+export interface TransferBatchItemInput {
+  productId: string;
+  presentationId?: string;
+  quantity: number;
+}
+
+export interface TransferBatchInput {
+  fromLocationId: string;
+  toLocationId: string;
+  reason?: string;
+  items: TransferBatchItemInput[];
+}
+
 export interface CreatePresentationInput {
   presentationTypeId: string;
   conversionFactor: number;

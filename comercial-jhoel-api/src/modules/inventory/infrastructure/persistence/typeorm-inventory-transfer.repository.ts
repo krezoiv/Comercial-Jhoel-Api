@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { EntityManager, QueryFailedError, Repository } from 'typeorm';
 import {
   InventoryTransferRepository,
   RegisterTransferData,
@@ -31,9 +31,35 @@ export class TypeOrmInventoryTransferRepository implements InventoryTransferRepo
 
   async registerTransfer(data: RegisterTransferData): Promise<string> {
     try {
-      const rows = await this.repository.manager.query<
-        { register_inventory_transfer: string }[]
-      >('SELECT register_inventory_transfer($1, $2, $3, $4, $5, $6, $7)', [
+      return await this.runTransfer(this.repository.manager, data);
+    } catch (error) {
+      throw this.translateError(error);
+    }
+  }
+
+  async registerTransferBatch(
+    items: RegisterTransferData[],
+  ): Promise<string[]> {
+    try {
+      return await this.repository.manager.transaction(async (manager) => {
+        const referenceIds: string[] = [];
+        for (const item of items) {
+          referenceIds.push(await this.runTransfer(manager, item));
+        }
+        return referenceIds;
+      });
+    } catch (error) {
+      throw this.translateError(error);
+    }
+  }
+
+  private async runTransfer(
+    manager: EntityManager,
+    data: RegisterTransferData,
+  ): Promise<string> {
+    const rows = await manager.query<{ register_inventory_transfer: string }[]>(
+      'SELECT register_inventory_transfer($1, $2, $3, $4, $5, $6, $7)',
+      [
         data.productId,
         data.presentationId,
         data.fromLocationId,
@@ -41,11 +67,9 @@ export class TypeOrmInventoryTransferRepository implements InventoryTransferRepo
         data.quantityPresentation,
         data.userId,
         data.reason ?? null,
-      ]);
-      return rows[0].register_inventory_transfer;
-    } catch (error) {
-      throw this.translateError(error);
-    }
+      ],
+    );
+    return rows[0].register_inventory_transfer;
   }
 
   private translateError(error: unknown): unknown {

@@ -20,6 +20,7 @@ import { CreatePresentationUseCase } from './application/use-cases/create-presen
 import { UpdatePresentationUseCase } from './application/use-cases/update-presentation.use-case';
 import { GetProductInventoryUseCase } from './application/use-cases/get-product-inventory.use-case';
 import { RegisterInventoryTransferUseCase } from './application/use-cases/register-inventory-transfer.use-case';
+import { RegisterInventoryTransferBatchUseCase } from './application/use-cases/register-inventory-transfer-batch.use-case';
 import { SetMinStockUseCase } from './application/use-cases/set-min-stock.use-case';
 import { InventoryController } from './presentation/controllers/inventory.controller';
 import { ProductsModule } from '../products/products.module';
@@ -64,6 +65,7 @@ import { PresentationTypesModule } from '../presentation-types/presentation-type
     UpdatePresentationUseCase,
     GetProductInventoryUseCase,
     RegisterInventoryTransferUseCase,
+    RegisterInventoryTransferBatchUseCase,
     SetMinStockUseCase,
   ],
   // Exported so `ProductsModule`'s own use cases (CreateProductUseCase,

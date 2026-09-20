@@ -29,6 +29,7 @@ import { ProductTableComponent } from './components/product-table/product-table.
 import { ProductFormModalComponent } from './components/product-form-modal/product-form-modal.component';
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
 import { TransferInventoryModalComponent } from './components/transfer-inventory-modal/transfer-inventory-modal.component';
+import { QuickTransferModalComponent } from './components/quick-transfer-modal/quick-transfer-modal.component';
 import { ImportResultsModalComponent } from './components/import-results-modal/import-results-modal.component';
 import { ImportPurchaseResultsModalComponent } from './components/import-purchase-results-modal/import-purchase-results-modal.component';
 
@@ -43,6 +44,7 @@ import { ImportPurchaseResultsModalComponent } from './components/import-purchas
     ProductFormModalComponent,
     DeleteConfirmModalComponent,
     TransferInventoryModalComponent,
+    QuickTransferModalComponent,
     ImportResultsModalComponent,
     ImportPurchaseResultsModalComponent,
   ],
@@ -77,6 +79,7 @@ export class InventoryPageComponent {
   private readonly router = inject(Router);
 
   readonly isTransferOpen = signal(false);
+  readonly isQuickTransferOpen = signal(false);
 
   readonly isImporting = signal(false);
   readonly isImportResultsOpen = signal(false);
@@ -267,6 +270,25 @@ export class InventoryPageComponent {
 
   closeTransferModal(): void {
     this.isTransferOpen.set(false);
+  }
+
+  openQuickTransferModal(): void {
+    this.isQuickTransferOpen.set(true);
+  }
+
+  closeQuickTransferModal(): void {
+    this.isQuickTransferOpen.set(false);
+  }
+
+  /**
+   * Unlike `onTransferCompleted`, this never closes the modal — "Transferencia
+   * rápida" is meant to stay open for a whole run of consecutive transfers
+   * (scan → guardar → scan → guardar…), so only the product/stock data
+   * refreshes here; the operator closes it explicitly when done.
+   */
+  onQuickTransferSaved(): void {
+    this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+    this.fetchStats();
   }
 
   /**

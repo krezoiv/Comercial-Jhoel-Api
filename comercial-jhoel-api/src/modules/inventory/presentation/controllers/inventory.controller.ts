@@ -18,10 +18,12 @@ import { CreatePresentationUseCase } from '../../application/use-cases/create-pr
 import { UpdatePresentationUseCase } from '../../application/use-cases/update-presentation.use-case';
 import { GetProductInventoryUseCase } from '../../application/use-cases/get-product-inventory.use-case';
 import { RegisterInventoryTransferUseCase } from '../../application/use-cases/register-inventory-transfer.use-case';
+import { RegisterInventoryTransferBatchUseCase } from '../../application/use-cases/register-inventory-transfer-batch.use-case';
 import { SetMinStockUseCase } from '../../application/use-cases/set-min-stock.use-case';
 import { CreatePresentationRequestDto } from '../dtos/create-presentation.request.dto';
 import { UpdatePresentationRequestDto } from '../dtos/update-presentation.request.dto';
 import { RegisterTransferRequestDto } from '../dtos/register-transfer.request.dto';
+import { RegisterTransferBatchRequestDto } from '../dtos/register-transfer-batch.request.dto';
 import { SetMinStockRequestDto } from '../dtos/set-min-stock.request.dto';
 
 /**
@@ -45,6 +47,7 @@ export class InventoryController {
     private readonly updatePresentationUseCase: UpdatePresentationUseCase,
     private readonly getProductInventoryUseCase: GetProductInventoryUseCase,
     private readonly registerTransferUseCase: RegisterInventoryTransferUseCase,
+    private readonly registerTransferBatchUseCase: RegisterInventoryTransferBatchUseCase,
     private readonly setMinStockUseCase: SetMinStockUseCase,
   ) {}
 
@@ -114,6 +117,21 @@ export class InventoryController {
       toLocationId: dto.toLocationId,
       quantity: dto.quantity,
       reason: dto.reason,
+      userId,
+    });
+  }
+
+  /** "Transferencia rápida" — varios productos, un origen/destino, una sola operación atómica. */
+  @Post('transfers/batch')
+  registerTransferBatch(
+    @Body() dto: RegisterTransferBatchRequestDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.registerTransferBatchUseCase.execute({
+      fromLocationId: dto.fromLocationId,
+      toLocationId: dto.toLocationId,
+      reason: dto.reason,
+      items: dto.items,
       userId,
     });
   }

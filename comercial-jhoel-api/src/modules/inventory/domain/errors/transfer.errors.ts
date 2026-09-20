@@ -36,3 +36,11 @@ export class InventoryProductInactiveError extends DomainError {
     super(`El producto ${productId} no está activo.`);
   }
 }
+
+export class EmptyTransferBatchError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super('Agrega al menos un producto antes de guardar la transferencia.');
+  }
+}

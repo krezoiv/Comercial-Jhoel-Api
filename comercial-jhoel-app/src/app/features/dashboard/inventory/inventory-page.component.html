@@ -18,6 +18,7 @@
     (selectedBusinessChange)="selectedBusiness.set($event)"
     (stockFilterChange)="stockFilter.set($event)"
     (addProduct)="openCreateForm()"
+    (quickTransferInventory)="openQuickTransferModal()"
     (transferInventory)="openTransferModal()"
     (exportPdf)="onExportPdf()"
     (exportExcel)="onExportExcel()"
@@ -45,6 +46,13 @@
   [products]="products()"
   (closed)="closeTransferModal()"
   (completed)="onTransferCompleted()"
+/>
+
+<app-quick-transfer-modal
+  [open]="isQuickTransferOpen()"
+  [products]="products()"
+  (closed)="closeQuickTransferModal()"
+  (completed)="onQuickTransferSaved()"
 />
 
 <app-product-form-modal

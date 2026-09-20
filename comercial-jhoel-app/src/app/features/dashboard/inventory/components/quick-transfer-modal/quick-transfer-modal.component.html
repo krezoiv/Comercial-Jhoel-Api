@@ -1,0 +1,171 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">Transferencia rápida</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="quick-transfer-from">Origen</label>
+          <select id="quick-transfer-from" [ngModel]="fromLocationId()" (ngModelChange)="fromLocationId.set($event)">
+            <option value="" disabled>Selecciona origen</option>
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="quick-transfer-to">Destino</label>
+          <select id="quick-transfer-to" [ngModel]="toLocationId()" (ngModelChange)="toLocationId.set($event)">
+            <option value="" disabled>Selecciona destino</option>
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (sameLocation()) {
+        <span class="field__error">El origen y destino deben ser diferentes.</span>
+      }
+
+      <div class="field">
+        <label for="quick-transfer-scan">Producto</label>
+        <div class="product-search">
+          <label class="product-search__box" for="quick-transfer-scan">
+            <app-icon name="search" [size]="18" />
+            <input
+              #scanInput
+              id="quick-transfer-scan"
+              type="text"
+              placeholder="Escanear SKU o buscar producto…"
+              autocomplete="off"
+              [disabled]="!fromLocationId() || !toLocationId() || sameLocation()"
+              [ngModel]="query()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onQueryInput($event)"
+              (keyup.enter)="onQueryEnter()"
+              (focus)="onFocus()"
+              (blur)="onBlur()"
+            />
+            <button
+              type="button"
+              class="product-search__scan-btn"
+              title="Escanear con cámara"
+              (click)="openScanner()"
+            >
+              <app-icon name="camera" [size]="16" />
+            </button>
+          </label>
+
+          @if (inputFocused() && !dropdownOpen()) {
+            <span class="scan-hint">Listo para escanear</span>
+          }
+
+          @if (dropdownOpen() && query().trim()) {
+            <div class="product-search__dropdown">
+              @if (filteredProducts().length === 0) {
+                <p class="product-search__empty">No se encontraron productos.</p>
+              } @else {
+                @for (product of filteredProducts(); track product.id) {
+                  <button type="button" class="product-search__result" (click)="selectSuggestion(product)">
+                    <span class="product-search__result-name">{{ product.name }}</span>
+                    <span class="product-search__result-meta">{{ product.sku || 'Sin SKU' }}</span>
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+
+        <app-barcode-scanner-modal
+          [open]="scannerOpen()"
+          (scanned)="onBarcodeScanned($event)"
+          (closed)="scannerOpen.set(false)"
+        />
+      </div>
+
+      <div class="cart">
+        @if (items().length === 0) {
+          <p class="cart__empty">Aún no has agregado productos. Escanea o busca el primero.</p>
+        } @else {
+          <div class="cart__table-wrap">
+            <table class="cart__table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Disponible</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of items(); track item.productId) {
+                  <tr [class.cart__row--error]="insufficientFor(item)">
+                    <td>{{ item.sku || 'Sin SKU' }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        class="cart__qty-input"
+                        [appDecimalInput]="0"
+                        [ngModel]="item.quantity"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="updateQuantity(item.productId, $event)"
+                      />
+                    </td>
+                    <td>{{ formatQuantity(availableFor(item)) }}</td>
+                    <td>
+                      <button
+                        type="button"
+                        class="cart__remove-btn"
+                        title="Quitar"
+                        (click)="removeItem(item.productId)"
+                      >
+                        <app-icon name="trash-2" [size]="16" />
+                      </button>
+                    </td>
+                  </tr>
+                  @if (insufficientFor(item)) {
+                    <tr class="cart__row-error-message">
+                      <td colspan="5">
+                        Stock insuficiente en {{ locationName(fromLocationId()) }}. Disponible:
+                        {{ formatQuantity(availableFor(item)) }}, solicitado: {{ formatQuantity(item.quantity) }}.
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="cart__summary">
+            <span>{{ items().length }} producto(s)</span>
+            <span>{{ formatQuantity(totalUnits()) }} unidad(es) en total</span>
+          </div>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p class="modal__error">{{ errorMessage() }}</p>
+      }
+
+      <div class="modal__actions">
+        <app-button variant="ghost-danger" type="button" [disabled]="isSubmitting()" (click)="close()">
+          <app-icon name="close" [size]="16" />
+          Cancelar
+        </app-button>
+        <app-button variant="primary" type="button" [disabled]="!canSave() || hasInsufficientItem()" (click)="submit()">
+          {{ isSubmitting() ? 'Guardando…' : 'Guardar transferencia' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

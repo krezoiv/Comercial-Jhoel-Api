@@ -9,6 +9,7 @@ import {
   InventoryLocation,
   ProductInventoryDetail,
   ProductPresentation,
+  TransferBatchInput,
   TransferInventoryInput,
   UpdatePresentationInput,
 } from '../models';
@@ -73,6 +74,13 @@ export class InventoryLocationsService {
   registerTransfer(input: TransferInventoryInput): Observable<void> {
     return this.http
       .post<ApiSuccessResponse<{ id: string }>>(`${environment.apiUrl}/inventory/transfers`, input)
+      .pipe(map(() => undefined));
+  }
+
+  /** "Transferencia rápida" — mismo endpoint/stored function que `registerTransfer`, aplicado a varios productos en una sola llamada atómica. */
+  registerTransferBatch(input: TransferBatchInput): Observable<void> {
+    return this.http
+      .post<ApiSuccessResponse<{ referenceIds: string[] }>>(`${environment.apiUrl}/inventory/transfers/batch`, input)
       .pipe(map(() => undefined));
   }
 
