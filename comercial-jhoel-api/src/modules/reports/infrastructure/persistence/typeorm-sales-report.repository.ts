@@ -249,7 +249,12 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
           sub.andWhere('p.categoryId = :existsCategoryId');
         }
         if (filters.businessId) {
-          sub.andWhere('p.businessId = :existsBusinessId');
+          // Historical snapshot (`sale_details.business_id`, see
+          // `AddBusinessSnapshotToSaleDetails`), not the product's *current*
+          // business — a product reassigned to a different línea de negocio
+          // after the sale must not retroactively change which business
+          // that past sale is filtered/reported under.
+          sub.andWhere('sd.businessId = :existsBusinessId');
         }
         return `EXISTS ${sub.getQuery()}`;
       },
@@ -279,7 +284,9 @@ export class TypeOrmSalesReportRepository implements SalesReportRepository {
       });
     }
     if (filters.businessId) {
-      qb.andWhere(`${productAlias}.businessId = :businessId`, {
+      // Historical snapshot, not the product's current business — same
+      // reasoning as `applyProductExistsFilter`'s own businessId branch.
+      qb.andWhere(`${detailAlias}.businessId = :businessId`, {
         businessId: filters.businessId,
       });
     }

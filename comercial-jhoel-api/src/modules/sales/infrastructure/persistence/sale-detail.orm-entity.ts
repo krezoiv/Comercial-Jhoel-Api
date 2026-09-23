@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { ProductOrmEntity } from '../../../products/infrastructure/persistence/product.orm-entity';
 import { ProductPresentationOrmEntity } from '../../../inventory/infrastructure/persistence/product-presentation.orm-entity';
+import { BusinessOrmEntity } from '../../../businesses/infrastructure/persistence/business.orm-entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import { SaleOrmEntity } from './sale.orm-entity';
 
@@ -64,4 +65,16 @@ export class SaleDetailOrmEntity {
   })
   @JoinColumn({ name: 'presentation_id' })
   presentation: ProductPresentationOrmEntity | null;
+
+  // Snapshot of the product's business AT THE MOMENT OF SALE (see
+  // `AddBusinessSnapshotToSaleDetails`) — never re-derived from the
+  // product's *current* business, which can change after the fact.
+  // Always set: `confirm_sale`/`adjust_sale_item` populate it on every
+  // new line, and every pre-existing row was backfilled by the migration.
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
+
+  @ManyToOne(() => BusinessOrmEntity, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'business_id' })
+  business: BusinessOrmEntity;
 }

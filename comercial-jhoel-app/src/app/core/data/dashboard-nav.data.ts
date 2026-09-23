@@ -66,6 +66,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       },
       { label: 'Presentaciones y Medidas', icon: 'layers', path: 'presentaciones-medidas' },
       { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
+      { label: 'Gestión de Caja de Ventas', icon: 'receipt', path: 'gestion-caja-ventas' },
       {
         label: 'Administrar Facturas de Compras',
         icon: 'shopping-bag',

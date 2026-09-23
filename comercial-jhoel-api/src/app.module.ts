@@ -46,6 +46,7 @@ import { NewsTypesModule } from './modules/news-types/news-types.module';
 import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subscriptions.module';
 import { CatalogBanksModule } from './modules/catalog-banks/catalog-banks.module';
 import { SiteVisitsModule } from './modules/site-visits/site-visits.module';
+import { SalesRegisterModule } from './modules/sales-register/sales-register.module';
 
 @Module({
   imports: [
@@ -111,6 +112,7 @@ import { SiteVisitsModule } from './modules/site-visits/site-visits.module';
     NewsSubscriptionsModule,
     CatalogBanksModule,
     SiteVisitsModule,
+    SalesRegisterModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

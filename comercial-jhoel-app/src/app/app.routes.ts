@@ -310,6 +310,14 @@ export const routes: Routes = [
         title: 'Gestión Caja Recargas — Sistema',
       },
       {
+        path: 'gestion-caja-ventas',
+        loadComponent: () =>
+          import('./features/dashboard/sales-register/sales-register-page.component').then(
+            (m) => m.SalesRegisterPageComponent
+          ),
+        title: 'Gestión de Caja de Ventas — Sistema',
+      },
+      {
         path: 'finanzas',
         loadComponent: () =>
           import('./features/dashboard/placeholder-page/dashboard-placeholder-page.component').then(

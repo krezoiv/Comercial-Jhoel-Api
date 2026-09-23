@@ -1,0 +1,65 @@
+<div class="sales-register">
+  <app-page-header
+    icon="receipt"
+    title="Gestión de Caja de Ventas"
+    subtitle="Ventas generales del día, separadas por negocio — se actualiza en vivo, sin esperar al cierre del día."
+  >
+    <div class="sales-register__header-actions">
+      <label class="sales-register__date-field">
+        <span>Fecha de negocio</span>
+        <input
+          type="date"
+          [value]="operationDate()"
+          [max]="maxSelectableDate"
+          (change)="onDateChange($any($event.target).value)"
+          aria-label="Fecha de negocio"
+        />
+      </label>
+
+      <button type="button" class="sales-register__refresh-btn" [disabled]="loading()" (click)="onRefresh()">
+        <app-icon name="refresh-cw" [size]="16" />
+        Actualizar
+      </button>
+    </div>
+  </app-page-header>
+
+  <app-report-summary [tiles]="tiles()" [loading]="loading()" />
+
+  @if (errorMessage()) {
+    <p class="sales-register__error">
+      <app-icon name="alert-triangle" [size]="16" />
+      {{ errorMessage() }}
+    </p>
+  }
+
+  @if (!loading() && summary() && summary()!.businesses.length > 0) {
+    <div class="sales-register__filter">
+      <label for="sales-register-business-filter">
+        <app-icon name="filter" [size]="14" />
+        Filtrar por negocio
+      </label>
+      <select
+        id="sales-register-business-filter"
+        [ngModel]="selectedBusinessId()"
+        (ngModelChange)="selectedBusinessId.set($event)"
+      >
+        <option value="">Todos los negocios</option>
+        @for (business of summary()!.businesses; track business.businessId) {
+          <option [value]="business.businessId">{{ business.businessName }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="sales-register__grid">
+      @for (business of visibleBusinesses(); track business.businessId; let i = $index) {
+        <app-sales-register-business-card [business]="business" [accentIndex]="i" />
+      }
+    </div>
+  } @else if (!loading() && summary()) {
+    <app-empty-state
+      icon="receipt"
+      title="Aún no hay ventas registradas"
+      description="En cuanto se confirme una venta para esta fecha, aparecerá aquí separada por negocio."
+    />
+  }
+</div>

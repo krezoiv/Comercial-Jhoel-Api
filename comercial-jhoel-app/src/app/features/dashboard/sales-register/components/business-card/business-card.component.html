@@ -1,0 +1,61 @@
+<app-card [hoverable]="false" [class]="'metric-card ' + accentClass">
+  <div class="metric-card__body">
+    <div class="metric-card__header">
+      <span class="metric-card__icon">
+        <app-icon name="shopping-bag" [size]="18" />
+      </span>
+      <span class="metric-card__title">{{ business.businessName }}</span>
+    </div>
+
+    <div class="metric-card__content">
+      <span class="metric-card__hero">{{ formatCurrency(business.totalAmount) }}</span>
+      <span class="metric-card__hero-caption">Ventas del día</span>
+
+      <div class="metric-card__footer">
+        <div class="metric-card__stat">
+          <span class="metric-card__stat-label">
+            <app-icon name="receipt" [size]="12" />
+            Ventas
+          </span>
+          <span class="metric-card__stat-value">{{ formatQuantity(business.salesCount) }}</span>
+        </div>
+        <div class="metric-card__divider"></div>
+        <div class="metric-card__stat">
+          <span class="metric-card__stat-label">
+            <app-icon name="package" [size]="12" />
+            Productos
+          </span>
+          <span class="metric-card__stat-value">{{ formatQuantity(business.productsCount) }}</span>
+        </div>
+      </div>
+
+      @if (business.topProduct; as top) {
+        <p class="business-card__top-product">
+          Más vendido: <strong>{{ top.productName }}</strong> ({{ formatQuantity(top.quantitySold) }})
+        </p>
+      }
+    </div>
+
+    <button type="button" class="business-card__toggle" (click)="toggle()">
+      {{ expanded() ? 'Ocultar productos' : 'Ver desglose de productos' }}
+      <app-icon [name]="expanded() ? 'chevron-up' : 'chevron-down'" [size]="14" />
+    </button>
+
+    @if (expanded()) {
+      <div class="business-card__products">
+        @for (product of business.products; track product.productId) {
+          <div class="business-card__product-row">
+            <div class="business-card__product-name">
+              <span>{{ product.productName }}</span>
+              <span class="business-card__product-sku">{{ product.sku || 'Sin SKU' }}</span>
+            </div>
+            <div class="business-card__product-numbers">
+              <span>{{ formatQuantity(product.quantitySold) }} und.</span>
+              <span class="business-card__product-total">{{ formatCurrency(product.totalRevenue) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</app-card>
