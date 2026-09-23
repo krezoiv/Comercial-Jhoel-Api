@@ -47,6 +47,7 @@ import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subsc
 import { CatalogBanksModule } from './modules/catalog-banks/catalog-banks.module';
 import { SiteVisitsModule } from './modules/site-visits/site-visits.module';
 import { SalesRegisterModule } from './modules/sales-register/sales-register.module';
+import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.module';
 
 @Module({
   imports: [
@@ -113,6 +114,7 @@ import { SalesRegisterModule } from './modules/sales-register/sales-register.mod
     CatalogBanksModule,
     SiteVisitsModule,
     SalesRegisterModule,
+    SalesCashBoxModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

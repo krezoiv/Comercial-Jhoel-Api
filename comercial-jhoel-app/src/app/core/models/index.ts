@@ -13,6 +13,7 @@ export * from './category.model';
 export * from './business.model';
 export * from './sale.model';
 export * from './sales-register.model';
+export * from './sales-cash-box.model';
 export * from './supplier.model';
 export * from './purchase.model';
 export * from './user.model';

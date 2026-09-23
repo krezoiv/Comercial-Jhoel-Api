@@ -57,5 +57,86 @@
         }
       </div>
     }
+
+    <div class="cash-box">
+      <div class="cash-box__header">
+        <span class="cash-box__label">
+          <app-icon name="wallet" [size]="14" />
+          Caja de Ventas
+        </span>
+        <span class="cash-box__balance">
+          {{ cashBoxBalance === null ? '—' : formatCurrency(cashBoxBalance) }}
+        </span>
+      </div>
+      <span class="cash-box__caption">Saldo acumulado (aportes + ventas − retiros)</span>
+
+      @if (canManageCashBox) {
+        <div class="cash-box__actions">
+          <button type="button" class="cash-box__action cash-box__action--contribute" (click)="openContribute()">
+            <app-icon name="plus" [size]="14" />
+            Aportar
+          </button>
+          <button type="button" class="cash-box__action cash-box__action--withdraw" (click)="openWithdraw()">
+            <app-icon name="minus" [size]="14" />
+            Retirar
+          </button>
+        </div>
+      }
+
+      <button type="button" class="business-card__toggle" (click)="toggleMovements()">
+        {{ movementsExpanded() ? 'Ocultar movimientos' : 'Ver movimientos de caja' }}
+        <app-icon [name]="movementsExpanded() ? 'chevron-up' : 'chevron-down'" [size]="14" />
+      </button>
+
+      @if (movementsExpanded()) {
+        @if (loadingMovements()) {
+          <p class="cash-box__empty">Cargando…</p>
+        } @else if (movements().length === 0) {
+          <p class="cash-box__empty">Todavía no hay aportes ni retiros para este negocio.</p>
+        } @else {
+          <div class="cash-box__movements">
+            @for (movement of movements(); track movement.id) {
+              <div class="cash-box__movement-row" [class.cash-box__movement-row--voided]="movement.isVoided">
+                <app-icon
+                  [name]="movement.movementType === 'CONTRIBUTION' ? 'plus' : 'minus'"
+                  [size]="14"
+                  [class]="'cash-box__movement-icon cash-box__movement-icon--' + (movement.movementType === 'CONTRIBUTION' ? 'contribute' : 'withdraw')"
+                />
+                <div class="cash-box__movement-info">
+                  <span class="cash-box__movement-concept">{{ movement.concept }}</span>
+                  <span class="cash-box__movement-meta">
+                    {{ movement.createdByUsername }} · {{ movement.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                    @if (movement.isVoided) {
+                      · Anulado
+                    }
+                  </span>
+                </div>
+                <span class="cash-box__movement-amount">{{ formatCurrency(movement.amount) }}</span>
+                @if (canManageCashBox && !movement.isVoided) {
+                  <button
+                    type="button"
+                    class="cash-box__movement-void"
+                    title="Anular movimiento"
+                    (click)="voidMovement(movement)"
+                  >
+                    <app-icon name="trash-2" [size]="14" />
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
   </div>
 </app-card>
+
+<app-cash-box-movement-modal
+  [open]="modalOpen()"
+  [mode]="modalMode()"
+  [businessId]="business.businessId"
+  [businessName]="business.businessName"
+  [currentBalance]="cashBoxBalance ?? 0"
+  (closed)="closeModal()"
+  (saved)="onMovementSaved()"
+/>

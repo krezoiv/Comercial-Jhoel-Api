@@ -4,8 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
-import { SalesRegisterSummary, formatCurrency, formatQuantity } from '../../../core/models';
+import { Business, SalesRegisterBusiness, SalesRegisterSummary, formatCurrency, formatQuantity } from '../../../core/models';
 import { SalesRegisterService } from '../../../core/services/sales-register.service';
+import { SalesCashBoxService } from '../../../core/services/sales-cash-box.service';
+import { BusinessService } from '../../../core/services/business.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { EmptyStateComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { ReportSummaryComponent, ReportSummaryTile } from '../reports/components/report-summary/report-summary.component';
@@ -55,7 +58,13 @@ const POLL_INTERVAL_MS = 60_000;
 })
 export class SalesRegisterPageComponent {
   private readonly salesRegisterService = inject(SalesRegisterService);
+  private readonly cashBoxService = inject(SalesCashBoxService);
+  private readonly businessService = inject(BusinessService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  /** Todos los negocios activos — la Caja de Ventas (saldo/aportes/retiros) es independiente de si el negocio vendió HOY, así que la lista de tarjetas nunca se limita a `summary().businesses`. Fetched once; no cambia con el filtro de fecha. */
+  readonly businesses = signal<Business[]>([]);
 
   readonly operationDate = signal(todayIsoDate());
   readonly maxSelectableDate = todayIsoDate();
@@ -64,15 +73,49 @@ export class SalesRegisterPageComponent {
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
 
+  /** businessId → saldo acumulado de Caja de Ventas — independiente de `summary`, refrescado en paralelo (y también tras cualquier aporte/retiro). */
+  readonly cashBoxBalances = signal<Map<string, number>>(new Map());
+
+  /** ADMIN/SUPER_ADMIN only — pasado a cada tarjeta para mostrar/ocultar Aportar/Retirar/Anular. El backend lo exige igual (`@Roles('ADMIN','SUPER_ADMIN')`). */
+  readonly isAdmin = this.authService.isAdmin;
+
   readonly selectedBusinessId = signal('');
 
-  readonly visibleBusinesses = computed(() => {
+  /**
+   * Un card por CADA negocio activo, siempre — nunca solo los que vendieron
+   * hoy. Un negocio sin ventas en la fecha filtrada todavía puede tener
+   * saldo acumulado en su Caja de Ventas (de un aporte, o de ventas de días
+   * anteriores) y debe poder gestionarse igual. Los datos de "ventas de
+   * hoy" de `summary()` se mezclan encima cuando existen; si no, el card
+   * simplemente muestra cero ventas hoy — nunca desaparece.
+   */
+  readonly mergedBusinesses = computed<SalesRegisterBusiness[]>(() => {
     const data = this.summary();
-    if (!data) {
-      return [];
-    }
+    const byId = new Map(data?.businesses.map((b) => [b.businessId, b]) ?? []);
+
+    return this.businesses()
+      .map((business) => {
+        const today = byId.get(business.id);
+        return (
+          today ?? {
+            businessId: business.id,
+            businessName: business.name,
+            totalAmount: 0,
+            salesCount: 0,
+            productsCount: 0,
+            topProduct: null,
+            products: [],
+          }
+        );
+      })
+      .sort((a, b) => b.totalAmount - a.totalAmount || a.businessName.localeCompare(b.businessName));
+  });
+
+  readonly visibleBusinesses = computed(() => {
     const filterId = this.selectedBusinessId();
-    return filterId ? data.businesses.filter((b) => b.businessId === filterId) : data.businesses;
+    return filterId
+      ? this.mergedBusinesses().filter((b) => b.businessId === filterId)
+      : this.mergedBusinesses();
   });
 
   readonly tiles = computed<ReportSummaryTile[]>(() => {
@@ -110,14 +153,48 @@ export class SalesRegisterPageComponent {
   });
 
   constructor() {
-    this.fetchSummary();
+    this.businessService.getBusinesses().subscribe({
+      next: (businesses) => this.businesses.set(businesses),
+      error: () => this.errorMessage.set('No se pudieron cargar los negocios.'),
+    });
 
-    const intervalId = setInterval(() => this.fetchSummary({ silent: true }), POLL_INTERVAL_MS);
+    this.fetchSummary();
+    this.fetchCashBoxBalances();
+
+    const intervalId = setInterval(() => {
+      this.fetchSummary({ silent: true });
+      this.fetchCashBoxBalances();
+    }, POLL_INTERVAL_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(intervalId));
 
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => this.fetchSummary({ silent: true }));
+      .subscribe(() => {
+        this.fetchSummary({ silent: true });
+        this.fetchCashBoxBalances();
+      });
+  }
+
+  /** Saldo acumulado de Caja de Ventas para una tarjeta — `null` mientras carga (nunca "Q 0.00" engañoso). */
+  cashBoxBalanceFor(businessId: string): number | null {
+    return this.cashBoxBalances().has(businessId) ? this.cashBoxBalances().get(businessId)! : null;
+  }
+
+  /** Tras un aporte/retiro/anulación en cualquier tarjeta — refresca TODOS los saldos en una sola llamada, nunca uno por negocio. */
+  onCashBoxChanged(): void {
+    this.fetchCashBoxBalances();
+  }
+
+  private fetchCashBoxBalances(): void {
+    this.cashBoxService.getBalances().subscribe({
+      next: (balances) => {
+        this.cashBoxBalances.set(new Map(balances.map((b) => [b.businessId, b.balance])));
+      },
+      error: () => {
+        // Silencioso, igual que el refresco de fondo del resumen — no borra
+        // los saldos ya mostrados por una falla transitoria de red.
+      },
+    });
   }
 
   onDateChange(value: string): void {

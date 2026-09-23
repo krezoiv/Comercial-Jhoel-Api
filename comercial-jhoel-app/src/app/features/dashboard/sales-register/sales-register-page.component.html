@@ -32,7 +32,7 @@
     </p>
   }
 
-  @if (!loading() && summary() && summary()!.businesses.length > 0) {
+  @if (!loading() && summary() && mergedBusinesses().length > 0) {
     <div class="sales-register__filter">
       <label for="sales-register-business-filter">
         <app-icon name="filter" [size]="14" />
@@ -44,7 +44,7 @@
         (ngModelChange)="selectedBusinessId.set($event)"
       >
         <option value="">Todos los negocios</option>
-        @for (business of summary()!.businesses; track business.businessId) {
+        @for (business of mergedBusinesses(); track business.businessId) {
           <option [value]="business.businessId">{{ business.businessName }}</option>
         }
       </select>
@@ -52,14 +52,20 @@
 
     <div class="sales-register__grid">
       @for (business of visibleBusinesses(); track business.businessId; let i = $index) {
-        <app-sales-register-business-card [business]="business" [accentIndex]="i" />
+        <app-sales-register-business-card
+          [business]="business"
+          [accentIndex]="i"
+          [cashBoxBalance]="cashBoxBalanceFor(business.businessId)"
+          [canManageCashBox]="isAdmin()"
+          (cashBoxChanged)="onCashBoxChanged()"
+        />
       }
     </div>
   } @else if (!loading() && summary()) {
     <app-empty-state
       icon="receipt"
-      title="Aún no hay ventas registradas"
-      description="En cuanto se confirme una venta para esta fecha, aparecerá aquí separada por negocio."
+      title="Todavía no hay negocios activos"
+      description="Crea un negocio en Sistema → Negocios para empezar a ver su Caja de Ventas aquí."
     />
   }
 </div>

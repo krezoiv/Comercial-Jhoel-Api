@@ -202,3 +202,162 @@
   color: var(--color-text-on-light);
   font-weight: var(--fw-semibold);
 }
+
+// ---- Caja de Ventas — saldo acumulado independiente + aportes/retiros ----
+
+.cash-box {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.cash-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cash-box__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-on-light-subtle);
+}
+
+.cash-box__balance {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--metric-accent);
+}
+
+.cash-box__caption {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.cash-box__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.cash-box__action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  @include focus-ring;
+}
+
+.cash-box__action--contribute {
+  color: var(--color-accent-green);
+
+  &:hover {
+    background: rgba(52, 199, 123, 0.08);
+    border-color: rgba(52, 199, 123, 0.3);
+  }
+}
+
+.cash-box__action--withdraw {
+  color: var(--color-danger);
+
+  &:hover {
+    background: rgba(220, 68, 68, 0.08);
+    border-color: rgba(220, 68, 68, 0.3);
+  }
+}
+
+.cash-box__empty {
+  margin-top: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  text-align: center;
+  padding: var(--space-3) 0;
+}
+
+.cash-box__movements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.cash-box__movement-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  font-size: var(--fs-xs);
+}
+
+.cash-box__movement-row--voided {
+  opacity: 0.55;
+}
+
+.cash-box__movement-icon {
+  flex-shrink: 0;
+}
+
+.cash-box__movement-icon--contribute {
+  color: var(--color-accent-green);
+}
+
+.cash-box__movement-icon--withdraw {
+  color: var(--color-danger);
+}
+
+.cash-box__movement-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cash-box__movement-concept {
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-box__movement-meta {
+  color: var(--color-text-on-light-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-box__movement-amount {
+  flex-shrink: 0;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+}
+
+.cash-box__movement-void {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-on-light-subtle);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-danger);
+  }
+}
