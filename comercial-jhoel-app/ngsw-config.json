@@ -10,6 +10,20 @@
       }
     },
     {
+      "name": "splash",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/assets/images/logo.png",
+          "/assets/images/logo@2x.png",
+          "/favicon-32.png",
+          "/icon-192.png",
+          "/icon-512.png"
+        ]
+      }
+    },
+    {
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",
