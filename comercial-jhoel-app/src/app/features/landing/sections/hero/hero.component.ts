@@ -6,11 +6,20 @@ import { ContactService } from '../../../../core/services/contact.service';
 import { BadgeComponent, ButtonComponent, ContainerComponent, IconComponent } from '../../../../shared/ui';
 import { HeroShowcaseComponent } from './hero-showcase.component';
 import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 @Component({
   selector: 'app-hero',
   standalone: true,
-  imports: [ContainerComponent, BadgeComponent, ButtonComponent, IconComponent, HeroShowcaseComponent, ParallaxLayerDirective],
+  imports: [
+    ContainerComponent,
+    BadgeComponent,
+    ButtonComponent,
+    IconComponent,
+    HeroShowcaseComponent,
+    ParallaxLayerDirective,
+    SectionLandingBackgroundComponent,
+  ],
   templateUrl: './hero.component.html',
   styleUrl: './hero.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

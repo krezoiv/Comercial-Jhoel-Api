@@ -1,0 +1,130 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title">{{ isEditMode ? 'Editar fondo' : 'Agregar fondo' }}</h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="modal__body">
+        <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="bg-name">Nombre *</label>
+            <input id="bg-name" type="text" formControlName="name" placeholder="Ej. Fondo Teléfonos — Septiembre" maxlength="150" />
+          </div>
+
+          <div class="field">
+            <label for="bg-section">Sección *</label>
+            <select id="bg-section" formControlName="sectionKey">
+              <option value="" disabled>Selecciona una sección…</option>
+              @for (option of sectionOptions; track option.value) {
+                <option [value]="option.value" [disabled]="isSectionTaken(option.value)">
+                  {{ option.label }}{{ isSectionTaken(option.value) ? ' (ya tiene un fondo activo)' : '' }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="bg-opacity">Opacidad — {{ form.controls.opacity.value }}%</label>
+            <input id="bg-opacity" type="range" formControlName="opacity" min="0" max="100" step="5" />
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="bg-overlay">Overlay</label>
+              <select id="bg-overlay" formControlName="overlay">
+                @for (option of overlayOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bg-position">Posición</label>
+              <select id="bg-position" formControlName="position">
+                @for (option of positionOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bg-size">Tamaño</label>
+              <select id="bg-size" formControlName="size">
+                @for (option of sizeOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bg-depth">Efecto 3D</label>
+              <select id="bg-depth" formControlName="depthEffect">
+                @for (option of depthEffectOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bg-parallax">Parallax</label>
+              <select id="bg-parallax" formControlName="parallax">
+                @for (option of parallaxOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bg-movement">Movimiento</label>
+              <select id="bg-movement" formControlName="movement">
+                @for (option of movementOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <p class="modal__error">{{ errorMessage() }}</p>
+          }
+        </form>
+
+        <div class="preview-panel">
+          <p class="preview-panel__label">Previsualización</p>
+          <div class="preview-stage">
+            <app-landing-background-layer
+              [imageUrl]="previewImageUrl()"
+              [opacity]="form.controls.opacity.value"
+              [overlay]="form.controls.overlay.value"
+              [position]="form.controls.position.value"
+              [size]="form.controls.size.value"
+              [depthEffect]="form.controls.depthEffect.value"
+              [parallax]="form.controls.parallax.value"
+              [movement]="form.controls.movement.value"
+            />
+            <div class="preview-stage__content">
+              <span class="preview-stage__eyebrow">Sección de ejemplo</span>
+              <h3 class="preview-stage__title">Título de ejemplo</h3>
+              <p class="preview-stage__text">Este es un texto de ejemplo para verificar que el contenido siga siendo legible.</p>
+              <span class="preview-stage__button">Botón de ejemplo</span>
+            </div>
+          </div>
+          @if (!previewImageUrl()) {
+            <p class="preview-panel__hint">Sube una imagen después de guardar para verla aquí.</p>
+          }
+        </div>
+      </div>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" type="button" [disabled]="isSubmitting()" (click)="close()">Cancelar</app-button>
+        <app-button variant="primary" type="button" [disabled]="isSubmitting()" (click)="submit()">
+          {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

@@ -22,3 +22,4 @@ export * from './gauge-ring/gauge-ring.component';
 export * from './image-lightbox/image-lightbox.component';
 export * from './update-available-banner/update-available-banner.component';
 export * from './loading-screen/loading-screen.component';
+export * from './landing-background-layer/landing-background-layer.component';

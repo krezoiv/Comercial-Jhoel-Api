@@ -1,0 +1,35 @@
+<div class="backgrounds">
+  <app-page-header
+    icon="layers"
+    title="Fondos de Landing"
+    subtitle="Administra las capas visuales de profundidad (imagen tipo marca de agua + parallax + iluminación) de cada sección de la landing pública."
+  >
+    <app-button variant="primary" (click)="openCreateForm()">
+      <app-icon name="plus" [size]="16" />
+      Agregar fondo
+    </app-button>
+  </app-page-header>
+
+  <app-background-table
+    [backgrounds]="backgrounds()"
+    [loading]="loading()"
+    [sectionLabel]="sectionLabel"
+    (edit)="openEditForm($event)"
+    (manageImage)="openImage($event)"
+    (preview)="openPreview($event)"
+    (toggleActive)="toggleActive($event)"
+    (addBackground)="openCreateForm()"
+  />
+</div>
+
+<app-background-form-modal
+  [open]="isFormOpen()"
+  [background]="editingBackground()"
+  [activeSectionKeys]="activeSectionKeys()"
+  (closed)="closeForm()"
+  (saved)="onBackgroundSaved($event)"
+/>
+
+<app-background-image-modal [background]="imageBackground()" (closed)="closeImage()" (changed)="onImageChanged($event)" />
+
+<app-background-preview-modal [background]="previewBackground()" (closed)="closePreview()" />

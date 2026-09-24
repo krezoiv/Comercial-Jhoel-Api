@@ -7,6 +7,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
 import { SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { NewsCarouselComponent } from './components/news-carousel/news-carousel.component';
 import { NewsDetailModalComponent } from './components/news-detail-modal/news-detail-modal.component';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 /**
  * Sección "NOTICIAS" de la landing pública — contenido editorial, NO un
@@ -18,7 +19,14 @@ import { NewsDetailModalComponent } from './components/news-detail-modal/news-de
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [SectionComponent, SectionHeadingComponent, RevealOnScrollDirective, NewsCarouselComponent, NewsDetailModalComponent],
+  imports: [
+    SectionComponent,
+    SectionHeadingComponent,
+    RevealOnScrollDirective,
+    NewsCarouselComponent,
+    NewsDetailModalComponent,
+    SectionLandingBackgroundComponent,
+  ],
   templateUrl: './news.component.html',
   styleUrl: './news.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

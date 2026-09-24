@@ -5,11 +5,19 @@ import { catchError, of } from 'rxjs';
 import { ContactChannel, SocialLink } from '../../../../core/models';
 import { ContactService } from '../../../../core/services/contact.service';
 import { ButtonComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [ReactiveFormsModule, SectionComponent, SectionHeadingComponent, ButtonComponent, IconComponent],
+  imports: [
+    ReactiveFormsModule,
+    SectionComponent,
+    SectionHeadingComponent,
+    ButtonComponent,
+    IconComponent,
+    SectionLandingBackgroundComponent,
+  ],
   templateUrl: './contact.component.html',
   styleUrl: './contact.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

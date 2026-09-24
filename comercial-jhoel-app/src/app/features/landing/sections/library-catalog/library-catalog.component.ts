@@ -5,6 +5,7 @@ import { PublicCatalogProduct } from '../../../../core/models';
 import { PublicProductCatalogService } from '../../../../core/services/public-product-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
 
@@ -22,6 +23,7 @@ import { CatalogProductCarouselComponent } from '../shared/catalog-product-carou
     SectionHeadingComponent,
     RevealOnScrollDirective,
     ParallaxLayerDirective,
+    SectionLandingBackgroundComponent,
     CatalogProductCarouselComponent,
     ImageLightboxComponent,
   ],

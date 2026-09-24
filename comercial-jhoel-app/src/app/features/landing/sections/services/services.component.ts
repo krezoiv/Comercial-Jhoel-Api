@@ -5,6 +5,7 @@ import { OffersService } from '../../../../core/services/offers.service';
 import { BadgeComponent, CardComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 @Component({
   selector: 'app-services',
@@ -18,6 +19,7 @@ import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-l
     IconComponent,
     RevealOnScrollDirective,
     ParallaxLayerDirective,
+    SectionLandingBackgroundComponent,
   ],
   templateUrl: './services.component.html',
   styleUrl: './services.component.scss',

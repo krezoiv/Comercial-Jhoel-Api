@@ -1,0 +1,11 @@
+<div class="bg-layer-root" aria-hidden="true">
+  <div
+    class="bg-layer"
+    [class.bg-layer--floating]="isFloating()"
+    [appParallaxLayer]="hasParallax() ? parallaxSpeed() : 0"
+    [appMouseShift]="hasMouseShift()"
+  >
+    <div class="bg-layer__image" [ngStyle]="imageStyle()"></div>
+  </div>
+  <div class="bg-layer__overlay" [ngStyle]="overlayStyle()"></div>
+</div>

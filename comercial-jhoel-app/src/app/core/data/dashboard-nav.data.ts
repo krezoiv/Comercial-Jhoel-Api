@@ -52,6 +52,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         roles: ['SUPER_ADMIN', 'ADMIN'],
       },
       {
+        label: 'Fondos de Landing',
+        icon: 'layers',
+        path: 'fondos-landing',
+        roles: ['SUPER_ADMIN', 'ADMIN'],
+      },
+      {
         label: 'Noticias',
         icon: 'newspaper',
         path: 'noticias',

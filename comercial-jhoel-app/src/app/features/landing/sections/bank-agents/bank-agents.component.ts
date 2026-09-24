@@ -14,6 +14,7 @@ import {
 } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { CatalogBanksComponent } from '../catalog-banks/catalog-banks.component';
+import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 /**
  * "Agentes Bancarios" — sección pública única que fusiona lo que antes
@@ -38,6 +39,7 @@ import { CatalogBanksComponent } from '../catalog-banks/catalog-banks.component'
     IconComponent,
     RevealOnScrollDirective,
     CatalogBanksComponent,
+    SectionLandingBackgroundComponent,
   ],
   templateUrl: './bank-agents.component.html',
   styleUrl: './bank-agents.component.scss',

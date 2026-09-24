@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  // Nunca intercepta clics — la capa entera, en cualquiera de sus
+  // elementos internos, es puramente decorativa.
+  pointer-events: none;
+}
+
+.bg-layer-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+// Recibe el `transform: translate3d(...)` que escribe `ParallaxLayerDirective`
+// directamente (scroll) — ningún otro elemento debe escribir `transform` en
+// este nodo, por eso el desplazamiento por mouse y la escala de profundidad
+// viven en el hijo `.bg-layer__image` en vez de aquí.
+.bg-layer {
+  position: absolute;
+  inset: -4%;
+}
+
+.bg-layer--floating .bg-layer__image {
+  animation: bg-layer-float 10s ease-in-out infinite;
+}
+
+.bg-layer__image {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  transition:
+    opacity 400ms ease-out,
+    filter 400ms ease-out;
+  transform: translate(var(--shift-x, 0px), var(--shift-y, 0px)) scale(var(--depth-scale, 1));
+}
+
+@keyframes bg-layer-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -14px;
+  }
+}
+
+.bg-layer__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-dark);
+  transition: opacity 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-layer--floating .bg-layer__image {
+    animation: none;
+  }
+}

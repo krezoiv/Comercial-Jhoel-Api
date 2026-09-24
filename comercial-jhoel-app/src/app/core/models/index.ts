@@ -57,3 +57,4 @@ export * from './news-type.model';
 export * from './news-subscriber.model';
 export * from './push-notification.model';
 export * from './catalog-bank.model';
+export * from './landing-background.model';

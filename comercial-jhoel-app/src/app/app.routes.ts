@@ -232,6 +232,15 @@ export const routes: Routes = [
         title: 'Catálogo de Bancos — Sistema',
       },
       {
+        path: 'fondos-landing',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/landing-backgrounds/landing-backgrounds-page.component').then(
+            (m) => m.LandingBackgroundsPageComponent,
+          ),
+        title: 'Fondos de Landing — Sistema',
+      },
+      {
         path: 'noticias',
         canActivate: [adminGuard],
         loadComponent: () =>

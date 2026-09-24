@@ -45,6 +45,7 @@ import { NewsModule } from './modules/news/news.module';
 import { NewsTypesModule } from './modules/news-types/news-types.module';
 import { NewsSubscriptionsModule } from './modules/news-subscriptions/news-subscriptions.module';
 import { CatalogBanksModule } from './modules/catalog-banks/catalog-banks.module';
+import { LandingBackgroundsModule } from './modules/landing-backgrounds/landing-backgrounds.module';
 import { SiteVisitsModule } from './modules/site-visits/site-visits.module';
 import { SalesRegisterModule } from './modules/sales-register/sales-register.module';
 import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.module';
@@ -112,6 +113,7 @@ import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.modu
     NewsTypesModule,
     NewsSubscriptionsModule,
     CatalogBanksModule,
+    LandingBackgroundsModule,
     SiteVisitsModule,
     SalesRegisterModule,
     SalesCashBoxModule,
