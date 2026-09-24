@@ -44,14 +44,12 @@
 
 <app-transfer-inventory-modal
   [open]="isTransferOpen()"
-  [products]="products()"
   (closed)="closeTransferModal()"
   (completed)="onTransferCompleted()"
 />
 
 <app-quick-transfer-modal
   [open]="isQuickTransferOpen()"
-  [products]="products()"
   (closed)="closeQuickTransferModal()"
   (completed)="onQuickTransferSaved()"
 />

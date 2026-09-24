@@ -43,7 +43,9 @@
 
               @if (productDropdownOpen() && productQuery().trim()) {
                 <div class="product-search__dropdown">
-                  @if (filteredProducts().length === 0) {
+                  @if (searching()) {
+                    <p class="product-search__empty">Buscando…</p>
+                  } @else if (filteredProducts().length === 0) {
                     <p class="product-search__empty">No se encontraron productos.</p>
                   } @else {
                     @for (product of filteredProducts(); track product.id) {

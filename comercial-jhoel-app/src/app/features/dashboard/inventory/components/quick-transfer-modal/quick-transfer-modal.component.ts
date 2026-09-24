@@ -13,17 +13,20 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 
-import { InventoryLocation, Product, formatQuantity, stockAt } from '../../../../../core/models';
+import { InventoryLocation, Product, StockByLocation, formatQuantity } from '../../../../../core/models';
 import { InventoryLocationsService } from '../../../../../core/services/inventory-locations.service';
+import { InventoryService } from '../../../../../core/services/inventory.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 
-/** How many suggestions the name-search dropdown shows at once — same ceiling `TransferInventoryModalComponent` already uses for its own picker. */
+/** How many suggestions the name-search dropdown shows at once. */
 const MAX_SUGGESTIONS = 20;
 
 interface QuickTransferItem {
@@ -31,6 +34,8 @@ interface QuickTransferItem {
   sku: string | null;
   name: string;
   quantity: number;
+  /** Capturado en el momento de agregar (desde el resultado real del backend) — `availableFor()` lee de aquí, nunca de una lista de productos potencialmente incompleta, así que el "disponible" siempre es correcto sin importar cuántos productos activos tenga el catálogo. */
+  stockByLocation: StockByLocation[];
 }
 
 /**
@@ -55,7 +60,6 @@ interface QuickTransferItem {
 })
 export class QuickTransferModalComponent implements OnChanges {
   @Input() open = false;
-  @Input() products: Product[] = [];
 
   @Output() closed = new EventEmitter<void>();
   @Output() completed = new EventEmitter<void>();
@@ -63,6 +67,7 @@ export class QuickTransferModalComponent implements OnChanges {
   @ViewChild('scanInput') private readonly scanInputRef?: ElementRef<HTMLInputElement>;
 
   private readonly inventoryLocationsService = inject(InventoryLocationsService);
+  private readonly inventoryService = inject(InventoryService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
 
@@ -75,9 +80,41 @@ export class QuickTransferModalComponent implements OnChanges {
   readonly inputFocused = signal(false);
   readonly scannerOpen = signal(false);
 
+  /** Resultados de la búsqueda en el backend (accent/case-insensitive, `search_normalize()`) — nunca un filtro sobre una lista de productos parcial/capada, así que un producto fuera de los primeros 200 del catálogo también aparece. */
+  readonly searchResults = signal<Product[]>([]);
+  readonly searching = signal(false);
+  private readonly query$ = new Subject<string>();
+
   readonly items = signal<QuickTransferItem[]>([]);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  constructor() {
+    this.query$
+      .pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          const trimmed = term.trim();
+          if (!trimmed) {
+            this.searching.set(false);
+            return of<Product[]>([]);
+          }
+          this.searching.set(true);
+          return this.inventoryService.getProducts(trimmed).pipe(
+            catchError(() => {
+              this.notificationService.error('No se pudo buscar productos.');
+              return of<Product[]>([]);
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((results) => {
+        this.searching.set(false);
+        this.searchResults.set(results);
+      });
+  }
 
   formatQuantity = formatQuantity;
 
@@ -104,6 +141,7 @@ export class QuickTransferModalComponent implements OnChanges {
     this.isSubmitting.set(false);
     this.items.set([]);
     this.query.set('');
+    this.searchResults.set([]);
     this.dropdownOpen.set(false);
     this.fromLocationId.set('');
     this.toLocationId.set('');
@@ -118,10 +156,9 @@ export class QuickTransferModalComponent implements OnChanges {
     return this.locations().find((l) => l.id === locationId)?.name ?? '';
   }
 
-  /** Live "disponible" for a cart line — read fresh from the already-loaded `products` list on every render, never cached on the item itself, so it follows origin changes and post-save refetches automatically. */
+  /** "Disponible" para una línea del carrito — lee del `stockByLocation` capturado en el momento de agregar (ver `QuickTransferItem`), nunca de una lista de productos que podría no incluirlo. Sigue cambios de origen (recalcula por nombre de ubicación) igual que antes; ya no sigue un refetch posterior a guardar porque `items` se vacía en cada envío exitoso. */
   availableFor(item: QuickTransferItem): number {
-    const product = this.products.find((p) => p.id === item.productId);
-    return product ? stockAt(product, this.locationName(this.fromLocationId())) : 0;
+    return item.stockByLocation.find((s) => s.locationName === this.locationName(this.fromLocationId()))?.quantity ?? 0;
   }
 
   insufficientFor(item: QuickTransferItem): boolean {
@@ -132,20 +169,18 @@ export class QuickTransferModalComponent implements OnChanges {
     this.items().some((item) => this.insufficientFor(item)),
   );
 
-  /** Client-side filter over the already-loaded `products` input — same "por SKU o nombre" matching `TransferInventoryModalComponent` already uses, no debounce/new endpoint needed. */
+  /** Resultados del backend (ya acotados a `MAX_SUGGESTIONS` para la lista visible). */
   filteredProducts(): Product[] {
-    const term = this.query().trim().toLowerCase();
-    if (!term) {
-      return [];
-    }
-    return this.products
-      .filter((p) => p.name.toLowerCase().includes(term) || (p.sku ?? '').toLowerCase().includes(term))
-      .slice(0, MAX_SUGGESTIONS);
+    return this.searchResults().slice(0, MAX_SUGGESTIONS);
   }
 
   onQueryInput(value: string): void {
     this.query.set(value);
     this.dropdownOpen.set(true);
+    if (!value.trim()) {
+      this.searchResults.set([]);
+    }
+    this.query$.next(value);
   }
 
   onFocus(): void {
@@ -165,12 +200,18 @@ export class QuickTransferModalComponent implements OnChanges {
    * The entire "lector de código de barras" mechanism: a USB/Bluetooth
    * scanner in keyboard-wedge mode types the code and then sends its own
    * Enter automatically — the operator never touches Enter/click, this
-   * handler is simply what's listening for it. An exact SKU match is
-   * always tried first (what a real scan produces); a manual name search
-   * that has narrowed to exactly one visible match also adds on Enter,
-   * matching `ProductSearchComponent.onEnter()`'s own precedent elsewhere
-   * in this app. Anything else — no match, or still-ambiguous — reports
-   * "no encontrado" rather than guessing.
+   * handler is simply what's listening for it. Goes straight to the
+   * backend on every Enter (never `this.query$`'s debounced pipeline,
+   * never a locally-cached product list) so a scan resolves immediately
+   * and correctly regardless of how large the active catalog is — the
+   * exact same root cause already fixed once for the main Inventario
+   * search (a client-side-only match over a capped `LIST_LIMIT` page
+   * silently missing anything outside it). An exact SKU match is always
+   * preferred (what a real scan produces); a manual name search that has
+   * narrowed to exactly one backend result also adds on Enter, matching
+   * `ProductSearchComponent.onEnter()`'s own precedent elsewhere in this
+   * app. Anything else — no match, or still-ambiguous — reports "no
+   * encontrado" rather than guessing.
    */
   onQueryEnter(): void {
     const term = this.query().trim();
@@ -178,20 +219,31 @@ export class QuickTransferModalComponent implements OnChanges {
       return;
     }
 
-    const bySku = this.products.find((p) => (p.sku ?? '').toLowerCase() === term.toLowerCase());
-    if (bySku) {
-      this.addOrIncrement(bySku);
-      return;
-    }
+    this.searching.set(true);
+    this.inventoryService.getProducts(term).subscribe({
+      next: (results) => {
+        this.searching.set(false);
 
-    const matches = this.filteredProducts();
-    if (matches.length === 1) {
-      this.addOrIncrement(matches[0]);
-      return;
-    }
+        const bySku = results.find((p) => (p.sku ?? '').toLowerCase() === term.toLowerCase());
+        if (bySku) {
+          this.addOrIncrement(bySku);
+          return;
+        }
 
-    this.notificationService.error('Producto no encontrado.');
-    this.clearQueryAndRefocus();
+        if (results.length === 1) {
+          this.addOrIncrement(results[0]);
+          return;
+        }
+
+        this.notificationService.error('Producto no encontrado.');
+        this.clearQueryAndRefocus();
+      },
+      error: () => {
+        this.searching.set(false);
+        this.notificationService.error('No se pudo buscar el producto.');
+        this.clearQueryAndRefocus();
+      },
+    });
   }
 
   selectSuggestion(product: Product): void {
@@ -212,7 +264,16 @@ export class QuickTransferModalComponent implements OnChanges {
     this.items.update((list) => {
       const index = list.findIndex((item) => item.productId === product.id);
       if (index === -1) {
-        return [...list, { productId: product.id, sku: product.sku, name: product.name, quantity: 1 }];
+        return [
+          ...list,
+          {
+            productId: product.id,
+            sku: product.sku,
+            name: product.name,
+            quantity: 1,
+            stockByLocation: product.stockByLocation ?? [],
+          },
+        ];
       }
       const copy = [...list];
       copy[index] = { ...copy[index], quantity: copy[index].quantity + 1 };

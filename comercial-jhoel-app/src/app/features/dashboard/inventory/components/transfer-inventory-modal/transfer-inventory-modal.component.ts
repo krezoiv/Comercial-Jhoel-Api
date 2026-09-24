@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 
 import {
   InventoryLocation,
@@ -21,7 +22,9 @@ import {
   formatQuantity,
 } from '../../../../../core/models';
 import { InventoryLocationsService } from '../../../../../core/services/inventory-locations.service';
+import { InventoryService } from '../../../../../core/services/inventory.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
+import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { BarcodeScannerModalComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
@@ -58,7 +61,6 @@ export type LockedProduct = Pick<Product, 'id' | 'name'>;
 })
 export class TransferInventoryModalComponent implements OnChanges {
   @Input() open = false;
-  @Input() products: Product[] = [];
   /** When set, the product picker is skipped entirely — used from the product detail page, which already knows exactly which product to transfer and shouldn't make the user search for it again. */
   @Input() lockedProduct: LockedProduct | null = null;
 
@@ -67,7 +69,9 @@ export class TransferInventoryModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly inventoryLocationsService = inject(InventoryLocationsService);
+  private readonly inventoryService = inject(InventoryService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -76,6 +80,13 @@ export class TransferInventoryModalComponent implements OnChanges {
   readonly productQuery = signal('');
   readonly productDropdownOpen = signal(false);
   readonly scannerOpen = signal(false);
+
+  /** Resultados de la búsqueda en el backend (accent/case-insensitive) — nunca un filtro sobre una lista de productos parcial/capada a `LIST_LIMIT`, así que un producto fuera de esa primera página también aparece. */
+  readonly searchResults = signal<Product[]>([]);
+  readonly searching = signal(false);
+  private readonly productQuery$ = new Subject<string>();
+  /** El objeto completo del producto elegido — capturado directamente del resultado de búsqueda en el momento de elegirlo, nunca re-derivado de una lista que podría no incluirlo. */
+  private readonly selectedProductObject = signal<Product | null>(null);
 
   readonly locations = signal<InventoryLocation[]>([]);
   readonly presentations = signal<ProductPresentation[]>([]);
@@ -98,6 +109,31 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.form.controls.productId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((productId) => this.onProductChange(productId));
+
+    this.productQuery$
+      .pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          const trimmed = term.trim();
+          if (!trimmed) {
+            this.searching.set(false);
+            return of<Product[]>([]);
+          }
+          this.searching.set(true);
+          return this.inventoryService.getProducts(trimmed).pipe(
+            catchError(() => {
+              this.notificationService.error('No se pudo buscar productos.');
+              return of<Product[]>([]);
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((results) => {
+        this.searching.set(false);
+        this.searchResults.set(results);
+      });
   }
 
   get selectedProduct(): Product | LockedProduct | null {
@@ -105,18 +141,12 @@ export class TransferInventoryModalComponent implements OnChanges {
     if (this.lockedProduct?.id === id) {
       return this.lockedProduct;
     }
-    return this.products.find((p) => p.id === id) ?? null;
+    return this.selectedProductObject();
   }
 
-  /** Client-side filter over the already-loaded `products` input — same "por SKU o nombre" matching the main Inventario search already uses, no new endpoint or debounce needed since the full list is already in memory. */
+  /** Resultados del backend (ya acotados a `MAX_PRODUCT_RESULTS` para la lista visible). */
   filteredProducts(): Product[] {
-    const term = this.productQuery().trim().toLowerCase();
-    if (!term) {
-      return [];
-    }
-    return this.products
-      .filter((p) => p.name.toLowerCase().includes(term) || (p.sku ?? '').toLowerCase().includes(term))
-      .slice(0, MAX_PRODUCT_RESULTS);
+    return this.searchResults().slice(0, MAX_PRODUCT_RESULTS);
   }
 
   onProductQueryInput(value: string): void {
@@ -124,7 +154,12 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.productDropdownOpen.set(true);
     if (this.form.controls.productId.value) {
       this.form.controls.productId.setValue('');
+      this.selectedProductObject.set(null);
     }
+    if (!value.trim()) {
+      this.searchResults.set([]);
+    }
+    this.productQuery$.next(value);
   }
 
   onProductFocus(): void {
@@ -141,6 +176,7 @@ export class TransferInventoryModalComponent implements OnChanges {
   selectProduct(product: Product): void {
     this.productQuery.set(product.name);
     this.productDropdownOpen.set(false);
+    this.selectedProductObject.set(product);
     this.form.controls.productId.setValue(product.id);
   }
 
@@ -148,15 +184,38 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.scannerOpen.set(true);
   }
 
+  /**
+   * Va directo al backend (nunca a `this.productQuery$`'s debounced
+   * pipeline ni a una lista de productos local) para que un escaneo se
+   * resuelva de inmediato y correctamente sin importar el tamaño del
+   * catálogo activo — mismo motivo que `QuickTransferModalComponent`'s
+   * propio `onQueryEnter()`. Prioriza un match exacto de SKU (lo que
+   * produce un escaneo real); si no hay uno pero el backend devolvió
+   * exactamente un resultado, también lo elige.
+   */
   onBarcodeScanned(code: string): void {
     this.scannerOpen.set(false);
     this.productQuery.set(code);
-    const first = this.filteredProducts()[0];
-    if (first) {
-      this.selectProduct(first);
-    } else {
-      this.productDropdownOpen.set(true);
-    }
+
+    this.searching.set(true);
+    this.inventoryService.getProducts(code).subscribe({
+      next: (results) => {
+        this.searching.set(false);
+        this.searchResults.set(results);
+        const bySku = results.find((p) => (p.sku ?? '').toLowerCase() === code.trim().toLowerCase());
+        const match = bySku ?? (results.length === 1 ? results[0] : null);
+        if (match) {
+          this.selectProduct(match);
+        } else {
+          this.productDropdownOpen.set(true);
+        }
+      },
+      error: () => {
+        this.searching.set(false);
+        this.notificationService.error('No se pudo buscar el producto.');
+        this.productDropdownOpen.set(true);
+      },
+    });
   }
 
   get selectedPresentation(): ProductPresentation | null {
@@ -256,6 +315,8 @@ export class TransferInventoryModalComponent implements OnChanges {
     this.productInventory.set(null);
     this.productQuery.set(this.lockedProduct?.name ?? '');
     this.productDropdownOpen.set(false);
+    this.searchResults.set([]);
+    this.selectedProductObject.set(null);
     this.form.reset({
       productId: this.lockedProduct?.id ?? '',
       presentationId: '',
