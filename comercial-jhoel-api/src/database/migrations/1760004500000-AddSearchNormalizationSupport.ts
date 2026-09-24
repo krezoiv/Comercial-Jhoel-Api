@@ -43,30 +43,39 @@ export class AddSearchNormalizationSupport1760004500000
   name = 'AddSearchNormalizationSupport1760004500000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS unaccent;`);
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
+    // Cada objeto se califica explícitamente con `public.` — no depender del
+    // `search_path` de la conexión. En el primer intento de despliegue a
+    // producción, `immutable_unaccent`/`search_normalize` se crearon sin
+    // calificar y el `CREATE INDEX` posterior falló con
+    // "function immutable_unaccent(text) does not exist" al intentar
+    // "inlinear" la función SQL — el `search_path` de esa conexión no
+    // resolvía igual que en desarrollo local. Toda la transacción hizo
+    // ROLLBACK automáticamente (no quedó nada a medias), y se corrigió
+    // calificando cada referencia con su esquema explícito.
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA public;`);
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA public;`);
 
     await queryRunner.query(`
-      CREATE OR REPLACE FUNCTION immutable_unaccent(text)
+      CREATE OR REPLACE FUNCTION public.immutable_unaccent(text)
       RETURNS text AS $$
         SELECT public.unaccent('public.unaccent'::regdictionary, $1)
       $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT;
     `);
 
     await queryRunner.query(`
-      CREATE OR REPLACE FUNCTION search_normalize(text)
+      CREATE OR REPLACE FUNCTION public.search_normalize(text)
       RETURNS text AS $$
-        SELECT lower(immutable_unaccent($1))
+        SELECT lower(public.immutable_unaccent($1))
       $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT;
     `);
 
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_products_search_name_trgm"
-      ON products USING GIN (search_normalize(name) gin_trgm_ops);
+      ON products USING GIN (public.search_normalize(name) public.gin_trgm_ops);
     `);
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_products_search_sku_trgm"
-      ON products USING GIN (search_normalize(sku) gin_trgm_ops);
+      ON products USING GIN (public.search_normalize(sku) public.gin_trgm_ops);
     `);
   }
 
@@ -77,9 +86,11 @@ export class AddSearchNormalizationSupport1760004500000
     await queryRunner.query(
       `DROP INDEX IF EXISTS "IDX_products_search_name_trgm";`,
     );
-    await queryRunner.query(`DROP FUNCTION IF EXISTS search_normalize(text);`);
     await queryRunner.query(
-      `DROP FUNCTION IF EXISTS immutable_unaccent(text);`,
+      `DROP FUNCTION IF EXISTS public.search_normalize(text);`,
+    );
+    await queryRunner.query(
+      `DROP FUNCTION IF EXISTS public.immutable_unaccent(text);`,
     );
     // Las extensiones NO se eliminan — otras funciones/índices podrían
     // depender de ellas para cuando este `down()` se ejecute, y
