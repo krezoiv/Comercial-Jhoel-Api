@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { BadgeComponent, IconComponent, SectionComponent } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 
 interface Value {
   icon: string;
@@ -12,7 +13,7 @@ interface Value {
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [SectionComponent, BadgeComponent, IconComponent, RevealOnScrollDirective],
+  imports: [SectionComponent, BadgeComponent, IconComponent, RevealOnScrollDirective, ParallaxLayerDirective],
   templateUrl: './about.component.html',
   styleUrl: './about.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

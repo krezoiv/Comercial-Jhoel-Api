@@ -1,5 +1,5 @@
 <app-section sectionId="servicios" tone="navy" spacing="lg">
-  <div class="services__glow" aria-hidden="true"></div>
+  <div class="services__glow" [appParallaxLayer]="0.06" aria-hidden="true"></div>
 
   <app-section-heading
     eyebrow="Nuestros servicios"
@@ -9,7 +9,7 @@
 
   <div class="services__grid">
     @for (service of services$ | async; track service.id; let i = $index) {
-      <app-card [revealDelay]="i * 60" appRevealOnScroll tone="glass" [padding]="'lg'">
+      <app-card [revealDelay]="i * 60" appRevealOnScroll tone="glass" [padding]="'lg'" tilt>
         <div class="service-card">
           @if (service.tag) {
             <app-badge class="service-card__tag" tone="gold">{{ service.tag }}</app-badge>

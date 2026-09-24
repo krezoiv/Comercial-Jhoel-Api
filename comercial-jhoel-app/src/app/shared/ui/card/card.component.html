@@ -2,6 +2,8 @@
   class="card"
   [class]="'card--' + tone + ' card--pad-' + padding"
   [class.card--hoverable]="hoverable"
+  [class.card--tilt]="tilt"
+  [appTiltOnMouse]="tilt"
 >
   <ng-content></ng-content>
 </div>

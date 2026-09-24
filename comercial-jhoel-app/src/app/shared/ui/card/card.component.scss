@@ -46,6 +46,21 @@
   transform: translateY(-4px);
 }
 
+// El tilt se compone con el lift de arriba, nunca lo reemplaza — ambos
+// leen del mismo `transform` final, pero el lift lo escribe una regla CSS
+// (`:hover`) y el tilt lo escribe `TiltOnMouseDirective` únicamente a
+// través de las custom properties `--tilt-x`/`--tilt-y` (nunca tocando
+// `transform` directamente), así que esta regla es la única que de verdad
+// ensambla ambos efectos en una sola transformación.
+.card--tilt {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
+}
+
+.card--tilt.card--hoverable:hover {
+  transform: translateY(-4px) perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+}
+
 .card--light.card--hoverable:hover {
   box-shadow: var(--shadow-lg);
   border-color: var(--color-primary-300);

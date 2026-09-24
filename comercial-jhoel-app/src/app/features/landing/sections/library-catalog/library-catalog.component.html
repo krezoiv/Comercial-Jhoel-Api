@@ -1,6 +1,6 @@
 @if (products().length > 0) {
   <app-section sectionId="libreria" tone="slate" spacing="lg">
-    <div class="library-catalog__glow" aria-hidden="true"></div>
+    <div class="library-catalog__glow" [appParallaxLayer]="0.06" aria-hidden="true"></div>
 
     <div appRevealOnScroll>
       <app-section-heading

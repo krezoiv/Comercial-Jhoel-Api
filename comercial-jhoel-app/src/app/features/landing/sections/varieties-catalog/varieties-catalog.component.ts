@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { PublicCatalogProduct } from '../../../../core/models';
 import { PublicProductCatalogService } from '../../../../core/services/public-product-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
 import { ProductInterestModalComponent } from './components/product-interest-modal/product-interest-modal.component';
@@ -21,6 +22,7 @@ import { ProductInterestModalComponent } from './components/product-interest-mod
     SectionComponent,
     SectionHeadingComponent,
     RevealOnScrollDirective,
+    ParallaxLayerDirective,
     CatalogProductCarouselComponent,
     ProductInterestModalComponent,
     ImageLightboxComponent,

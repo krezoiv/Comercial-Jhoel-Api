@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { OffersService } from '../../../../core/services/offers.service';
 import { BadgeComponent, CardComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 
 @Component({
   selector: 'app-services',
@@ -16,6 +17,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
     BadgeComponent,
     IconComponent,
     RevealOnScrollDirective,
+    ParallaxLayerDirective,
   ],
   templateUrl: './services.component.html',
   styleUrl: './services.component.scss',

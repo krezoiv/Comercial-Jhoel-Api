@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CatalogRequestType, PublicCatalogPhone } from '../../../../core/models';
 import { PublicCatalogService } from '../../../../core/services/public-catalog.service';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { PhoneCarouselComponent, PhoneInterestEvent } from './components/phone-carousel/phone-carousel.component';
 import { PhoneInterestModalComponent } from './components/phone-interest-modal/phone-interest-modal.component';
@@ -22,6 +23,7 @@ import { PhoneInterestModalComponent } from './components/phone-interest-modal/p
     SectionComponent,
     SectionHeadingComponent,
     RevealOnScrollDirective,
+    ParallaxLayerDirective,
     PhoneCarouselComponent,
     PhoneInterestModalComponent,
     ImageLightboxComponent,

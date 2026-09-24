@@ -60,6 +60,109 @@
   opacity: 0.25;
 }
 
+// Iluminación ambiental que sigue al cursor — `--mx`/`--my` los escribe
+// `HeroComponent.onHeroMouseMove()` (rAF-throttled, nunca atado en touch
+// ni con `prefers-reduced-motion`, ver ese método). Con el listener
+// desactivado, `--mx`/`--my` simplemente nunca cambian de su valor inicial
+// (centro), así que esta capa se queda como un glow ambiental fijo y
+// discreto en vez de desaparecer — nunca un elemento "roto".
+.hero__cursor-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    38rem circle at var(--mx, 50%) var(--my, 35%),
+    rgba(23, 195, 214, 0.1) 0%,
+    transparent 60%
+  );
+  transition: background 120ms linear;
+}
+
+// Formas flotantes discretas — profundidad adicional sin sobrecargar la
+// escena (solo 3, tamaños/opacidad pequeños). Cada una combina un `float`
+// propio (movimiento idle, siempre activo) con `appParallaxLayer` (reacción
+// al scroll, ver el HTML) — dos motores de movimiento independientes sobre
+// el mismo elemento, cada uno escribiendo una `transform` distinta
+// mediante composición de capas: el `float` anima `translate`/`opacity`
+// vía `@keyframes` en el propio elemento, mientras `ParallaxLayerDirective`
+// escribe `transform` inline — para que no se pisen entre sí, el `float`
+// se aplica a un pseudo-elemento hijo (`::after`) y el parallax al
+// contenedor.
+.hero__particle {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--color-accent-cyan-soft);
+    opacity: 0.35;
+    animation: hero-particle-float 9s ease-in-out infinite;
+  }
+}
+
+.hero__particle--1 {
+  top: 18%;
+  left: 8%;
+  width: 0.5rem;
+  height: 0.5rem;
+
+  &::after {
+    animation-duration: 8s;
+  }
+}
+
+.hero__particle--2 {
+  top: 62%;
+  left: 14%;
+  width: 0.75rem;
+  height: 0.75rem;
+
+  &::after {
+    background: var(--color-accent-gold-soft);
+    animation-duration: 11s;
+    animation-delay: -3s;
+  }
+}
+
+.hero__particle--3 {
+  top: 30%;
+  right: 12%;
+  width: 0.4rem;
+  height: 0.4rem;
+
+  @include bp.respond(lg) {
+    right: 34%;
+  }
+
+  &::after {
+    animation-duration: 7s;
+    animation-delay: -1.5s;
+  }
+}
+
+@keyframes hero-particle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__particle::after {
+    animation: none;
+  }
+}
+
 .hero__layout {
   position: relative;
   z-index: 1;

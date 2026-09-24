@@ -1,7 +1,11 @@
-<section id="inicio" class="hero" [class.hero--ready]="ready()">
-  <div class="hero__glow hero__glow--primary" aria-hidden="true"></div>
-  <div class="hero__glow hero__glow--gold" aria-hidden="true"></div>
+<section id="inicio" class="hero" [class.hero--ready]="ready()" (mousemove)="onHeroMouseMove($event)">
+  <div class="hero__glow hero__glow--primary" [appParallaxLayer]="0.05" aria-hidden="true"></div>
+  <div class="hero__glow hero__glow--gold" [appParallaxLayer]="0.09" aria-hidden="true"></div>
   <div class="hero__grid-pattern" aria-hidden="true"></div>
+  <div class="hero__cursor-light" aria-hidden="true"></div>
+  <div class="hero__particle hero__particle--1" [appParallaxLayer]="0.12" aria-hidden="true"></div>
+  <div class="hero__particle hero__particle--2" [appParallaxLayer]="0.16" aria-hidden="true"></div>
+  <div class="hero__particle hero__particle--3" [appParallaxLayer]="0.08" aria-hidden="true"></div>
 
   <app-container wide>
     <div class="hero__layout">

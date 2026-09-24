@@ -10,6 +10,7 @@ import {
   SectionHeadingComponent,
 } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 
 @Component({
   selector: 'app-catalog-preview',
@@ -22,6 +23,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
     ButtonComponent,
     IconComponent,
     RevealOnScrollDirective,
+    ParallaxLayerDirective,
   ],
   templateUrl: './catalog-preview.component.html',
   styleUrl: './catalog-preview.component.scss',
