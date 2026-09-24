@@ -100,11 +100,23 @@ export class InventoryService {
       .pipe(map((response) => response.data));
   }
 
-  getProducts(): Observable<Product[]> {
+  /**
+   * `search` is optional — when provided, it's forwarded to the backend's
+   * own `search` query param (ILIKE on name/sku, already proven correct —
+   * see `searchProducts()` below) instead of relying on `limit` alone to
+   * happen to include the matching row. Without it, a catalog past
+   * `LIST_LIMIT` active products would silently exclude anything not in
+   * that first page from client-side filtering — confirmed as the real
+   * cause of "buscar un producto existente y no aparece" once the catalog
+   * grew past 200 real products.
+   */
+  getProducts(search?: string): Observable<Product[]> {
+    const params: Record<string, string | number> = { limit: LIST_LIMIT };
+    if (search) {
+      params['search'] = search;
+    }
     return this.http
-      .get<ApiSuccessResponse<PaginatedResponse<ProductApiModel>>>(`${environment.apiUrl}/products`, {
-        params: { limit: LIST_LIMIT },
-      })
+      .get<ApiSuccessResponse<PaginatedResponse<ProductApiModel>>>(`${environment.apiUrl}/products`, { params })
       .pipe(map((response) => response.data.items.map(toProduct)));
   }
 

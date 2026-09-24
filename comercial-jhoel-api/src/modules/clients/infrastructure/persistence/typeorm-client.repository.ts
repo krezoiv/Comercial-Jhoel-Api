@@ -11,6 +11,7 @@ import {
 import { ClientNameAlreadyExistsError } from '../../domain/errors/client-name-already-exists.error';
 import { ClientOrmEntity } from './client.orm-entity';
 import { ClientMapper } from './client.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 @Injectable()
 export class TypeOrmClientRepository implements ClientRepository {
@@ -20,10 +21,19 @@ export class TypeOrmClientRepository implements ClientRepository {
   ) {}
 
   async findAll(options: FindClientsOptions): Promise<Client[]> {
-    const orms = await this.repository.find({
-      where: options.activeOnly ? { isActive: true } : {},
-      order: { name: 'ASC' },
-    });
+    const qb = this.repository.createQueryBuilder('client');
+    if (options.activeOnly) {
+      qb.andWhere('client.isActive = true');
+    }
+    if (options.search) {
+      applySearchTerms(
+        qb,
+        options.search,
+        (param) => `search_normalize(client.name) LIKE search_normalize(:${param})`,
+      );
+    }
+    qb.orderBy('client.name', 'ASC');
+    const orms = await qb.getMany();
     return orms.map((orm) => ClientMapper.toDomain(orm));
   }
 

@@ -32,7 +32,7 @@ export class TypeOrmNewsTypeRepository implements NewsTypeRepository {
       qb.andWhere('newsType.isActive = true');
     }
     if (options.search) {
-      qb.andWhere('newsType.name ILIKE :search', { search: `%${options.search}%` });
+      qb.andWhere('search_normalize(newsType.name) LIKE search_normalize(:search)', { search: `%${options.search}%` });
     }
 
     qb.select('newsType.id', 'id')

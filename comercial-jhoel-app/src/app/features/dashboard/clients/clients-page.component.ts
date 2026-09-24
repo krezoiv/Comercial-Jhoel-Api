@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { Client } from '../../../core/models';
 import { ClientService } from '../../../core/services/client.service';
@@ -37,11 +39,15 @@ export class ClientsPageComponent {
   /** ADMIN/SUPER_ADMIN only — passed down to hide add/edit/delete for other roles. The backend enforces this regardless. */
   readonly isAdmin = this.authService.isAdmin;
 
+  /** The full catalog — always the unfiltered list, so summary tiles never shrink while searching. */
   readonly clients = signal<Client[]>([]);
   readonly loading = signal(true);
 
   readonly searchTerm = signal('');
   readonly statusFilter = signal<ClientStatusFilterValue>('all');
+  /** `null` = no active server search; set from the debounced backend search below. */
+  private readonly searchResults = signal<Client[] | null>(null);
+  private readonly searchTerm$ = new Subject<string>();
 
   readonly isFormOpen = signal(false);
   readonly editingClient = signal<Client | null>(null);
@@ -50,14 +56,19 @@ export class ClientsPageComponent {
   readonly deletingClient = signal<Client | null>(null);
   readonly isDeleting = signal(false);
 
+  /**
+   * With a search term, the backend already matched `name` accent/case-insensitively
+   * (see `ClientService.getClients`'s `search` param, backed by `search_normalize()`)
+   * — this only narrows further by status, never re-does text matching in JS.
+   */
   readonly filteredClients = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
+    const term = this.searchTerm().trim();
     const status = this.statusFilter();
+    const base = term ? (this.searchResults() ?? []) : this.clients();
 
-    return this.clients().filter((client) => {
-      const matchesTerm = !term || client.name.toLowerCase().includes(term);
+    return base.filter((client) => {
       const matchesStatus = status === 'all' || (status === 'active' ? client.isActive : !client.isActive);
-      return matchesTerm && matchesStatus;
+      return matchesStatus;
     });
   });
 
@@ -67,6 +78,20 @@ export class ClientsPageComponent {
 
   constructor() {
     this.fetchClients();
+
+    this.searchTerm$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term) => {
+        const trimmed = term.trim();
+        if (!trimmed) {
+          this.searchResults.set(null);
+          return;
+        }
+        this.clientService.getClients(true, trimmed).subscribe({
+          next: (clients) => this.searchResults.set(clients),
+          error: () => this.notificationService.error('No se pudo buscar clientes.'),
+        });
+      });
   }
 
   private fetchClients(): void {
@@ -82,6 +107,14 @@ export class ClientsPageComponent {
         this.notificationService.error(extractErrorMessage(error, 'No se pudieron cargar los clientes.'));
       },
     });
+  }
+
+  onSearchTermChange(value: string): void {
+    this.searchTerm.set(value);
+    if (!value.trim()) {
+      this.searchResults.set(null);
+    }
+    this.searchTerm$.next(value);
   }
 
   openCreateForm(): void {
@@ -148,5 +181,6 @@ export class ClientsPageComponent {
   clearFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('all');
+    this.searchResults.set(null);
   }
 }

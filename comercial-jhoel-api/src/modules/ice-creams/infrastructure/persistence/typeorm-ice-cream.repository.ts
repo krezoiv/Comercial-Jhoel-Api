@@ -41,7 +41,7 @@ export class TypeOrmIceCreamRepository implements IceCreamRepository {
     }
     if (options.search) {
       qb.andWhere(
-        '(iceCream.product ILIKE :search OR iceCream.sku ILIKE :search)',
+        '(search_normalize(iceCream.product) LIKE search_normalize(:search) OR search_normalize(iceCream.sku) LIKE search_normalize(:search))',
         {
           search: `%${options.search}%`,
         },

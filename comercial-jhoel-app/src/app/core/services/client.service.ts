@@ -11,10 +11,19 @@ const BASE_URL = `${environment.apiUrl}/clients`;
 export class ClientService {
   private readonly http = inject(HttpClient);
 
-  /** Active-only by default. The admin screen passes true to also show inactive clients. */
-  getClients(includeInactive = false): Observable<Client[]> {
+  /**
+   * Active-only by default. The admin screen passes true to also show inactive clients.
+   * `search` is forwarded to the backend's accent/case-insensitive `search_normalize()`-based
+   * match (see the API's `AddSearchNormalizationSupport` migration) — never filtered here in
+   * JS, so "garcia" finds "García" the same way everywhere else in the app.
+   */
+  getClients(includeInactive = false, search?: string): Observable<Client[]> {
+    const params: Record<string, string | boolean> = { includeInactive };
+    if (search) {
+      params['search'] = search;
+    }
     return this.http
-      .get<ApiSuccessResponse<Client[]>>(BASE_URL, { params: { includeInactive } })
+      .get<ApiSuccessResponse<Client[]>>(BASE_URL, { params })
       .pipe(map((response) => response.data));
   }
 

@@ -119,7 +119,7 @@ export class TypeOrmProductPresentationRepository implements ProductPresentation
       .leftJoinAndSelect('presentation.presentationType', 'presentationType')
       .where('presentation.productId IN (:...productIds)', { productIds })
       .andWhere('presentation.isActive = true')
-      .andWhere('presentation.barcode ILIKE :search', { search: `%${trimmed}%` })
+      .andWhere('search_normalize(presentation.barcode) LIKE search_normalize(:search)', { search: `%${trimmed}%` })
       .getMany();
     for (const orm of orms) {
       if (!map.has(orm.productId)) {

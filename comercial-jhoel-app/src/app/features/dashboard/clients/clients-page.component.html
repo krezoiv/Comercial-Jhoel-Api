@@ -7,7 +7,7 @@
     [searchTerm]="searchTerm()"
     [statusFilter]="statusFilter()"
     [canManage]="isAdmin()"
-    (searchTermChange)="searchTerm.set($event)"
+    (searchTermChange)="onSearchTermChange($event)"
     (statusFilterChange)="statusFilter.set($event)"
     (addClient)="openCreateForm()"
   />

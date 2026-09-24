@@ -1,9 +1,14 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class ListSuppliersQueryDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   includeInactive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
 }

@@ -5,6 +5,7 @@ import { SupplierOutput, toSupplierOutput } from '../dtos/supplier-output';
 
 export interface ListSuppliersInput {
   activeOnly?: boolean;
+  search?: string;
 }
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ListSuppliersUseCase {
   async execute(input: ListSuppliersInput = {}): Promise<SupplierOutput[]> {
     const suppliers = await this.supplierRepository.findAll({
       activeOnly: input.activeOnly ?? false,
+      search: input.search?.trim() || undefined,
     });
     return suppliers.map(toSupplierOutput);
   }

@@ -75,7 +75,7 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
     }
     if (options.search) {
       qb.andWhere(
-        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        '(search_normalize(record.description) LIKE search_normalize(:search) OR search_normalize(client.name) LIKE search_normalize(:search))',
         {
           search: `%${options.search}%`,
         },
@@ -123,7 +123,7 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
     }
     if (options.search) {
       qb.andWhere(
-        '(record.description ILIKE :search OR client.name ILIKE :search)',
+        '(search_normalize(record.description) LIKE search_normalize(:search) OR search_normalize(client.name) LIKE search_normalize(:search))',
         {
           search: `%${options.search}%`,
         },

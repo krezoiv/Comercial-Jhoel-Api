@@ -4,12 +4,14 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { Supplier } from '../../domain/entities/supplier.entity';
 import {
   CreateSupplierData,
+  FindSuppliersOptions,
   SupplierRepository,
   UpdateSupplierData,
 } from '../../domain/repositories/supplier.repository';
 import { SupplierTaxIdAlreadyExistsError } from '../../domain/errors/supplier-tax-id-already-exists.error';
 import { SupplierOrmEntity } from './supplier.orm-entity';
 import { SupplierMapper } from './supplier.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 @Injectable()
 export class TypeOrmSupplierRepository implements SupplierRepository {
@@ -18,11 +20,22 @@ export class TypeOrmSupplierRepository implements SupplierRepository {
     private readonly repository: Repository<SupplierOrmEntity>,
   ) {}
 
-  async findAll(options?: { activeOnly?: boolean }): Promise<Supplier[]> {
-    const orms = await this.repository.find({
-      where: options?.activeOnly ? { isActive: true } : {},
-      order: { name: 'ASC' },
-    });
+  async findAll(options?: FindSuppliersOptions): Promise<Supplier[]> {
+    const qb = this.repository.createQueryBuilder('supplier');
+    if (options?.activeOnly) {
+      qb.andWhere('supplier.isActive = true');
+    }
+    if (options?.search) {
+      applySearchTerms(
+        qb,
+        options.search,
+        (param) => `(search_normalize(supplier.name) LIKE search_normalize(:${param})
+          OR search_normalize(supplier.taxId) LIKE search_normalize(:${param})
+          OR search_normalize(supplier.phone) LIKE search_normalize(:${param}))`,
+      );
+    }
+    qb.orderBy('supplier.name', 'ASC');
+    const orms = await qb.getMany();
     return orms.map((orm) => SupplierMapper.toDomain(orm));
   }
 

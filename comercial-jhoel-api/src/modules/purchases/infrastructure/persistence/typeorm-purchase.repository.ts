@@ -116,7 +116,7 @@ export class TypeOrmPurchaseRepository implements PurchaseRepository {
     }
     if (options.search) {
       qb.andWhere(
-        '(supplier.name ILIKE :search OR purchase.invoiceNumber ILIKE :search)',
+        '(search_normalize(supplier.name) LIKE search_normalize(:search) OR search_normalize(purchase.invoiceNumber) LIKE search_normalize(:search))',
         { search: `%${options.search}%` },
       );
     }

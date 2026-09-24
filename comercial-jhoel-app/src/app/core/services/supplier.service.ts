@@ -11,10 +11,18 @@ const BASE_URL = `${environment.apiUrl}/suppliers`;
 export class SupplierService {
   private readonly http = inject(HttpClient);
 
-  /** Active-only by default — what the purchase form's dropdown should offer. */
-  getSuppliers(includeInactive = false): Observable<Supplier[]> {
+  /**
+   * Active-only by default — what the purchase form's dropdown should offer.
+   * `search` is forwarded to the backend's accent/case-insensitive `search_normalize()`-based
+   * match (name/taxId/phone) — never filtered here in JS.
+   */
+  getSuppliers(includeInactive = false, search?: string): Observable<Supplier[]> {
+    const params: Record<string, string | boolean> = { includeInactive };
+    if (search) {
+      params['search'] = search;
+    }
     return this.http
-      .get<ApiSuccessResponse<Supplier[]>>(BASE_URL, { params: { includeInactive } })
+      .get<ApiSuccessResponse<Supplier[]>>(BASE_URL, { params })
       .pipe(map((response) => response.data));
   }
 

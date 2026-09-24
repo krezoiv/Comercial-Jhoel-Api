@@ -14,6 +14,8 @@ export interface UpdateClientData {
 
 export interface FindClientsOptions {
   activeOnly: boolean;
+  /** Accent/case-insensitive substring match on `name` — see `search_normalize()` (`AddSearchNormalizationSupport`). `undefined`/empty means no filter. */
+  search?: string;
 }
 
 export interface ClientRepository {

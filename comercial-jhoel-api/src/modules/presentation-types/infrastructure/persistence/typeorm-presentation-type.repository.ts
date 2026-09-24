@@ -43,7 +43,7 @@ export class TypeOrmPresentationTypeRepository
     }
     if (options.search) {
       qb.andWhere(
-        '(presentationType.name ILIKE :search OR presentationType.code ILIKE :search)',
+        '(search_normalize(presentationType.name) LIKE search_normalize(:search) OR search_normalize(presentationType.code) LIKE search_normalize(:search))',
         { search: `%${options.search}%` },
       );
     }

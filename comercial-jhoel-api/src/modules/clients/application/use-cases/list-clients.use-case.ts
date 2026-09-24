@@ -5,6 +5,7 @@ import { ClientOutput, toClientOutput } from '../dtos/client-output';
 
 export interface ListClientsInput {
   includeInactive?: boolean;
+  search?: string;
 }
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ListClientsUseCase {
   async execute(input: ListClientsInput = {}): Promise<ClientOutput[]> {
     const clients = await this.clientRepository.findAll({
       activeOnly: !input.includeInactive,
+      search: input.search?.trim() || undefined,
     });
     return clients.map(toClientOutput);
   }

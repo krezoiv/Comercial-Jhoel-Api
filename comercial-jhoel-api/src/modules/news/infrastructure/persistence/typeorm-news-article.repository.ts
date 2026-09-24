@@ -12,6 +12,7 @@ import {
 } from '../../domain/repositories/news-article.repository';
 import { NewsArticleOrmEntity } from './news-article.orm-entity';
 import { NewsArticleMapper } from './news-article.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 @Injectable()
 export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
@@ -34,7 +35,11 @@ export class TypeOrmNewsArticleRepository implements NewsArticleRepository {
       query.andWhere('n.isActive = true');
     }
     if (options?.search) {
-      query.andWhere('n.title ILIKE :search', { search: `%${options.search}%` });
+      applySearchTerms(
+        query,
+        options.search,
+        (param) => `search_normalize(n.title) LIKE search_normalize(:${param})`,
+      );
     }
     query.orderBy('n.sortOrder', 'ASC').addOrderBy('n.publishedAt', 'DESC');
     const orms = await query.getMany();

@@ -55,7 +55,7 @@ export class TypeOrmCatalogPhoneRepository implements CatalogPhoneRepository {
     }
     if (options?.search) {
       query.andWhere(
-        '(phone.brand ILIKE :search OR phone.model ILIKE :search)',
+        '(search_normalize(phone.brand) LIKE search_normalize(:search) OR search_normalize(phone.model) LIKE search_normalize(:search))',
         {
           search: `%${options.search}%`,
         },

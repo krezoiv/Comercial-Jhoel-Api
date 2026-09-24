@@ -39,7 +39,9 @@ export interface ProductPresentationRepository {
    * One active presentation per product (the first match, if more than
    * one somehow matched — barcodes are globally unique among active rows,
    * so this is a defensive cap, not an expected case) whose barcode
-   * `ILIKE` the given search term, scoped to `productIds` — backs
+   * matches the given search term (accent/case-insensitively, via
+   * `search_normalize()` — see `AddSearchNormalizationSupport`), scoped to
+   * `productIds` — backs
    * `ListProductsUseCase`'s "which presentation did this scan actually
    * mean" resolution. Returns an empty map for an empty `productIds` or
    * a blank `search`.

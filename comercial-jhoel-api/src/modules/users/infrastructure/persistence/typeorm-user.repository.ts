@@ -14,6 +14,7 @@ import { UsernameAlreadyExistsError } from '../../domain/errors/username-already
 import { PhoneAlreadyExistsError } from '../../domain/errors/phone-already-exists.error';
 import { UserOrmEntity } from './user.orm-entity';
 import { UserMapper } from './user.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 const SORT_COLUMN: Record<UserSortField, string> = {
   username: 'user.username',
@@ -37,9 +38,11 @@ export class TypeOrmUserRepository implements UserRepository {
       qb.andWhere('user.isActive = true');
     }
     if (options.search) {
-      qb.andWhere('(user.username ILIKE :search OR user.phone ILIKE :search)', {
-        search: `%${options.search}%`,
-      });
+      applySearchTerms(
+        qb,
+        options.search,
+        (param) => `(search_normalize(user.username) LIKE search_normalize(:${param}) OR search_normalize(user.phone) LIKE search_normalize(:${param}))`,
+      );
     }
     if (options.roleId) {
       qb.andWhere('user.roleId = :roleId', { roleId: options.roleId });

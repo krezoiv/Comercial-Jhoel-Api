@@ -33,7 +33,7 @@ export class TypeOrmCatalogBankRepository implements CatalogBankRepository {
       query.andWhere('b.isActive = true');
     }
     if (options?.search) {
-      query.andWhere('b.name ILIKE :search', { search: `%${options.search}%` });
+      query.andWhere('search_normalize(b.name) LIKE search_normalize(:search)', { search: `%${options.search}%` });
     }
     query.orderBy('b.sortOrder', 'ASC').addOrderBy('b.name', 'ASC');
     const orms = await query.getMany();

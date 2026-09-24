@@ -15,6 +15,7 @@ import { ProductNameAlreadyExistsError } from '../../domain/errors/product-name-
 import { ProductSkuAlreadyExistsError } from '../../domain/errors/product-sku-already-exists.error';
 import { ProductOrmEntity } from './product.orm-entity';
 import { ProductMapper } from './product.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 const SORT_COLUMN: Record<ProductSortField, string> = {
   name: 'product.name',
@@ -63,16 +64,17 @@ export class TypeOrmProductRepository implements ProductRepository {
     // `ListProductsUseCase` via `findMatchingByBarcode` — this WHERE
     // clause only decides whether the product is included at all.
     if (options.search) {
-      qb.andWhere(
-        `(product.name ILIKE :search
-          OR product.sku ILIKE :search
+      applySearchTerms(
+        qb,
+        options.search,
+        (param) => `(search_normalize(product.name) LIKE search_normalize(:${param})
+          OR search_normalize(product.sku) LIKE search_normalize(:${param})
           OR EXISTS (
             SELECT 1 FROM product_presentations pp
             WHERE pp.product_id = product.id
               AND pp.is_active = true
-              AND pp.barcode ILIKE :search
+              AND search_normalize(pp.barcode) LIKE search_normalize(:${param})
           ))`,
-        { search: `%${options.search}%` },
       );
     }
     if (options.categoryId) {

@@ -10,7 +10,9 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { Client } from '../../../../../core/models';
 import { ClientService } from '../../../../../core/services/client.service';
@@ -21,11 +23,12 @@ let nextInstanceId = 0;
 /**
  * Searchable client select — a near-copy of Reportería's own
  * `ProductFilterSearchComponent` (search box + dropdown + persistent
- * "selected" chip), adapted for clients: filtering is client-side over the
- * full active-clients list (fetched once), since ClientsModule has no
- * server-side search endpoint — this app's established convention for
- * small/medium catalogs (see Categorías/Negocios/Bancos) is a client-side
- * filter over a fully-fetched active list, not a new backend endpoint.
+ * "selected" chip), adapted for clients. The dropdown's base list (shown on
+ * focus with an empty query) is the full active-clients list, fetched once;
+ * once the user types, matching is delegated to the backend's accent/
+ * case-insensitive `search_normalize()`-based `search` param (debounced),
+ * never a `.toLowerCase().includes()` filter in JS — see `ClientService
+ * .getClients`.
  */
 @Component({
   selector: 'app-client-search-select',
@@ -56,6 +59,8 @@ export class ClientSearchSelectComponent {
 
   private readonly clients = signal<Client[]>([]);
   private readonly clientsLoaded = signal(false);
+  private readonly searchResults = signal<Client[] | null>(null);
+  private readonly query$ = new Subject<string>();
 
   readonly query = signal('');
   readonly open = signal(false);
@@ -76,13 +81,10 @@ export class ClientSearchSelectComponent {
     return name ? { id, name, isActive: true, createdAt: '', updatedAt: '' } : null;
   });
 
+  /** With a query, `searchResults()` (backend, accent/case-insensitive) — never a JS `.includes()` filter. */
   readonly filteredClients = computed(() => {
-    const term = this.query().trim().toLowerCase();
-    const clients = this.clients();
-    if (!term) {
-      return clients;
-    }
-    return clients.filter((c) => c.name.toLowerCase().includes(term));
+    const term = this.query().trim();
+    return term ? (this.searchResults() ?? []) : this.clients();
   });
 
   constructor() {
@@ -92,6 +94,18 @@ export class ClientSearchSelectComponent {
         this.clientsLoaded.set(true);
       },
       error: () => this.clientsLoaded.set(true),
+    });
+
+    this.query$.pipe(debounceTime(250), distinctUntilChanged(), takeUntilDestroyed()).subscribe((term) => {
+      const trimmed = term.trim();
+      if (!trimmed) {
+        this.searchResults.set(null);
+        return;
+      }
+      this.clientService.getClients(false, trimmed).subscribe({
+        next: (clients) => this.searchResults.set(clients),
+        error: () => this.searchResults.set([]),
+      });
     });
 
     effect(() => {
@@ -104,6 +118,10 @@ export class ClientSearchSelectComponent {
   onInput(value: string): void {
     this.query.set(value);
     this.open.set(true);
+    if (!value.trim()) {
+      this.searchResults.set(null);
+    }
+    this.query$.next(value);
   }
 
   onFocus(): void {
@@ -117,11 +135,13 @@ export class ClientSearchSelectComponent {
   select(client: Client): void {
     this.selectionChange.emit(client);
     this.query.set('');
+    this.searchResults.set(null);
     this.open.set(false);
   }
 
   clear(): void {
     this.selectionChange.emit(null);
     this.query.set('');
+    this.searchResults.set(null);
   }
 }

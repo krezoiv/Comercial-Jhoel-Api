@@ -57,6 +57,7 @@ export class SuppliersController {
   ): Promise<SupplierResponseDto[]> {
     return this.listSuppliersUseCase.execute({
       activeOnly: !query.includeInactive,
+      search: query.search,
     });
   }
 

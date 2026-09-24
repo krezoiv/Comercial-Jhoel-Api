@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 
 import {
   Business,
@@ -59,14 +61,18 @@ import { ImportPurchaseResultsModalComponent } from './components/import-purchas
  * fetched once from their own services) and filtering that also matches
  * SKU, not just name.
  *
- * Filtering/sorting/searching all happen client-side over one fetched
- * page (`InventoryService.getProducts()` asks for `limit=100`), even
- * though the backend's `GET /products` already supports `search`/
- * `categoryId`/`businessId`/`sortBy`/`page` as real query params. This
- * was a deliberate "swap the data source, don't rearchitect an
- * already-working filter UI" call, not an oversight — wiring the
- * toolbar to drive those params directly instead is a legitimate future
- * improvement if the catalog grows past what one page comfortably holds.
+ * Category/business/stock filters stay client-side over `products()` (the
+ * first `LIST_LIMIT` active products) — that part of the original "swap
+ * the data source, don't rearchitect an already-working filter UI" call
+ * still holds. The text search, however, is now server-backed
+ * (`InventoryService.getProducts(search)`, debounced): with the catalog
+ * past `LIST_LIMIT` real products, a client-side-only search silently
+ * excluded any product not already sitting in that first fetched page —
+ * confirmed live as the actual cause of a real "busco un producto
+ * existente y no aparece" report once the catalog reached ~1600 products.
+ * `searchResults` is `null` when no search term is active (browse mode,
+ * unchanged behavior); once set, it — not `products()` — is what
+ * `filteredProducts` searches through.
  */
 export class InventoryPageComponent {
   private readonly inventoryService = inject(InventoryService);
@@ -110,6 +116,11 @@ export class InventoryPageComponent {
   readonly selectedBusiness = signal('');
   readonly stockFilter = signal<StockFilterValue>('all');
 
+  /** `null` = no active server search (browse mode, `filteredProducts` reads `products()`). Set once a debounced search resolves; cleared back to `null` only when the search term itself is cleared, never on every keystroke — so the table shows the previous term's results (not a flash of "no results") while the next one is in flight. */
+  readonly searchResults = signal<Product[] | null>(null);
+  readonly searching = signal(false);
+  private readonly searchTerm$ = new Subject<string>();
+
   readonly isFormOpen = signal(false);
   readonly editingProduct = signal<Product | null>(null);
 
@@ -123,22 +134,23 @@ export class InventoryPageComponent {
   readonly businesses = computed(() => [...new Set(this.products().map((p) => p.business))].sort());
 
   readonly filteredProducts = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
+    const term = this.searchTerm().trim();
     const category = this.selectedCategory();
     const business = this.selectedBusiness();
     const stockFilter = this.stockFilter();
 
-    return this.products().filter((product) => {
-      const matchesTerm =
-        !term ||
-        product.name.toLowerCase().includes(term) ||
-        product.category.toLowerCase().includes(term) ||
-        product.business.toLowerCase().includes(term) ||
-        (product.sku ?? '').toLowerCase().includes(term);
+    // With a search term, the backend already did the name/SKU matching
+    // (see `searchTerm$` below) — `searchResults()` is that result set, not
+    // `products()` (which only ever holds the first `LIST_LIMIT` products
+    // and would silently miss anything outside that page). Category/
+    // business/stock still narrow it further client-side, same as before.
+    const base = term ? this.searchResults() ?? [] : this.products();
+
+    return base.filter((product) => {
       const matchesCategory = !category || product.category === category;
       const matchesBusiness = !business || product.business === business;
       const matchesStock = stockFilter === 'all' || getStockStatus(product.stock) === stockFilter;
-      return matchesTerm && matchesCategory && matchesBusiness && matchesStock;
+      return matchesCategory && matchesBusiness && matchesStock;
     });
   });
 
@@ -178,6 +190,44 @@ export class InventoryPageComponent {
       next: (unitsOfMeasure) => this.unitOfMeasureOptions.set(unitsOfMeasure),
       error: () => this.notificationService.error('No se pudieron cargar las unidades de medida.'),
     });
+
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          const trimmed = term.trim();
+          if (!trimmed) {
+            this.searching.set(false);
+            return of(null);
+          }
+          this.searching.set(true);
+          return this.inventoryService.getProducts(trimmed).pipe(
+            catchError(() => {
+              this.notificationService.error('No se pudo buscar productos.');
+              return of(null);
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((results) => {
+        this.searching.set(false);
+        // `null` from an empty term or a failed search — either way, don't
+        // clobber whatever the table was already correctly showing; an
+        // empty term explicitly clears via `onSearchTermChange` instead.
+        if (results !== null) {
+          this.searchResults.set(results);
+        }
+      });
+  }
+
+  onSearchTermChange(value: string): void {
+    this.searchTerm.set(value);
+    if (!value.trim()) {
+      this.searchResults.set(null);
+    }
+    this.searchTerm$.next(value);
   }
 
   private fetchStats(): void {
@@ -190,6 +240,22 @@ export class InventoryPageComponent {
         // this app.
       },
     });
+  }
+
+  /**
+   * Re-fetches the base product list and, if a search is currently active,
+   * re-runs it too — so a transfer/import that changed stock or added
+   * products doesn't leave a stale search result on screen. Calls
+   * `getProducts(term)` directly rather than going through `searchTerm$`:
+   * that subject's `distinctUntilChanged()` would silently swallow a
+   * forced refresh for the exact same (unchanged) term.
+   */
+  private refetchProducts(): void {
+    this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+    const term = this.searchTerm().trim();
+    if (term) {
+      this.inventoryService.getProducts(term).subscribe((results) => this.searchResults.set(results));
+    }
   }
 
   openCreateForm(): void {
@@ -213,6 +279,12 @@ export class InventoryPageComponent {
     this.products.update((list) =>
       wasEditing ? list.map((p) => (p.id === product.id ? product : p)) : [product, ...list]
     );
+    // Mirror the same edit into an active search's results, if any — a
+    // create never matches an existing search term, but an in-place edit
+    // (e.g. renaming the very product the user searched for) should.
+    if (this.searchResults() !== null) {
+      this.searchResults.update((list) => list!.map((p) => (p.id === product.id ? product : p)));
+    }
 
     this.notificationService.success(
       wasEditing ? `"${product.name}" se actualizó correctamente.` : `"${product.name}" se agregó al inventario.`
@@ -243,6 +315,9 @@ export class InventoryPageComponent {
         this.isDeleteOpen.set(false);
         this.deletingProduct.set(null);
         this.products.update((list) => list.filter((p) => p.id !== product.id));
+        if (this.searchResults() !== null) {
+          this.searchResults.update((list) => list!.filter((p) => p.id !== product.id));
+        }
         this.notificationService.success(`"${product.name}" se desactivó del inventario.`);
         this.fetchStats();
       },
@@ -255,6 +330,8 @@ export class InventoryPageComponent {
 
   clearFilters(): void {
     this.searchTerm.set('');
+    this.searchResults.set(null);
+    this.searchTerm$.next('');
     this.selectedCategory.set('');
     this.selectedBusiness.set('');
     this.stockFilter.set('all');
@@ -287,7 +364,7 @@ export class InventoryPageComponent {
    * refreshes here; the operator closes it explicitly when done.
    */
   onQuickTransferSaved(): void {
-    this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+    this.refetchProducts();
     this.fetchStats();
   }
 
@@ -357,7 +434,7 @@ export class InventoryPageComponent {
     // changes the running total (`stockAt`'s own doc comment), so the
     // aggregate tiles don't strictly need a refetch here, but it's kept for
     // consistency with every other mutation on this page.
-    this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+    this.refetchProducts();
     this.fetchStats();
   }
 
@@ -386,7 +463,7 @@ export class InventoryPageComponent {
         this.importResult.set(result);
         this.isImportResultsOpen.set(true);
         if (result.created > 0) {
-          this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+          this.refetchProducts();
           this.fetchStats();
         }
       },
@@ -426,7 +503,7 @@ export class InventoryPageComponent {
         this.importInitialStockResult.set(result);
         this.isImportInitialStockResultsOpen.set(true);
         if (result.purchasesCreated > 0) {
-          this.inventoryService.getProducts().subscribe((products) => this.products.set(products));
+          this.refetchProducts();
           this.fetchStats();
         }
       },

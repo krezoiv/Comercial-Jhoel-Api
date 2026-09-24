@@ -83,7 +83,7 @@ export class TypeOrmTicketRepository implements TicketRepository {
     }
     if (options.search) {
       qb.andWhere(
-        '(ticket.clientName ILIKE :search OR client.name ILIKE :search OR ticket.ticketNumber ILIKE :search)',
+        '(search_normalize(ticket.clientName) LIKE search_normalize(:search) OR search_normalize(client.name) LIKE search_normalize(:search) OR search_normalize(ticket.ticketNumber) LIKE search_normalize(:search))',
         { search: `%${options.search}%` },
       );
     }

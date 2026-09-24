@@ -5,10 +5,13 @@
       <input
         id="inventory-search"
         type="text"
-        placeholder="Buscar por nombre, SKU, categoría o negocio…"
+        placeholder="Buscar por nombre o SKU…"
         [ngModel]="searchTerm"
         (ngModelChange)="searchTermChange.emit($event)"
       />
+      @if (searching) {
+        <span class="search__spinner" aria-hidden="true"></span>
+      }
       <button
         type="button"
         class="search__scan-btn"

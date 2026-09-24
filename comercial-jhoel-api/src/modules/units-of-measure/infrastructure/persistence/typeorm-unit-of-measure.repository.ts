@@ -35,7 +35,7 @@ export class TypeOrmUnitOfMeasureRepository implements UnitOfMeasureRepository {
     }
     if (options.search) {
       qb.andWhere(
-        '(unitOfMeasure.name ILIKE :search OR unitOfMeasure.abbreviation ILIKE :search)',
+        '(search_normalize(unitOfMeasure.name) LIKE search_normalize(:search) OR search_normalize(unitOfMeasure.abbreviation) LIKE search_normalize(:search))',
         { search: `%${options.search}%` },
       );
     }

@@ -39,7 +39,7 @@ export class TypeOrmCatalogProductRepository implements CatalogProductRepository
       query.andWhere('cp.isActive = true');
     }
     if (options.search) {
-      query.andWhere('(product.name ILIKE :search OR product.sku ILIKE :search)', {
+      query.andWhere('(search_normalize(product.name) LIKE search_normalize(:search) OR search_normalize(product.sku) LIKE search_normalize(:search))', {
         search: `%${options.search}%`,
       });
     }

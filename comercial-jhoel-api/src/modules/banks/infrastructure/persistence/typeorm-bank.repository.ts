@@ -11,6 +11,7 @@ import {
 import { BankAlreadyExistsError } from '../../domain/errors/bank-already-exists.error';
 import { BankOrmEntity } from './bank.orm-entity';
 import { BankMapper } from './bank.mapper';
+import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
 
 @Injectable()
 export class TypeOrmBankRepository implements BankRepository {
@@ -29,11 +30,10 @@ export class TypeOrmBankRepository implements BankRepository {
       qb.andWhere('bank.isActive = true');
     }
     if (options.search) {
-      qb.andWhere(
-        '(bank.name ILIKE :search OR bank.accountNumber ILIKE :search)',
-        {
-          search: `%${options.search}%`,
-        },
+      applySearchTerms(
+        qb,
+        options.search,
+        (param) => `(search_normalize(bank.name) LIKE search_normalize(:${param}) OR search_normalize(bank.accountNumber) LIKE search_normalize(:${param}))`,
       );
     }
 

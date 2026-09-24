@@ -33,6 +33,8 @@ export class InventoryToolbarComponent {
   @Input() selectedCategory = '';
   @Input() selectedBusiness = '';
   @Input() stockFilter: StockFilterValue = 'all';
+  /** True while a debounced server search is in flight — shows a small inline spinner instead of blanking the table (the previous term's results stay visible until the new ones arrive). */
+  @Input() searching = false;
   /** USER role doesn't get to create products — hides the button, the backend still enforces this. */
   @Input() canManage = true;
   /** True while `POST /products/import` is in flight — disables the button so a slow upload can't be double-submitted. */

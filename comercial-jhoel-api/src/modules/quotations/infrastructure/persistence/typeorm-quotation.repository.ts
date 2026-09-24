@@ -86,7 +86,7 @@ export class TypeOrmQuotationRepository implements QuotationRepository {
     }
     if (options.search) {
       qb.andWhere(
-        '(client.name ILIKE :search OR quotation.quotationNumber ILIKE :search)',
+        '(search_normalize(client.name) LIKE search_normalize(:search) OR search_normalize(quotation.quotationNumber) LIKE search_normalize(:search))',
         { search: `%${options.search}%` },
       );
     }

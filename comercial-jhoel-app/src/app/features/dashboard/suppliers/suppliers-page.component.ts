@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { Supplier } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -37,11 +39,15 @@ export class SuppliersPageComponent {
   /** ADMIN/SUPER_ADMIN only — passed down to hide add/edit/delete for USER. The backend enforces this regardless. */
   readonly isAdmin = this.authService.isAdmin;
 
+  /** The full catalog — always the unfiltered list, so summary tiles never shrink while searching. */
   readonly suppliers = signal<Supplier[]>([]);
   readonly loading = signal(true);
 
   readonly searchTerm = signal('');
   readonly statusFilter = signal<StatusFilterValue>('all');
+  /** `null` = no active server search; set from the debounced backend search below. */
+  private readonly searchResults = signal<Supplier[] | null>(null);
+  private readonly searchTerm$ = new Subject<string>();
 
   readonly isFormOpen = signal(false);
   readonly editingSupplier = signal<Supplier | null>(null);
@@ -50,19 +56,21 @@ export class SuppliersPageComponent {
   readonly deletingSupplier = signal<Supplier | null>(null);
   readonly isDeleting = signal(false);
 
+  /**
+   * With a search term, the backend already matched name/taxId/phone
+   * accent/case-insensitively (see `SupplierService.getSuppliers`'s `search`
+   * param, backed by `search_normalize()`) — this only narrows further by
+   * status, never re-does text matching in JS.
+   */
   readonly filteredSuppliers = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
+    const term = this.searchTerm().trim();
     const status = this.statusFilter();
+    const base = term ? (this.searchResults() ?? []) : this.suppliers();
 
-    return this.suppliers().filter((supplier) => {
-      const matchesTerm =
-        !term ||
-        supplier.name.toLowerCase().includes(term) ||
-        (supplier.taxId ?? '').toLowerCase().includes(term) ||
-        (supplier.phone ?? '').toLowerCase().includes(term);
+    return base.filter((supplier) => {
       const matchesStatus =
         status === 'all' || (status === 'active' ? supplier.isActive : !supplier.isActive);
-      return matchesTerm && matchesStatus;
+      return matchesStatus;
     });
   });
 
@@ -70,6 +78,20 @@ export class SuppliersPageComponent {
 
   constructor() {
     this.fetchSuppliers();
+
+    this.searchTerm$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term) => {
+        const trimmed = term.trim();
+        if (!trimmed) {
+          this.searchResults.set(null);
+          return;
+        }
+        this.supplierService.getSuppliers(true, trimmed).subscribe({
+          next: (suppliers) => this.searchResults.set(suppliers),
+          error: () => this.notificationService.error('No se pudo buscar proveedores.'),
+        });
+      });
   }
 
   private fetchSuppliers(): void {
@@ -85,6 +107,14 @@ export class SuppliersPageComponent {
         this.notificationService.error(extractErrorMessage(error, 'No se pudieron cargar los proveedores.'));
       },
     });
+  }
+
+  onSearchTermChange(value: string): void {
+    this.searchTerm.set(value);
+    if (!value.trim()) {
+      this.searchResults.set(null);
+    }
+    this.searchTerm$.next(value);
   }
 
   openCreateForm(): void {
@@ -151,5 +181,6 @@ export class SuppliersPageComponent {
   clearFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('all');
+    this.searchResults.set(null);
   }
 }
