@@ -125,3 +125,69 @@
     padding-top: 0;
   }
 }
+
+// ---- Entrada animada, gateada por `[ready]` ---------------------------
+// Mismo idioma visual que `.reveal`/`.is-visible` en _base.scss (fade +
+// translateY, disparado por una clase) en vez de un segundo mecanismo —
+// solo que aquí el disparador es "la pantalla de carga terminó", no un
+// IntersectionObserver, ya que el Hero siempre está en el viewport desde
+// el primer frame. Selectores por nombre de tag/clase directamente sobre
+// los hijos de `.hero__content`/`.hero__layout` — sin tocar el HTML — el
+// mismo patrón ya usado en otras partes de este proyecto para estilar un
+// componente hijo desde la hoja de estilos del padre.
+.hero__content > app-badge,
+.hero__title,
+.hero__subtitle,
+.hero__actions,
+.hero__trust {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.hero__visual {
+  opacity: 0;
+  transform: translateY(24px) scale(0.97);
+  transition:
+    opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.hero--ready {
+  .hero__content > app-badge {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero__title {
+    opacity: 1;
+    transform: none;
+    transition-delay: 80ms;
+  }
+
+  .hero__subtitle {
+    opacity: 1;
+    transform: none;
+    transition-delay: 160ms;
+  }
+
+  .hero__actions {
+    opacity: 1;
+    transform: none;
+    transition-delay: 240ms;
+  }
+
+  .hero__trust {
+    opacity: 1;
+    transform: none;
+    transition-delay: 300ms;
+  }
+
+  .hero__visual {
+    opacity: 1;
+    transform: none;
+    transition-delay: 200ms;
+  }
+}

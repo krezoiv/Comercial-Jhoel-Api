@@ -55,8 +55,20 @@
   color: var(--color-white);
   box-shadow: var(--shadow-glow-primary);
 
-  &:hover:not(:disabled) {
-    filter: brightness(1.08);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px -10px rgba(47, 131, 224, 0.55);
+    }
+  }
+
+  // Gana por orden de cascada sobre el `:hover` de arriba (misma
+  // especificidad) — así un click real, incluso mientras el mouse sigue
+  // encima, sigue mostrando el "press" en vez de quedar atrapado en la
+  // elevación del hover.
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 }
 
@@ -65,8 +77,16 @@
   color: var(--color-ink-950);
   box-shadow: var(--shadow-glow-gold);
 
-  &:hover:not(:disabled) {
-    filter: brightness(1.05);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      filter: brightness(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px -10px rgba(245, 166, 35, 0.5);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 }
 

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
 import { SiteVisitsService } from '../../core/services/site-visits.service';
+import { LoadingScreenComponent } from '../../shared/ui';
 import { HeroComponent } from './sections/hero/hero.component';
 import { CredibilityComponent } from './sections/credibility/credibility.component';
 import { ServicesComponent } from './sections/services/services.component';
@@ -18,6 +19,7 @@ import { ContactComponent } from './sections/contact/contact.component';
   selector: 'app-landing-page',
   standalone: true,
   imports: [
+    LoadingScreenComponent,
     HeroComponent,
     CredibilityComponent,
     ServicesComponent,
@@ -35,6 +37,19 @@ import { ContactComponent } from './sections/contact/contact.component';
 })
 export class LandingPageComponent {
   private readonly siteVisitsService = inject(SiteVisitsService);
+
+  /**
+   * Gates the one-time intro screen — `false` only for the ~3s (or near-
+   * instant under `prefers-reduced-motion`) window right after a genuine
+   * entry to `/`. Lives here, not in `AppComponent`, for the same reason
+   * `registerVisit()` already does below: this component's constructor
+   * only re-runs on a real navigation to this route, never on an anchor/
+   * scroll/modal interaction within it, so the intro naturally never
+   * replays for those. `HeroComponent` reads it to gate its own entrance
+   * animation so it starts exactly as this screen fades away instead of
+   * having already finished animating behind an opaque overlay.
+   */
+  readonly introDone = signal(false);
 
   /**
    * Se registra UNA vez por carga real de esta página — el constructor solo

@@ -208,6 +208,7 @@
   --z-overlay: 200;
   --z-modal: 300;
   --z-toast: 400;
+  --z-loading-screen: 500;
 
   @media (min-width: 768px) {
     --container-pad: var(--space-8);

@@ -1,4 +1,7 @@
-<app-hero />
+@if (!introDone()) {
+  <app-loading-screen (finished)="introDone.set(true)" />
+}
+<app-hero [ready]="introDone()" />
 <app-credibility />
 <app-services />
 <app-phones />

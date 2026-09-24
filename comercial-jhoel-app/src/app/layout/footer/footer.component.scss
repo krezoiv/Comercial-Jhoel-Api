@@ -2,10 +2,28 @@
 @use 'mixins' as *;
 
 .footer {
+  position: relative;
   background: var(--color-bg-dark);
   color: var(--color-text-on-dark-muted);
   padding-block: var(--space-16) var(--space-8);
   border-top: 1px solid var(--color-border-dark);
+}
+
+// Separador elegante entre la última sección y el footer — un filo de
+// degradado de marca (el mismo cian/azul que ya cierra `--gradient-brand`
+// en CTAs y en el filo del navbar al hacer scroll), no un simple
+// `border-top` plano. `pointer-events: none` porque es puramente
+// decorativo, nunca debe interceptar un clic.
+.footer::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-accent-cyan) 50%, transparent 100%);
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .footer__top {

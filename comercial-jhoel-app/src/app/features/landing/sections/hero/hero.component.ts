@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
 import { SITE } from '../../../../core/data';
@@ -16,6 +16,16 @@ import { HeroShowcaseComponent } from './hero-showcase.component';
 })
 export class HeroComponent {
   private readonly contactService = inject(ContactService);
+
+  /**
+   * Set by `LandingPageComponent` once its intro loading screen finishes —
+   * `false` for the brief window while that overlay is still covering the
+   * hero, so the entrance animation below only starts the instant it's
+   * actually visible instead of having already finished behind an opaque
+   * screen. Defaults `true` so this component still animates in correctly
+   * if ever used/tested standalone, without `LandingPageComponent`.
+   */
+  readonly ready = input(true);
 
   readonly site = SITE;
 

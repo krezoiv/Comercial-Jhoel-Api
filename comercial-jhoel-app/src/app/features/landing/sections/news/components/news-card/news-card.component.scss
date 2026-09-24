@@ -52,6 +52,13 @@
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 10px 14px rgba(10, 14, 23, 0.14));
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .news-card:hover .news-card__image {
+    transform: scale(1.05);
+  }
 }
 
 .news-card__image-placeholder {

@@ -1,0 +1,30 @@
+<div class="loading-screen" [class.loading-screen--exit]="exiting()" aria-hidden="true">
+  <div class="loading-screen__glow" aria-hidden="true"></div>
+
+  <div class="loading-screen__content">
+    <div class="loading-screen__logo-wrap">
+      <img
+        class="loading-screen__logo"
+        src="assets/images/logo.png"
+        srcset="assets/images/logo.png 1x, assets/images/logo@2x.png 2x"
+        alt="Comercial Jhoel"
+        width="120"
+        height="120"
+      />
+    </div>
+
+    <p class="loading-screen__brand">Comercial Jhoel</p>
+
+    <div
+      class="loading-screen__bar-track"
+      role="progressbar"
+      aria-label="Cargando"
+      [attr.aria-valuenow]="progress()"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="loading-screen__bar-fill" [style.width.%]="progress()"></div>
+    </div>
+    <p class="loading-screen__percent">{{ progress() }}%</p>
+  </div>
+</div>
