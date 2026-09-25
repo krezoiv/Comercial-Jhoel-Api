@@ -14,6 +14,7 @@ export const SERVICES: ServiceItem[] = [
     icon: 'copy',
     title: 'Fotocopias e impresiones',
     description: 'Copias, impresiones, escaneos y anillados listos en minutos, a color o blanco y negro.',
+    tag: 'Listo en minutos',
   },
   {
     id: 'agente-bancario',
@@ -27,17 +28,20 @@ export const SERVICES: ServiceItem[] = [
     icon: 'briefcase',
     title: 'Servicios administrativos',
     description: 'Trámites, pago de servicios, recargas y gestiones que te ahorran tiempo y viajes.',
+    tag: 'Ahorra tiempo',
   },
   {
     id: 'venta-telefonos',
     icon: 'phone',
     title: 'Venta de teléfonos',
     description: 'Equipos y accesorios de telefonía con asesoría honesta según lo que realmente necesitas.',
+    tag: 'Crédito con Krediya',
   },
   {
     id: 'papeleria-empresarial',
     icon: 'layers',
     title: 'Papelería empresarial',
     description: 'Insumos de oficina al por mayor para negocios, colegios e instituciones.',
+    tag: 'Precio por mayor',
   },
 ];

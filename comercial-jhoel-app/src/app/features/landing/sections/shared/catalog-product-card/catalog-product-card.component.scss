@@ -8,6 +8,7 @@
 }
 
 .product-card {
+  position: relative;
   width: 100%;
   height: 100%;
   perspective: 1800px;
@@ -20,6 +21,48 @@
 @media (hover: hover) {
   .product-card:hover {
     transform: translateY(-6px);
+  }
+}
+
+// Anillo de resplandor + barrido de brillo — solo cuando `enhancedEffects`
+// está activo (hoy: únicamente "Variedades y Accesorios", ver el doc
+// comment del `@Input` en el componente). Librería sigue exactamente igual
+// que antes.
+.product-card--enhanced {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -0.6rem;
+    border-radius: calc(var(--radius-xl) + 0.6rem);
+    background: var(--gradient-brand);
+    opacity: 0;
+    filter: blur(22px);
+    z-index: -1;
+    transition: opacity var(--duration-slow) var(--ease-out);
+  }
+
+  .product-card__image-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%);
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-8px);
+    }
+
+    &:hover::before {
+      opacity: 0.55;
+    }
+
+    &:hover .product-card__image-wrap::after {
+      transform: translateX(130%);
+      transition: transform 900ms var(--ease-out);
+    }
   }
 }
 
@@ -318,6 +361,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .product-card__inner {
+    transition: none;
+  }
+
+  .product-card--enhanced::before,
+  .product-card--enhanced .product-card__image-wrap::after {
     transition: none;
   }
 }

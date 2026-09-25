@@ -86,14 +86,18 @@
   width: 3.25rem;
   height: 3.25rem;
   border-radius: var(--radius-full);
-  background: var(--color-surface-light);
-  color: var(--color-primary-600);
+  // Círculo de degradado de marca en vez de blanco plano — un blanco
+  // translúcido apenas se distinguía sobre los fondos oscuros/navy de las
+  // secciones (Librería, Variedades, Bancos), confirmado visualmente en
+  // capturas reales de producción. El degradado siempre contrasta, tanto
+  // sobre fondo claro como oscuro.
+  background: var(--gradient-brand);
+  color: var(--color-white);
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border-light);
+  border: none;
   transition:
     transform var(--duration-fast) var(--ease-out),
-    border-color var(--duration-base) var(--ease-out),
-    background var(--duration-base) var(--ease-out);
+    box-shadow var(--duration-base) var(--ease-out);
   @include focus-ring;
 
   @include bp.respond(sm) {
@@ -101,9 +105,8 @@
   }
 
   &:hover:not(:disabled) {
-    background: var(--color-white);
-    border-color: var(--color-primary-300);
-    transform: scale(1.06);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
+    transform: scale(1.08);
   }
 
   &:active:not(:disabled) {

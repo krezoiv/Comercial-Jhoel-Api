@@ -8,6 +8,7 @@
 }
 
 .phone-card {
+  position: relative;
   width: 100%;
   height: 100%;
   perspective: 1800px;
@@ -18,9 +19,29 @@
   transition: transform var(--duration-base) var(--ease-out);
 }
 
+// Anillo de resplandor de marca detrás de la card, oculto hasta el hover —
+// vive en este wrapper externo (nunca clippeado por el `overflow: hidden`
+// de `.phone-card__face`) para dar sensación de profundidad/premium sin
+// competir visualmente con el flip 3D.
+.phone-card::before {
+  content: '';
+  position: absolute;
+  inset: -0.6rem;
+  border-radius: calc(var(--radius-xl) + 0.6rem);
+  background: var(--gradient-brand);
+  opacity: 0;
+  filter: blur(22px);
+  z-index: -1;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
 @media (hover: hover) {
   .phone-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
+  }
+
+  .phone-card:hover::before {
+    opacity: 0.55;
   }
 }
 
@@ -113,6 +134,24 @@
 @media (hover: hover) {
   .phone-card:hover .phone-card__image {
     transform: scale(1.05);
+  }
+}
+
+// Barrido de brillo diagonal sobre la imagen al pasar el mouse — un solo
+// recorrido, no un loop — refuerza la sensación de "vitrina" sin distraer.
+.phone-card__image-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .phone-card:hover .phone-card__image-wrap::after {
+    transform: translateX(130%);
+    transition: transform 900ms var(--ease-out);
   }
 }
 
@@ -363,6 +402,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .phone-card__inner {
+    transition: none;
+  }
+
+  .phone-card::before,
+  .phone-card__image-wrap::after {
     transition: none;
   }
 }

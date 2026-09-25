@@ -34,6 +34,8 @@ export class CatalogProductCarouselComponent implements OnInit {
   @Input({ required: true }) products: PublicCatalogProduct[] = [];
   @Input() showInterestButton = false;
   @Input() ariaLabel = 'Catálogo de productos';
+  /** Reenviado a cada `CatalogProductCardComponent` — ver el doc comment de ese `@Input`. */
+  @Input() enhancedEffects = false;
 
   @Output() interest = new EventEmitter<PublicCatalogProduct>();
   @Output() imageZoom = new EventEmitter<{ url: string; alt: string }>();

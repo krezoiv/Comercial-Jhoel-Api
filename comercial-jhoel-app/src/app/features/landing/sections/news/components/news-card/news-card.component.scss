@@ -2,7 +2,32 @@
 
 :host {
   display: block;
+  position: relative;
   height: 100%;
+}
+
+// Anillo de resplandor de marca detrás de la card, oculto hasta el hover —
+// vive en el `:host` (nunca dentro de `.news-card`, que tiene su propio
+// `overflow: hidden` para recortar la imagen) para que el resplandor no
+// quede clippeado. Mismo tratamiento que `phone-card`/`catalog-product-card`
+// para que Teléfonos/Noticias/Variedades se sientan consistentes entre sí.
+:host::before {
+  content: '';
+  position: absolute;
+  inset: -0.5rem;
+  border-radius: calc(var(--radius-xl) + 0.5rem);
+  background: var(--gradient-brand);
+  opacity: 0;
+  filter: blur(20px);
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
+@media (hover: hover) {
+  :host:hover::before {
+    opacity: 0.5;
+  }
 }
 
 .news-card {
@@ -23,7 +48,7 @@
   @include focus-ring;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: var(--shadow-lg);
   }
 }
@@ -61,6 +86,24 @@
   }
 }
 
+// Barrido de brillo diagonal sobre la imagen al pasar el mouse — mismo
+// tratamiento que `phone-card`/`catalog-product-card`, un solo recorrido.
+.news-card__image-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .news-card:hover .news-card__image-wrap::after {
+    transform: translateX(130%);
+    transition: transform 900ms var(--ease-out);
+  }
+}
+
 .news-card__image-placeholder {
   color: var(--color-primary-400);
 }
@@ -74,11 +117,15 @@
 }
 
 .news-card__date {
+  align-self: flex-start;
+  padding: 0.15rem var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand-soft);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-primary-500);
+  color: var(--color-primary-600);
 }
 
 .news-card__title {
@@ -126,4 +173,13 @@
 
 .news-card:hover .news-card__cta app-icon {
   transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host::before,
+  .news-card,
+  .news-card__image,
+  .news-card__image-wrap::after {
+    transition: none;
+  }
 }

@@ -24,6 +24,13 @@ import { ButtonComponent, IconComponent, LikeButtonComponent } from '../../../..
 export class CatalogProductCardComponent implements OnInit {
   @Input({ required: true }) product!: PublicCatalogProduct;
   @Input() showInterestButton = false;
+  /**
+   * Activa el anillo de resplandor + barrido de brillo en hover — pedido
+   * explícitamente solo para "Variedades y Accesorios", no para Librería,
+   * así que es un `@Input` (nunca el comportamiento por defecto) para que
+   * cada sección decida sin bifurcar este componente compartido.
+   */
+  @Input() enhancedEffects = false;
 
   @Output() interest = new EventEmitter<void>();
   /** El zoom de imagen se abre desde un componente de sección (montado fuera del árbol con flip 3D) — ver `ImageLightboxComponent`. */

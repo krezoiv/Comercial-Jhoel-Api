@@ -1,4 +1,8 @@
-<div class="product-card" [class.product-card--flipped]="flipped()">
+<div
+  class="product-card"
+  [class.product-card--flipped]="flipped()"
+  [class.product-card--enhanced]="enhancedEffects"
+>
   <div class="product-card__inner">
     <div class="product-card__face product-card__face--front" (click)="toggleFlip()">
       <div class="product-card__image-wrap">
