@@ -9,7 +9,11 @@ export class BankDepositOperationMapper {
     return BankDepositOperation.create({
       id: orm.id,
       transactionBankId: orm.transactionBankId,
-      transactionBankName: orm.transactionBank.name,
+      transactionBankName:
+        orm.transactionBank?.name ?? orm.bankAccount?.name ?? '',
+      bankAccountId: orm.bankAccountId,
+      bankAccountName: orm.bankAccount?.name ?? null,
+      bankAccountNumber: orm.bankAccount?.accountNumber ?? null,
       totalAmount: orm.totalAmount,
       transactionCount: orm.transactionCount,
       totalCash: orm.totalCash,

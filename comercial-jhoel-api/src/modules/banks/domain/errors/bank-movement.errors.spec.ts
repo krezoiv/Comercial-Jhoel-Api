@@ -1,0 +1,97 @@
+import {
+  BankAccountRequiredError,
+  BankBalanceLimitExceededError,
+  InsufficientBankBalanceError,
+  InvalidMovementAmountError,
+  SameAccountTransferError,
+  TransferOriginNotAllowedError,
+  bankMovementErrorFromMessage,
+} from './bank-movement.errors';
+
+describe('bankMovementErrorFromMessage', () => {
+  it('maps an insufficient deposit balance to the exact business message', () => {
+    const error = bankMovementErrorFromMessage('INSUFFICIENT_BALANCE:DEPOSITO');
+    expect(error).toBeInstanceOf(InsufficientBankBalanceError);
+    expect(error?.message).toBe(
+      'Saldo insuficiente para realizar el depósito.',
+    );
+    expect((error as InsufficientBankBalanceError).status).toBe(400);
+  });
+
+  it('maps an insufficient transfer balance', () => {
+    expect(
+      bankMovementErrorFromMessage('INSUFFICIENT_BALANCE:TRANSFERENCIA_SALIDA')
+        ?.message,
+    ).toBe('Saldo insuficiente para realizar la transferencia.');
+  });
+
+  it('maps the Génesis payment limit using the configured value', () => {
+    const error = bankMovementErrorFromMessage(
+      'BALANCE_LIMIT_EXCEEDED:PAGO_GENESIS:GENESIS:120000.00:Fundación Génesis Empresarial',
+    );
+    expect(error).toBeInstanceOf(BankBalanceLimitExceededError);
+    expect(error?.message).toBe(
+      'El pago excede el límite máximo permitido de Q120,000.00 para la línea de crédito de Fundación Génesis Empresarial.',
+    );
+  });
+
+  it('maps the BI Club limit using the configured value', () => {
+    expect(
+      bankMovementErrorFromMessage(
+        'BALANCE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA:BI_CLUB:75000.00:Bi Club Empresarial',
+      )?.message,
+    ).toBe(
+      'El saldo de BI Club Empresarial no puede superar el límite configurado de Q75,000.00.',
+    );
+  });
+
+  it('keeps a bank name containing ":" intact for a generic limit', () => {
+    expect(
+      bankMovementErrorFromMessage(
+        'BALANCE_LIMIT_EXCEEDED:RETIRO::500.00:Cuenta: especial',
+      )?.message,
+    ).toBe(
+      'El saldo de Cuenta: especial no puede superar el límite configurado de Q500.00.',
+    );
+  });
+
+  it('maps the special transfer-origin rules', () => {
+    const biClub = bankMovementErrorFromMessage(
+      'TRANSFER_ORIGIN_NOT_ALLOWED:BI_CLUB',
+    );
+    const districol = bankMovementErrorFromMessage(
+      'TRANSFER_ORIGIN_NOT_ALLOWED:DISTRICOL',
+    );
+    expect(biClub).toBeInstanceOf(TransferOriginNotAllowedError);
+    expect(biClub?.message).toBe(
+      'Solo Banco Industrial puede transferir a BI Club Empresarial.',
+    );
+    expect(districol?.message).toBe(
+      'Solo Banco Agromercantil puede transferir a Districol.',
+    );
+  });
+
+  it('maps amount / same-account / missing-account codes', () => {
+    expect(
+      bankMovementErrorFromMessage('INVALID_MOVEMENT_AMOUNT:x'),
+    ).toBeInstanceOf(InvalidMovementAmountError);
+    expect(
+      bankMovementErrorFromMessage('INVALID_MOVEMENT_AMOUNT:x')?.message,
+    ).toBe('El monto debe ser mayor que cero.');
+    expect(
+      bankMovementErrorFromMessage('SAME_ACCOUNT_TRANSFER:x'),
+    ).toBeInstanceOf(SameAccountTransferError);
+    expect(
+      bankMovementErrorFromMessage('BANK_ACCOUNT_REQUIRED:x'),
+    ).toBeInstanceOf(BankAccountRequiredError);
+  });
+
+  it('returns null for codes that are not balance rules (never leaks a technical message as a business one)', () => {
+    expect(bankMovementErrorFromMessage('CASH_TOTAL_MISMATCH:x')).toBeNull();
+    expect(
+      bankMovementErrorFromMessage(
+        'duplicate key value violates unique constraint',
+      ),
+    ).toBeNull();
+  });
+});

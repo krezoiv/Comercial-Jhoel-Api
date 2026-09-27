@@ -1,0 +1,38 @@
+.movements-count {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.movements-table {
+  td {
+    vertical-align: top;
+  }
+}
+
+.movements-table__muted {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  white-space: normal;
+}
+
+.movements-table__account {
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-medium);
+}
+
+.movements-table__amount {
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-success);
+
+  &.is-negative {
+    color: var(--color-danger);
+  }
+}
+
+.movements-table__concept {
+  max-width: 16rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

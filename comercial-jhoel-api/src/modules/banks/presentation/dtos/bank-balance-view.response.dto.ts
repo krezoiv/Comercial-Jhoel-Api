@@ -5,6 +5,9 @@ export class BankBalanceViewResponseDto {
   accountTypeName: string;
   previousBalance: number;
   finalBalance: number | null;
+  currentBalance: number;
+  specialAccount: string | null;
+  maxBalance: number | null;
 }
 
 export class SaveBankBalancesResponseDto {

@@ -5,7 +5,6 @@ import {
   IsDateString,
   IsNumber,
   IsUUID,
-  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -13,8 +12,8 @@ export class SaveBankBalanceEntryRequestDto {
   @IsUUID()
   bankId: string;
 
+  /** Para la fecha de hoy se ignora: se registra el saldo actual dinámico. Negativo solo lo admite la línea de crédito de Génesis (lo valida `save_bank_balance`). */
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   finalBalance: number;
 }
 

@@ -24,8 +24,15 @@ export class BankDepositCashDetailRequestDto {
 }
 
 export class CreateBankDepositRequestDto {
+  /** Obligatorio salvo para Desembolsos/Pagos Génesis (sin selector de banco); lo exige `register_bank_deposit_operation`. */
+  @IsOptional()
   @IsUUID()
-  transactionBankId: string;
+  transactionBankId?: string;
+
+  /** Cuenta bancaria afectada (Depósito/Retiro/Reintegro). Ignorada para tipos Génesis. */
+  @IsOptional()
+  @IsUUID()
+  bankAccountId?: string;
 
   @IsUUID()
   transactionTypeId: string;

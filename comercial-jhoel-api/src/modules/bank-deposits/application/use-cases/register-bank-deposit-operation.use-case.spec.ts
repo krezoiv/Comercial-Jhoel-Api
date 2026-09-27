@@ -18,6 +18,7 @@ import { TransactionType } from '../../../transaction-types/domain/entities/tran
 import { TransactionManager } from '../../../../shared/application/ports/transaction-manager.port';
 import { RegisterAccountReceivableChargeUseCase } from '../../../accounts-receivable/application/use-cases/register-account-receivable-charge.use-case';
 import { todayIsoDate } from '../utils/today-iso-date';
+import { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
 
 function buildDayOpening(overrides: { closedAt: Date | null }): DayOpening {
   return DayOpening.create({
@@ -41,11 +42,16 @@ function buildDayOpening(overrides: { closedAt: Date | null }): DayOpening {
   });
 }
 
-function buildOperation(overrides: { clientId?: string | null } = {}): BankDepositOperation {
+function buildOperation(
+  overrides: { clientId?: string | null } = {},
+): BankDepositOperation {
   return BankDepositOperation.create({
     id: 'op-1',
     transactionBankId: 'bank-1',
     transactionBankName: 'Akísi',
+    bankAccountId: 'account-1',
+    bankAccountName: 'Akísi',
+    bankAccountNumber: '42197144',
     transactionTypeId: 'type-1',
     transactionTypeName: 'Depósito',
     totalAmount: 500,
@@ -89,6 +95,7 @@ function buildTransactionType(name: string): TransactionType {
     id: 'type-1',
     name,
     icon: 'bank',
+    balanceEffect: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -106,6 +113,7 @@ describe('RegisterBankDepositOperationUseCase', () => {
   let transactionTypeRepository: jest.Mocked<TransactionTypeRepository>;
   let transactionManager: jest.Mocked<TransactionManager>;
   let registerAccountReceivableChargeUseCase: jest.Mocked<RegisterAccountReceivableChargeUseCase>;
+  let bankMovementRepository: jest.Mocked<BankMovementRepository>;
   let useCase: RegisterBankDepositOperationUseCase;
 
   const input = {
@@ -138,6 +146,10 @@ describe('RegisterBankDepositOperationUseCase', () => {
       execute: jest.fn(),
     } as unknown as jest.Mocked<RegisterAccountReceivableChargeUseCase>;
 
+    bankMovementRepository = {
+      findByReference: jest.fn().mockResolvedValue([]),
+    } as unknown as jest.Mocked<BankMovementRepository>;
+
     useCase = new RegisterBankDepositOperationUseCase(
       bankDepositRepository,
       dayOpeningRepository,
@@ -145,6 +157,7 @@ describe('RegisterBankDepositOperationUseCase', () => {
       transactionTypeRepository,
       transactionManager,
       registerAccountReceivableChargeUseCase,
+      bankMovementRepository,
     );
 
     dayOpeningRepository.findByDate.mockResolvedValue(
@@ -211,7 +224,9 @@ describe('RegisterBankDepositOperationUseCase', () => {
     });
 
     it('rejects a clientId that is inactive', async () => {
-      clientRepository.findById.mockResolvedValue(buildClient({ isActive: false }));
+      clientRepository.findById.mockResolvedValue(
+        buildClient({ isActive: false }),
+      );
 
       await expect(
         useCase.execute({ ...input, clientId: 'client-1' }),
@@ -228,11 +243,18 @@ describe('RegisterBankDepositOperationUseCase', () => {
       await useCase.execute({ ...input, clientId: 'client-1' });
 
       expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'client-1', clientName: 'Juan Pérez' }),
+        expect.objectContaining({
+          clientId: 'client-1',
+          clientName: 'Juan Pérez',
+        }),
       );
-      expect(bankDepositRepository.registerOperation.mock.calls[0]).toHaveLength(1);
+      expect(
+        bankDepositRepository.registerOperation.mock.calls[0],
+      ).toHaveLength(1);
       expect(transactionManager.runInTransaction).not.toHaveBeenCalled();
-      expect(registerAccountReceivableChargeUseCase.execute).not.toHaveBeenCalled();
+      expect(
+        registerAccountReceivableChargeUseCase.execute,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -246,7 +268,11 @@ describe('RegisterBankDepositOperationUseCase', () => {
 
     it('rejects when no clientId is provided', async () => {
       await expect(
-        useCase.execute({ ...input, isAdmin: true, sendToAccountsReceivable: true }),
+        useCase.execute({
+          ...input,
+          isAdmin: true,
+          sendToAccountsReceivable: true,
+        }),
       ).rejects.toThrow(BankDepositAccountsReceivableRequiresClientError);
       expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
     });
@@ -287,7 +313,9 @@ describe('RegisterBankDepositOperationUseCase', () => {
         expect.objectContaining({ clientId: 'client-1' }),
         'ctx',
       );
-      expect(registerAccountReceivableChargeUseCase.execute).toHaveBeenCalledWith(
+      expect(
+        registerAccountReceivableChargeUseCase.execute,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'client-1',
           amount: input.totalAmount,
@@ -297,6 +325,79 @@ describe('RegisterBankDepositOperationUseCase', () => {
         }),
       );
       expect(result.id).toBe('op-1');
+    });
+  });
+
+  describe('saldos dinámicos', () => {
+    it('passes the selected bank account through to the repository (the SQL function owns every balance rule)', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+
+      await useCase.execute({ ...input, bankAccountId: 'account-1' });
+
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({ bankAccountId: 'account-1' }),
+      );
+    });
+
+    it('allows omitting the agent bank (Desembolso/Pago Génesis) — sent as null, resolved in SQL', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+
+      await useCase.execute({ ...input, transactionBankId: undefined });
+
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          transactionBankId: null,
+          bankAccountId: null,
+        }),
+      );
+    });
+
+    it('returns the balance movement (saldo anterior → posterior) read from the ledger', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+      bankMovementRepository.findByReference.mockResolvedValue([
+        {
+          bankId: 'account-1',
+          bankName: 'GTC',
+          accountNumber: '029-6179731-4',
+          amount: -100,
+          balanceBefore: 1000,
+          balanceAfter: 900,
+        } as never,
+      ]);
+
+      const result = await useCase.execute({
+        ...input,
+        bankAccountId: 'account-1',
+      });
+
+      expect(bankMovementRepository.findByReference).toHaveBeenCalledWith(
+        'BANK_DEPOSIT',
+        'op-1',
+      );
+      expect(result.balanceMovement).toEqual({
+        bankId: 'account-1',
+        bankName: 'GTC',
+        accountNumber: '029-6179731-4',
+        amount: -100,
+        balanceBefore: 1000,
+        balanceAfter: 900,
+      });
+    });
+
+    it('returns balanceMovement null for a type that does not move balance', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+
+      const result = await useCase.execute(input);
+
+      expect(result.balanceMovement).toBeNull();
     });
   });
 });

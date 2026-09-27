@@ -7,6 +7,9 @@ export interface BankBalanceViewOutput {
   accountTypeName: string;
   previousBalance: number;
   finalBalance: number | null;
+  currentBalance: number;
+  specialAccount: string | null;
+  maxBalance: number | null;
 }
 
 export function toBankBalanceViewOutput(

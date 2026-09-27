@@ -6,7 +6,10 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { TRANSACTION_TYPE_ICONS } from '../../domain/entities/transaction-type.entity';
+import {
+  TRANSACTION_TYPE_BALANCE_EFFECTS,
+  TRANSACTION_TYPE_ICONS,
+} from '../../domain/entities/transaction-type.entity';
 
 export class UpdateTransactionTypeRequestDto {
   @IsOptional()
@@ -19,4 +22,9 @@ export class UpdateTransactionTypeRequestDto {
   @IsOptional()
   @IsIn(TRANSACTION_TYPE_ICONS)
   icon?: string;
+
+  /** Efecto sobre el saldo bancario; `null`/omitido = no mueve saldo. */
+  @IsOptional()
+  @IsIn(TRANSACTION_TYPE_BALANCE_EFFECTS)
+  balanceEffect?: string | null;
 }

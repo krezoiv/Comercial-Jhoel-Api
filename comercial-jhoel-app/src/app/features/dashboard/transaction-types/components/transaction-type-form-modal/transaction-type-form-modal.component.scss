@@ -122,3 +122,8 @@
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
+
+.field__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}

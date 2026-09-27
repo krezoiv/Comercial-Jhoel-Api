@@ -1,0 +1,142 @@
+<div class="reports-page">
+  <app-page-header
+    icon="bank"
+    title="Movimientos Bancarios"
+    subtitle="Historial de cada cambio de saldo: operaciones, transferencias, ajustes y anulaciones."
+  >
+    <app-button variant="primary" [disabled]="exporting()" (click)="exportPdf()">
+      <app-icon name="download" [size]="16" />
+      {{ exporting() ? 'Generando…' : 'Exportar PDF' }}
+    </app-button>
+  </app-page-header>
+
+  <div class="reports-page__filters">
+    <div class="reports-page__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field">
+        <label for="bmreport-start">Desde</label>
+        <input id="bmreport-start" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+      <div class="field">
+        <label for="bmreport-end">Hasta</label>
+        <input id="bmreport-end" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+      <div class="field">
+        <label for="bmreport-account">Banco / Cuenta</label>
+        <select id="bmreport-account" [ngModel]="draftBankId()" (ngModelChange)="draftBankId.set($event)">
+          <option value="">Todas las cuentas</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ accountLabel(account) }}{{ account.isActive ? '' : ' (inactiva)' }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="bmreport-type">Tipo de operación</label>
+        <select id="bmreport-type" [ngModel]="draftMovementType()" (ngModelChange)="draftMovementType.set($event)">
+          <option value="">Todos los tipos</option>
+          @for (entry of movementTypes; track entry[0]) {
+            <option [value]="entry[0]">{{ entry[1] }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="bmreport-user">Usuario</label>
+        <select id="bmreport-user" [ngModel]="draftUserId()" (ngModelChange)="draftUserId.set($event)">
+          <option value="">Todos los usuarios</option>
+          @for (user of users(); track user.id) {
+            <option [value]="user.id">{{ user.username }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
+  </div>
+
+  <p class="movements-count">
+    {{ loading() ? 'Cargando movimientos…' : formatQuantity(total()) + ' movimiento(s) encontrados' }}
+  </p>
+
+  <div class="table-wrapper">
+    <table class="report-table movements-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cuenta</th>
+          <th>Operación</th>
+          <th class="align-right">Monto</th>
+          <th class="align-right">Saldo anterior</th>
+          <th class="align-right">Saldo posterior</th>
+          <th>Usuario</th>
+          <th>Referencia / Concepto</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!loading()) {
+          @for (row of rows(); track row.id) {
+            <tr [class.report-table__row--voided]="row.status === 'ANULADO'">
+              <td>
+                {{ row.businessDate | date: 'dd/MM/yyyy' }}
+                <small class="movements-table__muted">{{ row.createdAt | date: 'HH:mm' }}</small>
+              </td>
+              <td>
+                <strong class="movements-table__account">{{ row.bankName }}</strong>
+                <small class="movements-table__muted">{{ row.accountTypeName }} · {{ row.accountNumber }}</small>
+              </td>
+              <td>
+                {{ typeLabels[row.movementType] }}
+                <small class="movements-table__muted">
+                  {{ originLabels[row.origin] }}
+                  @if (row.counterpartBankName) {
+                    · {{ row.movementType === 'TRANSFERENCIA_ENTRADA' ? 'desde' : 'hacia' }} {{ row.counterpartBankName }}
+                  }
+                </small>
+              </td>
+              <td class="align-right movements-table__amount" [class.is-negative]="row.amount < 0">
+                {{ signedAmount(row.amount) }}
+              </td>
+              <td class="align-right"><app-bank-balance-amount [value]="row.balanceBefore" /></td>
+              <td class="align-right"><app-bank-balance-amount [value]="row.balanceAfter" strong /></td>
+              <td>{{ row.username }}</td>
+              <td class="movements-table__concept">
+                {{ row.referenceText || row.concept || '—' }}
+                @if (row.referenceText && row.concept) {
+                  <small class="movements-table__muted">{{ row.concept }}</small>
+                }
+                @if (row.observation) {
+                  <small class="movements-table__muted">{{ row.observation }}</small>
+                }
+              </td>
+              <td>
+                @if (row.status === 'ANULADO') {
+                  <span class="status-badge status-badge--voided" [title]="row.reversedByUsername ? 'Anulado por ' + row.reversedByUsername : ''">
+                    <app-icon name="x-circle" [size]="13" />
+                    Anulado
+                  </span>
+                } @else {
+                  <span class="status-badge status-badge--active">
+                    <app-icon name="check-circle" [size]="13" />
+                    Aplicado
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (!loading() && rows().length === 0) {
+      <p class="table-wrapper__empty">No se encontraron movimientos con los filtros seleccionados.</p>
+    }
+  </div>
+
+  <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+</div>

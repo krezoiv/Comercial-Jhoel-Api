@@ -8,6 +8,8 @@ export interface BankOutput {
   accountTypeName: string;
   previousBalance: number;
   finalBalance: number;
+  specialAccount: string | null;
+  maxBalance: number | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +28,8 @@ export function toBankOutput(bank: Bank): BankOutput {
     accountTypeName: bank.accountTypeName,
     previousBalance: bank.previousBalance,
     finalBalance: bank.finalBalance,
+    specialAccount: bank.specialAccount,
+    maxBalance: bank.maxBalance,
     isActive: bank.isActive,
     createdAt: bank.createdAt,
     updatedAt: bank.updatedAt,

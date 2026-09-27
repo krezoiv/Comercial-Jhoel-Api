@@ -16,8 +16,11 @@ export interface BankDepositTransactionOutput {
 /** Full shape — used for `GET /bank-deposits/:id` and the response of `POST /bank-deposits`. */
 export interface BankDepositOperationOutput {
   id: string;
-  transactionBankId: string;
+  transactionBankId: string | null;
   transactionBankName: string;
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   totalCash: number;
@@ -42,13 +45,27 @@ export interface BankDepositOperationOutput {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** Solo en la respuesta de `POST /bank-deposits`: el movimiento de saldo que generó la operación (saldo anterior → posterior). */
+  balanceMovement?: BankDepositBalanceMovementOutput | null;
+}
+
+export interface BankDepositBalanceMovementOutput {
+  bankId: string;
+  bankName: string;
+  accountNumber: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
 }
 
 /** Lighter shape for `GET /bank-deposits`/reportería listings — no cash-detail/transaction rows. Still carries `isVoided` (and who/when/why) — the list keeps a voided operation visible with a badge, only the report's own aggregate totals exclude it (see `TypeOrmBankDepositRepository.getReportSummary`). */
 export interface BankDepositOperationSummaryOutput {
   id: string;
-  transactionBankId: string;
+  transactionBankId: string | null;
   transactionBankName: string;
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   operationDate: string;
@@ -72,6 +89,9 @@ export function toBankDepositOperationOutput(
     id: operation.id,
     transactionBankId: operation.transactionBankId,
     transactionBankName: operation.transactionBankName,
+    bankAccountId: operation.bankAccountId,
+    bankAccountName: operation.bankAccountName,
+    bankAccountNumber: operation.bankAccountNumber,
     totalAmount: operation.totalAmount,
     transactionCount: operation.transactionCount,
     totalCash: operation.totalCash,
@@ -113,6 +133,9 @@ export function toBankDepositOperationSummaryOutput(
     id: operation.id,
     transactionBankId: operation.transactionBankId,
     transactionBankName: operation.transactionBankName,
+    bankAccountId: operation.bankAccountId,
+    bankAccountName: operation.bankAccountName,
+    bankAccountNumber: operation.bankAccountNumber,
     totalAmount: operation.totalAmount,
     transactionCount: operation.transactionCount,
     operationDate: operation.operationDate,

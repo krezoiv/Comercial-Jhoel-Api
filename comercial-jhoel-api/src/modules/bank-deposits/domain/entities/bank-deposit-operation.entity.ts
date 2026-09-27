@@ -3,8 +3,14 @@ import { BankDepositTransaction } from './bank-deposit-transaction.entity';
 
 export interface BankDepositOperationProps {
   id: string;
-  transactionBankId: string;
+  /** `null` para Desembolsos/Pagos Génesis (sin selector de banco agente). */
+  transactionBankId: string | null;
+  /** Nombre del banco agente, o — si no hay (Génesis) — el de la cuenta afectada. */
   transactionBankName: string;
+  /** Cuenta bancaria (`banks`) cuyo saldo movió esta operación — `null` para tipos que no mueven saldo y para operaciones previas a los saldos dinámicos. */
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   totalCash: number;
@@ -47,7 +53,19 @@ export class BankDepositOperation {
     return this.props.id;
   }
 
-  get transactionBankId(): string {
+  get bankAccountId(): string | null {
+    return this.props.bankAccountId;
+  }
+
+  get bankAccountName(): string | null {
+    return this.props.bankAccountName;
+  }
+
+  get bankAccountNumber(): string | null {
+    return this.props.bankAccountNumber;
+  }
+
+  get transactionBankId(): string | null {
     return this.props.transactionBankId;
   }
 

@@ -237,3 +237,74 @@ app-transaction-monthly-chart {
   padding: var(--space-5) var(--space-6);
   box-shadow: var(--shadow-md);
 }
+
+.balance-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-light-muted);
+
+  &--error {
+    border-color: var(--color-danger);
+  }
+}
+
+.balance-preview__account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--color-text-on-light);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  strong {
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+  }
+}
+
+.balance-preview__figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  color: var(--color-text-on-light-muted);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+.balance-preview__label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.balance-preview__hint {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.balance-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-danger);
+}

@@ -27,6 +27,9 @@ import { GetCuadreAgentesSummaryUseCase } from '../../application/use-cases/get-
 import { ValidateBankBalancesForDateUseCase } from '../../application/use-cases/validate-bank-balances-for-date.use-case';
 import { GetDayStatusUseCase } from '../../application/use-cases/get-day-status.use-case';
 import { OpenDayUseCase } from '../../application/use-cases/open-day.use-case';
+import { AdjustBankBalanceUseCase } from '../../application/use-cases/adjust-bank-balance.use-case';
+import { AdjustBankBalanceRequestDto } from '../dtos/adjust-bank-balance.request.dto';
+import { BankMovementOutput } from '../../application/dtos/bank-movement-output';
 import { CreateBankRequestDto } from '../dtos/create-bank.request.dto';
 import { UpdateBankRequestDto } from '../dtos/update-bank.request.dto';
 import { ListBanksQueryDto } from '../dtos/list-banks.query.dto';
@@ -73,6 +76,7 @@ export class BanksController {
     private readonly validateBankBalancesForDateUseCase: ValidateBankBalancesForDateUseCase,
     private readonly getDayStatusUseCase: GetDayStatusUseCase,
     private readonly openDayUseCase: OpenDayUseCase,
+    private readonly adjustBankBalanceUseCase: AdjustBankBalanceUseCase,
   ) {}
 
   /**
@@ -181,6 +185,29 @@ export class BanksController {
     @CurrentUser('userId') userId: string,
   ): Promise<BankResponseDto> {
     return this.updateBankUseCase.execute(id, { ...dto, updatedBy: userId });
+  }
+
+  /**
+   * "Ajustar saldo" — solo admin/super_admin, validado aquí en el backend
+   * (no basta con ocultar el botón). Queda como movimiento AJUSTE_MANUAL
+   * auditado, nunca como sobrescritura silenciosa de `final_balance`.
+   */
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Post(':id/balance-adjustments')
+  @HttpCode(HttpStatus.CREATED)
+  adjustBalance(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdjustBankBalanceRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<BankMovementOutput> {
+    return this.adjustBankBalanceUseCase.execute({
+      bankId: id,
+      newBalance: dto.newBalance,
+      reason: dto.reason,
+      observation: dto.observation ?? null,
+      userId,
+    });
   }
 
   @UseGuards(RolesGuard)

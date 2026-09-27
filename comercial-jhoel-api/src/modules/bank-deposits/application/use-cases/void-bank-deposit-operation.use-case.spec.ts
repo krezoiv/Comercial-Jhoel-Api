@@ -11,6 +11,9 @@ function buildOperation(
     id: 'op-1',
     transactionBankId: 'bank-1',
     transactionBankName: 'Akísi',
+    bankAccountId: null,
+    bankAccountName: null,
+    bankAccountNumber: null,
     transactionTypeId: 'type-1',
     transactionTypeName: 'Depósito',
     totalAmount: 500,
@@ -85,6 +88,7 @@ describe('VoidBankDepositOperationUseCase', () => {
       'op-1',
       'admin-1',
       'Registrado por error.',
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
     );
     expect(result.isVoided).toBe(true);
   });

@@ -45,6 +45,7 @@ export class TypeOrmTransactionTypeRepository implements TransactionTypeReposito
     const orm = this.repository.create({
       name: data.name,
       icon: data.icon,
+      balanceEffect: data.balanceEffect,
       createdBy: data.createdBy,
     });
     try {

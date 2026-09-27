@@ -71,10 +71,19 @@ export class SaveBankBalancesUseCase {
       throw new DayAlreadyClosedError(input.operationDate);
     }
 
+    // Saldos dinámicos: la foto de HOY es siempre el saldo actual real de
+    // cada cuenta (lo toma `save_bank_balance` bajo el lock de la fila), así
+    // que "Registrar saldos" nunca puede sobrescribir ni desviar el saldo
+    // vivo. Una fecha pasada conserva su corrección histórica tal cual; en
+    // ningún caso se toca `banks.final_balance` desde aquí.
+    const isToday = input.operationDate === todayIsoDate();
     const savedCount = await this.bankBalanceRepository.saveBalances({
       operationDate: input.operationDate,
       userId: input.userId,
-      entries: input.entries,
+      entries: input.entries.map((entry) => ({
+        bankId: entry.bankId,
+        finalBalance: isToday ? null : entry.finalBalance,
+      })),
     });
 
     return { savedCount };

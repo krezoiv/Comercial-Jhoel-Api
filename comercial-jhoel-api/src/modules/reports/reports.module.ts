@@ -19,6 +19,7 @@ import { AssetsModule } from '../assets/assets.module';
 import { BankDepositsModule } from '../bank-deposits/bank-deposits.module';
 import { TransactionBanksModule } from '../transaction-banks/transaction-banks.module';
 import { TransactionTypesModule } from '../transaction-types/transaction-types.module';
+import { BanksModule } from '../banks/banks.module';
 import { IceCreamSaleDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-sale-detail.orm-entity';
 import { IceCreamPurchaseDetailOrmEntity } from '../ice-creams/infrastructure/persistence/ice-cream-purchase-detail.orm-entity';
 import { AgentReconciliationOrmEntity } from '../banks/infrastructure/persistence/agent-reconciliation.orm-entity';
@@ -68,6 +69,8 @@ import { AssetsReceivablesReportController } from './presentation/controllers/as
 import { IceCreamReportController } from './presentation/controllers/ice-cream-report.controller';
 import { AgentReconciliationsReportController } from './presentation/controllers/agent-reconciliations-report.controller';
 import { BankDepositsReportController } from './presentation/controllers/bank-deposits-report.controller';
+import { BankMovementsReportController } from './presentation/controllers/bank-movements-report.controller';
+import { ExportBankMovementsReportPdfUseCase } from './application/use-cases/export-bank-movements-report-pdf.use-case';
 
 /**
  * Reportería is a pure read-side, cross-cutting module — it never writes to
@@ -122,6 +125,8 @@ import { BankDepositsReportController } from './presentation/controllers/bank-de
     BankDepositsModule,
     TransactionBanksModule,
     TransactionTypesModule,
+    // Movimientos de saldo bancario: ListBankMovementsUseCase + BANK_REPOSITORY.
+    BanksModule,
   ],
   controllers: [
     SalesReportController,
@@ -131,6 +136,7 @@ import { BankDepositsReportController } from './presentation/controllers/bank-de
     IceCreamReportController,
     AgentReconciliationsReportController,
     BankDepositsReportController,
+    BankMovementsReportController,
   ],
   providers: [
     {
@@ -182,6 +188,7 @@ import { BankDepositsReportController } from './presentation/controllers/bank-de
     ExportAgentReconciliationsReportPdfUseCase,
     GetBankDepositsReportSummaryUseCase,
     ExportBankDepositsReportPdfUseCase,
+    ExportBankMovementsReportPdfUseCase,
   ],
 })
 export class ReportsModule {}

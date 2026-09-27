@@ -1,3 +1,5 @@
+import { BankSpecialAccount } from './bank-account-movement.entity';
+
 export interface BankProps {
   id: string;
   name: string;
@@ -5,6 +7,11 @@ export interface BankProps {
   accountTypeId: string;
   accountTypeName: string;
   /**
+   * **Desde `CreateBankAccountMovements`**: `finalBalance` es el SALDO ACTUAL
+   * dinámico de la cuenta — solo lo mueve `apply_bank_account_movement`
+   * (Transaccionar, transferencias, ajustes manuales), nunca "Guardar
+   * Cambios". El texto siguiente describe el comportamiento anterior.
+   *
    * `previousBalance`/`finalBalance` here are cached "current" figures on
    * `banks` itself — `previousBalance` is only ever the bank's *configured
    * opening* balance (set at creation, editable via Sistema → Bancos), and
@@ -19,6 +26,10 @@ export interface BankProps {
    */
   previousBalance: number;
   finalBalance: number;
+  /** Regla especial de saldo (`banks.special_account`) — ver `BankSpecialAccount`. */
+  specialAccount: BankSpecialAccount | null;
+  /** Límite máximo configurable del saldo (BI Club / Génesis) — `null` = sin límite. */
+  maxBalance: number | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +72,14 @@ export class Bank {
 
   get finalBalance(): number {
     return this.props.finalBalance;
+  }
+
+  get specialAccount(): BankSpecialAccount | null {
+    return this.props.specialAccount;
+  }
+
+  get maxBalance(): number | null {
+    return this.props.maxBalance;
   }
 
   get isActive(): boolean {

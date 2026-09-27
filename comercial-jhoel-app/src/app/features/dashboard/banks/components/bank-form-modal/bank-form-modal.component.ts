@@ -12,7 +12,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { AccountType, Bank } from '../../../../../core/models';
+import { AccountType, BANK_SPECIAL_ACCOUNT_OPTIONS, Bank, BankInput, BankSpecialAccount } from '../../../../../core/models';
 import { BankService } from '../../../../../core/services/bank.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
@@ -47,8 +47,18 @@ export class BankFormModalComponent implements OnChanges {
     accountNumber: ['', [Validators.required, Validators.maxLength(34)]],
     accountTypeId: ['', Validators.required],
     previousBalance: [0, [Validators.required, Validators.min(0)]],
-    finalBalance: [0, [Validators.required, Validators.min(0)]],
+    // Saldo inicial (solo alta). Negativo solo para Génesis — lo valida el backend.
+    finalBalance: [0, [Validators.required]],
+    specialAccount: ['' as BankSpecialAccount | ''],
+    maxBalance: [null as number | null, [Validators.min(0)]],
   });
+
+  readonly specialAccountOptions = BANK_SPECIAL_ACCOUNT_OPTIONS;
+
+  get selectedSpecialHint(): string | null {
+    const value = this.form.controls.specialAccount.value;
+    return this.specialAccountOptions.find((option) => option.value === value)?.hint ?? null;
+  }
 
   get isEditMode(): boolean {
     return this.bank !== null;
@@ -63,10 +73,29 @@ export class BankFormModalComponent implements OnChanges {
     this.isSubmitting.set(false);
 
     if (this.bank) {
-      const { name, accountNumber, accountTypeId, previousBalance, finalBalance } = this.bank;
-      this.form.reset({ name, accountNumber, accountTypeId, previousBalance, finalBalance });
+      const { name, accountNumber, accountTypeId, previousBalance, finalBalance, specialAccount, maxBalance } = this.bank;
+      this.form.reset({
+        name,
+        accountNumber,
+        accountTypeId,
+        previousBalance,
+        finalBalance,
+        specialAccount: specialAccount ?? '',
+        maxBalance: maxBalance ?? null,
+      });
+      // El saldo actual es dinámico: en edición solo se muestra; se corrige con "Ajustar saldo".
+      this.form.controls.finalBalance.disable();
     } else {
-      this.form.reset({ name: '', accountNumber: '', accountTypeId: '', previousBalance: 0, finalBalance: 0 });
+      this.form.reset({
+        name: '',
+        accountNumber: '',
+        accountTypeId: '',
+        previousBalance: 0,
+        finalBalance: 0,
+        specialAccount: '',
+        maxBalance: null,
+      });
+      this.form.controls.finalBalance.enable();
     }
   }
 
@@ -78,7 +107,17 @@ export class BankFormModalComponent implements OnChanges {
       return;
     }
 
-    const input = this.form.getRawValue();
+    const raw = this.form.getRawValue();
+    const input: BankInput = {
+      name: raw.name,
+      accountNumber: raw.accountNumber,
+      accountTypeId: raw.accountTypeId,
+      previousBalance: raw.previousBalance,
+      specialAccount: raw.specialAccount || null,
+      maxBalance: raw.maxBalance ?? null,
+      // Solo en el alta: en edición el saldo actual no viaja (el backend rechazaría un cambio).
+      ...(this.isEditMode ? {} : { finalBalance: raw.finalBalance }),
+    };
     this.isSubmitting.set(true);
 
     const request$ = this.isEditMode

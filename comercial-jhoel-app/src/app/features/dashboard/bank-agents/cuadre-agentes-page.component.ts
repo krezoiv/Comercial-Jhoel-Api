@@ -21,6 +21,7 @@ import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
 import { NotificationService } from '../../../core/services/notification.service';
+import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
@@ -153,6 +154,7 @@ export class CuadreAgentesPageComponent {
   readonly resultText = computed(() => STATUS_TEXT[this.resultStatus()]);
 
   formatCurrency = formatCurrency;
+  formatSigned = formatSignedBankBalance;
   formatQuantity = formatQuantity;
 
   constructor() {

@@ -1,0 +1,80 @@
+@if (open && row) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adjust-balance-title" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving" (click)="onCancel()">
+        <app-icon name="close" [size]="18" />
+      </button>
+
+      <div class="modal__icon">
+        <app-icon name="wallet" [size]="22" />
+      </div>
+      <h2 id="adjust-balance-title" class="modal__title">Ajustar saldo</h2>
+      <p class="modal__subtitle">{{ row.bankName }} · {{ row.accountTypeName }} · {{ row.accountNumber }}</p>
+
+      <div class="modal__summary">
+        <div>
+          <span>Saldo actual</span>
+          <app-bank-balance-amount [value]="row.currentBalance" [specialAccount]="row.specialAccount" strong />
+        </div>
+        <div>
+          <span>Diferencia</span>
+          <strong [class.is-negative]="(difference() ?? 0) < 0">
+            {{ difference() === null ? '—' : (difference()! > 0 ? '+' : '') + formatSigned(difference()!) }}
+          </strong>
+        </div>
+      </div>
+
+      <label class="modal__field">
+        <span>Nuevo saldo <em>(obligatorio)</em></span>
+        <div class="money-input">
+          <span>Q</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            appDecimalInput
+            [allowNegative]="allowsNegative()"
+            [ngModel]="newBalance()"
+            (ngModelChange)="onNewBalanceChange($event)"
+            placeholder="0.00"
+            aria-label="Nuevo saldo"
+          />
+        </div>
+        @if (allowsNegative()) {
+          <small class="modal__hint">Línea de crédito de Génesis: puede ser negativa (saldo a favor).</small>
+        }
+        @if (validationMessage(); as message) {
+          <small class="modal__error">{{ message }}</small>
+        }
+      </label>
+
+      <label class="modal__field">
+        <span>Motivo <em>(obligatorio)</em></span>
+        <input
+          type="text"
+          maxlength="255"
+          placeholder="Ej: Corrección por diferencia bancaria"
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        />
+      </label>
+
+      <label class="modal__field">
+        <span>Observación <em class="is-optional">(opcional)</em></span>
+        <textarea rows="2" maxlength="1000" [ngModel]="observation()" (ngModelChange)="observation.set($event)"></textarea>
+      </label>
+
+      <p class="modal__note">
+        <app-icon name="alert-circle" [size]="14" />
+        El ajuste queda registrado como movimiento <strong>AJUSTE MANUAL</strong> con tu usuario, la fecha, el saldo
+        anterior y el nuevo. No se borra ni modifica ningún movimiento previo.
+      </p>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canConfirm()" (click)="onConfirm()">
+          {{ isSaving ? 'Guardando…' : 'Confirmar ajuste' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

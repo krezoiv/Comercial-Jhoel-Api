@@ -11,6 +11,9 @@ import type { ClientRepository } from '../../../clients/domain/repositories/clie
 import { TRANSACTION_TYPE_REPOSITORY } from '../../../transaction-types/domain/repositories/transaction-type.repository';
 import type { TransactionTypeRepository } from '../../../transaction-types/domain/repositories/transaction-type.repository';
 import { RegisterAccountReceivableChargeUseCase } from '../../../accounts-receivable/application/use-cases/register-account-receivable-charge.use-case';
+import { BANK_MOVEMENT_REPOSITORY } from '../../../banks/domain/repositories/bank-movement.repository';
+import type { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
+import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import { TRANSACTION_MANAGER } from '../../../../shared/application/ports/transaction-manager.port';
 import type { TransactionManager } from '../../../../shared/application/ports/transaction-manager.port';
 import { BankDepositDayNotOpenedError } from '../../domain/errors/bank-deposit-day-not-opened.error';
@@ -43,7 +46,10 @@ export interface RegisterBankDepositOperationCashDetailInput {
 }
 
 export interface RegisterBankDepositOperationInput {
-  transactionBankId: string;
+  /** Omitido para Desembolsos/Pagos Génesis — la cuenta se resuelve sola en SQL. */
+  transactionBankId?: string | null;
+  /** Cuenta cuyo saldo mueve la operación (Depósito/Retiro/Reintegro). Toda validación de saldo vive en `apply_bank_account_movement`, bajo lock — nunca se pre-calcula aquí. */
+  bankAccountId?: string | null;
   transactionTypeId: string;
   totalAmount: number;
   cashDetails: RegisterBankDepositOperationCashDetailInput[];
@@ -97,6 +103,8 @@ export class RegisterBankDepositOperationUseCase {
     @Inject(TRANSACTION_MANAGER)
     private readonly transactionManager: TransactionManager,
     private readonly registerAccountReceivableChargeUseCase: RegisterAccountReceivableChargeUseCase,
+    @Inject(BANK_MOVEMENT_REPOSITORY)
+    private readonly bankMovementRepository: BankMovementRepository,
   ) {}
 
   async execute(
@@ -148,7 +156,8 @@ export class RegisterBankDepositOperationUseCase {
     }
 
     const depositData: RegisterBankDepositOperationData = {
-      transactionBankId: input.transactionBankId,
+      transactionBankId: input.transactionBankId ?? null,
+      bankAccountId: input.bankAccountId ?? null,
       transactionTypeId: input.transactionTypeId,
       totalAmount: input.totalAmount,
       operationDate,
@@ -163,7 +172,7 @@ export class RegisterBankDepositOperationUseCase {
     if (!sendToAccountsReceivable) {
       const operation =
         await this.bankDepositRepository.registerOperation(depositData);
-      return toBankDepositOperationOutput(operation);
+      return this.withBalanceMovement(operation);
     }
 
     const operation = await this.transactionManager.runInTransaction(
@@ -189,6 +198,28 @@ export class RegisterBankDepositOperationUseCase {
       },
     );
 
-    return toBankDepositOperationOutput(operation);
+    return this.withBalanceMovement(operation);
+  }
+
+  /** Adjunta el saldo anterior → posterior que produjo la operación, leído del ledger (nunca recalculado aquí). */
+  private async withBalanceMovement(
+    operation: BankDepositOperation,
+  ): Promise<BankDepositOperationOutput> {
+    const output = toBankDepositOperationOutput(operation);
+    const [movement] = await this.bankMovementRepository.findByReference(
+      'BANK_DEPOSIT',
+      operation.id,
+    );
+    output.balanceMovement = movement
+      ? {
+          bankId: movement.bankId,
+          bankName: movement.bankName,
+          accountNumber: movement.accountNumber,
+          amount: movement.amount,
+          balanceBefore: movement.balanceBefore,
+          balanceAfter: movement.balanceAfter,
+        }
+      : null;
+    return output;
   }
 }

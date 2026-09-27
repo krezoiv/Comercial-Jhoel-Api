@@ -13,6 +13,7 @@ function buildTransactionType(
     id: 'type-1',
     name: overrides.name ?? 'Depósito',
     icon: overrides.icon ?? 'arrow-down-circle',
+    balanceEffect: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -61,6 +62,7 @@ describe('CreateTransactionTypeUseCase', () => {
     expect(repository.create).toHaveBeenCalledWith({
       name: 'Pago de Cheque',
       icon: 'file-check',
+      balanceEffect: null,
       createdBy: 'user-1',
     });
   });

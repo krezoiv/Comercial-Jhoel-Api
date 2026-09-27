@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, Bank, BankInput } from '../models';
+import { ApiSuccessResponse, Bank, BankBalanceAdjustmentInput, BankInput, BankMovement } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/banks`;
 
@@ -27,6 +27,13 @@ export class BankService {
 
   updateBank(id: string, input: BankInput): Observable<Bank> {
     return this.http.patch<ApiSuccessResponse<Bank>>(`${BASE_URL}/${id}`, input).pipe(map((response) => response.data));
+  }
+
+  /** "Ajustar saldo" — solo admin/super_admin (el backend lo exige). Queda como movimiento AJUSTE_MANUAL auditado; nunca sobrescribe el historial. */
+  adjustBalance(id: string, input: BankBalanceAdjustmentInput): Observable<BankMovement> {
+    return this.http
+      .post<ApiSuccessResponse<BankMovement>>(`${BASE_URL}/${id}/balance-adjustments`, input)
+      .pipe(map((response) => response.data));
   }
 
   /** Soft delete — the backend deactivates the bank, it never deletes the row (past bank_balances history stays intact). */

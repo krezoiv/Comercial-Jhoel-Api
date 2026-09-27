@@ -4,7 +4,8 @@ export const BANK_BALANCE_REPOSITORY = Symbol('BANK_BALANCE_REPOSITORY');
 
 export interface SaveBankBalanceEntryData {
   bankId: string;
-  finalBalance: number;
+  /** `null` = registrar el saldo actual dinámico de la cuenta (lo resuelve `save_bank_balance` bajo lock). */
+  finalBalance: number | null;
 }
 
 export interface SaveBankBalancesData {

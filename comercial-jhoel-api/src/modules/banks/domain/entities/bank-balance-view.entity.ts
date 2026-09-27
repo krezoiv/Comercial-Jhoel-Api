@@ -13,4 +13,8 @@ export interface BankBalanceView {
   accountTypeName: string;
   previousBalance: number;
   finalBalance: number | null;
+  /** Saldo ACTUAL dinámico (`banks.final_balance`), movido solo por operaciones/ajustes — independiente de la fecha consultada. */
+  currentBalance: number;
+  specialAccount: string | null;
+  maxBalance: number | null;
 }

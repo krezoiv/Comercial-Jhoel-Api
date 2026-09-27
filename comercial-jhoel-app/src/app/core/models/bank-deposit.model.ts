@@ -17,8 +17,13 @@ export interface BankDepositTransaction {
 /** Full shape returned by `POST /bank-deposits` and `GET /bank-deposits/:id`. */
 export interface BankDepositOperation {
   id: string;
-  transactionBankId: string;
+  /** `null` para Desembolsos/Pagos Génesis (sin banco agente). */
+  transactionBankId: string | null;
   transactionBankName: string;
+  /** Cuenta cuyo saldo movió la operación — `null` si el tipo no mueve saldo. */
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   totalCash: number;
@@ -46,12 +51,22 @@ export interface BankDepositOperation {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** Solo en la respuesta de `POST /bank-deposits`: saldo anterior → posterior de la cuenta afectada. */
+  balanceMovement?: {
+    bankId: string;
+    bankName: string;
+    accountNumber: string;
+    amount: number;
+    balanceBefore: number;
+    balanceAfter: number;
+  } | null;
 }
 
 /** Lighter shape for listings (`GET /bank-deposits`/`GET /reports/bank-deposits`) — no cash-detail/transaction rows. Still carries the void fields — a voided operation stays visible in the list (with a badge), it just doesn't count toward the report's own totals (see `ReportsService.getBankDepositsReportSummary`). */
 export interface BankDepositOperationSummary {
   id: string;
-  transactionBankId: string;
+  /** `null` para Desembolsos/Pagos Génesis (sin banco agente). */
+  transactionBankId: string | null;
   transactionBankName: string;
   totalAmount: number;
   transactionCount: number;
@@ -76,7 +91,10 @@ export interface BankDepositCashDetailInput {
 
 /** Payload for `POST /bank-deposits` — the backend recomputes/validates every total server-side regardless of what's sent. */
 export interface RegisterBankDepositInput {
-  transactionBankId: string;
+  /** Omitido para Desembolsos/Pagos Génesis. */
+  transactionBankId?: string | null;
+  /** Cuenta bancaria afectada (Depósito/Retiro/Reintegro). */
+  bankAccountId?: string | null;
   transactionTypeId: string;
   totalAmount: number;
   cashDetails: BankDepositCashDetailInput[];

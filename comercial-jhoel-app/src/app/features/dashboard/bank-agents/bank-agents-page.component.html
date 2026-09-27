@@ -1,5 +1,5 @@
 <div class="bank-agents">
-  <app-page-header icon="bank" title="Agentes Bancarios" subtitle="Registra el cuadre diario de saldos de cada banco.">
+  <app-page-header icon="bank" title="Agentes Bancarios" subtitle="Saldo actual de cada cuenta — se actualiza automáticamente con cada operación.">
     <div class="bank-agents__header-actions">
       <label class="bank-agents__date-field">
         <span>Fecha de operación</span>
@@ -33,7 +33,7 @@
             <th>No. Cuenta</th>
             <th>Tipo</th>
             <th class="align-right">Saldo Anterior</th>
-            <th class="align-right">Saldo Final</th>
+            <th class="align-right">Saldo Actual</th>
           </tr>
         </thead>
       </table>
@@ -60,15 +60,26 @@
         Debe aperturar el día antes de registrar los saldos bancarios.
         <button type="button" class="info-banner__link" (click)="reopenEntryModal()">Aperturar el día</button>
       </p>
+    } @else if (isTodayOperationDate()) {
+      <p class="info-banner">
+        <app-icon name="alert-circle" [size]="16" />
+        @if (hasExistingRecordsForDate()) {
+          Los saldos del día ya fueron registrados. Puede volver a registrarlos para actualizar la foto del día con el
+          saldo actual.
+        } @else {
+          Los saldos se actualizan automáticamente con cada operación. Registre los saldos del día para habilitar el
+          Cuadre Agentes.
+        }
+      </p>
     } @else if (hasExistingRecordsForDate()) {
       <p class="info-banner">
         <app-icon name="alert-circle" [size]="16" />
-        Ya existen saldos registrados para esta fecha. Puede modificar los registros existentes.
+        Ya existen saldos registrados para esta fecha. Puede corregir la foto histórica; el saldo actual no cambia.
       </p>
     } @else {
       <p class="info-banner">
         <app-icon name="alert-circle" [size]="16" />
-        No existen registros para esta fecha. Puede ingresar nuevos saldos.
+        No existen registros para esta fecha. Puede ingresar la foto histórica de saldos.
       </p>
     }
 
@@ -80,7 +91,13 @@
             <th>No. Cuenta</th>
             <th>Tipo</th>
             <th class="align-right">Saldo Anterior</th>
-            <th class="align-right">Saldo Final</th>
+            <th class="align-right">Saldo Actual</th>
+            @if (!isTodayOperationDate()) {
+              <th class="align-right">Saldo Final ({{ draft.operationDate() }})</th>
+            }
+            @if (isAdmin()) {
+              <th class="align-right">Acciones</th>
+            }
           </tr>
         </thead>
         <tbody>
@@ -89,22 +106,41 @@
               <td class="bank-agents-table__name">{{ row.bankName }}</td>
               <td class="bank-agents-table__account-number">{{ row.accountNumber }}</td>
               <td>{{ row.accountTypeName }}</td>
-              <td class="align-right">{{ formatCurrency(row.previousBalance) }}</td>
               <td class="align-right">
-                <div class="final-balance-input">
-                  <span>Q</span>
-                  <input
-                    type="text"
-                    inputmode="decimal"
-                    appDecimalInput
-                    [value]="displayFinalBalance(row)"
-                    (change)="onFinalBalanceInput(row.bankId, $any($event.target).value)"
-                    [attr.aria-label]="'Saldo final de ' + row.bankName"
-                    [disabled]="!isEditingUnlocked()"
-                    placeholder="0.00"
-                  />
-                </div>
+                <app-bank-balance-amount [value]="row.previousBalance" [specialAccount]="row.specialAccount" />
               </td>
+              <td class="align-right bank-agents-table__current">
+                <app-bank-balance-amount [value]="row.currentBalance" [specialAccount]="row.specialAccount" strong />
+                @if (row.maxBalance !== null) {
+                  <small class="bank-agents-table__limit">Límite {{ formatCurrency(row.maxBalance) }}</small>
+                }
+              </td>
+              @if (!isTodayOperationDate()) {
+                <td class="align-right">
+                  <div class="final-balance-input">
+                    <span>Q</span>
+                    <input
+                      type="text"
+                      inputmode="decimal"
+                      appDecimalInput
+                      [allowNegative]="row.specialAccount === 'GENESIS'"
+                      [value]="displayFinalBalance(row)"
+                      (change)="onFinalBalanceInput(row.bankId, $any($event.target).value)"
+                      [attr.aria-label]="'Saldo final de ' + row.bankName"
+                      [disabled]="!isEditingUnlocked()"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </td>
+              }
+              @if (isAdmin()) {
+                <td class="align-right">
+                  <app-button variant="ghost" size="sm" [disabled]="isAdjusting()" (click)="openAdjustModal(row)">
+                    <app-icon name="wallet" [size]="14" />
+                    Ajustar saldo
+                  </app-button>
+                </td>
+              }
             </tr>
           }
         </tbody>
@@ -112,16 +148,18 @@
     </div>
 
     <div class="bank-agents__actions">
-      <app-button
-        variant="ghost"
-        size="lg"
-        [disabled]="isSaving() || !isEditingUnlocked()"
-        (click)="openZeroConfirmModal()"
-      >
-        Poner Saldos en Cero
-      </app-button>
+      @if (!isTodayOperationDate()) {
+        <app-button
+          variant="ghost"
+          size="lg"
+          [disabled]="isSaving() || !isEditingUnlocked()"
+          (click)="openZeroConfirmModal()"
+        >
+          Poner Saldos en Cero
+        </app-button>
+      }
       <app-button variant="primary" size="lg" [disabled]="!canSave" (click)="openSaveConfirmModal()">
-        Guardar Cambios
+        {{ isTodayOperationDate() ? 'Registrar saldos del día' : 'Guardar Cambios' }}
       </app-button>
     </div>
   }
@@ -140,6 +178,14 @@
   [isSaving]="isSaving()"
   (confirmed)="confirmSaveChanges()"
   (cancelled)="cancelSaveConfirm()"
+/>
+
+<app-adjust-balance-modal
+  [open]="adjustingRow() !== null"
+  [row]="adjustingRow()"
+  [isSaving]="isAdjusting()"
+  (confirmed)="confirmAdjust($event)"
+  (cancelled)="cancelAdjust()"
 />
 
 <app-zero-balances-confirm-modal

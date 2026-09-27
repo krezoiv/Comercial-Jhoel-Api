@@ -6,6 +6,8 @@ export class BankResponseDto {
   accountTypeName: string;
   previousBalance: number;
   finalBalance: number;
+  specialAccount: string | null;
+  maxBalance: number | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { BANK_DEPOSIT_CASH_DENOMINATIONS, formatCurrency, formatQuantity } from '../../../../../core/models';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 interface CashSummaryRow {
   denomination: number;
@@ -13,7 +13,7 @@ interface CashSummaryRow {
 @Component({
   selector: 'app-bank-deposit-save-confirm-modal',
   standalone: true,
-  imports: [ButtonComponent, IconComponent],
+  imports: [ButtonComponent, IconComponent, BankBalanceAmountComponent],
   templateUrl: './save-confirm-modal.component.html',
   styleUrl: './save-confirm-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +31,11 @@ export class SaveConfirmModalComponent {
   @Input() transactionAmounts: number[] = [];
   /** "Vuelto" confirmado — `0` cuando la operación no lo necesitó. */
   @Input() changeGiven = 0;
+  /** Cuenta cuyo saldo se moverá — `null` si el tipo no mueve saldo. Vista previa; el backend recalcula siempre bajo lock. */
+  @Input() affectedAccountLabel: string | null = null;
+  @Input() affectedAccountSpecial: string | null = null;
+  @Input() balanceBefore: number | null = null;
+  @Input() balanceAfter: number | null = null;
   @Input() isSaving = false;
 
   @Output() confirmed = new EventEmitter<void>();

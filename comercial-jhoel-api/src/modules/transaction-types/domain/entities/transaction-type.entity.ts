@@ -22,11 +22,30 @@ export const TRANSACTION_TYPE_ICONS = [
 
 export type TransactionTypeIcon = (typeof TRANSACTION_TYPE_ICONS)[number];
 
+/**
+ * Efecto de un tipo de transacción sobre el saldo bancario — ver migración
+ * `CreateBankAccountMovements`. `null` = el tipo no mueve saldo (Remesas,
+ * Pago de Cheque...). DEPOSITO/DESEMBOLSO_GENESIS/REINTEGRO restan;
+ * RETIRO/PAGO_GENESIS suman. Los dos de Génesis no usan selector de banco:
+ * la cuenta es siempre la línea de crédito de Fundación Génesis.
+ */
+export const TRANSACTION_TYPE_BALANCE_EFFECTS = [
+  'DEPOSITO',
+  'RETIRO',
+  'DESEMBOLSO_GENESIS',
+  'PAGO_GENESIS',
+  'REINTEGRO',
+] as const;
+
+export type TransactionTypeBalanceEffect =
+  (typeof TRANSACTION_TYPE_BALANCE_EFFECTS)[number];
+
 export interface TransactionTypeProps {
   id: string;
   name: string;
   /** Icon key from the frontend's shared icon registry — rendered on the Transaccionar dashboard's type cards. */
   icon: string;
+  balanceEffect: TransactionTypeBalanceEffect | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -54,6 +73,10 @@ export class TransactionType {
 
   get icon(): string {
     return this.props.icon;
+  }
+
+  get balanceEffect(): TransactionTypeBalanceEffect | null {
+    return this.props.balanceEffect;
   }
 
   get isActive(): boolean {

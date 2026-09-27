@@ -12,10 +12,28 @@
           <dt>Tipo de Transacción</dt>
           <dd>{{ transactionTypeName }}</dd>
         </div>
-        <div class="modal__summary-row">
-          <dt>Banco Agente</dt>
-          <dd>{{ transactionBankName }}</dd>
-        </div>
+        @if (transactionBankName) {
+          <div class="modal__summary-row">
+            <dt>Banco Agente</dt>
+            <dd>{{ transactionBankName }}</dd>
+          </div>
+        }
+        @if (affectedAccountLabel) {
+          <div class="modal__summary-row">
+            <dt>Cuenta afectada</dt>
+            <dd>{{ affectedAccountLabel }}</dd>
+          </div>
+          @if (balanceBefore !== null && balanceAfter !== null) {
+            <div class="modal__summary-row">
+              <dt>Saldo actual</dt>
+              <dd><app-bank-balance-amount [value]="balanceBefore" [specialAccount]="affectedAccountSpecial" /></dd>
+            </div>
+            <div class="modal__summary-row">
+              <dt>Saldo después</dt>
+              <dd><app-bank-balance-amount [value]="balanceAfter" [specialAccount]="affectedAccountSpecial" strong /></dd>
+            </div>
+          }
+        }
         @if (clientName) {
           <div class="modal__summary-row">
             <dt>Cliente</dt>

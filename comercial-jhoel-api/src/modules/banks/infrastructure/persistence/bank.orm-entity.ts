@@ -57,6 +57,24 @@ export class BankOrmEntity {
   })
   finalBalance: number;
 
+  @Column({
+    name: 'special_account',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  specialAccount: string | null;
+
+  @Column({
+    name: 'max_balance',
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    nullable: true,
+    transformer: new DecimalColumnTransformer(),
+  })
+  maxBalance: number | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

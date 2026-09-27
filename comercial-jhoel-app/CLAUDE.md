@@ -1218,6 +1218,25 @@ date-range logic of its own — `period` is rendered exactly as the backend comp
   card grids this same session) via direct CSS review rather than re-verifying a pattern already exercised
   live twice this session.
 
+### Saldos bancarios dinámicos (Bancos / Transaccionar / Transferencias Bancarias / Movimientos Bancarios)
+
+El backend es la única fuente de verdad del saldo (`banks.final_balance`, ver el `CLAUDE.md` del API);
+ninguna pantalla lo calcula para guardar — las vistas previas "saldo actual → saldo después" son solo UX.
+
+- **Signo real siempre**: `formatSignedBankBalance()` (`core/utils/bank-balance.util.ts`) → `-Q 5,000.00`;
+  `<app-bank-balance-amount>` (shared/ui) añade "Saldo a favor" a un negativo de Génesis. Nunca `Math.abs()`
+  sobre un saldo.
+- **Agentes Bancarios → Bancos**: columna "Saldo Actual"; para hoy "Registrar saldos del día" guarda la foto
+  con el saldo vivo (sin inputs); fechas pasadas conservan la edición histórica. "Ajustar saldo" (solo admin)
+  abre `AdjustBalanceModalComponent` (motivo obligatorio).
+- **Transaccionar**: `BankDepositDraftStore` guarda `transactionTypeBalanceEffect` y `bankAccountId`; tipos
+  Génesis ocultan el banco agente y usan la cuenta `GENESIS`; Depósito/Retiro/Reintegro piden la cuenta.
+- **Finanzas → Transferencias Bancarias** (`features/dashboard/bank-transfers/`) y **Reportería →
+  Movimientos Bancarios** (`reports/bank-movements/`, admin, reutiliza estilos/paginación de Reporte de
+  Transacciones).
+- Sistema → Bancos edita `specialAccount`/`maxBalance`; en edición el saldo es de solo lectura. Sistema →
+  Tipo de Transacción edita `balanceEffect`.
+
 ### Alertas y Notificaciones — Navbar bell (`features/dashboard/topbar/components/alert-bell/`)
 
 `AlertBellComponent` (selector `app-alert-bell`) sits in `DashboardTopbarComponent`'s topbar, between the

@@ -1,5 +1,6 @@
 import { Bank } from '../../domain/entities/bank.entity';
 import { BankOrmEntity } from './bank.orm-entity';
+import { BankSpecialAccount } from '../../domain/entities/bank-account-movement.entity';
 
 export class BankMapper {
   static toDomain(orm: BankOrmEntity): Bank {
@@ -11,6 +12,8 @@ export class BankMapper {
       accountTypeName: orm.accountType.name,
       previousBalance: orm.previousBalance,
       finalBalance: orm.finalBalance,
+      specialAccount: (orm.specialAccount as BankSpecialAccount | null) ?? null,
+      maxBalance: orm.maxBalance ?? null,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

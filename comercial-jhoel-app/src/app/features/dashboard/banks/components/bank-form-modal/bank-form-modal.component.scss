@@ -115,3 +115,8 @@
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
+
+.field__optional {
+  font-weight: var(--fw-regular, 400);
+  color: var(--color-text-on-light-subtle);
+}

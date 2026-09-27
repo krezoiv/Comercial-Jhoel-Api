@@ -4,16 +4,23 @@ import { FormsModule } from '@angular/forms';
 
 import { BankBalanceView, DayStatus, formatBankCurrency } from '../../../core/models';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
+import { AuthService } from '../../../core/services/auth.service';
 import { BankBalanceService } from '../../../core/services/bank-balance.service';
+import { BankService } from '../../../core/services/bank.service';
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
+import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
+import { BankBalanceAmountComponent, ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { ZeroBalancesConfirmModalComponent } from './components/zero-balances-confirm-modal/zero-balances-confirm-modal.component';
 import { EntryConfirmModalComponent } from './components/entry-confirm-modal/entry-confirm-modal.component';
 import { SaveBalancesConfirmModalComponent } from './components/save-balances-confirm-modal/save-balances-confirm-modal.component';
+import {
+  AdjustBalanceModalComponent,
+  AdjustBalanceSubmission,
+} from './components/adjust-balance-modal/adjust-balance-modal.component';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique every other date-driven page in this app already uses (Recargas, Reports). */
 function todayIsoDate(): string {
@@ -25,6 +32,15 @@ function todayIsoDate(): string {
 }
 
 /**
+ * **Saldos dinámicos**: la columna "Saldo Actual" es `banks.final_balance`,
+ * que solo mueven las operaciones (Transaccionar, transferencias) y los
+ * ajustes manuales — el backend es la fuente de verdad, esta pantalla nunca
+ * lo calcula. Para HOY, "Registrar saldos del día" guarda la foto diaria
+ * (necesaria para el cuadre/cierre) con el saldo actual de cada cuenta — ya
+ * no se teclea. Para una fecha pasada se conserva la corrección histórica
+ * de la foto tal cual existía (nunca toca el saldo actual). Corregir el
+ * saldo actual es "Ajustar saldo": solo admin, con motivo, auditado.
+ *
  * All draft state (operation date + entered saldo final values) lives in
  * `BankBalanceDraftStore`, a root-provided singleton persisted to
  * `sessionStorage` — same pattern as `PurchaseDraftStore`/
@@ -51,6 +67,8 @@ function todayIsoDate(): string {
     ZeroBalancesConfirmModalComponent,
     EntryConfirmModalComponent,
     SaveBalancesConfirmModalComponent,
+    AdjustBalanceModalComponent,
+    BankBalanceAmountComponent,
   ],
   templateUrl: './bank-agents-page.component.html',
   styleUrl: './bank-agents-page.component.scss',
@@ -61,7 +79,13 @@ export class BankAgentsPageComponent {
   private readonly cuadreAgentesService = inject(CuadreAgentesService);
   private readonly notificationService = inject(NotificationService);
   private readonly dayStatusService = inject(DayStatusService);
+  private readonly bankService = inject(BankService);
   protected readonly draft = inject(BankBalanceDraftStore);
+  readonly isAdmin = inject(AuthService).isAdmin;
+
+  /** Cuenta abierta en "Ajustar saldo" (`null` = modal cerrado). */
+  readonly adjustingRow = signal<BankBalanceView | null>(null);
+  readonly isAdjusting = signal(false);
 
   readonly maxSelectableDate = todayIsoDate();
 
@@ -203,19 +227,65 @@ export class BankAgentsPageComponent {
       return;
     }
     const parsed = parseFloat(value);
-    if (Number.isNaN(parsed) || parsed < 0) {
+    // Solo la línea de crédito de Génesis admite una foto negativa (lo valida también el backend).
+    const allowsNegative = this.rows().find((row) => row.bankId === bankId)?.specialAccount === 'GENESIS';
+    if (Number.isNaN(parsed) || (parsed < 0 && !allowsNegative)) {
       return;
     }
     this.draft.setFinalBalance(bankId, parsed);
   }
 
+  /** Hoy: la foto se toma del saldo actual (no hay nada que teclear). Fecha pasada: exige una edición pendiente, como siempre. */
   get canSave(): boolean {
     return (
       this.isEditingUnlocked() &&
-      this.draft.hasActiveDraft() &&
+      (this.isTodayOperationDate() ? this.rows().length > 0 : this.draft.hasActiveDraft()) &&
       !this.isSaving() &&
       !this.isRefreshingBalances()
     );
+  }
+
+  openAdjustModal(row: BankBalanceView): void {
+    if (!this.isAdmin()) {
+      return;
+    }
+    this.adjustingRow.set(row);
+  }
+
+  cancelAdjust(): void {
+    if (this.isAdjusting()) {
+      return;
+    }
+    this.adjustingRow.set(null);
+  }
+
+  /** El backend valida permisos, saldo negativo y registra el AJUSTE_MANUAL; aquí solo se refresca la tabla con lo que quedó guardado. */
+  confirmAdjust(submission: AdjustBalanceSubmission): void {
+    const row = this.adjustingRow();
+    if (!row || this.isAdjusting()) {
+      return;
+    }
+    this.isAdjusting.set(true);
+    this.bankService
+      .adjustBalance(row.bankId, {
+        newBalance: submission.newBalance,
+        reason: submission.reason,
+        ...(submission.observation ? { observation: submission.observation } : {}),
+      })
+      .subscribe({
+        next: (movement) => {
+          this.isAdjusting.set(false);
+          this.adjustingRow.set(null);
+          this.notificationService.success(
+            `Saldo de ${row.bankName} ajustado a ${formatSignedBankBalance(movement.balanceAfter)}.`,
+          );
+          this.refreshBalances();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isAdjusting.set(false);
+          this.notificationService.error(extractErrorMessage(error, 'No se pudo ajustar el saldo.'));
+        },
+      });
   }
 
   /** "Guardar Cambios" now opens the confirmation (Step 3) instead of saving directly — the actual save happens in `confirmSaveChanges()`. */
@@ -249,10 +319,14 @@ export class BankAgentsPageComponent {
     }
 
     const isFirstRecordForDate = !this.hasExistingRecordsForDate();
-    const entries = Object.entries(this.draft.draftFinalBalances()).map(([bankId, finalBalance]) => ({
-      bankId,
-      finalBalance,
-    }));
+    // Hoy: foto del saldo actual de TODAS las cuentas (el backend vuelve a
+    // tomar el saldo vivo bajo lock; lo enviado aquí es solo informativo).
+    const entries = this.isTodayOperationDate()
+      ? this.rows().map((row) => ({ bankId: row.bankId, finalBalance: row.currentBalance }))
+      : Object.entries(this.draft.draftFinalBalances()).map(([bankId, finalBalance]) => ({
+          bankId,
+          finalBalance,
+        }));
 
     this.isSaving.set(true);
     this.bankBalanceService.saveBalances({ operationDate: this.draft.operationDate(), entries }).subscribe({
@@ -287,7 +361,7 @@ export class BankAgentsPageComponent {
    * zeros to be persisted.
    */
   openZeroConfirmModal(): void {
-    if (this.loading() || this.rows().length === 0 || !this.isEditingUnlocked()) {
+    if (this.loading() || this.rows().length === 0 || !this.isEditingUnlocked() || this.isTodayOperationDate()) {
       return;
     }
     this.isZeroConfirmModalOpen.set(true);

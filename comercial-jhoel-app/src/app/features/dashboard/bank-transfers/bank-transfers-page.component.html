@@ -1,0 +1,271 @@
+<div class="transfers">
+  <app-page-header
+    icon="arrow-left-right"
+    title="Transferencias Bancarias"
+    subtitle="Traslada saldo entre cuentas bancarias. Los saldos se actualizan al instante en Agentes Bancarios → Bancos."
+  />
+
+  <section class="transfers__card">
+    <div class="transfers__grid">
+      <div class="field">
+        <label for="transfer-source">Cuenta origen</label>
+        <select id="transfer-source" [ngModel]="sourceId()" (ngModelChange)="onSourceChange($event)" [disabled]="loadingAccounts()">
+          <option value="" disabled>Seleccionar cuenta origen</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ accountLabel(account) }} — {{ formatSigned(account.finalBalance) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="transfer-destination">Cuenta destino</label>
+        <select
+          id="transfer-destination"
+          [ngModel]="destinationId()"
+          (ngModelChange)="destinationId.set($event)"
+          [disabled]="loadingAccounts() || !sourceId()"
+        >
+          <option value="" disabled>{{ sourceId() ? 'Seleccionar cuenta destino' : 'Elija primero la cuenta origen' }}</option>
+          @for (option of destinationOptions(); track option.bank.id) {
+            <option [value]="option.bank.id" [disabled]="option.blockedReason !== null">
+              {{ accountLabel(option.bank) }}{{ option.blockedReason ? ' — no permitido desde esta cuenta' : '' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="transfer-amount">Monto</label>
+        <div class="money-input">
+          <span>Q</span>
+          <input
+            id="transfer-amount"
+            type="text"
+            inputmode="decimal"
+            appDecimalInput
+            [ngModel]="amount()"
+            (ngModelChange)="onAmountChange($event)"
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="transfer-reference">Referencia <span class="field__optional">(opcional)</span></label>
+        <input
+          id="transfer-reference"
+          type="text"
+          maxlength="100"
+          placeholder="Ej. No. de boleta"
+          [ngModel]="referenceText()"
+          (ngModelChange)="referenceText.set($event)"
+        />
+      </div>
+
+      <div class="field field--wide">
+        <label for="transfer-concept">Concepto / observación <span class="field__optional">(opcional)</span></label>
+        <input
+          id="transfer-concept"
+          type="text"
+          maxlength="255"
+          placeholder="Ej. Fondeo de cuenta para operaciones del día"
+          [ngModel]="concept()"
+          (ngModelChange)="concept.set($event)"
+        />
+      </div>
+    </div>
+
+    @if (source() || destination()) {
+      <div class="transfers__preview">
+        <div class="preview-side">
+          <span class="preview-side__title">Origen</span>
+          @if (source(); as account) {
+            <strong class="preview-side__account">{{ accountLabel(account) }}</strong>
+            <div class="preview-side__figures">
+              <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
+              @if (preview(); as p) {
+                <app-icon name="arrow-right" [size]="14" />
+                <app-bank-balance-amount [value]="p.sourceAfter" [specialAccount]="account.specialAccount" strong />
+              }
+            </div>
+          } @else {
+            <span class="preview-side__empty">Sin seleccionar</span>
+          }
+        </div>
+        <div class="transfers__preview-arrow">
+          <app-icon name="arrow-right" [size]="20" />
+          @if (preview(); as p) {
+            <strong>{{ formatSigned(p.amount) }}</strong>
+          }
+        </div>
+        <div class="preview-side">
+          <span class="preview-side__title">Destino</span>
+          @if (destination(); as account) {
+            <strong class="preview-side__account">{{ accountLabel(account) }}</strong>
+            <div class="preview-side__figures">
+              <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
+              @if (preview(); as p) {
+                <app-icon name="arrow-right" [size]="14" />
+                <app-bank-balance-amount [value]="p.destinationAfter" [specialAccount]="account.specialAccount" strong />
+              }
+            </div>
+            @if (account.maxBalance !== null) {
+              <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
+            }
+          } @else {
+            <span class="preview-side__empty">Sin seleccionar</span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (validationError(); as message) {
+      <p class="transfers__error" role="alert">
+        <app-icon name="alert-triangle" [size]="16" />
+        {{ message }}
+      </p>
+    }
+
+    <div class="transfers__actions">
+      <app-button variant="primary" [disabled]="!canSubmit()" (click)="requestConfirm()">
+        <app-icon name="arrow-left-right" [size]="16" />
+        Registrar transferencia
+      </app-button>
+    </div>
+  </section>
+
+  <section class="transfers__card">
+    <h2 class="transfers__section-title">Transferencias recientes</h2>
+    @if (loadingTransfers()) {
+      <p class="transfers__muted">Cargando transferencias…</p>
+    } @else if (transfers().length === 0) {
+      <p class="transfers__muted">Aún no hay transferencias registradas.</p>
+    } @else {
+      <div class="table-wrapper">
+        <table class="transfers-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th class="align-right">Monto</th>
+              <th>Usuario</th>
+              <th>Referencia</th>
+              <th>Estado</th>
+              @if (isAdmin()) {
+                <th></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (transfer of transfers(); track transfer.id) {
+              <tr [class.is-voided]="transfer.status === 'ANULADO'">
+                <td>
+                  {{ transfer.businessDate | date: 'dd/MM/yyyy' }}
+                  <small>{{ transfer.createdAt | date: 'HH:mm' }}</small>
+                </td>
+                <td>
+                  <strong>{{ transfer.source.bankName }}</strong>
+                  <small>{{ transfer.source.accountNumber }} · {{ formatSigned(transfer.source.balanceBefore) }} → {{ formatSigned(transfer.source.balanceAfter) }}</small>
+                </td>
+                <td>
+                  <strong>{{ transfer.destination.bankName }}</strong>
+                  <small>{{ transfer.destination.accountNumber }} · {{ formatSigned(transfer.destination.balanceBefore) }} → {{ formatSigned(transfer.destination.balanceAfter) }}</small>
+                </td>
+                <td class="align-right transfers-table__amount">{{ formatSigned(transfer.amount) }}</td>
+                <td>{{ transfer.username }}</td>
+                <td class="transfers-table__reference">
+                  {{ transfer.referenceText || '—' }}
+                  @if (transfer.concept) {
+                    <small>{{ transfer.concept }}</small>
+                  }
+                </td>
+                <td>
+                  <span class="status" [class.status--voided]="transfer.status === 'ANULADO'">
+                    {{ transfer.status === 'ANULADO' ? 'Anulada' : 'Aplicada' }}
+                  </span>
+                </td>
+                @if (isAdmin()) {
+                  <td class="align-right">
+                    <button
+                      type="button"
+                      class="action-btn"
+                      title="Anular transferencia"
+                      [disabled]="transfer.status === 'ANULADO' || isVoiding()"
+                      (click)="openVoid(transfer)"
+                    >
+                      <app-icon name="x-circle" [size]="16" />
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+@if (isConfirmOpen() && preview(); as p) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="transfer-confirm-title" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="cancelConfirm()">
+        <app-icon name="close" [size]="18" />
+      </button>
+      <div class="modal__icon">
+        <app-icon name="arrow-left-right" [size]="22" />
+      </div>
+      <h2 id="transfer-confirm-title" class="modal__title">¿Confirmar transferencia?</h2>
+      <dl class="modal__summary">
+        <div>
+          <dt>Monto</dt>
+          <dd class="modal__total">{{ formatSigned(p.amount) }}</dd>
+        </div>
+        <div>
+          <dt>Origen</dt>
+          <dd>{{ accountLabel(source()!) }}</dd>
+        </div>
+        <div>
+          <dt>Saldo origen</dt>
+          <dd>{{ formatSigned(p.sourceBefore) }} → <strong>{{ formatSigned(p.sourceAfter) }}</strong></dd>
+        </div>
+        <div>
+          <dt>Destino</dt>
+          <dd>{{ accountLabel(destination()!) }}</dd>
+        </div>
+        <div>
+          <dt>Saldo destino</dt>
+          <dd>{{ formatSigned(p.destinationBefore) }} → <strong>{{ formatSigned(p.destinationAfter) }}</strong></dd>
+        </div>
+        @if (referenceText().trim()) {
+          <div>
+            <dt>Referencia</dt>
+            <dd>{{ referenceText().trim() }}</dd>
+          </div>
+        }
+        @if (concept().trim()) {
+          <div>
+            <dt>Concepto</dt>
+            <dd>{{ concept().trim() }}</dd>
+          </div>
+        }
+      </dl>
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="cancelConfirm()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="isSaving()" (click)="confirmTransfer()">
+          {{ isSaving() ? 'Registrando…' : 'Confirmar transferencia' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-void-confirm-modal
+  title="Anular Transferencia"
+  description="La transferencia no se elimina: se registran los movimientos inversos en ambas cuentas y queda en el historial marcada como Anulada. Si la cuenta destino ya no tiene saldo suficiente, la anulación se rechaza."
+  [open]="voidingTransferId() !== null"
+  [isSaving]="isVoiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="cancelVoid()"
+/>

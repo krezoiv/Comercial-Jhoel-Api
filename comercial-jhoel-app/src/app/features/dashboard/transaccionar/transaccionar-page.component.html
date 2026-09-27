@@ -53,25 +53,44 @@
     <app-page-header
       [icon]="selectedTypeIcon()"
       [title]="draft.transactionTypeName()"
-      subtitle="Registra un depósito bancario: monto, banco agente, desglose de efectivo y las transacciones en que se reparte."
+      [subtitle]="formSubtitle()"
     />
 
     <section class="transaccionar__card">
       <div class="transaccionar__row">
-        <div class="field">
-          <label for="transaction-bank">Banco Agente</label>
-          <select
-            id="transaction-bank"
-            [ngModel]="draft.transactionBankId()"
-            (ngModelChange)="onBankChange($event)"
-            [disabled]="loadingBanks()"
-          >
-            <option value="" disabled>Seleccionar banco agente</option>
-            @for (bank of transactionBanks(); track bank.id) {
-              <option [value]="bank.id">{{ bank.name }}</option>
-            }
-          </select>
-        </div>
+        @if (!draft.isGenesisType()) {
+          <div class="field">
+            <label for="transaction-bank">Banco Agente</label>
+            <select
+              id="transaction-bank"
+              [ngModel]="draft.transactionBankId()"
+              (ngModelChange)="onBankChange($event)"
+              [disabled]="loadingBanks()"
+            >
+              <option value="" disabled>Seleccionar banco agente</option>
+              @for (bank of transactionBanks(); track bank.id) {
+                <option [value]="bank.id">{{ bank.name }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (draft.needsBankAccount()) {
+          <div class="field">
+            <label for="bank-account">Cuenta bancaria afectada</label>
+            <select
+              id="bank-account"
+              [ngModel]="draft.bankAccountId()"
+              (ngModelChange)="onBankAccountChange($event)"
+              [disabled]="loadingAccounts()"
+            >
+              <option value="" disabled>Seleccionar cuenta</option>
+              @for (account of selectableAccounts(); track account.id) {
+                <option [value]="account.id">{{ accountLabel(account) }} — {{ formatSigned(account.finalBalance) }}</option>
+              }
+            </select>
+          </div>
+        }
 
         <div class="field">
           <label for="total-amount">Monto Total a Depositar</label>
@@ -126,6 +145,40 @@
           }
         }
       </div>
+
+      @if (affectedAccount(); as account) {
+        <div class="balance-preview" [class.balance-preview--error]="balanceError() !== null">
+          <div class="balance-preview__account">
+            <app-icon name="bank" [size]="18" />
+            <div>
+              <span class="balance-preview__label">{{ draft.isGenesisType() ? 'Línea de crédito' : 'Cuenta afectada' }}</span>
+              <strong>{{ accountLabel(account) }}</strong>
+            </div>
+          </div>
+          <div class="balance-preview__figures">
+            <div>
+              <span class="balance-preview__label">Saldo actual</span>
+              <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
+            </div>
+            @if (balancePreview(); as preview) {
+              <app-icon name="arrow-right" [size]="16" />
+              <div>
+                <span class="balance-preview__label">Saldo después</span>
+                <app-bank-balance-amount [value]="preview.after" [specialAccount]="account.specialAccount" strong />
+              </div>
+            }
+          </div>
+          @if (account.maxBalance !== null && draft.transactionTypeBalanceEffect() === 'PAGO_GENESIS') {
+            <p class="balance-preview__hint">Límite máximo de la línea: {{ formatSigned(account.maxBalance) }}</p>
+          }
+        </div>
+      }
+      @if (balanceError(); as message) {
+        <p class="balance-error" role="alert">
+          <app-icon name="alert-triangle" [size]="16" />
+          {{ message }}
+        </p>
+      }
     </section>
 
     <section class="transaccionar__card">
@@ -170,7 +223,7 @@
     <section class="transaccionar__footer">
       <app-cuadre-status-indicator [status]="draft.overallStatus()" [text]="overallStatusText()" />
 
-      <app-button variant="primary" [disabled]="!draft.canSave() || isSaving()" (click)="requestSave()">
+      <app-button variant="primary" [disabled]="!canSubmit() || isSaving()" (click)="requestSave()">
         Confirmar y Guardar
       </app-button>
     </section>
@@ -179,7 +232,7 @@
   <app-bank-deposit-save-confirm-modal
     [open]="isConfirmOpen()"
     [transactionTypeName]="draft.transactionTypeName()"
-    [transactionBankName]="selectedBankName()"
+    [transactionBankName]="draft.isGenesisType() ? '' : selectedBankName()"
     [clientName]="draft.clientName()"
     [registeredClientName]="draft.clientId() ? draft.clientDisplayName() : null"
     [sendToAccountsReceivable]="draft.sendToAccountsReceivable()"
@@ -187,6 +240,10 @@
     [cashCounts]="draft.cashCounts()"
     [transactionAmounts]="draft.transactionAmounts()"
     [changeGiven]="draft.changeConfirmed() ? draft.changeGiven() : 0"
+    [affectedAccountLabel]="affectedAccount() ? accountLabel(affectedAccount()!) : null"
+    [affectedAccountSpecial]="affectedAccount()?.specialAccount ?? null"
+    [balanceBefore]="balancePreview()?.before ?? null"
+    [balanceAfter]="balancePreview()?.after ?? null"
     [isSaving]="isSaving()"
     (confirmed)="confirmSave()"
     (cancelled)="dismissConfirm()"

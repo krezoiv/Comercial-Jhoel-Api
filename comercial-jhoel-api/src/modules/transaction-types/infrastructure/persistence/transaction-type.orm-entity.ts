@@ -27,6 +27,14 @@ export class TransactionTypeOrmEntity {
   @Column({ type: 'varchar', length: 50 })
   icon: string;
 
+  @Column({
+    name: 'balance_effect',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  balanceEffect: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

@@ -7,6 +7,7 @@ import {
   BankDepositOperationOutput,
   toBankDepositOperationOutput,
 } from '../dtos/bank-deposit-output';
+import { todayIsoDate } from '../utils/today-iso-date';
 
 export interface VoidBankDepositOperationInput {
   id: string;
@@ -46,10 +47,14 @@ export class VoidBankDepositOperationUseCase {
       throw new BankDepositOperationAlreadyVoidedError(input.id);
     }
 
+    // El movimiento inverso de saldo (si la operación movió alguno) se
+    // registra con la fecha de negocio de HOY — la anulación ocurre hoy,
+    // el movimiento original conserva su propia fecha.
     const voided = await this.bankDepositRepository.voidOperation(
       input.id,
       input.voidedBy,
       input.reason,
+      todayIsoDate(),
     );
     return toBankDepositOperationOutput(voided);
   }

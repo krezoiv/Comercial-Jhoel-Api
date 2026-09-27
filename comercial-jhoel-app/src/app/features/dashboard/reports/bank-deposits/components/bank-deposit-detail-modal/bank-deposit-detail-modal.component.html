@@ -38,9 +38,15 @@
                 <dd>{{ op.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
               </div>
               <div class="info-grid__item">
-                <dt>Banco Agente</dt>
+                <dt>{{ op.transactionBankId ? 'Banco Agente' : 'Línea de crédito' }}</dt>
                 <dd>{{ op.transactionBankName }}</dd>
               </div>
+              @if (op.bankAccountName) {
+                <div class="info-grid__item">
+                  <dt>Cuenta afectada</dt>
+                  <dd>{{ op.bankAccountName }} · {{ op.bankAccountNumber }}</dd>
+                </div>
+              }
               <div class="info-grid__item">
                 <dt>Tipo de Transacción</dt>
                 <dd>{{ op.transactionTypeName }}</dd>

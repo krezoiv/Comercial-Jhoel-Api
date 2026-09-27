@@ -160,8 +160,13 @@ export class TypeOrmDashboardRepository implements DashboardRepository {
     const rows = await this.bankDepositOperationRepository
       .createQueryBuilder('operation')
       .leftJoin('operation.transactionBank', 'transactionBank')
-      .select('operation.transactionBankId', 'bankId')
-      .addSelect('transactionBank.name', 'bankName')
+      .leftJoin('operation.bankAccount', 'bankAccount')
+      // Desembolsos/Pagos Génesis no tienen banco agente — se agrupan bajo la cuenta afectada.
+      .select(
+        'COALESCE(operation.transactionBankId, operation.bankAccountId)',
+        'bankId',
+      )
+      .addSelect('COALESCE(transactionBank.name, bankAccount.name)', 'bankName')
       .addSelect('SUM(operation.transactionCount)', 'transactions')
       .where('operation.isVoided = false')
       .andWhere('operation.operationDate >= :startDate', {
@@ -170,8 +175,8 @@ export class TypeOrmDashboardRepository implements DashboardRepository {
       .andWhere('operation.operationDate <= :endDate', {
         endDate: period.isoEndDate,
       })
-      .groupBy('operation.transactionBankId')
-      .addGroupBy('transactionBank.name')
+      .groupBy('COALESCE(operation.transactionBankId, operation.bankAccountId)')
+      .addGroupBy('COALESCE(transactionBank.name, bankAccount.name)')
       .getRawMany<{ bankId: string; bankName: string; transactions: string }>();
 
     return rows.map((row) => ({

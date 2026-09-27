@@ -484,3 +484,15 @@
     color: var(--color-primary-700);
   }
 }
+
+.favor-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  white-space: nowrap;
+}

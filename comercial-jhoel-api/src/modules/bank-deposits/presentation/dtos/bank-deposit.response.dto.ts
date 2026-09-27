@@ -13,8 +13,11 @@ export class BankDepositTransactionResponseDto {
 
 export class BankDepositOperationResponseDto {
   id: string;
-  transactionBankId: string;
+  transactionBankId: string | null;
   transactionBankName: string;
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   totalCash: number;
@@ -37,12 +40,23 @@ export class BankDepositOperationResponseDto {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  balanceMovement?: {
+    bankId: string;
+    bankName: string;
+    accountNumber: string;
+    amount: number;
+    balanceBefore: number;
+    balanceAfter: number;
+  } | null;
 }
 
 export class BankDepositOperationSummaryResponseDto {
   id: string;
-  transactionBankId: string;
+  transactionBankId: string | null;
   transactionBankName: string;
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   operationDate: string;

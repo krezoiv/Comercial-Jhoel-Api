@@ -372,6 +372,14 @@ export const routes: Routes = [
         title: 'Transaccionar — Sistema',
       },
       {
+        path: 'transferencias-bancarias',
+        loadComponent: () =>
+          import('./features/dashboard/bank-transfers/bank-transfers-page.component').then(
+            (m) => m.BankTransfersPageComponent
+          ),
+        title: 'Transferencias Bancarias — Sistema',
+      },
+      {
         path: 'recargas',
         loadComponent: () =>
           import('./features/dashboard/recharges/recharges-page.component').then((m) => m.RechargesPageComponent),
@@ -473,6 +481,15 @@ export const routes: Routes = [
             (m) => m.AgentReconciliationsReportPageComponent
           ),
         title: 'Reporte de Cuadre de Agentes — Sistema',
+      },
+      {
+        path: 'reportes-movimientos-bancarios',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/reports/bank-movements/bank-movements-report-page.component').then(
+            (m) => m.BankMovementsReportPageComponent
+          ),
+        title: 'Movimientos Bancarios — Sistema',
       },
       {
         path: 'reportes-transacciones',

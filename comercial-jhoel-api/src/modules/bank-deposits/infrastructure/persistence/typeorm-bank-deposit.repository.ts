@@ -1,6 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, QueryFailedError, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  EntityManager,
+  QueryFailedError,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import {
   BankDepositDailyTransactionCount,
@@ -21,6 +26,10 @@ import { InvalidCashQuantityError } from '../../domain/errors/invalid-cash-quant
 import { CashTotalMismatchError } from '../../domain/errors/cash-total-mismatch.error';
 import { TransactionTotalMismatchError } from '../../domain/errors/transaction-total-mismatch.error';
 import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-deposit-client.error';
+import { BankDepositOperationNotFoundError } from '../../domain/errors/bank-deposit-operation-not-found.error';
+import { BankDepositOperationAlreadyVoidedError } from '../../domain/errors/bank-deposit-operation-already-voided.error';
+import { InvalidBankAccountError } from '../../domain/errors/invalid-bank-account.error';
+import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
 import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
 import { BankDepositOperationMapper } from './bank-deposit-operation.mapper';
 
@@ -49,7 +58,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       const rows = await manager.query<
         { register_bank_deposit_operation: string }[]
       >(
-        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10)',
+        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11)',
         [
           data.transactionBankId,
           data.totalAmount,
@@ -61,6 +70,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
           data.clientName,
           data.changeGiven ?? 0,
           data.clientId ?? null,
+          data.bankAccountId ?? null,
         ],
       );
       operationId = rows[0].register_bank_deposit_operation;
@@ -90,6 +100,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       .createQueryBuilder('operation')
       .leftJoinAndSelect('operation.transactionBank', 'transactionBank')
       .leftJoinAndSelect('operation.transactionType', 'transactionType')
+      .leftJoinAndSelect('operation.bankAccount', 'bankAccount')
       .leftJoinAndSelect('operation.user', 'user');
 
     this.applyFilters(qb, options);
@@ -118,7 +129,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       BankDepositOperationOrmEntity,
       {
         where: { id },
-        relations: { cashDetails: true, transactions: true },
+        relations: { cashDetails: true, transactions: true, bankAccount: true },
       },
     );
     return orm ? BankDepositOperationMapper.toDomain(orm) : null;
@@ -145,22 +156,31 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       totalAmount: string;
     }>();
 
+    // Desembolsos/Pagos Génesis no tienen banco agente: se agrupan bajo la
+    // cuenta afectada (Fundación Génesis Empresarial) en vez de quedar sin nombre.
     const byBankQb = this.repository
       .createQueryBuilder('operation')
-      .leftJoin('operation.transactionBank', 'transactionBank');
+      .leftJoin('operation.transactionBank', 'transactionBank')
+      .leftJoin('operation.bankAccount', 'bankAccount');
     this.applyFilters(byBankQb, filters);
     byBankQb.andWhere('operation.isVoided = false');
     byBankQb
-      .select('operation.transactionBankId', 'transactionBankId')
-      .addSelect('transactionBank.name', 'transactionBankName')
+      .select(
+        'COALESCE(operation.transactionBankId, operation.bankAccountId)',
+        'transactionBankId',
+      )
+      .addSelect(
+        'COALESCE(transactionBank.name, bankAccount.name)',
+        'transactionBankName',
+      )
       .addSelect('COUNT(*)', 'operationCount')
       .addSelect(
         'COALESCE(SUM(operation.transactionCount), 0)',
         'transactionCount',
       )
       .addSelect('COALESCE(SUM(operation.totalAmount), 0)', 'totalAmount')
-      .groupBy('operation.transactionBankId')
-      .addGroupBy('transactionBank.name')
+      .groupBy('COALESCE(operation.transactionBankId, operation.bankAccountId)')
+      .addGroupBy('COALESCE(transactionBank.name, bankAccount.name)')
       .orderBy('SUM(operation.totalAmount)', 'DESC');
 
     const byBankRaw = await byBankQb.getRawMany<{
@@ -193,13 +213,22 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
     const qb = this.repository.createQueryBuilder('operation');
     this.applyFilters(qb, { startDate, endDate });
     qb.andWhere('operation.isVoided = false');
-    qb.select("to_char(operation.operationDate, 'YYYY-MM-DD')", 'date').addSelect(
+    qb.select(
+      "to_char(operation.operationDate, 'YYYY-MM-DD')",
+      'date',
+    ).addSelect(
       'COALESCE(SUM(operation.transactionCount), 0)',
       'transactionCount',
     );
-    qb.groupBy('operation.operationDate').orderBy('operation.operationDate', 'ASC');
+    qb.groupBy('operation.operationDate').orderBy(
+      'operation.operationDate',
+      'ASC',
+    );
 
-    const rows = await qb.getRawMany<{ date: string; transactionCount: string }>();
+    const rows = await qb.getRawMany<{
+      date: string;
+      transactionCount: string;
+    }>();
     return rows.map((row) => ({
       date: row.date,
       transactionCount: parseInt(row.transactionCount, 10),
@@ -217,29 +246,36 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       'COALESCE(SUM(operation.transactionCount), 0)',
       'transactionCount',
     );
-    qb.groupBy("to_char(operation.operationDate, 'YYYY-MM')").orderBy('month', 'ASC');
+    qb.groupBy("to_char(operation.operationDate, 'YYYY-MM')").orderBy(
+      'month',
+      'ASC',
+    );
 
-    const rows = await qb.getRawMany<{ month: string; transactionCount: string }>();
+    const rows = await qb.getRawMany<{
+      month: string;
+      transactionCount: string;
+    }>();
     return rows.map((row) => ({
       month: row.month,
       transactionCount: parseInt(row.transactionCount, 10),
     }));
   }
 
+  /** `void_bank_deposit_operation` marca la anulación Y registra el movimiento inverso de saldo en la misma transacción — nunca queda una operación anulada con su saldo aún aplicado (ni al revés). */
   async voidOperation(
     id: string,
     voidedBy: string,
     reason: string,
+    businessDate: string,
   ): Promise<BankDepositOperation> {
-    await this.repository.update(
-      { id },
-      {
-        isVoided: true,
-        voidedAt: new Date(),
-        voidedBy,
-        voidReason: reason,
-      },
-    );
+    try {
+      await this.repository.manager.query(
+        'SELECT void_bank_deposit_operation($1, $2, $3, $4)',
+        [id, businessDate, voidedBy, reason],
+      );
+    } catch (error) {
+      throw this.translateBankDepositError(error);
+    }
     const operation = await this.findById(id);
     if (!operation) {
       throw new InternalServerErrorException(
@@ -294,7 +330,12 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       (error.driverError as { message?: string } | undefined)?.message ??
       error.message;
 
-    const [code] = message.split(':');
+    const balanceError = bankMovementErrorFromMessage(message);
+    if (balanceError) {
+      return balanceError;
+    }
+
+    const [code, detail] = message.split(':');
 
     switch (code) {
       case 'TRANSACTION_BANK_NOT_FOUND':
@@ -315,6 +356,13 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         return new InvalidChangeGivenError();
       case 'BANK_DEPOSIT_CLIENT_INVALID':
         return new InvalidBankDepositClientError();
+      case 'BANK_NOT_FOUND':
+      case 'BANK_INACTIVE':
+        return new InvalidBankAccountError();
+      case 'BANK_DEPOSIT_OPERATION_NOT_FOUND':
+        return new BankDepositOperationNotFoundError(detail);
+      case 'BANK_DEPOSIT_OPERATION_ALREADY_VOIDED':
+        return new BankDepositOperationAlreadyVoidedError(detail);
       default:
         return error;
     }

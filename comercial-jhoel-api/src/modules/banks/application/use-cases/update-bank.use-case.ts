@@ -7,6 +7,8 @@ import { BankNotFoundError } from '../../domain/errors/bank-not-found.error';
 import { BankAlreadyExistsError } from '../../domain/errors/bank-already-exists.error';
 import { InvalidAccountTypeError } from '../../domain/errors/invalid-account-type.error';
 import { BankOutput, toBankOutput } from '../dtos/bank-output';
+import { BankSpecialAccount } from '../../domain/entities/bank-account-movement.entity';
+import { BankBalanceRequiresAdjustmentError } from '../../domain/errors/bank-movement.errors';
 
 export interface UpdateBankInput {
   name?: string;
@@ -14,6 +16,8 @@ export interface UpdateBankInput {
   accountTypeId?: string;
   previousBalance?: number;
   finalBalance?: number;
+  specialAccount?: string | null;
+  maxBalance?: number | null;
   updatedBy: string;
 }
 
@@ -30,6 +34,17 @@ export class UpdateBankUseCase {
     const bank = await this.bankRepository.findById(id);
     if (!bank) {
       throw new BankNotFoundError(id);
+    }
+
+    // El saldo actual es dinámico: solo lo mueven las operaciones o un
+    // AJUSTE MANUAL auditado. Reenviar el mismo valor (el formulario de
+    // edición lo hace) se tolera; cambiarlo por aquí, no.
+    if (
+      input.finalBalance !== undefined &&
+      Math.round(input.finalBalance * 100) !==
+        Math.round(bank.finalBalance * 100)
+    ) {
+      throw new BankBalanceRequiresAdjustmentError();
     }
 
     if (input.accountTypeId) {
@@ -67,8 +82,14 @@ export class UpdateBankUseCase {
       ...(input.previousBalance !== undefined
         ? { previousBalance: input.previousBalance }
         : {}),
-      ...(input.finalBalance !== undefined
-        ? { finalBalance: input.finalBalance }
+      ...(input.specialAccount !== undefined
+        ? {
+            specialAccount: (input.specialAccount ??
+              null) as BankSpecialAccount | null,
+          }
+        : {}),
+      ...(input.maxBalance !== undefined
+        ? { maxBalance: input.maxBalance ?? null }
         : {}),
       updatedBy: input.updatedBy,
     });

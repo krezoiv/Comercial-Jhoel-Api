@@ -9,6 +9,7 @@ import {
   UpdateBankData,
 } from '../../domain/repositories/bank.repository';
 import { BankAlreadyExistsError } from '../../domain/errors/bank-already-exists.error';
+import { SpecialAccountAlreadyAssignedError } from '../../domain/errors/bank-movement.errors';
 import { BankOrmEntity } from './bank.orm-entity';
 import { BankMapper } from './bank.mapper';
 import { applySearchTerms } from '../../../../shared/infrastructure/persistence/apply-search-terms.util';
@@ -33,7 +34,8 @@ export class TypeOrmBankRepository implements BankRepository {
       applySearchTerms(
         qb,
         options.search,
-        (param) => `(search_normalize(bank.name) LIKE search_normalize(:${param}) OR search_normalize(bank.accountNumber) LIKE search_normalize(:${param}))`,
+        (param) =>
+          `(search_normalize(bank.name) LIKE search_normalize(:${param}) OR search_normalize(bank.accountNumber) LIKE search_normalize(:${param}))`,
       );
     }
 
@@ -57,18 +59,35 @@ export class TypeOrmBankRepository implements BankRepository {
   }
 
   async create(data: CreateBankData): Promise<Bank> {
-    const orm = this.repository.create({
-      name: data.name,
-      accountNumber: data.accountNumber,
-      accountTypeId: data.accountTypeId,
-      previousBalance: data.previousBalance,
-      finalBalance: data.finalBalance,
-      createdBy: data.createdBy,
-    });
     try {
-      const saved = await this.repository.save(orm);
+      // La cuenta y su movimiento SALDO_INICIAL se crean juntos: el ledger
+      // arranca desde el primer momento igual a `final_balance`.
+      const savedId = await this.repository.manager.transaction(
+        async (manager) => {
+          const saved = await manager.save(
+            manager.create(BankOrmEntity, {
+              name: data.name,
+              accountNumber: data.accountNumber,
+              accountTypeId: data.accountTypeId,
+              previousBalance: data.previousBalance,
+              finalBalance: data.finalBalance,
+              specialAccount: data.specialAccount,
+              maxBalance: data.maxBalance,
+              createdBy: data.createdBy,
+            }),
+          );
+          await manager.query(
+            `INSERT INTO bank_account_movements (
+               bank_id, movement_type, origin, amount, balance_before, balance_after,
+               business_date, user_id, concept
+             ) VALUES ($1, 'SALDO_INICIAL', 'SALDO_INICIAL', $2, 0, $2, CURRENT_DATE, $3, 'Saldo inicial de la cuenta')`,
+            [saved.id, data.finalBalance, data.createdBy],
+          );
+          return saved.id;
+        },
+      );
       const withRelations = await this.repository.findOneOrFail({
-        where: { id: saved.id },
+        where: { id: savedId },
       });
       return BankMapper.toDomain(withRelations);
     } catch (error) {
@@ -107,6 +126,9 @@ export class TypeOrmBankRepository implements BankRepository {
       )?.constraint;
       if (constraint === 'UQ_banks_name_account_number_active') {
         return new BankAlreadyExistsError(name, accountNumber);
+      }
+      if (constraint === 'UQ_banks_special_account_single_active') {
+        return new SpecialAccountAlreadyAssignedError();
       }
     }
     return error;

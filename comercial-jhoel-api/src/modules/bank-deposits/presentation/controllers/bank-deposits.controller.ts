@@ -69,7 +69,8 @@ export class BankDepositsController {
     @CurrentUser() user: RequestUser,
   ): Promise<BankDepositOperationResponseDto> {
     return this.registerBankDepositOperationUseCase.execute({
-      transactionBankId: dto.transactionBankId,
+      transactionBankId: dto.transactionBankId ?? null,
+      bankAccountId: dto.bankAccountId ?? null,
       transactionTypeId: dto.transactionTypeId,
       totalAmount: dto.totalAmount,
       cashDetails: dto.cashDetails,

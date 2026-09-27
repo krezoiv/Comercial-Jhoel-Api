@@ -64,6 +64,9 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
         'lastFinalBalance',
       )
       .addSelect('bank.previousBalance', 'bankPreviousBalance')
+      .addSelect('bank.finalBalance', 'currentBalance')
+      .addSelect('bank.specialAccount', 'specialAccount')
+      .addSelect('bank.maxBalance', 'maxBalance')
       .addSelect(
         (subQb) =>
           subQb
@@ -82,6 +85,9 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
       accountTypeName: string;
       lastFinalBalance: string | null;
       bankPreviousBalance: string;
+      currentBalance: string;
+      specialAccount: string | null;
+      maxBalance: string | null;
       savedFinalBalance: string | null;
     }>();
 
@@ -97,6 +103,9 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
         row.savedFinalBalance !== null
           ? parseFloat(row.savedFinalBalance)
           : null,
+      currentBalance: parseFloat(row.currentBalance),
+      specialAccount: row.specialAccount,
+      maxBalance: row.maxBalance !== null ? parseFloat(row.maxBalance) : null,
     }));
   }
 

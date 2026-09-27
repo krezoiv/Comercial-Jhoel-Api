@@ -136,6 +136,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Tickets', icon: 'tag', path: 'tickets' },
       { label: 'Cotizaciones', icon: 'file-check', path: 'cotizaciones' },
       { label: 'Transaccionar', icon: 'bank', path: 'transaccionar' },
+      { label: 'Transferencias Bancarias', icon: 'arrow-left-right', path: 'transferencias-bancarias' },
       { label: 'Cuentas por Cobrar', icon: 'receipt', path: 'cuentas-por-cobrar' },
       { label: 'Activos', icon: 'package', path: 'activos' },
       { label: 'Recargas Electrónicas', icon: 'smartphone', path: 'recargas' },
@@ -159,6 +160,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Reporte de Recargas', icon: 'smartphone', path: 'reportes-recargas' },
       { label: 'Reporte de Cuadre de Agentes', icon: 'bank', path: 'reportes-cuadre-agentes' },
       { label: 'Reporte de Transacciones', icon: 'bank', path: 'reportes-transacciones' },
+      { label: 'Movimientos Bancarios', icon: 'arrow-left-right', path: 'reportes-movimientos-bancarios' },
     ],
   },
   {

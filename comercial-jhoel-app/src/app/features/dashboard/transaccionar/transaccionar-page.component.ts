@@ -4,7 +4,17 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 
-import { BankDepositTransactionSummary, Client, TransactionBank, TransactionType } from '../../../core/models';
+import {
+  Bank,
+  BankDepositTransactionSummary,
+  Client,
+  TransactionBank,
+  TransactionType,
+  balanceEffectDirection,
+  bankAccountLabel,
+} from '../../../core/models';
+import { BankService } from '../../../core/services/bank.service';
+import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
@@ -14,7 +24,13 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
-import { ButtonComponent, IconComponent, PageHeaderComponent, TransactionMonthlyChartComponent } from '../../../shared/ui';
+import {
+  BankBalanceAmountComponent,
+  ButtonComponent,
+  IconComponent,
+  PageHeaderComponent,
+  TransactionMonthlyChartComponent,
+} from '../../../shared/ui';
 import { ClientSearchSelectComponent } from '../accounts-receivable/components/client-search-select/client-search-select.component';
 import { CashBreakdownTableComponent } from './components/cash-breakdown-table/cash-breakdown-table.component';
 import { SaveConfirmModalComponent } from './components/save-confirm-modal/save-confirm-modal.component';
@@ -26,6 +42,24 @@ import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadr
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 
 type TransaccionarView = 'dashboard' | 'form';
+
+function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/** Normaliza para comparar nombres de banco agente vs. cuenta (sin acentos/mayúsculas). */
+function normalizeName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+const INSUFFICIENT_MESSAGES: Record<string, string> = {
+  DEPOSITO: 'Saldo insuficiente para realizar el depósito.',
+  REINTEGRO: 'Saldo insuficiente para realizar el reintegro.',
+};
 
 /** Same accepted-hardcoded-name pattern this app already uses for a handful of business rules tied to one specific catalog row (e.g. Recargas' `KNOWN_RECHARGE_TYPE_NAMES`) — the backend independently re-validates this exact rule (`RegisterBankDepositOperationUseCase`'s own `DEPOSIT_TRANSACTION_TYPE_NAME`), this is only a proactive UX echo so the checkbox never renders for the wrong type. */
 const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
@@ -67,6 +101,7 @@ const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
     CuadreResultCardComponent,
     ChangeConfirmModalComponent,
     ClientSearchSelectComponent,
+    BankBalanceAmountComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -79,6 +114,7 @@ export class TransaccionarPageComponent {
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
+  private readonly bankService = inject(BankService);
 
   readonly draft = inject(BankDepositDraftStore);
   readonly isAdmin = this.authService.isAdmin;
@@ -88,6 +124,76 @@ export class TransaccionarPageComponent {
 
   readonly transactionTypes = signal<TransactionType[]>([]);
   readonly loadingTypes = signal(true);
+
+  /** Cuentas bancarias activas con su SALDO ACTUAL (backend) — para elegir la cuenta afectada y la vista previa del saldo. */
+  readonly bankAccounts = signal<Bank[]>([]);
+  readonly loadingAccounts = signal(true);
+
+  readonly accountLabel = bankAccountLabel;
+  readonly formatSigned = formatSignedBankBalance;
+
+  /** Cuentas elegibles, primero las cuyo nombre coincide con el banco agente elegido (solo orden, nunca filtra). */
+  readonly selectableAccounts = computed(() => {
+    const agentName = normalizeName(this.selectedBankName());
+    const matches = (bank: Bank) =>
+      agentName !== '' && (normalizeName(bank.name).includes(agentName) || agentName.includes(normalizeName(bank.name)));
+    return [...this.bankAccounts()].sort((a, b) => Number(matches(b)) - Number(matches(a)) || a.name.localeCompare(b.name));
+  });
+
+  readonly genesisAccount = computed(() => this.bankAccounts().find((bank) => bank.specialAccount === 'GENESIS') ?? null);
+
+  /** La cuenta cuyo saldo moverá la operación: Génesis (automática) o la elegida. */
+  readonly affectedAccount = computed<Bank | null>(() => {
+    if (this.draft.isGenesisType()) {
+      return this.genesisAccount();
+    }
+    if (!this.draft.needsBankAccount()) {
+      return null;
+    }
+    return this.bankAccounts().find((bank) => bank.id === this.draft.bankAccountId()) ?? null;
+  });
+
+  /** Vista previa: saldo actual → saldo después, por el MONTO APLICADO (no el efectivo recibido). Informativa — el backend recalcula bajo lock. */
+  readonly balancePreview = computed(() => {
+    const account = this.affectedAccount();
+    const direction = balanceEffectDirection(this.draft.transactionTypeBalanceEffect());
+    if (!account || direction === 0) {
+      return null;
+    }
+    const amount = round2(this.draft.totalAmount());
+    return { before: account.finalBalance, after: round2(account.finalBalance + direction * amount), amount };
+  });
+
+  /** Validación de UX — espejo de las reglas del backend (que es quien realmente las hace cumplir). */
+  readonly balanceError = computed<string | null>(() => {
+    const effect = this.draft.transactionTypeBalanceEffect();
+    if (this.draft.isGenesisType() && !this.loadingAccounts() && !this.genesisAccount()) {
+      return 'No hay una cuenta configurada como línea de crédito de Fundación Génesis Empresarial (Sistema → Bancos).';
+    }
+    const account = this.affectedAccount();
+    const preview = this.balancePreview();
+    if (!account || !preview || preview.amount <= 0) {
+      return null;
+    }
+    if (preview.after < 0 && preview.after < preview.before && account.specialAccount !== 'GENESIS') {
+      return INSUFFICIENT_MESSAGES[effect ?? ''] ?? 'Saldo insuficiente para realizar la operación.';
+    }
+    if (preview.after > preview.before && account.maxBalance !== null && preview.after > account.maxBalance) {
+      return effect === 'PAGO_GENESIS'
+        ? `El pago excede el límite máximo permitido de ${formatSignedBankBalance(account.maxBalance)} para la línea de crédito de Fundación Génesis Empresarial.`
+        : `El saldo de ${account.name} no puede superar el límite configurado de ${formatSignedBankBalance(account.maxBalance)}.`;
+    }
+    return null;
+  });
+
+  readonly canSubmit = computed(() => this.draft.canSave() && this.balanceError() === null);
+
+  readonly formSubtitle = computed(() => {
+    if (this.draft.isGenesisType()) {
+      return 'Línea de crédito de Fundación Génesis Empresarial — la cuenta se selecciona automáticamente.';
+    }
+    return 'Registra la operación: banco agente, cuenta afectada, monto, desglose de efectivo y las transacciones en que se reparte.';
+  });
 
   /** `GET /bank-deposits/summary` — the same call the Resumen dashboard's own "Resumen Diario de Transacciones" section reads, see `BankDepositService.getTransactionSummary()`'s own doc comment. Fetched once when the dashboard view mounts; a transient failure just leaves both cards showing zero rather than breaking this screen. */
   readonly transactionSummary = signal<BankDepositTransactionSummary | null>(null);
@@ -146,12 +252,19 @@ export class TransaccionarPageComponent {
       next: (types) => {
         this.transactionTypes.set(types);
         this.loadingTypes.set(false);
+        // Un borrador restaurado toma el efecto vigente del catálogo, nunca uno guardado viejo.
+        const current = types.find((type) => type.id === this.draft.transactionTypeId());
+        if (current) {
+          this.draft.syncBalanceEffect(current.balanceEffect ?? null);
+        }
       },
       error: () => {
         this.loadingTypes.set(false);
         this.notificationService.error('No se pudieron cargar los tipos de transacción.');
       },
     });
+
+    this.loadBankAccounts();
 
     this.bankDepositService
       .getTransactionSummary()
@@ -163,8 +276,27 @@ export class TransaccionarPageComponent {
   }
 
   selectType(type: TransactionType): void {
-    this.draft.setTransactionType(type.id, type.name);
+    this.draft.setTransactionType(type.id, type.name, type.balanceEffect ?? null);
     this.view.set('form');
+    this.loadBankAccounts();
+  }
+
+  onBankAccountChange(id: string): void {
+    this.draft.setBankAccount(id);
+  }
+
+  /** Refresca los saldos actuales desde el backend (fuente de verdad) — al entrar al formulario y después de guardar. */
+  private loadBankAccounts(): void {
+    this.bankService.getBanks().subscribe({
+      next: (banks) => {
+        this.bankAccounts.set(banks.filter((bank) => bank.isActive));
+        this.loadingAccounts.set(false);
+      },
+      error: () => {
+        this.loadingAccounts.set(false);
+        this.notificationService.error('No se pudieron cargar las cuentas bancarias.');
+      },
+    });
   }
 
   /** Going back to the dashboard always starts a fresh operation — changing the tipo mid-flight discards whatever was already entered for the previous one, after confirming if there's anything meaningful to lose. */
@@ -248,7 +380,7 @@ export class TransaccionarPageComponent {
   }
 
   requestSave(): void {
-    if (!this.draft.canSave() || this.isSaving()) {
+    if (!this.canSubmit() || this.isSaving()) {
       return;
     }
     this.isConfirmOpen.set(true);
@@ -269,7 +401,8 @@ export class TransaccionarPageComponent {
     this.isSaving.set(true);
     this.bankDepositService
       .registerOperation({
-        transactionBankId: this.draft.transactionBankId(),
+        transactionBankId: this.draft.isGenesisType() ? null : this.draft.transactionBankId(),
+        bankAccountId: this.draft.needsBankAccount() ? this.draft.bankAccountId() : null,
         transactionTypeId: this.draft.transactionTypeId(),
         totalAmount: this.draft.totalAmount(),
         cashDetails: Object.entries(this.draft.cashCounts())
@@ -282,17 +415,29 @@ export class TransaccionarPageComponent {
         changeGiven: this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
       })
       .subscribe({
-        next: () => {
+        next: (operation) => {
           this.isSaving.set(false);
           this.isConfirmOpen.set(false);
           this.draft.reset();
           this.view.set('dashboard');
-          this.notificationService.success('Transacción registrada correctamente.');
+          const movement = operation.balanceMovement;
+          this.notificationService.success(
+            movement
+              ? `Transacción registrada. Nuevo saldo de ${movement.bankName}: ${formatSignedBankBalance(movement.balanceAfter)}.`
+              : 'Transacción registrada correctamente.',
+          );
+          this.loadBankAccounts();
+          this.bankDepositService
+            .getTransactionSummary()
+            .pipe(catchError(() => of(null)))
+            .subscribe((summary) => summary && this.transactionSummary.set(summary));
         },
         error: (error: HttpErrorResponse) => {
           this.isSaving.set(false);
           this.isConfirmOpen.set(false);
           this.notificationService.error(extractErrorMessage(error, 'No se pudo registrar la transacción.'));
+          // El saldo pudo cambiar por otra operación concurrente — se re-lee del backend.
+          this.loadBankAccounts();
         },
       });
   }

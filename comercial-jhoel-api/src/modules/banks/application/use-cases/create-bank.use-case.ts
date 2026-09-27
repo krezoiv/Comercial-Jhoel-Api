@@ -6,6 +6,8 @@ import type { AccountTypeRepository } from '../../../account-types/domain/reposi
 import { BankAlreadyExistsError } from '../../domain/errors/bank-already-exists.error';
 import { InvalidAccountTypeError } from '../../domain/errors/invalid-account-type.error';
 import { BankOutput, toBankOutput } from '../dtos/bank-output';
+import { BankSpecialAccount } from '../../domain/entities/bank-account-movement.entity';
+import { InsufficientBankBalanceError } from '../../domain/errors/bank-movement.errors';
 
 export interface CreateBankInput {
   name: string;
@@ -13,6 +15,8 @@ export interface CreateBankInput {
   accountTypeId: string;
   previousBalance?: number;
   finalBalance?: number;
+  specialAccount?: string | null;
+  maxBalance?: number | null;
   createdBy: string;
 }
 
@@ -47,12 +51,21 @@ export class CreateBankUseCase {
       throw new BankAlreadyExistsError(name, accountNumber);
     }
 
+    const specialAccount = (input.specialAccount ??
+      null) as BankSpecialAccount | null;
+    const finalBalance = input.finalBalance ?? 0;
+    if (finalBalance < 0 && specialAccount !== 'GENESIS') {
+      throw new InsufficientBankBalanceError('AJUSTE_MANUAL');
+    }
+
     const bank = await this.bankRepository.create({
       name,
       accountNumber,
       accountTypeId: input.accountTypeId,
       previousBalance: input.previousBalance ?? 0,
-      finalBalance: input.finalBalance ?? 0,
+      finalBalance,
+      specialAccount,
+      maxBalance: input.maxBalance ?? null,
       createdBy: input.createdBy,
     });
 

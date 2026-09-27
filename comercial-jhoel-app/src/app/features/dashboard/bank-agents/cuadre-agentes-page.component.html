@@ -124,7 +124,12 @@
                     </span>
                   </td>
                   <td class="align-right banks-table__value">
-                    {{ bank.calculationType === 'subtract' ? '−' : '+' }} {{ formatCurrency(bank.finalBalance) }}
+                    <!-- Signo real del saldo: un negativo (p. ej. Génesis "saldo a favor") se muestra entre paréntesis, nunca convertido a positivo. -->
+                    {{ bank.calculationType === 'subtract' ? '−' : '+' }}
+                    {{ bank.finalBalance < 0 ? '(' + formatSigned(bank.finalBalance) + ')' : formatCurrency(bank.finalBalance) }}
+                    @if (bank.specialAccount === 'GENESIS' && bank.finalBalance < 0) {
+                      <span class="favor-tag">Saldo a favor</span>
+                    }
                   </td>
                 </tr>
               }
@@ -136,7 +141,14 @@
               </tr>
               <tr class="banks-table__subtotal-row">
                 <td colspan="2">Líneas de Crédito</td>
-                <td class="align-right">− {{ formatCurrency(summary()!.totalCreditLines) }}</td>
+                <td class="align-right">
+                  −
+                  {{
+                    summary()!.totalCreditLines < 0
+                      ? '(' + formatSigned(summary()!.totalCreditLines) + ')'
+                      : formatCurrency(summary()!.totalCreditLines)
+                  }}
+                </td>
               </tr>
               <tr class="banks-table__total-row">
                 <td colspan="2">Total Bancos</td>

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity';
 import { TransactionBankOrmEntity } from '../../../transaction-banks/infrastructure/persistence/transaction-bank.orm-entity';
+import { BankOrmEntity } from '../../../banks/infrastructure/persistence/bank.orm-entity';
 import { TransactionTypeOrmEntity } from '../../../transaction-types/infrastructure/persistence/transaction-type.orm-entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import { BankDepositCashDetailOrmEntity } from './bank-deposit-cash-detail.orm-entity';
@@ -20,15 +21,25 @@ export class BankDepositOperationOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'transaction_bank_id' })
-  transactionBankId: string;
+  /** `null` para Desembolsos/Pagos Génesis — no usan banco agente. */
+  @Column({ name: 'transaction_bank_id', type: 'uuid', nullable: true })
+  transactionBankId: string | null;
 
   @ManyToOne(() => TransactionBankOrmEntity, {
     eager: true,
+    nullable: true,
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'transaction_bank_id' })
-  transactionBank: TransactionBankOrmEntity;
+  transactionBank: TransactionBankOrmEntity | null;
+
+  /** Cuenta bancaria cuyo saldo movió la operación (ver `bank_account_movements`). No eager: se une explícitamente en `findAll`/`findById`. */
+  @Column({ name: 'bank_account_id', type: 'uuid', nullable: true })
+  bankAccountId: string | null;
+
+  @ManyToOne(() => BankOrmEntity, { nullable: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'bank_account_id' })
+  bankAccount: BankOrmEntity | null;
 
   @Column({
     name: 'total_amount',

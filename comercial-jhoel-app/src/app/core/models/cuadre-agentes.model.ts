@@ -7,6 +7,8 @@ export interface BankBalanceSummaryItem {
   accountTypeId: string;
   accountTypeName: string;
   finalBalance: number;
+  /** Regla especial de la cuenta — `GENESIS` puede tener saldo negativo ("saldo a favor"). */
+  specialAccount?: string | null;
   calculationType: BankBalanceCalculationType;
 }
 

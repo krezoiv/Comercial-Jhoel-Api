@@ -12,7 +12,12 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { TRANSACTION_TYPE_ICONS, TransactionType } from '../../../../../core/models';
+import {
+  TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS,
+  TRANSACTION_TYPE_ICONS,
+  TransactionType,
+  TransactionTypeBalanceEffect,
+} from '../../../../../core/models';
 import { TransactionTypeService } from '../../../../../core/services/transaction-type.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
@@ -42,10 +47,20 @@ export class TransactionTypeFormModalComponent implements OnChanges {
   readonly errorMessage = signal<string | null>(null);
 
   readonly icons = TRANSACTION_TYPE_ICONS;
+  readonly balanceEffectOptions = TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS;
+
+  get selectedEffectHint(): string {
+    const value = this.form.controls.balanceEffect.value;
+    return (
+      this.balanceEffectOptions.find((option) => option.value === value)?.hint ??
+      'Este tipo no modifica el saldo de ninguna cuenta bancaria.'
+    );
+  }
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
     icon: [TRANSACTION_TYPE_ICONS[0] as string, Validators.required],
+    balanceEffect: ['' as TransactionTypeBalanceEffect | ''],
   });
 
   get isEditMode(): boolean {
@@ -63,6 +78,7 @@ export class TransactionTypeFormModalComponent implements OnChanges {
     this.form.reset({
       name: this.transactionType?.name ?? '',
       icon: this.transactionType?.icon ?? TRANSACTION_TYPE_ICONS[0],
+      balanceEffect: this.transactionType?.balanceEffect ?? '',
     });
   }
 
@@ -81,12 +97,13 @@ export class TransactionTypeFormModalComponent implements OnChanges {
       return;
     }
 
-    const { name, icon } = this.form.getRawValue();
+    const { name, icon, balanceEffect } = this.form.getRawValue();
+    const input = { name, icon, balanceEffect: balanceEffect || null };
     this.isSubmitting.set(true);
 
     const request$ = this.isEditMode
-      ? this.transactionTypeService.updateTransactionType(this.transactionType!.id, { name, icon })
-      : this.transactionTypeService.createTransactionType({ name, icon });
+      ? this.transactionTypeService.updateTransactionType(this.transactionType!.id, input)
+      : this.transactionTypeService.createTransactionType(input);
 
     request$.subscribe({
       next: (transactionType) => {

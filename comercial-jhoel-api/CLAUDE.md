@@ -1293,6 +1293,40 @@ Resumen needed its own lightweight, non-sensitive number instead of reusing that
 - Response is deliberately just `{ count, month }` — no by-bank breakdown, no amount, nothing a `USER`-role
   account shouldn't see.
 
+### Saldos bancarios dinámicos (migración `1760005100000-CreateBankAccountMovements`)
+
+`banks.final_balance` dejó de ser un valor tecleado a diario: es el **saldo actual materializado** de cada
+cuenta y solo lo modifica `apply_bank_account_movement(...)` — la única función que escribe esa columna.
+Bloquea la fila (`SELECT ... FOR UPDATE`), valida, inserta un renglón en el ledger
+`bank_account_movements` (saldo anterior / monto con signo / saldo posterior, `CHECK balance_after =
+balance_before + amount`) y actualiza `final_balance` en la misma transacción. Nunca se borra un movimiento:
+las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y marcan el original `ANULADO`.
+
+- **Reglas (todas en SQL)**: ninguna cuenta queda negativa, excepto la línea de crédito de Génesis
+  (`banks.special_account = 'GENESIS'`, "saldo a favor"), salvo por transferencia saliente. Un aumento no
+  puede superar `banks.max_balance` (Génesis Q120,000 / BI Club Q75,000, editables en Sistema → Bancos);
+  no aplica a `AJUSTE_MANUAL` ni `ANULACION`. `register_bank_transfer`: BI Club solo recibe de
+  `BANCO_INDUSTRIAL`, Districol solo de `BANCO_AGROMERCANTIL`; bloquea ambas filas en orden de id.
+- **Transaccionar**: `transaction_types.balance_effect` (DEPOSITO/REINTEGRO/DESEMBOLSO_GENESIS restan,
+  RETIRO/PAGO_GENESIS suman, `NULL` = no mueve saldo). `register_bank_deposit_operation` ganó
+  `p_bank_account_id` y aplica el movimiento por `total_amount` (monto aplicado, nunca el efectivo con
+  vuelto) dentro de la misma función — si el saldo no alcanza, se revierte la operación completa. Tipos
+  Génesis: `transaction_bank_id` va `NULL` (columna ahora nullable) y la cuenta se resuelve sola; las
+  agregaciones por banco usan `COALESCE(transaction_bank, bank_account)`. `void_bank_deposit_operation`
+  anula + revierte saldo atómicamente.
+- **Foto diaria**: `save_bank_balance` ya **no** toca `banks.final_balance`. Para hoy,
+  `SaveBankBalancesUseCase` envía `NULL` y la función toma el saldo vivo bajo lock; fechas pasadas conservan
+  su corrección histórica. El cierre del día sigue exigiendo la foto de todas las cuentas activas.
+- **Ajuste manual**: `POST /banks/:id/balance-adjustments` (`@Roles` admin) → `adjust_bank_balance`, motivo
+  obligatorio. `PATCH /banks/:id` rechaza cambiar `finalBalance` (`BankBalanceRequiresAdjustmentError`); el
+  alta de una cuenta registra su `SALDO_INICIAL`.
+- **Endpoints**: `POST/GET /bank-transfers` (operativo, exige día abierto), `POST /bank-transfers/:id/void`
+  (admin), `GET /reports/bank-movements` + `/export` (admin, PDF con `buildReportPdf`).
+- Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
+  compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
+  (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia
+  temporal de la base).
+
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 
 `GET /dashboard/summary` — admin-only (`@Roles('ADMIN', 'SUPER_ADMIN')`, class-level), backs the Resumen

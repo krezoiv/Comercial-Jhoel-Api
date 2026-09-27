@@ -44,6 +44,14 @@ function isCreditLineAccountType(accountTypeName: string): boolean {
  * are the exact same real-SQL-aggregate methods Reportería already uses —
  * see that module's own "never sum in memory over one page" note).
  *
+ * **Saldos dinámicos (`CreateBankAccountMovements`)**: `banks.final_balance`
+ * ahora es el saldo ACTUAL de cada cuenta (movido por Transaccionar,
+ * transferencias y ajustes), así que este resumen ya refleja el saldo real
+ * sin ningún cálculo adicional. Se usa con su signo real — la línea de
+ * crédito de Génesis puede ser negativa ("saldo a favor") y restar un
+ * negativo la suma al total, que es exactamente su efecto contable. Nunca
+ * `Math.abs()`.
+ *
  * `finalBalance` here is each active bank's own `banks.final_balance`
  * column — the static reference value Sistema → Bancos stores (see that
  * module's docs: it seeds "saldo anterior" for a bank's very first cuadre
@@ -79,6 +87,7 @@ export class GetCuadreAgentesSummaryUseCase {
         accountTypeId: bank.accountTypeId,
         accountTypeName: bank.accountTypeName,
         finalBalance: bank.finalBalance,
+        specialAccount: bank.specialAccount,
         calculationType,
       };
     });

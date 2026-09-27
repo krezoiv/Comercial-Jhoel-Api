@@ -28,6 +28,8 @@ export interface TransactionType {
   id: string;
   name: string;
   icon: string;
+  /** Efecto sobre el saldo bancario — `null` = no mueve saldo (Remesas, Pago de Cheque...). */
+  balanceEffect: TransactionTypeBalanceEffect | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -37,4 +39,45 @@ export interface TransactionType {
 export interface TransactionTypeInput {
   name: string;
   icon: string;
+  balanceEffect?: TransactionTypeBalanceEffect | null;
+}
+
+/** Espejo de `TRANSACTION_TYPE_BALANCE_EFFECTS` del backend. */
+export type TransactionTypeBalanceEffect = 'DEPOSITO' | 'RETIRO' | 'DESEMBOLSO_GENESIS' | 'PAGO_GENESIS' | 'REINTEGRO';
+
+export const TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS: {
+  value: TransactionTypeBalanceEffect;
+  label: string;
+  hint: string;
+}[] = [
+  { value: 'DEPOSITO', label: 'Depósito', hint: 'Resta del saldo de la cuenta seleccionada (no puede exceder el saldo).' },
+  { value: 'RETIRO', label: 'Retiro', hint: 'Suma al saldo de la cuenta seleccionada.' },
+  {
+    value: 'DESEMBOLSO_GENESIS',
+    label: 'Desembolso / Renovación Génesis',
+    hint: 'Resta de la línea de crédito de Fundación Génesis (puede quedar en negativo).',
+  },
+  {
+    value: 'PAGO_GENESIS',
+    label: 'Pago de préstamo Génesis',
+    hint: 'Suma a la línea de crédito de Fundación Génesis (máximo según el límite configurado).',
+  },
+  { value: 'REINTEGRO', label: 'Reintegro', hint: 'Resta del saldo de la cuenta seleccionada.' },
+];
+
+/** Desembolsos/Pagos Génesis: sin selector de banco — la cuenta es siempre la línea de crédito de Génesis (la resuelve el backend). */
+export function isGenesisBalanceEffect(effect: TransactionTypeBalanceEffect | null | undefined): boolean {
+  return effect === 'DESEMBOLSO_GENESIS' || effect === 'PAGO_GENESIS';
+}
+
+/** Tipos que exigen elegir la cuenta bancaria afectada. */
+export function requiresBankAccount(effect: TransactionTypeBalanceEffect | null | undefined): boolean {
+  return effect === 'DEPOSITO' || effect === 'RETIRO' || effect === 'REINTEGRO';
+}
+
+/** `+1` suma al saldo, `-1` resta, `0` no lo mueve — solo para la vista previa; el backend recalcula siempre. */
+export function balanceEffectDirection(effect: TransactionTypeBalanceEffect | null | undefined): 1 | -1 | 0 {
+  if (effect === 'RETIRO' || effect === 'PAGO_GENESIS') return 1;
+  if (effect === 'DEPOSITO' || effect === 'DESEMBOLSO_GENESIS' || effect === 'REINTEGRO') return -1;
+  return 0;
 }

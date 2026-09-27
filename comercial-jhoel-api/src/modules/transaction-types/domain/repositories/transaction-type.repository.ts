@@ -1,4 +1,7 @@
-import { TransactionType } from '../entities/transaction-type.entity';
+import {
+  TransactionType,
+  TransactionTypeBalanceEffect,
+} from '../entities/transaction-type.entity';
 
 export const TRANSACTION_TYPE_REPOSITORY = Symbol(
   'TRANSACTION_TYPE_REPOSITORY',
@@ -7,12 +10,14 @@ export const TRANSACTION_TYPE_REPOSITORY = Symbol(
 export interface CreateTransactionTypeData {
   name: string;
   icon: string;
+  balanceEffect: TransactionTypeBalanceEffect | null;
   createdBy: string;
 }
 
 export interface UpdateTransactionTypeData {
   name?: string;
   icon?: string;
+  balanceEffect?: TransactionTypeBalanceEffect | null;
   updatedBy: string;
 }
 

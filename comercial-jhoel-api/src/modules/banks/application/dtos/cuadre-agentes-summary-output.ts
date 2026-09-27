@@ -6,7 +6,9 @@ export interface BankBalanceSummaryItem {
   name: string;
   accountTypeId: string;
   accountTypeName: string;
+  /** Con su signo real — la línea de crédito de Génesis puede ser negativa ("saldo a favor"). */
   finalBalance: number;
+  specialAccount: string | null;
   calculationType: BankBalanceCalculationType;
 }
 
@@ -16,7 +18,7 @@ export interface CuadreAgentesSummaryOutput {
   totalBanks: number;
   /** Sum of every non-credit-line bank's `finalBalance` (Ahorro + Monetaria) — the "Cuentas Positivas" breakdown line. */
   totalPositiveAccounts: number;
-  /** Sum of every credit-line bank's `finalBalance`, as a positive magnitude (already subtracted in `totalBanks`) — the "Líneas de Crédito" breakdown line. */
+  /** Sum of every credit-line bank's `finalBalance`, with its real sign (already subtracted in `totalBanks`; a negative Génesis "saldo a favor" therefore increases the total) — the "Líneas de Crédito" breakdown line. */
   totalCreditLines: number;
   totalAssets: number;
   totalAccountsReceivable: number;

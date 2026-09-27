@@ -62,24 +62,59 @@
           </div>
 
           <div class="field">
-            <label for="bank-final-balance">Saldo final inicial</label>
+            <label for="bank-final-balance">{{ isEditMode ? 'Saldo actual' : 'Saldo inicial' }}</label>
             <input
               id="bank-final-balance"
               type="text"
               inputmode="decimal"
               appDecimalInput
+              [allowNegative]="form.controls.specialAccount.value === 'GENESIS'"
               formControlName="finalBalance"
               placeholder="0.00"
             />
             @if (form.controls.finalBalance.invalid && form.controls.finalBalance.touched) {
-              <span class="field__error">Ingresa un valor de 0 o más.</span>
+              <span class="field__error">Ingresa un saldo válido.</span>
             }
           </div>
         </div>
         <p class="field-hint">
-          Estos valores solo aplican como saldo anterior de referencia para el primer cuadre del banco en Agentes
-          Bancarios — los cuadres posteriores se calculan automáticamente.
+          @if (isEditMode) {
+            El saldo actual se actualiza automáticamente con cada operación. Para corregirlo use
+            <strong>Ajustar saldo</strong> en Agentes Bancarios → Bancos (solo administradores, queda auditado).
+          } @else {
+            El saldo inicial queda registrado como primer movimiento de la cuenta; desde ahí lo mueven las operaciones.
+          }
         </p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="bank-special-account">Regla especial <span class="field__optional">(opcional)</span></label>
+            <select id="bank-special-account" formControlName="specialAccount">
+              <option value="">Ninguna</option>
+              @for (option of specialAccountOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="bank-max-balance">Límite máximo de saldo <span class="field__optional">(opcional)</span></label>
+            <input
+              id="bank-max-balance"
+              type="text"
+              inputmode="decimal"
+              appDecimalInput
+              formControlName="maxBalance"
+              placeholder="Sin límite"
+            />
+            @if (form.controls.maxBalance.invalid && form.controls.maxBalance.touched) {
+              <span class="field__error">Ingresa un valor de 0 o más.</span>
+            }
+          </div>
+        </div>
+        @if (selectedSpecialHint; as hint) {
+          <p class="field-hint">{{ hint }}</p>
+        }
 
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>

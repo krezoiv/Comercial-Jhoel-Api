@@ -10,6 +10,8 @@ import {
   ApiSuccessResponse,
   AssetsReceivablesReportFilters,
   BankDepositOperationSummary,
+  BankMovementsFilters,
+  PaginatedBankMovements,
   BankDepositsReportFilters,
   BankDepositsReportSummary,
   AssetsReceivablesReportRow,
@@ -251,6 +253,23 @@ export class ReportsService {
 
   exportIceCreamReportPdf(filters: IceCreamReportFilters): Observable<Blob> {
     return this.http.get(`${BASE_URL}/ice-cream/export`, {
+      params: toParams(filters),
+      responseType: 'blob',
+    });
+  }
+
+  /** Historial de movimientos de saldo bancario (admin) — mismo filtro para la lista y el PDF. */
+  getBankMovementsReport(filters: BankMovementsFilters): Observable<PaginatedBankMovements> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedBankMovements>>(`${BASE_URL}/bank-movements`, {
+        params: toParams(filters),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  /** `responseType: 'blob'` — el backend devuelve el PDF crudo, sin el sobre `{ success, data }`. */
+  exportBankMovementsReportPdf(filters: BankMovementsFilters): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/bank-movements/export`, {
       params: toParams(filters),
       responseType: 'blob',
     });

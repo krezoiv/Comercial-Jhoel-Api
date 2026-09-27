@@ -1,6 +1,11 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
-import { BANK_DEPOSIT_CASH_DENOMINATIONS } from '../models';
+import {
+  BANK_DEPOSIT_CASH_DENOMINATIONS,
+  TransactionTypeBalanceEffect,
+  isGenesisBalanceEffect,
+  requiresBankAccount,
+} from '../models';
 import { AuthService } from './auth.service';
 
 export type CuadreStatus = 'red' | 'yellow' | 'green';
@@ -8,7 +13,9 @@ export type CuadreStatus = 'red' | 'yellow' | 'green';
 interface PersistedBankDepositDraft {
   transactionTypeId: string;
   transactionTypeName: string;
+  transactionTypeBalanceEffect?: TransactionTypeBalanceEffect | null;
   transactionBankId: string;
+  bankAccountId?: string;
   totalAmount: number;
   cashCounts: Record<string, number>;
   transactionAmounts: number[];
@@ -49,6 +56,12 @@ export class BankDepositDraftStore {
   readonly transactionTypeId = signal('');
   readonly transactionTypeName = signal('');
   readonly transactionBankId = signal('');
+  /** Efecto del tipo elegido sobre el saldo bancario — decide si se pide banco agente y/o cuenta afectada. */
+  readonly transactionTypeBalanceEffect = signal<TransactionTypeBalanceEffect | null>(null);
+  /** Cuenta bancaria (`banks`) cuyo saldo mueve la operación — Depósito/Retiro/Reintegro. Génesis la resuelve el backend. */
+  readonly bankAccountId = signal('');
+  readonly isGenesisType = computed(() => isGenesisBalanceEffect(this.transactionTypeBalanceEffect()));
+  readonly needsBankAccount = computed(() => requiresBankAccount(this.transactionTypeBalanceEffect()));
   readonly totalAmount = signal(0);
   /** Keyed by denomination (as string, since object keys are always strings) — quantity per fixed denomination row. */
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
@@ -139,7 +152,8 @@ export class BankDepositDraftStore {
   readonly canSave = computed(
     () =>
       this.transactionTypeId() !== '' &&
-      this.transactionBankId() !== '' &&
+      (this.isGenesisType() || this.transactionBankId() !== '') &&
+      (!this.needsBankAccount() || this.bankAccountId() !== '') &&
       round2(this.totalAmount()) > 0 &&
       this.transactionAmounts().length > 0 &&
       this.overallStatus() === 'green',
@@ -149,6 +163,7 @@ export class BankDepositDraftStore {
   readonly hasMeaningfulProgress = computed(
     () =>
       this.transactionBankId() !== '' ||
+      this.bankAccountId() !== '' ||
       this.totalAmount() > 0 ||
       this.totalCash() > 0 ||
       this.transactionAmounts().length > 0 ||
@@ -164,9 +179,23 @@ export class BankDepositDraftStore {
     this.restore();
   }
 
-  setTransactionType(id: string, name: string): void {
+  setTransactionType(id: string, name: string, balanceEffect: TransactionTypeBalanceEffect | null = null): void {
     this.transactionTypeId.set(id);
     this.transactionTypeName.set(name);
+    this.transactionTypeBalanceEffect.set(balanceEffect);
+    this.persist();
+  }
+
+  /** Re-sincroniza el efecto con el catálogo actual (un borrador restaurado puede venir de antes de este campo). */
+  syncBalanceEffect(balanceEffect: TransactionTypeBalanceEffect | null): void {
+    if (this.transactionTypeBalanceEffect() !== balanceEffect) {
+      this.transactionTypeBalanceEffect.set(balanceEffect);
+      this.persist();
+    }
+  }
+
+  setBankAccount(id: string): void {
+    this.bankAccountId.set(id);
     this.persist();
   }
 
@@ -264,7 +293,9 @@ export class BankDepositDraftStore {
   reset(): void {
     this.transactionTypeId.set('');
     this.transactionTypeName.set('');
+    this.transactionTypeBalanceEffect.set(null);
     this.transactionBankId.set('');
+    this.bankAccountId.set('');
     this.totalAmount.set(0);
     this.cashCounts.set(emptyCashCounts());
     this.transactionAmounts.set([]);
@@ -285,7 +316,9 @@ export class BankDepositDraftStore {
     const payload: PersistedBankDepositDraft = {
       transactionTypeId: this.transactionTypeId(),
       transactionTypeName: this.transactionTypeName(),
+      transactionTypeBalanceEffect: this.transactionTypeBalanceEffect(),
       transactionBankId: this.transactionBankId(),
+      bankAccountId: this.bankAccountId(),
       totalAmount: this.totalAmount(),
       cashCounts: this.cashCounts(),
       transactionAmounts: this.transactionAmounts(),
@@ -319,6 +352,8 @@ export class BankDepositDraftStore {
       this.transactionTypeId.set(parsed.transactionTypeId ?? '');
       this.transactionTypeName.set(parsed.transactionTypeName ?? '');
       this.transactionBankId.set(parsed.transactionBankId ?? '');
+      this.transactionTypeBalanceEffect.set(parsed.transactionTypeBalanceEffect ?? null);
+      this.bankAccountId.set(parsed.bankAccountId ?? '');
       this.totalAmount.set(parsed.totalAmount ?? 0);
       this.cashCounts.set({ ...emptyCashCounts(), ...(parsed.cashCounts ?? {}) });
       this.transactionAmounts.set(Array.isArray(parsed.transactionAmounts) ? parsed.transactionAmounts : []);

@@ -1,4 +1,5 @@
 import { Bank } from '../entities/bank.entity';
+import { BankSpecialAccount } from '../entities/bank-account-movement.entity';
 
 export const BANK_REPOSITORY = Symbol('BANK_REPOSITORY');
 
@@ -8,6 +9,8 @@ export interface CreateBankData {
   accountTypeId: string;
   previousBalance: number;
   finalBalance: number;
+  specialAccount: BankSpecialAccount | null;
+  maxBalance: number | null;
   createdBy: string;
 }
 
@@ -16,7 +19,8 @@ export interface UpdateBankData {
   accountNumber?: string;
   accountTypeId?: string;
   previousBalance?: number;
-  finalBalance?: number;
+  specialAccount?: BankSpecialAccount | null;
+  maxBalance?: number | null;
   updatedBy: string;
 }
 

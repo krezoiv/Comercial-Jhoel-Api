@@ -29,6 +29,17 @@
           </div>
         </div>
 
+        <div class="field">
+          <label for="transaction-type-effect">Efecto en el saldo bancario</label>
+          <select id="transaction-type-effect" formControlName="balanceEffect">
+            <option value="">No modifica saldo</option>
+            @for (option of balanceEffectOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <small class="field__hint">{{ selectedEffectHint }}</small>
+        </div>
+
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>
         }

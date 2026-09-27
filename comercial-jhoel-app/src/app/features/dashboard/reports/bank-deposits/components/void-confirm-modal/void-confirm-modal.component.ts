@@ -23,6 +23,9 @@ const MIN_REASON_LENGTH = 5;
 export class VoidConfirmModalComponent implements OnChanges {
   @Input() open = false;
   @Input() isSaving = false;
+  /** Opcionales — por defecto, el texto de anular una operación de Transaccionar (sin cambios). */
+  @Input() title = 'Anular Transacción';
+  @Input() description: string | null = null;
 
   @Output() confirmed = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();

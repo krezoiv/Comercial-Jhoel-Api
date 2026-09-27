@@ -5,14 +5,19 @@
         <app-icon name="alert-triangle" [size]="24" />
       </div>
 
-      <h2 class="modal__title">Anular Transacción</h2>
+      <h2 class="modal__title">{{ title }}</h2>
 
+      @if (description) {
+        <p class="modal__description">{{ description }}</p>
+      } @else {
       <p class="modal__description">
         Está a punto de anular esta transacción de Transaccionar. No se elimina ni se modifica el registro
         — quedará visible en el historial marcada como <strong>Anulada</strong> y dejará de sumar en los
         totales del reporte. Si el error fue en el monto, el banco o el desglose, registre una nueva
-        transacción correcta desde Transaccionar después de anular esta.
+        transacción correcta desde Transaccionar después de anular esta. Si la operación movió el saldo de una
+        cuenta, se registrará el movimiento inverso automáticamente.
       </p>
+      }
 
       <label class="modal__field">
         <span>Motivo de anulación <em>(obligatorio)</em></span>

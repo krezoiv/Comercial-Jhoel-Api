@@ -9,7 +9,10 @@ export interface BankDepositCashDetailData {
 }
 
 export interface RegisterBankDepositOperationData {
-  transactionBankId: string;
+  /** Omitido/`null` para Desembolsos/Pagos Génesis — el SQL lo exige para cualquier otro tipo. */
+  transactionBankId: string | null;
+  /** Cuenta bancaria cuyo saldo se mueve (Depósito/Retiro/Reintegro). Ignorado para tipos Génesis: el SQL resuelve la línea de crédito sola. */
+  bankAccountId?: string | null;
   totalAmount: number;
   operationDate: string;
   cashDetails: BankDepositCashDetailData[];
@@ -50,6 +53,7 @@ export interface BankDepositReportFilters {
 }
 
 export interface BankDepositReportByBank {
+  /** Banco agente, o la cuenta afectada cuando la operación no tiene banco agente (Génesis). */
   transactionBankId: string;
   transactionBankName: string;
   operationCount: number;
@@ -105,10 +109,11 @@ export interface BankDepositRepository {
     startDate: string,
     endDate: string,
   ): Promise<BankDepositMonthlyTransactionCount[]>;
-  /** Marks the operation voided — never a physical DELETE, never rewrites `totalAmount`/cash/transactions. The caller (`VoidBankDepositOperationUseCase`) has already checked the operation exists and isn't already voided. */
+  /** Marks the operation voided — never a physical DELETE, never rewrites `totalAmount`/cash/transactions. Since saldos dinámicos, runs `void_bank_deposit_operation`, which also registers the inverse balance movement atomically (and re-checks existence/already-voided under a row lock). */
   voidOperation(
     id: string,
     voidedBy: string,
     reason: string,
+    businessDate: string,
   ): Promise<BankDepositOperation>;
 }

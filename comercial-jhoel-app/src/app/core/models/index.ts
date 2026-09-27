@@ -29,6 +29,7 @@ export * from './ice-cream-sale.model';
 export * from './account-type.model';
 export * from './bank.model';
 export * from './bank-balance.model';
+export * from './bank-movement.model';
 export * from './cuadre-agentes.model';
 export * from './client.model';
 export * from './account-receivable.model';
