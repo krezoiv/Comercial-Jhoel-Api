@@ -483,6 +483,15 @@ export const routes: Routes = [
         title: 'Reporte de Cuadre de Agentes — Sistema',
       },
       {
+        path: 'reportes-transferencias',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/reports/bank-transfers/bank-transfers-report-page.component').then(
+            (m) => m.BankTransfersReportPageComponent
+          ),
+        title: 'Reporte de Transferencias — Sistema',
+      },
+      {
         path: 'reportes-movimientos-bancarios',
         canActivate: [adminGuard],
         loadComponent: () =>

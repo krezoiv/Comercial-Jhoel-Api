@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map } from 'rxjs';
 
@@ -18,7 +19,7 @@ import { IconComponent } from '../../../shared/ui';
 @Component({
   selector: 'app-dashboard-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, IconComponent],
+  imports: [RouterLink, RouterLinkActive, IconComponent, NgTemplateOutlet],
   templateUrl: './dashboard-sidebar.component.html',
   styleUrl: './dashboard-sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +50,9 @@ export class DashboardSidebarComponent {
    */
   private readonly expandedGroup = signal<string | null>(null);
 
+  /** Segundo nivel (p. ej. Sistema → Bancos y Transacciones): también acordeón exclusivo, dentro del grupo abierto. */
+  private readonly expandedSubgroup = signal<string | null>(null);
+
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -66,23 +70,47 @@ export class DashboardSidebarComponent {
     // abierto — es exactamente el mismo `.set()` que usa `toggleGroup`.
     effect(() => {
       const url = this.currentUrl();
-      const activeItem = this.navItems().find((item) =>
-        item.children?.some((child) => url.includes(`/${child.path}`)),
-      );
-      if (activeItem) {
-        this.expandedGroup.set(activeItem.path);
+      for (const item of this.navItems()) {
+        const child = item.children?.find((c) => this.containsActiveRoute(c, url));
+        if (child) {
+          this.expandedGroup.set(item.path);
+          // Si la ruta vive dentro de un submenú, ese submenú también se abre.
+          if (child.children) {
+            this.expandedSubgroup.set(child.path);
+          }
+          return;
+        }
       }
     });
   }
 
-  /** Drops any item (or child) whose `roles` list excludes the current user's role — e.g. Usuarios/Roles for a USER account. */
+  /** `true` si `item` es la ruta actual o contiene la ruta actual entre sus hijos (por segmento completo). */
+  private containsActiveRoute(item: DashboardNavItem, url: string): boolean {
+    if (item.children) {
+      return item.children.some((child) => this.containsActiveRoute(child, url));
+    }
+    const path = url.split(/[?#]/)[0];
+    return item.path !== '' && (path === `/dashboard/${item.path}` || path.startsWith(`/dashboard/${item.path}/`));
+  }
+
+  /**
+   * Quita cualquier elemento (a cualquier nivel) cuyo `roles` excluya el rol
+   * actual, y cualquier grupo/submenú que quede vacío tras filtrar — p. ej.
+   * "Usuarios y Configuración" completo para una cuenta USER.
+   */
   readonly navItems = computed<DashboardNavItem[]>(() => {
     const role = this.authService.currentUser()?.role;
     const isVisible = (item: DashboardNavItem) => !item.roles || (!!role && item.roles.includes(role));
+    const filterItems = (items: DashboardNavItem[]): DashboardNavItem[] =>
+      items.filter(isVisible).flatMap((item) => {
+        if (!item.children) {
+          return [item];
+        }
+        const children = filterItems(item.children);
+        return children.length > 0 ? [{ ...item, children }] : [];
+      });
 
-    return DASHBOARD_NAV_ITEMS.filter(isVisible).map((item) =>
-      item.children ? { ...item, children: item.children.filter(isVisible) } : item,
-    );
+    return filterItems(DASHBOARD_NAV_ITEMS);
   });
 
   /** Small "en progreso" dot next to Ventas/Compras — non-invasive nudge that a draft is waiting, visible from anywhere in the dashboard. */
@@ -174,6 +202,14 @@ export class DashboardSidebarComponent {
 
   isExpanded(path: string): boolean {
     return this.expandedGroup() === path;
+  }
+
+  isSubgroupExpanded(path: string): boolean {
+    return this.expandedSubgroup() === path;
+  }
+
+  toggleSubgroup(path: string): void {
+    this.expandedSubgroup.update((current) => (current === path ? null : path));
   }
 
   /**

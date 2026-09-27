@@ -71,6 +71,12 @@ import { AgentReconciliationsReportController } from './presentation/controllers
 import { BankDepositsReportController } from './presentation/controllers/bank-deposits-report.controller';
 import { BankMovementsReportController } from './presentation/controllers/bank-movements-report.controller';
 import { ExportBankMovementsReportPdfUseCase } from './application/use-cases/export-bank-movements-report-pdf.use-case';
+import { BankTransfersReportController } from './presentation/controllers/bank-transfers-report.controller';
+import {
+  GetBankTransfersReportSummaryUseCase,
+  GetBankTransfersReportUseCase,
+} from './application/use-cases/get-bank-transfers-report.use-case';
+import { ExportBankTransfersReportPdfUseCase } from './application/use-cases/export-bank-transfers-report-pdf.use-case';
 
 /**
  * Reportería is a pure read-side, cross-cutting module — it never writes to
@@ -137,6 +143,7 @@ import { ExportBankMovementsReportPdfUseCase } from './application/use-cases/exp
     AgentReconciliationsReportController,
     BankDepositsReportController,
     BankMovementsReportController,
+    BankTransfersReportController,
   ],
   providers: [
     {
@@ -189,6 +196,9 @@ import { ExportBankMovementsReportPdfUseCase } from './application/use-cases/exp
     GetBankDepositsReportSummaryUseCase,
     ExportBankDepositsReportPdfUseCase,
     ExportBankMovementsReportPdfUseCase,
+    GetBankTransfersReportUseCase,
+    GetBankTransfersReportSummaryUseCase,
+    ExportBankTransfersReportPdfUseCase,
   ],
 })
 export class ReportsModule {}

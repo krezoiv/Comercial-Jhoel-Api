@@ -1,10 +1,28 @@
 @use 'breakpoints' as bp;
 
+// Un solo ritmo vertical para todo el Resumen: cada sección es un hijo
+// directo y el espacio entre ellas lo da este `gap` — ninguna sección
+// define su propio margen exterior (antes cada una traía uno distinto y
+// algunas ninguno, de ahí los espaciados desiguales).
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+
+  @include bp.respond(lg) {
+    gap: var(--space-8);
+  }
+
+  > * {
+    min-width: 0;
+  }
+}
+
 .home__header {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  margin-bottom: var(--space-8);
 }
 
 .home__icon {
@@ -45,11 +63,8 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-5);
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-8);
-  max-width: 40rem;
 
-  @include bp.respond(sm) {
+  @include bp.respond(md) {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -58,7 +73,6 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-5);
-  margin-bottom: var(--space-8);
 
   @include bp.respond(sm) {
     grid-template-columns: repeat(2, 1fr);

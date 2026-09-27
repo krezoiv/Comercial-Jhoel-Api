@@ -319,6 +319,33 @@
   border-left-color: var(--sidebar-active-icon);
 }
 
+// Submenú de segundo nivel: mismo acordeón de grid, más compacto y con la
+// guía vertical un poco más tenue, para que la jerarquía se lea de un vistazo.
+.sidebar__link--subgroup {
+  font-weight: var(--fw-semibold);
+  color: var(--sidebar-text);
+}
+
+// Dentro de los submenús el ancho es menor: las etiquetas largas bajan de
+// línea en vez de cortarse con "…" (p. ej. "Bancos y Transacciones").
+.sidebar__submenu .sidebar__link-label {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.sidebar__submenu--nested {
+  margin: 0 0 var(--space-1) var(--space-3);
+  padding-left: var(--space-3);
+  border-left-style: dashed;
+}
+
+// Los hijos de un submenú cerrado nunca deben verse aunque el grupo padre sí
+// esté abierto (el fade-in de `.sidebar__submenu-wrapper--expanded` los
+// alcanzaría por herencia del selector descendiente).
+.sidebar__submenu-wrapper--nested:not(.sidebar__submenu-wrapper--expanded) .sidebar__link--sub {
+  opacity: 0;
+}
+
 /**
  * "Apertura del Día" — Cuadre Agentes hasta que el día esté aperturado y
  * los saldos guardados. Selector compuesto con `.sidebar__submenu-wrapper

@@ -11,7 +11,10 @@ import {
   AssetsReceivablesReportFilters,
   BankDepositOperationSummary,
   BankMovementsFilters,
+  BankTransfersReportFilters,
+  BankTransfersSummary,
   PaginatedBankMovements,
+  PaginatedBankTransfers,
   BankDepositsReportFilters,
   BankDepositsReportSummary,
   AssetsReceivablesReportRow,
@@ -273,5 +276,23 @@ export class ReportsService {
       params: toParams(filters),
       responseType: 'blob',
     });
+  }
+
+  /** Reporte de Transferencias Bancarias (admin): listado paginado. */
+  getBankTransfersReport(filters: BankTransfersReportFilters): Observable<PaginatedBankTransfers> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedBankTransfers>>(`${BASE_URL}/bank-transfers`, { params: toParams(filters) })
+      .pipe(map((response) => response.data));
+  }
+
+  getBankTransfersReportSummary(filters: BankTransfersReportFilters): Observable<BankTransfersSummary> {
+    return this.http
+      .get<ApiSuccessResponse<BankTransfersSummary>>(`${BASE_URL}/bank-transfers/summary`, { params: toParams(filters) })
+      .pipe(map((response) => response.data));
+  }
+
+  /** `responseType: 'blob'` — el backend devuelve el PDF crudo. */
+  exportBankTransfersReportPdf(filters: BankTransfersReportFilters): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/bank-transfers/export`, { params: toParams(filters), responseType: 'blob' });
   }
 }

@@ -1,8 +1,15 @@
-<nav class="strip" aria-label="Saldos bancarios">
-  <div class="strip__label">
-    <app-icon name="bank" [size]="16" />
-    <span>Saldos</span>
-  </div>
+<section class="strip" aria-label="Saldos bancarios">
+  <header class="strip__header">
+    <span class="strip__title">
+      <app-icon name="bank" [size]="16" />
+      Saldos bancarios
+    </span>
+    <span class="strip__legend">
+      <span class="dot dot--positive"></span> favorable
+      <span class="dot dot--negative"></span> desfavorable
+      <span class="strip__legend-note">· según la última transacción</span>
+    </span>
+  </header>
 
   @if (loading()) {
     <p class="strip__note">Cargando saldos…</p>
@@ -11,28 +18,36 @@
   } @else if (items().length === 0) {
     <p class="strip__note">No hay cuentas marcadas "En Transaccionar" en Sistema → Bancos.</p>
   } @else {
-    <ul class="strip__list">
+    <ul class="strip__grid">
       @for (item of items(); track item.bankId) {
-        <li class="strip__item" [title]="trendLabel(item)">
-          <div class="strip__row">
-            <span class="strip__name">{{ item.bankName }}</span>
-            <span class="strip__balance">
-              <app-bank-balance-amount [value]="item.currentBalance" [specialAccount]="item.specialAccount" strong />
-              @if (item.trend !== 'FLAT') {
-                <span
-                  class="trend"
-                  [class.trend--positive]="item.trendTone === 'POSITIVE'"
-                  [class.trend--negative]="item.trendTone === 'NEGATIVE'"
-                  [attr.aria-label]="trendLabel(item)"
-                >
-                  <app-icon [name]="item.trend === 'UP' ? 'arrow-up' : 'arrow-down'" [size]="14" />
-                </span>
-              }
-            </span>
+        <li
+          class="account"
+          [class.account--positive]="item.trendTone === 'POSITIVE'"
+          [class.account--negative]="item.trendTone === 'NEGATIVE'"
+          [title]="trendLabel(item)"
+        >
+          <div class="account__top">
+            <span class="account__name">{{ item.bankName }}</span>
+            @if (item.trend !== 'FLAT') {
+              <span
+                class="trend"
+                [class.trend--positive]="item.trendTone === 'POSITIVE'"
+                [class.trend--negative]="item.trendTone === 'NEGATIVE'"
+                [attr.aria-label]="trendLabel(item)"
+              >
+                <app-icon [name]="item.trend === 'UP' ? 'arrow-up' : 'arrow-down'" [size]="13" />
+              </span>
+            }
           </div>
-          <span class="strip__account">{{ item.accountNumber }}</span>
+          <app-bank-balance-amount
+            class="account__balance"
+            [value]="item.currentBalance"
+            [specialAccount]="item.specialAccount"
+            strong
+          />
+          <span class="account__number" [title]="item.accountTypeName">{{ item.accountNumber }}</span>
         </li>
       }
     </ul>
   }
-</nav>
+</section>

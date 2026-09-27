@@ -12,7 +12,10 @@ import {
   AdjustBankBalanceData,
   BankMovementFilters,
   BankMovementRepository,
+  BankTransferFilters,
+  BankTransfersSummary,
   LastBankMovement,
+  PaginatedBankTransfers,
   PaginatedBankMovements,
   RegisterBankTransferData,
 } from '../../domain/repositories/bank-movement.repository';
@@ -263,34 +266,114 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
   }
 
   async findTransfers(
-    filters: Pick<BankMovementFilters, 'startDate' | 'endDate' | 'bankId'>,
+    filters: BankTransferFilters,
+    page: number,
     limit: number,
-  ): Promise<BankTransfer[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-    if (filters.startDate) {
-      params.push(filters.startDate);
-      conditions.push(`s.business_date >= $${params.length}`);
-    }
-    if (filters.endDate) {
-      params.push(filters.endDate);
-      conditions.push(`s.business_date <= $${params.length}`);
-    }
-    if (filters.bankId) {
-      params.push(filters.bankId);
-      conditions.push(
-        `(s.bank_id = $${params.length} OR e.bank_id = $${params.length})`,
-      );
-    }
-    params.push(limit);
-    const rows = await this.manager.query<TransferRow[]>(
-      `${TRANSFER_SELECT}
-       ${conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : ''}
-       ORDER BY s.sequence DESC
-       LIMIT $${params.length}`,
+  ): Promise<PaginatedBankTransfers> {
+    const { where, params } = this.buildTransferFilters(filters);
+    const [{ total }] = await this.manager.query<{ total: string }[]>(
+      `SELECT COUNT(*) AS total FROM (${TRANSFER_SELECT} ${where}) t`,
       params,
     );
-    return rows.map((row) => this.toTransfer(row));
+    const rows = await this.manager.query<TransferRow[]>(
+      `${TRANSFER_SELECT} ${where}
+       ORDER BY s.sequence DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, (page - 1) * limit],
+    );
+    return {
+      items: rows.map((row) => this.toTransfer(row)),
+      total: parseInt(total, 10),
+      page,
+      limit,
+    };
+  }
+
+  async getTransfersSummary(
+    filters: BankTransferFilters,
+  ): Promise<BankTransfersSummary> {
+    const { where, params } = this.buildTransferFilters(filters);
+    const base = `(${TRANSFER_SELECT} ${where}) t`;
+    const [totals] = await this.manager.query<
+      {
+        transfer_count: string;
+        total_amount: string;
+        voided_count: string;
+        voided_amount: string;
+      }[]
+    >(
+      `SELECT
+         COUNT(*) FILTER (WHERE t.status = 'APLICADO') AS transfer_count,
+         COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'APLICADO'), 0) AS total_amount,
+         COUNT(*) FILTER (WHERE t.status = 'ANULADO') AS voided_count,
+         COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'ANULADO'), 0) AS voided_amount
+       FROM ${base}`,
+      params,
+    );
+    const routes = await this.manager.query<
+      {
+        source_bank_id: string;
+        source_bank_name: string;
+        source_account_number: string;
+        destination_bank_id: string;
+        destination_bank_name: string;
+        destination_account_number: string;
+        transfer_count: string;
+        total_amount: string;
+      }[]
+    >(
+      `SELECT
+         t.source_bank_id, t.source_bank_name, t.source_account_number,
+         t.destination_bank_id, t.destination_bank_name, t.destination_account_number,
+         COUNT(*) AS transfer_count, SUM(t.amount) AS total_amount
+       FROM ${base}
+       WHERE t.status = 'APLICADO'
+       GROUP BY t.source_bank_id, t.source_bank_name, t.source_account_number,
+                t.destination_bank_id, t.destination_bank_name, t.destination_account_number
+       ORDER BY SUM(t.amount) DESC`,
+      params,
+    );
+    return {
+      transferCount: parseInt(totals.transfer_count, 10),
+      totalAmount: parseFloat(totals.total_amount),
+      voidedCount: parseInt(totals.voided_count, 10),
+      voidedAmount: parseFloat(totals.voided_amount),
+      byRoute: routes.map((row) => ({
+        sourceBankId: row.source_bank_id,
+        sourceBankName: row.source_bank_name,
+        sourceAccountNumber: row.source_account_number,
+        destinationBankId: row.destination_bank_id,
+        destinationBankName: row.destination_bank_name,
+        destinationAccountNumber: row.destination_account_number,
+        transferCount: parseInt(row.transfer_count, 10),
+        totalAmount: parseFloat(row.total_amount),
+      })),
+    };
+  }
+
+  /** Condiciones sobre el par salida (`s`) / entrada (`e`) de `TRANSFER_SELECT` — se anexan con AND a su WHERE. */
+  private buildTransferFilters(filters: BankTransferFilters): {
+    where: string;
+    params: unknown[];
+  } {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    const add = (condition: string, value: unknown) => {
+      params.push(value);
+      conditions.push(condition.replace(/\?/g, `$${params.length}`));
+    };
+    if (filters.startDate) add('s.business_date >= ?', filters.startDate);
+    if (filters.endDate) add('s.business_date <= ?', filters.endDate);
+    if (filters.bankId) add('(s.bank_id = ? OR e.bank_id = ?)', filters.bankId);
+    if (filters.sourceBankId) add('s.bank_id = ?', filters.sourceBankId);
+    if (filters.destinationBankId)
+      add('e.bank_id = ?', filters.destinationBankId);
+    if (filters.userId) add('s.user_id = ?', filters.userId);
+    if (filters.status) add('s.status = ?', filters.status);
+    return {
+      where: conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '',
+      params,
+    };
   }
 
   private buildFilters(filters: BankMovementFilters): {

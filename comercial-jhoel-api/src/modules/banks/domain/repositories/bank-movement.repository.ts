@@ -1,5 +1,6 @@
 import {
   BankAccountMovement,
+  BankMovementStatus,
   BankMovementType,
   BankTransfer,
 } from '../entities/bank-account-movement.entity';
@@ -39,6 +40,45 @@ export interface BankMovementFilters {
   userId?: string;
 }
 
+/** Filtros de transferencias (Transferencias Bancarias y su reporte). */
+export interface BankTransferFilters {
+  startDate?: string;
+  endDate?: string;
+  /** Cuenta como origen O destino. */
+  bankId?: string;
+  sourceBankId?: string;
+  destinationBankId?: string;
+  userId?: string;
+  status?: BankMovementStatus;
+}
+
+export interface PaginatedBankTransfers {
+  items: BankTransfer[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface BankTransferRouteSummary {
+  sourceBankId: string;
+  sourceBankName: string;
+  sourceAccountNumber: string;
+  destinationBankId: string;
+  destinationBankName: string;
+  destinationAccountNumber: string;
+  transferCount: number;
+  totalAmount: number;
+}
+
+/** Totales del reporte — `transferCount`/`totalAmount` excluyen las anuladas (mismo criterio que el resto de la Reportería). */
+export interface BankTransfersSummary {
+  transferCount: number;
+  totalAmount: number;
+  voidedCount: number;
+  voidedAmount: number;
+  byRoute: BankTransferRouteSummary[];
+}
+
 export interface PaginatedBankMovements {
   items: BankAccountMovement[];
   total: number;
@@ -73,7 +113,11 @@ export interface BankMovementRepository {
   /** Último movimiento de cada cuenta (sin SALDO_INICIAL): monto con signo y cuándo ocurrió. Cuentas sin movimientos no aparecen. */
   getLastMovementByBank(): Promise<Map<string, LastBankMovement>>;
   findTransfers(
-    filters: Pick<BankMovementFilters, 'startDate' | 'endDate' | 'bankId'>,
+    filters: BankTransferFilters,
+    page: number,
     limit: number,
-  ): Promise<BankTransfer[]>;
+  ): Promise<PaginatedBankTransfers>;
+  getTransfersSummary(
+    filters: BankTransferFilters,
+  ): Promise<BankTransfersSummary>;
 }

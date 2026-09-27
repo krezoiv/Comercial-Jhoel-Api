@@ -16,18 +16,19 @@ import { DashboardNavItem, ShortcutRouteOption } from '../models';
 export function buildShortcutRouteOptions(items: DashboardNavItem[] = DASHBOARD_NAV_ITEMS): ShortcutRouteOption[] {
   const options: ShortcutRouteOption[] = [];
 
-  for (const item of items) {
-    if (item.path) {
-      options.push({ label: item.label, route: `/dashboard/${item.path}` });
-    }
-    if (item.children) {
-      for (const child of item.children) {
-        if (child.path) {
-          options.push({ label: `${item.label} · ${child.label}`, route: `/dashboard/${child.path}` });
-        }
+  // Solo las hojas son rutas reales: un grupo/submenú es únicamente un
+  // contenedor del sidebar. La etiqueta lleva el camino completo
+  // ("Sistema · Bancos y Transacciones · Tipos de Cuenta").
+  const visit = (list: DashboardNavItem[], trail: string[]): void => {
+    for (const item of list) {
+      if (item.children) {
+        visit(item.children, [...trail, item.label]);
+      } else if (item.path) {
+        options.push({ label: [...trail, item.label].join(' · '), route: `/dashboard/${item.path}` });
       }
     }
-  }
+  };
+  visit(items, []);
 
   return options;
 }

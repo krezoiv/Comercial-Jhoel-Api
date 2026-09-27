@@ -24,13 +24,15 @@ export class ListBankTransfersUseCase {
     if (input.startDate && input.endDate && input.startDate > input.endDate) {
       throw new InvalidBankMovementDateRangeError();
     }
-    return this.bankMovementRepository.findTransfers(
+    const page = await this.bankMovementRepository.findTransfers(
       {
         startDate: input.startDate,
         endDate: input.endDate,
         bankId: input.bankId,
       },
+      1,
       input.limit ?? DEFAULT_LIMIT,
     );
+    return page.items;
   }
 }

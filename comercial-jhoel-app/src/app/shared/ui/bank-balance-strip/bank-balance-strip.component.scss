@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
   min-width: 0;
@@ -5,100 +7,169 @@
 
 .strip {
   display: flex;
-  align-items: stretch;
-  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
   background: var(--color-surface-light);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+
+  @include bp.respond(md) {
+    padding: var(--space-4) var(--space-5);
+  }
 }
 
-.strip__label {
+.strip__header {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.strip__title {
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-table-header-bg);
-  color: var(--color-table-header-text);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  color: var(--color-text-on-light-muted);
+}
+
+.strip__legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+
+  &--positive {
+    background: var(--color-success);
+  }
+
+  &--negative {
+    background: var(--color-danger);
+    margin-left: var(--space-1);
+  }
 }
 
 .strip__note {
-  align-self: center;
-  padding: var(--space-3) var(--space-4);
   font-size: var(--fs-sm);
   color: var(--color-text-on-light-muted);
 }
 
-// Desliza horizontalmente en pantallas angostas — la página nunca se desborda.
-.strip__list {
-  display: flex;
-  flex: 1;
-  min-width: 0;
+// Todas las cuentas visibles a la vez: la cuadrícula se reparte en tantas
+// columnas como quepan y baja a la siguiente fila — nunca scroll horizontal.
+.strip__grid {
+  display: grid;
+  // Teléfono: dos columnas (nunca una lista larguísima de una sola).
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  }
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
-}
 
-.strip__item {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.15rem;
-  flex-shrink: 0;
-  padding: var(--space-3) var(--space-5);
-  scroll-snap-align: start;
-
-  & + & {
-    border-left: 1px solid var(--color-border-light);
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+    gap: var(--space-3);
   }
 }
 
-.strip__row {
+.account {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  border: 1px solid transparent;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  // Acento lateral que sigue el color de la tendencia (neutral si no hay).
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: var(--space-3);
+    bottom: var(--space-3);
+    width: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-border-light);
+  }
+
+  &--positive::before {
+    background: var(--color-success);
+  }
+
+  &--negative::before {
+    background: var(--color-danger);
+  }
+
+  &:hover {
+    border-color: var(--color-border-light);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
 }
 
-.strip__name {
-  font-size: var(--fs-sm);
+.account__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+// Nombre y número siempre completos (nunca "…"): si no caben, bajan de línea.
+.account__name {
+  min-width: 0;
+  font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  color: var(--color-text-on-light);
-  white-space: nowrap;
+  line-height: 1.3;
+  color: var(--color-text-on-light-muted);
+  overflow-wrap: anywhere;
 }
 
-.strip__balance {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--fs-sm);
+.account__balance {
+  justify-content: flex-start;
+  font-size: var(--fs-md);
   color: var(--color-text-on-light);
 }
 
-.strip__account {
+.account__number {
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-on-light-subtle);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .trend {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.3rem;
-  height: 1.3rem;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: var(--radius-full);
-  color: var(--color-text-on-light-subtle);
-  background: var(--color-bg-light-muted);
 
   &--positive {
     color: var(--color-success);

@@ -1625,6 +1625,23 @@ migration/architecture writeup this all sits on top of.
   presentation `<select>` still resolves "Unidad (factor 1)"/"Caja (factor 12)" exactly as before this
   feature — no regression in Compras' own product/presentation flow.
 
+### Sidebar clasificado por tipo, con submenús de dos niveles
+
+`core/data/dashboard-nav.data.ts` agrupa todo por tipo: Resumen · Ventas y Compras · Agentes Bancarios ·
+Recargas Electrónicas · Cartera · Inventario (con Teléfonos ▸) · Reportes y Gráficas (Reportes ▸, Gráficas ▸,
+admin) · Sistema (Catálogos Generales ▸, Bancos y Transacciones ▸, Cajas y Cierres ▸, Administrar Facturas ▸,
+Catálogo Web ▸, Noticias ▸, Usuarios y Configuración ▸). Rutas hoja y `roles` idénticos a antes.
+
+- Un nodo con `children` es solo un contenedor: su `path` es un id (los nuevos usan `grupo-…`), nunca una ruta.
+- `DashboardSidebarComponent.navItems` filtra por rol de forma recursiva y elimina grupos que quedan vacíos;
+  dos acordeones exclusivos (`expandedGroup`/`expandedSubgroup`) y apertura automática de ambos niveles al
+  entrar por un enlace profundo (`containsActiveRoute`, comparación por segmento completo). Las hojas de
+  cualquier nivel se pintan con un único `<ng-template #leafLink>` (candado, punto de borrador, tooltip).
+- `buildShortcutRouteOptions()` recorre el árbol y solo ofrece hojas, con etiqueta de camino completo
+  ("Sistema · Bancos y Transacciones · Tipos de Cuenta").
+- Resumen: `.home` es una sola columna con `gap` uniforme; las secciones que solo viven ahí
+  (`app-recharge-indicators-section`, `app-financial-indicators`) ya no traen margen exterior propio.
+
 ### Notifications
 
 `NotificationService` (`core/services/notification.service.ts`) is a global toast queue —

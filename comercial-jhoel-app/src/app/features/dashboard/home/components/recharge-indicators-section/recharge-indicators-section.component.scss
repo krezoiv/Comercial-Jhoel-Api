@@ -1,8 +1,8 @@
 @use 'breakpoints' as bp;
 
+// Sin margen exterior propio: el espaciado entre secciones lo da `.home` (Resumen).
 :host {
   display: block;
-  margin-top: var(--space-8);
 }
 
 .recharge-indicators__title {

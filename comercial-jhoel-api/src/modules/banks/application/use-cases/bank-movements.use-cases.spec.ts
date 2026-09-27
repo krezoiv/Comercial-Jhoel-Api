@@ -77,6 +77,7 @@ function mockRepository(): jest.Mocked<BankMovementRepository> {
     findByReference: jest.fn(),
     findTransferById: jest.fn(),
     findTransfers: jest.fn(),
+    getTransfersSummary: jest.fn(),
     getLastMovementByBank: jest.fn(),
   };
 }

@@ -120,3 +120,42 @@ export interface BankBalanceAdjustmentInput {
   reason: string;
   observation?: string;
 }
+
+/** Filtros del Reporte de Transferencias Bancarias (`GET /reports/bank-transfers`). */
+export interface BankTransfersReportFilters {
+  startDate?: string;
+  endDate?: string;
+  sourceBankId?: string;
+  destinationBankId?: string;
+  userId?: string;
+  status?: BankMovementStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedBankTransfers {
+  items: BankTransfer[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface BankTransferRouteSummary {
+  sourceBankId: string;
+  sourceBankName: string;
+  sourceAccountNumber: string;
+  destinationBankId: string;
+  destinationBankName: string;
+  destinationAccountNumber: string;
+  transferCount: number;
+  totalAmount: number;
+}
+
+/** `transferCount`/`totalAmount` excluyen las anuladas (se cuentan aparte en `voidedCount`/`voidedAmount`). */
+export interface BankTransfersSummary {
+  transferCount: number;
+  totalAmount: number;
+  voidedCount: number;
+  voidedAmount: number;
+  byRoute: BankTransferRouteSummary[];
+}

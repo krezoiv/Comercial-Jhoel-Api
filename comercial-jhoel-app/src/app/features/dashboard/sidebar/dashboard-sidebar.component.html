@@ -32,30 +32,43 @@
         <div class="sidebar__submenu-wrapper" [class.sidebar__submenu-wrapper--expanded]="isExpanded(item.path)">
           <div class="sidebar__submenu">
             @for (child of item.children; track child.path; let i = $index) {
-              <a
-                class="sidebar__link sidebar__link--sub"
-                [class.sidebar__link--disabled]="isLinkDisabled(child.path)"
-                [routerLink]="isLinkDisabled(child.path) ? null : ['/dashboard', child.path]"
-                [attr.aria-disabled]="isLinkDisabled(child.path)"
-                [title]="linkTooltipFor(child.path)"
-                [style.transition-delay]="isExpanded(item.path) ? (i * 35) + 'ms' : '0ms'"
-                routerLinkActive="sidebar__link--active"
-                (click)="onLinkClick(child.path)"
-              >
-                @if (isLinkDisabled(child.path)) {
-                  <app-icon name="lock" [size]="18" />
-                } @else {
+              @if (child.children) {
+                <!-- Segundo nivel: submenú dentro del grupo (p. ej. Sistema → Bancos y Transacciones). -->
+                <button
+                  type="button"
+                  class="sidebar__link sidebar__link--sub sidebar__link--subgroup"
+                  [class.sidebar__link--expanded]="isSubgroupExpanded(child.path)"
+                  [attr.aria-expanded]="isSubgroupExpanded(child.path)"
+                  [style.transition-delay]="isExpanded(item.path) ? i * 35 + 'ms' : '0ms'"
+                  (click)="toggleSubgroup(child.path)"
+                >
                   <app-icon [name]="child.icon" [size]="18" />
-                }
-                {{ child.label }}
-                @if (hasDraftFor(child.path)) {
-                  <span
-                    class="sidebar__draft-dot"
-                    [title]="draftLabelFor(child.path)"
-                    [attr.aria-label]="draftLabelFor(child.path)"
-                  ></span>
-                }
-              </a>
+                  <span class="sidebar__link-label">{{ child.label }}</span>
+                  <app-icon name="chevron-down" [size]="14" class="sidebar__chevron" />
+                </button>
+                <div
+                  class="sidebar__submenu-wrapper sidebar__submenu-wrapper--nested"
+                  [class.sidebar__submenu-wrapper--expanded]="isExpanded(item.path) && isSubgroupExpanded(child.path)"
+                >
+                  <div class="sidebar__submenu sidebar__submenu--nested">
+                    @for (leaf of child.children; track leaf.path; let j = $index) {
+                      <ng-container
+                        *ngTemplateOutlet="
+                          leafLink;
+                          context: { $implicit: leaf, delay: isSubgroupExpanded(child.path) ? j * 30 + 'ms' : '0ms' }
+                        "
+                      />
+                    }
+                  </div>
+                </div>
+              } @else {
+                <ng-container
+                  *ngTemplateOutlet="
+                    leafLink;
+                    context: { $implicit: child, delay: isExpanded(item.path) ? i * 35 + 'ms' : '0ms' }
+                  "
+                />
+              }
             }
           </div>
         </div>
@@ -74,6 +87,30 @@
       }
     }
   </nav>
+
+  <!-- Enlace hoja de cualquier nivel (grupo o submenú): candado si está bloqueado, punto de borrador, etc. -->
+  <ng-template #leafLink let-leaf let-delay="delay">
+    <a
+      class="sidebar__link sidebar__link--sub"
+      [class.sidebar__link--disabled]="isLinkDisabled(leaf.path)"
+      [routerLink]="isLinkDisabled(leaf.path) ? null : ['/dashboard', leaf.path]"
+      [attr.aria-disabled]="isLinkDisabled(leaf.path)"
+      [title]="linkTooltipFor(leaf.path)"
+      [style.transition-delay]="delay"
+      routerLinkActive="sidebar__link--active"
+      (click)="onLinkClick(leaf.path)"
+    >
+      @if (isLinkDisabled(leaf.path)) {
+        <app-icon name="lock" [size]="18" />
+      } @else {
+        <app-icon [name]="leaf.icon" [size]="18" />
+      }
+      <span class="sidebar__link-label">{{ leaf.label }}</span>
+      @if (hasDraftFor(leaf.path)) {
+        <span class="sidebar__draft-dot" [title]="draftLabelFor(leaf.path)" [attr.aria-label]="draftLabelFor(leaf.path)"></span>
+      }
+    </a>
+  </ng-template>
 
   <button
     type="button"

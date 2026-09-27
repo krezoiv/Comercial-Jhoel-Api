@@ -1,0 +1,201 @@
+<div class="reports-page">
+  <app-page-header
+    icon="arrow-left-right"
+    title="Reporte de Transferencias"
+    subtitle="Consulta, filtra y exporta las transferencias entre cuentas bancarias."
+  >
+    <app-button variant="primary" [disabled]="exporting()" (click)="exportPdf()">
+      <app-icon name="download" [size]="16" />
+      {{ exporting() ? 'Generando…' : 'Exportar PDF' }}
+    </app-button>
+  </app-page-header>
+
+  <div class="reports-page__filters">
+    <div class="reports-page__filters-title">
+      <app-icon name="filter" [size]="16" />
+      Filtros
+    </div>
+
+    <div class="filters-grid">
+      <div class="field">
+        <label for="btreport-start">Desde</label>
+        <input id="btreport-start" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+      <div class="field">
+        <label for="btreport-end">Hasta</label>
+        <input id="btreport-end" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+      <div class="field">
+        <label for="btreport-source">Cuenta origen</label>
+        <select id="btreport-source" [ngModel]="draftSourceBankId()" (ngModelChange)="draftSourceBankId.set($event)">
+          <option value="">Todas</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ accountLabel(account) }}{{ account.isActive ? '' : ' (inactiva)' }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="btreport-destination">Cuenta destino</label>
+        <select
+          id="btreport-destination"
+          [ngModel]="draftDestinationBankId()"
+          (ngModelChange)="draftDestinationBankId.set($event)"
+        >
+          <option value="">Todas</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ accountLabel(account) }}{{ account.isActive ? '' : ' (inactiva)' }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="btreport-user">Usuario</label>
+        <select id="btreport-user" [ngModel]="draftUserId()" (ngModelChange)="draftUserId.set($event)">
+          <option value="">Todos los usuarios</option>
+          @for (user of users(); track user.id) {
+            <option [value]="user.id">{{ user.username }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="btreport-status">Estado</label>
+        <select id="btreport-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
+          <option value="">Todas</option>
+          <option value="APLICADO">Aplicadas</option>
+          <option value="ANULADO">Anuladas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <app-button variant="ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">Limpiar filtros</app-button>
+      <app-button variant="primary" (click)="applyFilters()">Aplicar filtros</app-button>
+    </div>
+  </div>
+
+  <app-report-summary [tiles]="summaryTiles()" [loading]="loadingSummary()" />
+
+  <div class="table-wrapper">
+    <table class="report-table transfers-report-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th class="align-right">Monto</th>
+          <th>Referencia / Concepto</th>
+          <th>Usuario</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!loadingTable()) {
+          @for (row of rows(); track row.id) {
+            <tr [class.report-table__row--voided]="row.status === 'ANULADO'">
+              <td>
+                {{ row.businessDate | date: 'dd/MM/yyyy' }}
+                <small class="cell-muted">{{ row.createdAt | date: 'HH:mm' }}</small>
+              </td>
+              <td>
+                <strong class="cell-strong">{{ row.source.bankName }}</strong>
+                <small class="cell-muted">{{ row.source.accountNumber }}</small>
+                <small class="cell-muted">
+                  {{ formatSigned(row.source.balanceBefore) }} → {{ formatSigned(row.source.balanceAfter) }}
+                </small>
+              </td>
+              <td>
+                <strong class="cell-strong">{{ row.destination.bankName }}</strong>
+                <small class="cell-muted">{{ row.destination.accountNumber }}</small>
+                <small class="cell-muted">
+                  {{ formatSigned(row.destination.balanceBefore) }} → {{ formatSigned(row.destination.balanceAfter) }}
+                </small>
+              </td>
+              <td class="align-right report-table__total">{{ formatSigned(row.amount) }}</td>
+              <td class="cell-wrap">
+                {{ row.referenceText || '—' }}
+                @if (row.concept) {
+                  <small class="cell-muted">{{ row.concept }}</small>
+                }
+              </td>
+              <td>{{ row.username }}</td>
+              <td>
+                @if (row.status === 'ANULADO') {
+                  <span class="status-badge status-badge--voided">
+                    <app-icon name="x-circle" [size]="13" />
+                    Anulada
+                  </span>
+                } @else {
+                  <span class="status-badge status-badge--active">
+                    <app-icon name="check-circle" [size]="13" />
+                    Aplicada
+                  </span>
+                }
+              </td>
+              <td class="report-table__actions">
+                <button
+                  type="button"
+                  class="action-btn action-btn--danger"
+                  title="Anular transferencia"
+                  [disabled]="row.status === 'ANULADO' || isVoiding()"
+                  (click)="openVoid(row)"
+                >
+                  <app-icon name="x-circle" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (loadingTable()) {
+      <p class="table-wrapper__empty">Cargando transferencias…</p>
+    } @else if (rows().length === 0) {
+      <p class="table-wrapper__empty">No se encontraron transferencias con los filtros seleccionados.</p>
+    }
+  </div>
+
+  <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
+
+  @if (summary() && summary()!.byRoute.length > 0) {
+    <div class="by-bank">
+      <h2 class="by-bank__title">Por ruta (origen → destino)</h2>
+      <div class="table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th class="align-right">Transferencias</th>
+              <th class="align-right">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (route of summary()!.byRoute; track route.sourceBankId + route.destinationBankId) {
+              <tr>
+                <td>
+                  {{ route.sourceBankName }}
+                  <small class="cell-muted">{{ route.sourceAccountNumber }}</small>
+                </td>
+                <td>
+                  {{ route.destinationBankName }}
+                  <small class="cell-muted">{{ route.destinationAccountNumber }}</small>
+                </td>
+                <td class="align-right">{{ formatQuantity(route.transferCount) }}</td>
+                <td class="align-right report-table__total">{{ formatSigned(route.totalAmount) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<app-void-confirm-modal
+  title="Anular Transferencia"
+  description="La transferencia no se elimina: se registran los movimientos inversos en ambas cuentas y queda en el historial marcada como Anulada. Si la cuenta destino ya no tiene saldo suficiente, la anulación se rechaza."
+  [open]="voidingTransferId() !== null"
+  [isSaving]="isVoiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="cancelVoid()"
+/>

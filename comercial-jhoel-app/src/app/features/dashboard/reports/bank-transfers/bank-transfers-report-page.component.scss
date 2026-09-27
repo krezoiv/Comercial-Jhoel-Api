@@ -1,0 +1,22 @@
+.transfers-report-table td {
+  vertical-align: top;
+}
+
+.cell-strong {
+  display: block;
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-medium);
+}
+
+.cell-muted {
+  display: block;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-on-light-subtle);
+}
+
+.cell-wrap {
+  max-width: 16rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
