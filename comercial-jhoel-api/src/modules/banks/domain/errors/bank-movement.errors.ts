@@ -16,6 +16,7 @@ const INSUFFICIENT_BALANCE_MESSAGES: Record<string, string> = {
   DESEMBOLSO_GENESIS: 'Saldo insuficiente para realizar el desembolso.',
   REINTEGRO: 'Saldo insuficiente para realizar el reintegro.',
   TRANSFERENCIA_SALIDA: 'Saldo insuficiente para realizar la transferencia.',
+  RETIRO_EFECTIVO: 'Saldo insuficiente para realizar el retiro de efectivo.',
   AJUSTE_MANUAL:
     'El saldo de una cuenta bancaria no puede ser negativo (solo la línea de crédito de Fundación Génesis Empresarial lo permite).',
   ANULACION:
@@ -76,6 +77,22 @@ export class TransferOriginNotAllowedError extends DomainError {
         ? 'Solo Banco Agromercantil puede transferir a Districol.'
         : 'Solo Banco Industrial puede transferir a BI Club Empresarial.',
     );
+  }
+}
+
+export class TransferDestinationNotAllowedError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super('BI Club Empresarial solo puede transferir a Banco Industrial.');
+  }
+}
+
+export class BankTransferDestinationRequiredError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super('Seleccione la cuenta destino o "Retiro de efectivo en banco".');
   }
 }
 
@@ -197,6 +214,8 @@ export function bankMovementErrorFromMessage(
       );
     case 'TRANSFER_ORIGIN_NOT_ALLOWED':
       return new TransferOriginNotAllowedError(details[0] ?? '');
+    case 'TRANSFER_DESTINATION_NOT_ALLOWED':
+      return new TransferDestinationNotAllowedError();
     case 'SAME_ACCOUNT_TRANSFER':
       return new SameAccountTransferError();
     case 'INVALID_MOVEMENT_AMOUNT':

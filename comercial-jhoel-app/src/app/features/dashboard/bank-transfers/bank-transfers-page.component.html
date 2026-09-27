@@ -26,6 +26,9 @@
           [disabled]="loadingAccounts() || !sourceId()"
         >
           <option value="" disabled>{{ sourceId() ? 'Seleccionar cuenta destino' : 'Elija primero la cuenta origen' }}</option>
+          <option [value]="cashWithdrawalValue" [disabled]="cashWithdrawalBlockedReason() !== null">
+            Retiro de efectivo en banco{{ cashWithdrawalBlockedReason() ? ' — no permitido desde esta cuenta' : '' }}
+          </option>
           @for (option of destinationOptions(); track option.bank.id) {
             <option [value]="option.bank.id" [disabled]="option.blockedReason !== null">
               {{ accountLabel(option.bank) }}{{ option.blockedReason ? ' — no permitido desde esta cuenta' : '' }}
@@ -105,13 +108,23 @@
             <div class="preview-side__figures">
               <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
               @if (preview(); as p) {
-                <app-icon name="arrow-right" [size]="14" />
-                <app-bank-balance-amount [value]="p.destinationAfter" [specialAccount]="account.specialAccount" strong />
+                @if (p.destinationAfter !== null) {
+                  <app-icon name="arrow-right" [size]="14" />
+                  <app-bank-balance-amount [value]="p.destinationAfter" [specialAccount]="account.specialAccount" strong />
+                }
               }
             </div>
             @if (account.maxBalance !== null) {
               <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
             }
+          } @else if (isCashWithdrawal()) {
+            <strong class="preview-side__account">
+              <app-icon name="wallet" [size]="14" />
+              Retiro de efectivo en banco
+            </strong>
+            <small class="preview-side__hint">
+              Solo disminuye el saldo de la cuenta origen; no se acredita a ninguna otra cuenta.
+            </small>
           } @else {
             <span class="preview-side__empty">Sin seleccionar</span>
           }
@@ -128,8 +141,8 @@
 
     <div class="transfers__actions">
       <app-button variant="primary" [disabled]="!canSubmit()" (click)="requestConfirm()">
-        <app-icon name="arrow-left-right" [size]="16" />
-        Registrar transferencia
+        <app-icon [name]="isCashWithdrawal() ? 'wallet' : 'arrow-left-right'" [size]="16" />
+        {{ isCashWithdrawal() ? 'Registrar retiro' : 'Registrar transferencia' }}
       </app-button>
     </div>
   </section>
@@ -169,8 +182,13 @@
                   <small>{{ transfer.source.accountNumber }} · {{ formatSigned(transfer.source.balanceBefore) }} → {{ formatSigned(transfer.source.balanceAfter) }}</small>
                 </td>
                 <td>
-                  <strong>{{ transfer.destination.bankName }}</strong>
-                  <small>{{ transfer.destination.accountNumber }} · {{ formatSigned(transfer.destination.balanceBefore) }} → {{ formatSigned(transfer.destination.balanceAfter) }}</small>
+                  @if (transfer.destination; as destination) {
+                    <strong>{{ destination.bankName }}</strong>
+                    <small>{{ destination.accountNumber }} · {{ formatSigned(destination.balanceBefore) }} → {{ formatSigned(destination.balanceAfter) }}</small>
+                  } @else {
+                    <strong>Retiro de efectivo</strong>
+                    <small>en banco — no se acredita a ninguna cuenta</small>
+                  }
                 </td>
                 <td class="align-right transfers-table__amount">{{ formatSigned(transfer.amount) }}</td>
                 <td>{{ transfer.username }}</td>
@@ -216,7 +234,7 @@
       <div class="modal__icon">
         <app-icon name="arrow-left-right" [size]="22" />
       </div>
-      <h2 id="transfer-confirm-title" class="modal__title">¿Confirmar transferencia?</h2>
+      <h2 id="transfer-confirm-title" class="modal__title">{{ isCashWithdrawal() ? '¿Confirmar retiro de efectivo?' : '¿Confirmar transferencia?' }}</h2>
       <dl class="modal__summary">
         <div>
           <dt>Monto</dt>
@@ -232,12 +250,14 @@
         </div>
         <div>
           <dt>Destino</dt>
-          <dd>{{ accountLabel(destination()!) }}</dd>
+          <dd>{{ destination() ? accountLabel(destination()!) : 'Retiro de efectivo en banco' }}</dd>
         </div>
-        <div>
-          <dt>Saldo destino</dt>
-          <dd>{{ formatSigned(p.destinationBefore) }} → <strong>{{ formatSigned(p.destinationAfter) }}</strong></dd>
-        </div>
+        @if (p.destinationBefore !== null && p.destinationAfter !== null) {
+          <div>
+            <dt>Saldo destino</dt>
+            <dd>{{ formatSigned(p.destinationBefore) }} → <strong>{{ formatSigned(p.destinationAfter) }}</strong></dd>
+          </div>
+        }
         @if (referenceText().trim()) {
           <div>
             <dt>Referencia</dt>
@@ -254,7 +274,7 @@
       <div class="modal__actions">
         <app-button variant="ghost" [disabled]="isSaving()" (click)="cancelConfirm()">Cancelar</app-button>
         <app-button variant="primary" [disabled]="isSaving()" (click)="confirmTransfer()">
-          {{ isSaving() ? 'Registrando…' : 'Confirmar transferencia' }}
+          {{ isSaving() ? 'Registrando…' : isCashWithdrawal() ? 'Confirmar retiro' : 'Confirmar transferencia' }}
         </app-button>
       </div>
     </div>

@@ -259,6 +259,37 @@ BEGIN
   UPDATE banks SET available_in_transaccionar = true WHERE id IN (v_normal, v_genesis);
   PERFORM pg_temp.set_balance(v_normal, 5000);
 
+  -- BI Club como ORIGEN: solo hacia Banco Industrial (ni otro banco ni retiro de efectivo)
+  PERFORM pg_temp.set_balance(v_biclub, 1000);
+  PERFORM pg_temp.set_balance(v_industrial, 0);
+  PERFORM pg_temp.assert_rejects('BI Club → otro banco',
+    format('SELECT register_bank_transfer(%L, %L, 100, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_normal),
+    'TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB');
+  PERFORM pg_temp.assert_rejects('BI Club → retiro de efectivo',
+    format('SELECT register_bank_transfer(%L, NULL, 100, CURRENT_DATE, pg_temp.admin_id())', v_biclub),
+    'TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB');
+  PERFORM register_bank_transfer(v_biclub, v_industrial, 400, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM pg_temp.assert_eq('BI Club → Banco Industrial (origen)', pg_temp.balance(v_biclub), 600);
+  PERFORM pg_temp.assert_eq('BI Club → Banco Industrial (destino)', pg_temp.balance(v_industrial), 400);
+
+  -- Retiro de efectivo en banco: solo resta al origen, nadie recibe
+  PERFORM pg_temp.set_balance(v_normal, 5000);
+  PERFORM pg_temp.set_balance(v_normal2, 10000);
+  v_transfer := register_bank_transfer(v_normal, NULL, 1500, CURRENT_DATE, pg_temp.admin_id(), 'RET-1', 'Retiro en ventanilla');
+  PERFORM pg_temp.assert_eq('RETIRO EFECTIVO origen', pg_temp.balance(v_normal), 3500);
+  PERFORM pg_temp.assert_eq('RETIRO EFECTIVO no acredita a otra cuenta', pg_temp.balance(v_normal2), 10000);
+  PERFORM pg_temp.assert_eq('RETIRO EFECTIVO un solo movimiento',
+    (SELECT COUNT(*) FROM bank_account_movements WHERE reference_id = v_transfer AND movement_type = 'RETIRO_EFECTIVO'), 1);
+  PERFORM pg_temp.assert_rejects('RETIRO EFECTIVO > saldo',
+    format('SELECT register_bank_transfer(%L, NULL, 999999, CURRENT_DATE, pg_temp.admin_id())', v_normal),
+    'INSUFFICIENT_BALANCE:RETIRO_EFECTIVO');
+  PERFORM pg_temp.set_balance(v_genesis, 100);
+  PERFORM pg_temp.assert_rejects('RETIRO EFECTIVO Génesis no queda negativo',
+    format('SELECT register_bank_transfer(%L, NULL, 200, CURRENT_DATE, pg_temp.admin_id())', v_genesis),
+    'INSUFFICIENT_BALANCE:RETIRO_EFECTIVO');
+  PERFORM void_bank_transfer(v_transfer, CURRENT_DATE, pg_temp.admin_id(), 'Prueba');
+  PERFORM pg_temp.assert_eq('ANULAR RETIRO EFECTIVO restaura', pg_temp.balance(v_normal), 5000);
+
   -- Validaciones generales
   PERFORM pg_temp.assert_rejects('Monto cero en transferencia',
     format('SELECT register_bank_transfer(%L, %L, 0, CURRENT_DATE, pg_temp.admin_id())', v_normal, v_normal2),

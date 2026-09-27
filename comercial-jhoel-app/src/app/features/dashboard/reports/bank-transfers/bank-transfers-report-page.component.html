@@ -42,6 +42,7 @@
           (ngModelChange)="draftDestinationBankId.set($event)"
         >
           <option value="">Todas</option>
+          <option [value]="cashWithdrawalFilter">Retiro de efectivo en banco</option>
           @for (account of accounts(); track account.id) {
             <option [value]="account.id">{{ accountLabel(account) }}{{ account.isActive ? '' : ' (inactiva)' }}</option>
           }
@@ -82,10 +83,10 @@
           <th>Origen</th>
           <th>Destino</th>
           <th class="align-right">Monto</th>
-          <th>Referencia / Concepto</th>
+          <th>Referencia</th>
           <th>Usuario</th>
           <th>Estado</th>
-          <th>Acciones</th>
+          <th aria-label="Acciones"></th>
         </tr>
       </thead>
       <tbody>
@@ -104,11 +105,16 @@
                 </small>
               </td>
               <td>
-                <strong class="cell-strong">{{ row.destination.bankName }}</strong>
-                <small class="cell-muted">{{ row.destination.accountNumber }}</small>
-                <small class="cell-muted">
-                  {{ formatSigned(row.destination.balanceBefore) }} → {{ formatSigned(row.destination.balanceAfter) }}
-                </small>
+                @if (row.destination; as destination) {
+                  <strong class="cell-strong">{{ destination.bankName }}</strong>
+                  <small class="cell-muted">{{ destination.accountNumber }}</small>
+                  <small class="cell-muted">
+                    {{ formatSigned(destination.balanceBefore) }} → {{ formatSigned(destination.balanceAfter) }}
+                  </small>
+                } @else {
+                  <strong class="cell-strong">Retiro de efectivo</strong>
+                  <small class="cell-muted">en banco</small>
+                }
               </td>
               <td class="align-right report-table__total">{{ formatSigned(row.amount) }}</td>
               <td class="cell-wrap">
@@ -170,15 +176,19 @@
             </tr>
           </thead>
           <tbody>
-            @for (route of summary()!.byRoute; track route.sourceBankId + route.destinationBankId) {
+            @for (route of summary()!.byRoute; track route.sourceBankId + (route.destinationBankId ?? 'retiro')) {
               <tr>
                 <td>
                   {{ route.sourceBankName }}
                   <small class="cell-muted">{{ route.sourceAccountNumber }}</small>
                 </td>
                 <td>
-                  {{ route.destinationBankName }}
-                  <small class="cell-muted">{{ route.destinationAccountNumber }}</small>
+                  @if (route.destinationBankName) {
+                    {{ route.destinationBankName }}
+                    <small class="cell-muted">{{ route.destinationAccountNumber }}</small>
+                  } @else {
+                    Retiro de efectivo en banco
+                  }
                 </td>
                 <td class="align-right">{{ formatQuantity(route.transferCount) }}</td>
                 <td class="align-right report-table__total">{{ formatSigned(route.totalAmount) }}</td>

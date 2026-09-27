@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -11,8 +12,15 @@ export class CreateBankTransferRequestDto {
   @IsUUID()
   sourceBankId: string;
 
+  /** Omitido cuando `cashWithdrawal` es `true`. */
+  @IsOptional()
   @IsUUID()
-  destinationBankId: string;
+  destinationBankId?: string;
+
+  /** "Retiro de efectivo en banco": solo disminuye el saldo del origen, no acredita a ninguna cuenta. */
+  @IsOptional()
+  @IsBoolean()
+  cashWithdrawal?: boolean;
 
   @IsNumber(
     { maxDecimalPlaces: 2 },

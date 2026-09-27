@@ -7,6 +7,7 @@ export type BankMovementType =
   | 'REINTEGRO'
   | 'TRANSFERENCIA_SALIDA'
   | 'TRANSFERENCIA_ENTRADA'
+  | 'RETIRO_EFECTIVO'
   | 'AJUSTE_MANUAL'
   | 'SALDO_INICIAL'
   | 'ANULACION';
@@ -23,6 +24,7 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   REINTEGRO: 'Reintegro',
   TRANSFERENCIA_SALIDA: 'Transferencia (salida)',
   TRANSFERENCIA_ENTRADA: 'Transferencia (entrada)',
+  RETIRO_EFECTIVO: 'Retiro de efectivo',
   AJUSTE_MANUAL: 'Ajuste manual',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
@@ -93,8 +95,12 @@ interface BankTransferSide {
   balanceAfter: number;
 }
 
+/** `CASH_WITHDRAWAL` = retiro de efectivo en banco: solo sale del origen, `destination` es `null`. */
+export type BankTransferKind = 'TRANSFER' | 'CASH_WITHDRAWAL';
+
 export interface BankTransfer {
   id: string;
+  kind: BankTransferKind;
   businessDate: string;
   createdAt: string;
   amount: number;
@@ -104,12 +110,14 @@ export interface BankTransfer {
   concept: string | null;
   status: BankMovementStatus;
   source: BankTransferSide;
-  destination: BankTransferSide;
+  destination: BankTransferSide | null;
 }
 
 export interface BankTransferInput {
   sourceBankId: string;
-  destinationBankId: string;
+  /** Omitido en un retiro de efectivo en banco. */
+  destinationBankId?: string;
+  cashWithdrawal?: boolean;
   amount: number;
   referenceText?: string;
   concept?: string;
@@ -129,6 +137,7 @@ export interface BankTransfersReportFilters {
   destinationBankId?: string;
   userId?: string;
   status?: BankMovementStatus;
+  kind?: BankTransferKind;
   page?: number;
   limit?: number;
 }
@@ -144,9 +153,10 @@ export interface BankTransferRouteSummary {
   sourceBankId: string;
   sourceBankName: string;
   sourceAccountNumber: string;
-  destinationBankId: string;
-  destinationBankName: string;
-  destinationAccountNumber: string;
+  /** `null` = retiros de efectivo en banco. */
+  destinationBankId: string | null;
+  destinationBankName: string | null;
+  destinationAccountNumber: string | null;
   transferCount: number;
   totalAmount: number;
 }

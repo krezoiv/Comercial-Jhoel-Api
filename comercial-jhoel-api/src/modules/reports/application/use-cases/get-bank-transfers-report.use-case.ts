@@ -29,6 +29,7 @@ function toFilters(input: BankTransfersReportInput): BankTransferFilters {
     destinationBankId: input.destinationBankId,
     userId: input.userId,
     status: input.status,
+    kind: input.kind,
   };
 }
 

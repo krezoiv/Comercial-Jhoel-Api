@@ -35,6 +35,11 @@ export class BankTransfersReportFilterQueryDto {
   @IsIn(['APLICADO', 'ANULADO'])
   status?: 'APLICADO' | 'ANULADO';
 
+  /** `CASH_WITHDRAWAL` = solo retiros de efectivo en banco; `TRANSFER` = solo transferencias entre cuentas. */
+  @IsOptional()
+  @IsIn(['TRANSFER', 'CASH_WITHDRAWAL'])
+  kind?: 'TRANSFER' | 'CASH_WITHDRAWAL';
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

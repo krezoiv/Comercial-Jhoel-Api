@@ -1240,6 +1240,13 @@ ninguna pantalla lo calcula para guardar — las vistas previas "saldo actual �
   tarjetas de resumen y los tipos en Transaccionar, y en Resumen. Solo pinta `trend`/`trendTone` del backend.
 - El input "Monto Total a Depositar" usa `appDecimalInput thousands` (1,000.00) vía `ngModel`, así "Saldo después"
   (con flecha verde/roja) se actualiza en cada tecla.
+- **Reportería → Reportes → Transferencias Bancarias** (`reports/bank-transfers/`, admin): mismo patrón borrador/
+  aplicado que el Reporte de Transacciones, tarjetas, tabla paginada, desglose por ruta, anular y PDF. Gotcha:
+  un `<select>` con opciones largas (cuentas) estira la cuadrícula de filtros → `.filters-grid > .field { min-width: 0 }`;
+  y nunca poner `.visually-hidden` (absoluto) dentro de una tabla con scroll propio: se escapa y desborda la página.
+- Transferencias Bancarias: la opción "Retiro de efectivo en banco" del selector de destino envía
+  `cashWithdrawal: true` (sin destino); con BI Club como origen solo se habilita Banco Industrial. En los listados
+  y el reporte `destination` puede ser `null` (se muestra "Retiro de efectivo").
 - Sistema → Bancos edita `specialAccount`/`maxBalance`; en edición el saldo es de solo lectura. Sistema →
   Tipo de Transacción edita `balanceEffect`.
 

@@ -3,13 +3,15 @@ import {
   BankMovementStatus,
   BankMovementType,
   BankTransfer,
+  BankTransferKind,
 } from '../entities/bank-account-movement.entity';
 
 export const BANK_MOVEMENT_REPOSITORY = Symbol('BANK_MOVEMENT_REPOSITORY');
 
 export interface RegisterBankTransferData {
   sourceBankId: string;
-  destinationBankId: string;
+  /** `null` = retiro de efectivo en banco (solo sale del origen). */
+  destinationBankId: string | null;
   amount: number;
   businessDate: string;
   userId: string;
@@ -50,6 +52,7 @@ export interface BankTransferFilters {
   destinationBankId?: string;
   userId?: string;
   status?: BankMovementStatus;
+  kind?: BankTransferKind;
 }
 
 export interface PaginatedBankTransfers {
@@ -63,9 +66,10 @@ export interface BankTransferRouteSummary {
   sourceBankId: string;
   sourceBankName: string;
   sourceAccountNumber: string;
-  destinationBankId: string;
-  destinationBankName: string;
-  destinationAccountNumber: string;
+  /** `null` en los retiros de efectivo en banco. */
+  destinationBankId: string | null;
+  destinationBankName: string | null;
+  destinationAccountNumber: string | null;
   transferCount: number;
   totalAmount: number;
 }

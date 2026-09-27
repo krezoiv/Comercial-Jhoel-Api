@@ -6,6 +6,7 @@ export const BANK_MOVEMENT_TYPES = [
   'REINTEGRO',
   'TRANSFERENCIA_SALIDA',
   'TRANSFERENCIA_ENTRADA',
+  'RETIRO_EFECTIVO',
   'AJUSTE_MANUAL',
   'SALDO_INICIAL',
   'ANULACION',
@@ -74,9 +75,13 @@ export interface BankAccountMovement {
   reversedByUsername: string | null;
 }
 
-/** Vista de una transferencia: su salida (origen) y su entrada (destino) juntas. */
+/** `TRANSFER` = de una cuenta a otra; `CASH_WITHDRAWAL` = retiro de efectivo en banco (solo sale del origen). */
+export type BankTransferKind = 'TRANSFER' | 'CASH_WITHDRAWAL';
+
+/** Vista de una transferencia: su salida (origen) y su entrada (destino) juntas — `destination` es `null` en un retiro de efectivo. */
 export interface BankTransfer {
   id: string;
+  kind: BankTransferKind;
   businessDate: string;
   createdAt: Date;
   amount: number;
@@ -98,5 +103,5 @@ export interface BankTransfer {
     accountNumber: string;
     balanceBefore: number;
     balanceAfter: number;
-  };
+  } | null;
 }

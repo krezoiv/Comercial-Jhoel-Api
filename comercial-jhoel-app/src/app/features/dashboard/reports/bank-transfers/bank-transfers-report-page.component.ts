@@ -38,6 +38,9 @@ function firstDayOfMonthIsoDate(): string {
 
 const LIMIT = 20;
 
+/** Opción del filtro "Cuenta destino" que muestra solo los retiros de efectivo en banco (se envía como `kind`). */
+const CASH_WITHDRAWAL_FILTER = '__retiro_efectivo__';
+
 /**
  * Reportería → Reporte de Transferencias (admin). Mismo patrón que el
  * Reporte de Transacciones: filtros en borrador que solo se aplican con
@@ -71,6 +74,7 @@ export class BankTransfersReportPageComponent {
   private readonly notificationService = inject(NotificationService);
 
   readonly limit = LIMIT;
+  readonly cashWithdrawalFilter = CASH_WITHDRAWAL_FILTER;
   readonly accountLabel = bankAccountLabel;
   readonly formatSigned = formatSignedBankBalance;
   readonly formatQuantity = formatQuantity;
@@ -106,6 +110,7 @@ export class BankTransfersReportPageComponent {
     return (
       !!f.sourceBankId ||
       !!f.destinationBankId ||
+      !!f.kind ||
       !!f.userId ||
       !!f.status ||
       f.startDate !== firstDayOfMonthIsoDate() ||
@@ -165,7 +170,11 @@ export class BankTransfersReportPageComponent {
       startDate: this.draftStartDate() || undefined,
       endDate: this.draftEndDate() || undefined,
       sourceBankId: this.draftSourceBankId() || undefined,
-      destinationBankId: this.draftDestinationBankId() || undefined,
+      destinationBankId:
+        this.draftDestinationBankId() && this.draftDestinationBankId() !== CASH_WITHDRAWAL_FILTER
+          ? this.draftDestinationBankId()
+          : undefined,
+      kind: this.draftDestinationBankId() === CASH_WITHDRAWAL_FILTER ? 'CASH_WITHDRAWAL' : undefined,
       userId: this.draftUserId() || undefined,
       status: (this.draftStatus() || undefined) as BankTransfersReportFilters['status'],
     });

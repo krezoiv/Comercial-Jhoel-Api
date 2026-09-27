@@ -91,6 +91,17 @@ describe('bankMovementErrorFromMessage', () => {
     );
   });
 
+  it('mapea la regla de BI Club como origen y el retiro de efectivo sin saldo', () => {
+    expect(
+      bankMovementErrorFromMessage('TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB')
+        ?.message,
+    ).toBe('BI Club Empresarial solo puede transferir a Banco Industrial.');
+    expect(
+      bankMovementErrorFromMessage('INSUFFICIENT_BALANCE:RETIRO_EFECTIVO')
+        ?.message,
+    ).toBe('Saldo insuficiente para realizar el retiro de efectivo.');
+  });
+
   it('returns null for codes that are not balance rules (never leaks a technical message as a business one)', () => {
     expect(bankMovementErrorFromMessage('CASH_TOTAL_MISMATCH:x')).toBeNull();
     expect(

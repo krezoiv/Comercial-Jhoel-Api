@@ -7,6 +7,7 @@ import {
   BankMovementStatus,
   BankMovementType,
   BankTransfer,
+  BankTransferKind,
 } from '../../domain/entities/bank-account-movement.entity';
 import {
   AdjustBankBalanceData,
@@ -59,6 +60,7 @@ interface MovementRow {
 
 interface TransferRow {
   id: string;
+  kind: BankTransferKind;
   business_date: string;
   created_at: Date;
   amount: string;
@@ -72,11 +74,11 @@ interface TransferRow {
   source_account_number: string;
   source_balance_before: string;
   source_balance_after: string;
-  destination_bank_id: string;
-  destination_bank_name: string;
-  destination_account_number: string;
-  destination_balance_before: string;
-  destination_balance_after: string;
+  destination_bank_id: string | null;
+  destination_bank_name: string | null;
+  destination_account_number: string | null;
+  destination_balance_before: string | null;
+  destination_balance_after: string | null;
 }
 
 // `numeric` llega como string desde pg — mismo motivo que
@@ -100,9 +102,12 @@ const MOVEMENT_SELECT = `
   LEFT JOIN users ru ON ru.id = m.reversed_by
 `;
 
+// Salida (`s`) + entrada opcional (`e`): un retiro de efectivo en banco
+// (`RETIRO_EFECTIVO`) no tiene entrada, por eso LEFT JOIN y destino nulo.
 const TRANSFER_SELECT = `
   SELECT
     s.reference_id AS id,
+    CASE WHEN s.movement_type = 'RETIRO_EFECTIVO' THEN 'CASH_WITHDRAWAL' ELSE 'TRANSFER' END AS kind,
     to_char(s.business_date, 'YYYY-MM-DD') AS business_date,
     s.created_at, -s.amount AS amount, s.user_id, u.username,
     s.reference_text, s.concept, s.status,
@@ -111,15 +116,15 @@ const TRANSFER_SELECT = `
     e.bank_id AS destination_bank_id, db.name AS destination_bank_name, db.account_number AS destination_account_number,
     e.balance_before AS destination_balance_before, e.balance_after AS destination_balance_after
   FROM bank_account_movements s
-  JOIN bank_account_movements e
+  LEFT JOIN bank_account_movements e
     ON e.reference_type = 'BANK_TRANSFER'
    AND e.reference_id = s.reference_id
    AND e.movement_type = 'TRANSFERENCIA_ENTRADA'
   JOIN banks sb ON sb.id = s.bank_id
-  JOIN banks db ON db.id = e.bank_id
+  LEFT JOIN banks db ON db.id = e.bank_id
   JOIN users u ON u.id = s.user_id
   WHERE s.reference_type = 'BANK_TRANSFER'
-    AND s.movement_type = 'TRANSFERENCIA_SALIDA'
+    AND s.movement_type IN ('TRANSFERENCIA_SALIDA', 'RETIRO_EFECTIVO')
 `;
 
 @Injectable()
@@ -315,9 +320,9 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
         source_bank_id: string;
         source_bank_name: string;
         source_account_number: string;
-        destination_bank_id: string;
-        destination_bank_name: string;
-        destination_account_number: string;
+        destination_bank_id: string | null;
+        destination_bank_name: string | null;
+        destination_account_number: string | null;
         transfer_count: string;
         total_amount: string;
       }[]
@@ -370,6 +375,14 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
       add('e.bank_id = ?', filters.destinationBankId);
     if (filters.userId) add('s.user_id = ?', filters.userId);
     if (filters.status) add('s.status = ?', filters.status);
+    if (filters.kind) {
+      add(
+        's.movement_type = ?',
+        filters.kind === 'CASH_WITHDRAWAL'
+          ? 'RETIRO_EFECTIVO'
+          : 'TRANSFERENCIA_SALIDA',
+      );
+    }
     return {
       where: conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '',
       params,
@@ -432,6 +445,7 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
   private toTransfer(row: TransferRow): BankTransfer {
     return {
       id: row.id,
+      kind: row.kind,
       businessDate: row.business_date,
       createdAt: row.created_at,
       amount: parseFloat(row.amount),
@@ -447,13 +461,16 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
         balanceBefore: parseFloat(row.source_balance_before),
         balanceAfter: parseFloat(row.source_balance_after),
       },
-      destination: {
-        bankId: row.destination_bank_id,
-        bankName: row.destination_bank_name,
-        accountNumber: row.destination_account_number,
-        balanceBefore: parseFloat(row.destination_balance_before),
-        balanceAfter: parseFloat(row.destination_balance_after),
-      },
+      destination:
+        row.destination_bank_id !== null
+          ? {
+              bankId: row.destination_bank_id,
+              bankName: row.destination_bank_name ?? '',
+              accountNumber: row.destination_account_number ?? '',
+              balanceBefore: parseFloat(row.destination_balance_before ?? '0'),
+              balanceAfter: parseFloat(row.destination_balance_after ?? '0'),
+            }
+          : null,
     };
   }
 

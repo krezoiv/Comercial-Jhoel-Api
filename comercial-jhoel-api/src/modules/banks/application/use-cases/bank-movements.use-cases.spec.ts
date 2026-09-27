@@ -10,6 +10,7 @@ import {
   BankOperationDayClosedError,
   BankOperationDayNotOpenedError,
   BankTransferAlreadyVoidedError,
+  BankTransferDestinationRequiredError,
   BankTransferNotFoundError,
   InvalidBankMovementDateRangeError,
   MovementReasonRequiredError,
@@ -43,6 +44,7 @@ function buildTransfer(
 ): BankTransfer {
   return {
     id: 'transfer-1',
+    kind: 'TRANSFER',
     businessDate: todayIsoDate(),
     createdAt: new Date(),
     amount: 2000,
@@ -140,7 +142,46 @@ describe('RegisterBankTransferUseCase', () => {
       concept: null,
     });
     expect(result.source.balanceAfter).toBe(3000);
-    expect(result.destination.balanceAfter).toBe(12000);
+    expect(result.destination?.balanceAfter).toBe(12000);
+  });
+});
+
+describe('RegisterBankTransferUseCase — retiro de efectivo', () => {
+  let repository: jest.Mocked<BankMovementRepository>;
+  let useCase: RegisterBankTransferUseCase;
+
+  beforeEach(() => {
+    repository = mockRepository();
+    const dayOpeningRepository = {
+      findByDate: jest.fn().mockResolvedValue(buildDayOpening(null)),
+    } as unknown as jest.Mocked<DayOpeningRepository>;
+    useCase = new RegisterBankTransferUseCase(repository, dayOpeningRepository);
+    repository.registerTransfer.mockResolvedValue('transfer-1');
+    repository.findTransferById.mockResolvedValue(buildTransfer());
+  });
+
+  it('envía destino nulo cuando es retiro de efectivo (aunque venga una cuenta destino)', async () => {
+    await useCase.execute({
+      sourceBankId: 'a',
+      destinationBankId: 'b',
+      cashWithdrawal: true,
+      amount: 100,
+      userId: 'u',
+    });
+    expect(repository.registerTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceBankId: 'a',
+        destinationBankId: null,
+        amount: 100,
+      }),
+    );
+  });
+
+  it('exige una cuenta destino si no es retiro de efectivo', async () => {
+    await expect(
+      useCase.execute({ sourceBankId: 'a', amount: 100, userId: 'u' }),
+    ).rejects.toThrow(BankTransferDestinationRequiredError);
+    expect(repository.registerTransfer).not.toHaveBeenCalled();
   });
 });
 

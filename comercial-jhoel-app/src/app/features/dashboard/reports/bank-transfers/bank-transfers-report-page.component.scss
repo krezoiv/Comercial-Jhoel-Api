@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .transfers-report-table td {
   vertical-align: top;
 }
@@ -16,7 +18,60 @@
 }
 
 .cell-wrap {
-  max-width: 16rem;
+  max-width: 13rem;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+// Los selectores de cuenta tienen opciones largas ("Banco · Tipo · No. cuenta"):
+// sin esto, la cuadrícula de filtros estira sus columnas al ancho de ese texto
+// y la página entera se desborda hacia los lados.
+.filters-grid > .field {
+  min-width: 0;
+
+  select,
+  input {
+    width: 100%;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+}
+
+// Seis filtros en una sola fila en escritorio (el reporte base usa cinco).
+.filters-grid {
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+// Las celdas de cuenta traen nombre + número + saldos: se permite que bajen
+// de línea para que la tabla completa (incluida "Acciones") quepa en
+// escritorio sin desplazamiento; en pantallas angostas el contenedor sigue
+// desplazándose por su cuenta, sin mover la página.
+.transfers-report-table {
+  th,
+  td {
+    white-space: normal;
+    padding-inline: var(--space-2);
+  }
+
+  th.align-right {
+    text-align: right;
+  }
+
+  .cell-muted {
+    white-space: nowrap;
+  }
+
+  // Un monto o una fecha nunca se parten en dos líneas.
+  .report-table__total,
+  td:first-child {
+    white-space: nowrap;
+  }
+
+  th:last-child,
+  td:last-child {
+    width: 1%;
+    padding-inline: var(--space-2) var(--space-4);
+  }
 }

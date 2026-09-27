@@ -36,3 +36,17 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+// Los selectores de cuenta tienen opciones largas ("Banco · Tipo · No. cuenta"):
+// sin esto, la cuadrícula de filtros estira sus columnas al ancho de ese texto
+// y la página entera se desborda hacia los lados.
+.filters-grid > .field {
+  min-width: 0;
+
+  select,
+  input {
+    width: 100%;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+}

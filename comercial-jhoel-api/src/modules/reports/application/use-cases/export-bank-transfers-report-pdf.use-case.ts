@@ -62,7 +62,9 @@ export class ExportBankTransfersReportPdfUseCase {
     const rows = page.items.map((transfer) => [
       formatIsoDate(transfer.businessDate),
       `${transfer.source.bankName} · ${transfer.source.accountNumber}`,
-      `${transfer.destination.bankName} · ${transfer.destination.accountNumber}`,
+      transfer.destination
+        ? `${transfer.destination.bankName} · ${transfer.destination.accountNumber}`
+        : 'Retiro de efectivo en banco',
       formatReportCurrency(transfer.amount),
       transfer.referenceText ?? transfer.concept ?? '—',
       transfer.username,
@@ -128,6 +130,15 @@ export class ExportBankTransfersReportPdfUseCase {
       lines.push({
         label: 'Usuario',
         value: user?.username ?? user?.name ?? '—',
+      });
+    }
+    if (input.kind) {
+      lines.push({
+        label: 'Tipo',
+        value:
+          input.kind === 'CASH_WITHDRAWAL'
+            ? 'Retiros de efectivo en banco'
+            : 'Transferencias entre cuentas',
       });
     }
     if (input.status) {

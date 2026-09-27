@@ -18,13 +18,22 @@ function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+/** Valor del selector "Cuenta destino" para el retiro de efectivo en banco (no es una cuenta). */
+export const CASH_WITHDRAWAL_VALUE = '__retiro_efectivo__';
+
+const BI_CLUB_SOURCE_RULE = 'BI Club Empresarial solo puede transferir a Banco Industrial.';
+
 /**
- * Regla de origen para las cuentas especiales — espejo (solo UX) de
- * `register_bank_transfer`: BI Club solo recibe de Banco Industrial y
- * Districol solo de Banco Agromercantil. El backend lo vuelve a validar.
+ * Reglas de las cuentas especiales — espejo (solo UX) de
+ * `register_bank_transfer`: BI Club solo recibe de Banco Industrial y, como
+ * origen, solo traslada a Banco Industrial; Districol solo recibe de Banco
+ * Agromercantil. El backend lo vuelve a validar.
  */
 function destinationRuleError(source: Bank | null, destination: Bank | null): string | null {
   if (!source || !destination) return null;
+  if (source.specialAccount === 'BI_CLUB' && destination.specialAccount !== 'BANCO_INDUSTRIAL') {
+    return BI_CLUB_SOURCE_RULE;
+  }
   if (destination.specialAccount === 'BI_CLUB' && source.specialAccount !== 'BANCO_INDUSTRIAL') {
     return 'Solo Banco Industrial puede transferir a BI Club Empresarial.';
   }
@@ -32,6 +41,11 @@ function destinationRuleError(source: Bank | null, destination: Bank | null): st
     return 'Solo Banco Agromercantil puede transferir a Districol.';
   }
   return null;
+}
+
+/** El retiro de efectivo en banco no se permite desde BI Club (solo traslada a Banco Industrial). */
+function cashWithdrawalRuleError(source: Bank | null): string | null {
+  return source?.specialAccount === 'BI_CLUB' ? BI_CLUB_SOURCE_RULE : null;
 }
 
 /**
@@ -85,6 +99,10 @@ export class BankTransfersPageComponent {
   readonly isVoiding = signal(false);
 
   readonly source = computed(() => this.accounts().find((bank) => bank.id === this.sourceId()) ?? null);
+  readonly cashWithdrawalValue = CASH_WITHDRAWAL_VALUE;
+  /** "Retiro de efectivo en banco": solo disminuye el origen, no acredita a ninguna cuenta. */
+  readonly isCashWithdrawal = computed(() => this.destinationId() === CASH_WITHDRAWAL_VALUE);
+  readonly cashWithdrawalBlockedReason = computed(() => cashWithdrawalRuleError(this.source()));
   readonly destination = computed(() => this.accounts().find((bank) => bank.id === this.destinationId()) ?? null);
 
   /** Destinos posibles: cualquier otra cuenta; los especiales bloqueados por la regla de origen se muestran deshabilitados con el motivo. */
@@ -94,32 +112,44 @@ export class BankTransfersPageComponent {
       .map((bank) => ({ bank, blockedReason: destinationRuleError(this.source(), bank) })),
   );
 
+  /** `destinationBefore/After` son `null` en un retiro de efectivo (no hay cuenta que reciba). */
   readonly preview = computed(() => {
     const source = this.source();
     const destination = this.destination();
+    const cash = this.isCashWithdrawal();
     const amount = round2(this.amount() ?? 0);
-    if (!source || !destination || amount <= 0) return null;
+    if (!source || (!destination && !cash) || amount <= 0) return null;
     return {
       amount,
       sourceBefore: source.finalBalance,
       sourceAfter: round2(source.finalBalance - amount),
-      destinationBefore: destination.finalBalance,
-      destinationAfter: round2(destination.finalBalance + amount),
+      destinationBefore: destination ? destination.finalBalance : null,
+      destinationAfter: destination ? round2(destination.finalBalance + amount) : null,
     };
   });
 
   readonly validationError = computed<string | null>(() => {
     const source = this.source();
     const destination = this.destination();
+    const cash = this.isCashWithdrawal();
     const amount = this.amount();
-    if (!source || !destination) return null;
-    const ruleError = destinationRuleError(source, destination);
+    if (!source || (!destination && !cash)) return null;
+    const ruleError = cash ? cashWithdrawalRuleError(source) : destinationRuleError(source, destination);
     if (ruleError) return ruleError;
     if (amount === null) return null;
     if (amount <= 0) return 'El monto debe ser mayor que cero.';
-    if (round2(amount) > source.finalBalance) return 'Saldo insuficiente para realizar la transferencia.';
+    if (round2(amount) > source.finalBalance) {
+      return cash
+        ? 'Saldo insuficiente para realizar el retiro de efectivo.'
+        : 'Saldo insuficiente para realizar la transferencia.';
+    }
     const preview = this.preview();
-    if (preview && destination.maxBalance !== null && preview.destinationAfter > destination.maxBalance) {
+    if (
+      destination &&
+      preview?.destinationAfter != null &&
+      destination.maxBalance !== null &&
+      preview.destinationAfter > destination.maxBalance
+    ) {
       return destination.specialAccount === 'BI_CLUB'
         ? `El saldo de BI Club Empresarial no puede superar el límite configurado de ${formatSignedBankBalance(destination.maxBalance)}.`
         : `El saldo de ${destination.name} no puede superar el límite configurado de ${formatSignedBankBalance(destination.maxBalance)}.`;
@@ -138,7 +168,8 @@ export class BankTransfersPageComponent {
 
   onSourceChange(id: string): void {
     this.sourceId.set(id);
-    if (this.destinationId() === id || destinationRuleError(this.source(), this.destination())) {
+    const invalidCash = this.isCashWithdrawal() && cashWithdrawalRuleError(this.source()) !== null;
+    if (this.destinationId() === id || invalidCash || destinationRuleError(this.source(), this.destination())) {
       this.destinationId.set('');
     }
   }
@@ -164,7 +195,7 @@ export class BankTransfersPageComponent {
     this.bankTransferService
       .registerTransfer({
         sourceBankId: this.sourceId(),
-        destinationBankId: this.destinationId(),
+        ...(this.isCashWithdrawal() ? { cashWithdrawal: true } : { destinationBankId: this.destinationId() }),
         amount: preview.amount,
         ...(this.referenceText().trim() ? { referenceText: this.referenceText().trim() } : {}),
         ...(this.concept().trim() ? { concept: this.concept().trim() } : {}),
@@ -174,7 +205,9 @@ export class BankTransfersPageComponent {
           this.isSaving.set(false);
           this.isConfirmOpen.set(false);
           this.notificationService.success(
-            `Transferencia registrada. ${transfer.source.bankName}: ${formatSignedBankBalance(transfer.source.balanceAfter)} · ${transfer.destination.bankName}: ${formatSignedBankBalance(transfer.destination.balanceAfter)}.`,
+            transfer.destination
+              ? `Transferencia registrada. ${transfer.source.bankName}: ${formatSignedBankBalance(transfer.source.balanceAfter)} · ${transfer.destination.bankName}: ${formatSignedBankBalance(transfer.destination.balanceAfter)}.`
+              : `Retiro de efectivo registrado. Nuevo saldo de ${transfer.source.bankName}: ${formatSignedBankBalance(transfer.source.balanceAfter)}.`,
           );
           this.resetForm();
           this.loadAccounts();

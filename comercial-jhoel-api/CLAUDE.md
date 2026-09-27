@@ -1328,6 +1328,15 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Tira de saldos** `GET /banks/balance-strip` (cualquier autenticado): cuentas `available_in_transaccionar` + Génesis
   y BI Club siempre; `trend` = signo del ÚLTIMO movimiento (sin SALDO_INICIAL, `DISTINCT ON (bank_id) … sequence
   DESC`); `trendTone` invertido para GENESIS/BI_CLUB (bajar = POSITIVE). Lo usan Transaccionar y Resumen.
+- **Reporte de Transferencias** `GET /reports/bank-transfers` (+ `/summary`, `/export`, admin): filtros fecha/origen/
+  destino/usuario/estado; `findTransfers(filters, page, limit)` y `getTransfersSummary()` del mismo
+  `BANK_MOVEMENT_REPOSITORY` (totales sin anuladas, `byRoute` origen→destino). Verificado contra la base en una
+  transacción revertida.
+- **Retiro de efectivo en banco / BI Club como origen** (migración `1760005300000`): `register_bank_transfer` con
+  destino `NULL` registra un solo movimiento `RETIRO_EFECTIVO` (resta al origen, no acredita; saldo suficiente,
+  ni Génesis queda negativo). BI Club como ORIGEN solo va a `BANCO_INDUSTRIAL`
+  (`TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB`, incluye el retiro). `TRANSFER_SELECT` usa LEFT JOIN: `BankTransfer.kind`
+  (`TRANSFER`/`CASH_WITHDRAWAL`) y `destination: null`; filtro `kind` en el reporte.
 - Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
   compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia
