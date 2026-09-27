@@ -18,6 +18,7 @@ export interface UpdateBankInput {
   finalBalance?: number;
   specialAccount?: string | null;
   maxBalance?: number | null;
+  availableInTransaccionar?: boolean;
   updatedBy: string;
 }
 
@@ -90,6 +91,9 @@ export class UpdateBankUseCase {
         : {}),
       ...(input.maxBalance !== undefined
         ? { maxBalance: input.maxBalance ?? null }
+        : {}),
+      ...(input.availableInTransaccionar !== undefined
+        ? { availableInTransaccionar: input.availableInTransaccionar }
         : {}),
       updatedBy: input.updatedBy,
     });

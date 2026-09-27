@@ -12,6 +12,7 @@ import {
   AdjustBankBalanceData,
   BankMovementFilters,
   BankMovementRepository,
+  LastBankMovement,
   PaginatedBankMovements,
   RegisterBankTransferData,
 } from '../../domain/repositories/bank-movement.repository';
@@ -240,6 +241,25 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
       [transferId],
     );
     return rows.length > 0 ? this.toTransfer(rows[0]) : null;
+  }
+
+  async getLastMovementByBank(): Promise<Map<string, LastBankMovement>> {
+    // DISTINCT ON + ORDER BY sequence DESC: el movimiento más reciente por
+    // cuenta, usando el índice (bank_id, sequence).
+    const rows = await this.manager.query<
+      { bank_id: string; amount: string; created_at: Date }[]
+    >(
+      `SELECT DISTINCT ON (bank_id) bank_id, amount, created_at
+       FROM bank_account_movements
+       WHERE movement_type <> 'SALDO_INICIAL'
+       ORDER BY bank_id, sequence DESC`,
+    );
+    return new Map(
+      rows.map((row) => [
+        row.bank_id,
+        { amount: parseFloat(row.amount), createdAt: row.created_at },
+      ]),
+    );
   }
 
   async findTransfers(

@@ -6,6 +6,7 @@
           <th>Banco</th>
           <th>Número de Cuenta</th>
           <th>Tipo de Cuenta</th>
+          <th>En Transaccionar</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -14,6 +15,7 @@
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
             <td><span class="skeleton skeleton--lg"></span></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
@@ -70,6 +72,11 @@
             </button>
           </th>
           <th>
+            <span class="th-with-hint" title="Cuentas que aparecen en «Cuenta bancaria afectada» de Transaccionar">
+              En Transaccionar
+            </span>
+          </th>
+          <th>
             <button type="button" class="sort-btn" (click)="toggleSort('isActive')">
               Estado
               <app-icon [name]="sortIcon('isActive')" [size]="14" />
@@ -86,6 +93,22 @@
             <td class="bank-table__name">{{ bank.name }}</td>
             <td class="bank-table__account-number">{{ bank.accountNumber }}</td>
             <td>{{ bank.accountTypeName }}</td>
+            <td>
+              @if (canManage) {
+                <label class="switch" [class.switch--busy]="togglingId === bank.id">
+                  <input
+                    type="checkbox"
+                    [checked]="bank.availableInTransaccionar"
+                    [disabled]="!bank.isActive || togglingId === bank.id"
+                    (change)="toggleTransaccionar.emit(bank)"
+                    [attr.aria-label]="'Mostrar ' + bank.name + ' ' + bank.accountNumber + ' en Transaccionar'"
+                  />
+                  <span class="switch__track"></span>
+                </label>
+              } @else {
+                {{ bank.availableInTransaccionar ? 'Sí' : 'No' }}
+              }
+            </td>
             <td>
               <app-badge [tone]="bank.isActive ? 'success' : 'danger'">
                 {{ bank.isActive ? 'Activo' : 'Inactivo' }}
@@ -127,6 +150,20 @@
           <div>
             <p class="bank-card__name">{{ bank.name }}</p>
             <p class="bank-card__account-number">{{ bank.accountNumber }} · {{ bank.accountTypeName }}</p>
+            @if (canManage) {
+              <label class="card-toggle">
+                <span class="switch" [class.switch--busy]="togglingId === bank.id">
+                  <input
+                    type="checkbox"
+                    [checked]="bank.availableInTransaccionar"
+                    [disabled]="!bank.isActive || togglingId === bank.id"
+                    (change)="toggleTransaccionar.emit(bank)"
+                  />
+                  <span class="switch__track"></span>
+                </span>
+                En Transaccionar
+              </label>
+            }
           </div>
           <app-badge [tone]="bank.isActive ? 'success' : 'danger'">
             {{ bank.isActive ? 'Activo' : 'Inactivo' }}

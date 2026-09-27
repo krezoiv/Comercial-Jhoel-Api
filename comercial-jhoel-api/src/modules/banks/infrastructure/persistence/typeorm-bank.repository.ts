@@ -73,6 +73,7 @@ export class TypeOrmBankRepository implements BankRepository {
               finalBalance: data.finalBalance,
               specialAccount: data.specialAccount,
               maxBalance: data.maxBalance,
+              availableInTransaccionar: data.availableInTransaccionar,
               createdBy: data.createdBy,
             }),
           );

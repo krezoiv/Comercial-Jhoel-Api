@@ -9,7 +9,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { DashboardMetricsService } from '../../../core/services/dashboard-metrics.service';
 import { DashboardSummaryService } from '../../../core/services/dashboard-summary.service';
-import { CardComponent, IconComponent, SummaryTileComponent, TransactionMonthlyChartComponent } from '../../../shared/ui';
+import {
+  BankBalanceStripComponent,
+  CardComponent,
+  IconComponent,
+  SummaryTileComponent,
+  TransactionMonthlyChartComponent,
+} from '../../../shared/ui';
 import { FinancialIndicatorsComponent } from './components/financial-indicators/financial-indicators.component';
 import { RechargeIndicatorsSectionComponent } from './components/recharge-indicators-section/recharge-indicators-section.component';
 import { TransactionSummaryCardComponent } from '../transaccionar/components/transaction-summary-card/transaction-summary-card.component';
@@ -29,6 +35,7 @@ const BANCOS_CARD_ID = 'bancos';
     IconComponent,
     SummaryTileComponent,
     TransactionMonthlyChartComponent,
+    BankBalanceStripComponent,
     FinancialIndicatorsComponent,
     TransactionSummaryCardComponent,
     RechargeIndicatorsSectionComponent,

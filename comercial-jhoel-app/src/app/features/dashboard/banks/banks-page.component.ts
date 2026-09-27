@@ -48,6 +48,9 @@ export class BanksPageComponent {
   readonly deletingBank = signal<Bank | null>(null);
   readonly isDeleting = signal(false);
 
+  /** Cuenta cuyo "En Transaccionar" se está guardando — bloquea el doble clic. */
+  readonly togglingTransaccionarId = signal<string | null>(null);
+
   readonly filteredBanks = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const status = this.statusFilter();
@@ -105,6 +108,32 @@ export class BanksPageComponent {
     this.notificationService.success(
       wasEditing ? `"${bank.name}" se actualizó correctamente.` : `"${bank.name}" se agregó correctamente.`,
     );
+  }
+
+  /** Muestra/oculta la cuenta en "Cuenta bancaria afectada" de Transaccionar. La tabla refleja lo que el backend guardó, nunca un cambio optimista. */
+  toggleTransaccionar(bank: Bank): void {
+    if (this.togglingTransaccionarId()) {
+      return;
+    }
+    const next = !bank.availableInTransaccionar;
+    this.togglingTransaccionarId.set(bank.id);
+    this.bankService.setAvailableInTransaccionar(bank.id, next).subscribe({
+      next: (updated) => {
+        this.togglingTransaccionarId.set(null);
+        this.banks.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));
+        this.notificationService.success(
+          next
+            ? `${bank.name} · ${bank.accountNumber} ahora aparece en Transaccionar.`
+            : `${bank.name} · ${bank.accountNumber} ya no aparece en Transaccionar.`,
+        );
+      },
+      error: (error: HttpErrorResponse) => {
+        this.togglingTransaccionarId.set(null);
+        // Revierte el interruptor al valor real guardado.
+        this.banks.update((list) => list.map((b) => (b.id === bank.id ? { ...b } : b)));
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo actualizar la cuenta.'));
+      },
+    });
   }
 
   requestDelete(bank: Bank): void {

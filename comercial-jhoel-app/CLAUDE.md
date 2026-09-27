@@ -1234,6 +1234,12 @@ ninguna pantalla lo calcula para guardar — las vistas previas "saldo actual �
 - **Finanzas → Transferencias Bancarias** (`features/dashboard/bank-transfers/`) y **Reportería →
   Movimientos Bancarios** (`reports/bank-movements/`, admin, reutiliza estilos/paginación de Reporte de
   Transacciones).
+- El selector "Cuenta bancaria afectada" solo lista cuentas con `availableInTransaccionar` (interruptor "En
+  Transaccionar" en la tabla de Sistema → Bancos y en el formulario).
+- `<app-bank-balance-strip>` (shared/ui, se autocarga y refresca al volver a la pestaña): tira de saldos entre las
+  tarjetas de resumen y los tipos en Transaccionar, y en Resumen. Solo pinta `trend`/`trendTone` del backend.
+- El input "Monto Total a Depositar" usa `appDecimalInput thousands` (1,000.00) vía `ngModel`, así "Saldo después"
+  (con flecha verde/roja) se actualiza en cada tecla.
 - Sistema → Bancos edita `specialAccount`/`maxBalance`; en edición el saldo es de solo lectura. Sistema →
   Tipo de Transacción edita `balanceEffect`.
 

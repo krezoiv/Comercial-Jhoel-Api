@@ -30,6 +30,8 @@ export interface BankProps {
   specialAccount: BankSpecialAccount | null;
   /** Límite máximo configurable del saldo (BI Club / Génesis) — `null` = sin límite. */
   maxBalance: number | null;
+  /** Si la cuenta aparece en "Cuenta bancaria afectada" de Transaccionar (configurable en Sistema → Bancos). */
+  availableInTransaccionar: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -80,6 +82,10 @@ export class Bank {
 
   get maxBalance(): number | null {
     return this.props.maxBalance;
+  }
+
+  get availableInTransaccionar(): boolean {
+    return this.props.availableInTransaccionar;
   }
 
   get isActive(): boolean {

@@ -21,6 +21,8 @@
     (delete)="requestDelete($event)"
     (clearFilters)="clearFilters()"
     (addBank)="openCreateForm()"
+    [togglingId]="togglingTransaccionarId()"
+    (toggleTransaccionar)="toggleTransaccionar($event)"
   />
 </div>
 

@@ -38,6 +38,7 @@ import { VoidBankTransferUseCase } from './application/use-cases/void-bank-trans
 import { ListBankTransfersUseCase } from './application/use-cases/list-bank-transfers.use-case';
 import { AdjustBankBalanceUseCase } from './application/use-cases/adjust-bank-balance.use-case';
 import { ListBankMovementsUseCase } from './application/use-cases/list-bank-movements.use-case';
+import { GetBankBalanceStripUseCase } from './application/use-cases/get-bank-balance-strip.use-case';
 import { BanksController } from './presentation/controllers/banks.controller';
 import { AgentReconciliationsController } from './presentation/controllers/agent-reconciliations.controller';
 import { ClosedDaysController } from './presentation/controllers/closed-days.controller';
@@ -111,6 +112,7 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     ListBankTransfersUseCase,
     AdjustBankBalanceUseCase,
     ListBankMovementsUseCase,
+    GetBankBalanceStripUseCase,
   ],
   // DAY_OPENING_REPOSITORY exported for BankDepositsModule (Transaccionar),
   // which reuses the exact same "día abierto/cerrado" business-day cycle

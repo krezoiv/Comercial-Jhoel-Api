@@ -28,6 +28,10 @@ import { ValidateBankBalancesForDateUseCase } from '../../application/use-cases/
 import { GetDayStatusUseCase } from '../../application/use-cases/get-day-status.use-case';
 import { OpenDayUseCase } from '../../application/use-cases/open-day.use-case';
 import { AdjustBankBalanceUseCase } from '../../application/use-cases/adjust-bank-balance.use-case';
+import {
+  BankBalanceStripItem,
+  GetBankBalanceStripUseCase,
+} from '../../application/use-cases/get-bank-balance-strip.use-case';
 import { AdjustBankBalanceRequestDto } from '../dtos/adjust-bank-balance.request.dto';
 import { BankMovementOutput } from '../../application/dtos/bank-movement-output';
 import { CreateBankRequestDto } from '../dtos/create-bank.request.dto';
@@ -77,6 +81,7 @@ export class BanksController {
     private readonly getDayStatusUseCase: GetDayStatusUseCase,
     private readonly openDayUseCase: OpenDayUseCase,
     private readonly adjustBankBalanceUseCase: AdjustBankBalanceUseCase,
+    private readonly getBankBalanceStripUseCase: GetBankBalanceStripUseCase,
   ) {}
 
   /**
@@ -106,6 +111,16 @@ export class BanksController {
       date: dto.date ?? todayIsoDate(),
       userId,
     });
+  }
+
+  /**
+   * Tira de saldos (Transaccionar y Resumen): cuentas principales, saldo
+   * actual y tendencia del día. Cualquier cuenta autenticada, igual que
+   * `balances`. Declarada antes de `:id` por el mismo motivo de enrutamiento.
+   */
+  @Get('balance-strip')
+  getBalanceStrip(): Promise<BankBalanceStripItem[]> {
+    return this.getBankBalanceStripUseCase.execute();
   }
 
   @Get('balances')

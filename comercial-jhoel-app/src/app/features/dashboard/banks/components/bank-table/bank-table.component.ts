@@ -34,6 +34,10 @@ export class BankTableComponent {
   @Output() delete = new EventEmitter<Bank>();
   @Output() clearFilters = new EventEmitter<void>();
   @Output() addBank = new EventEmitter<void>();
+  /** Alternar "Visible en Transaccionar" desde la tabla, sin abrir el formulario. */
+  @Output() toggleTransaccionar = new EventEmitter<Bank>();
+  /** Id de la cuenta cuyo cambio de visibilidad está en curso (bloquea el doble clic). */
+  @Input() togglingId: string | null = null;
 
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
 

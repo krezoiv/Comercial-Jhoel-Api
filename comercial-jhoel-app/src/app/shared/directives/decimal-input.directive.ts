@@ -1,4 +1,13 @@
-import { Directive, ElementRef, HostListener, Input, Renderer2, forwardRef, inject } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  HostListener,
+  Input,
+  Renderer2,
+  booleanAttribute,
+  forwardRef,
+  inject,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 const NAVIGATION_KEYS = new Set([
@@ -56,6 +65,14 @@ export class DecimalInputDirective implements ControlValueAccessor {
   @Input() appDecimalInput: number | '' = 2;
   /** Set true only for the rare field that may legitimately go negative (e.g. a "resultado del cuadre" difference is never typed directly, but a future signed field could opt in). */
   @Input() allowNegative = false;
+  /**
+   * Opt-in: muestra separador de miles mientras se escribe (`1,000`) y, al
+   * salir del campo, el formato completo `1,000.00`. El valor emitido al
+   * modelo sigue siendo el número limpio (`1000`). Solo funciona con
+   * `ngModel`/`formControlName` — sin esta opción el comportamiento es
+   * idéntico al de siempre para cada campo existente.
+   */
+  @Input({ transform: booleanAttribute }) thousands = false;
 
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
   private readonly renderer = inject(Renderer2);
@@ -70,8 +87,53 @@ export class DecimalInputDirective implements ControlValueAccessor {
   // ---- ControlValueAccessor — only ever exercised under formControlName/ngModel ----
 
   writeValue(value: number | string | null): void {
-    const display = value === null || value === undefined || value === '' ? '' : String(value);
+    const empty = value === null || value === undefined || value === '';
+    const display = empty ? '' : this.thousands ? this.formatFull(Number(value)) : String(value);
     this.renderer.setProperty(this.el.nativeElement, 'value', display);
+  }
+
+  /** `1234.5` → `"1,234.50"` (con `thousands`). */
+  private formatFull(value: number): string {
+    if (!Number.isFinite(value)) {
+      return '';
+    }
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: this.decimals,
+      maximumFractionDigits: this.decimals,
+    });
+  }
+
+  /**
+   * Reaplica los separadores de miles a lo que el usuario está escribiendo,
+   * sin rellenar decimales (respeta un "12." o "12.5" a medio escribir) y
+   * conservando la posición del cursor: se cuenta cuántos dígitos quedaban
+   * antes del cursor y se lo vuelve a poner después del mismo dígito.
+   */
+  private reformatWhileTyping(): void {
+    const input = this.el.nativeElement;
+    const raw = input.value;
+    const caret = input.selectionStart ?? raw.length;
+    const digitsBeforeCaret = raw.slice(0, caret).replace(/[^0-9.]/g, '').length;
+
+    const negative = raw.startsWith('-');
+    const clean = raw.replace(/[^0-9.]/g, '');
+    const [integerPart, ...rest] = clean.split('.');
+    const groupedInteger = integerPart.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const formatted = (negative ? '-' : '') + groupedInteger + (rest.length > 0 ? '.' + rest.join('') : '');
+
+    if (formatted === raw) {
+      return;
+    }
+    input.value = formatted;
+    let seen = 0;
+    let position = negative ? 1 : 0;
+    while (position < formatted.length && seen < digitsBeforeCaret) {
+      if (/[0-9.]/.test(formatted[position])) {
+        seen++;
+      }
+      position++;
+    }
+    input.setSelectionRange(position, position);
   }
 
   registerOnChange(fn: (value: number | null) => void): void {
@@ -88,7 +150,10 @@ export class DecimalInputDirective implements ControlValueAccessor {
 
   @HostListener('input')
   onInput(): void {
-    const raw = this.el.nativeElement.value.trim();
+    if (this.thousands) {
+      this.reformatWhileTyping();
+    }
+    const raw = this.el.nativeElement.value.replace(/,/g, '').trim();
     if (raw === '' || raw === '-') {
       this.onChange(null);
       return;
@@ -99,6 +164,13 @@ export class DecimalInputDirective implements ControlValueAccessor {
 
   @HostListener('blur')
   onBlur(): void {
+    if (this.thousands) {
+      const raw = this.el.nativeElement.value.replace(/,/g, '').trim();
+      const parsed = Number(raw);
+      if (raw !== '' && raw !== '-' && Number.isFinite(parsed)) {
+        this.el.nativeElement.value = this.formatFull(parsed);
+      }
+    }
     this.onTouched();
   }
 
@@ -165,7 +237,8 @@ export class DecimalInputDirective implements ControlValueAccessor {
 
   @HostListener('paste', ['$event'])
   onPaste(event: ClipboardEvent): void {
-    const pasted = (event.clipboardData?.getData('text') ?? '').trim();
+    const text = (event.clipboardData?.getData('text') ?? '').trim();
+    const pasted = this.thousands ? text.replace(/,/g, '') : text;
     const sign = this.allowNegative ? '-?' : '';
     const pattern =
       this.decimals > 0

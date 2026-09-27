@@ -11,6 +11,7 @@ export interface CreateBankData {
   finalBalance: number;
   specialAccount: BankSpecialAccount | null;
   maxBalance: number | null;
+  availableInTransaccionar: boolean;
   createdBy: string;
 }
 
@@ -21,6 +22,7 @@ export interface UpdateBankData {
   previousBalance?: number;
   specialAccount?: BankSpecialAccount | null;
   maxBalance?: number | null;
+  availableInTransaccionar?: boolean;
   updatedBy: string;
 }
 

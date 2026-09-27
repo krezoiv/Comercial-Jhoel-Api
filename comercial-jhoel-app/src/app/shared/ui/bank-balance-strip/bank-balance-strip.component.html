@@ -1,0 +1,38 @@
+<nav class="strip" aria-label="Saldos bancarios">
+  <div class="strip__label">
+    <app-icon name="bank" [size]="16" />
+    <span>Saldos</span>
+  </div>
+
+  @if (loading()) {
+    <p class="strip__note">Cargando saldos…</p>
+  } @else if (failed()) {
+    <p class="strip__note">No se pudieron cargar los saldos.</p>
+  } @else if (items().length === 0) {
+    <p class="strip__note">No hay cuentas marcadas "En Transaccionar" en Sistema → Bancos.</p>
+  } @else {
+    <ul class="strip__list">
+      @for (item of items(); track item.bankId) {
+        <li class="strip__item" [title]="trendLabel(item)">
+          <div class="strip__row">
+            <span class="strip__name">{{ item.bankName }}</span>
+            <span class="strip__balance">
+              <app-bank-balance-amount [value]="item.currentBalance" [specialAccount]="item.specialAccount" strong />
+              @if (item.trend !== 'FLAT') {
+                <span
+                  class="trend"
+                  [class.trend--positive]="item.trendTone === 'POSITIVE'"
+                  [class.trend--negative]="item.trendTone === 'NEGATIVE'"
+                  [attr.aria-label]="trendLabel(item)"
+                >
+                  <app-icon [name]="item.trend === 'UP' ? 'arrow-up' : 'arrow-down'" [size]="14" />
+                </span>
+              }
+            </span>
+          </div>
+          <span class="strip__account">{{ item.accountNumber }}</span>
+        </li>
+      }
+    </ul>
+  }
+</nav>

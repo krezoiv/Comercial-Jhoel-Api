@@ -51,6 +51,7 @@ export class BankFormModalComponent implements OnChanges {
     finalBalance: [0, [Validators.required]],
     specialAccount: ['' as BankSpecialAccount | ''],
     maxBalance: [null as number | null, [Validators.min(0)]],
+    availableInTransaccionar: [true],
   });
 
   readonly specialAccountOptions = BANK_SPECIAL_ACCOUNT_OPTIONS;
@@ -82,6 +83,7 @@ export class BankFormModalComponent implements OnChanges {
         finalBalance,
         specialAccount: specialAccount ?? '',
         maxBalance: maxBalance ?? null,
+        availableInTransaccionar: this.bank.availableInTransaccionar,
       });
       // El saldo actual es dinámico: en edición solo se muestra; se corrige con "Ajustar saldo".
       this.form.controls.finalBalance.disable();
@@ -94,6 +96,7 @@ export class BankFormModalComponent implements OnChanges {
         finalBalance: 0,
         specialAccount: '',
         maxBalance: null,
+        availableInTransaccionar: true,
       });
       this.form.controls.finalBalance.enable();
     }
@@ -115,6 +118,7 @@ export class BankFormModalComponent implements OnChanges {
       previousBalance: raw.previousBalance,
       specialAccount: raw.specialAccount || null,
       maxBalance: raw.maxBalance ?? null,
+      availableInTransaccionar: raw.availableInTransaccionar,
       // Solo en el alta: en edición el saldo actual no viaja (el backend rechazaría un cambio).
       ...(this.isEditMode ? {} : { finalBalance: raw.finalBalance }),
     };

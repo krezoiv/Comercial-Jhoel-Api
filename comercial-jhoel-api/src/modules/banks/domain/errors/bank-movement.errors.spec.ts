@@ -84,6 +84,11 @@ describe('bankMovementErrorFromMessage', () => {
     expect(
       bankMovementErrorFromMessage('BANK_ACCOUNT_REQUIRED:x'),
     ).toBeInstanceOf(BankAccountRequiredError);
+    expect(
+      bankMovementErrorFromMessage('BANK_ACCOUNT_NOT_AVAILABLE:x')?.message,
+    ).toBe(
+      'La cuenta seleccionada no está habilitada para Transaccionar (Sistema → Bancos).',
+    );
   });
 
   it('returns null for codes that are not balance rules (never leaks a technical message as a business one)', () => {

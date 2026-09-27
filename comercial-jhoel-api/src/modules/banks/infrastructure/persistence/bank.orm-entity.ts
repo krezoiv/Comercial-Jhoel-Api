@@ -75,6 +75,13 @@ export class BankOrmEntity {
   })
   maxBalance: number | null;
 
+  @Column({
+    name: 'available_in_transaccionar',
+    type: 'boolean',
+    default: true,
+  })
+  availableInTransaccionar: boolean;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

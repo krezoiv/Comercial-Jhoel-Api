@@ -308,3 +308,32 @@ app-transaction-monthly-chart {
   font-weight: var(--fw-medium);
   color: var(--color-danger);
 }
+
+.balance-preview__after {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+
+  &--up {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+  }
+
+  &--down {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+  }
+}
+
+.transaccionar__balance-strip {
+  margin-bottom: var(--space-6);
+}

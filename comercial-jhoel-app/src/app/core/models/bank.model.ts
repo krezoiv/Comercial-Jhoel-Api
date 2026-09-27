@@ -11,6 +11,8 @@ export interface Bank {
   specialAccount: BankSpecialAccount | null;
   /** Límite máximo configurable del saldo (BI Club / Génesis) — `null` = sin límite. */
   maxBalance: number | null;
+  /** Si aparece en "Cuenta bancaria afectada" de Transaccionar — se configura en Sistema → Bancos (el backend también lo valida). */
+  availableInTransaccionar: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +28,7 @@ export interface BankInput {
   finalBalance?: number;
   specialAccount?: BankSpecialAccount | null;
   maxBalance?: number | null;
+  availableInTransaccionar?: boolean;
 }
 
 /** Reglas especiales de saldo — espejo de `BANK_SPECIAL_ACCOUNTS` del backend (`banks.special_account`). */

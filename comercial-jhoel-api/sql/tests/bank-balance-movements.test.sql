@@ -243,6 +243,22 @@ BEGIN
     format('SELECT register_bank_transfer(%L, %L, 100, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_districol),
     'TRANSFER_ORIGIN_NOT_ALLOWED:DISTRICOL');
 
+  -- Cuenta no habilitada para Transaccionar (Sistema → Bancos): rechazada
+  -- en el backend aunque la UI la oculte; Génesis no depende del flag.
+  UPDATE banks SET available_in_transaccionar = false WHERE id IN (v_normal, v_genesis);
+  PERFORM pg_temp.set_balance(v_normal, 1000);
+  PERFORM pg_temp.assert_rejects('Cuenta no habilitada en Transaccionar',
+    format('SELECT pg_temp.transaccionar(%L, %L, 10)', 'RETIRO', v_normal), 'BANK_ACCOUNT_NOT_AVAILABLE');
+  PERFORM pg_temp.assert_eq('Cuenta no habilitada: saldo intacto', pg_temp.balance(v_normal), 1000);
+  PERFORM pg_temp.set_balance(v_genesis, 0);
+  PERFORM pg_temp.transaccionar('DESEMBOLSO_GENESIS', NULL, 100);
+  PERFORM pg_temp.assert_eq('Génesis no depende del flag', pg_temp.balance(v_genesis), -100);
+  -- Las transferencias siguen admitiendo cualquier cuenta activa.
+  PERFORM register_bank_transfer(v_normal, v_normal2, 10, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM pg_temp.assert_eq('Transferencia ignora el flag', pg_temp.balance(v_normal), 990);
+  UPDATE banks SET available_in_transaccionar = true WHERE id IN (v_normal, v_genesis);
+  PERFORM pg_temp.set_balance(v_normal, 5000);
+
   -- Validaciones generales
   PERFORM pg_temp.assert_rejects('Monto cero en transferencia',
     format('SELECT register_bank_transfer(%L, %L, 0, CURRENT_DATE, pg_temp.admin_id())', v_normal, v_normal2),

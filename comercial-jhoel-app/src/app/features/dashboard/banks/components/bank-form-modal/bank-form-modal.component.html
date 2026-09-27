@@ -116,6 +116,17 @@
           <p class="field-hint">{{ hint }}</p>
         }
 
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="availableInTransaccionar" />
+          <span>
+            Mostrar en Transaccionar
+            <small>
+              Aparece en «Cuenta bancaria afectada» para Depósitos, Retiros y Reintegros. (Desembolsos y Pagos Génesis
+              usan la línea de crédito de Génesis siempre, sin importar esta opción.)
+            </small>
+          </span>
+        </label>
+
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>
         }

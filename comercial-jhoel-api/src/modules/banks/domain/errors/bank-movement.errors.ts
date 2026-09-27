@@ -165,6 +165,16 @@ export class SpecialAccountAlreadyAssignedError extends DomainError {
   }
 }
 
+export class BankAccountNotAvailableError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super(
+      'La cuenta seleccionada no está habilitada para Transaccionar (Sistema → Bancos).',
+    );
+  }
+}
+
 /**
  * `null` cuando el mensaje no corresponde a ninguna regla de saldos —
  * el llamador decide entonces cómo traducirlo (o re-lanzarlo tal cual).
@@ -201,6 +211,8 @@ export function bankMovementErrorFromMessage(
       return new GenesisAccountNotConfiguredError();
     case 'BANK_ACCOUNT_REQUIRED':
       return new BankAccountRequiredError();
+    case 'BANK_ACCOUNT_NOT_AVAILABLE':
+      return new BankAccountNotAvailableError();
     default:
       return null;
   }

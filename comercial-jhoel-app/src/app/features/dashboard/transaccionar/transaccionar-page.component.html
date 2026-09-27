@@ -23,6 +23,8 @@
       />
     </div>
 
+    <app-bank-balance-strip class="transaccionar__balance-strip" />
+
     @if (loadingTypes()) {
       <p class="type-grid__loading">Cargando tipos de transacción…</p>
     } @else if (transactionTypes().length === 0) {
@@ -89,18 +91,26 @@
                 <option [value]="account.id">{{ accountLabel(account) }} — {{ formatSigned(account.finalBalance) }}</option>
               }
             </select>
+            @if (!loadingAccounts() && selectableAccounts().length === 0) {
+              <span class="field__hint">
+                No hay cuentas habilitadas. Un administrador puede activarlas en Sistema → Bancos («En Transaccionar»).
+              </span>
+            }
           </div>
         }
 
         <div class="field">
           <label for="total-amount">Monto Total a Depositar</label>
+          <!-- Formato 1,000.00 (separador de miles mientras se escribe) y actualización en vivo de "Saldo después". -->
           <input
             id="total-amount"
             type="text"
             inputmode="decimal"
             appDecimalInput
-            [value]="draft.totalAmount()"
-            (change)="onTotalAmountInput($any($event.target).value)"
+            thousands
+            placeholder="0.00"
+            [ngModel]="draft.totalAmount() || null"
+            (ngModelChange)="onTotalAmountChange($event)"
           />
         </div>
 
@@ -164,7 +174,18 @@
               <app-icon name="arrow-right" [size]="16" />
               <div>
                 <span class="balance-preview__label">Saldo después</span>
-                <app-bank-balance-amount [value]="preview.after" [specialAccount]="account.specialAccount" strong />
+                <span class="balance-preview__after">
+                  @if (preview.after > preview.before) {
+                    <span class="trend trend--up" title="El saldo sube" aria-label="El saldo sube">
+                      <app-icon name="arrow-up" [size]="16" />
+                    </span>
+                  } @else if (preview.after < preview.before) {
+                    <span class="trend trend--down" title="El saldo baja" aria-label="El saldo baja">
+                      <app-icon name="arrow-down" [size]="16" />
+                    </span>
+                  }
+                  <app-bank-balance-amount [value]="preview.after" [specialAccount]="account.specialAccount" strong />
+                </span>
               </div>
             }
           </div>

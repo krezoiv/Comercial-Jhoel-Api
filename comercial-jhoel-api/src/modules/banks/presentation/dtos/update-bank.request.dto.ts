@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsNumber,
@@ -49,4 +50,9 @@ export class UpdateBankRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   maxBalance?: number | null;
+
+  /** Si la cuenta aparece en el selector "Cuenta bancaria afectada" de Transaccionar. */
+  @IsOptional()
+  @IsBoolean()
+  availableInTransaccionar?: boolean;
 }

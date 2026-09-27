@@ -27,3 +27,22 @@ export interface SaveBankBalancesInput {
 export interface SaveBankBalancesResult {
   savedCount: number;
 }
+
+/**
+ * Un renglón de la tira de saldos (Transaccionar / Resumen) — `GET /banks/balance-strip`.
+ * `trend` es la dirección de la ÚLTIMA transacción de la cuenta; `trendTone` ya trae el color
+ * decidido por el backend (para Génesis y BI Club bajar es favorable).
+ */
+export interface BankBalanceStripItem {
+  bankId: string;
+  bankName: string;
+  accountNumber: string;
+  accountTypeName: string;
+  specialAccount: BankSpecialAccount | null;
+  currentBalance: number;
+  /** Monto con signo de la última transacción (0 si nunca tuvo una). */
+  lastChange: number;
+  lastMovementAt: string | null;
+  trend: 'UP' | 'DOWN' | 'FLAT';
+  trendTone: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+}

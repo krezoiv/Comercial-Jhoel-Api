@@ -3,7 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, Bank, BankBalanceAdjustmentInput, BankInput, BankMovement } from '../models';
+import {
+  ApiSuccessResponse,
+  Bank,
+  BankBalanceAdjustmentInput,
+  BankBalanceStripItem,
+  BankInput,
+  BankMovement,
+} from '../models';
 
 const BASE_URL = `${environment.apiUrl}/banks`;
 
@@ -17,6 +24,13 @@ export class BankService {
       .pipe(map((response) => response.data));
   }
 
+  /** Tira de saldos: cuentas principales con su saldo actual y la tendencia de hoy (calculada en el backend). */
+  getBalanceStrip(): Observable<BankBalanceStripItem[]> {
+    return this.http
+      .get<ApiSuccessResponse<BankBalanceStripItem[]>>(`${BASE_URL}/balance-strip`)
+      .pipe(map((response) => response.data));
+  }
+
   getBankById(id: string): Observable<Bank> {
     return this.http.get<ApiSuccessResponse<Bank>>(`${BASE_URL}/${id}`).pipe(map((response) => response.data));
   }
@@ -27,6 +41,13 @@ export class BankService {
 
   updateBank(id: string, input: BankInput): Observable<Bank> {
     return this.http.patch<ApiSuccessResponse<Bank>>(`${BASE_URL}/${id}`, input).pipe(map((response) => response.data));
+  }
+
+  /** Muestra u oculta la cuenta en el selector "Cuenta bancaria afectada" de Transaccionar (solo admin). */
+  setAvailableInTransaccionar(id: string, availableInTransaccionar: boolean): Observable<Bank> {
+    return this.http
+      .patch<ApiSuccessResponse<Bank>>(`${BASE_URL}/${id}`, { availableInTransaccionar })
+      .pipe(map((response) => response.data));
   }
 
   /** "Ajustar saldo" — solo admin/super_admin (el backend lo exige). Queda como movimiento AJUSTE_MANUAL auditado; nunca sobrescribe el historial. */

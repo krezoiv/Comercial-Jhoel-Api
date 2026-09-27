@@ -25,6 +25,12 @@ export interface AdjustBankBalanceData {
   observation: string | null;
 }
 
+export interface LastBankMovement {
+  /** Delta con signo del movimiento (positivo = subió). */
+  amount: number;
+  createdAt: Date;
+}
+
 export interface BankMovementFilters {
   startDate?: string;
   endDate?: string;
@@ -64,6 +70,8 @@ export interface BankMovementRepository {
     referenceId: string,
   ): Promise<BankAccountMovement[]>;
   findTransferById(transferId: string): Promise<BankTransfer | null>;
+  /** Último movimiento de cada cuenta (sin SALDO_INICIAL): monto con signo y cuándo ocurrió. Cuentas sin movimientos no aparecen. */
+  getLastMovementByBank(): Promise<Map<string, LastBankMovement>>;
   findTransfers(
     filters: Pick<BankMovementFilters, 'startDate' | 'endDate' | 'bankId'>,
     limit: number,

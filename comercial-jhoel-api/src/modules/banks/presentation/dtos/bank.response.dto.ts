@@ -8,6 +8,7 @@ export class BankResponseDto {
   finalBalance: number;
   specialAccount: string | null;
   maxBalance: number | null;
+  availableInTransaccionar: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

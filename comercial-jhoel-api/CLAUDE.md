@@ -1322,6 +1322,12 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   alta de una cuenta registra su `SALDO_INICIAL`.
 - **Endpoints**: `POST/GET /bank-transfers` (operativo, exige día abierto), `POST /bank-transfers/:id/void`
   (admin), `GET /reports/bank-movements` + `/export` (admin, PDF con `buildReportPdf`).
+- **Cuentas visibles en Transaccionar** (migración `1760005200000`): `banks.available_in_transaccionar` (default
+  `true`), interruptor por cuenta en Sistema → Bancos. `register_bank_deposit_operation` rechaza una cuenta no
+  habilitada (`BANK_ACCOUNT_NOT_AVAILABLE`); no afecta Desembolsos/Pagos Génesis ni Transferencias.
+- **Tira de saldos** `GET /banks/balance-strip` (cualquier autenticado): cuentas `available_in_transaccionar` + Génesis
+  y BI Club siempre; `trend` = signo del ÚLTIMO movimiento (sin SALDO_INICIAL, `DISTINCT ON (bank_id) … sequence
+  DESC`); `trendTone` invertido para GENESIS/BI_CLUB (bajar = POSITIVE). Lo usan Transaccionar y Resumen.
 - Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
   compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia

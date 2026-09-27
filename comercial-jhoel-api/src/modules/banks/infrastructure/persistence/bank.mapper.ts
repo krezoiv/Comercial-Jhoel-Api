@@ -14,6 +14,7 @@ export class BankMapper {
       finalBalance: orm.finalBalance,
       specialAccount: (orm.specialAccount as BankSpecialAccount | null) ?? null,
       maxBalance: orm.maxBalance ?? null,
+      availableInTransaccionar: orm.availableInTransaccionar ?? true,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

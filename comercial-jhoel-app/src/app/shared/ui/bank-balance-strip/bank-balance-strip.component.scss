@@ -1,0 +1,112 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.strip {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.strip__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-table-header-bg);
+  color: var(--color-table-header-text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.strip__note {
+  align-self: center;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+// Desliza horizontalmente en pantallas angostas — la página nunca se desborda.
+.strip__list {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.strip__item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5);
+  scroll-snap-align: start;
+
+  & + & {
+    border-left: 1px solid var(--color-border-light);
+  }
+}
+
+.strip__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.strip__name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+  white-space: nowrap;
+}
+
+.strip__balance {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light);
+}
+
+.strip__account {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-on-light-subtle);
+  white-space: nowrap;
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: var(--radius-full);
+  color: var(--color-text-on-light-subtle);
+  background: var(--color-bg-light-muted);
+
+  &--positive {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+  }
+
+  &--negative {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+  }
+}

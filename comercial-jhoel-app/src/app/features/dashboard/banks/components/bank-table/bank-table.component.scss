@@ -212,3 +212,74 @@
     background-position: -200% 0;
   }
 }
+
+// "En Transaccionar" — interruptor para mostrar/ocultar la cuenta en el
+// selector "Cuenta bancaria afectada" de Transaccionar.
+.switch {
+  position: relative;
+  display: inline-flex;
+  width: 2.5rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+}
+
+.switch__track {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: var(--radius-full);
+    background: var(--color-white, #fff);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+}
+
+.switch input:checked + .switch__track {
+  background: var(--color-success);
+
+  &::after {
+    transform: translateX(1.1rem);
+  }
+}
+
+.switch input:focus-visible + .switch__track {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.switch input:disabled + .switch__track,
+.switch--busy .switch__track {
+  opacity: 0.5;
+}
+
+.card-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}

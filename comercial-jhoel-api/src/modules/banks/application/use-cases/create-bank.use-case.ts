@@ -17,6 +17,7 @@ export interface CreateBankInput {
   finalBalance?: number;
   specialAccount?: string | null;
   maxBalance?: number | null;
+  availableInTransaccionar?: boolean;
   createdBy: string;
 }
 
@@ -66,6 +67,7 @@ export class CreateBankUseCase {
       finalBalance,
       specialAccount,
       maxBalance: input.maxBalance ?? null,
+      availableInTransaccionar: input.availableInTransaccionar ?? true,
       createdBy: input.createdBy,
     });
 

@@ -10,6 +10,7 @@ export interface BankOutput {
   finalBalance: number;
   specialAccount: string | null;
   maxBalance: number | null;
+  availableInTransaccionar: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,7 @@ export function toBankOutput(bank: Bank): BankOutput {
     finalBalance: bank.finalBalance,
     specialAccount: bank.specialAccount,
     maxBalance: bank.maxBalance,
+    availableInTransaccionar: bank.availableInTransaccionar,
     isActive: bank.isActive,
     createdAt: bank.createdAt,
     updatedAt: bank.updatedAt,

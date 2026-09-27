@@ -26,6 +26,7 @@ import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import {
   BankBalanceAmountComponent,
+  BankBalanceStripComponent,
   ButtonComponent,
   IconComponent,
   PageHeaderComponent,
@@ -102,6 +103,7 @@ const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
     ChangeConfirmModalComponent,
     ClientSearchSelectComponent,
     BankBalanceAmountComponent,
+    BankBalanceStripComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -132,12 +134,18 @@ export class TransaccionarPageComponent {
   readonly accountLabel = bankAccountLabel;
   readonly formatSigned = formatSignedBankBalance;
 
-  /** Cuentas elegibles, primero las cuyo nombre coincide con el banco agente elegido (solo orden, nunca filtra). */
+  /**
+   * Solo las cuentas marcadas "En Transaccionar" en Sistema → Bancos (el
+   * backend rechaza cualquier otra), primero las cuyo nombre coincide con el
+   * banco agente elegido.
+   */
   readonly selectableAccounts = computed(() => {
     const agentName = normalizeName(this.selectedBankName());
     const matches = (bank: Bank) =>
       agentName !== '' && (normalizeName(bank.name).includes(agentName) || agentName.includes(normalizeName(bank.name)));
-    return [...this.bankAccounts()].sort((a, b) => Number(matches(b)) - Number(matches(a)) || a.name.localeCompare(b.name));
+    return this.bankAccounts()
+      .filter((bank) => bank.availableInTransaccionar)
+      .sort((a, b) => Number(matches(b)) - Number(matches(a)) || a.name.localeCompare(b.name));
   });
 
   readonly genesisAccount = computed(() => this.bankAccounts().find((bank) => bank.specialAccount === 'GENESIS') ?? null);
@@ -150,7 +158,7 @@ export class TransaccionarPageComponent {
     if (!this.draft.needsBankAccount()) {
       return null;
     }
-    return this.bankAccounts().find((bank) => bank.id === this.draft.bankAccountId()) ?? null;
+    return this.selectableAccounts().find((bank) => bank.id === this.draft.bankAccountId()) ?? null;
   });
 
   /** Vista previa: saldo actual → saldo después, por el MONTO APLICADO (no el efectivo recibido). Informativa — el backend recalcula bajo lock. */
@@ -332,9 +340,9 @@ export class TransaccionarPageComponent {
     this.draft.setSendToAccountsReceivable(checked);
   }
 
-  onTotalAmountInput(value: string): void {
-    const parsed = parseFloat(value);
-    this.draft.setTotalAmount(Number.isNaN(parsed) ? 0 : Math.max(parsed, 0));
+  /** Se llama en cada tecla (el directive ya entrega el número limpio, sin comas) — así "Saldo después" se actualiza en vivo. */
+  onTotalAmountChange(value: number | null): void {
+    this.draft.setTotalAmount(value === null || Number.isNaN(value) ? 0 : Math.max(value, 0));
   }
 
   onCashQuantityChange(event: { denomination: number; quantity: number }): void {
