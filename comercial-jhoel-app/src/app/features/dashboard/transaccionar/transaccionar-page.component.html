@@ -79,7 +79,7 @@
 
         @if (draft.needsBankAccount()) {
           <div class="field">
-            <label for="bank-account">Cuenta bancaria afectada</label>
+            <label for="bank-account">{{ isReintegro() ? 'Cuenta origen del abono' : 'Cuenta bancaria afectada' }}</label>
             <select
               id="bank-account"
               [ngModel]="draft.bankAccountId()"
@@ -194,6 +194,35 @@
           }
         </div>
       }
+      @if (genesisReintegroPreview(); as genesis) {
+        <div class="balance-preview">
+          <div class="balance-preview__account">
+            <app-icon name="bank" [size]="18" />
+            <div>
+              <span class="balance-preview__label">Línea de crédito (abono)</span>
+              <strong>{{ accountLabel(genesis.account) }}</strong>
+            </div>
+          </div>
+          <div class="balance-preview__figures">
+            <div>
+              <span class="balance-preview__label">Saldo actual</span>
+              <app-bank-balance-amount [value]="genesis.before" [specialAccount]="genesis.account.specialAccount" />
+            </div>
+            <app-icon name="arrow-right" [size]="16" />
+            <div>
+              <span class="balance-preview__label">Saldo después</span>
+              <span class="balance-preview__after">
+                @if (genesis.after < genesis.before) {
+                  <span class="trend trend--down" title="El saldo baja" aria-label="El saldo baja">
+                    <app-icon name="arrow-down" [size]="16" />
+                  </span>
+                }
+                <app-bank-balance-amount [value]="genesis.after" [specialAccount]="genesis.account.specialAccount" strong />
+              </span>
+            </div>
+          </div>
+        </div>
+      }
       @if (balanceError(); as message) {
         <p class="balance-error" role="alert">
           <app-icon name="alert-triangle" [size]="16" />
@@ -265,6 +294,9 @@
     [affectedAccountSpecial]="affectedAccount()?.specialAccount ?? null"
     [balanceBefore]="balancePreview()?.before ?? null"
     [balanceAfter]="balancePreview()?.after ?? null"
+    [genesisAccountLabel]="genesisReintegroPreview() ? accountLabel(genesisReintegroPreview()!.account) : null"
+    [genesisBalanceBefore]="genesisReintegroPreview()?.before ?? null"
+    [genesisBalanceAfter]="genesisReintegroPreview()?.after ?? null"
     [isSaving]="isSaving()"
     (confirmed)="confirmSave()"
     (cancelled)="dismissConfirm()"

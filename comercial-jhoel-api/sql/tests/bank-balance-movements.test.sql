@@ -168,20 +168,37 @@ BEGIN
     format('SELECT pg_temp.transaccionar(%L, NULL, 5000)', 'PAGO_GENESIS'), 'BALANCE_LIMIT_EXCEEDED:PAGO_GENESIS');
   PERFORM pg_temp.assert_eq('CASO 9 saldo intacto', pg_temp.balance(v_genesis), 118000);
 
-  -- CASO 10 — Reintegro Génesis 5000 − 2000 = 3000
-  PERFORM pg_temp.set_balance(v_genesis, 5000);
-  PERFORM pg_temp.transaccionar('REINTEGRO', v_genesis, 2000);
-  PERFORM pg_temp.assert_eq('CASO 10 reintegro', pg_temp.balance(v_genesis), 3000);
-
-  -- CASO 11 — Reintegro Génesis −3000 − 2000 = −5000
-  PERFORM pg_temp.set_balance(v_genesis, -3000);
-  PERFORM pg_temp.transaccionar('REINTEGRO', v_genesis, 2000);
-  PERFORM pg_temp.assert_eq('CASO 11 reintegro negativo', pg_temp.balance(v_genesis), -5000);
-
-  -- Reintegro sobre cuenta normal: 10000 − 1000 = 9000
+  -- CASO 10 — Reintegro Génesis (abono a la línea, migración 1760005400000):
+  -- resta de la cuenta origen Y de Génesis. Origen 10000 − 2000 = 8000,
+  -- Génesis 5000 − 2000 = 3000.
   PERFORM pg_temp.set_balance(v_normal, 10000);
-  PERFORM pg_temp.transaccionar('REINTEGRO', v_normal, 1000);
-  PERFORM pg_temp.assert_eq('REINTEGRO cuenta normal', pg_temp.balance(v_normal), 9000);
+  PERFORM pg_temp.set_balance(v_genesis, 5000);
+  v_op := pg_temp.transaccionar('REINTEGRO', v_normal, 2000);
+  PERFORM pg_temp.assert_eq('CASO 10 reintegro origen', pg_temp.balance(v_normal), 8000);
+  PERFORM pg_temp.assert_eq('CASO 10 reintegro Génesis', pg_temp.balance(v_genesis), 3000);
+  PERFORM pg_temp.assert_eq('CASO 10 dos movimientos',
+    (SELECT COUNT(*) FROM bank_account_movements WHERE reference_id = v_op AND movement_type = 'REINTEGRO'), 2);
+
+  -- Anular el reintegro restaura ambas cuentas
+  PERFORM void_bank_deposit_operation(v_op, CURRENT_DATE, pg_temp.admin_id(), 'Prueba de anulación');
+  PERFORM pg_temp.assert_eq('CASO 10 anulación origen', pg_temp.balance(v_normal), 10000);
+  PERFORM pg_temp.assert_eq('CASO 10 anulación Génesis', pg_temp.balance(v_genesis), 5000);
+
+  -- CASO 11 — Génesis puede quedar negativo (−3000 − 2000 = −5000), la
+  -- cuenta origen no: sin saldo se rechaza todo y nada se mueve.
+  PERFORM pg_temp.set_balance(v_normal, 10000);
+  PERFORM pg_temp.set_balance(v_genesis, -3000);
+  PERFORM pg_temp.transaccionar('REINTEGRO', v_normal, 2000);
+  PERFORM pg_temp.assert_eq('CASO 11 reintegro Génesis negativo', pg_temp.balance(v_genesis), -5000);
+  PERFORM pg_temp.set_balance(v_normal, 1000);
+  PERFORM pg_temp.assert_rejects('CASO 11 reintegro > saldo origen',
+    format('SELECT pg_temp.transaccionar(%L, %L, 2000)', 'REINTEGRO', v_normal), 'INSUFFICIENT_BALANCE:REINTEGRO');
+  PERFORM pg_temp.assert_eq('CASO 11 origen intacto', pg_temp.balance(v_normal), 1000);
+  PERFORM pg_temp.assert_eq('CASO 11 Génesis intacto', pg_temp.balance(v_genesis), -5000);
+
+  -- La línea Génesis no puede ser la cuenta origen de su propio reintegro
+  PERFORM pg_temp.assert_rejects('CASO 11 origen = Génesis',
+    format('SELECT pg_temp.transaccionar(%L, %L, 100)', 'REINTEGRO', v_genesis), 'REINTEGRO_SOURCE_IS_GENESIS');
 
   -- CASO 12 — Transferencia 5000→10000 por 2000
   PERFORM pg_temp.set_balance(v_normal, 5000);

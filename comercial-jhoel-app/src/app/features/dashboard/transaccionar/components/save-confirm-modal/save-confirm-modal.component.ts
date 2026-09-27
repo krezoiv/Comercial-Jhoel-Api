@@ -36,6 +36,10 @@ export class SaveConfirmModalComponent {
   @Input() affectedAccountSpecial: string | null = null;
   @Input() balanceBefore: number | null = null;
   @Input() balanceAfter: number | null = null;
+  /** Reintegro Génesis: la línea de crédito también baja por el mismo monto. */
+  @Input() genesisAccountLabel: string | null = null;
+  @Input() genesisBalanceBefore: number | null = null;
+  @Input() genesisBalanceAfter: number | null = null;
   @Input() isSaving = false;
 
   @Output() confirmed = new EventEmitter<void>();

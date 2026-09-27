@@ -34,6 +34,20 @@
             </div>
           }
         }
+        @if (genesisAccountLabel && genesisBalanceBefore !== null && genesisBalanceAfter !== null) {
+          <div class="modal__summary-row">
+            <dt>Línea de crédito (abono)</dt>
+            <dd>{{ genesisAccountLabel }}</dd>
+          </div>
+          <div class="modal__summary-row">
+            <dt>Saldo Génesis actual</dt>
+            <dd><app-bank-balance-amount [value]="genesisBalanceBefore" specialAccount="GENESIS" /></dd>
+          </div>
+          <div class="modal__summary-row">
+            <dt>Saldo Génesis después</dt>
+            <dd><app-bank-balance-amount [value]="genesisBalanceAfter" specialAccount="GENESIS" strong /></dd>
+          </div>
+        }
         @if (clientName) {
           <div class="modal__summary-row">
             <dt>Cliente</dt>

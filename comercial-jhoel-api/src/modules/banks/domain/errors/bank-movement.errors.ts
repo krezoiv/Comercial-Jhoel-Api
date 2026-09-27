@@ -192,6 +192,16 @@ export class BankAccountNotAvailableError extends DomainError {
   }
 }
 
+export class ReintegroSourceIsGenesisError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super(
+      'El reintegro abona a la línea de crédito de Fundación Génesis Empresarial: seleccione la cuenta desde la que se paga.',
+    );
+  }
+}
+
 /**
  * `null` cuando el mensaje no corresponde a ninguna regla de saldos —
  * el llamador decide entonces cómo traducirlo (o re-lanzarlo tal cual).
@@ -232,6 +242,8 @@ export function bankMovementErrorFromMessage(
       return new BankAccountRequiredError();
     case 'BANK_ACCOUNT_NOT_AVAILABLE':
       return new BankAccountNotAvailableError();
+    case 'REINTEGRO_SOURCE_IS_GENESIS':
+      return new ReintegroSourceIsGenesisError();
     default:
       return null;
   }

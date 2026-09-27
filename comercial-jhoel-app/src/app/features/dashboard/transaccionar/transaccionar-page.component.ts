@@ -137,18 +137,23 @@ export class TransaccionarPageComponent {
   /**
    * Solo las cuentas marcadas "En Transaccionar" en Sistema → Bancos (el
    * backend rechaza cualquier otra), primero las cuyo nombre coincide con el
-   * banco agente elegido.
+   * banco agente elegido. En un Reintegro la línea Génesis nunca es el
+   * origen: es la cuenta a la que se abona.
    */
   readonly selectableAccounts = computed(() => {
+    const isReintegro = this.isReintegro();
     const agentName = normalizeName(this.selectedBankName());
     const matches = (bank: Bank) =>
       agentName !== '' && (normalizeName(bank.name).includes(agentName) || agentName.includes(normalizeName(bank.name)));
     return this.bankAccounts()
-      .filter((bank) => bank.availableInTransaccionar)
+      .filter((bank) => bank.availableInTransaccionar && !(isReintegro && bank.specialAccount === 'GENESIS'))
       .sort((a, b) => Number(matches(b)) - Number(matches(a)) || a.name.localeCompare(b.name));
   });
 
   readonly genesisAccount = computed(() => this.bankAccounts().find((bank) => bank.specialAccount === 'GENESIS') ?? null);
+
+  /** Reintegro Génesis = abono a la línea de crédito: resta de la cuenta origen Y de Génesis (el backend aplica ambos movimientos). */
+  readonly isReintegro = computed(() => this.draft.transactionTypeBalanceEffect() === 'REINTEGRO');
 
   /** La cuenta cuyo saldo moverá la operación: Génesis (automática) o la elegida. */
   readonly affectedAccount = computed<Bank | null>(() => {
@@ -172,10 +177,23 @@ export class TransaccionarPageComponent {
     return { before: account.finalBalance, after: round2(account.finalBalance + direction * amount), amount };
   });
 
+  /** Segunda cuenta que mueve un Reintegro: la línea de Génesis baja por el mismo monto. */
+  readonly genesisReintegroPreview = computed(() => {
+    const genesis = this.genesisAccount();
+    if (!this.isReintegro() || !genesis) {
+      return null;
+    }
+    const amount = round2(this.draft.totalAmount());
+    return { account: genesis, before: genesis.finalBalance, after: round2(genesis.finalBalance - amount) };
+  });
+
   /** Validación de UX — espejo de las reglas del backend (que es quien realmente las hace cumplir). */
   readonly balanceError = computed<string | null>(() => {
     const effect = this.draft.transactionTypeBalanceEffect();
     if (this.draft.isGenesisType() && !this.loadingAccounts() && !this.genesisAccount()) {
+      return 'No hay una cuenta configurada como línea de crédito de Fundación Génesis Empresarial (Sistema → Bancos).';
+    }
+    if (this.isReintegro() && !this.loadingAccounts() && !this.genesisAccount()) {
       return 'No hay una cuenta configurada como línea de crédito de Fundación Génesis Empresarial (Sistema → Bancos).';
     }
     const account = this.affectedAccount();
@@ -199,6 +217,9 @@ export class TransaccionarPageComponent {
   readonly formSubtitle = computed(() => {
     if (this.draft.isGenesisType()) {
       return 'Línea de crédito de Fundación Génesis Empresarial — la cuenta se selecciona automáticamente.';
+    }
+    if (this.isReintegro()) {
+      return 'Abono a la línea de crédito de Fundación Génesis Empresarial: resta de la cuenta origen y del saldo de Génesis.';
     }
     return 'Registra la operación: banco agente, cuenta afectada, monto, desglose de efectivo y las transacciones en que se reparte.';
   });

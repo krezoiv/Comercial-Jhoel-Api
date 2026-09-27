@@ -1,5 +1,6 @@
 import {
   BankAccountRequiredError,
+  ReintegroSourceIsGenesisError,
   BankBalanceLimitExceededError,
   InsufficientBankBalanceError,
   InvalidMovementAmountError,
@@ -100,6 +101,12 @@ describe('bankMovementErrorFromMessage', () => {
       bankMovementErrorFromMessage('INSUFFICIENT_BALANCE:RETIRO_EFECTIVO')
         ?.message,
     ).toBe('Saldo insuficiente para realizar el retiro de efectivo.');
+  });
+
+  it('rechaza la línea Génesis como origen de su propio reintegro', () => {
+    expect(
+      bankMovementErrorFromMessage('REINTEGRO_SOURCE_IS_GENESIS:x'),
+    ).toBeInstanceOf(ReintegroSourceIsGenesisError);
   });
 
   it('returns null for codes that are not balance rules (never leaks a technical message as a business one)', () => {

@@ -62,7 +62,11 @@ export const TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS: {
     label: 'Pago de préstamo Génesis',
     hint: 'Suma a la línea de crédito de Fundación Génesis (máximo según el límite configurado).',
   },
-  { value: 'REINTEGRO', label: 'Reintegro', hint: 'Resta del saldo de la cuenta seleccionada.' },
+  {
+    value: 'REINTEGRO',
+    label: 'Reintegro Génesis',
+    hint: 'Abono a la línea de crédito: resta de la cuenta origen seleccionada y del saldo de Fundación Génesis.',
+  },
 ];
 
 /** Desembolsos/Pagos Génesis: sin selector de banco — la cuenta es siempre la línea de crédito de Génesis (la resuelve el backend). */

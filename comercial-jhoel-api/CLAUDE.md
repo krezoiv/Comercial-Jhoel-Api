@@ -1337,6 +1337,11 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   ni Génesis queda negativo). BI Club como ORIGEN solo va a `BANCO_INDUSTRIAL`
   (`TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB`, incluye el retiro). `TRANSFER_SELECT` usa LEFT JOIN: `BankTransfer.kind`
   (`TRANSFER`/`CASH_WITHDRAWAL`) y `destination: null`; filtro `kind` en el reporte.
+- **Reintegro Génesis = abono a la línea de crédito** (migración `1760005400000`): `register_bank_deposit_operation`
+  con `balance_effect = 'REINTEGRO'` aplica DOS movimientos `REINTEGRO` con el mismo `reference_id`: −monto a la
+  cuenta origen elegida (necesita saldo) y −monto a la cuenta `GENESIS` (puede quedar negativa), con
+  `counterpart_bank_id` cruzado; bloquea ambas filas en orden de id. Anular revierte los dos. La línea Génesis no puede
+  ser el origen (`REINTEGRO_SOURCE_IS_GENESIS`); sin Génesis activa → `GENESIS_ACCOUNT_NOT_CONFIGURED`.
 - Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
   compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia
