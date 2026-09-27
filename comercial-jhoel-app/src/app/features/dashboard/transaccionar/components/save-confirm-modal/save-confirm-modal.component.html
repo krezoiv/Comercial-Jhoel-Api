@@ -66,6 +66,12 @@
             <dd>Se generará un cargo por {{ formatCurrency(totalAmount) }}</dd>
           </div>
         }
+        @if (sendToAssets) {
+          <div class="modal__summary-row">
+            <dt>Activos</dt>
+            <dd>Se generará un cargo por {{ formatCurrency(totalAmount) }}</dd>
+          </div>
+        }
         <div class="modal__summary-row modal__summary-row--total">
           <dt>Monto Total</dt>
           <dd>{{ formatCurrency(totalAmount) }}</dd>

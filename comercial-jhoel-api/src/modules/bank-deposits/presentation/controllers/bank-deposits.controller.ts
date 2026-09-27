@@ -79,6 +79,7 @@ export class BankDepositsController {
       clientName: dto.clientName ?? null,
       clientId: dto.clientId ?? null,
       sendToAccountsReceivable: dto.sendToAccountsReceivable ?? false,
+      sendToAssets: dto.sendToAssets ?? false,
       isAdmin: ADMIN_ROLES.includes(user.role),
       changeGiven: dto.changeGiven ?? 0,
     });

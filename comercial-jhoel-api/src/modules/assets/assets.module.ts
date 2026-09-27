@@ -39,6 +39,7 @@ import { AssetsController } from './presentation/controllers/assets.controller';
   // use case, and ListAssetsUseCase is reused directly for the report's list endpoint —
   // identical filtering/pagination, no reason to duplicate it. Same reuse-over-duplicate
   // reasoning as RechargesModule's own exports.
-  exports: [ASSET_REPOSITORY, ListAssetsUseCase],
+  // RegisterAssetChargeUseCase: Transaccionar ("Enviar a Activos") lo reutiliza tal cual.
+  exports: [ASSET_REPOSITORY, ListAssetsUseCase, RegisterAssetChargeUseCase],
 })
 export class AssetsModule {}

@@ -6,17 +6,8 @@ export class BankDepositAccountsReceivableRequiresClientError extends DomainErro
 
   constructor() {
     super(
-      'Se requiere un cliente registrado para enviar el depósito a cuentas por cobrar.',
+      'Se requiere un cliente registrado para enviar la transacción a cuentas por cobrar.',
     );
-  }
-}
-
-/** `sendToAccountsReceivable: true` on a transaction type other than "Depósito" — never trusts the frontend to only show the checkbox for the right type. */
-export class BankDepositAccountsReceivableWrongTypeError extends DomainError {
-  readonly status = 400;
-
-  constructor() {
-    super('Solo los depósitos pueden enviarse a cuentas por cobrar.');
   }
 }
 
@@ -26,7 +17,7 @@ export class BankDepositAccountsReceivableForbiddenError extends DomainError {
 
   constructor() {
     super(
-      'Solo un administrador puede enviar un depósito a cuentas por cobrar.',
+      'Solo un administrador puede enviar una transacción a cuentas por cobrar.',
     );
   }
 }

@@ -100,10 +100,12 @@ export interface RegisterBankDepositInput {
   cashDetails: BankDepositCashDetailInput[];
   transactionAmounts: number[];
   clientName?: string | null;
-  /** A REGISTERED client id — only ever sent for a "Depósito" (the form's own "Cliente registrado" picker doesn't render for any other tipo). The backend re-validates it exists+active regardless of what was already checked client-side. */
+  /** A REGISTERED client id — any tipo de transacción. The backend re-validates it exists+active regardless of what was already checked client-side. */
   clientId?: string | null;
-  /** "Enviar a cuentas por cobrar" — requires `clientId`, only ever offered checked for a "Depósito", and only enabled for an admin account. The backend re-validates all three independently — see `RegisterBankDepositOperationUseCase`. */
+  /** "Enviar a cuentas por cobrar" — requires `clientId` and an admin account. The backend re-validates both independently — see `RegisterBankDepositOperationUseCase`. */
   sendToAccountsReceivable?: boolean;
+  /** "Enviar a Activos" — solo Retiros/Desembolsos Génesis; mismas reglas que CxC y nunca junto con `sendToAccountsReceivable`. */
+  sendToAssets?: boolean;
   /** "Vuelto" — omitido/`0` significa que no hubo vuelto, idéntico al comportamiento de siempre. El backend recalcula/valida esto contra el efectivo real. */
   changeGiven?: number;
 }

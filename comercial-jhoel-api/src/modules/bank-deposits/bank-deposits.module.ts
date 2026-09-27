@@ -20,6 +20,7 @@ import { TransactionTypesModule } from '../transaction-types/transaction-types.m
 import { BanksModule } from '../banks/banks.module';
 import { ClientsModule } from '../clients/clients.module';
 import { AccountsReceivableModule } from '../accounts-receivable/accounts-receivable.module';
+import { AssetsModule } from '../assets/assets.module';
 import { SharedModule } from '../../shared/shared.module';
 
 @Module({
@@ -32,8 +33,7 @@ import { SharedModule } from '../../shared/shared.module';
     // Validates transactionBankId the same way PurchasesModule reaches SuppliersModule.
     TransactionBanksModule,
     // For the TransactionTypeOrmEntity relation (eager-loaded on BankDepositOperationOrmEntity)
-    // and, since the "Enviar a cuentas por cobrar" follow-up, to resolve/confirm a transaction
-    // type's name really is "Depósito" before allowing that flow.
+    // and to confirm the type's balance effect before "Enviar a Activos".
     TransactionTypesModule,
     // For DAY_OPENING_REPOSITORY — Transaccionar reuses Banks' own día-abierto/cerrado
     // cycle rather than a parallel one, see RegisterBankDepositOperationUseCase.
@@ -44,7 +44,9 @@ import { SharedModule } from '../../shared/shared.module';
     // For RegisterAccountReceivableChargeUseCase — reused as-is when a deposit is sent
     // to Cuentas por Cobrar, rather than duplicating its validation/SQL call.
     AccountsReceivableModule,
-    // For TRANSACTION_MANAGER — lets the deposit + its optional CxC cargo commit or
+    // For RegisterAssetChargeUseCase — "Enviar a Activos" (Retiros/Desembolsos Génesis).
+    AssetsModule,
+    // For TRANSACTION_MANAGER — lets the deposit + its optional CxC/Activos cargo commit or
     // roll back atomically in one DB transaction.
     SharedModule,
   ],

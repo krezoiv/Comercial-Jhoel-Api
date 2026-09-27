@@ -8,9 +8,11 @@ import { DAY_OPENING_REPOSITORY } from '../../../banks/domain/repositories/day-o
 import type { DayOpeningRepository } from '../../../banks/domain/repositories/day-opening.repository';
 import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.repository';
 import type { ClientRepository } from '../../../clients/domain/repositories/client.repository';
+import { RegisterAccountReceivableChargeUseCase } from '../../../accounts-receivable/application/use-cases/register-account-receivable-charge.use-case';
+import { RegisterAssetChargeUseCase } from '../../../assets/application/use-cases/register-asset-charge.use-case';
 import { TRANSACTION_TYPE_REPOSITORY } from '../../../transaction-types/domain/repositories/transaction-type.repository';
 import type { TransactionTypeRepository } from '../../../transaction-types/domain/repositories/transaction-type.repository';
-import { RegisterAccountReceivableChargeUseCase } from '../../../accounts-receivable/application/use-cases/register-account-receivable-charge.use-case';
+import type { TransactionTypeBalanceEffect } from '../../../transaction-types/domain/entities/transaction-type.entity';
 import { BANK_MOVEMENT_REPOSITORY } from '../../../banks/domain/repositories/bank-movement.repository';
 import type { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
@@ -22,23 +24,20 @@ import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-
 import {
   BankDepositAccountsReceivableForbiddenError,
   BankDepositAccountsReceivableRequiresClientError,
-  BankDepositAccountsReceivableWrongTypeError,
 } from '../../domain/errors/bank-deposit-accounts-receivable.error';
+import {
+  BankDepositAssetsAndReceivableConflictError,
+  BankDepositAssetsWrongTypeError,
+} from '../../domain/errors/bank-deposit-assets.error';
 import {
   BankDepositOperationOutput,
   toBankDepositOperationOutput,
 } from '../dtos/bank-deposit-output';
 import { todayIsoDate } from '../utils/today-iso-date';
 
-/**
- * Same accepted-hardcoded-name pattern `GetRechargeSalesSummaryUseCase`
- * already established for `KNOWN_RECHARGE_TYPE_NAMES` — `transaction_types`
- * stays a fully normalized, admin-managed catalog everywhere else; this is
- * the one spot that needs to recognize "this is really a depósito" as a
- * business rule (never trusting the frontend to only show the "Enviar a
- * cuentas por cobrar" checkbox for the right type).
- */
-const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
+/** Tipos cuyo monto puede enviarse a Activos: dinero que sale hacia el cliente. */
+const ASSET_ELIGIBLE_BALANCE_EFFECTS: readonly TransactionTypeBalanceEffect[] =
+  ['RETIRO', 'DESEMBOLSO_GENESIS'];
 
 export interface RegisterBankDepositOperationCashDetailInput {
   denomination: number;
@@ -58,8 +57,10 @@ export interface RegisterBankDepositOperationInput {
   clientName?: string | null;
   /** A REGISTERED client — re-validated (exists + active) here regardless of what the frontend already checked; independent of `sendToAccountsReceivable` (a deposit can link a registered client without also generating a cargo). */
   clientId?: string | null;
-  /** "Enviar a cuentas por cobrar" — requires `clientId`, requires the resolved transaction type to actually be "Depósito", and requires `isAdmin` (same rule `POST /accounts-receivable/:clientId/charges` already enforces — see `BankDepositAccountsReceivableForbiddenError`). */
+  /** "Enviar a cuentas por cobrar" — any transaction type; requires `clientId` and `isAdmin` (same rule `POST /accounts-receivable/:clientId/charges` already enforces — see `BankDepositAccountsReceivableForbiddenError`). */
   sendToAccountsReceivable?: boolean;
+  /** "Enviar a Activos" — solo Retiros y Desembolsos Génesis (por `balance_effect`); mismas reglas de cliente y admin que CxC, y nunca junto con `sendToAccountsReceivable`. */
+  sendToAssets?: boolean;
   isAdmin: boolean;
   /** "Vuelto" — omitted/`0` means no vuelto. `register_bank_deposit_operation` recomputes/validates this against the actual cash total server-side regardless of what's sent here. */
   changeGiven?: number;
@@ -98,11 +99,12 @@ export class RegisterBankDepositOperationUseCase {
     private readonly dayOpeningRepository: DayOpeningRepository,
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepository: ClientRepository,
-    @Inject(TRANSACTION_TYPE_REPOSITORY)
-    private readonly transactionTypeRepository: TransactionTypeRepository,
     @Inject(TRANSACTION_MANAGER)
     private readonly transactionManager: TransactionManager,
     private readonly registerAccountReceivableChargeUseCase: RegisterAccountReceivableChargeUseCase,
+    private readonly registerAssetChargeUseCase: RegisterAssetChargeUseCase,
+    @Inject(TRANSACTION_TYPE_REPOSITORY)
+    private readonly transactionTypeRepository: TransactionTypeRepository,
     @Inject(BANK_MOVEMENT_REPOSITORY)
     private readonly bankMovementRepository: BankMovementRepository,
   ) {}
@@ -122,6 +124,7 @@ export class RegisterBankDepositOperationUseCase {
     }
 
     const sendToAccountsReceivable = input.sendToAccountsReceivable ?? false;
+    const sendToAssets = input.sendToAssets ?? false;
 
     // A registered client is independent of the checkbox — resolved and
     // validated whenever one was sent, so `clientName` reflects the real
@@ -137,21 +140,26 @@ export class RegisterBankDepositOperationUseCase {
       clientName = client.name;
     }
 
-    if (sendToAccountsReceivable) {
+    if (sendToAccountsReceivable && sendToAssets) {
+      throw new BankDepositAssetsAndReceivableConflictError();
+    }
+    if (sendToAccountsReceivable || sendToAssets) {
       if (!clientId) {
         throw new BankDepositAccountsReceivableRequiresClientError();
       }
       if (!input.isAdmin) {
         throw new BankDepositAccountsReceivableForbiddenError();
       }
+    }
+    if (sendToAssets) {
       const transactionType = await this.transactionTypeRepository.findById(
         input.transactionTypeId,
       );
       if (
-        !transactionType ||
-        transactionType.name.trim() !== DEPOSIT_TRANSACTION_TYPE_NAME
+        !transactionType?.balanceEffect ||
+        !ASSET_ELIGIBLE_BALANCE_EFFECTS.includes(transactionType.balanceEffect)
       ) {
-        throw new BankDepositAccountsReceivableWrongTypeError();
+        throw new BankDepositAssetsWrongTypeError();
       }
     }
 
@@ -169,7 +177,7 @@ export class RegisterBankDepositOperationUseCase {
       changeGiven: input.changeGiven ?? 0,
     };
 
-    if (!sendToAccountsReceivable) {
+    if (!sendToAccountsReceivable && !sendToAssets) {
       const operation =
         await this.bankDepositRepository.registerOperation(depositData);
       return this.withBalanceMovement(operation);
@@ -183,16 +191,21 @@ export class RegisterBankDepositOperationUseCase {
             context,
           );
 
-        await this.registerAccountReceivableChargeUseCase.execute({
+        const charge = {
           clientId: clientId as string,
           amount: input.totalAmount,
           date: operationDate,
-          description: `Depósito Transaccionar — ${registeredOperation.transactionBankName}`,
+          description: `${registeredOperation.transactionTypeName} Transaccionar — ${registeredOperation.transactionBankName}`,
           createdBy: input.userId,
           referenceType: 'BANK_DEPOSIT',
           referenceId: registeredOperation.id,
           context,
-        });
+        };
+        if (sendToAssets) {
+          await this.registerAssetChargeUseCase.execute(charge);
+        } else {
+          await this.registerAccountReceivableChargeUseCase.execute(charge);
+        }
 
         return registeredOperation;
       },

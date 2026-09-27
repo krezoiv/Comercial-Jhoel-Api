@@ -63,15 +63,20 @@ export class CreateBankDepositRequestDto {
   @MaxLength(150)
   clientName?: string;
 
-  /** A REGISTERED client id — only meaningful for a "Depósito" transaction type; the use case re-validates it exists+active regardless of what the frontend already checked. */
+  /** A REGISTERED client id — any transaction type; the use case re-validates it exists+active regardless of what the frontend already checked. */
   @IsOptional()
   @IsUUID()
   clientId?: string;
 
-  /** "Enviar a cuentas por cobrar" — requires `clientId`, requires the transaction type to actually be "Depósito", and requires the caller to be an admin (same rule `POST /accounts-receivable/:clientId/charges` already enforces). All three are re-checked server-side, never trusted from this flag alone. */
+  /** "Enviar a cuentas por cobrar" — any transaction type; requires `clientId` and an admin caller (same rule `POST /accounts-receivable/:clientId/charges` already enforces). Re-checked server-side, never trusted from this flag alone. */
   @IsOptional()
   @IsBoolean()
   sendToAccountsReceivable?: boolean;
+
+  /** "Enviar a Activos" — solo Retiros y Desembolsos Génesis; exige `clientId` y un admin, y excluye `sendToAccountsReceivable`. Todo se revalida en el servidor. */
+  @IsOptional()
+  @IsBoolean()
+  sendToAssets?: boolean;
 
   /** "Vuelto" — omitido/`0` significa que no hubo vuelto, idéntico al comportamiento de siempre. El backend recalcula/valida esto contra el efectivo real, nunca confía ciegamente en este valor. */
   @IsOptional()

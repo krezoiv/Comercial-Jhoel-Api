@@ -126,33 +126,42 @@
           />
         </div>
 
-        @if (isDepositType()) {
-          <div class="field">
-            <label>Cliente registrado <span class="field__optional">(opcional)</span></label>
-            <app-client-search-select
-              [selectedClientId]="draft.clientId()"
-              [selectedClientName]="draft.clientDisplayName()"
-              placeholder="Buscar cliente registrado…"
-              (selectionChange)="onRegisteredClientChange($event)"
-            />
-          </div>
+        <div class="field">
+          <label>Cliente registrado <span class="field__optional">(opcional)</span></label>
+          <app-client-search-select
+            [selectedClientId]="draft.clientId()"
+            [selectedClientName]="draft.clientDisplayName()"
+            placeholder="Buscar cliente registrado…"
+            (selectionChange)="onRegisteredClientChange($event)"
+          />
+        </div>
 
-          @if (isAdmin()) {
-            <div class="field">
-              <label class="checkbox" [class.checkbox--disabled]="!canSendToAccountsReceivable()">
+        @if (isAdmin()) {
+          <div class="field">
+            <label class="checkbox" [class.checkbox--disabled]="!canSendToAccountsReceivable()">
+              <input
+                type="checkbox"
+                [ngModel]="draft.sendToAccountsReceivable()"
+                [disabled]="!canSendToAccountsReceivable()"
+                (ngModelChange)="onSendToAccountsReceivableChange($event)"
+              />
+              Enviar a cuentas por cobrar
+            </label>
+            @if (isAssetEligibleType()) {
+              <label class="checkbox" [class.checkbox--disabled]="!canSendToAssets()">
                 <input
                   type="checkbox"
-                  [ngModel]="draft.sendToAccountsReceivable()"
-                  [disabled]="!canSendToAccountsReceivable()"
-                  (ngModelChange)="onSendToAccountsReceivableChange($event)"
+                  [ngModel]="draft.sendToAssets()"
+                  [disabled]="!canSendToAssets()"
+                  (ngModelChange)="onSendToAssetsChange($event)"
                 />
-                Enviar a cuentas por cobrar
+                Enviar a Activos
               </label>
-              @if (!canSendToAccountsReceivable()) {
-                <span class="field__hint">Selecciona un cliente registrado para habilitar esta opción.</span>
-              }
-            </div>
-          }
+            }
+            @if (!canSendToAccountsReceivable()) {
+              <span class="field__hint">Selecciona un cliente registrado para habilitar esta opción.</span>
+            }
+          </div>
         }
       </div>
 
@@ -286,6 +295,7 @@
     [clientName]="draft.clientName()"
     [registeredClientName]="draft.clientId() ? draft.clientDisplayName() : null"
     [sendToAccountsReceivable]="draft.sendToAccountsReceivable()"
+    [sendToAssets]="canSendToAssets() && draft.sendToAssets()"
     [totalAmount]="draft.totalAmount()"
     [cashCounts]="draft.cashCounts()"
     [transactionAmounts]="draft.transactionAmounts()"

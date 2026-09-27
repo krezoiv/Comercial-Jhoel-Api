@@ -1,4 +1,5 @@
 import { Asset, AssetMovementType } from '../entities/asset.entity';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export const ASSET_REPOSITORY = Symbol('ASSET_REPOSITORY');
 
@@ -64,6 +65,9 @@ export interface RegisterAssetMovementData {
   date: string;
   description: string | null;
   createdBy: string;
+  /** Origen polimórfico — `null` para un movimiento registrado directo en Activos; `'BANK_DEPOSIT'` + id de la operación cuando lo genera Transaccionar. */
+  referenceType?: string | null;
+  referenceId?: string | null;
 }
 
 export interface StatementMovement {
@@ -100,12 +104,15 @@ export interface AssetRepository {
   getReportSummary(
     options: FindAssetsReportSummaryOptions,
   ): Promise<AssetsReportSummary>;
-  findById(id: string): Promise<Asset | null>;
+  findById(id: string, context?: TransactionContext): Promise<Asset | null>;
   create(data: CreateAssetData): Promise<Asset>;
   update(id: string, data: UpdateAssetData): Promise<Asset>;
   deactivate(id: string): Promise<void>;
   /** Invokes the `register_asset_movement` Postgres function — validation, balance computation (for logging/return purposes only, never enforced here — see that function's own doc comment for why Activos allows a negative balance), and the insert all happen atomically, serialized per client via an advisory lock. */
-  registerMovement(data: RegisterAssetMovementData): Promise<Asset>;
+  registerMovement(
+    data: RegisterAssetMovementData,
+    context?: TransactionContext,
+  ): Promise<Asset>;
   /** The client's current signed balance — a single bounded aggregate, never a full-history fetch. */
   getCurrentBalance(clientId: string): Promise<number>;
   getStatement(

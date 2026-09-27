@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { EntityManager, QueryFailedError, Repository } from 'typeorm';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 import { Asset } from '../../domain/entities/asset.entity';
 import {
   AssetRepository,
@@ -146,9 +147,18 @@ export class TypeOrmAssetRepository implements AssetRepository {
     };
   }
 
-  async findById(id: string): Promise<Asset | null> {
-    const orm = await this.repository.findOne({ where: { id } });
+  async findById(
+    id: string,
+    context?: TransactionContext,
+  ): Promise<Asset | null> {
+    const orm = await this.getManager(context).findOne(AssetOrmEntity, {
+      where: { id },
+    });
     return orm ? AssetMapper.toDomain(orm) : null;
+  }
+
+  private getManager(context?: TransactionContext): EntityManager {
+    return (context as EntityManager | undefined) ?? this.repository.manager;
   }
 
   async create(data: CreateAssetData): Promise<Asset> {
@@ -202,25 +212,30 @@ export class TypeOrmAssetRepository implements AssetRepository {
   }
 
   /** Invokes `register_asset_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for why Activos allows a negative balance and why this is the atomic, concurrency-safe replacement for the old plain `create()` INSERT. */
-  async registerMovement(data: RegisterAssetMovementData): Promise<Asset> {
+  async registerMovement(
+    data: RegisterAssetMovementData,
+    context?: TransactionContext,
+  ): Promise<Asset> {
     let movementId: string;
     try {
-      const rows = await this.repository.manager.query<
+      const rows = await this.getManager(context).query<
         { register_asset_movement: string }[]
-      >('SELECT register_asset_movement($1, $2, $3, $4, $5, $6)', [
+      >('SELECT register_asset_movement($1, $2, $3, $4, $5, $6, $7, $8)', [
         data.clientId,
         data.movementType,
         data.amount,
         data.date,
         data.description,
         data.createdBy,
+        data.referenceType ?? null,
+        data.referenceId ?? null,
       ]);
       movementId = rows[0].register_asset_movement;
     } catch (error) {
       throw this.translateMovementError(error);
     }
 
-    const asset = await this.findById(movementId);
+    const asset = await this.findById(movementId, context);
     if (!asset) {
       throw new InternalServerErrorException(
         'No se pudo recuperar el movimiento recién registrado.',

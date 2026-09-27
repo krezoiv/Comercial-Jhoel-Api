@@ -5,7 +5,6 @@ import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-
 import {
   BankDepositAccountsReceivableForbiddenError,
   BankDepositAccountsReceivableRequiresClientError,
-  BankDepositAccountsReceivableWrongTypeError,
 } from '../../domain/errors/bank-deposit-accounts-receivable.error';
 import { BankDepositRepository } from '../../domain/repositories/bank-deposit.repository';
 import { DayOpeningRepository } from '../../../banks/domain/repositories/day-opening.repository';
@@ -13,10 +12,18 @@ import { DayOpening } from '../../../banks/domain/entities/day-opening.entity';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 import { ClientRepository } from '../../../clients/domain/repositories/client.repository';
 import { Client } from '../../../clients/domain/entities/client.entity';
-import { TransactionTypeRepository } from '../../../transaction-types/domain/repositories/transaction-type.repository';
-import { TransactionType } from '../../../transaction-types/domain/entities/transaction-type.entity';
 import { TransactionManager } from '../../../../shared/application/ports/transaction-manager.port';
 import { RegisterAccountReceivableChargeUseCase } from '../../../accounts-receivable/application/use-cases/register-account-receivable-charge.use-case';
+import { RegisterAssetChargeUseCase } from '../../../assets/application/use-cases/register-asset-charge.use-case';
+import { TransactionTypeRepository } from '../../../transaction-types/domain/repositories/transaction-type.repository';
+import {
+  TransactionType,
+  TransactionTypeBalanceEffect,
+} from '../../../transaction-types/domain/entities/transaction-type.entity';
+import {
+  BankDepositAssetsAndReceivableConflictError,
+  BankDepositAssetsWrongTypeError,
+} from '../../domain/errors/bank-deposit-assets.error';
 import { todayIsoDate } from '../utils/today-iso-date';
 import { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
 
@@ -43,7 +50,7 @@ function buildDayOpening(overrides: { closedAt: Date | null }): DayOpening {
 }
 
 function buildOperation(
-  overrides: { clientId?: string | null } = {},
+  overrides: { clientId?: string | null; transactionTypeName?: string } = {},
 ): BankDepositOperation {
   return BankDepositOperation.create({
     id: 'op-1',
@@ -53,7 +60,7 @@ function buildOperation(
     bankAccountName: 'Akísi',
     bankAccountNumber: '42197144',
     transactionTypeId: 'type-1',
-    transactionTypeName: 'Depósito',
+    transactionTypeName: overrides.transactionTypeName ?? 'Depósito',
     totalAmount: 500,
     transactionCount: 2,
     totalCash: 500,
@@ -90,12 +97,14 @@ function buildClient(overrides: { isActive?: boolean } = {}): Client {
   });
 }
 
-function buildTransactionType(name: string): TransactionType {
+function buildTransactionType(
+  balanceEffect: TransactionTypeBalanceEffect | null,
+): TransactionType {
   return TransactionType.create({
     id: 'type-1',
-    name,
+    name: 'Retiros',
     icon: 'bank',
-    balanceEffect: null,
+    balanceEffect,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -110,9 +119,10 @@ describe('RegisterBankDepositOperationUseCase', () => {
   let bankDepositRepository: jest.Mocked<BankDepositRepository>;
   let dayOpeningRepository: jest.Mocked<DayOpeningRepository>;
   let clientRepository: jest.Mocked<ClientRepository>;
-  let transactionTypeRepository: jest.Mocked<TransactionTypeRepository>;
   let transactionManager: jest.Mocked<TransactionManager>;
   let registerAccountReceivableChargeUseCase: jest.Mocked<RegisterAccountReceivableChargeUseCase>;
+  let registerAssetChargeUseCase: jest.Mocked<RegisterAssetChargeUseCase>;
+  let transactionTypeRepository: jest.Mocked<TransactionTypeRepository>;
   let bankMovementRepository: jest.Mocked<BankMovementRepository>;
   let useCase: RegisterBankDepositOperationUseCase;
 
@@ -136,12 +146,15 @@ describe('RegisterBankDepositOperationUseCase', () => {
     clientRepository = {
       findById: jest.fn(),
     } as unknown as jest.Mocked<ClientRepository>;
-    transactionTypeRepository = {
-      findById: jest.fn(),
-    } as unknown as jest.Mocked<TransactionTypeRepository>;
     transactionManager = {
       runInTransaction: jest.fn((work) => work('ctx')),
     } as unknown as jest.Mocked<TransactionManager>;
+    registerAssetChargeUseCase = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<RegisterAssetChargeUseCase>;
+    transactionTypeRepository = {
+      findById: jest.fn(),
+    } as unknown as jest.Mocked<TransactionTypeRepository>;
     registerAccountReceivableChargeUseCase = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<RegisterAccountReceivableChargeUseCase>;
@@ -154,9 +167,10 @@ describe('RegisterBankDepositOperationUseCase', () => {
       bankDepositRepository,
       dayOpeningRepository,
       clientRepository,
-      transactionTypeRepository,
       transactionManager,
       registerAccountReceivableChargeUseCase,
+      registerAssetChargeUseCase,
+      transactionTypeRepository,
       bankMovementRepository,
     );
 
@@ -286,23 +300,29 @@ describe('RegisterBankDepositOperationUseCase', () => {
       expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
     });
 
-    it('rejects a transaction type that is not "Depósito"', async () => {
+    it('sends any transaction type to CxC, described with its own type name', async () => {
       clientRepository.findById.mockResolvedValue(buildClient());
-      transactionTypeRepository.findById.mockResolvedValue(
-        buildTransactionType('Retiro'),
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation({
+          clientId: 'client-1',
+          transactionTypeName: 'Retiros',
+        }),
       );
 
-      await expect(useCase.execute(sendInput)).rejects.toThrow(
-        BankDepositAccountsReceivableWrongTypeError,
+      await useCase.execute(sendInput);
+
+      expect(
+        registerAccountReceivableChargeUseCase.execute,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: 'client-1',
+          description: 'Retiros Transaccionar — Akísi',
+        }),
       );
-      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
     });
 
     it('registers the deposit and the CxC charge atomically, tagged with the deposit as its origin', async () => {
       clientRepository.findById.mockResolvedValue(buildClient());
-      transactionTypeRepository.findById.mockResolvedValue(
-        buildTransactionType('Depósito'),
-      );
       const operation = buildOperation({ clientId: 'client-1' });
       bankDepositRepository.registerOperation.mockResolvedValue(operation);
 
@@ -325,6 +345,84 @@ describe('RegisterBankDepositOperationUseCase', () => {
         }),
       );
       expect(result.id).toBe('op-1');
+    });
+  });
+
+  describe('sendToAssets', () => {
+    const assetInput = {
+      ...input,
+      clientId: 'client-1',
+      isAdmin: true,
+      sendToAssets: true,
+    };
+
+    it.each<TransactionTypeBalanceEffect>(['RETIRO', 'DESEMBOLSO_GENESIS'])(
+      'registers a %s and its Activos charge atomically, tagged with the operation',
+      async (effect) => {
+        clientRepository.findById.mockResolvedValue(buildClient());
+        transactionTypeRepository.findById.mockResolvedValue(
+          buildTransactionType(effect),
+        );
+        const operation = buildOperation({
+          clientId: 'client-1',
+          transactionTypeName: 'Retiros',
+        });
+        bankDepositRepository.registerOperation.mockResolvedValue(operation);
+
+        await useCase.execute(assetInput);
+
+        expect(transactionManager.runInTransaction).toHaveBeenCalledTimes(1);
+        expect(registerAssetChargeUseCase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            clientId: 'client-1',
+            amount: input.totalAmount,
+            description: 'Retiros Transaccionar — Akísi',
+            referenceType: 'BANK_DEPOSIT',
+            referenceId: operation.id,
+            context: 'ctx',
+          }),
+        );
+        expect(
+          registerAccountReceivableChargeUseCase.execute,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each<TransactionTypeBalanceEffect | null>([
+      'DEPOSITO',
+      'REINTEGRO',
+      'PAGO_GENESIS',
+      null,
+    ])('rejects a %s type', async (effect) => {
+      clientRepository.findById.mockResolvedValue(buildClient());
+      transactionTypeRepository.findById.mockResolvedValue(
+        buildTransactionType(effect),
+      );
+
+      await expect(useCase.execute(assetInput)).rejects.toThrow(
+        BankDepositAssetsWrongTypeError,
+      );
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
+
+    it('rejects sending to CxC and Activos at the same time', async () => {
+      clientRepository.findById.mockResolvedValue(buildClient());
+      await expect(
+        useCase.execute({ ...assetInput, sendToAccountsReceivable: true }),
+      ).rejects.toThrow(BankDepositAssetsAndReceivableConflictError);
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
+
+    it('requires a registered client and an admin, same as CxC', async () => {
+      await expect(
+        useCase.execute({ ...assetInput, clientId: undefined }),
+      ).rejects.toThrow(BankDepositAccountsReceivableRequiresClientError);
+
+      clientRepository.findById.mockResolvedValue(buildClient());
+      await expect(
+        useCase.execute({ ...assetInput, isAdmin: false }),
+      ).rejects.toThrow(BankDepositAccountsReceivableForbiddenError);
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
     });
   });
 

@@ -1342,6 +1342,11 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   cuenta origen elegida (necesita saldo) y −monto a la cuenta `GENESIS` (puede quedar negativa), con
   `counterpart_bank_id` cruzado; bloquea ambas filas en orden de id. Anular revierte los dos. La línea Génesis no puede
   ser el origen (`REINTEGRO_SOURCE_IS_GENESIS`); sin Génesis activa → `GENESIS_ACCOUNT_NOT_CONFIGURED`.
+- **Transaccionar → CxC / Activos**: "Enviar a cuentas por cobrar" vale para cualquier tipo (ya no solo "Depósito").
+  "Enviar a Activos" (`sendToAssets`) solo para `balance_effect` RETIRO/DESEMBOLSO_GENESIS
+  (`BankDepositAssetsWrongTypeError`), excluyente con CxC; mismas reglas de cliente registrado + admin. Reutiliza
+  `RegisterAssetChargeUseCase` dentro de la misma transacción; `assets.reference_type/reference_id` (migración
+  `1760005500000`) ligan el cargo a la operación. Anular la operación NO revierte el cargo (igual que CxC).
 - Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
   compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia

@@ -23,6 +23,7 @@ interface PersistedBankDepositDraft {
   clientId: string | null;
   clientDisplayName: string | null;
   sendToAccountsReceivable: boolean;
+  sendToAssets?: boolean;
   changeGiven: number;
   changeConfirmed: boolean;
 }
@@ -84,6 +85,9 @@ export class BankDepositDraftStore {
 
   /** "Enviar a cuentas por cobrar" — only meaningful (and only ever shown enabled) while `clientId` is set; cleared automatically whenever the registered client is cleared, see `setRegisteredClient`. The backend re-validates all of this regardless — see `RegisterBankDepositOperationUseCase`. */
   readonly sendToAccountsReceivable = signal(false);
+
+  /** "Enviar a Activos" — solo Retiros/Desembolsos Génesis; excluyente con `sendToAccountsReceivable` (marcar uno desmarca el otro). */
+  readonly sendToAssets = signal(false);
 
   /**
    * "Vuelto" — cash handed back to the client when `totalCash` exceeds
@@ -280,12 +284,24 @@ export class BankDepositDraftStore {
     this.clientDisplayName.set(client?.name ?? null);
     if (!client) {
       this.sendToAccountsReceivable.set(false);
+      this.sendToAssets.set(false);
     }
     this.persist();
   }
 
   setSendToAccountsReceivable(value: boolean): void {
     this.sendToAccountsReceivable.set(value);
+    if (value) {
+      this.sendToAssets.set(false);
+    }
+    this.persist();
+  }
+
+  setSendToAssets(value: boolean): void {
+    this.sendToAssets.set(value);
+    if (value) {
+      this.sendToAccountsReceivable.set(false);
+    }
     this.persist();
   }
 
@@ -303,6 +319,7 @@ export class BankDepositDraftStore {
     this.clientId.set(null);
     this.clientDisplayName.set(null);
     this.sendToAccountsReceivable.set(false);
+    this.sendToAssets.set(false);
     this.changeGiven.set(0);
     this.changeConfirmed.set(false);
     this.clearStorage();
@@ -326,6 +343,7 @@ export class BankDepositDraftStore {
       clientId: this.clientId(),
       clientDisplayName: this.clientDisplayName(),
       sendToAccountsReceivable: this.sendToAccountsReceivable(),
+      sendToAssets: this.sendToAssets(),
       changeGiven: this.changeGiven(),
       changeConfirmed: this.changeConfirmed(),
     };
@@ -361,6 +379,7 @@ export class BankDepositDraftStore {
       this.clientId.set(parsed.clientId ?? null);
       this.clientDisplayName.set(parsed.clientDisplayName ?? null);
       this.sendToAccountsReceivable.set(parsed.sendToAccountsReceivable ?? false);
+      this.sendToAssets.set(parsed.sendToAssets ?? false);
       this.changeGiven.set(parsed.changeGiven ?? 0);
       this.changeConfirmed.set(parsed.changeConfirmed ?? false);
     } catch {

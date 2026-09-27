@@ -8,6 +8,7 @@ import {
   ReferencedClientNotFoundError,
 } from '../../domain/errors/referenced-client-invalid.error';
 import { AssetOutput, toAssetOutput } from '../dtos/asset-output';
+import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export interface RegisterAssetChargeInput {
   clientId: string;
@@ -15,6 +16,11 @@ export interface RegisterAssetChargeInput {
   date: string;
   description?: string;
   createdBy: string;
+  /** Origen polimórfico — lo omite el endpoint "Registrar Cargo"; Transaccionar lo manda junto con `referenceId`. */
+  referenceType?: string;
+  referenceId?: string;
+  /** Presente cuando el cargo debe confirmarse o revertirse junto con otra escritura (`TransactionManager.runInTransaction`). */
+  context?: TransactionContext;
 }
 
 /** "Registrar Cargo" for Activos — an independent Kardex movement, never a rewrite of a prior one (see the migration's own doc comment for the full reasoning). */
@@ -38,14 +44,19 @@ export class RegisterAssetChargeUseCase {
 
     const description = input.description?.trim().replace(/\s+/g, ' ') || null;
 
-    const movement = await this.assetRepository.registerMovement({
-      clientId: input.clientId,
-      movementType: 'CARGO',
-      amount: input.amount,
-      date: input.date,
-      description,
-      createdBy: input.createdBy,
-    });
+    const movement = await this.assetRepository.registerMovement(
+      {
+        clientId: input.clientId,
+        movementType: 'CARGO',
+        amount: input.amount,
+        date: input.date,
+        description,
+        createdBy: input.createdBy,
+        referenceType: input.referenceType ?? null,
+        referenceId: input.referenceId ?? null,
+      },
+      input.context,
+    );
 
     return toAssetOutput(movement);
   }

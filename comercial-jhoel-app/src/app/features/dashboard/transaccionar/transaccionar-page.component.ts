@@ -62,9 +62,6 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
   REINTEGRO: 'Saldo insuficiente para realizar el reintegro.',
 };
 
-/** Same accepted-hardcoded-name pattern this app already uses for a handful of business rules tied to one specific catalog row (e.g. Recargas' `KNOWN_RECHARGE_TYPE_NAMES`) — the backend independently re-validates this exact rule (`RegisterBankDepositOperationUseCase`'s own `DEPOSIT_TRANSACTION_TYPE_NAME`), this is only a proactive UX echo so the checkbox never renders for the wrong type. */
-const DEPOSIT_TRANSACTION_TYPE_NAME = 'Depósito';
-
 /**
  * "Transaccionar" — a two-step flow. Step one is a dashboard of cards, one
  * per active "Tipo de Transacción" (Depósito, Retiro, Desembolso Préstamo,
@@ -248,11 +245,16 @@ export class TransaccionarPageComponent {
     () => this.transactionTypes().find((t) => t.id === this.draft.transactionTypeId())?.icon ?? 'arrow-left-right',
   );
 
-  /** Gates both the "Cliente registrado" picker and the "Enviar a cuentas por cobrar" checkbox — neither renders for any other tipo de transacción. */
-  readonly isDepositType = computed(() => this.draft.transactionTypeName() === DEPOSIT_TRANSACTION_TYPE_NAME);
-
   /** The checkbox is only ever offered enabled once both conditions hold — a non-admin sees it hidden entirely (the backend rejects the operation outright otherwise, see `BankDepositAccountsReceivableForbiddenError`), and no registered client means there's nothing to charge. */
   readonly canSendToAccountsReceivable = computed(() => this.isAdmin() && this.draft.clientId() !== null);
+
+  /** "Enviar a Activos" solo existe para Retiros y Desembolsos Génesis (el backend lo revalida por `balance_effect`). */
+  readonly isAssetEligibleType = computed(() => {
+    const effect = this.draft.transactionTypeBalanceEffect();
+    return effect === 'RETIRO' || effect === 'DESEMBOLSO_GENESIS';
+  });
+
+  readonly canSendToAssets = computed(() => this.isAssetEligibleType() && this.canSendToAccountsReceivable());
 
   readonly overallStatusText = computed(() => {
     switch (this.draft.overallStatus()) {
@@ -361,6 +363,10 @@ export class TransaccionarPageComponent {
     this.draft.setSendToAccountsReceivable(checked);
   }
 
+  onSendToAssetsChange(checked: boolean): void {
+    this.draft.setSendToAssets(checked);
+  }
+
   /** Se llama en cada tecla (el directive ya entrega el número limpio, sin comas) — así "Saldo después" se actualiza en vivo. */
   onTotalAmountChange(value: number | null): void {
     this.draft.setTotalAmount(value === null || Number.isNaN(value) ? 0 : Math.max(value, 0));
@@ -441,6 +447,7 @@ export class TransaccionarPageComponent {
         clientName: this.draft.clientName().trim() || null,
         clientId: this.draft.clientId(),
         sendToAccountsReceivable: this.draft.sendToAccountsReceivable(),
+        sendToAssets: this.canSendToAssets() && this.draft.sendToAssets(),
         changeGiven: this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
       })
       .subscribe({
