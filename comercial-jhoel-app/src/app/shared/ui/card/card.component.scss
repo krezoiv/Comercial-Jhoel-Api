@@ -71,3 +71,39 @@
   border-color: var(--color-accent-cyan);
   box-shadow: var(--shadow-glow-primary);
 }
+
+// Iluminación que sigue al puntero — solo `glass` + `tilt`, combinación que
+// únicamente usa la landing pública (Catálogo, Agentes bancarios...);
+// `TiltOnMouseDirective` escribe `--glow-x`/`--glow-y` en este mismo
+// elemento. Las cards del panel (light/dark, sin tilt) no cambian.
+.card--glass.card--tilt {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(28, 46, 82, 0.55) 0%, rgba(9, 16, 32, 0.7) 100%);
+  border-color: rgba(130, 192, 247, 0.14);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      20rem circle at var(--glow-x, 50%) var(--glow-y, 0%),
+      rgba(127, 230, 239, 0.16) 0%,
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--duration-slow) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    &:hover::after {
+      opacity: 1;
+    }
+  }
+}
+
+.card--glass.card--tilt.card--hoverable:hover {
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.85), 0 16px 40px -18px rgba(23, 195, 214, 0.35);
+}

@@ -4,6 +4,7 @@ import { CatalogRequestType, PublicCatalogPhone } from '../../../../../../core/m
 import { PublicCatalogService } from '../../../../../../core/services/public-catalog.service';
 import { formatCurrency } from '../../../../../../core/utils/number-format.util';
 import { BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent } from '../../../../../../shared/ui';
+import { TiltOnMouseDirective } from '../../../../../../shared/directives/tilt-on-mouse.directive';
 
 interface DisplaySpec {
   label: string;
@@ -22,7 +23,7 @@ interface DisplaySpec {
 @Component({
   selector: 'app-phone-card',
   standalone: true,
-  imports: [BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent],
+  imports: [BadgeComponent, ButtonComponent, IconComponent, LikeButtonComponent, TiltOnMouseDirective],
   templateUrl: './phone-card.component.html',
   styleUrl: './phone-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

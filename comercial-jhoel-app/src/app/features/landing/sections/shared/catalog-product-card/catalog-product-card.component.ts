@@ -4,6 +4,7 @@ import { PublicCatalogProduct } from '../../../../../core/models';
 import { PublicProductCatalogService } from '../../../../../core/services/public-product-catalog.service';
 import { formatCurrency } from '../../../../../core/utils/number-format.util';
 import { ButtonComponent, IconComponent, LikeButtonComponent } from '../../../../../shared/ui';
+import { TiltOnMouseDirective } from '../../../../../shared/directives/tilt-on-mouse.directive';
 
 /**
  * Card compartida por "Librería" y "Variedades y Accesorios" — mismo flip
@@ -16,7 +17,7 @@ import { ButtonComponent, IconComponent, LikeButtonComponent } from '../../../..
 @Component({
   selector: 'app-catalog-product-card',
   standalone: true,
-  imports: [ButtonComponent, IconComponent, LikeButtonComponent],
+  imports: [ButtonComponent, IconComponent, LikeButtonComponent, TiltOnMouseDirective],
   templateUrl: './catalog-product-card.component.html',
   styleUrl: './catalog-product-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

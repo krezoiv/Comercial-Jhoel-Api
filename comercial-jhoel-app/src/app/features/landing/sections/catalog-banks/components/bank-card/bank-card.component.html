@@ -1,4 +1,4 @@
-<div class="bank-card" [class.bank-card--flipped]="flipped()">
+<div class="bank-card" [class.bank-card--flipped]="flipped()" [appTiltOnMouse]="true" [tiltMax]="4">
   <div class="bank-card__inner">
     <div class="bank-card__face bank-card__face--front" (click)="toggleFlip()">
       <div class="bank-card__image-wrap">

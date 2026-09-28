@@ -18,6 +18,13 @@ import { AfterViewInit, Directive, ElementRef, Input, OnDestroy, inject } from '
  * enable/disable input (same convention as `ngModel`) so a consumer can
  * still opt out per-instance even on a capable device (e.g.
  * `[appTiltOnMouse]="false"`).
+ *
+ * El mismo listener también escribe `--glow-x`/`--glow-y` (porcentaje
+ * dentro del host) — la iluminación que sigue al puntero en las cards de
+ * la landing (ver el mixin `pointer-light` en styles/_landing.scss) lee
+ * esas dos variables. Un solo `mousemove` por card para ambos efectos, en
+ * vez de una segunda directiva con su propio listener. Con `tiltMax=0` la
+ * card solo recibe la iluminación, sin rotación.
  */
 @Directive({
   selector: '[appTiltOnMouse]',
@@ -74,10 +81,16 @@ export class TiltOnMouseDirective implements AfterViewInit, OnDestroy {
       const style = this.el.nativeElement.style;
       style.setProperty('--tilt-y', `${(px * this.tiltMax * 2).toFixed(2)}deg`);
       style.setProperty('--tilt-x', `${(-py * this.tiltMax * 2).toFixed(2)}deg`);
+      style.setProperty('--glow-x', `${((px + 0.5) * 100).toFixed(1)}%`);
+      style.setProperty('--glow-y', `${((py + 0.5) * 100).toFixed(1)}%`);
     });
   };
 
   private readonly onLeave = (): void => {
+    if (this.raf !== null) {
+      cancelAnimationFrame(this.raf);
+      this.raf = null;
+    }
     const style = this.el.nativeElement.style;
     style.setProperty('--tilt-x', '0deg');
     style.setProperty('--tilt-y', '0deg');

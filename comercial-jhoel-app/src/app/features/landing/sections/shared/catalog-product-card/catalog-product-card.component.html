@@ -2,6 +2,8 @@
   class="product-card"
   [class.product-card--flipped]="flipped()"
   [class.product-card--enhanced]="enhancedEffects"
+  [appTiltOnMouse]="true"
+  [tiltMax]="4"
 >
   <div class="product-card__inner">
     <div class="product-card__face product-card__face--front" (click)="toggleFlip()">

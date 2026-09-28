@@ -33,6 +33,11 @@ import { ContactComponent } from './sections/contact/contact.component';
     ContactComponent,
   ],
   templateUrl: './landing-page.component.html',
+  // Fondo base común a todas las secciones (se funden en él arriba/abajo) y
+  // recorte horizontal de seguridad: `clip` (no `hidden`) no crea un
+  // contenedor de scroll, así el navbar `sticky` y los overlays
+  // `position: fixed` siguen funcionando igual.
+  styles: [':host { display: block; background: var(--lp-base); overflow-x: clip; }'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LandingPageComponent {

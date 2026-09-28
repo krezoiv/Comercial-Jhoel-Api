@@ -5,27 +5,74 @@
   display: block;
 }
 
+// Portada: sube por debajo del navbar (margen negativo = alto del navbar)
+// para que el navbar transparente de la landing flote sobre la escena, y
+// ocupa ~92% del alto visible. `svh` en vez de `vh`: en móvil no "salta"
+// cuando la barra del navegador aparece/desaparece.
 .hero {
   position: relative;
   overflow: hidden;
-  background: var(--gradient-dark-fade);
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: 92vh;
+  min-height: 92svh;
+  margin-top: calc(-1 * var(--navbar-height));
+  padding-top: calc(var(--navbar-height) + var(--space-10));
+  padding-bottom: var(--space-24);
+  background: var(--lp-base);
   color: var(--color-text-on-dark);
-  padding-top: var(--space-16);
-  padding-bottom: var(--space-20);
 
   @include bp.respond(lg) {
-    padding-top: var(--space-24);
-    padding-bottom: var(--space-32);
+    padding-top: calc(var(--navbar-height) + var(--space-12));
+    padding-bottom: var(--space-24);
   }
+
+  > app-container {
+    width: 100%;
+  }
+}
+
+// Capa base de iluminación "cinematográfica": azul profundo arriba a la
+// derecha (detrás de la escena 3D), y fundido a `--lp-base` abajo para que
+// el Hero continúe sin corte hacia la siguiente sección.
+.hero__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 75% 35%, rgba(26, 99, 184, 0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 15% 10%, rgba(23, 195, 214, 0.1) 0%, transparent 70%),
+    linear-gradient(180deg, #030814 0%, #06142b 45%, var(--lp-base) 100%);
 }
 
 .hero__grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
   pointer-events: none;
+}
+
+// "Piso" tecnológico en perspectiva — una retícula inclinada que se
+// desvanece hacia el horizonte; da profundidad a la escena sin imágenes.
+.hero__floor {
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  bottom: -2rem;
+  height: 45%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(79, 160, 242, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 160, 242, 0.18) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(600px) rotateX(62deg);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(180deg, transparent 0%, black 55%, transparent 100%);
+  opacity: 0.55;
 }
 
 .hero__glow {
@@ -37,18 +84,23 @@
 }
 
 .hero__glow--primary {
-  width: 32rem;
-  height: 32rem;
+  width: 36rem;
+  height: 36rem;
   top: -10rem;
-  // Offset horizontal reducido a propósito (antes -8rem) — `.hero` ya tiene
-  // `overflow: hidden`, pero un offset tan grande deja mucho contenido
-  // pintado fuera del viewport que el recorte solo oculta a zoom normal;
-  // algunos navegadores móviles pueden seguir revelándolo al hacer
-  // pinch-zoom y desplazarse (una peculiaridad real del compositor, no del
-  // layout — por eso nunca aparecía en `scrollWidth`). Reducir el offset
-  // ataca la causa de raíz en vez de depender solo del recorte.
+  // Offset horizontal reducido a propósito — un offset grande deja pintura
+  // fuera del viewport que algunos navegadores móviles revelan con
+  // pinch-zoom aunque `.hero` recorte con `overflow: hidden`.
   right: -3rem;
   background: radial-gradient(circle, var(--color-primary-600) 0%, transparent 70%);
+}
+
+.hero__glow--cyan {
+  width: 22rem;
+  height: 22rem;
+  top: 38%;
+  right: 22%;
+  background: radial-gradient(circle, var(--color-accent-cyan) 0%, transparent 70%);
+  opacity: 0.18;
 }
 
 .hero__glow--gold {
@@ -57,15 +109,12 @@
   bottom: -8rem;
   left: -2rem;
   background: radial-gradient(circle, var(--color-accent-gold) 0%, transparent 70%);
-  opacity: 0.25;
+  opacity: 0.14;
 }
 
 // Iluminación ambiental que sigue al cursor — `--mx`/`--my` los escribe
-// `HeroComponent.onHeroMouseMove()` (rAF-throttled, nunca atado en touch
-// ni con `prefers-reduced-motion`, ver ese método). Con el listener
-// desactivado, `--mx`/`--my` simplemente nunca cambian de su valor inicial
-// (centro), así que esta capa se queda como un glow ambiental fijo y
-// discreto en vez de desaparecer — nunca un elemento "roto".
+// `HeroComponent.onHeroMouseMove()` (rAF-throttled, nunca en touch ni con
+// `prefers-reduced-motion`). Sin listener, queda como un glow fijo.
 .hero__cursor-light {
   position: absolute;
   inset: 0;
@@ -76,19 +125,11 @@
     rgba(23, 195, 214, 0.1) 0%,
     transparent 60%
   );
-  transition: background 120ms linear;
 }
 
-// Formas flotantes discretas — profundidad adicional sin sobrecargar la
-// escena (solo 3, tamaños/opacidad pequeños). Cada una combina un `float`
-// propio (movimiento idle, siempre activo) con `appParallaxLayer` (reacción
-// al scroll, ver el HTML) — dos motores de movimiento independientes sobre
-// el mismo elemento, cada uno escribiendo una `transform` distinta
-// mediante composición de capas: el `float` anima `translate`/`opacity`
-// vía `@keyframes` en el propio elemento, mientras `ParallaxLayerDirective`
-// escribe `transform` inline — para que no se pisen entre sí, el `float`
-// se aplica a un pseudo-elemento hijo (`::after`) y el parallax al
-// contenedor.
+// Partículas discretas. El `float` idle vive en `::after` y el parallax de
+// scroll (`appParallaxLayer`, `transform` inline) en el contenedor — dos
+// motores de movimiento en dos elementos distintos, nunca se pisan.
 .hero__particle {
   position: absolute;
   z-index: 0;
@@ -102,7 +143,8 @@
     height: 100%;
     border-radius: 50%;
     background: var(--color-accent-cyan-soft);
-    opacity: 0.35;
+    box-shadow: 0 0 12px var(--color-accent-cyan);
+    opacity: 0.4;
     animation: hero-particle-float 9s ease-in-out infinite;
   }
 }
@@ -121,11 +163,12 @@
 .hero__particle--2 {
   top: 62%;
   left: 14%;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.7rem;
+  height: 0.7rem;
 
   &::after {
     background: var(--color-accent-gold-soft);
+    box-shadow: 0 0 12px var(--color-accent-gold);
     animation-duration: 11s;
     animation-delay: -3s;
   }
@@ -138,12 +181,24 @@
   height: 0.4rem;
 
   @include bp.respond(lg) {
-    right: 34%;
+    right: 46%;
   }
 
   &::after {
     animation-duration: 7s;
     animation-delay: -1.5s;
+  }
+}
+
+.hero__particle--4 {
+  top: 78%;
+  right: 8%;
+  width: 0.35rem;
+  height: 0.35rem;
+
+  &::after {
+    animation-duration: 10s;
+    animation-delay: -4s;
   }
 }
 
@@ -153,7 +208,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-14px);
+    transform: translateY(-16px);
   }
 }
 
@@ -167,7 +222,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: var(--space-16);
+  gap: var(--space-12);
   align-items: center;
 
   @include bp.respond(lg) {
@@ -177,39 +232,68 @@
 }
 
 .hero__content {
+  // `min-width: 0`: sin esto, el badge (`nowrap`) fija el ancho mínimo de
+  // la columna del grid y en 360–414px empuja título y CTAs fuera de la
+  // pantalla (el `overflow: hidden` del Hero los recortaba en silencio).
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-6);
-}
 
-.hero__title {
-  font-size: var(--fs-3xl);
-  line-height: var(--lh-tight);
-  max-width: 24ch;
+  > app-badge {
+    max-width: 100%;
+  }
 
-  @include bp.respond(md) {
-    font-size: var(--fs-4xl);
+  @include bp.respond-down(sm) {
+    > app-badge ::ng-deep .badge {
+      white-space: normal;
+      line-height: 1.4;
+    }
   }
 }
 
+.hero__visual {
+  min-width: 0;
+}
+
+.hero__title {
+  font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: var(--fw-bold);
+  max-width: 18ch;
+  text-wrap: balance;
+  text-shadow: 0 8px 40px rgba(47, 131, 224, 0.25);
+}
+
 .hero__subtitle {
-  font-size: var(--fs-md);
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
   line-height: var(--lh-normal);
-  color: var(--color-text-on-dark-muted);
-  max-width: 40ch;
+  color: var(--lp-text-muted);
+  max-width: 46ch;
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
+
+  // En móvil los CTAs ocupan el ancho: objetivos táctiles grandes y claros.
+  @include bp.respond-down(sm) {
+    width: 100%;
+
+    app-button,
+    app-button ::ng-deep .btn {
+      width: 100%;
+    }
+  }
 }
 
 .hero__trust {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-6);
+  gap: var(--space-3) var(--space-6);
   padding-top: var(--space-2);
 }
 
@@ -218,79 +302,175 @@
   align-items: center;
   gap: var(--space-2);
   font-size: var(--fs-sm);
-  color: var(--color-text-on-dark-subtle);
+  color: #8fa0bd;
+
+  app-icon {
+    color: var(--color-accent-cyan);
+  }
 }
 
 .hero__visual {
-  padding-top: var(--space-6);
+  padding-top: var(--space-4);
 
   @include bp.respond(lg) {
     padding-top: 0;
   }
 }
 
+// Indicador de scroll — solo en pantallas con alto suficiente.
+.hero__scroll {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  transform: translateX(-50%);
+  color: #8fa0bd;
+  font-size: 0.6875rem;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: var(--radius-md);
+  transition: color var(--duration-base) var(--ease-out);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-accent-cyan-soft);
+  }
+
+  @media (min-width: 768px) and (min-height: 700px) {
+    display: flex;
+  }
+}
+
+.hero__scroll-mouse {
+  position: relative;
+  width: 1.375rem;
+  height: 2.125rem;
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius-full);
+  opacity: 0.8;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.4rem;
+    left: 50%;
+    width: 3px;
+    height: 0.45rem;
+    margin-left: -1.5px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    animation: hero-scroll-wheel 2.2s var(--ease-out) infinite;
+  }
+}
+
+@keyframes hero-scroll-wheel {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(0.55rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll-mouse::after {
+    animation: none;
+  }
+}
+
 // ---- Entrada animada, gateada por `[ready]` ---------------------------
-// Mismo idioma visual que `.reveal`/`.is-visible` en _base.scss (fade +
-// translateY, disparado por una clase) en vez de un segundo mecanismo —
-// solo que aquí el disparador es "la pantalla de carga terminó", no un
-// IntersectionObserver, ya que el Hero siempre está en el viewport desde
-// el primer frame. Selectores por nombre de tag/clase directamente sobre
-// los hijos de `.hero__content`/`.hero__layout` — sin tocar el HTML — el
-// mismo patrón ya usado en otras partes de este proyecto para estilar un
-// componente hijo desde la hoja de estilos del padre.
+// Mismo idioma visual que `.reveal`/`.is-visible` (fade + translateY +
+// blur → nítido) pero disparado por "la pantalla de carga terminó", no por
+// un IntersectionObserver: el Hero siempre está en viewport desde el
+// primer frame.
 .hero__content > app-badge,
 .hero__title,
 .hero__subtitle,
 .hero__actions,
-.hero__trust {
+.hero__trust,
+.hero__scroll {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translate3d(0, 24px, 0);
+  filter: blur(6px);
   transition:
-    opacity var(--duration-slow) var(--ease-out),
-    transform var(--duration-slow) var(--ease-out);
+    opacity 800ms var(--ease-out),
+    transform 800ms var(--ease-out),
+    filter 800ms var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+}
+
+.hero__scroll {
+  transform: translate3d(-50%, 24px, 0);
 }
 
 .hero__visual {
   opacity: 0;
-  transform: translateY(24px) scale(0.97);
+  transform: translate3d(0, 32px, 0) scale(0.94);
   transition:
-    opacity var(--duration-slow) var(--ease-out),
-    transform var(--duration-slow) var(--ease-out);
+    opacity 1000ms var(--ease-out),
+    transform 1100ms var(--ease-out);
 }
 
 .hero--ready {
-  .hero__content > app-badge {
+  .hero__content > app-badge,
+  .hero__title,
+  .hero__subtitle,
+  .hero__actions,
+  .hero__trust {
     opacity: 1;
     transform: none;
+    filter: none;
   }
 
   .hero__title {
-    opacity: 1;
-    transform: none;
     transition-delay: 80ms;
   }
 
   .hero__subtitle {
-    opacity: 1;
-    transform: none;
     transition-delay: 160ms;
   }
 
   .hero__actions {
-    opacity: 1;
-    transform: none;
     transition-delay: 240ms;
   }
 
   .hero__trust {
-    opacity: 1;
-    transform: none;
-    transition-delay: 300ms;
+    transition-delay: 320ms;
   }
 
   .hero__visual {
     opacity: 1;
     transform: none;
     transition-delay: 200ms;
+  }
+
+  .hero__scroll {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0);
+    filter: none;
+    transition-delay: 700ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__content > app-badge,
+  .hero__title,
+  .hero__subtitle,
+  .hero__actions,
+  .hero__trust,
+  .hero__visual {
+    filter: none;
   }
 }

@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { PublicNewsArticle } from '../../../../../../core/models';
 import { PublicNewsService } from '../../../../../../core/services/public-news.service';
 import { IconComponent, LikeButtonComponent } from '../../../../../../shared/ui';
+import { TiltOnMouseDirective } from '../../../../../../shared/directives/tilt-on-mouse.directive';
 
 const EXCERPT_LENGTH = 140;
 
@@ -18,7 +19,7 @@ const EXCERPT_LENGTH = 140;
 @Component({
   selector: 'app-news-card',
   standalone: true,
-  imports: [DatePipe, IconComponent, LikeButtonComponent],
+  imports: [DatePipe, IconComponent, LikeButtonComponent, TiltOnMouseDirective],
   templateUrl: './news-card.component.html',
   styleUrl: './news-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

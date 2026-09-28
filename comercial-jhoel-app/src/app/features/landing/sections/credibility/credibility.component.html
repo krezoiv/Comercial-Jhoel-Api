@@ -1,5 +1,5 @@
-<app-section tone="dark" spacing="sm">
-  <div class="credibility__grid" appRevealOnScroll>
+<app-section tone="dark" spacing="sm" [wideContainer]="true">
+  <div class="credibility__grid" appRevealOnScroll revealVariant="scale">
     @for (stat of stats$ | async; track stat.id) {
       <app-stat-card [value]="stat.value" [label]="stat.label" [icon]="stat.icon" />
     }

@@ -1,4 +1,4 @@
-<div class="phone-card" [class.phone-card--flipped]="flipped()">
+<div class="phone-card" [class.phone-card--flipped]="flipped()" [appTiltOnMouse]="true" [tiltMax]="4">
   <div class="phone-card__inner">
     <div class="phone-card__face phone-card__face--front" (click)="toggleFlip()">
       <div class="phone-card__image-wrap">

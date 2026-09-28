@@ -203,6 +203,34 @@
   --duration-base: 250ms;
   --duration-slow: 450ms;
 
+  // ---- Landing pública "dark cinematic" -------------------------------------
+  // Tokens exclusivos de la landing (prefijo `--lp-`) — nunca los consume
+  // el panel. Todos derivan de la paleta de marca de arriba (ink/primary/
+  // cyan), así la landing se vuelve más premium sin inventar una segunda
+  // identidad. `--lp-base` es el color al que TODAS las secciones funden
+  // arriba y abajo (ver `section.component.scss`) — eso es lo que evita
+  // que se lean como bloques sueltos.
+  --lp-base: #04060d;
+  --lp-deep: #061226;
+  --lp-navy: #0a2246;
+  --lp-surface: rgba(14, 24, 44, 0.72);
+  --lp-surface-strong: rgba(10, 18, 36, 0.92);
+  --lp-surface-raised: linear-gradient(160deg, rgba(28, 46, 82, 0.78) 0%, rgba(9, 16, 32, 0.9) 100%);
+  --lp-border: rgba(130, 192, 247, 0.14);
+  --lp-border-strong: rgba(127, 230, 239, 0.38);
+  --lp-glow-cyan: rgba(23, 195, 214, 0.35);
+  --lp-glow-blue: rgba(47, 131, 224, 0.4);
+  --lp-shadow-card: 0 24px 48px -24px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --lp-shadow-card-hover:
+    0 36px 64px -28px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(127, 230, 239, 0.28), 0 18px 48px -18px var(--lp-glow-cyan);
+  --lp-image-stage:
+    radial-gradient(ellipse 80% 70% at 50% 18%, rgba(130, 192, 247, 0.22) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(20, 38, 72, 0.9) 0%, rgba(8, 14, 28, 0.95) 100%);
+  --lp-text-muted: #a9b6cf;
+  --lp-container-pad: clamp(1.25rem, 4vw, 4rem);
+  --ease-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
+  --duration-reveal: 700ms;
+
   // ---- Z-index scale ------------------------------------------------------------
   --z-navbar: 100;
   --z-overlay: 200;

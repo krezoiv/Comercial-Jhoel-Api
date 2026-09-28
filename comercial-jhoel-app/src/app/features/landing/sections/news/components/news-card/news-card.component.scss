@@ -1,4 +1,5 @@
 @use 'mixins' as *;
+@use 'landing' as lp;
 
 :host {
   display: block;
@@ -6,101 +7,75 @@
   height: 100%;
 }
 
-// Anillo de resplandor de marca detrás de la card, oculto hasta el hover —
-// vive en el `:host` (nunca dentro de `.news-card`, que tiene su propio
-// `overflow: hidden` para recortar la imagen) para que el resplandor no
-// quede clippeado. Mismo tratamiento que `phone-card`/`catalog-product-card`
-// para que Teléfonos/Noticias/Variedades se sientan consistentes entre sí.
-:host::before {
-  content: '';
-  position: absolute;
-  inset: -0.5rem;
-  border-radius: calc(var(--radius-xl) + 0.5rem);
-  background: var(--gradient-brand);
-  opacity: 0;
-  filter: blur(20px);
-  z-index: -1;
-  pointer-events: none;
-  transition: opacity var(--duration-slow) var(--ease-out);
-}
-
-@media (hover: hover) {
-  :host:hover::before {
-    opacity: 0.5;
-  }
-}
-
+// La card entera es el wrapper 3D (no tiene flip): lift + tilt + anillo
+// de resplandor, y la iluminación del puntero confinada a su propio borde.
 .news-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   text-align: left;
   cursor: pointer;
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  @include lp.card-surface;
+  @include lp.card-3d-wrapper(-8px, 1.03);
+  @include lp.glow-ring;
   transition:
-    transform var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
+    transform 400ms var(--ease-out),
+    box-shadow var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
   @include focus-ring;
 
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-lg);
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--lp-border-strong);
+      box-shadow: var(--lp-shadow-card-hover);
+    }
   }
 }
 
-// `contain`, never `cover` — an admin-uploaded news image is often a
-// portrait flyer/poster, not a landscape photo. `cover` inside a wide box
-// crops away the actual content (verified live: a 1288×1600 poster showed
-// as a flat, washed-out sliver). Same lesson already applied to the
-// catalog product-card image stage; padding + soft gradient backdrop keep
-// any aspect ratio looking deliberate rather than letterboxed.
+// La luz del puntero vive en el wrapper de imagen+cuerpo recortado, no en
+// `.news-card` (cuyo `::before` ya es el anillo de resplandor exterior).
 .news-card__image-wrap {
   position: relative;
   aspect-ratio: 4 / 3;
+  flex-shrink: 0;
   padding: var(--space-3);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(255, 255, 255, 0.9) 0%, transparent 60%),
-    var(--gradient-brand-soft);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  @include lp.image-stage;
+
+  // Brillo que sigue al puntero sobre la vitrina (hover únicamente).
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(18rem circle at var(--glow-x, 50%) var(--glow-y, 0%), rgba(47, 131, 224, 0.14) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity var(--duration-slow) var(--ease-out);
+    pointer-events: none;
+  }
 }
 
+// `contain`, nunca `cover` — las noticias suelen ser flyers verticales.
 .news-card__image {
+  position: relative;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 10px 14px rgba(10, 14, 23, 0.14));
-  transition: transform var(--duration-slow) var(--ease-out);
+  filter: drop-shadow(0 16px 18px rgba(10, 30, 60, 0.2));
+  transition: transform 700ms var(--ease-out);
 }
 
 @media (hover: hover) {
   .news-card:hover .news-card__image {
     transform: scale(1.05);
   }
-}
 
-// Barrido de brillo diagonal sobre la imagen al pasar el mouse — mismo
-// tratamiento que `phone-card`/`catalog-product-card`, un solo recorrido.
-.news-card__image-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%);
-  transform: translateX(-130%);
-  pointer-events: none;
-}
-
-@media (hover: hover) {
   .news-card:hover .news-card__image-wrap::after {
-    transform: translateX(130%);
-    transition: transform 900ms var(--ease-out);
+    opacity: 1;
   }
 }
 
@@ -108,51 +83,71 @@
   color: var(--color-primary-400);
 }
 
+.news-card__category {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 1;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.25rem var(--space-3);
+  border-radius: var(--radius-full);
+  background: rgba(6, 12, 26, 0.7);
+  border: 1px solid var(--lp-border-strong);
+  color: var(--color-accent-cyan-soft);
+  font-size: 0.6875rem;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 .news-card__body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4);
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-5);
 }
 
 .news-card__date {
-  align-self: flex-start;
-  padding: 0.15rem var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--gradient-brand-soft);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-primary-600);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+  color: #8fa0bd;
+  font-variant-numeric: tabular-nums;
 }
 
 .news-card__title {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
-  color: var(--color-text-on-light);
+  color: var(--color-white);
   line-height: 1.3;
-  margin-top: 0.125rem;
+  @include line-clamp(2);
 }
 
 .news-card__excerpt {
   flex: 1;
-  font-size: var(--fs-xs);
+  min-height: 0;
+  font-size: var(--fs-sm);
   line-height: 1.5;
-  color: var(--color-text-on-light-muted);
-  margin-top: 0.125rem;
+  color: var(--lp-text-muted);
+  @include line-clamp(3);
 }
 
-// Like (compacto, izquierda) + "Leer más" (derecha) comparten una sola
-// fila al pie de la card — mismo criterio de `phone-card`/`product-card`:
-// el Like queda integrado a la card en vez de flotar sobre la imagen.
+// Like (compacto, izquierda) + "Leer más" (derecha).
 .news-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-2);
 }
 
 .news-card__cta {
@@ -162,8 +157,8 @@
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--color-primary-600);
+  letter-spacing: 0.04em;
+  color: var(--color-accent-cyan-soft);
   white-space: nowrap;
 
   app-icon {
@@ -171,15 +166,19 @@
   }
 }
 
-.news-card:hover .news-card__cta app-icon {
-  transform: translateX(2px);
+@media (hover: hover) {
+  .news-card:hover .news-card__cta {
+    color: var(--color-white);
+
+    app-icon {
+      transform: translateX(3px);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :host::before,
   .news-card,
-  .news-card__image,
-  .news-card__image-wrap::after {
+  .news-card__image {
     transition: none;
   }
 }

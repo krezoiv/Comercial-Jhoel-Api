@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 
 import { SITE } from '../../../../core/data';
@@ -12,6 +13,7 @@ import { SectionLandingBackgroundComponent } from '../shared/section-landing-bac
   selector: 'app-hero',
   standalone: true,
   imports: [
+    RouterLink,
     ContainerComponent,
     BadgeComponent,
     ButtonComponent,
@@ -34,6 +36,11 @@ export class HeroComponent {
    * touch device (no `hover: hover`) or under `prefers-reduced-motion` —
    * checked once here, not per event, so a device that can't benefit from
    * it never pays even the listener's cost.
+   *
+   * El mismo handler también escribe `--hx`/`--hy` (posición normalizada
+   * -0.5…0.5): la escena 3D de `HeroShowcaseComponent` los hereda y los
+   * usa para rotar/desplazar sus capas a distinta profundidad — un solo
+   * listener para la luz y para el 3D, nunca uno por capa.
    */
   private readonly mouseLightEnabled =
     typeof window !== 'undefined' &&
@@ -49,11 +56,27 @@ export class HeroComponent {
     this.mouseRaf = requestAnimationFrame(() => {
       this.mouseRaf = null;
       const rect = target.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      const y = ((event.clientY - rect.top) / rect.height) * 100;
-      target.style.setProperty('--mx', `${x.toFixed(1)}%`);
-      target.style.setProperty('--my', `${y.toFixed(1)}%`);
+      const px = (event.clientX - rect.left) / rect.width;
+      const py = (event.clientY - rect.top) / rect.height;
+      target.style.setProperty('--mx', `${(px * 100).toFixed(1)}%`);
+      target.style.setProperty('--my', `${(py * 100).toFixed(1)}%`);
+      target.style.setProperty('--hx', (px - 0.5).toFixed(3));
+      target.style.setProperty('--hy', (py - 0.5).toFixed(3));
     });
+  }
+
+  /** Al salir del Hero, la escena vuelve suavemente a su pose de reposo. */
+  onHeroMouseLeave(event: MouseEvent): void {
+    if (!this.mouseLightEnabled) {
+      return;
+    }
+    if (this.mouseRaf !== null) {
+      cancelAnimationFrame(this.mouseRaf);
+      this.mouseRaf = null;
+    }
+    const target = event.currentTarget as HTMLElement;
+    target.style.setProperty('--hx', '0');
+    target.style.setProperty('--hy', '0');
   }
 
   /**

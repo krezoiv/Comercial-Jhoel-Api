@@ -6,9 +6,13 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-6);
-  background: rgba(5, 7, 12, 0.86);
-  backdrop-filter: blur(4px);
+  background:
+    radial-gradient(ellipse 60% 60% at 50% 50%, rgba(26, 99, 184, 0.18) 0%, transparent 70%),
+    rgba(3, 6, 14, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   overflow: hidden;
+  animation: lightbox-backdrop-in 260ms var(--ease-out);
 }
 
 .lightbox__image {
@@ -18,8 +22,22 @@
   height: auto;
   object-fit: contain;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    0 40px 80px -30px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(130, 192, 247, 0.16),
+    0 0 60px -20px rgba(23, 195, 214, 0.45);
   cursor: default;
+  animation: lightbox-image-in 380ms var(--ease-out);
+}
+
+// Salida (~60% de la entrada): más rápida que la entrada, como pide el
+// sistema de movimiento — el usuario ya decidió cerrar.
+.lightbox-backdrop--closing {
+  animation: lightbox-backdrop-out 180ms ease-in forwards;
+
+  .lightbox__image {
+    animation: lightbox-image-out 180ms ease-in forwards;
+  }
 }
 
 .lightbox__close {
@@ -29,19 +47,49 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--radius-full);
   color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  transition: background var(--duration-base) var(--ease-out);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(130, 192, 247, 0.22);
+  transition:
+    background var(--duration-base) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
   }
 
   &:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
+  }
+}
+
+@keyframes lightbox-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lightbox-image-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+}
+
+@keyframes lightbox-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes lightbox-image-out {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
   }
 }

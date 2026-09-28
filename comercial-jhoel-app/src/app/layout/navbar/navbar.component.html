@@ -1,4 +1,4 @@
-<header class="navbar" [class.navbar--scrolled]="isScrolled()">
+<header class="navbar" [class.navbar--scrolled]="isScrolled()" [class.navbar--overlay]="isOverlay()" [class.navbar--menu-open]="isMenuOpen()">
   <app-container wide>
     <div class="navbar__row">
       <a class="navbar__brand" routerLink="/" fragment="inicio" (click)="closeMenu()">
@@ -21,6 +21,7 @@
                 type="button"
                 class="navbar__link navbar__dropdown-trigger"
                 [class.navbar__link--active]="isDropdownOpen(link.label)"
+                [class.navbar__link--current]="activeLink() === link.label"
                 (click)="toggleDropdown(link.label)"
                 aria-haspopup="true"
                 [attr.aria-expanded]="isDropdownOpen(link.label)"
@@ -52,7 +53,14 @@
               }
             </div>
           } @else {
-            <a class="navbar__link" [routerLink]="link.path" [fragment]="link.fragment">{{ link.label }}</a>
+            <a
+              class="navbar__link"
+              [class.navbar__link--current]="activeLink() === link.label"
+              [attr.aria-current]="activeLink() === link.label ? 'location' : null"
+              [routerLink]="link.path"
+              [fragment]="link.fragment"
+              >{{ link.label }}</a
+            >
           }
         }
       </nav>
@@ -76,6 +84,10 @@
       </button>
     </div>
   </app-container>
+
+  <div class="navbar__progress" aria-hidden="true">
+    <span #progressBar class="navbar__progress-bar"></span>
+  </div>
 
   @if (isMenuOpen()) {
     <div class="navbar__mobile">
@@ -130,6 +142,7 @@
             } @else {
               <a
                 class="navbar__mobile-link"
+                [class.navbar__mobile-link--current]="activeLink() === link.label"
                 [routerLink]="link.path"
                 [fragment]="link.fragment"
                 (click)="closeMenu()"

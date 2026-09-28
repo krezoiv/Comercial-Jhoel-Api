@@ -2,14 +2,20 @@
 
 .credibility__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  border: 1px solid var(--color-border-dark);
-  border-radius: var(--radius-lg);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid rgba(130, 192, 247, 0.14);
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  // Vidrio oscuro con un filo de luz arriba — la tira de cifras "flota"
+  // entre el Hero y Servicios en vez de ser un recuadro plano.
+  background:
+    radial-gradient(ellipse 60% 120% at 50% 0%, rgba(23, 195, 214, 0.1) 0%, transparent 70%),
+    linear-gradient(160deg, rgba(20, 36, 66, 0.6) 0%, rgba(8, 14, 28, 0.75) 100%);
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
   > * {
-    border-right: 1px solid var(--color-border-dark);
-    border-bottom: 1px solid var(--color-border-dark);
+    border-right: 1px solid rgba(130, 192, 247, 0.1);
+    border-bottom: 1px solid rgba(130, 192, 247, 0.1);
   }
 
   > *:nth-child(2n) {
@@ -17,18 +23,23 @@
   }
 
   @include bp.respond(md) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     > * {
       border-bottom: none;
     }
 
     > *:nth-child(2n) {
-      border-right: 1px solid var(--color-border-dark);
+      border-right: 1px solid rgba(130, 192, 247, 0.1);
     }
 
     > *:last-child {
       border-right: none;
     }
   }
+}
+
+// Cifras fluidas: "+8,000" a 46px no cabe en media columna de 360px.
+.credibility__grid ::ng-deep .stat__value {
+  font-size: clamp(1.75rem, 1.2rem + 2.4vw, var(--fs-3xl));
 }

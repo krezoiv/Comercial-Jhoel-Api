@@ -20,30 +20,65 @@
   // instead of stacked, squeezing the mobile menu into a narrow strip next
   // to the header instead of a full-width panel below it.
   flex-direction: column;
-  // Antes era un negro neutro puro (rgba(5,7,12,…)) — sin ninguna relación
-  // con el resto del sistema de color. Este degradado usa el mismo azul
-  // primario que ya vertebra el sitio (--color-primary-900, la base de
-  // --gradient-brand que usan los CTAs) fundido hacia el mismo negro de
-  // siempre, así el navbar queda anclado a la identidad de marca en vez de
-  // ser un overlay genérico — sigue siendo un glass oscuro, discreto, que
-  // no compite con el hero.
-  background: linear-gradient(180deg, rgba(10, 43, 82, 0.82) 0%, rgba(5, 7, 12, 0.8) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  position: relative;
+  // Vidrio oscuro con tinte del azul de marca (`--color-primary-900`
+  // fundido al negro base). `background-color` en vez de un degradado para
+  // que el paso transparente → vidrio → sólido se anime suavemente.
+  background-color: rgba(6, 16, 34, 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid transparent;
   transition:
-    background-color var(--duration-base) var(--ease-out),
-    border-color var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
+    background-color 400ms var(--ease-out),
+    border-color 400ms var(--ease-out),
+    box-shadow 400ms var(--ease-out),
+    backdrop-filter 400ms var(--ease-out);
+}
+
+// Landing, arriba del todo: transparente sobre la escena del Hero.
+.navbar--overlay {
+  background-color: rgba(6, 16, 34, 0);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
 }
 
 .navbar--scrolled {
-  background: linear-gradient(180deg, rgba(10, 43, 82, 0.95) 0%, rgba(5, 7, 12, 0.95) 100%);
-  border-bottom-color: var(--color-border-dark);
-  // Un filo de cian de marca, apenas visible — el mismo acento que cierra
-  // --gradient-brand — le da al navbar una firma sutil sin volverlo un
-  // segundo protagonista sobre el hero.
-  box-shadow: 0 1px 0 rgba(23, 195, 214, 0.3);
+  background-color: rgba(5, 11, 24, 0.84);
+  border-bottom-color: rgba(130, 192, 247, 0.1);
+  // Un filo de cian de marca, apenas visible, más una sombra que "despega"
+  // el navbar del contenido que pasa por debajo.
+  box-shadow:
+    0 1px 0 rgba(23, 195, 214, 0.18),
+    0 12px 32px -18px rgba(0, 0, 0, 0.8);
+}
+
+// Menú móvil abierto: el panel empuja el Hero hacia abajo y detrás del
+// vidrio quedaría el fondo claro del `body` — aquí el navbar es sólido.
+.navbar--menu-open {
+  background-color: rgba(4, 9, 20, 0.98);
+}
+
+// Progreso de lectura: línea de 2px en el borde inferior del navbar
+// (`transform: scaleX`, escrita directo por el componente en un rAF).
+.navbar__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.navbar__progress-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-brand);
+  box-shadow: 0 0 10px rgba(23, 195, 214, 0.7);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 .navbar__row {
@@ -96,23 +131,56 @@
 }
 
 .navbar__link {
+  position: relative;
   display: flex;
   align-items: center;
+  min-height: 2.75rem;
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   line-height: 1;
   color: var(--color-text-on-dark-muted);
   padding-block: var(--space-2);
-  transition: color var(--duration-base) var(--ease-out);
+  transition:
+    color var(--duration-base) var(--ease-out),
+    text-shadow var(--duration-base) var(--ease-out);
   @include focus-ring;
 
+  // Subrayado animado con resplandor — crece desde el centro en hover y
+  // queda fijo en el enlace de la sección actual.
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.45rem;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--gradient-brand);
+    box-shadow: 0 0 10px rgba(23, 195, 214, 0.6);
+    transform: scaleX(0);
+    transition: transform 350ms var(--ease-out);
+  }
+
   &:hover {
-    color: var(--color-text-on-dark);
+    color: var(--color-white);
+    text-shadow: 0 0 18px rgba(127, 230, 239, 0.45);
+
+    &::after {
+      transform: scaleX(1);
+    }
   }
 }
 
 .navbar__link--active {
   color: var(--color-text-on-dark);
+}
+
+.navbar__link--current {
+  color: var(--color-white);
+
+  &::after {
+    transform: scaleX(1);
+  }
 }
 
 // Cualquier `.navbar__link` que sea un <button> en vez de un <a> — el
@@ -158,10 +226,13 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-2);
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
+  // Vidrio oscuro, mismo lenguaje que el navbar (antes blanco sólido).
+  background: rgba(7, 15, 32, 0.96);
+  border: 1px solid rgba(130, 192, 247, 0.16);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    0 24px 48px -16px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
   transform-origin: top center;
   animation: navbar-dropdown-in var(--duration-fast) var(--ease-out);
 }
@@ -186,25 +257,28 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   line-height: 1.2;
-  color: var(--color-text-on-light);
+  color: var(--color-text-on-dark-muted);
   white-space: nowrap;
-  transition: background-color var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
   @include focus-ring;
 
   &:hover {
-    background: var(--color-bg-light-muted);
+    background: rgba(47, 131, 224, 0.16);
+    color: var(--color-white);
   }
 }
 
 .navbar__dropdown-item-icon {
   flex-shrink: 0;
-  color: var(--color-primary-600);
+  color: var(--color-accent-cyan);
 }
 
 .navbar__dropdown-divider {
   height: 1px;
   margin-block: var(--space-2);
-  background: var(--color-border-light);
+  background: rgba(130, 192, 247, 0.12);
 }
 
 .navbar__actions {
@@ -235,6 +309,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: var(--radius-md);
+  @include focus-ring;
   color: var(--color-text-on-dark);
   padding: var(--space-2);
   margin-right: calc(var(--space-2) * -1);
@@ -245,9 +323,13 @@
 }
 
 .navbar__mobile {
-  border-top: 1px solid var(--color-border-dark);
-  background: var(--color-bg-dark);
+  border-top: 1px solid rgba(130, 192, 247, 0.1);
+  background: rgba(4, 9, 20, 0.97);
   padding-block: var(--space-6);
+  max-height: calc(100dvh - var(--navbar-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: navbar-mobile-in var(--duration-base) var(--ease-out);
 
   @include bp.respond(lg) {
     display: none;
@@ -281,6 +363,18 @@
 
   &:hover {
     color: var(--color-text-on-dark);
+  }
+}
+
+.navbar__mobile-link--current {
+  color: var(--color-accent-cyan-soft);
+  font-weight: var(--fw-semibold);
+}
+
+@keyframes navbar-mobile-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
   }
 }
 

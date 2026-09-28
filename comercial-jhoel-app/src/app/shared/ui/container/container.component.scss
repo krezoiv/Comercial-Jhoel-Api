@@ -7,3 +7,8 @@
 .container--wide {
   max-width: var(--container-max-wide);
 }
+
+.container--fluid {
+  max-width: none;
+  padding-inline: var(--lp-container-pad);
+}

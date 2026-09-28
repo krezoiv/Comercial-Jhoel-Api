@@ -1,5 +1,7 @@
 <div
   class="news-card"
+  [appTiltOnMouse]="true"
+  [tiltMax]="4"
   role="button"
   tabindex="0"
   [attr.aria-label]="'Leer ' + article.title"
@@ -14,10 +16,16 @@
         <app-icon name="newspaper" [size]="40" />
       </div>
     }
+    @if (article.newsTypeName) {
+      <span class="news-card__category">{{ article.newsTypeName }}</span>
+    }
   </div>
 
   <div class="news-card__body">
-    <p class="news-card__date">{{ article.publishedAt | date: 'dd/MM/yyyy' }}</p>
+    <p class="news-card__date">
+      <app-icon name="clock" [size]="12" />
+      {{ article.publishedAt | date: 'dd/MM/yyyy' }}
+    </p>
     <h3 class="news-card__title">{{ article.title }}</h3>
     <p class="news-card__excerpt">{{ excerpt() }}</p>
 

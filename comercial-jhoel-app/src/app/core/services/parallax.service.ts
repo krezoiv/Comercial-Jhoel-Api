@@ -12,7 +12,10 @@ import { Injectable } from '@angular/core';
  * Only ever writes `transform` (via `translate3d`, GPU-composited, never
  * triggers layout/paint) — never `top`/`left`/`margin`. Disabled entirely
  * (no listener even attached) under `prefers-reduced-motion: reduce`,
- * checked once at construction, not per-frame.
+ * checked once at construction, not per-frame. También se desactiva en
+ * dispositivos táctiles/pantallas angostas (`hover: none` o < 768px): en
+ * móvil el parallax cuesta más (scroll con inercia + repintado) de lo que
+ * aporta, así que esas capas simplemente quedan estáticas.
  */
 @Injectable({ providedIn: 'root' })
 export class ParallaxService {
@@ -23,7 +26,8 @@ export class ParallaxService {
   constructor() {
     this.enabled =
       typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      window.matchMedia('(hover: hover) and (min-width: 768px)').matches;
 
     if (this.enabled) {
       window.addEventListener('scroll', this.requestUpdate, { passive: true });

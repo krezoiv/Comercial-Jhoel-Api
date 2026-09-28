@@ -1,5 +1,6 @@
 @use 'mixins' as *;
 @use 'breakpoints' as bp;
+@use 'landing' as lp;
 
 :host {
   display: block;
@@ -7,42 +8,16 @@
   height: 100%;
 }
 
+// Wrapper externo: lift + tilt 3D del hover (ver `lp.card-3d-wrapper`) y
+// anillo de resplandor. Nunca gira para el flip — ese es `__inner` — así
+// el hover jamás interfiere con el click que voltea la card.
 .phone-card {
   position: relative;
   width: 100%;
   height: 100%;
   perspective: 1800px;
-  // El "lift" vive en este wrapper externo, nunca en `.phone-card__inner`
-  // (el que gira con `rotateY` para el flip) — así el hover nunca compite
-  // ni interfiere con la transformación 3D del flip, son dos transforms en
-  // dos elementos distintos de la jerarquía.
-  transition: transform var(--duration-base) var(--ease-out);
-}
-
-// Anillo de resplandor de marca detrás de la card, oculto hasta el hover —
-// vive en este wrapper externo (nunca clippeado por el `overflow: hidden`
-// de `.phone-card__face`) para dar sensación de profundidad/premium sin
-// competir visualmente con el flip 3D.
-.phone-card::before {
-  content: '';
-  position: absolute;
-  inset: -0.6rem;
-  border-radius: calc(var(--radius-xl) + 0.6rem);
-  background: var(--gradient-brand);
-  opacity: 0;
-  filter: blur(22px);
-  z-index: -1;
-  transition: opacity var(--duration-slow) var(--ease-out);
-}
-
-@media (hover: hover) {
-  .phone-card:hover {
-    transform: translateY(-8px);
-  }
-
-  .phone-card:hover::before {
-    opacity: 0.55;
-  }
+  @include lp.card-3d-wrapper(-8px, 1.03);
+  @include lp.glow-ring;
 }
 
 .phone-card__inner {
@@ -50,7 +25,7 @@
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform var(--duration-slow) var(--ease-out);
+  transition: transform 750ms var(--ease-spring);
 }
 
 .phone-card--flipped .phone-card__inner {
@@ -65,85 +40,82 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-light);
-  background: var(--color-surface-light);
-  box-shadow: var(--shadow-lg);
   overflow: hidden;
-  transition: box-shadow var(--duration-base) var(--ease-out);
+  @include lp.card-surface;
+  @include lp.pointer-light('::after', 0.2);
+  transition:
+    box-shadow var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .phone-card:hover .phone-card__face {
+    border-color: var(--lp-border-strong);
+    box-shadow: var(--lp-shadow-card-hover);
+  }
 }
 
 .phone-card__face--front {
   cursor: pointer;
-
-  @media (hover: hover) {
-    &:hover {
-      box-shadow:
-        0 32px 56px -20px rgba(10, 14, 23, 0.32),
-        var(--shadow-glow-primary);
-    }
-  }
 }
 
-// Header and CTAs are always fully visible, regardless of how many specs a
-// phone has — only `.phone-card__specs-scroll` (the middle section) ever
-// scrolls internally. This is what keeps "Lo quiero"/"Comprar a crédito"
-// reachable without hunting, per the requirement that the flip must never
-// block access to those actions.
+// Header y CTAs siempre visibles sin importar cuántas specs tenga el
+// teléfono — solo `.phone-card__specs-scroll` hace scroll interno, así
+// "Lo quiero"/"Comprar a crédito" nunca quedan fuera de alcance.
 .phone-card__face--back {
   transform: rotateY(180deg);
-  padding: var(--space-6) var(--space-5) var(--space-5);
+  padding: var(--space-5) var(--space-5) var(--space-4);
   gap: var(--space-3);
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(23, 195, 214, 0.14) 0%, transparent 70%),
+    var(--lp-surface-raised);
 }
 
 .phone-card__back-header,
 .phone-card__credit-note,
 .phone-card__actions {
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
 }
 
-// `contain`, never `cover` — a catalog photo can arrive in any orientation
-// or crop from the admin (portrait product shot, landscape lifestyle
-// photo, a screenshot...); this is what guarantees the full phone is
-// always visible, centered, never awkwardly cropped, regardless of what
-// gets uploaded. The soft brand gradient + generous padding reads as a
-// deliberate "product stage" rather than an empty letterbox.
+// `contain`, nunca `cover`: una foto de catálogo puede llegar en cualquier
+// proporción; así el teléfono completo siempre se ve, centrado, sobre un
+// "escenario" iluminado en vez de un letterbox vacío.
 .phone-card__image-wrap {
-  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6) var(--space-6) var(--space-4);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(255, 255, 255, 0.9) 0%, transparent 60%),
-    var(--gradient-brand-soft);
-  overflow: hidden;
+  padding: var(--space-6) var(--space-6) var(--space-3);
+  @include lp.image-stage;
 }
 
 .phone-card__image {
+  position: relative;
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 18px 20px rgba(10, 14, 23, 0.16));
+  filter: drop-shadow(0 16px 18px rgba(10, 30, 60, 0.2));
   cursor: zoom-in;
-  transition: transform var(--duration-slow) var(--ease-out);
+  transition: transform 700ms var(--ease-out);
 }
 
 @media (hover: hover) {
   .phone-card:hover .phone-card__image {
-    transform: scale(1.05);
+    transform: translate3d(0, -6px, 0) scale(1.06);
   }
 }
 
 // Barrido de brillo diagonal sobre la imagen al pasar el mouse — un solo
-// recorrido, no un loop — refuerza la sensación de "vitrina" sin distraer.
+// recorrido, no un loop.
 .phone-card__image-wrap::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%);
+  background: linear-gradient(115deg, transparent 30%, rgba(127, 230, 239, 0.28) 45%, transparent 60%);
   transform: translateX(-130%);
   pointer-events: none;
 }
@@ -151,37 +123,17 @@
 @media (hover: hover) {
   .phone-card:hover .phone-card__image-wrap::after {
     transform: translateX(130%);
-    transition: transform 900ms var(--ease-out);
+    transition: transform 1100ms var(--ease-out);
   }
 }
 
-// Ocupa la esquina donde antes vivía el Like (ahora reubicado al pie de la
-// card, ver `.phone-card__footer`) — mismo criterio visual de overlay
-// discreto sobre la imagen, ahora para la acción de ampliar.
 .phone-card__zoom {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--color-primary-600);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(2px);
-  transition:
-    background var(--duration-base) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  z-index: 3;
+  @include lp.glass-icon-button;
   @include focus-ring;
-
-  &:hover {
-    background: #fff;
-    transform: scale(1.06);
-  }
 }
 
 .phone-card__image-placeholder {
@@ -194,55 +146,54 @@
 }
 
 .phone-card__body {
-  padding: var(--space-5) var(--space-5) var(--space-3);
+  position: relative;
+  z-index: 3;
+  padding: var(--space-4) var(--space-5) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
 .phone-card__brand {
-  font-size: var(--fs-xs);
+  font-size: 0.75rem;
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-primary-500);
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan-soft);
 }
 
 .phone-card__model {
   font-size: var(--fs-lg);
-  color: var(--color-text-on-light);
+  color: var(--color-white);
   line-height: 1.15;
   font-weight: var(--fw-semibold);
   overflow-wrap: break-word;
-
-  @include bp.respond(lg) {
-    font-size: var(--fs-xl);
-  }
+  @include line-clamp(2);
 }
 
 .phone-card__price {
+  font-family: var(--font-heading);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  color: var(--color-primary-600);
+  font-variant-numeric: tabular-nums;
   margin-top: var(--space-1);
-
-  @include bp.respond(lg) {
-    font-size: var(--fs-2xl);
-  }
+  background: linear-gradient(90deg, var(--color-white) 0%, var(--color-accent-cyan-soft) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .phone-card__badges {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
 }
 
-// Fila inferior del frente: Like (compacto, izquierda) + CTA de flip
-// (ocupa el resto, derecha) — comparten una sola fila en vez de que el
-// Like flote sobre la imagen, para que quede "integrado" a la card en
-// lugar de superpuesto, y para que nunca se solape con nombre/precio.
+// Like (compacto, izquierda) + CTA de flip (resto de la fila).
 .phone-card__footer {
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -253,35 +204,8 @@
 .phone-card__flip-btn {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-full);
-  background: var(--color-bg-light-muted);
-  color: var(--color-primary-600);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  transition:
-    background var(--duration-base) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  @include lp.pill-button;
   @include focus-ring;
-
-  app-icon {
-    transition: transform var(--duration-base) var(--ease-out);
-  }
-
-  &:hover {
-    background: var(--gradient-brand-soft);
-    color: var(--color-primary-700);
-
-    app-icon {
-      transform: translateX(2px);
-    }
-  }
 }
 
 .phone-card__back-header {
@@ -290,34 +214,32 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-3);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--lp-border);
 }
 
-// Permite que el bloque marca/modelo se encoja y envuelva su texto en vez
-// de forzar el ancho de la fila — sin esto, un modelo largo empuja el
-// precio fuera del borde de la card en viewports angostos (bug
-// reproducido y confirmado en 375px de ancho).
+// Permite que marca/modelo se encoja y envuelva en vez de empujar el
+// precio fuera de la card en viewports angostos.
 .phone-card__back-header-info {
   min-width: 0;
   flex: 1 1 10rem;
 }
 
-// The one part of the back face allowed to grow/shrink and scroll — a
-// top/bottom fade mask hints there's more to scroll without needing a
-// visible scrollbar (same "don't just clip, hint it" instinct as
-// `overflow-x: auto` wide-table containers elsewhere in this codebase).
+// Única zona del reverso que crece/encoge y hace scroll — la máscara
+// arriba/abajo insinúa que hay más sin barra visible.
 .phone-card__specs-scroll {
+  position: relative;
+  z-index: 3;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   mask-image: linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
 }
 
 .phone-card__specs {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
 
   li {
     display: flex;
@@ -326,15 +248,15 @@
     gap: var(--space-3);
     font-size: var(--fs-sm);
     padding-block: var(--space-2);
-    border-bottom: 1px solid var(--color-border-light);
+    border-bottom: 1px solid rgba(130, 192, 247, 0.08);
 
     span {
-      color: var(--color-text-on-light-subtle);
+      color: var(--lp-text-muted);
       flex-shrink: 0;
     }
 
     strong {
-      color: var(--color-text-on-light);
+      color: var(--color-white);
       font-weight: var(--fw-semibold);
       text-align: right;
       min-width: 0;
@@ -349,11 +271,11 @@
   gap: var(--space-3);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
-  color: #8a5300;
-  background: var(--color-gold-soft);
-  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--color-accent-gold-soft);
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.28);
   border-radius: var(--radius-md);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
 }
 
 .phone-card__credit-note-icon {
@@ -361,24 +283,24 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: var(--radius-full);
   background: var(--color-accent-gold);
-  color: var(--color-white);
+  color: var(--color-ink-950);
 }
 
 .phone-card__actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-1);
+  gap: var(--space-2);
 
   app-button {
     display: block;
 
     ::ng-deep .btn {
       width: 100%;
+      min-height: 2.75rem;
     }
   }
 }
@@ -388,19 +310,21 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
+  min-height: 2.5rem;
   padding: var(--space-2);
-  margin-top: var(--space-1);
-  color: var(--color-text-on-light-subtle);
+  color: var(--lp-text-muted);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
+  border-radius: var(--radius-full);
   @include focus-ring;
 
   &:hover {
-    color: var(--color-text-on-light);
+    color: var(--color-white);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .phone-card,
   .phone-card__inner {
     transition: none;
   }

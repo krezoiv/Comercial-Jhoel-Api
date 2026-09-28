@@ -44,22 +44,55 @@
   color: var(--color-text-on-light);
 }
 
-.section--dark {
-  background: var(--color-bg-dark);
-  color: var(--color-text-on-dark);
-}
-
-// Azul marino de marca — variante oscura intermedia, para que secciones
-// consecutivas nunca repitan el mismo negro plano.
-.section--navy {
-  background: var(--color-primary-900);
-  color: var(--color-text-on-dark);
-}
-
-// Superficie oscura elevada (la misma que ya usa el modo oscuro del panel
-// para tarjetas/dropdowns) — un tercer tono, ligeramente más claro que
-// `dark`/`navy`, para la misma jerarquía visual.
+// ---- Tonos oscuros "dark cinematic" -----------------------------------------
+// Los tres tonos oscuros (`dark`/`navy`/`slate`) comparten el mismo truco
+// de continuidad: su degradado arranca y termina EXACTAMENTE en
+// `--lp-base`, así dos secciones consecutivas se funden sin costura en vez
+// de leerse como bloques independientes. Cada tono solo cambia el color de
+// su "núcleo" (el centro del degradado) y la luz ambiental de su
+// `::before`, que sigue siendo parte del mismo sistema azul/cian de marca.
+// El `::before` vive detrás del contenido (z-index 0, sin eventos) — los
+// glows propios de cada sección y `app-section-landing-background` siguen
+// funcionando igual encima de él.
+.section--dark,
+.section--navy,
 .section--slate {
-  background: var(--color-bg-dark-elevated);
   color: var(--color-text-on-dark);
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+.section--dark {
+  background: linear-gradient(180deg, var(--lp-base) 0%, #050a16 45%, var(--lp-base) 100%);
+
+  &::before {
+    background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(47, 131, 224, 0.14) 0%, transparent 70%);
+  }
+}
+
+// Azul profundo de marca (derivado de `--color-primary-900`) en el núcleo.
+.section--navy {
+  background: linear-gradient(180deg, var(--lp-base) 0%, var(--lp-deep) 22%, var(--lp-navy) 55%, var(--lp-deep) 82%, var(--lp-base) 100%);
+
+  &::before {
+    background:
+      radial-gradient(ellipse 50% 40% at 85% 30%, rgba(23, 195, 214, 0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 45% 40% at 10% 75%, rgba(47, 131, 224, 0.14) 0%, transparent 70%);
+  }
+}
+
+// Superficie oscura elevada con un tinte azul — tercer tono de la jerarquía.
+.section--slate {
+  background: linear-gradient(180deg, var(--lp-base) 0%, #0a1224 30%, #0c1630 60%, var(--lp-base) 100%);
+
+  &::before {
+    background: radial-gradient(ellipse 55% 45% at 15% 20%, rgba(47, 131, 224, 0.12) 0%, transparent 70%);
+  }
 }

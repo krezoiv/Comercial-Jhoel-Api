@@ -8,6 +8,8 @@ export const SERVICES: ServiceItem[] = [
     description:
       'Todo lo que tu familia necesita para el colegio y la oficina, con marcas confiables y buen precio.',
     tag: 'Más solicitado',
+    fragment: 'libreria',
+    ctaLabel: 'Ver librería',
   },
   {
     id: 'fotocopias',
@@ -15,6 +17,8 @@ export const SERVICES: ServiceItem[] = [
     title: 'Fotocopias e impresiones',
     description: 'Copias, impresiones, escaneos y anillados listos en minutos, a color o blanco y negro.',
     tag: 'Listo en minutos',
+    fragment: 'contacto',
+    ctaLabel: 'Consultar',
   },
   {
     id: 'agente-bancario',
@@ -22,6 +26,8 @@ export const SERVICES: ServiceItem[] = [
     title: 'Agente bancario',
     description: 'Depósitos, retiros, pagos de servicios y transferencias sin hacer cola en el banco.',
     tag: 'Rápido y seguro',
+    fragment: 'agentes-bancarios',
+    ctaLabel: 'Ver operaciones',
   },
   {
     id: 'servicios-administrativos',
@@ -29,6 +35,8 @@ export const SERVICES: ServiceItem[] = [
     title: 'Servicios administrativos',
     description: 'Trámites, pago de servicios, recargas y gestiones que te ahorran tiempo y viajes.',
     tag: 'Ahorra tiempo',
+    fragment: 'contacto',
+    ctaLabel: 'Consultar',
   },
   {
     id: 'venta-telefonos',
@@ -36,6 +44,8 @@ export const SERVICES: ServiceItem[] = [
     title: 'Venta de teléfonos',
     description: 'Equipos y accesorios de telefonía con asesoría honesta según lo que realmente necesitas.',
     tag: 'Crédito con Krediya',
+    fragment: 'telefonos',
+    ctaLabel: 'Ver teléfonos',
   },
   {
     id: 'papeleria-empresarial',
@@ -43,5 +53,7 @@ export const SERVICES: ServiceItem[] = [
     title: 'Papelería empresarial',
     description: 'Insumos de oficina al por mayor para negocios, colegios e instituciones.',
     tag: 'Precio por mayor',
+    fragment: 'libreria',
+    ctaLabel: 'Ver catálogo',
   },
 ];

@@ -1,11 +1,13 @@
-<app-section tone="slate" spacing="lg">
+<app-section tone="slate" spacing="lg" [wideContainer]="true">
   <div class="catalog__glow" [appParallaxLayer]="0.06" aria-hidden="true"></div>
 
-  <app-section-heading
-    eyebrow="Catálogo"
-    title="Explora nuestras categorías más buscadas"
-    subtitle="Un vistazo rápido a lo que encuentras en tienda. Ingresa al catálogo completo para ver todo el detalle."
-  />
+  <div appRevealOnScroll>
+    <app-section-heading
+      eyebrow="Catálogo"
+      title="Explora nuestras categorías más buscadas"
+      subtitle="Un vistazo rápido a lo que encuentras en tienda. Ingresa al catálogo completo para ver todo el detalle."
+    />
+  </div>
 
   <div class="catalog__grid">
     @for (category of categories$ | async; track category.id; let i = $index) {

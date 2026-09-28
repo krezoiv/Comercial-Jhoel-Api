@@ -35,4 +35,6 @@ export class SectionComponent {
   @Input() tone: SectionTone = 'light';
   @Input() spacing: SectionSpacing = 'md';
   @Input() wideContainer = false;
+  /** Contenedor sin `max-width` (ver `ContainerComponent.fluid`) — secciones de carrusel full-width de la landing. */
+  @Input() fluidContainer = false;
 }

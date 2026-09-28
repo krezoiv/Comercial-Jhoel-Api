@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, comput
 import { PublicCatalogBank } from '../../../../../../core/models';
 import { PublicCatalogBankService } from '../../../../../../core/services/public-catalog-bank.service';
 import { IconComponent } from '../../../../../../shared/ui';
+import { TiltOnMouseDirective } from '../../../../../../shared/directives/tilt-on-mouse.directive';
 
 /**
  * Card individual del catálogo de Bancos — frente (imagen + nombre) y
@@ -16,7 +17,7 @@ import { IconComponent } from '../../../../../../shared/ui';
 @Component({
   selector: 'app-bank-card',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, TiltOnMouseDirective],
   templateUrl: './bank-card.component.html',
   styleUrl: './bank-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

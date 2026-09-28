@@ -103,17 +103,57 @@ button {
   color: transparent;
 }
 
+// Entrada al hacer scroll — `RevealOnScrollDirective` solo alterna
+// `.is-visible`; aquí vive todo el movimiento. `blur → sharp` solo en
+// desktop (un `filter` animado en móvil cuesta más de lo que aporta), y
+// al terminar el estado final es `filter: none`/`transform: none`, nunca
+// un valor "neutro" que siga creando un containing block para overlays
+// `position: fixed` descendientes.
 .reveal {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translate3d(0, 24px, 0);
   transition:
-    opacity var(--duration-slow) var(--ease-out),
-    transform var(--duration-slow) var(--ease-out);
+    opacity var(--duration-reveal) var(--ease-out),
+    transform var(--duration-reveal) var(--ease-out),
+    filter var(--duration-reveal) var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
+
+  @media (min-width: 768px) {
+    transform: translate3d(0, 40px, 0);
+    filter: blur(6px);
+  }
+
+  &.reveal--fade {
+    transform: none;
+  }
+
+  &.reveal--scale {
+    transform: translate3d(0, 24px, 0) scale(0.94);
+  }
+
+  &.reveal--left {
+    transform: translate3d(-32px, 0, 0);
+  }
+
+  &.reveal--right {
+    transform: translate3d(32px, 0, 0);
+  }
 
   &.is-visible {
     opacity: 1;
     transform: none;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.reveal--scale,
+  .reveal.reveal--left,
+  .reveal.reveal--right {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 

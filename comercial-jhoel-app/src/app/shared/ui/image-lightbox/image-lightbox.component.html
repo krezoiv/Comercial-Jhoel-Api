@@ -1,5 +1,12 @@
 @if (open && imageUrl) {
-  <div class="lightbox-backdrop" (click)="close()">
+  <div
+    class="lightbox-backdrop"
+    [class.lightbox-backdrop--closing]="closing()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="alt || 'Imagen ampliada'"
+    (click)="close()"
+  >
     <button type="button" class="lightbox__close" (click)="close()" aria-label="Cerrar imagen ampliada">
       <app-icon name="close" [size]="20" />
     </button>

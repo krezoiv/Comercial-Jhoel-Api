@@ -40,13 +40,9 @@
 .phones__carousel {
   position: relative;
   z-index: 1;
-  margin-top: var(--space-10);
-  width: 100%;
-  max-width: 64rem;
-  margin-inline: auto;
-  overflow: hidden;
+  margin-top: var(--space-4);
 
   @include bp.respond(lg) {
-    margin-top: var(--space-12);
+    margin-top: var(--space-6);
   }
 }

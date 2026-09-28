@@ -1,7 +1,7 @@
 @use 'breakpoints' as bp;
+@use 'mixins' as *;
+@use 'landing' as lp;
 
-// Mismo "glow" atmosférico que ya usan Hero/Teléfonos/Librería — Servicios
-// no tenía ninguno, lo que lo dejaba plano frente a esas secciones.
 .services__glow {
   position: absolute;
   top: -6rem;
@@ -13,63 +13,212 @@
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(circle, var(--color-accent-cyan) 0%, transparent 70%);
-  opacity: 0.32;
+  opacity: 0.22;
 }
 
+.services__glow--blue {
+  top: auto;
+  right: auto;
+  bottom: -4rem;
+  left: -3rem;
+  background: radial-gradient(circle, var(--color-primary-500) 0%, transparent 70%);
+  opacity: 0.2;
+}
+
+// 1 → 2 → 3 → 6 columnas: en monitores anchos las seis cards quedan en una
+// sola fila en vez de encerrarse en un contenedor de 1200px.
 .services__grid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1rem, 1.6vw, 1.75rem);
+  max-width: 120rem;
+  margin-inline: auto;
 
   @include bp.respond(sm) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @include bp.respond(lg) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  @media (min-width: 1680px) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.services__item {
+  min-width: 0;
 }
 
 .service-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
+  height: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  @include lp.card-surface;
+  @include lp.card-3d-wrapper(-8px, 1.02);
+  @include lp.pointer-light('::after', 0.18);
+  transition:
+    transform 400ms var(--ease-out),
+    box-shadow var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--lp-border-strong);
+      box-shadow: var(--lp-shadow-card-hover);
+    }
+  }
+
+  &:focus-within {
+    border-color: var(--lp-border-strong);
+  }
 }
 
-.service-card__tag {
+// Cabecera visual: no hay fotos de servicios en el proyecto, así que la
+// "imagen" es un escenario de luz + retícula + el ícono del servicio en
+// gran formato, con el mismo lenguaje que las cards de producto.
+.service-card__visual {
+  position: relative;
+  height: 9.5rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 90% at 80% 0%, rgba(23, 195, 214, 0.32) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 80% at 0% 100%, rgba(47, 131, 224, 0.35) 0%, transparent 65%),
+    linear-gradient(160deg, #0d2446 0%, #081327 100%);
+
+  // Overlay hacia la superficie de la card, para que la cabecera funda con el cuerpo.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgba(9, 16, 32, 0.9) 100%);
+    pointer-events: none;
+  }
+}
+
+.services__item:nth-child(3n + 2) .service-card__visual {
+  background:
+    radial-gradient(ellipse 90% 90% at 20% 0%, rgba(79, 160, 242, 0.34) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 80% at 100% 100%, rgba(23, 195, 214, 0.28) 0%, transparent 65%),
+    linear-gradient(160deg, #0b1f3f 0%, #070f22 100%);
+}
+
+.services__item:nth-child(3n + 3) .service-card__visual {
+  background:
+    radial-gradient(ellipse 80% 90% at 50% 0%, rgba(127, 230, 239, 0.26) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 70% at 100% 100%, rgba(47, 131, 224, 0.3) 0%, transparent 65%),
+    linear-gradient(160deg, #0a2246 0%, #06112a 100%);
+}
+
+.service-card__visual-grid {
   position: absolute;
-  top: 0;
-  right: 0;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(130, 192, 247, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(130, 192, 247, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 80% 80% at 70% 20%, #000 20%, transparent 75%);
+}
+
+.service-card__visual-art {
+  position: absolute;
+  right: -1rem;
+  bottom: -1.75rem;
+  color: rgba(127, 230, 239, 0.16);
+  transform: rotate(-12deg);
+  transition:
+    transform 700ms var(--ease-out),
+    color var(--duration-slow) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .service-card:hover .service-card__visual-art {
+    transform: rotate(-4deg) scale(1.08) translate3d(-6px, -6px, 0);
+    color: rgba(127, 230, 239, 0.26);
+  }
 }
 
 .service-card__icon {
+  position: absolute;
+  left: var(--space-5);
+  bottom: var(--space-4);
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 3.25rem;
   height: 3.25rem;
   border-radius: var(--radius-md);
-  // Antes: gradiente traslúcido + `--color-primary-600` — pensado para
-  // tarjetas CLARAS, se veía apagado/sin contraste sobre la tarjeta oscura
-  // de esta sección. Mismo gradiente sólido + ícono blanco + glow que ya
-  // usa el resto de la identidad oscura de la marca (Hero, botones
-  // primarios), para que el ícono destaque en vez de perderse.
   background: var(--gradient-brand);
   color: var(--color-white);
-  box-shadow: var(--shadow-glow-primary);
-  margin-bottom: var(--space-2);
+  box-shadow: 0 10px 28px -8px var(--lp-glow-cyan), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.service-card__body {
+  position: relative;
+  z-index: 3;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+}
+
+.service-card__tag {
+  display: inline-flex;
+  padding: 0.2rem var(--space-3);
+  border-radius: var(--radius-full);
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.32);
+  color: var(--color-accent-gold-soft);
+  font-size: 0.75rem;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
 }
 
 .service-card__title {
   font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+  margin-top: var(--space-1);
 }
 
 .service-card__description {
+  flex: 1;
   font-size: var(--fs-sm);
   line-height: var(--lh-normal);
-  color: var(--color-text-on-dark-muted);
+  color: var(--lp-text-muted);
+}
+
+.service-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  margin-top: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent-cyan-soft);
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-base) var(--ease-out);
+  @include focus-ring;
+
+  app-icon {
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  &:hover {
+    color: var(--color-white);
+
+    app-icon {
+      transform: translateX(4px);
+    }
+  }
 }

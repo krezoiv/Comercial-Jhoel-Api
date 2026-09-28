@@ -1,4 +1,5 @@
 <footer class="footer">
+  <div class="footer__glow" aria-hidden="true"></div>
   <app-container wide>
     <div class="footer__top">
       <div class="footer__brand">
@@ -9,10 +10,9 @@
         <p class="footer__tagline">{{ site.tagline }}</p>
         <div class="footer__socials">
           @for (social of socialLinks(); track social.id) {
-          <a class="footer__social" [href]="social.href" [attr.aria-label]="social.label" target="_blank"
-            rel="noopener noreferrer">
-            <app-icon [name]="social.icon" [size]="18" />
-          </a>
+            <a class="footer__social" [href]="social.href" [attr.aria-label]="social.label" target="_blank" rel="noopener noreferrer">
+              <app-icon [name]="social.icon" [size]="18" />
+            </a>
           }
         </div>
       </div>
@@ -21,7 +21,7 @@
         <h3 class="footer__heading">Navegación</h3>
         <ul class="footer__list">
           @for (link of navLinks; track link.label) {
-          <li><a [routerLink]="link.path" [fragment]="link.fragment">{{ link.label }}</a></li>
+            <li><a [routerLink]="link.path" [fragment]="link.fragment">{{ link.label }}</a></li>
           }
         </ul>
       </div>
@@ -30,40 +30,39 @@
         <h3 class="footer__heading">Contacto</h3>
         <ul class="footer__list">
           @for (channel of channels(); track channel.id) {
-          <li>
-            <a [href]="channel.href">
-              <app-icon [name]="channel.icon" [size]="16" />
-              {{ channel.value }}
-            </a>
-          </li>
+            <li>
+              <a [href]="channel.href">
+                <app-icon [name]="channel.icon" [size]="16" />
+                <span class="footer__channel-value">{{ channel.value }}</span>
+              </a>
+            </li>
           }
         </ul>
       </div>
 
       @if (businessHours(); as hours) {
-      <div class="footer__col">
-        <h3 class="footer__heading">Horario</h3>
-        <p class="footer__text">{{ hours }}</p>
-      </div>
+        <div class="footer__col">
+          <h3 class="footer__heading">Horario</h3>
+          <p class="footer__text">{{ hours }}</p>
+        </div>
       }
     </div>
 
     <div class="footer__bottom">
-      <p>
-        © {{ year }} {{ site.name }}.<br>
-        <span style="color: #79a4ff; font-size: 12px;">
-          Desarrollado por {{ site.developer }}. <br>
-          <a href="mailto:{{ site.devEmail }}" style="color: #79a4ff; font-size: 8px;">{{ site.devEmail }}</a>
+      <p class="footer__legal">
+        © {{ year }} {{ site.name }}.
+        <span class="footer__dev">
+          Desarrollado por {{ site.developer }} ·
+          <a class="footer__dev-mail" href="mailto:{{ site.devEmail }}">{{ site.devEmail }}</a>
         </span>
       </p>
 
-
-
       @if (visitCount(); as count) {
-      <p class="footer__visits">
-        <app-icon name="eye" [size]="14" />
-        Visitas: {{ formatQuantity(count) }}
-      </p>
+        <p class="footer__visits">
+          <span class="footer__visits-dot" aria-hidden="true"></span>
+          <app-icon name="eye" [size]="14" />
+          Visitas: <strong>{{ formatQuantity(count) }}</strong>
+        </p>
       }
     </div>
   </app-container>

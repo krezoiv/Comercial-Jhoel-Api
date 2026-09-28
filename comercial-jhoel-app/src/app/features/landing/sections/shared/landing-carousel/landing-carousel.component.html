@@ -1,0 +1,77 @@
+<div
+  class="lc"
+  [class.lc--in-view]="inView()"
+  [class.lc--dragging]="dragging()"
+  [class.lc--can-prev]="!atStart()"
+  [class.lc--can-next]="!atEnd()"
+  (mouseenter)="pauseAutoplay()"
+  (mouseleave)="resumeAutoplay()"
+  (focusin)="pauseAutoplay()"
+  (focusout)="resumeAutoplay()"
+>
+  <div class="lc__viewport">
+    <button
+      type="button"
+      class="lc__nav lc__nav--prev"
+      [disabled]="atStart()"
+      (click)="prev()"
+      [attr.aria-label]="'Ver ' + itemNoun() + ' anterior'"
+    >
+      <app-icon name="chevron-left" [size]="22" />
+    </button>
+
+    <div
+      #track
+      class="lc__track"
+      tabindex="0"
+      role="region"
+      aria-roledescription="carrusel"
+      [attr.aria-label]="ariaLabel() + ' — usa las flechas del teclado para desplazarte'"
+      (keydown)="onKeydown($event)"
+      (dragstart)="$event.preventDefault()"
+    >
+      @for (item of items(); track item.id; let i = $index) {
+        <div
+          class="lc__slide"
+          role="group"
+          aria-roledescription="elemento"
+          [attr.aria-label]="i + 1 + ' de ' + items().length + (itemLabel()(item) ? ': ' + itemLabel()(item) : '')"
+          [style.--i]="i"
+        >
+          <ng-container [ngTemplateOutlet]="slideTemplate()" [ngTemplateOutletContext]="{ $implicit: item, index: i }" />
+        </div>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="lc__nav lc__nav--next"
+      [disabled]="atEnd()"
+      (click)="next()"
+      [attr.aria-label]="'Ver siguiente ' + itemNoun()"
+    >
+      <app-icon name="chevron-right" [size]="22" />
+    </button>
+  </div>
+
+  @if (positions().length > 1) {
+    @if (positions().length <= 12) {
+      <div class="lc__dots" role="group" [attr.aria-label]="'Posición en ' + ariaLabel()">
+        @for (position of positions(); track position) {
+          <button
+            type="button"
+            class="lc__dot"
+            [class.lc__dot--active]="position === activePosition()"
+            [attr.aria-current]="position === activePosition() ? 'true' : null"
+            [attr.aria-label]="'Ir a la posición ' + (position + 1) + ' de ' + positions().length"
+            (click)="goTo(position)"
+          ></button>
+        }
+      </div>
+    } @else {
+      <div class="lc__progress" aria-hidden="true">
+        <span class="lc__progress-bar" [style.--progress]="(activePosition() + 1) / positions().length"></span>
+      </div>
+    }
+  }
+</div>

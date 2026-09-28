@@ -1,10 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { OffersService } from '../../../../core/services/offers.service';
-import { BadgeComponent, CardComponent, IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
+import { IconComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
+import { TiltOnMouseDirective } from '../../../../shared/directives/tilt-on-mouse.directive';
 import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 
 @Component({
@@ -12,13 +14,13 @@ import { SectionLandingBackgroundComponent } from '../shared/section-landing-bac
   standalone: true,
   imports: [
     AsyncPipe,
+    RouterLink,
     SectionComponent,
     SectionHeadingComponent,
-    CardComponent,
-    BadgeComponent,
     IconComponent,
     RevealOnScrollDirective,
     ParallaxLayerDirective,
+    TiltOnMouseDirective,
     SectionLandingBackgroundComponent,
   ],
   templateUrl: './services.component.html',

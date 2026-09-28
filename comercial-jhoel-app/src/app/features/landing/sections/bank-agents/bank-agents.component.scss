@@ -1,11 +1,15 @@
 @use 'breakpoints' as bp;
 
 .bank-agents__layout {
+  // La sección usa contenedor fluido (su carrusel de bancos es full-width);
+  // este bloque de texto + operaciones conserva el ancho legible habitual.
+  max-width: var(--container-max-wide);
+  margin-inline: auto;
   display: grid;
   gap: var(--space-12);
 
   @include bp.respond(lg) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-16);
     align-items: center;
   }
@@ -33,7 +37,7 @@
 
 .bank-agents__operations {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
