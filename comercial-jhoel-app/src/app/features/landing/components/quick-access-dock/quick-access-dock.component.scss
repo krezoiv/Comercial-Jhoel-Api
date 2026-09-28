@@ -1,0 +1,346 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+// ---------------------------------------------------------------------------
+// Dock de acceso rápido.
+// < 1024px: barra flotante inferior centrada (se esconde sobre el Hero,
+//           al desplazarse hacia abajo y cerca del footer).
+// ≥ 1024px: dock vertical fijo a la derecha, centrado verticalmente; el
+//           nombre de cada acceso se despliega hacia la izquierda en hover.
+// ---------------------------------------------------------------------------
+
+:host {
+  --dock-thumb: 2.75rem;
+  --dock-radius: 0.875rem;
+
+  position: fixed;
+  z-index: var(--z-dock);
+  left: 50%;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: calc(100vw - 1.5rem);
+  pointer-events: none;
+
+  @include bp.respond(lg) {
+    --dock-thumb: 3rem;
+
+    left: auto;
+    bottom: auto;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    max-width: none;
+  }
+
+  @include bp.respond(xl) {
+    --dock-thumb: 3.25rem;
+  }
+
+  @media (min-width: 1440px) {
+    --dock-thumb: 3.5rem;
+    --dock-radius: 1rem;
+  }
+}
+
+.dock {
+  pointer-events: auto;
+  padding: 0.375rem;
+  border-radius: var(--radius-full);
+  // Mismo vidrio oscuro con tinte de marca que el navbar.
+  background: rgba(6, 16, 34, 0.74);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(130, 192, 247, 0.16);
+  box-shadow:
+    0 24px 48px -20px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 0 32px -12px rgba(23, 195, 214, 0.35);
+
+  // Entrada (fade + slide) — espera a que termine la pantalla de carga.
+  opacity: 0;
+  transform: translate3d(0, 1.5rem, 0);
+  transition:
+    opacity 500ms var(--ease-out),
+    transform 500ms var(--ease-out);
+
+  @include bp.respond(lg) {
+    padding: 0.5rem;
+    border-radius: calc(var(--dock-radius) + 0.5rem);
+    transform: translate3d(1.5rem, 0, 0);
+  }
+}
+
+.dock--ready {
+  opacity: 1;
+  transform: none;
+  transition-delay: 350ms;
+}
+
+// Móvil: escondido (sobre el Hero, al bajar o junto al footer).
+.dock--ready.dock--hidden {
+  opacity: 0;
+  transform: translate3d(0, calc(100% + 1.5rem), 0);
+  pointer-events: none;
+  transition-delay: 0ms;
+}
+
+// Desktop junto al footer: se repliega parcialmente hacia el borde y baja
+// su énfasis para no competir con el footer; el hover lo recupera.
+@include bp.respond(lg) {
+  .dock--ready.dock--near-footer:not(:hover):not(:has(:focus-visible)) {
+    opacity: 0.45;
+    transform: translate3d(35%, 0, 0);
+    transition-delay: 0ms;
+  }
+}
+
+.dock__list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  @include bp.respond(lg) {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+}
+
+.dock__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.5rem;
+  margin-inline: 0.125rem;
+  background: rgba(130, 192, 247, 0.18);
+
+  @include bp.respond(lg) {
+    width: 60%;
+    height: 1px;
+    margin: 0.125rem 0;
+  }
+}
+
+.dock__item {
+  position: relative;
+  display: flex;
+}
+
+.dock__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // Área táctil ≥ 44px aunque la miniatura sea menor.
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  // Sin el padding por defecto de <button>: ensanchaba el dock ~12px.
+  padding: 0;
+  border-radius: var(--dock-radius);
+  color: var(--lp-text-muted);
+  outline: none;
+
+  &:focus-visible .dock__thumb {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+// ---- Miniatura -------------------------------------------------------------
+.dock__thumb {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dock-thumb);
+  height: var(--dock-thumb);
+  border-radius: var(--dock-radius);
+  background: linear-gradient(160deg, rgba(28, 46, 82, 0.9) 0%, rgba(9, 16, 32, 0.95) 100%);
+  border: 1px solid rgba(130, 192, 247, 0.16);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.9);
+  transition:
+    transform 300ms var(--ease-out),
+    border-color 300ms var(--ease-out),
+    box-shadow 300ms var(--ease-out),
+    color 300ms var(--ease-out);
+}
+
+// Con imagen: misma "vitrina" clara que las cards de catálogo, así las
+// fotos con fondo blanco se integran en vez de verse como parches.
+.dock__thumb--image {
+  background: radial-gradient(ellipse 90% 80% at 50% 30%, #ffffff 0%, #eef4fc 60%, #d6e3f4 100%);
+}
+
+.dock__img {
+  width: 100%;
+  height: 100%;
+  padding: 0.3rem;
+  border-radius: inherit;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+.dock__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-cyan-soft);
+}
+
+// Sobre una miniatura, el ícono va como insignia en la esquina.
+.dock__thumb--image .dock__icon {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.3rem;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: var(--radius-full);
+  background: rgba(6, 16, 34, 0.95);
+  border: 1px solid rgba(127, 230, 239, 0.4);
+  box-shadow: 0 0 10px -2px rgba(23, 195, 214, 0.55);
+}
+
+// En móvil la barra usa solo el ícono sobre la miniatura más pequeña.
+@include bp.respond-down(lg) {
+  .dock__thumb {
+    --dock-thumb: 2.5rem;
+  }
+}
+
+// ---- Etiqueta: la card se "expande" hacia la izquierda en hover/foco ----------
+// Vive detrás de la miniatura y se revela con `clip-path` desde el borde
+// derecho — parece que la propia tarjeta crece, sin mover el layout del dock.
+.dock__label {
+  display: none;
+
+  @include bp.respond(lg) {
+    position: absolute;
+    top: 50%;
+    right: -0.25rem;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: calc(var(--dock-thumb) + 0.5rem);
+    padding: 0 calc(var(--dock-thumb) + 1rem) 0 var(--space-4);
+    border-radius: calc(var(--dock-radius) + 0.25rem);
+    background: linear-gradient(90deg, rgba(10, 24, 48, 0.97) 0%, rgba(6, 16, 34, 0.97) 100%);
+    border: 1px solid rgba(127, 230, 239, 0.3);
+    box-shadow:
+      0 18px 36px -18px rgba(0, 0, 0, 0.9),
+      0 0 24px -10px rgba(23, 195, 214, 0.5);
+    color: var(--color-white);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateY(-50%);
+    clip-path: inset(0 0 0 100% round calc(var(--dock-radius) + 0.25rem));
+    opacity: 0;
+    transition:
+      clip-path 320ms var(--ease-out),
+      opacity 200ms var(--ease-out);
+
+    app-icon {
+      color: var(--color-accent-cyan-soft);
+      transition: transform 320ms var(--ease-out);
+    }
+  }
+}
+
+@include bp.respond(lg) {
+  // `:focus-visible` (no `:focus-within`): tras un clic con mouse el foco
+  // queda en el botón y la etiqueta se quedaría abierta.
+  .dock__item:hover,
+  .dock__item:has(.dock__btn:focus-visible) {
+    z-index: 2;
+
+    .dock__label {
+      opacity: 1;
+      clip-path: inset(0 0 0 0 round calc(var(--dock-radius) + 0.25rem));
+
+      app-icon {
+        transform: translateX(3px);
+      }
+    }
+  }
+}
+
+// ---- Hover / foco de la miniatura -------------------------------------------------
+@media (hover: hover) {
+  .dock__btn:hover .dock__thumb {
+    transform: translate3d(-2px, -2px, 0) scale(1.08) perspective(400px) rotateY(-8deg);
+    border-color: rgba(127, 230, 239, 0.55);
+    box-shadow:
+      0 14px 26px -12px rgba(0, 0, 0, 0.9),
+      0 0 22px -4px rgba(23, 195, 214, 0.55);
+  }
+}
+
+.dock__btn:active .dock__thumb {
+  transform: scale(0.95);
+}
+
+// ---- Activo: "estoy en esta sección" ----------------------------------------------
+.dock__item--active {
+  .dock__thumb {
+    border-color: rgba(127, 230, 239, 0.7);
+    box-shadow:
+      0 0 0 1px rgba(23, 195, 214, 0.35),
+      0 0 20px -4px rgba(23, 195, 214, 0.6);
+    transform: scale(1.04);
+  }
+
+  // Indicador: punto bajo el acceso (barra inferior) / línea vertical a la
+  // izquierda (dock vertical).
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -0.3rem;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    box-shadow: 0 0 8px var(--color-accent-cyan);
+    transform: translateX(-50%);
+
+    @include bp.respond(lg) {
+      left: -0.5rem;
+      top: 50%;
+      bottom: auto;
+      width: 3px;
+      height: 45%;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+// ---- WhatsApp: verde muy sutil dentro de la estética azul --------------------------
+.dock__item--whatsapp {
+  .dock__icon {
+    color: #4ade80;
+  }
+
+  .dock__thumb {
+    border-color: rgba(52, 199, 123, 0.35);
+    box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.9), 0 0 16px -8px rgba(52, 199, 123, 0.55);
+  }
+}
+
+@media (hover: hover) {
+  .dock__item--whatsapp .dock__btn:hover .dock__thumb {
+    border-color: rgba(74, 222, 128, 0.6);
+    box-shadow:
+      0 14px 26px -12px rgba(0, 0, 0, 0.9),
+      0 0 22px -4px rgba(52, 199, 123, 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock,
+  .dock__thumb,
+  .dock__label {
+    transition: none;
+  }
+}

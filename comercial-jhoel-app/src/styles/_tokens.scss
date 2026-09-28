@@ -232,6 +232,9 @@
   --duration-reveal: 700ms;
 
   // ---- Z-index scale ------------------------------------------------------------
+  // Dock de acceso rápido de la landing: sobre el contenido, pero debajo del
+  // navbar (y su menú móvil), modales, lightbox, toasts y pantalla de carga.
+  --z-dock: 90;
   --z-navbar: 100;
   --z-overlay: 200;
   --z-modal: 300;

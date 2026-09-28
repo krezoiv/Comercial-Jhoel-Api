@@ -10,6 +10,7 @@
   // rol que antes cumplía el propio `<app-section>` antes de la fusión.
   position: relative;
   margin-top: var(--space-16);
+  scroll-margin-top: calc(var(--navbar-height) + var(--space-4));
 
   @include bp.respond(lg) {
     margin-top: var(--space-20);

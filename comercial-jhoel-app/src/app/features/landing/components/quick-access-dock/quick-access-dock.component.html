@@ -1,0 +1,61 @@
+<nav
+  class="dock"
+  [class.dock--ready]="ready()"
+  [class.dock--near-footer]="nearFooter()"
+  [class.dock--hidden]="hidden()"
+  [attr.inert]="hidden() ? '' : null"
+  aria-label="Acceso rápido"
+>
+  <ul class="dock__list">
+    @for (item of items(); track item.id; let i = $index) {
+      @if (item.dividerBefore) {
+        <li class="dock__divider" aria-hidden="true"></li>
+      }
+      <li
+        class="dock__item"
+        [class.dock__item--active]="item.sectionId !== null && activeSection() === item.sectionId && item.action !== 'link'"
+        [class.dock__item--whatsapp]="item.tone === 'whatsapp'"
+        [style.--i]="i"
+      >
+        @if (item.href) {
+          <a class="dock__btn" [href]="item.href" target="_blank" rel="noopener noreferrer" [attr.aria-label]="item.ariaLabel">
+            <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }" />
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="dock__btn"
+            [attr.aria-label]="item.ariaLabel"
+            [attr.aria-current]="item.sectionId !== null && activeSection() === item.sectionId ? 'location' : null"
+            [attr.aria-haspopup]="item.action === 'notifications' ? 'dialog' : null"
+            (click)="activate(item)"
+          >
+            <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }" />
+          </button>
+        }
+      </li>
+    }
+  </ul>
+</nav>
+
+<ng-template #content let-item>
+  <span class="dock__label" aria-hidden="true">
+    {{ item.label }}
+    <app-icon name="arrow-right" [size]="14" />
+  </span>
+  <span class="dock__thumb" [class.dock__thumb--image]="item.thumbnailUrl">
+    @if (item.thumbnailUrl) {
+      <img
+        class="dock__img"
+        [src]="item.thumbnailUrl"
+        alt=""
+        width="56"
+        height="56"
+        loading="lazy"
+        decoding="async"
+        (error)="onThumbnailError(item.id)"
+      />
+    }
+    <span class="dock__icon"><app-icon [name]="item.icon" [size]="item.thumbnailUrl ? 13 : 20" /></span>
+  </span>
+</ng-template>

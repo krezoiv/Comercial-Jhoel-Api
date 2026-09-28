@@ -213,11 +213,11 @@
 }
 
 .lc__nav--prev {
-  left: max(0.5rem, calc(var(--lp-container-pad) - 2.25rem));
+  left: max(0.5rem, calc(var(--lp-container-pad) - var(--lc-nav-inset, 2.25rem)));
 }
 
 .lc__nav--next {
-  right: max(0.5rem, calc(var(--lp-container-pad) - 2.25rem));
+  right: max(0.5rem, calc(var(--lp-container-pad) - var(--lc-nav-inset, 2.25rem)));
 }
 
 // ---- Indicadores ------------------------------------------------------------

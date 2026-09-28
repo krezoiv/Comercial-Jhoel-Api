@@ -8,6 +8,7 @@ import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-l
 import { SectionLandingBackgroundComponent } from '../shared/section-landing-background/section-landing-background.component';
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
+import { LandingQuickAccessStore } from '../../../../core/services/landing-quick-access.store';
 
 /**
  * Sección "LIBRERÍA" de la landing pública — catálogo puramente informativo
@@ -33,6 +34,7 @@ import { CatalogProductCarouselComponent } from '../shared/catalog-product-carou
 })
 export class LibraryCatalogComponent {
   private readonly publicProductCatalogService = inject(PublicProductCatalogService);
+  private readonly quickAccess = inject(LandingQuickAccessStore);
 
   readonly products = signal<PublicCatalogProduct[]>([]);
   readonly loading = signal(true);
@@ -45,6 +47,12 @@ export class LibraryCatalogComponent {
       next: (products) => {
         this.products.set(products);
         this.loading.set(false);
+        // Miniatura del dock de acceso rápido: la imagen del primer producto que tenga una.
+        const withImage = products.find((product) => product.hasImage);
+        this.quickAccess.publish('libreria', {
+          available: products.length > 0,
+          thumbnailUrl: withImage ? this.publicProductCatalogService.getImageUrl(withImage.id) : null,
+        });
       },
       error: (_error: HttpErrorResponse) => {
         // Sección opcional de la landing — un fallo de red aquí no debe romper el resto de la página, solo se oculta.

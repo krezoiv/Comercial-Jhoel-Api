@@ -14,6 +14,7 @@ import { CatalogPreviewComponent } from './sections/catalog-preview/catalog-prev
 import { BankAgentsComponent } from './sections/bank-agents/bank-agents.component';
 import { AboutComponent } from './sections/about/about.component';
 import { ContactComponent } from './sections/contact/contact.component';
+import { QuickAccessDockComponent } from './components/quick-access-dock/quick-access-dock.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -31,13 +32,10 @@ import { ContactComponent } from './sections/contact/contact.component';
     BankAgentsComponent,
     AboutComponent,
     ContactComponent,
+    QuickAccessDockComponent,
   ],
   templateUrl: './landing-page.component.html',
-  // Fondo base común a todas las secciones (se funden en él arriba/abajo) y
-  // recorte horizontal de seguridad: `clip` (no `hidden`) no crea un
-  // contenedor de scroll, así el navbar `sticky` y los overlays
-  // `position: fixed` siguen funcionando igual.
-  styles: [':host { display: block; background: var(--lp-base); overflow-x: clip; }'],
+  styleUrl: './landing-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LandingPageComponent {

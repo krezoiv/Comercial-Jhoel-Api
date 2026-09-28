@@ -1,0 +1,32 @@
+@use 'breakpoints' as bp;
+
+// Fondo base común a todas las secciones (se funden en él arriba/abajo) y
+// recorte horizontal de seguridad: `clip` (no `hidden`) no crea un
+// contenedor de scroll, así el navbar `sticky` y los overlays
+// `position: fixed` siguen funcionando igual.
+:host {
+  display: block;
+  background: var(--lp-base);
+  overflow-x: clip;
+
+  // Desde 1024px el dock de acceso rápido vive fijo a la derecha: se le
+  // reserva un carril lateral (`--dock-space`) agrandando el gutter de los
+  // contenedores, así nunca tapa texto, botones, cards ni las flechas de
+  // los carruseles. Simétrico a propósito, para no descentrar el diseño.
+  @include bp.respond(lg) {
+    --dock-space: 5.5rem;
+    --container-pad: max(2rem, var(--dock-space));
+    --lp-container-pad: max(clamp(1.25rem, 4vw, 4rem), var(--dock-space));
+    // Flechas del carrusel: dentro del carril, a la izquierda del dock.
+    --lc-nav-inset: 0rem;
+  }
+
+  @media (min-width: 1440px) {
+    --dock-space: 6rem;
+  }
+
+  // Con ≥1600px el contenedor ancho (1400px) ya deja margen de sobra.
+  @media (min-width: 1600px) {
+    --container-pad: var(--space-8);
+  }
+}

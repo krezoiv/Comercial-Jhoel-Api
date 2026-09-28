@@ -23,6 +23,7 @@ import {
   IconComponent,
 } from '../../shared/ui';
 import { NotificationsModalComponent } from './components/notifications-modal/notifications-modal.component';
+import { NotificationsModalService } from '../../core/services/notifications-modal.service';
 
 /**
  * Secciones de la landing (en orden de página) → etiqueta del enlace del
@@ -62,8 +63,14 @@ export class NavbarComponent {
 
   readonly isScrolled = signal(false);
   readonly isMenuOpen = signal(false);
-  /** Controla `NotificationsModalComponent`, montado una sola vez aquí — nunca un segundo Navbar ni un segundo menú móvil. */
-  readonly isNotificationsModalOpen = signal(false);
+  /**
+   * Controla `NotificationsModalComponent`, montado una sola vez aquí — nunca
+   * un segundo Navbar ni un segundo menú móvil. El estado vive en
+   * `NotificationsModalService` para que el dock de acceso rápido de la
+   * landing abra este mismo modal.
+   */
+  private readonly notificationsModal = inject(NotificationsModalService);
+  readonly isNotificationsModalOpen = this.notificationsModal.isOpen;
 
   /** Label of the desktop dropdown currently open (`null` = none). At most one at a time. */
   private readonly openDropdownLabel = signal<string | null>(null);
@@ -219,10 +226,10 @@ export class NavbarComponent {
 
   openNotificationsModal(): void {
     this.closeMenu();
-    this.isNotificationsModalOpen.set(true);
+    this.notificationsModal.open();
   }
 
   closeNotificationsModal(): void {
-    this.isNotificationsModalOpen.set(false);
+    this.notificationsModal.close();
   }
 }

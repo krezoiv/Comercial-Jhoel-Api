@@ -7,6 +7,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
 import { ParallaxLayerDirective } from '../../../../shared/directives/parallax-layer.directive';
 import { ImageLightboxComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { BankCarouselComponent } from './components/bank-carousel/bank-carousel.component';
+import { LandingQuickAccessStore } from '../../../../core/services/landing-quick-access.store';
 
 /**
  * Fragmento "Bancos con los que trabajamos" — catálogo informativo con
@@ -31,6 +32,7 @@ import { BankCarouselComponent } from './components/bank-carousel/bank-carousel.
 })
 export class CatalogBanksComponent {
   private readonly publicCatalogBankService = inject(PublicCatalogBankService);
+  private readonly quickAccess = inject(LandingQuickAccessStore);
 
   readonly banks = signal<PublicCatalogBank[]>([]);
   readonly loading = signal(true);
@@ -43,6 +45,12 @@ export class CatalogBanksComponent {
       next: (banks) => {
         this.banks.set(banks);
         this.loading.set(false);
+        // Miniatura del dock de acceso rápido: el logo del primer banco con imagen (solo info pública).
+        const withImage = banks.find((bank) => bank.hasImage);
+        this.quickAccess.publish('bancos', {
+          available: banks.length > 0,
+          thumbnailUrl: withImage ? this.publicCatalogBankService.getImageUrl(withImage.id) : null,
+        });
       },
       error: (_error: HttpErrorResponse) => {
         // Sección opcional de la landing — un fallo de red aquí no debe romper el resto de la página, solo se oculta.

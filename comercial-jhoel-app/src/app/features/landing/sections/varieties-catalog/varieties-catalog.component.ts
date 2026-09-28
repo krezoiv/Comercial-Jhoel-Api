@@ -9,6 +9,7 @@ import { SectionLandingBackgroundComponent } from '../shared/section-landing-bac
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { CatalogProductCarouselComponent } from '../shared/catalog-product-carousel/catalog-product-carousel.component';
 import { ProductInterestModalComponent } from './components/product-interest-modal/product-interest-modal.component';
+import { LandingQuickAccessStore } from '../../../../core/services/landing-quick-access.store';
 
 /**
  * Sección "VARIEDADES Y ACCESORIOS" de la landing pública — catálogo con
@@ -35,6 +36,7 @@ import { ProductInterestModalComponent } from './components/product-interest-mod
 })
 export class VarietiesCatalogComponent {
   private readonly publicProductCatalogService = inject(PublicProductCatalogService);
+  private readonly quickAccess = inject(LandingQuickAccessStore);
 
   readonly products = signal<PublicCatalogProduct[]>([]);
   readonly loading = signal(true);
@@ -49,6 +51,12 @@ export class VarietiesCatalogComponent {
       next: (products) => {
         this.products.set(products);
         this.loading.set(false);
+        // Miniatura del dock de acceso rápido: la imagen del primer producto que tenga una.
+        const withImage = products.find((product) => product.hasImage);
+        this.quickAccess.publish('variedades', {
+          available: products.length > 0,
+          thumbnailUrl: withImage ? this.publicProductCatalogService.getImageUrl(withImage.id) : null,
+        });
       },
       error: (_error: HttpErrorResponse) => {
         this.loading.set(false);

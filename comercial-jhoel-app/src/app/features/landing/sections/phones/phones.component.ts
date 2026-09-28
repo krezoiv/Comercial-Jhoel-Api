@@ -9,6 +9,7 @@ import { SectionLandingBackgroundComponent } from '../shared/section-landing-bac
 import { ImageLightboxComponent, SectionComponent, SectionHeadingComponent } from '../../../../shared/ui';
 import { PhoneCarouselComponent, PhoneInterestEvent } from './components/phone-carousel/phone-carousel.component';
 import { PhoneInterestModalComponent } from './components/phone-interest-modal/phone-interest-modal.component';
+import { LandingQuickAccessStore } from '../../../../core/services/landing-quick-access.store';
 
 /**
  * Sección "TELÉFONOS" de la landing pública — catálogo visual premium
@@ -36,6 +37,7 @@ import { PhoneInterestModalComponent } from './components/phone-interest-modal/p
 })
 export class PhonesComponent {
   private readonly publicCatalogService = inject(PublicCatalogService);
+  private readonly quickAccess = inject(LandingQuickAccessStore);
 
   readonly phones = signal<PublicCatalogPhone[]>([]);
   readonly loading = signal(true);
@@ -51,6 +53,13 @@ export class PhonesComponent {
       next: (phones) => {
         this.phones.set(phones);
         this.loading.set(false);
+        // Miniatura del dock de acceso rápido: la imagen principal del primer teléfono que tenga una.
+        const withImage = phones.find((phone) => phone.images.length > 0);
+        const image = withImage ? (withImage.images.find((img) => img.isPrimary) ?? withImage.images[0]) : null;
+        this.quickAccess.publish('telefonos', {
+          available: phones.length > 0,
+          thumbnailUrl: image ? this.publicCatalogService.getImageUrl(image.id) : null,
+        });
       },
       error: (_error: HttpErrorResponse) => {
         // Sección opcional de la landing — un fallo de red aquí no debe romper el resto de la página, solo se oculta.
