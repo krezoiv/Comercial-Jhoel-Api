@@ -11,6 +11,7 @@ import {
 } from '../../domain/entities/bank-account-movement.entity';
 import {
   AdjustBankBalanceData,
+  BankBalanceCreditResult,
   BankMovementFilters,
   BankMovementRepository,
   BankTransferFilters,
@@ -18,6 +19,7 @@ import {
   LastBankMovement,
   PaginatedBankTransfers,
   PaginatedBankMovements,
+  RegisterBankBalanceCreditData,
   RegisterBankTransferData,
 } from '../../domain/repositories/bank-movement.repository';
 import {
@@ -206,6 +208,59 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
       );
     }
     return this.toMovement(rows[0]);
+  }
+
+  async registerBalanceCredit(
+    data: RegisterBankBalanceCreditData,
+  ): Promise<BankBalanceCreditResult> {
+    let operationId: string;
+    let movementId: string;
+    try {
+      const rows = await this.manager.query<
+        { out_operation_id: string; out_movement_id: string }[]
+      >(
+        'SELECT out_operation_id, out_movement_id FROM register_bank_balance_credit($1, $2, $3, $4, $5, $6)',
+        [
+          data.bankId,
+          data.amount,
+          data.businessDate,
+          data.userId,
+          data.referenceText,
+          data.observation,
+        ],
+      );
+      operationId = rows[0].out_operation_id;
+      movementId = rows[0].out_movement_id;
+    } catch (error) {
+      throw this.translateError(error);
+    }
+
+    const rows = await this.manager.query<MovementRow[]>(
+      `${MOVEMENT_SELECT} WHERE m.id = $1`,
+      [movementId],
+    );
+    if (rows.length === 0) {
+      throw new InternalServerErrorException(
+        'No se pudo recuperar la acreditación recién registrada.',
+      );
+    }
+    return { operationId, movement: this.toMovement(rows[0]) };
+  }
+
+  async voidBalanceCredit(
+    operationId: string,
+    businessDate: string,
+    userId: string,
+    reason: string,
+  ): Promise<void> {
+    try {
+      await this.manager.query(
+        'SELECT void_bank_balance_credit($1, $2, $3, $4)',
+        [operationId, businessDate, userId, reason],
+      );
+    } catch (error) {
+      throw this.translateError(error);
+    }
   }
 
   async findMovements(

@@ -32,6 +32,7 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   TRANSFERENCIA_ENTRADA: 'Transferencia (entrada)',
   RETIRO_EFECTIVO: 'Retiro de efectivo',
   AJUSTE_MANUAL: 'Ajuste manual',
+  ACREDITACION_SALDO: 'Acreditación de saldo',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };

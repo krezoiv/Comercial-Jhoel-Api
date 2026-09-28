@@ -13,6 +13,10 @@ import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { BankBalanceAmountComponent, ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { VoidConfirmModalComponent } from '../reports/bank-deposits/components/void-confirm-modal/void-confirm-modal.component';
+import { BalanceCreditComponent } from './components/balance-credit/balance-credit.component';
+
+/** Apartados de la página: A. transferencias entre cuentas (existente) · B. acreditar saldo (solo admin). */
+export type BankTransfersTab = 'transfers' | 'credit';
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -68,6 +72,7 @@ function cashWithdrawalRuleError(source: Bank | null): string | null {
     IconComponent,
     BankBalanceAmountComponent,
     VoidConfirmModalComponent,
+    BalanceCreditComponent,
   ],
   templateUrl: './bank-transfers-page.component.html',
   styleUrl: './bank-transfers-page.component.scss',
@@ -78,6 +83,8 @@ export class BankTransfersPageComponent {
   private readonly bankTransferService = inject(BankTransferService);
   private readonly notificationService = inject(NotificationService);
   readonly isAdmin = inject(AuthService).isAdmin;
+
+  readonly activeTab = signal<BankTransfersTab>('transfers');
 
   readonly accountLabel = bankAccountLabel;
   readonly formatSigned = formatSignedBankBalance;
@@ -164,6 +171,16 @@ export class BankTransfersPageComponent {
   constructor() {
     this.loadAccounts();
     this.loadTransfers();
+  }
+
+  selectTab(tab: BankTransfersTab): void {
+    if (tab === 'credit' && !this.isAdmin()) return;
+    this.activeTab.set(tab);
+  }
+
+  /** "Acreditar saldo" cambió un saldo: se recargan las cuentas para que el formulario de transferencias no quede con saldos viejos. */
+  onBalanceCredited(): void {
+    this.loadAccounts();
   }
 
   onSourceChange(id: string): void {
@@ -259,7 +276,7 @@ export class BankTransfersPageComponent {
     this.concept.set('');
   }
 
-  private loadAccounts(): void {
+  loadAccounts(): void {
     this.bankService.getBanks().subscribe({
       next: (banks) => {
         this.accounts.set(banks.filter((bank) => bank.isActive));

@@ -1,0 +1,255 @@
+<section class="transfers__card">
+  <header class="credit__header">
+    <span class="credit__header-icon"><app-icon name="plus" [size]="20" /></span>
+    <div>
+      <h2 class="credit__title">Acreditar saldo</h2>
+      <p class="credit__subtitle">
+        Agrega saldo directamente a una cuenta bancaria. No es un depósito de Transaccionar ni una transferencia: no descuenta
+        de ninguna otra cuenta.
+      </p>
+    </div>
+  </header>
+
+  <div class="credit__layout">
+    <div class="credit__form">
+      <div class="field">
+        <label for="credit-account">Cuenta bancaria</label>
+        <select
+          id="credit-account"
+          [ngModel]="bankId()"
+          (ngModelChange)="onAccountChange($event)"
+          [disabled]="loadingAccounts() || isSaving()"
+        >
+          <option value="" disabled>{{ loadingAccounts() ? 'Cargando cuentas…' : 'Seleccionar cuenta' }}</option>
+          @for (option of accounts(); track option.id) {
+            <option [value]="option.id">{{ accountLabel(option) }} — {{ formatSigned(option.finalBalance) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="credit-amount">Monto a acreditar</label>
+        <div class="money-input">
+          <span>Q</span>
+          <input
+            id="credit-amount"
+            type="text"
+            inputmode="decimal"
+            appDecimalInput
+            thousands
+            autocomplete="off"
+            [ngModel]="amount()"
+            (ngModelChange)="onAmountChange($event)"
+            [disabled]="!bankId() || isSaving()"
+            placeholder="0.00"
+            aria-describedby="credit-amount-hint"
+          />
+        </div>
+        <small id="credit-amount-hint" class="credit__hint">Mayor que cero, máximo 2 decimales.</small>
+      </div>
+
+      <div class="field">
+        <label for="credit-reference">Referencia <span class="field__optional">(opcional)</span></label>
+        <input
+          id="credit-reference"
+          type="text"
+          maxlength="100"
+          placeholder="Ej. No. de boleta"
+          [ngModel]="referenceText()"
+          (ngModelChange)="referenceText.set($event)"
+          [disabled]="isSaving()"
+        />
+      </div>
+
+      <div class="field">
+        <label for="credit-observation">Concepto / observación <span class="field__optional">(opcional)</span></label>
+        <input
+          id="credit-observation"
+          type="text"
+          maxlength="1000"
+          placeholder="Ej. Fondeo de la cuenta"
+          [ngModel]="observation()"
+          (ngModelChange)="observation.set($event)"
+          [disabled]="isSaving()"
+        />
+      </div>
+    </div>
+
+    <aside class="credit__summary" aria-live="polite">
+      <div class="credit__summary-row">
+        <span>Saldo actual</span>
+        @if (loadingBalance()) {
+          <span class="credit__muted">Consultando…</span>
+        } @else if (account()) {
+          <app-bank-balance-amount [value]="account()!.finalBalance" [specialAccount]="account()!.specialAccount" />
+        } @else {
+          <span class="credit__muted">Seleccione una cuenta</span>
+        }
+      </div>
+      <div class="credit__summary-row">
+        <span>Monto a acreditar</span>
+        <strong class="credit__plus">{{ preview() ? '+ ' + formatSigned(preview()!.amount) : '—' }}</strong>
+      </div>
+      <div class="credit__summary-row credit__summary-row--total">
+        <span>Nuevo saldo</span>
+        @if (preview(); as p) {
+          <app-bank-balance-amount [value]="p.after" [specialAccount]="account()?.specialAccount ?? null" strong />
+        } @else {
+          <span class="credit__muted">—</span>
+        }
+      </div>
+      @if (account()?.maxBalance !== null && account()?.maxBalance !== undefined) {
+        <small class="credit__muted">Límite configurado: {{ formatSigned(account()!.maxBalance!) }}</small>
+      }
+      <small class="credit__muted">Vista previa informativa: el sistema confirma el saldo definitivo al guardar.</small>
+    </aside>
+  </div>
+
+  @if (validationError(); as message) {
+    <p class="transfers__error" role="alert">
+      <app-icon name="alert-triangle" [size]="16" />
+      {{ message }}
+    </p>
+  }
+
+  <div class="transfers__actions">
+    <app-button variant="ghost" [disabled]="isSaving()" (click)="clearForm()">Cancelar</app-button>
+    <app-button variant="primary" [disabled]="!canSubmit()" (click)="requestConfirm()">
+      <app-icon name="plus" [size]="16" />
+      Acreditar saldo
+    </app-button>
+  </div>
+</section>
+
+<section class="transfers__card">
+  <h2 class="transfers__section-title">Acreditaciones recientes</h2>
+  @if (loadingCredits()) {
+    <p class="transfers__muted">Cargando acreditaciones…</p>
+  } @else if (credits().length === 0) {
+    <p class="transfers__muted">Aún no hay acreditaciones registradas.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="transfers-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cuenta</th>
+            <th class="align-right">Monto</th>
+            <th>Saldo</th>
+            <th>Usuario</th>
+            <th>Referencia</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (credit of credits(); track credit.id) {
+            <tr [class.is-voided]="credit.status === 'ANULADO'">
+              <td>
+                {{ credit.businessDate | date: 'dd/MM/yyyy' }}
+                <small>{{ credit.createdAt | date: 'HH:mm' }}</small>
+              </td>
+              <td>
+                <strong>{{ credit.bankName }}</strong>
+                <small>{{ credit.accountTypeName }} · {{ credit.accountNumber }}</small>
+              </td>
+              <td class="align-right transfers-table__amount">+ {{ formatSigned(credit.amount) }}</td>
+              <td>
+                <small>{{ formatSigned(credit.balanceBefore) }} → {{ formatSigned(credit.balanceAfter) }}</small>
+              </td>
+              <td>{{ credit.username }}</td>
+              <td class="transfers-table__reference">
+                {{ credit.referenceText || '—' }}
+                @if (credit.observation) {
+                  <small>{{ credit.observation }}</small>
+                }
+              </td>
+              <td>
+                <span class="status" [class.status--voided]="credit.status === 'ANULADO'">
+                  {{ credit.status === 'ANULADO' ? 'Anulada' : 'Aplicada' }}
+                </span>
+              </td>
+              <td class="align-right">
+                <button
+                  type="button"
+                  class="action-btn"
+                  title="Anular acreditación"
+                  [attr.aria-label]="'Anular acreditación de ' + formatSigned(credit.amount) + ' a ' + credit.bankName"
+                  [disabled]="credit.status === 'ANULADO' || isVoiding()"
+                  (click)="openVoid(credit)"
+                >
+                  <app-icon name="x-circle" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isConfirmOpen() && preview() && account(); as current) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="credit-confirm-title" (click)="$event.stopPropagation()">
+      <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="cancelConfirm()">
+        <app-icon name="close" [size]="18" />
+      </button>
+      <div class="modal__icon">
+        <app-icon name="plus" [size]="22" />
+      </div>
+      <h2 id="credit-confirm-title" class="modal__title">
+        ¿Deseas acreditar {{ formatSigned(preview()!.amount) }} a la cuenta {{ current.name }} · {{ current.accountTypeName }}?
+      </h2>
+      <dl class="modal__summary">
+        <div>
+          <dt>Banco</dt>
+          <dd>{{ current.name }}</dd>
+        </div>
+        <div>
+          <dt>Cuenta</dt>
+          <dd>{{ current.accountTypeName }} · {{ current.accountNumber }}</dd>
+        </div>
+        <div>
+          <dt>Saldo actual</dt>
+          <dd>{{ formatSigned(preview()!.before) }}</dd>
+        </div>
+        <div>
+          <dt>Monto a acreditar</dt>
+          <dd class="modal__total">+ {{ formatSigned(preview()!.amount) }}</dd>
+        </div>
+        <div>
+          <dt>Nuevo saldo</dt>
+          <dd><strong>{{ formatSigned(preview()!.after) }}</strong></dd>
+        </div>
+        @if (referenceText().trim()) {
+          <div>
+            <dt>Referencia</dt>
+            <dd>{{ referenceText().trim() }}</dd>
+          </div>
+        }
+        @if (observation().trim()) {
+          <div>
+            <dt>Observación</dt>
+            <dd>{{ observation().trim() }}</dd>
+          </div>
+        }
+      </dl>
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="cancelConfirm()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="isSaving()" (click)="confirmCredit()">
+          {{ isSaving() ? 'Acreditando…' : 'Confirmar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-void-confirm-modal
+  title="Anular acreditación de saldo"
+  description="La acreditación no se elimina: se registra un movimiento inverso que resta el mismo monto de la cuenta y ambos quedan en el historial. Si la cuenta ya no tiene saldo suficiente, la anulación se rechaza."
+  [open]="voidingOperationId() !== null"
+  [isSaving]="isVoiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="cancelVoid()"
+/>

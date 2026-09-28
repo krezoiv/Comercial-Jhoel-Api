@@ -28,6 +28,21 @@ export interface AdjustBankBalanceData {
   observation: string | null;
 }
 
+export interface RegisterBankBalanceCreditData {
+  bankId: string;
+  amount: number;
+  businessDate: string;
+  userId: string;
+  referenceText: string | null;
+  observation: string | null;
+}
+
+/** Resultado de `register_bank_balance_credit`: la operación y el movimiento del ledger que generó. */
+export interface BankBalanceCreditResult {
+  operationId: string;
+  movement: BankAccountMovement;
+}
+
 export interface LastBankMovement {
   /** Delta con signo del movimiento (positivo = subió). */
   amount: number;
@@ -104,6 +119,17 @@ export interface BankMovementRepository {
     reason: string,
   ): Promise<void>;
   adjustBalance(data: AdjustBankBalanceData): Promise<BankAccountMovement>;
+  /** Acreditar saldo — `register_bank_balance_credit` (lock + ledger + saldo en una sola transacción). */
+  registerBalanceCredit(
+    data: RegisterBankBalanceCreditData,
+  ): Promise<BankBalanceCreditResult>;
+  /** Anula una acreditación — `void_bank_balance_credit` (movimiento inverso, nunca borra). */
+  voidBalanceCredit(
+    operationId: string,
+    businessDate: string,
+    userId: string,
+    reason: string,
+  ): Promise<void>;
   findMovements(
     filters: BankMovementFilters,
     page: number,

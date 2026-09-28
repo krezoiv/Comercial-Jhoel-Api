@@ -128,6 +128,22 @@ export class MovementReasonRequiredError extends DomainError {
   }
 }
 
+export class BankBalanceCreditNotFoundError extends DomainError {
+  readonly status = 404;
+
+  constructor(id: string) {
+    super(`Acreditación de saldo no encontrada: ${id}`);
+  }
+}
+
+export class BankBalanceCreditAlreadyVoidedError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super('Esta acreditación de saldo ya fue anulada.');
+  }
+}
+
 export class BankTransferNotFoundError extends DomainError {
   readonly status = 404;
 
@@ -236,6 +252,10 @@ export function bankMovementErrorFromMessage(
       return new MovementReasonRequiredError();
     case 'TRANSFER_ALREADY_VOIDED':
       return new BankTransferAlreadyVoidedError();
+    case 'BALANCE_CREDIT_NOT_FOUND':
+      return new BankBalanceCreditNotFoundError(details[0] ?? '');
+    case 'BALANCE_CREDIT_ALREADY_VOIDED':
+      return new BankBalanceCreditAlreadyVoidedError();
     case 'GENESIS_ACCOUNT_NOT_CONFIGURED':
       return new GenesisAccountNotConfiguredError();
     case 'BANK_ACCOUNT_REQUIRED':

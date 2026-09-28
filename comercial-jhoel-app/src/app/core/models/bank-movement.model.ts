@@ -10,9 +10,17 @@ export type BankMovementType =
   | 'RETIRO_EFECTIVO'
   | 'AJUSTE_MANUAL'
   | 'SALDO_INICIAL'
-  | 'ANULACION';
+  | 'ANULACION'
+  /** Transferencias Bancarias → "Acreditar saldo": suma directa a una cuenta, sin contrapartida (≠ Depósito de Transaccionar). */
+  | 'ACREDITACION_SALDO';
 
-export type BankMovementOrigin = 'TRANSACCIONAR' | 'TRANSFERENCIA' | 'AJUSTE_MANUAL' | 'SALDO_INICIAL' | 'ANULACION';
+export type BankMovementOrigin =
+  | 'TRANSACCIONAR'
+  | 'TRANSFERENCIA'
+  | 'AJUSTE_MANUAL'
+  | 'SALDO_INICIAL'
+  | 'ANULACION'
+  | 'ACREDITACION_SALDO';
 
 export type BankMovementStatus = 'APLICADO' | 'ANULADO';
 
@@ -26,6 +34,7 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   TRANSFERENCIA_ENTRADA: 'Transferencia (entrada)',
   RETIRO_EFECTIVO: 'Retiro de efectivo',
   AJUSTE_MANUAL: 'Ajuste manual',
+  ACREDITACION_SALDO: 'Acreditación de saldo',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };
@@ -36,7 +45,16 @@ export const BANK_MOVEMENT_ORIGIN_LABELS: Record<BankMovementOrigin, string> = {
   AJUSTE_MANUAL: 'Ajuste manual',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
+  ACREDITACION_SALDO: 'Acreditación de saldo',
 };
+
+/** Datos que se envían al acreditar saldo — el backend calcula saldos y valida todo. */
+export interface BankBalanceCreditInput {
+  bankId: string;
+  amount: number;
+  referenceText?: string;
+  observation?: string;
+}
 
 /** Un renglón del historial de movimientos. `amount` lleva signo: `balanceBefore + amount === balanceAfter` siempre. */
 export interface BankMovement {

@@ -36,6 +36,9 @@ import { CancelDayUseCase } from './application/use-cases/cancel-day.use-case';
 import { RegisterBankTransferUseCase } from './application/use-cases/register-bank-transfer.use-case';
 import { VoidBankTransferUseCase } from './application/use-cases/void-bank-transfer.use-case';
 import { ListBankTransfersUseCase } from './application/use-cases/list-bank-transfers.use-case';
+import { RegisterBankBalanceCreditUseCase } from './application/use-cases/register-bank-balance-credit.use-case';
+import { VoidBankBalanceCreditUseCase } from './application/use-cases/void-bank-balance-credit.use-case';
+import { ListBankBalanceCreditsUseCase } from './application/use-cases/list-bank-balance-credits.use-case';
 import { AdjustBankBalanceUseCase } from './application/use-cases/adjust-bank-balance.use-case';
 import { ListBankMovementsUseCase } from './application/use-cases/list-bank-movements.use-case';
 import { GetBankBalanceStripUseCase } from './application/use-cases/get-bank-balance-strip.use-case';
@@ -108,6 +111,9 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
     ReopenDayUseCase,
     CancelDayUseCase,
     RegisterBankTransferUseCase,
+    RegisterBankBalanceCreditUseCase,
+    VoidBankBalanceCreditUseCase,
+    ListBankBalanceCreditsUseCase,
     VoidBankTransferUseCase,
     ListBankTransfersUseCase,
     AdjustBankBalanceUseCase,

@@ -5,6 +5,44 @@
     subtitle="Traslada saldo entre cuentas bancarias. Los saldos se actualizan al instante en Agentes Bancarios → Bancos."
   />
 
+  @if (isAdmin()) {
+    <div class="transfers__tabs" role="tablist" aria-label="Apartados de Transferencias Bancarias">
+      <button
+        type="button"
+        role="tab"
+        id="tab-transfers"
+        class="transfers__tab"
+        [class.transfers__tab--active]="activeTab() === 'transfers'"
+        [attr.aria-selected]="activeTab() === 'transfers'"
+        aria-controls="panel-transfers"
+        (click)="selectTab('transfers')"
+      >
+        <app-icon name="arrow-left-right" [size]="16" />
+        Transferencias entre cuentas
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab-credit"
+        class="transfers__tab"
+        [class.transfers__tab--active]="activeTab() === 'credit'"
+        [attr.aria-selected]="activeTab() === 'credit'"
+        aria-controls="panel-credit"
+        (click)="selectTab('credit')"
+      >
+        <app-icon name="plus" [size]="16" />
+        Acreditar saldo
+      </button>
+    </div>
+  }
+
+  @if (activeTab() === 'credit' && isAdmin()) {
+    <div id="panel-credit" role="tabpanel" aria-labelledby="tab-credit">
+      <app-balance-credit [accounts]="accounts()" [loadingAccounts]="loadingAccounts()" (balanceChanged)="onBalanceCredited()" />
+    </div>
+  } @else {
+  <div id="panel-transfers" class="transfers__panel" role="tabpanel" [attr.aria-labelledby]="isAdmin() ? 'tab-transfers' : null">
+
   <section class="transfers__card">
     <div class="transfers__grid">
       <div class="field">
@@ -223,6 +261,8 @@
       </div>
     }
   </section>
+  </div>
+  }
 </div>
 
 @if (isConfirmOpen() && preview(); as p) {
