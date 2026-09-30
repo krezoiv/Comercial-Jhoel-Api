@@ -50,42 +50,39 @@ async function run(banks: Bank[]) {
 }
 
 describe('GetCuadreAgentesSummaryUseCase — BI Club como línea de crédito', () => {
-  it('suma el saldo de BI Club con su signo real aunque su tipo diga "crédito" (el saldo ya es la deuda)', async () => {
-    const summary = await run([
-      bank('bi', -25000, 'BI_CLUB', 'Linea Crédito'),
-      bank('gen', 1000, 'GENESIS', 'Linea Crédito'),
-    ]);
+  it('clasifica BI Club como línea de crédito aunque su tipo de cuenta no diga "crédito"', async () => {
+    const summary = await run([bank('bi', -25000, 'BI_CLUB', 'Monetaria')]);
     expect(summary.banks[0]).toEqual(
-      expect.objectContaining({ calculationType: 'sum', finalBalance: -25000 }),
+      expect.objectContaining({
+        calculationType: 'subtract',
+        finalBalance: -25000,
+      }),
     );
-    // Génesis sigue siendo "subtract" por su tipo de cuenta.
-    expect(summary.banks[1].calculationType).toBe('subtract');
   });
 
-  it('conserva el signo real del saldo (nunca Math.abs): la deuda reduce el total', async () => {
+  it('conserva el signo real del saldo (nunca Math.abs)', async () => {
     const summary = await run([bank('bi', -75000, 'BI_CLUB', 'Linea Crédito')]);
     expect(summary.banks[0].finalBalance).toBe(-75000);
-    expect(summary.totalBanks).toBe(-75000);
+    expect(summary.totalCreditLines).toBe(-75000);
   });
 
   it('usar y pagar la línea (BI Club ↔ Banco Industrial) no cambia el total de bancos', async () => {
-    // Inicio: Banco Industrial Q10,000, BI Club Q0.
+    // Inicio: Banco Industrial Q10,000, BI Club −Q75,000 (todo disponible).
     const before = await run([
       bank('ind', 10000, 'BANCO_INDUSTRIAL'),
-      bank('bi', 0, 'BI_CLUB', 'Linea Crédito'),
-    ]);
-    // Uso: BI Club → Banco Industrial Q75,000.
-    const afterUse = await run([
-      bank('ind', 85000, 'BANCO_INDUSTRIAL'),
       bank('bi', -75000, 'BI_CLUB', 'Linea Crédito'),
     ]);
-    // Pago: Banco Industrial → BI Club Q75,000.
-    const afterPayment = await run([
-      bank('ind', 10000, 'BANCO_INDUSTRIAL'),
+    // Uso: BI Club → Banco Industrial Q75,000 (BI Club a 0, Industrial +75,000).
+    const afterUse = await run([
+      bank('ind', 85000, 'BANCO_INDUSTRIAL'),
       bank('bi', 0, 'BI_CLUB', 'Linea Crédito'),
     ]);
-    expect(before.totalBanks).toBe(10000);
-    expect(afterUse.totalBanks).toBe(10000);
-    expect(afterPayment.totalBanks).toBe(10000);
+    // Pago: Banco Industrial → BI Club Q75,000 (BI Club vuelve a −75,000).
+    const afterPayment = await run([
+      bank('ind', 10000, 'BANCO_INDUSTRIAL'),
+      bank('bi', -75000, 'BI_CLUB', 'Linea Crédito'),
+    ]);
+    expect(afterUse.totalBanks).toBe(before.totalBanks);
+    expect(afterPayment.totalBanks).toBe(before.totalBanks);
   });
 });

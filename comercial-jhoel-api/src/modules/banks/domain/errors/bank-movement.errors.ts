@@ -69,10 +69,61 @@ export class BankBalanceLimitExceededError extends DomainError {
 }
 
 /**
- * Línea de crédito de BI Club Empresarial (migración `BiClubCreditLine`):
- * su saldo va de 0 a `-max_balance`. Una anulación que rompería esos
- * límites se explica aparte, porque el usuario no está "usando" ni
- * "devolviendo" nada.
+ * Línea de crédito de BI Club Empresarial — modelo vigente
+ * (`BiClubAvailableCredit`, 1760005900000): saldo = −disponible
+ * (−Q75,000 = todo disponible, Q0.00 = agotada). Una anulación o un ajuste
+ * que rompería el rango se explica aparte, porque el usuario no está
+ * "usando" ni "pagando" nada.
+ */
+export class CreditLineNoAvailableError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string) {
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: la línea de crédito de BI Club Empresarial quedaría sin disponible (saldo positivo).'
+        : movementType === 'AJUSTE_MANUAL'
+          ? 'El saldo de BI Club Empresarial no puede ser positivo (Q0.00 = línea agotada).'
+          : 'La línea de crédito de BI Club Empresarial no tiene disponible (saldo Q0.00).',
+    );
+  }
+}
+
+export class CreditLineAvailableExceededError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string, available: string) {
+    const amount = Number(available);
+    const detail = Number.isNaN(amount)
+      ? ''
+      : ` Disponible: Q${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`;
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: excedería el disponible de la línea de crédito de BI Club Empresarial.'
+        : movementType === 'AJUSTE_MANUAL'
+          ? 'El saldo de BI Club Empresarial no puede ser positivo (Q0.00 = línea agotada).'
+          : `El monto excede el disponible de la línea de crédito de BI Club Empresarial.${detail}`,
+    );
+  }
+}
+
+export class CreditLinePaymentExceededError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string) {
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: el disponible de BI Club Empresarial superaría el límite de la línea.'
+        : movementType === 'AJUSTE_MANUAL'
+          ? 'El saldo de BI Club Empresarial no puede ser menor que el límite negativo de la línea.'
+          : 'El pago excede el monto utilizado de la línea de crédito de BI Club Empresarial.',
+    );
+  }
+}
+
+/**
+ * Códigos del modelo anterior (1760005700000/1760005800000) — solo los
+ * levanta la versión de las funciones que restaura un `down()`.
  */
 export class CreditLineLimitExceededError extends DomainError {
   readonly status = 400;
@@ -106,16 +157,6 @@ export class CreditLineOverpaymentError extends DomainError {
       movementType === 'ANULACION'
         ? 'No es posible anular la operación: la línea de crédito de BI Club Empresarial quedaría con saldo positivo.'
         : 'El monto de devolución excede el saldo pendiente de la línea de crédito.',
-    );
-  }
-}
-
-export class CreditLinePositiveBalanceError extends DomainError {
-  readonly status = 400;
-
-  constructor() {
-    super(
-      'El saldo de la línea de crédito de BI Club Empresarial no puede ser positivo (Q0.00 = nada utilizado).',
     );
   }
 }
@@ -300,6 +341,15 @@ export function bankMovementErrorFromMessage(
         details[2] ?? '',
         details.slice(3).join(':'),
       );
+    case 'CREDIT_LINE_NO_AVAILABLE':
+      return new CreditLineNoAvailableError(details[0] ?? '');
+    case 'CREDIT_LINE_AVAILABLE_EXCEEDED':
+      return new CreditLineAvailableExceededError(
+        details[0] ?? '',
+        details[1] ?? '',
+      );
+    case 'CREDIT_LINE_PAYMENT_EXCEEDED':
+      return new CreditLinePaymentExceededError(details[0] ?? '');
     case 'CREDIT_LINE_LIMIT_EXCEEDED':
       return new CreditLineLimitExceededError(details[0] ?? '');
     case 'CREDIT_LINE_NO_DEBT':

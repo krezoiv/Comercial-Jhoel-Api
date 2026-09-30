@@ -41,7 +41,7 @@
         </div>
         @if (isCreditLine()) {
           <small class="modal__hint">
-            Línea de crédito de BI Club: entre {{ formatSigned(-(row?.maxBalance ?? 0)) }} y Q 0.00 (negativo = utilizado).
+            Línea de crédito de BI Club: entre {{ formatSigned(-(row?.maxBalance ?? 0)) }} (todo disponible) y Q 0.00 (agotada).
           </small>
         } @else if (allowsNegative()) {
           <small class="modal__hint">Línea de crédito de Génesis: puede ser negativa (saldo a favor).</small>

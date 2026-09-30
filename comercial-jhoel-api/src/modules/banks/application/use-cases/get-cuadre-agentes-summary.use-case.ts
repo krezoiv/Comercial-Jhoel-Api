@@ -78,16 +78,15 @@ export class GetCuadreAgentesSummaryUseCase {
       this.accountReceivableRepository.getReportSummary({ isActive: true }),
     ]);
 
-    // BI Club Empresarial (migraciones `BiClubCreditLine` /
-    // `BiClubCreditLineDirection`): su saldo ya ES la deuda con signo
-    // (0 = nada utilizado, −Q75,000 = Q75,000 utilizados), así que se SUMA
-    // con su signo real sin importar el nombre de su tipo de cuenta. Usar la
-    // línea (BI Club → Banco Industrial) resta a BI Club y suma a Banco
-    // Industrial el mismo monto: el total no cambia, como toda transferencia
-    // entre cuentas propias. Restarlo como las demás líneas lo duplicaría.
+    // BI Club Empresarial (migración `BiClubAvailableCredit`) es línea de
+    // crédito por su regla especial, no por el nombre editable de su tipo de
+    // cuenta. Su saldo es −disponible y se resta con su signo real: usar la
+    // línea (BI Club → Banco Industrial) sube BI Club y Banco Industrial el
+    // mismo monto, y el pago de fin de día baja ambos — `activos − saldo de
+    // la línea` no cambia, como toda transferencia entre cuentas propias.
     const bankItems = banks.map((bank) => {
       const calculationType: BankBalanceCalculationType =
-        bank.specialAccount !== 'BI_CLUB' &&
+        bank.specialAccount === 'BI_CLUB' ||
         isCreditLineAccountType(bank.accountTypeName)
           ? 'subtract'
           : 'sum';

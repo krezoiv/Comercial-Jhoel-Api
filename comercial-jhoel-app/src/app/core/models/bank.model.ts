@@ -6,7 +6,7 @@ export interface Bank {
   accountTypeName: string;
   /** Cached "current" figures, not a specific operation date's values — see the backend's `BankProps` doc comment. For a given date's actual previous/final balance, use `BankBalanceView` instead. */
   previousBalance: number;
-  /** SALDO ACTUAL dinámico — solo lo mueven Transaccionar, las transferencias y los ajustes manuales (backend). Puede ser negativo solo para las líneas de crédito: Génesis ("saldo a favor") y BI Club (≤ 0, negativo = utilizado). */
+  /** SALDO ACTUAL dinámico — solo lo mueven Transaccionar, las transferencias y los ajustes manuales (backend). Puede ser negativo solo para las líneas de crédito: Génesis ("saldo a favor") y BI Club (≤ 0, saldo = −disponible). */
   finalBalance: number;
   specialAccount: BankSpecialAccount | null;
   /** Límite máximo configurable del saldo (BI Club / Génesis) — `null` = sin límite. */
@@ -43,7 +43,7 @@ export const BANK_SPECIAL_ACCOUNT_OPTIONS: { value: BankSpecialAccount; label: s
   {
     value: 'BI_CLUB',
     label: 'BI Club Empresarial — línea de crédito',
-    hint: 'Saldo entre -límite y Q0.00: enviar a Banco Industrial usa la línea, recibir de Banco Industrial la paga. El límite máximo es el de la línea.',
+    hint: 'Saldo = −disponible (−límite = todo disponible, Q0.00 = agotada): enviar a Banco Industrial consume disponible; el pago de Banco Industrial lo repone.',
   },
   { value: 'DISTRICOL', label: 'Districol', hint: 'Solo recibe transferencias de Banco Agromercantil.' },
   { value: 'BANCO_INDUSTRIAL', label: 'Banco Industrial', hint: 'Puede transferir a BI Club Empresarial.' },

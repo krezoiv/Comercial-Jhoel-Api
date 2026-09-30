@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 
 import { BankBalanceView } from '../../../../../core/models';
 import {
-  CREDIT_LINE_LIMIT_MESSAGE,
   formatSignedBankBalance,
   isCreditLineAccount,
 } from '../../../../../core/utils/bank-balance.util';
@@ -72,8 +71,10 @@ export class AdjustBalanceModalComponent implements OnChanges {
       return 'Una cuenta bancaria normal no puede quedar con saldo negativo.';
     }
     if (this.isCreditLine()) {
-      if (target > 0) return 'El saldo de la línea de crédito de BI Club Empresarial no puede ser positivo (Q0.00 = nada utilizado).';
-      if (target < -(this.row?.maxBalance ?? 0)) return CREDIT_LINE_LIMIT_MESSAGE;
+      if (target > 0) return 'El saldo de BI Club Empresarial no puede ser positivo (Q0.00 = línea agotada).';
+      if (target < -(this.row?.maxBalance ?? 0)) {
+        return 'El saldo de BI Club Empresarial no puede ser menor que el límite negativo de la línea.';
+      }
     }
     if (this.difference() === 0) {
       return 'El nuevo saldo es igual al saldo actual.';
