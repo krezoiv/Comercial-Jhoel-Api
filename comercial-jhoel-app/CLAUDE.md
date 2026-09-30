@@ -1247,6 +1247,11 @@ ninguna pantalla lo calcula para guardar — las vistas previas "saldo actual �
 - Transferencias Bancarias: la opción "Retiro de efectivo en banco" del selector de destino envía
   `cashWithdrawal: true` (sin destino); con BI Club como origen solo se habilita Banco Industrial. En los listados
   y el reporte `destination` puede ser `null` (se muestra "Retiro de efectivo").
+- **BI Club Empresarial = línea de crédito** (saldo ≤ 0, negativo = utilizado; límite = `maxBalance`). Toda la lógica
+  de UX vive en `bank-balance.util.ts` (`isCreditLineAccount`, `creditLineStatus`, `transferBalanceDelta`,
+  `creditLineMovementError`, mensajes idénticos al backend) y `<app-credit-line-summary>` (shared/ui) muestra
+  Límite/Saldo/Utilizado/Disponible. Transferencias muestra "Uso de línea de crédito" / "Pago / devolución de línea de
+  crédito". Utilizado = −saldo solo para mostrar; el saldo se pinta siempre con su signo.
 - Sistema → Bancos edita `specialAccount`/`maxBalance`; en edición el saldo es de solo lectura. Sistema →
   Tipo de Transacción edita `balanceEffect`.
 

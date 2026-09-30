@@ -14,7 +14,7 @@ import {
   bankAccountLabel,
 } from '../../../core/models';
 import { BankService } from '../../../core/services/bank.service';
-import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
+import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../core/utils/bank-balance.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
@@ -197,6 +197,10 @@ export class TransaccionarPageComponent {
     const preview = this.balancePreview();
     if (!account || !preview || preview.amount <= 0) {
       return null;
+    }
+    // BI Club Empresarial = línea de crédito: -límite ≤ saldo ≤ 0 (Depósito usa la línea, Retiro la paga).
+    if (isCreditLineAccount(account.specialAccount)) {
+      return creditLineMovementError(preview.before, round2(preview.after - preview.before), account.maxBalance);
     }
     if (preview.after < 0 && preview.after < preview.before && account.specialAccount !== 'GENESIS') {
       return INSUFFICIENT_MESSAGES[effect ?? ''] ?? 'Saldo insuficiente para realizar la operación.';

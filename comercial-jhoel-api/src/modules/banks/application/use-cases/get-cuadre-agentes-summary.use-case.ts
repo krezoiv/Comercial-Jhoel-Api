@@ -78,9 +78,18 @@ export class GetCuadreAgentesSummaryUseCase {
       this.accountReceivableRepository.getReportSummary({ isActive: true }),
     ]);
 
+    // BI Club Empresarial es línea de crédito por su regla especial
+    // (migración `BiClubCreditLine`), no solo por el nombre editable de su
+    // tipo de cuenta. Su saldo es ≤ 0 y se usa con su signo real: como
+    // Banco Industrial → BI Club resta el mismo monto a ambas cuentas,
+    // `activos − saldo de la línea` deja el total intacto (una
+    // transferencia entre cuentas propias nunca cambia el cuadre).
     const bankItems = banks.map((bank) => {
       const calculationType: BankBalanceCalculationType =
-        isCreditLineAccountType(bank.accountTypeName) ? 'subtract' : 'sum';
+        bank.specialAccount === 'BI_CLUB' ||
+        isCreditLineAccountType(bank.accountTypeName)
+          ? 'subtract'
+          : 'sum';
       return {
         id: bank.id,
         name: bank.name,

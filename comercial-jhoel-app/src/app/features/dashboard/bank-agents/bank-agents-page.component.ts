@@ -11,8 +11,14 @@ import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.serv
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
-import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
-import { BankBalanceAmountComponent, ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
+import { formatSignedBankBalance, isCreditLineAccount } from '../../../core/utils/bank-balance.util';
+import {
+  BankBalanceAmountComponent,
+  ButtonComponent,
+  CreditLineSummaryComponent,
+  IconComponent,
+  PageHeaderComponent,
+} from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { ZeroBalancesConfirmModalComponent } from './components/zero-balances-confirm-modal/zero-balances-confirm-modal.component';
 import { EntryConfirmModalComponent } from './components/entry-confirm-modal/entry-confirm-modal.component';
@@ -69,6 +75,7 @@ function todayIsoDate(): string {
     SaveBalancesConfirmModalComponent,
     AdjustBalanceModalComponent,
     BankBalanceAmountComponent,
+    CreditLineSummaryComponent,
   ],
   templateUrl: './bank-agents-page.component.html',
   styleUrl: './bank-agents-page.component.scss',
@@ -140,6 +147,8 @@ export class BankAgentsPageComponent {
   readonly hasExistingRecordsForDate = computed(() => this.rows().some((row) => row.finalBalance !== null));
 
   formatCurrency = formatBankCurrency;
+  /** BI Club Empresarial = línea de crédito (saldo ≤ 0, con límite / utilizado / disponible). */
+  readonly isCreditLine = isCreditLineAccount;
 
   constructor() {
     this.fetchBalances();
@@ -227,8 +236,9 @@ export class BankAgentsPageComponent {
       return;
     }
     const parsed = parseFloat(value);
-    // Solo la línea de crédito de Génesis admite una foto negativa (lo valida también el backend).
-    const allowsNegative = this.rows().find((row) => row.bankId === bankId)?.specialAccount === 'GENESIS';
+    // Solo las líneas de crédito (Génesis, BI Club) admiten una foto negativa (lo valida también el backend).
+    const specialAccount = this.rows().find((row) => row.bankId === bankId)?.specialAccount;
+    const allowsNegative = specialAccount === 'GENESIS' || isCreditLineAccount(specialAccount);
     if (Number.isNaN(parsed) || (parsed < 0 && !allowsNegative)) {
       return;
     }

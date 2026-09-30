@@ -68,7 +68,7 @@
               type="text"
               inputmode="decimal"
               appDecimalInput
-              [allowNegative]="form.controls.specialAccount.value === 'GENESIS'"
+              [allowNegative]="form.controls.specialAccount.value === 'GENESIS' || form.controls.specialAccount.value === 'BI_CLUB'"
               formControlName="finalBalance"
               placeholder="0.00"
             />

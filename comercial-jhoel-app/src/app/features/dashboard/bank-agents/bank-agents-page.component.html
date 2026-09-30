@@ -111,7 +111,9 @@
               </td>
               <td class="align-right bank-agents-table__current">
                 <app-bank-balance-amount [value]="row.currentBalance" [specialAccount]="row.specialAccount" strong />
-                @if (row.maxBalance !== null) {
+                @if (isCreditLine(row.specialAccount)) {
+                  <app-credit-line-summary class="bank-agents-table__limit" [balance]="row.currentBalance" [maxBalance]="row.maxBalance" compact />
+                } @else if (row.maxBalance !== null) {
                   <small class="bank-agents-table__limit">Límite {{ formatCurrency(row.maxBalance) }}</small>
                 }
               </td>
@@ -123,7 +125,7 @@
                       type="text"
                       inputmode="decimal"
                       appDecimalInput
-                      [allowNegative]="row.specialAccount === 'GENESIS'"
+                      [allowNegative]="row.specialAccount === 'GENESIS' || isCreditLine(row.specialAccount)"
                       [value]="displayFinalBalance(row)"
                       (change)="onFinalBalanceInput(row.bankId, $any($event.target).value)"
                       [attr.aria-label]="'Saldo final de ' + row.bankName"

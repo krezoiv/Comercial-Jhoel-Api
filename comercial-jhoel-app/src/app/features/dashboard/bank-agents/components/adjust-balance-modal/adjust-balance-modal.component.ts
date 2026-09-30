@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Out
 import { FormsModule } from '@angular/forms';
 
 import { BankBalanceView } from '../../../../../core/models';
-import { formatSignedBankBalance } from '../../../../../core/utils/bank-balance.util';
+import {
+  CREDIT_LINE_LIMIT_MESSAGE,
+  formatSignedBankBalance,
+  isCreditLineAccount,
+} from '../../../../../core/utils/bank-balance.util';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
@@ -45,7 +49,16 @@ export class AdjustBalanceModalComponent implements OnChanges {
   readonly reason = signal('');
   readonly observation = signal('');
 
-  readonly allowsNegative = computed(() => this.row?.specialAccount === 'GENESIS');
+  // Getters, no `computed()`: `row` es un @Input plano (no una señal), así que
+  // un computed conservaría la cuenta de la primera apertura del modal.
+  /** BI Club Empresarial = línea de crédito: su saldo va de -límite a Q0.00. */
+  isCreditLine(): boolean {
+    return isCreditLineAccount(this.row?.specialAccount);
+  }
+
+  allowsNegative(): boolean {
+    return this.row?.specialAccount === 'GENESIS' || this.isCreditLine();
+  }
 
   readonly difference = computed(() => {
     const target = this.newBalance();
@@ -57,6 +70,10 @@ export class AdjustBalanceModalComponent implements OnChanges {
     if (target === null) return null;
     if (target < 0 && !this.allowsNegative()) {
       return 'Una cuenta bancaria normal no puede quedar con saldo negativo.';
+    }
+    if (this.isCreditLine()) {
+      if (target > 0) return 'El saldo de la línea de crédito de BI Club Empresarial no puede ser positivo (Q0.00 = nada utilizado).';
+      if (target < -(this.row?.maxBalance ?? 0)) return CREDIT_LINE_LIMIT_MESSAGE;
     }
     if (this.difference() === 0) {
       return 'El nuevo saldo es igual al saldo actual.';

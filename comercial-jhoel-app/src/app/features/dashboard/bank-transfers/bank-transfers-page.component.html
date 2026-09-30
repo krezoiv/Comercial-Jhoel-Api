@@ -152,7 +152,7 @@
                 }
               }
             </div>
-            @if (account.maxBalance !== null) {
+            @if (account.maxBalance !== null && creditLineOperation() !== 'USE') {
               <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
             }
           } @else if (isCashWithdrawal()) {
@@ -167,6 +167,25 @@
             <span class="preview-side__empty">Sin seleccionar</span>
           }
         </div>
+      </div>
+    }
+
+    @if (creditLineAccount(); as line) {
+      <div class="transfers__credit-line">
+        <div class="transfers__credit-line-head">
+          <app-icon [name]="creditLineOperation() === 'USE' ? 'arrow-down' : 'arrow-up'" [size]="16" />
+          <div>
+            <strong>{{ creditLineOperation() === 'USE' ? 'Uso de línea de crédito' : 'Pago / devolución de línea de crédito' }}</strong>
+            <p>
+              {{
+                creditLineOperation() === 'USE'
+                  ? 'El monto transferido aumentará el saldo utilizado de la línea de crédito.'
+                  : 'El monto disminuirá el saldo pendiente de la línea de crédito.'
+              }}
+            </p>
+          </div>
+        </div>
+        <app-credit-line-summary [balance]="line.finalBalance" [maxBalance]="line.maxBalance" />
       </div>
     }
 
@@ -276,6 +295,12 @@
       </div>
       <h2 id="transfer-confirm-title" class="modal__title">{{ isCashWithdrawal() ? '¿Confirmar retiro de efectivo?' : '¿Confirmar transferencia?' }}</h2>
       <dl class="modal__summary">
+        @if (creditLineOperation(); as operation) {
+          <div>
+            <dt>Operación</dt>
+            <dd>{{ operation === 'USE' ? 'Uso de línea de crédito (BI Club)' : 'Pago / devolución de línea de crédito (BI Club)' }}</dd>
+          </div>
+        }
         <div>
           <dt>Monto</dt>
           <dd class="modal__total">{{ formatSigned(p.amount) }}</dd>

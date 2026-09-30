@@ -7,7 +7,7 @@ import { Bank, BankMovement, bankAccountLabel } from '../../../../../core/models
 import { BankService } from '../../../../../core/services/bank.service';
 import { BankTransferService } from '../../../../../core/services/bank-transfer.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
-import { formatSignedBankBalance } from '../../../../../core/utils/bank-balance.util';
+import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../../../core/utils/bank-balance.util';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
@@ -93,6 +93,9 @@ export class BalanceCreditComponent {
     if (amount <= 0) return 'El monto a acreditar debe ser mayor que cero.';
     const account = this.account();
     const preview = this.preview();
+    if (account && preview && isCreditLineAccount(account.specialAccount)) {
+      return creditLineMovementError(preview.before, preview.amount, account.maxBalance);
+    }
     if (account && preview && account.maxBalance !== null && preview.after > account.maxBalance) {
       return `El saldo de ${account.name} no puede superar el límite configurado de ${formatSignedBankBalance(account.maxBalance)}.`;
     }

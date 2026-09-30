@@ -8,10 +8,21 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BankService } from '../../../core/services/bank.service';
 import { BankTransferService } from '../../../core/services/bank-transfer.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
+import {
+  creditLineMovementError,
+  formatSignedBankBalance,
+  isCreditLineAccount,
+  transferBalanceDelta,
+} from '../../../core/utils/bank-balance.util';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
-import { BankBalanceAmountComponent, ButtonComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
+import {
+  BankBalanceAmountComponent,
+  ButtonComponent,
+  CreditLineSummaryComponent,
+  IconComponent,
+  PageHeaderComponent,
+} from '../../../shared/ui';
 import { VoidConfirmModalComponent } from '../reports/bank-deposits/components/void-confirm-modal/void-confirm-modal.component';
 import { BalanceCreditComponent } from './components/balance-credit/balance-credit.component';
 
@@ -71,6 +82,7 @@ function cashWithdrawalRuleError(source: Bank | null): string | null {
     ButtonComponent,
     IconComponent,
     BankBalanceAmountComponent,
+    CreditLineSummaryComponent,
     VoidConfirmModalComponent,
     BalanceCreditComponent,
   ],
@@ -119,7 +131,26 @@ export class BankTransfersPageComponent {
       .map((bank) => ({ bank, blockedReason: destinationRuleError(this.source(), bank) })),
   );
 
-  /** `destinationBefore/After` son `null` en un retiro de efectivo (no hay cuenta que reciba). */
+  /**
+   * Operación sobre la línea de crédito de BI Club, si aplica:
+   * `USE` = Banco Industrial → BI Club (aumenta lo utilizado),
+   * `PAYMENT` = BI Club → Banco Industrial (pago / devolución).
+   */
+  readonly creditLineOperation = computed<'USE' | 'PAYMENT' | null>(() => {
+    if (isCreditLineAccount(this.destination()?.specialAccount)) return 'USE';
+    if (isCreditLineAccount(this.source()?.specialAccount) && this.destination()) return 'PAYMENT';
+    return null;
+  });
+
+  /** La cuenta BI Club involucrada (origen o destino), para mostrar su línea. */
+  readonly creditLineAccount = computed<Bank | null>(() => {
+    const operation = this.creditLineOperation();
+    if (operation === 'USE') return this.destination();
+    if (operation === 'PAYMENT') return this.source();
+    return null;
+  });
+
+  /** `destinationBefore/After` son `null` en un retiro de efectivo (no hay cuenta que reciba). Cada lado aplica su propia regla (BI Club al revés). */
   readonly preview = computed(() => {
     const source = this.source();
     const destination = this.destination();
@@ -129,9 +160,11 @@ export class BankTransfersPageComponent {
     return {
       amount,
       sourceBefore: source.finalBalance,
-      sourceAfter: round2(source.finalBalance - amount),
+      sourceAfter: round2(source.finalBalance + transferBalanceDelta(source.specialAccount, 'source', amount)),
       destinationBefore: destination ? destination.finalBalance : null,
-      destinationAfter: destination ? round2(destination.finalBalance + amount) : null,
+      destinationAfter: destination
+        ? round2(destination.finalBalance + transferBalanceDelta(destination.specialAccount, 'destination', amount))
+        : null,
     };
   });
 
@@ -145,10 +178,26 @@ export class BankTransfersPageComponent {
     if (ruleError) return ruleError;
     if (amount === null) return null;
     if (amount <= 0) return 'El monto debe ser mayor que cero.';
-    if (round2(amount) > source.finalBalance) {
+    const rounded = round2(amount);
+    // BI Club como origen: pago de la línea — no requiere "saldo", requiere deuda pendiente.
+    if (isCreditLineAccount(source.specialAccount)) {
+      return creditLineMovementError(
+        source.finalBalance,
+        transferBalanceDelta(source.specialAccount, 'source', rounded),
+        source.maxBalance,
+      );
+    }
+    if (rounded > source.finalBalance) {
       return cash
         ? 'Saldo insuficiente para realizar el retiro de efectivo.'
         : 'Saldo insuficiente para realizar la transferencia.';
+    }
+    if (destination && isCreditLineAccount(destination.specialAccount)) {
+      return creditLineMovementError(
+        destination.finalBalance,
+        transferBalanceDelta(destination.specialAccount, 'destination', rounded),
+        destination.maxBalance,
+      );
     }
     const preview = this.preview();
     if (
@@ -157,9 +206,7 @@ export class BankTransfersPageComponent {
       destination.maxBalance !== null &&
       preview.destinationAfter > destination.maxBalance
     ) {
-      return destination.specialAccount === 'BI_CLUB'
-        ? `El saldo de BI Club Empresarial no puede superar el límite configurado de ${formatSignedBankBalance(destination.maxBalance)}.`
-        : `El saldo de ${destination.name} no puede superar el límite configurado de ${formatSignedBankBalance(destination.maxBalance)}.`;
+      return `El saldo de ${destination.name} no puede superar el límite configurado de ${formatSignedBankBalance(destination.maxBalance)}.`;
     }
     return null;
   });

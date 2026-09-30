@@ -144,3 +144,40 @@
     flex-direction: column;
   }
 }
+
+// BI Club Empresarial = línea de crédito: explica si la transferencia usa
+// la línea o la paga, con límite / saldo / utilizado / disponible.
+.transfers__credit-line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface-light);
+  min-width: 0;
+}
+
+.transfers__credit-line-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--color-text-on-light);
+
+  app-icon {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: var(--color-primary-600);
+  }
+
+  strong {
+    font-size: var(--fs-sm);
+  }
+
+  p {
+    margin: var(--space-1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+  }
+}

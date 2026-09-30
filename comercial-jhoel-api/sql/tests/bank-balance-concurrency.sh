@@ -68,3 +68,47 @@ else
   echo "CASO 20 FALLÓ" >&2
   exit 1
 fi
+
+# CASO 21 — concurrencia sobre la línea de crédito de BI Club (migración
+# 1760005700000). BI Club en -Q50,000 (disponible Q25,000), Banco Industrial
+# con Q100,000. A y B envían Q20,000 al mismo tiempo: `register_bank_transfer`
+# bloquea ambas filas en orden de id, así que B espera a A, ve -Q70,000 y
+# es rechazado (excedería -Q75,000). Final: BI Club -Q70,000, Industrial Q80,000.
+read -r IND_ID BICLUB_ID < <("${PSQL[@]}" -d "$TEST_DB" -F ' ' -c "
+  SELECT
+    (SELECT id FROM banks WHERE is_active AND special_account = 'BANCO_INDUSTRIAL' ORDER BY created_at LIMIT 1),
+    (SELECT id FROM banks WHERE is_active AND special_account = 'BI_CLUB' ORDER BY created_at LIMIT 1)")
+
+"${PSQL[@]}" -d "$TEST_DB" -c "
+  UPDATE banks SET max_balance = 75000 WHERE id = '$BICLUB_ID';
+  SELECT adjust_bank_balance('$IND_ID', 100000, CURRENT_DATE, '$ADMIN_ID', 'Preparación prueba concurrencia')
+  WHERE (SELECT final_balance FROM banks WHERE id = '$IND_ID') <> 100000;
+  SELECT adjust_bank_balance('$BICLUB_ID', -50000, CURRENT_DATE, '$ADMIN_ID', 'Preparación prueba concurrencia')
+  WHERE (SELECT final_balance FROM banks WHERE id = '$BICLUB_ID') <> -50000" >/dev/null
+
+credit_line_sql() {
+  local hold="$1"
+  cat <<SQL
+BEGIN;
+SELECT register_bank_transfer('$IND_ID', '$BICLUB_ID', 20000, CURRENT_DATE, '$ADMIN_ID', 'CONC', 'Concurrencia BI Club');
+SELECT pg_sleep($hold);
+COMMIT;
+SQL
+}
+
+(credit_line_sql 2 | "${PSQL[@]}" -d "$TEST_DB" >"$LOG_A" 2>&1 && echo "A: OK" || echo "A: rechazado — $(grep -m1 ERROR "$LOG_A")") &
+sleep 0.5
+(credit_line_sql 0 | "${PSQL[@]}" -d "$TEST_DB" >"$LOG_B" 2>&1 && echo "B: OK" || echo "B: rechazado — $(grep -m1 ERROR "$LOG_B")") &
+wait
+
+BICLUB_FINAL=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT final_balance FROM banks WHERE id = '$BICLUB_ID'")
+IND_FINAL=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT final_balance FROM banks WHERE id = '$IND_ID'")
+TRANSFERS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT COUNT(*) FROM bank_account_movements WHERE reference_text = 'CONC' AND bank_id = '$BICLUB_ID'")
+
+echo "BI Club: $BICLUB_FINAL | Banco Industrial: $IND_FINAL | Usos registrados: $TRANSFERS"
+if [[ "$BICLUB_FINAL" == "-70000.00" && "$IND_FINAL" == "80000.00" && "$TRANSFERS" == "1" ]]; then
+  echo "CASO 21 OK — la disponibilidad de la línea no se usó dos veces; el rechazo no movió Banco Industrial"
+else
+  echo "CASO 21 FALLÓ" >&2
+  exit 1
+fi

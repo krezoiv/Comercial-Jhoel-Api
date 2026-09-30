@@ -39,7 +39,11 @@
             aria-label="Nuevo saldo"
           />
         </div>
-        @if (allowsNegative()) {
+        @if (isCreditLine()) {
+          <small class="modal__hint">
+            Línea de crédito de BI Club: entre {{ formatSigned(-(row?.maxBalance ?? 0)) }} y Q 0.00 (negativo = utilizado).
+          </small>
+        } @else if (allowsNegative()) {
           <small class="modal__hint">Línea de crédito de Génesis: puede ser negativa (saldo a favor).</small>
         }
         @if (validationMessage(); as message) {

@@ -81,19 +81,26 @@ describe('GetBankBalanceStripUseCase', () => {
     );
   });
 
-  it('invierte el color para Génesis y BI Club (bajar es favorable)', async () => {
-    const [genesis, biClub] = await run(
-      [bank('g', 'GENESIS'), bank('bi', 'BI_CLUB')],
-      [
-        ['g', -3000],
-        ['bi', 1000],
-      ],
-    );
+  it('invierte el color para Génesis (bajar es favorable)', async () => {
+    const [genesis] = await run([bank('g', 'GENESIS')], [['g', -3000]]);
     expect(genesis).toEqual(
       expect.objectContaining({ trend: 'DOWN', trendTone: 'POSITIVE' }),
     );
-    expect(biClub).toEqual(
-      expect.objectContaining({ trend: 'UP', trendTone: 'NEGATIVE' }),
+  });
+
+  it('BI Club (línea de crédito): usar la línea es rojo, devolver es verde', async () => {
+    const [used, repaid] = await run(
+      [bank('use', 'BI_CLUB'), bank('pay', 'BI_CLUB')],
+      [
+        ['use', -75000],
+        ['pay', 50000],
+      ],
+    );
+    expect(used).toEqual(
+      expect.objectContaining({ trend: 'DOWN', trendTone: 'NEGATIVE' }),
+    );
+    expect(repaid).toEqual(
+      expect.objectContaining({ trend: 'UP', trendTone: 'POSITIVE' }),
     );
   });
 

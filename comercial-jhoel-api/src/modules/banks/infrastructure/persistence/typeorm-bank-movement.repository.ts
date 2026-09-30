@@ -106,12 +106,16 @@ const MOVEMENT_SELECT = `
 
 // Salida (`s`) + entrada opcional (`e`): un retiro de efectivo en banco
 // (`RETIRO_EFECTIVO`) no tiene entrada, por eso LEFT JOIN y destino nulo.
+// El monto transferido es la magnitud del movimiento de salida: su signo
+// depende de la regla de la cuenta (BI Club, línea de crédito, SUMA al
+// enviar), no de la dirección de la transferencia. Los saldos de cada lado
+// se devuelven con su signo real.
 const TRANSFER_SELECT = `
   SELECT
     s.reference_id AS id,
     CASE WHEN s.movement_type = 'RETIRO_EFECTIVO' THEN 'CASH_WITHDRAWAL' ELSE 'TRANSFER' END AS kind,
     to_char(s.business_date, 'YYYY-MM-DD') AS business_date,
-    s.created_at, -s.amount AS amount, s.user_id, u.username,
+    s.created_at, abs(s.amount) AS amount, s.user_id, u.username,
     s.reference_text, s.concept, s.status,
     s.bank_id AS source_bank_id, sb.name AS source_bank_name, sb.account_number AS source_account_number,
     s.balance_before AS source_balance_before, s.balance_after AS source_balance_after,

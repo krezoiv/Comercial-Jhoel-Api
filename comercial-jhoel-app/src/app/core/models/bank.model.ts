@@ -6,7 +6,7 @@ export interface Bank {
   accountTypeName: string;
   /** Cached "current" figures, not a specific operation date's values — see the backend's `BankProps` doc comment. For a given date's actual previous/final balance, use `BankBalanceView` instead. */
   previousBalance: number;
-  /** SALDO ACTUAL dinámico — solo lo mueven Transaccionar, las transferencias y los ajustes manuales (backend). Puede ser negativo únicamente para la línea de crédito de Génesis ("saldo a favor"). */
+  /** SALDO ACTUAL dinámico — solo lo mueven Transaccionar, las transferencias y los ajustes manuales (backend). Puede ser negativo solo para las líneas de crédito: Génesis ("saldo a favor") y BI Club (≤ 0, negativo = utilizado). */
   finalBalance: number;
   specialAccount: BankSpecialAccount | null;
   /** Límite máximo configurable del saldo (BI Club / Génesis) — `null` = sin límite. */
@@ -40,7 +40,11 @@ export const BANK_SPECIAL_ACCOUNT_OPTIONS: { value: BankSpecialAccount; label: s
     label: 'Fundación Génesis — línea de crédito',
     hint: 'Desembolsos/Pagos Génesis la usan automáticamente; puede quedar en negativo (saldo a favor).',
   },
-  { value: 'BI_CLUB', label: 'BI Club Empresarial', hint: 'Solo recibe transferencias de Banco Industrial; admite límite máximo.' },
+  {
+    value: 'BI_CLUB',
+    label: 'BI Club Empresarial — línea de crédito',
+    hint: 'Saldo entre -límite y Q0.00: recibir de Banco Industrial usa la línea, devolverle la paga. El límite máximo es el de la línea.',
+  },
   { value: 'DISTRICOL', label: 'Districol', hint: 'Solo recibe transferencias de Banco Agromercantil.' },
   { value: 'BANCO_INDUSTRIAL', label: 'Banco Industrial', hint: 'Puede transferir a BI Club Empresarial.' },
   { value: 'BANCO_AGROMERCANTIL', label: 'Banco Agromercantil', hint: 'Puede transferir a Districol.' },

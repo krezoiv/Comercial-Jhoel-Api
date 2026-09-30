@@ -2,7 +2,11 @@ import {
   BankAccountRequiredError,
   ReintegroSourceIsGenesisError,
   BankBalanceLimitExceededError,
+  CreditLineLimitExceededError,
+  CreditLineNoDebtError,
+  CreditLineOverpaymentError,
   InsufficientBankBalanceError,
+  LegacyCreditLineTransferError,
   InvalidMovementAmountError,
   SameAccountTransferError,
   TransferOriginNotAllowedError,
@@ -101,6 +105,48 @@ describe('bankMovementErrorFromMessage', () => {
       bankMovementErrorFromMessage('INSUFFICIENT_BALANCE:RETIRO_EFECTIVO')
         ?.message,
     ).toBe('Saldo insuficiente para realizar el retiro de efectivo.');
+  });
+
+  it('mapea las reglas de la línea de crédito de BI Club con los mensajes exactos', () => {
+    const limit = bankMovementErrorFromMessage(
+      'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA:75000.00:25000.00',
+    );
+    expect(limit).toBeInstanceOf(CreditLineLimitExceededError);
+    expect(limit?.message).toBe(
+      'El monto excede el límite disponible de la línea de crédito de BI Club Empresarial.',
+    );
+    expect((limit as CreditLineLimitExceededError).status).toBe(400);
+
+    const noDebt = bankMovementErrorFromMessage(
+      'CREDIT_LINE_NO_DEBT:TRANSFERENCIA_SALIDA',
+    );
+    expect(noDebt).toBeInstanceOf(CreditLineNoDebtError);
+    expect(noDebt?.message).toBe(
+      'No existe saldo pendiente para realizar esta devolución.',
+    );
+
+    const overpayment = bankMovementErrorFromMessage(
+      'CREDIT_LINE_OVERPAYMENT:TRANSFERENCIA_SALIDA:25000.00',
+    );
+    expect(overpayment).toBeInstanceOf(CreditLineOverpaymentError);
+    expect(overpayment?.message).toBe(
+      'El monto de devolución excede el saldo pendiente de la línea de crédito.',
+    );
+  });
+
+  it('explica una anulación que rompería los límites de la línea de BI Club', () => {
+    expect(
+      bankMovementErrorFromMessage(
+        'CREDIT_LINE_LIMIT_EXCEEDED:ANULACION:75000.00:0',
+      )?.message,
+    ).toContain('No es posible anular la operación');
+    expect(
+      bankMovementErrorFromMessage('CREDIT_LINE_OVERPAYMENT:ANULACION:10.00')
+        ?.message,
+    ).toContain('quedaría con saldo positivo');
+    expect(
+      bankMovementErrorFromMessage('LEGACY_CREDIT_LINE_TRANSFER:x'),
+    ).toBeInstanceOf(LegacyCreditLineTransferError);
   });
 
   it('rechaza la línea Génesis como origen de su propio reintegro', () => {

@@ -13,3 +13,71 @@ export function formatSignedBankBalance(value: number): string {
 export function isFavorBalance(specialAccount: string | null | undefined, value: number): boolean {
   return specialAccount === 'GENESIS' && value < 0;
 }
+
+function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * BI Club Empresarial es una LÍNEA DE CRÉDITO (migración backend
+ * `BiClubCreditLine`): su saldo va de Q0.00 (nada utilizado) a
+ * `-maxBalance` (línea agotada). Todo lo de abajo es solo UX — el backend
+ * (`apply_bank_account_movement`) vuelve a validar bajo lock.
+ */
+export function isCreditLineAccount(specialAccount: string | null | undefined): boolean {
+  return specialAccount === 'BI_CLUB';
+}
+
+export interface CreditLineStatus {
+  /** `banks.max_balance` — la única fuente del límite (Sistema → Bancos). */
+  limit: number;
+  /** Saldo real con su signo (≤ 0). */
+  balance: number;
+  /** Monto utilizado / adeudado = −saldo (el saldo guardado nunca se transforma). */
+  used: number;
+  /** Disponible = límite + saldo. */
+  available: number;
+}
+
+export function creditLineStatus(balance: number, maxBalance: number | null): CreditLineStatus {
+  const limit = maxBalance ?? 0;
+  return {
+    limit,
+    balance,
+    used: balance < 0 ? round2(-balance) : 0,
+    available: round2(limit + balance),
+  };
+}
+
+/**
+ * Cuánto cambia el saldo de una cuenta en una transferencia: una cuenta
+ * normal resta al enviar y suma al recibir; BI Club, al revés (recibir de
+ * Banco Industrial usa la línea, enviarle es un pago/devolución).
+ */
+export function transferBalanceDelta(
+  specialAccount: string | null | undefined,
+  side: 'source' | 'destination',
+  amount: number,
+): number {
+  const normal = side === 'source' ? -amount : amount;
+  return isCreditLineAccount(specialAccount) ? -normal : normal;
+}
+
+/** Mensajes idénticos a los del backend (`bank-movement.errors.ts`). */
+export const CREDIT_LINE_LIMIT_MESSAGE =
+  'El monto excede el límite disponible de la línea de crédito de BI Club Empresarial.';
+export const CREDIT_LINE_NO_DEBT_MESSAGE = 'No existe saldo pendiente para realizar esta devolución.';
+export const CREDIT_LINE_OVERPAYMENT_MESSAGE =
+  'El monto de devolución excede el saldo pendiente de la línea de crédito.';
+
+/** Valida un movimiento (`delta` con signo) sobre la línea de crédito: `-límite ≤ saldo ≤ 0`. */
+export function creditLineMovementError(before: number, delta: number, maxBalance: number | null): string | null {
+  const after = round2(before + delta);
+  if (delta < 0 && after < -(maxBalance ?? 0)) {
+    return CREDIT_LINE_LIMIT_MESSAGE;
+  }
+  if (delta > 0 && after > 0) {
+    return before >= 0 ? CREDIT_LINE_NO_DEBT_MESSAGE : CREDIT_LINE_OVERPAYMENT_MESSAGE;
+  }
+  return null;
+}

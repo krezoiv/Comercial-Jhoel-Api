@@ -68,6 +68,68 @@ export class BankBalanceLimitExceededError extends DomainError {
   }
 }
 
+/**
+ * Línea de crédito de BI Club Empresarial (migración `BiClubCreditLine`):
+ * su saldo va de 0 a `-max_balance`. Una anulación que rompería esos
+ * límites se explica aparte, porque el usuario no está "usando" ni
+ * "devolviendo" nada.
+ */
+export class CreditLineLimitExceededError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string) {
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: la línea de crédito de BI Club Empresarial excedería su límite.'
+        : 'El monto excede el límite disponible de la línea de crédito de BI Club Empresarial.',
+    );
+  }
+}
+
+export class CreditLineNoDebtError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string) {
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: la línea de crédito de BI Club Empresarial quedaría con saldo positivo.'
+        : 'No existe saldo pendiente para realizar esta devolución.',
+    );
+  }
+}
+
+export class CreditLineOverpaymentError extends DomainError {
+  readonly status = 400;
+
+  constructor(movementType: string) {
+    super(
+      movementType === 'ANULACION'
+        ? 'No es posible anular la operación: la línea de crédito de BI Club Empresarial quedaría con saldo positivo.'
+        : 'El monto de devolución excede el saldo pendiente de la línea de crédito.',
+    );
+  }
+}
+
+export class CreditLinePositiveBalanceError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super(
+      'El saldo de la línea de crédito de BI Club Empresarial no puede ser positivo (Q0.00 = nada utilizado).',
+    );
+  }
+}
+
+export class LegacyCreditLineTransferError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super(
+      'Esta transferencia de BI Club Empresarial se registró antes de convertirla en línea de crédito y no puede anularse automáticamente. Corrija el saldo con "Ajustar saldo".',
+    );
+  }
+}
+
 export class TransferOriginNotAllowedError extends DomainError {
   readonly status = 400;
 
@@ -238,6 +300,14 @@ export function bankMovementErrorFromMessage(
         details[2] ?? '',
         details.slice(3).join(':'),
       );
+    case 'CREDIT_LINE_LIMIT_EXCEEDED':
+      return new CreditLineLimitExceededError(details[0] ?? '');
+    case 'CREDIT_LINE_NO_DEBT':
+      return new CreditLineNoDebtError(details[0] ?? '');
+    case 'CREDIT_LINE_OVERPAYMENT':
+      return new CreditLineOverpaymentError(details[0] ?? '');
+    case 'LEGACY_CREDIT_LINE_TRANSFER':
+      return new LegacyCreditLineTransferError();
     case 'TRANSFER_ORIGIN_NOT_ALLOWED':
       return new TransferOriginNotAllowedError(details[0] ?? '');
     case 'TRANSFER_DESTINATION_NOT_ALLOWED':
