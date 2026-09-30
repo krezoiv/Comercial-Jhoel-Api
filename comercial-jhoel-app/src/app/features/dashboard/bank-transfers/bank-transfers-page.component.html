@@ -152,7 +152,7 @@
                 }
               }
             </div>
-            @if (account.maxBalance !== null && creditLineOperation() !== 'USE') {
+            @if (account.maxBalance !== null && creditLineOperation() !== 'PAYMENT') {
               <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
             }
           } @else if (isCashWithdrawal()) {

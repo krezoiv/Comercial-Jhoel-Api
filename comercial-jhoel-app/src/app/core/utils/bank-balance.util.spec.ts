@@ -22,11 +22,9 @@ describe('BI Club — línea de crédito', () => {
     expect(creditLineStatus(-75000, 75000)).toEqual({ limit: 75000, balance: -75000, used: 75000, available: 0 });
   });
 
-  it('recibir de Banco Industrial resta; enviarle suma (cuenta normal al revés)', () => {
-    expect(transferBalanceDelta('BI_CLUB', 'destination', 75000)).toBe(-75000);
-    expect(transferBalanceDelta('BI_CLUB', 'source', 50000)).toBe(50000);
-    expect(transferBalanceDelta('BANCO_INDUSTRIAL', 'source', 75000)).toBe(-75000);
-    expect(transferBalanceDelta(null, 'destination', 100)).toBe(100);
+  it('usar la línea (BI Club envía) resta; pagarla (BI Club recibe) suma', () => {
+    expect(transferBalanceDelta('source', 75000)).toBe(-75000);
+    expect(transferBalanceDelta('destination', 50000)).toBe(50000);
   });
 
   it('casos A–H', () => {

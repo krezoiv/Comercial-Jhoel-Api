@@ -50,17 +50,13 @@ export function creditLineStatus(balance: number, maxBalance: number | null): Cr
 }
 
 /**
- * Cuánto cambia el saldo de una cuenta en una transferencia: una cuenta
- * normal resta al enviar y suma al recibir; BI Club, al revés (recibir de
- * Banco Industrial usa la línea, enviarle es un pago/devolución).
+ * Cuánto cambia el saldo de una cuenta en una transferencia: el origen
+ * resta y el destino suma, también BI Club (usar la línea = enviar a Banco
+ * Industrial; pagarla = recibir de Banco Industrial). Lo especial de BI Club
+ * son solo sus límites (`creditLineMovementError`).
  */
-export function transferBalanceDelta(
-  specialAccount: string | null | undefined,
-  side: 'source' | 'destination',
-  amount: number,
-): number {
-  const normal = side === 'source' ? -amount : amount;
-  return isCreditLineAccount(specialAccount) ? -normal : normal;
+export function transferBalanceDelta(side: 'source' | 'destination', amount: number): number {
+  return side === 'source' ? -amount : amount;
 }
 
 /** Mensajes idénticos a los del backend (`bank-movement.errors.ts`). */

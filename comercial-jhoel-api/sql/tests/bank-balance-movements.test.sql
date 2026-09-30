@@ -222,126 +222,130 @@ BEGIN
   PERFORM pg_temp.assert_eq('CASO 13 destino intacto', pg_temp.balance(v_normal2), 10000);
 
   -- ================================================================
-  -- BI Club Empresarial = LÍNEA DE CRÉDITO (migración 1760005700000):
-  -- saldo entre -max_balance y 0. Recibir de Banco Industrial RESTA,
-  -- devolver a Banco Industrial SUMA hacia cero.
+  -- BI Club Empresarial = LÍNEA DE CRÉDITO (migraciones 1760005700000 y
+  -- 1760005800000): saldo entre -max_balance y 0.
+  --   Uso:  BI Club → Banco Industrial   (BI Club − monto, Industrial + monto)
+  --   Pago: Banco Industrial → BI Club   (Industrial − monto, BI Club + monto)
   -- ================================================================
   UPDATE banks SET max_balance = 75000 WHERE id = v_biclub;
 
-  -- CASO 14 / A — BI Club Q0, Banco Industrial envía Q75,000 → -75,000
-  PERFORM pg_temp.set_balance(v_industrial, 100000);
+  -- CASO A — BI Club Q0 usa Q75,000 → -75,000; Banco Industrial recibe +75,000
+  PERFORM pg_temp.set_balance(v_industrial, 10000);
   PERFORM pg_temp.set_balance(v_biclub, 0);
-  v_transfer := register_bank_transfer(v_industrial, v_biclub, 75000, CURRENT_DATE, pg_temp.admin_id(), 'BI-1', 'Uso línea');
+  v_transfer := register_bank_transfer(v_biclub, v_industrial, 75000, CURRENT_DATE, pg_temp.admin_id(), 'BI-1', 'Uso línea');
   PERFORM pg_temp.assert_eq('CASO A BI Club usa Q75,000', pg_temp.balance(v_biclub), -75000);
-  PERFORM pg_temp.assert_eq('CASO A Banco Industrial - 75,000', pg_temp.balance(v_industrial), 25000);
+  PERFORM pg_temp.assert_eq('CASO A Banco Industrial recibe', pg_temp.balance(v_industrial), 85000);
   PERFORM pg_temp.assert_eq('CASO A movimiento BI Club (efecto -75,000)',
     (SELECT amount FROM bank_account_movements WHERE reference_id = v_transfer AND bank_id = v_biclub), -75000);
-  PERFORM pg_temp.assert_eq('CASO A movimiento Banco Industrial (efecto -75,000)',
-    (SELECT amount FROM bank_account_movements WHERE reference_id = v_transfer AND bank_id = v_industrial), -75000);
+  PERFORM pg_temp.assert_eq('CASO A movimiento Banco Industrial (efecto +75,000)',
+    (SELECT amount FROM bank_account_movements WHERE reference_id = v_transfer AND bank_id = v_industrial), 75000);
 
-  -- CASO D — BI Club -75,000 recibe Q1 → rechazado, nada se mueve
-  PERFORM pg_temp.assert_rejects('CASO D BI Club en el límite recibe Q1',
-    format('SELECT register_bank_transfer(%L, %L, 1, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
-    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA');
+  -- CASO D — BI Club -75,000 usa Q1 más → rechazado, nada se mueve
+  PERFORM pg_temp.assert_rejects('CASO D BI Club en el límite usa Q1',
+    format('SELECT register_bank_transfer(%L, %L, 1, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
+    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_SALIDA');
   PERFORM pg_temp.assert_eq('CASO D BI Club intacto', pg_temp.balance(v_biclub), -75000);
-  PERFORM pg_temp.assert_eq('CASO D Banco Industrial intacto (rollback atómico)', pg_temp.balance(v_industrial), 25000);
+  PERFORM pg_temp.assert_eq('CASO D Banco Industrial intacto (rollback atómico)', pg_temp.balance(v_industrial), 85000);
 
-  -- CASO E — BI Club -75,000 devuelve Q50,000 → -25,000; Banco Industrial + 50,000
-  v_transfer := register_bank_transfer(v_biclub, v_industrial, 50000, CURRENT_DATE, pg_temp.admin_id(), 'BI-2', 'Devolución');
+  -- CASO E — pago Q50,000: Banco Industrial → BI Club → -25,000; Industrial − 50,000
+  v_transfer := register_bank_transfer(v_industrial, v_biclub, 50000, CURRENT_DATE, pg_temp.admin_id(), 'BI-2', 'Pago');
   PERFORM pg_temp.assert_eq('CASO E BI Club', pg_temp.balance(v_biclub), -25000);
-  PERFORM pg_temp.assert_eq('CASO E Banco Industrial', pg_temp.balance(v_industrial), 75000);
+  PERFORM pg_temp.assert_eq('CASO E Banco Industrial', pg_temp.balance(v_industrial), 35000);
   PERFORM pg_temp.assert_eq('CASO E movimiento BI Club (efecto +50,000)',
     (SELECT amount FROM bank_account_movements WHERE reference_id = v_transfer AND bank_id = v_biclub), 50000);
   PERFORM pg_temp.assert_eq('CASO E saldo posterior en historial',
     (SELECT balance_after FROM bank_account_movements WHERE reference_id = v_transfer AND bank_id = v_biclub), -25000);
 
-  -- CASO H — BI Club -25,000 devuelve Q26,000 → rechazado (no puede quedar en +1,000)
-  PERFORM pg_temp.assert_rejects('CASO H devolución > deuda',
-    format('SELECT register_bank_transfer(%L, %L, 26000, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
-    'CREDIT_LINE_OVERPAYMENT:TRANSFERENCIA_SALIDA');
+  -- CASO H — BI Club -25,000, pago de Q26,000 → rechazado (no puede quedar en +1,000)
+  PERFORM pg_temp.assert_rejects('CASO H pago > deuda',
+    format('SELECT register_bank_transfer(%L, %L, 26000, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    'CREDIT_LINE_OVERPAYMENT:TRANSFERENCIA_ENTRADA');
   PERFORM pg_temp.assert_eq('CASO H BI Club intacto', pg_temp.balance(v_biclub), -25000);
-  PERFORM pg_temp.assert_eq('CASO H Banco Industrial intacto', pg_temp.balance(v_industrial), 75000);
+  PERFORM pg_temp.assert_eq('CASO H Banco Industrial intacto', pg_temp.balance(v_industrial), 35000);
 
-  -- CASO G — BI Club -25,000 devuelve Q25,000 → 0
-  PERFORM register_bank_transfer(v_biclub, v_industrial, 25000, CURRENT_DATE, pg_temp.admin_id(), 'BI-3', 'Devolución final');
+  -- CASO G — BI Club -25,000, pago de Q25,000 → 0
+  PERFORM register_bank_transfer(v_industrial, v_biclub, 25000, CURRENT_DATE, pg_temp.admin_id(), 'BI-3', 'Pago final');
   PERFORM pg_temp.assert_eq('CASO G BI Club línea pagada', pg_temp.balance(v_biclub), 0);
-  PERFORM pg_temp.assert_eq('CASO G Banco Industrial', pg_temp.balance(v_industrial), 100000);
+  PERFORM pg_temp.assert_eq('CASO G Banco Industrial', pg_temp.balance(v_industrial), 10000);
 
-  -- Sin deuda pendiente: devolver Q1,000 con BI Club en 0 → rechazado
-  PERFORM pg_temp.assert_rejects('BI Club Q0 devuelve Q1,000',
-    format('SELECT register_bank_transfer(%L, %L, 1000, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
-    'CREDIT_LINE_NO_DEBT:TRANSFERENCIA_SALIDA');
+  -- Sin deuda pendiente: pagar Q1,000 con BI Club en 0 → rechazado
+  PERFORM pg_temp.assert_rejects('BI Club Q0 recibe pago de Q1,000',
+    format('SELECT register_bank_transfer(%L, %L, 1000, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    'CREDIT_LINE_NO_DEBT:TRANSFERENCIA_ENTRADA');
 
-  -- CASO B — BI Club -50,000 recibe Q25,000 → -75,000 (límite exacto)
+  -- CASO B — BI Club -50,000 usa Q25,000 → -75,000 (límite exacto)
   PERFORM pg_temp.set_balance(v_biclub, -50000);
-  PERFORM register_bank_transfer(v_industrial, v_biclub, 25000, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM register_bank_transfer(v_biclub, v_industrial, 25000, CURRENT_DATE, pg_temp.admin_id());
   PERFORM pg_temp.assert_eq('CASO B BI Club límite exacto', pg_temp.balance(v_biclub), -75000);
 
-  -- CASO C — BI Club -50,000 recibe Q25,000.01 / Q25,001 → rechazado
+  -- CASO C — BI Club -50,000 usa Q25,001 / Q25,000.01 → rechazado
   PERFORM pg_temp.set_balance(v_biclub, -50000);
   PERFORM pg_temp.assert_rejects('CASO C BI Club excede por Q1',
-    format('SELECT register_bank_transfer(%L, %L, 25001, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
-    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA');
+    format('SELECT register_bank_transfer(%L, %L, 25001, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
+    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_SALIDA');
   PERFORM pg_temp.assert_rejects('CASO C BI Club excede por Q0.01',
-    format('SELECT register_bank_transfer(%L, %L, 25000.01, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
-    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA');
+    format('SELECT register_bank_transfer(%L, %L, 25000.01, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
+    'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_SALIDA');
   PERFORM pg_temp.assert_eq('CASO C BI Club intacto', pg_temp.balance(v_biclub), -50000);
 
-  -- Uso parcial: -50,000 recibe Q20,000 → -70,000; luego Q30,000 excede
-  PERFORM register_bank_transfer(v_industrial, v_biclub, 20000, CURRENT_DATE, pg_temp.admin_id());
+  -- Uso parcial: -50,000 usa Q20,000 → -70,000; luego Q30,000 excede
+  PERFORM register_bank_transfer(v_biclub, v_industrial, 20000, CURRENT_DATE, pg_temp.admin_id());
   PERFORM pg_temp.assert_eq('USO PARCIAL -70,000', pg_temp.balance(v_biclub), -70000);
   PERFORM pg_temp.assert_rejects('USO PARCIAL Q30,000 excede',
-    format('SELECT register_bank_transfer(%L, %L, 30000, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    format('SELECT register_bank_transfer(%L, %L, 30000, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
     'CREDIT_LINE_LIMIT_EXCEEDED');
 
-  -- CASO F — BI Club -75,000 devuelve Q75,000 → 0
+  -- CASO F — BI Club -75,000, pago de Q75,000 → 0
   PERFORM pg_temp.set_balance(v_biclub, -75000);
-  PERFORM register_bank_transfer(v_biclub, v_industrial, 75000, CURRENT_DATE, pg_temp.admin_id());
-  PERFORM pg_temp.assert_eq('CASO F devolución total', pg_temp.balance(v_biclub), 0);
+  PERFORM pg_temp.set_balance(v_industrial, 100000);
+  PERFORM register_bank_transfer(v_industrial, v_biclub, 75000, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM pg_temp.assert_eq('CASO F pago total', pg_temp.balance(v_biclub), 0);
 
-  -- Banco Industrial sin saldo suficiente: BI Club tampoco se mueve (rollback)
+  -- Pago sin saldo en Banco Industrial: BI Club tampoco se mueve (rollback)
+  PERFORM pg_temp.set_balance(v_biclub, -5000);
   PERFORM pg_temp.set_balance(v_industrial, 100);
-  PERFORM pg_temp.assert_rejects('Banco Industrial sin saldo → BI Club',
+  PERFORM pg_temp.assert_rejects('Pago sin saldo en Banco Industrial',
     format('SELECT register_bank_transfer(%L, %L, 1000, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
     'INSUFFICIENT_BALANCE:TRANSFERENCIA_SALIDA');
-  PERFORM pg_temp.assert_eq('ROLLBACK BI Club intacto', pg_temp.balance(v_biclub), 0);
+  PERFORM pg_temp.assert_eq('ROLLBACK BI Club intacto', pg_temp.balance(v_biclub), -5000);
   PERFORM pg_temp.assert_eq('ROLLBACK Banco Industrial intacto', pg_temp.balance(v_industrial), 100);
+  PERFORM pg_temp.set_balance(v_biclub, 0);
 
   -- Monto negativo / cero / más de 2 decimales
   PERFORM pg_temp.set_balance(v_industrial, 100000);
   PERFORM pg_temp.assert_rejects('BI Club monto negativo',
-    format('SELECT register_bank_transfer(%L, %L, -100, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    format('SELECT register_bank_transfer(%L, %L, -100, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
     'INVALID_MOVEMENT_AMOUNT');
   PERFORM pg_temp.assert_rejects('BI Club monto cero',
-    format('SELECT register_bank_transfer(%L, %L, 0, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    format('SELECT register_bank_transfer(%L, %L, 0, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
     'INVALID_MOVEMENT_AMOUNT');
   PERFORM pg_temp.assert_rejects('BI Club monto con 3 decimales',
-    format('SELECT register_bank_transfer(%L, %L, 10.005, CURRENT_DATE, pg_temp.admin_id())', v_industrial, v_biclub),
+    format('SELECT register_bank_transfer(%L, %L, 10.005, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_industrial),
     'INVALID_MOVEMENT_AMOUNT');
 
-  -- Anulaciones: anular un uso regresa la línea hacia 0; anular una
-  -- devolución la vuelve a usar; ninguna puede romper -límite ≤ saldo ≤ 0.
+  -- Anulaciones: anular un uso regresa la línea a 0; anular un pago la vuelve
+  -- a usar; ninguna puede romper -límite ≤ saldo ≤ 0.
   PERFORM pg_temp.set_balance(v_biclub, 0);
-  v_transfer := register_bank_transfer(v_industrial, v_biclub, 10000, CURRENT_DATE, pg_temp.admin_id());
+  v_transfer := register_bank_transfer(v_biclub, v_industrial, 10000, CURRENT_DATE, pg_temp.admin_id());
   PERFORM void_bank_transfer(v_transfer, CURRENT_DATE, pg_temp.admin_id(), 'Prueba');
   PERFORM pg_temp.assert_eq('ANULAR USO BI Club', pg_temp.balance(v_biclub), 0);
   PERFORM pg_temp.assert_eq('ANULAR USO Banco Industrial', pg_temp.balance(v_industrial), 100000);
   PERFORM pg_temp.set_balance(v_biclub, -30000);
-  v_transfer := register_bank_transfer(v_biclub, v_industrial, 30000, CURRENT_DATE, pg_temp.admin_id());
-  PERFORM register_bank_transfer(v_industrial, v_biclub, 75000, CURRENT_DATE, pg_temp.admin_id());
-  PERFORM pg_temp.assert_rejects('ANULAR DEVOLUCIÓN excedería el límite',
+  v_transfer := register_bank_transfer(v_industrial, v_biclub, 30000, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM register_bank_transfer(v_biclub, v_industrial, 75000, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM pg_temp.assert_rejects('ANULAR PAGO excedería el límite',
     format('SELECT void_bank_transfer(%L, CURRENT_DATE, pg_temp.admin_id(), %L)', v_transfer, 'x'),
     'CREDIT_LINE_LIMIT_EXCEEDED:ANULACION');
-  PERFORM pg_temp.assert_eq('ANULAR DEVOLUCIÓN rechazada: BI Club intacto', pg_temp.balance(v_biclub), -75000);
+  PERFORM pg_temp.assert_eq('ANULAR PAGO rechazada: BI Club intacto', pg_temp.balance(v_biclub), -75000);
 
-  -- Transferencia con la semántica anterior (entrada positiva a BI Club):
-  -- su anulación se rechaza en vez de invertir un signo que ya no aplica.
+  -- Transferencia registrada con el sentido invertido de 1760005700000
+  -- (entrada NEGATIVA a BI Club): su anulación se rechaza.
   v_transfer := gen_random_uuid();
   INSERT INTO bank_account_movements (bank_id, movement_type, origin, amount, balance_before, balance_after,
     business_date, user_id, reference_type, reference_id, counterpart_bank_id)
-  VALUES (v_biclub, 'TRANSFERENCIA_ENTRADA', 'TRANSFERENCIA', 1, -75000, -74999,
+  VALUES (v_biclub, 'TRANSFERENCIA_ENTRADA', 'TRANSFERENCIA', -1, -75000, -75001,
     CURRENT_DATE, pg_temp.admin_id(), 'BANK_TRANSFER', v_transfer, v_industrial);
-  PERFORM pg_temp.assert_rejects('ANULAR transferencia BI Club previa a la línea',
+  PERFORM pg_temp.assert_rejects('ANULAR transferencia BI Club con sentido anterior',
     format('SELECT void_bank_transfer(%L, CURRENT_DATE, pg_temp.admin_id(), %L)', v_transfer, 'x'),
     'LEGACY_CREDIT_LINE_TRANSFER');
   DELETE FROM bank_account_movements WHERE reference_id = v_transfer; -- solo la fila sintética de esta prueba (todo termina en ROLLBACK)
@@ -360,8 +364,7 @@ BEGIN
 
   -- Límite configurable: una sola fuente de verdad (banks.max_balance)
   UPDATE banks SET max_balance = 80000 WHERE id = v_biclub;
-  PERFORM pg_temp.set_balance(v_industrial, 100000);
-  PERFORM register_bank_transfer(v_industrial, v_biclub, 80000, CURRENT_DATE, pg_temp.admin_id());
+  PERFORM register_bank_transfer(v_biclub, v_industrial, 80000, CURRENT_DATE, pg_temp.admin_id());
   PERFORM pg_temp.assert_eq('LÍMITE CONFIGURABLE Q80,000', pg_temp.balance(v_biclub), -80000);
   UPDATE banks SET max_balance = 75000 WHERE id = v_biclub;
   PERFORM pg_temp.set_balance(v_biclub, 0);
@@ -413,7 +416,7 @@ BEGIN
   PERFORM pg_temp.set_balance(v_normal, 5000);
 
   -- BI Club como ORIGEN: solo hacia Banco Industrial (ni otro banco ni retiro de efectivo)
-  PERFORM pg_temp.set_balance(v_biclub, -1000);
+  PERFORM pg_temp.set_balance(v_biclub, 0);
   PERFORM pg_temp.set_balance(v_industrial, 0);
   PERFORM pg_temp.assert_rejects('BI Club → otro banco',
     format('SELECT register_bank_transfer(%L, %L, 100, CURRENT_DATE, pg_temp.admin_id())', v_biclub, v_normal),
@@ -422,7 +425,7 @@ BEGIN
     format('SELECT register_bank_transfer(%L, NULL, 100, CURRENT_DATE, pg_temp.admin_id())', v_biclub),
     'TRANSFER_DESTINATION_NOT_ALLOWED:BI_CLUB');
   PERFORM register_bank_transfer(v_biclub, v_industrial, 400, CURRENT_DATE, pg_temp.admin_id());
-  PERFORM pg_temp.assert_eq('BI Club → Banco Industrial (origen)', pg_temp.balance(v_biclub), -600);
+  PERFORM pg_temp.assert_eq('BI Club → Banco Industrial (origen)', pg_temp.balance(v_biclub), -400);
   PERFORM pg_temp.assert_eq('BI Club → Banco Industrial (destino)', pg_temp.balance(v_industrial), 400);
   PERFORM pg_temp.set_balance(v_biclub, 0);
 

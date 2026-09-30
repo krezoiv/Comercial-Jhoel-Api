@@ -43,7 +43,7 @@ export const BANK_SPECIAL_ACCOUNT_OPTIONS: { value: BankSpecialAccount; label: s
   {
     value: 'BI_CLUB',
     label: 'BI Club Empresarial — línea de crédito',
-    hint: 'Saldo entre -límite y Q0.00: recibir de Banco Industrial usa la línea, devolverle la paga. El límite máximo es el de la línea.',
+    hint: 'Saldo entre -límite y Q0.00: enviar a Banco Industrial usa la línea, recibir de Banco Industrial la paga. El límite máximo es el de la línea.',
   },
   { value: 'DISTRICOL', label: 'Districol', hint: 'Solo recibe transferencias de Banco Agromercantil.' },
   { value: 'BANCO_INDUSTRIAL', label: 'Banco Industrial', hint: 'Puede transferir a BI Club Empresarial.' },

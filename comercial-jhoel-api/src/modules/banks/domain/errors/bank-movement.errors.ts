@@ -125,7 +125,7 @@ export class LegacyCreditLineTransferError extends DomainError {
 
   constructor() {
     super(
-      'Esta transferencia de BI Club Empresarial se registró antes de convertirla en línea de crédito y no puede anularse automáticamente. Corrija el saldo con "Ajustar saldo".',
+      'Esta transferencia de BI Club Empresarial se registró con una regla de saldo anterior y no puede anularse automáticamente. Corrija el saldo con "Ajustar saldo".',
     );
   }
 }

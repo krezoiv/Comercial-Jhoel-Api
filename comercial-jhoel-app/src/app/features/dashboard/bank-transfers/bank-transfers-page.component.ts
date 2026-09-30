@@ -133,24 +133,24 @@ export class BankTransfersPageComponent {
 
   /**
    * Operación sobre la línea de crédito de BI Club, si aplica:
-   * `USE` = Banco Industrial → BI Club (aumenta lo utilizado),
-   * `PAYMENT` = BI Club → Banco Industrial (pago / devolución).
+   * `USE` = BI Club → Banco Industrial (aumenta lo utilizado),
+   * `PAYMENT` = Banco Industrial → BI Club (pago / devolución).
    */
   readonly creditLineOperation = computed<'USE' | 'PAYMENT' | null>(() => {
-    if (isCreditLineAccount(this.destination()?.specialAccount)) return 'USE';
-    if (isCreditLineAccount(this.source()?.specialAccount) && this.destination()) return 'PAYMENT';
+    if (isCreditLineAccount(this.source()?.specialAccount) && this.destination()) return 'USE';
+    if (isCreditLineAccount(this.destination()?.specialAccount)) return 'PAYMENT';
     return null;
   });
 
   /** La cuenta BI Club involucrada (origen o destino), para mostrar su línea. */
   readonly creditLineAccount = computed<Bank | null>(() => {
     const operation = this.creditLineOperation();
-    if (operation === 'USE') return this.destination();
-    if (operation === 'PAYMENT') return this.source();
+    if (operation === 'USE') return this.source();
+    if (operation === 'PAYMENT') return this.destination();
     return null;
   });
 
-  /** `destinationBefore/After` son `null` en un retiro de efectivo (no hay cuenta que reciba). Cada lado aplica su propia regla (BI Club al revés). */
+  /** `destinationBefore/After` son `null` en un retiro de efectivo (no hay cuenta que reciba). */
   readonly preview = computed(() => {
     const source = this.source();
     const destination = this.destination();
@@ -160,10 +160,10 @@ export class BankTransfersPageComponent {
     return {
       amount,
       sourceBefore: source.finalBalance,
-      sourceAfter: round2(source.finalBalance + transferBalanceDelta(source.specialAccount, 'source', amount)),
+      sourceAfter: round2(source.finalBalance + transferBalanceDelta('source', amount)),
       destinationBefore: destination ? destination.finalBalance : null,
       destinationAfter: destination
-        ? round2(destination.finalBalance + transferBalanceDelta(destination.specialAccount, 'destination', amount))
+        ? round2(destination.finalBalance + transferBalanceDelta('destination', amount))
         : null,
     };
   });
@@ -179,23 +179,20 @@ export class BankTransfersPageComponent {
     if (amount === null) return null;
     if (amount <= 0) return 'El monto debe ser mayor que cero.';
     const rounded = round2(amount);
-    // BI Club como origen: pago de la línea — no requiere "saldo", requiere deuda pendiente.
+    // BI Club como origen: uso de la línea — no requiere "saldo", requiere disponible.
     if (isCreditLineAccount(source.specialAccount)) {
-      return creditLineMovementError(
-        source.finalBalance,
-        transferBalanceDelta(source.specialAccount, 'source', rounded),
-        source.maxBalance,
-      );
+      return creditLineMovementError(source.finalBalance, transferBalanceDelta('source', rounded), source.maxBalance);
     }
     if (rounded > source.finalBalance) {
       return cash
         ? 'Saldo insuficiente para realizar el retiro de efectivo.'
         : 'Saldo insuficiente para realizar la transferencia.';
     }
+    // BI Club como destino: pago de la línea — requiere deuda pendiente.
     if (destination && isCreditLineAccount(destination.specialAccount)) {
       return creditLineMovementError(
         destination.finalBalance,
-        transferBalanceDelta(destination.specialAccount, 'destination', rounded),
+        transferBalanceDelta('destination', rounded),
         destination.maxBalance,
       );
     }
