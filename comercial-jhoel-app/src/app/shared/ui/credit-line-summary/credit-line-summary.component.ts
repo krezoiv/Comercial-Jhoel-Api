@@ -14,7 +14,7 @@ import { CreditLineStatus, creditLineStatus, formatSignedBankBalance } from '../
   template: `
     @if (compact) {
       <small class="compact">
-        Línea de crédito · Utilizado {{ format(status.used) }} · Disponible {{ format(status.available) }} de
+        Línea de crédito · Deuda utilizada {{ format(status.used) }} · Disponible {{ format(status.available) }} de
         {{ format(status.limit) }}
       </small>
     } @else {
@@ -32,7 +32,7 @@ import { CreditLineStatus, creditLineStatus, formatSignedBankBalance } from '../
           <dd [class.negative]="status.balance < 0">{{ format(status.balance) }}</dd>
         </div>
         <div>
-          <dt>Utilizado</dt>
+          <dt>Deuda utilizada</dt>
           <dd>{{ format(status.used) }}</dd>
         </div>
         <div>

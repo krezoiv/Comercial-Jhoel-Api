@@ -14,12 +14,7 @@ import {
   bankAccountLabel,
 } from '../../../core/models';
 import { BankService } from '../../../core/services/bank.service';
-import {
-  balanceEffect,
-  creditLineMovementError,
-  formatSignedBankBalance,
-  isCreditLineAccount,
-} from '../../../core/utils/bank-balance.util';
+import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../core/utils/bank-balance.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
@@ -176,11 +171,7 @@ export class TransaccionarPageComponent {
       return null;
     }
     const amount = round2(this.draft.totalAmount());
-    return {
-      before: account.finalBalance,
-      after: round2(account.finalBalance + balanceEffect(account.specialAccount, direction * amount)),
-      amount,
-    };
+    return { before: account.finalBalance, after: round2(account.finalBalance + direction * amount), amount };
   });
 
   /** Segunda cuenta que mueve un Reintegro: la línea de Génesis baja por el mismo monto. */
@@ -207,7 +198,7 @@ export class TransaccionarPageComponent {
     if (!account || !preview || preview.amount <= 0) {
       return null;
     }
-    // BI Club Empresarial = línea de crédito (saldo = −disponible): un Depósito consume disponible, un Retiro lo repone.
+    // BI Club Empresarial = línea de crédito: -límite ≤ saldo ≤ 0 (Depósito usa la línea, Retiro la paga).
     if (isCreditLineAccount(account.specialAccount)) {
       return creditLineMovementError(preview.before, round2(preview.after - preview.before), account.maxBalance);
     }

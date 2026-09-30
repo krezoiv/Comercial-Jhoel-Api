@@ -20,19 +20,20 @@ export interface BankBalanceStripItem {
   /** Cuándo ocurrió esa última transacción (`null` si nunca tuvo una). */
   lastMovementAt: Date | null;
   trend: BankBalanceTrend;
-  /** Color de la flecha: para Génesis y BI Club es inverso (bajar es bueno). */
+  /** Color de la flecha: para Génesis es inverso (bajar es bueno). */
   trendTone: BankBalanceTrendTone;
 }
 
 /**
  * Cuentas cuyo saldo se lee "al revés": que baje es favorable. Génesis
- * (línea de crédito) y BI Club Empresarial (saldo = −disponible: bajar =
- * reponer disponible con el pago; subir = usar la línea) — pedido explícito
- * del negocio.
+ * (línea de crédito) — pedido explícito del negocio. BI Club Empresarial
+ * estaba aquí mientras su saldo era "lo recibido de Banco Industrial"
+ * (bajar = devolver). Desde `BiClubCreditLine` su saldo es ≤ 0 y devolver lo
+ * SUBE hacia cero, así que el mismo criterio (usar la línea = desfavorable,
+ * devolver = favorable) se obtiene con el tono normal.
  */
 const INVERSE_TONE_ACCOUNTS: ReadonlySet<BankSpecialAccount> = new Set([
   'GENESIS',
-  'BI_CLUB',
 ]);
 
 /** Siempre visibles en la tira aunque no estén habilitadas en Transaccionar. */

@@ -2,9 +2,9 @@ import {
   BankAccountRequiredError,
   ReintegroSourceIsGenesisError,
   BankBalanceLimitExceededError,
-  CreditLineAvailableExceededError,
-  CreditLineNoAvailableError,
-  CreditLinePaymentExceededError,
+  CreditLineLimitExceededError,
+  CreditLineNoDebtError,
+  CreditLineOverpaymentError,
   InsufficientBankBalanceError,
   LegacyCreditLineTransferError,
   InvalidMovementAmountError,
@@ -107,44 +107,43 @@ describe('bankMovementErrorFromMessage', () => {
     ).toBe('Saldo insuficiente para realizar el retiro de efectivo.');
   });
 
-  it('mapea las reglas de la línea de crédito de BI Club (saldo = −disponible)', () => {
-    const exceeded = bankMovementErrorFromMessage(
-      'CREDIT_LINE_AVAILABLE_EXCEEDED:TRANSFERENCIA_SALIDA:25000.00',
+  it('mapea las reglas de la línea de crédito de BI Club con los mensajes exactos', () => {
+    const limit = bankMovementErrorFromMessage(
+      'CREDIT_LINE_LIMIT_EXCEEDED:TRANSFERENCIA_ENTRADA:75000.00:25000.00',
     );
-    expect(exceeded).toBeInstanceOf(CreditLineAvailableExceededError);
-    expect(exceeded?.message).toBe(
-      'El monto excede el disponible de la línea de crédito de BI Club Empresarial. Disponible: Q25,000.00.',
+    expect(limit).toBeInstanceOf(CreditLineLimitExceededError);
+    expect(limit?.message).toBe(
+      'El monto excede el saldo disponible de la línea de crédito de Q75,000.00.',
     );
-    expect((exceeded as CreditLineAvailableExceededError).status).toBe(400);
+    expect((limit as CreditLineLimitExceededError).status).toBe(400);
 
-    const noAvailable = bankMovementErrorFromMessage(
-      'CREDIT_LINE_NO_AVAILABLE:TRANSFERENCIA_SALIDA',
+    const noDebt = bankMovementErrorFromMessage(
+      'CREDIT_LINE_NO_DEBT:TRANSFERENCIA_SALIDA',
     );
-    expect(noAvailable).toBeInstanceOf(CreditLineNoAvailableError);
-    expect(noAvailable?.message).toBe(
-      'La línea de crédito de BI Club Empresarial no tiene disponible (saldo Q0.00).',
+    expect(noDebt).toBeInstanceOf(CreditLineNoDebtError);
+    expect(noDebt?.message).toBe(
+      'No existe deuda pendiente en la línea de crédito para realizar esta devolución.',
     );
 
-    const payment = bankMovementErrorFromMessage(
-      'CREDIT_LINE_PAYMENT_EXCEEDED:TRANSFERENCIA_ENTRADA:75000.00:0.00',
+    const overpayment = bankMovementErrorFromMessage(
+      'CREDIT_LINE_OVERPAYMENT:TRANSFERENCIA_SALIDA:25000.00',
     );
-    expect(payment).toBeInstanceOf(CreditLinePaymentExceededError);
-    expect(payment?.message).toBe(
-      'El pago excede el monto utilizado de la línea de crédito de BI Club Empresarial.',
+    expect(overpayment).toBeInstanceOf(CreditLineOverpaymentError);
+    expect(overpayment?.message).toBe(
+      'El monto a devolver excede el saldo pendiente de la línea de crédito.',
     );
   });
 
-  it('explica una anulación o un ajuste que rompería el rango de la línea de BI Club', () => {
+  it('explica una anulación que rompería los límites de la línea de BI Club', () => {
     expect(
       bankMovementErrorFromMessage(
-        'CREDIT_LINE_PAYMENT_EXCEEDED:ANULACION:75000.00:0',
+        'CREDIT_LINE_LIMIT_EXCEEDED:ANULACION:75000.00:0',
       )?.message,
     ).toContain('No es posible anular la operación');
     expect(
-      bankMovementErrorFromMessage(
-        'CREDIT_LINE_AVAILABLE_EXCEEDED:AJUSTE_MANUAL:10',
-      )?.message,
-    ).toContain('no puede ser positivo');
+      bankMovementErrorFromMessage('CREDIT_LINE_OVERPAYMENT:ANULACION:10.00')
+        ?.message,
+    ).toContain('quedaría con saldo positivo');
     expect(
       bankMovementErrorFromMessage('LEGACY_CREDIT_LINE_TRANSFER:x'),
     ).toBeInstanceOf(LegacyCreditLineTransferError);

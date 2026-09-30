@@ -71,9 +71,9 @@ export class AdjustBalanceModalComponent implements OnChanges {
       return 'Una cuenta bancaria normal no puede quedar con saldo negativo.';
     }
     if (this.isCreditLine()) {
-      if (target > 0) return 'El saldo de BI Club Empresarial no puede ser positivo (Q0.00 = línea agotada).';
+      if (target > 0) return 'El saldo de BI Club Empresarial no puede ser positivo (Q0.00 = no se debe nada).';
       if (target < -(this.row?.maxBalance ?? 0)) {
-        return 'El saldo de BI Club Empresarial no puede ser menor que el límite negativo de la línea.';
+        return 'El saldo de BI Club Empresarial no puede ser menor que el límite negativo de la línea de crédito.';
       }
     }
     if (this.difference() === 0) {

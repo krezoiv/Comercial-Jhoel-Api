@@ -173,14 +173,14 @@
     @if (creditLineAccount(); as line) {
       <div class="transfers__credit-line">
         <div class="transfers__credit-line-head">
-          <app-icon [name]="creditLineOperation() === 'USE' ? 'arrow-up' : 'arrow-down'" [size]="16" />
+          <app-icon [name]="creditLineOperation() === 'USE' ? 'arrow-down' : 'arrow-up'" [size]="16" />
           <div>
             <strong>{{ creditLineOperation() === 'USE' ? 'Uso de línea de crédito' : 'Pago / devolución de línea de crédito' }}</strong>
             <p>
               {{
                 creditLineOperation() === 'USE'
-                  ? 'El monto transferido disminuirá el disponible de la línea de crédito.'
-                  : 'El monto repondrá el disponible de la línea de crédito.'
+                  ? 'El monto transferido aumentará el saldo utilizado de la línea de crédito.'
+                  : 'El monto disminuirá el saldo pendiente de la línea de crédito.'
               }}
             </p>
           </div>

@@ -8,8 +8,8 @@ import { InvalidAccountTypeError } from '../../domain/errors/invalid-account-typ
 import { BankOutput, toBankOutput } from '../dtos/bank-output';
 import { BankSpecialAccount } from '../../domain/entities/bank-account-movement.entity';
 import {
-  CreditLineNoAvailableError,
-  CreditLinePaymentExceededError,
+  CreditLineLimitExceededError,
+  CreditLinePositiveBalanceError,
   InsufficientBankBalanceError,
 } from '../../domain/errors/bank-movement.errors';
 
@@ -60,13 +60,12 @@ export class CreateBankUseCase {
       null) as BankSpecialAccount | null;
     const finalBalance = input.finalBalance ?? 0;
     if (specialAccount === 'BI_CLUB') {
-      // Línea de crédito: saldo = −disponible, entre -límite (todo
-      // disponible) y Q0.00 (agotada).
+      // Línea de crédito: saldo inicial entre -límite y Q0.00.
       if (finalBalance > 0) {
-        throw new CreditLineNoAvailableError('AJUSTE_MANUAL');
+        throw new CreditLinePositiveBalanceError();
       }
       if (finalBalance < -(input.maxBalance ?? 0)) {
-        throw new CreditLinePaymentExceededError('AJUSTE_MANUAL');
+        throw new CreditLineLimitExceededError('SALDO_INICIAL');
       }
     } else if (finalBalance < 0 && specialAccount !== 'GENESIS') {
       throw new InsufficientBankBalanceError('AJUSTE_MANUAL');

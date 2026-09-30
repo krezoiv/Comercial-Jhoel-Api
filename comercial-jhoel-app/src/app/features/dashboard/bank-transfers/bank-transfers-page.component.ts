@@ -133,8 +133,8 @@ export class BankTransfersPageComponent {
 
   /**
    * Operación sobre la línea de crédito de BI Club, si aplica:
-   * `USE` = BI Club → Banco Industrial (consume disponible),
-   * `PAYMENT` = Banco Industrial → BI Club (pago: repone disponible).
+   * `USE` = BI Club → Banco Industrial (aumenta lo utilizado),
+   * `PAYMENT` = Banco Industrial → BI Club (pago / devolución).
    */
   readonly creditLineOperation = computed<'USE' | 'PAYMENT' | null>(() => {
     if (isCreditLineAccount(this.source()?.specialAccount) && this.destination()) return 'USE';
@@ -160,10 +160,10 @@ export class BankTransfersPageComponent {
     return {
       amount,
       sourceBefore: source.finalBalance,
-      sourceAfter: round2(source.finalBalance + transferBalanceDelta(source.specialAccount, 'source', amount)),
+      sourceAfter: round2(source.finalBalance + transferBalanceDelta('source', amount)),
       destinationBefore: destination ? destination.finalBalance : null,
       destinationAfter: destination
-        ? round2(destination.finalBalance + transferBalanceDelta(destination.specialAccount, 'destination', amount))
+        ? round2(destination.finalBalance + transferBalanceDelta('destination', amount))
         : null,
     };
   });
@@ -181,22 +181,18 @@ export class BankTransfersPageComponent {
     const rounded = round2(amount);
     // BI Club como origen: uso de la línea — no requiere "saldo", requiere disponible.
     if (isCreditLineAccount(source.specialAccount)) {
-      return creditLineMovementError(
-        source.finalBalance,
-        transferBalanceDelta(source.specialAccount, 'source', rounded),
-        source.maxBalance,
-      );
+      return creditLineMovementError(source.finalBalance, transferBalanceDelta('source', rounded), source.maxBalance);
     }
     if (rounded > source.finalBalance) {
       return cash
         ? 'Saldo insuficiente para realizar el retiro de efectivo.'
         : 'Saldo insuficiente para realizar la transferencia.';
     }
-    // BI Club como destino: pago de la línea — no puede reponer más de lo utilizado.
+    // BI Club como destino: pago de la línea — requiere deuda pendiente.
     if (destination && isCreditLineAccount(destination.specialAccount)) {
       return creditLineMovementError(
         destination.finalBalance,
-        transferBalanceDelta(destination.specialAccount, 'destination', rounded),
+        transferBalanceDelta('destination', rounded),
         destination.maxBalance,
       );
     }

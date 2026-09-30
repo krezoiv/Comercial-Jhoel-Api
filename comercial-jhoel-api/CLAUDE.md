@@ -1347,18 +1347,18 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   (`BankDepositAssetsWrongTypeError`), excluyente con CxC; mismas reglas de cliente registrado + admin. Reutiliza
   `RegisterAssetChargeUseCase` dentro de la misma transacción; `assets.reference_type/reference_id` (migración
   `1760005500000`) ligan el cargo a la operación. Anular la operación NO revierte el cargo (igual que CxC).
-- **BI Club Empresarial = línea de crédito, saldo = −disponible** (modelo vigente: migración
-  `1760005900000-BiClubAvailableCredit`; 5700/5800 fueron iteraciones previas). `−max_balance` = todo disponible,
-  `0` = agotada; rango siempre `−max_balance ≤ saldo ≤ 0`. **Uso** = BI Club → Banco Industrial (BI Club sube hacia 0,
-  Industrial +); **pago** de fin de día = Banco Industrial → BI Club (Industrial −, BI Club baja hacia −límite).
-  Regla única en `apply_bank_account_movement`: para `BI_CLUB` invierte el delta de todo movimiento OPERATIVO
-  (transferencia, Transaccionar, Acreditar saldo, reintegro), nunca `AJUSTE_MANUAL`/`ANULACION`/`SALDO_INICIAL`;
-  `register_bank_transfer` envía deltas normales. Códigos: `CREDIT_LINE_NO_AVAILABLE`, `CREDIT_LINE_AVAILABLE_EXCEEDED`,
-  `CREDIT_LINE_PAYMENT_EXCEEDED`. `void_bank_transfer` rechaza anular transferencias de BI Club con entrada positiva /
-  salida negativa (`LEGACY_CREDIT_LINE_TRANSFER`). Cuadre Agentes: `BI_CLUB` siempre `subtract` con signo real (uso y
-  pago no cambian el total). Tira de saldos: BI Club con tono inverso. La 5900 llevó BI Club de 0 a −max_balance con
-  un `AJUSTE_MANUAL` auditado. `TRANSFER_SELECT` usa `abs(s.amount)`. Pruebas en `bank-balance-movements.test.sql` y
-  CASO 21 del `.sh`.
+- **BI Club Empresarial = línea de crédito, saldo = DEUDA** (regla definitiva: migración
+  `1760006000000-BiClubDebtModel`; 5700/5800/5900 fueron iteraciones previas). `Q0` = no se debe nada, `−Q50,000` =
+  se deben Q50,000; disponible = `max_balance + saldo`; rango `−max_balance ≤ saldo ≤ 0`. **Uso** = BI Club → Banco
+  Industrial (BI Club − monto, Industrial + monto); **pago** = Banco Industrial → BI Club (Industrial − monto, BI Club
+  + monto hacia 0). En transferencias todas las cuentas usan la regla normal (origen resta, destino suma);
+  `apply_bank_account_movement` NO invierte nada y hace cumplir el rango de BI Club para todo tipo de movimiento:
+  `CREDIT_LINE_LIMIT_EXCEEDED` / `CREDIT_LINE_NO_DEBT` / `CREDIT_LINE_OVERPAYMENT`. `void_bank_transfer` rechaza anular
+  transferencias de BI Club con entrada negativa / salida positiva (`LEGACY_CREDIT_LINE_TRANSFER`). La 6000 convierte
+  (idempotente, un `AJUSTE_MANUAL` auditado) el saldo que quedó como −disponible si la 5900 se había aplicado.
+  Cuadre Agentes suma `BI_CLUB` con su signo real (la deuda resta del total; uso/pago no cambian el total). Tira de
+  saldos con tono normal. `TRANSFER_SELECT` usa `abs(s.amount)`. Pruebas: casos OBLIG 1–9 y CICLO en
+  `bank-balance-movements.test.sql`, CASO 21 en el `.sh`.
 - Errores SQL → dominio en `banks/domain/errors/bank-movement.errors.ts` (`bankMovementErrorFromMessage`),
   compartido con `TypeOrmBankDepositRepository`. Pruebas de negocio: `sql/tests/bank-balance-movements.test.sql`
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia

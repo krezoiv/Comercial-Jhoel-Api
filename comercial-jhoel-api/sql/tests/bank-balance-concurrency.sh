@@ -70,11 +70,11 @@ else
 fi
 
 # CASO 21 — concurrencia sobre la línea de crédito de BI Club (migración
-# 1760005900000: saldo = −disponible). BI Club en -Q25,000 (disponible
-# Q25,000), Banco Industrial con Q100,000. A y B envían Q20,000 al mismo
+# 1760005700000 / 1760005800000). BI Club en -Q50,000 (disponible Q25,000),
+# Banco Industrial con Q100,000. A y B usan Q20,000 de la línea al mismo
 # tiempo (BI Club → Banco Industrial): `register_bank_transfer` bloquea ambas
-# filas en orden de id, así que B espera a A, ve -Q5,000 (disponible Q5,000)
-# y es rechazado. Final: BI Club -Q5,000, Industrial Q120,000.
+# filas en orden de id, así que B espera a A, ve -Q70,000 y es rechazado
+# (excedería -Q75,000). Final: BI Club -Q70,000, Industrial Q120,000.
 read -r IND_ID BICLUB_ID < <("${PSQL[@]}" -d "$TEST_DB" -F ' ' -c "
   SELECT
     (SELECT id FROM banks WHERE is_active AND special_account = 'BANCO_INDUSTRIAL' ORDER BY created_at LIMIT 1),
@@ -84,8 +84,8 @@ read -r IND_ID BICLUB_ID < <("${PSQL[@]}" -d "$TEST_DB" -F ' ' -c "
   UPDATE banks SET max_balance = 75000 WHERE id = '$BICLUB_ID';
   SELECT adjust_bank_balance('$IND_ID', 100000, CURRENT_DATE, '$ADMIN_ID', 'Preparación prueba concurrencia')
   WHERE (SELECT final_balance FROM banks WHERE id = '$IND_ID') <> 100000;
-  SELECT adjust_bank_balance('$BICLUB_ID', -25000, CURRENT_DATE, '$ADMIN_ID', 'Preparación prueba concurrencia')
-  WHERE (SELECT final_balance FROM banks WHERE id = '$BICLUB_ID') <> -25000" >/dev/null
+  SELECT adjust_bank_balance('$BICLUB_ID', -50000, CURRENT_DATE, '$ADMIN_ID', 'Preparación prueba concurrencia')
+  WHERE (SELECT final_balance FROM banks WHERE id = '$BICLUB_ID') <> -50000" >/dev/null
 
 credit_line_sql() {
   local hold="$1"
@@ -107,7 +107,7 @@ IND_FINAL=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT final_balance FROM banks WHERE
 TRANSFERS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT COUNT(*) FROM bank_account_movements WHERE reference_text = 'CONC' AND bank_id = '$BICLUB_ID'")
 
 echo "BI Club: $BICLUB_FINAL | Banco Industrial: $IND_FINAL | Usos registrados: $TRANSFERS"
-if [[ "$BICLUB_FINAL" == "-5000.00" && "$IND_FINAL" == "120000.00" && "$TRANSFERS" == "1" ]]; then
+if [[ "$BICLUB_FINAL" == "-70000.00" && "$IND_FINAL" == "120000.00" && "$TRANSFERS" == "1" ]]; then
   echo "CASO 21 OK — la disponibilidad de la línea no se usó dos veces; el rechazo no movió Banco Industrial"
 else
   echo "CASO 21 FALLÓ" >&2
