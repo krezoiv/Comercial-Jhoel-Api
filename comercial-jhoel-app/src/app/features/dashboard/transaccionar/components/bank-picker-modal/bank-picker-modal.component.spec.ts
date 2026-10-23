@@ -90,7 +90,7 @@ describe('BankPickerModalComponent', () => {
   it('Depositar → Akisi emite Fundación Génesis Empresarial', fakeAsync(() => {
     open('DEPOSITO');
     tile('Akísi').click();
-    tick(200);
+    tick(1000);
     expect(picked.length).toBe(1);
     expect(picked[0].transactionBank.id).toBe('a-akisi');
     expect(picked[0].account.id).toBe('genesis');
@@ -119,6 +119,32 @@ describe('BankPickerModalComponent', () => {
     expect(tile('GTC').querySelector('.bank-mark')!.textContent!.trim()).toBe('GTC');
   });
 
+  it('muestra el saldo actual de la cuenta (o el total si hay varias)', () => {
+    open('DEPOSITO');
+    expect(tile('Akísi').querySelector('.bank-tile__balance')!.textContent).toContain('Saldo actual');
+    expect(tile('Akísi').querySelector('.bank-tile__balance')!.textContent).toContain('500.00');
+    expect(tile('GTC').querySelector('.bank-tile__balance')!.textContent).toContain('Saldo total');
+    expect(tile('GTC').querySelector('.bank-tile__balance')!.textContent).toContain('1,000.00');
+    expect(tile('Cooperativa').querySelector('.bank-tile__balance')).toBeNull();
+  });
+
+  it('efecto de selección: marca el banco, bloquea otros clics y luego emite una sola vez', fakeAsync(() => {
+    open('DEPOSITO');
+    tile('Akísi').click();
+    fixture.detectChanges();
+    expect(tile('Akísi').classList).toContain('bank-tile--selected');
+    expect(tile('Akísi').querySelector('.pick-check')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.bank-grid--picked')).not.toBeNull();
+    tile('GTC').click();
+    (fixture.nativeElement.querySelector('.modal__close') as HTMLButtonElement).click();
+    tick(300);
+    expect(picked.length).toBe(0);
+    tick(700);
+    expect(picked.length).toBe(1);
+    expect(picked[0].account.id).toBe('genesis');
+    expect(cancelled).toBe(0);
+  }));
+
   it('Reintegro → Akisi queda deshabilitado (Génesis no puede ser el origen)', () => {
     open('REINTEGRO');
     expect(tile('Akísi').disabled).toBeTrue();
@@ -133,7 +159,7 @@ describe('BankPickerModalComponent', () => {
     const options: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.account-option'));
     expect(options.length).toBe(2);
     options[1].click();
-    tick(200);
+    tick(1000);
     expect(picked[0].account.id).toBe('gtc-2');
   }));
 

@@ -22,7 +22,7 @@ import {
 } from '../../../../../core/utils/transaction-bank-account.util';
 import { formatSignedBankBalance } from '../../../../../core/utils/bank-balance.util';
 import { transactionBankImageUrl } from '../../../../../core/services/transaction-bank.service';
-import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 export interface BankPickerSelection {
   transactionBank: TransactionBank;
@@ -34,6 +34,8 @@ interface BankPickerOption {
   monogram: string;
   /** Logo subido en Sistema → Banco Agente; sin logo se muestran las iniciales. */
   imageUrl: string | null;
+  /** Saldo actual de la cuenta que se afectará (suma si el banco tiene varias) — solo informativo. */
+  balance: { value: number; specialAccount: Bank['specialAccount']; accountCount: number } | null;
   resolution: TransactionBankResolution;
 }
 
@@ -45,6 +47,16 @@ const TITLES: Partial<Record<TransactionTypeBalanceEffect, string>> = {
 
 /** Duración de la animación de salida — debe coincidir con `bank-picker-out` en el SCSS. */
 const CLOSE_ANIMATION_MS = 140;
+/** Efecto de selección (pulso + check) antes de cerrar — debe coincidir con `bank-tile-picked` en el SCSS. */
+const SELECT_ANIMATION_MS = 520;
+
+function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 /**
  * Paso previo de Depósito / Retiro / Reintegro: elegir el banco por su icono.
@@ -56,7 +68,7 @@ const CLOSE_ANIMATION_MS = 140;
 @Component({
   selector: 'app-bank-picker-modal',
   standalone: true,
-  imports: [ButtonComponent, IconComponent],
+  imports: [BankBalanceAmountComponent, ButtonComponent, IconComponent],
   templateUrl: './bank-picker-modal.component.html',
   styleUrl: './bank-picker-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +97,13 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   /** Banco con varias cuentas a la espera de que se elija una. */
   readonly pendingOption = signal<BankPickerOption | null>(null);
   readonly closing = signal(false);
+  /** Mostrando el efecto de selección (antes de `closing`). */
+  readonly picking = signal(false);
+  /** Ningún clic/tecla cuenta mientras se ve el efecto o se cierra — evita selecciones o cierres dobles. */
+  readonly busy = computed(() => this.closing() || this.picking());
+  /** Banco/cuenta recién elegidos — dispara el efecto de selección mientras el modal se cierra. */
+  readonly selectedBankId = signal<string | null>(null);
+  readonly selectedAccountId = signal<string | null>(null);
 
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
   private loggedProblems = false;
@@ -96,12 +115,24 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
 
   readonly options = computed<BankPickerOption[]>(() => {
     const { effect, banks, accounts } = this.inputs();
-    return banks.map((bank) => ({
-      bank,
-      monogram: transactionBankMonogram(bank),
-      imageUrl: transactionBankImageUrl(bank),
-      resolution: resolveTransactionBankAccount(bank, accounts, effect),
-    }));
+    return banks.map((bank) => {
+      const resolution = resolveTransactionBankAccount(bank, accounts, effect);
+      const resolved = resolution.status === 'ok' ? resolution.accounts : [];
+      return {
+        bank,
+        monogram: transactionBankMonogram(bank),
+        imageUrl: transactionBankImageUrl(bank),
+        resolution,
+        balance:
+          resolved.length === 0
+            ? null
+            : {
+                value: round2(resolved.reduce((sum, account) => sum + account.finalBalance, 0)),
+                specialAccount: resolved.length === 1 ? resolved[0].specialAccount : null,
+                accountCount: resolved.length,
+              },
+      };
+    });
   });
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -109,7 +140,10 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
 
     if (changes['open'] && this.open) {
       this.closing.set(false);
+      this.picking.set(false);
       this.pendingOption.set(null);
+      this.selectedBankId.set(null);
+      this.selectedAccountId.set(null);
       this.loggedProblems = false;
       queueMicrotask(() => this.dialog()?.nativeElement.focus());
     }
@@ -127,7 +161,7 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (!this.open || this.closing()) {
+    if (!this.open || this.busy()) {
       return;
     }
     if (this.pendingOption()) {
@@ -138,11 +172,12 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   }
 
   choose(option: BankPickerOption): void {
-    if (this.closing() || option.resolution.status !== 'ok') {
+    if (this.busy() || option.resolution.status !== 'ok') {
       return;
     }
     const accounts = option.resolution.accounts;
     if (accounts.length === 1) {
+      this.selectedBankId.set(option.bank.id);
       this.finish(option.bank, accounts[0]);
       return;
     }
@@ -151,7 +186,9 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
 
   chooseAccount(account: Bank): void {
     const option = this.pendingOption();
-    if (option) {
+    if (option && !this.busy()) {
+      this.selectedBankId.set(option.bank.id);
+      this.selectedAccountId.set(account.id);
       this.finish(option.bank, account);
     }
   }
@@ -161,7 +198,7 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   }
 
   cancel(): void {
-    if (this.closing()) {
+    if (this.busy()) {
       return;
     }
     this.closeThen(() => this.cancelled.emit());
@@ -173,13 +210,23 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   }
 
   private finish(transactionBank: TransactionBank, account: Bank): void {
-    if (this.closing()) {
+    if (this.busy()) {
       return;
     }
-    this.closeThen(() => this.picked.emit({ transactionBank, account }));
+    // Deja ver el efecto de selección y luego cierra con la animación normal.
+    this.closeThen(() => this.picked.emit({ transactionBank, account }), prefersReducedMotion() ? 0 : SELECT_ANIMATION_MS);
   }
 
-  private closeThen(callback: () => void): void {
+  private closeThen(callback: () => void, holdMs = 0): void {
+    if (holdMs > 0) {
+      // `picking` bloquea nuevos clics mientras se ve el efecto; `closing` arranca la animación de salida después.
+      this.picking.set(true);
+      this.closeTimer = setTimeout(() => {
+        this.picking.set(false);
+        this.closeThen(callback);
+      }, holdMs);
+      return;
+    }
     this.closing.set(true);
     this.closeTimer = setTimeout(() => {
       this.closeTimer = null;
