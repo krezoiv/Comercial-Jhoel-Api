@@ -10,8 +10,10 @@ import {
   Client,
   TransactionBank,
   TransactionType,
+  TransactionTypeBalanceEffect,
   balanceEffectDirection,
   bankAccountLabel,
+  requiresBankAccount,
 } from '../../../core/models';
 import { BankService } from '../../../core/services/bank.service';
 import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../core/utils/bank-balance.util';
@@ -23,6 +25,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { TransactionBankService } from '../../../core/services/transaction-bank.service';
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import {
   BankBalanceAmountComponent,
@@ -41,20 +44,12 @@ import { TransactionSummaryCardComponent } from './components/transaction-summar
 import { CommissionSummaryCardComponent } from './components/commission-summary-card/commission-summary-card.component';
 import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadre-result-card.component';
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
+import { BankPickerModalComponent, BankPickerSelection } from './components/bank-picker-modal/bank-picker-modal.component';
 
 type TransaccionarView = 'dashboard' | 'form';
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-/** Normaliza para comparar nombres de banco agente vs. cuenta (sin acentos/mayúsculas). */
-function normalizeName(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
 }
 
 const INSUFFICIENT_MESSAGES: Record<string, string> = {
@@ -98,6 +93,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     CommissionSummaryCardComponent,
     CuadreResultCardComponent,
     ChangeConfirmModalComponent,
+    BankPickerModalComponent,
     ClientSearchSelectComponent,
     BankBalanceAmountComponent,
     BankBalanceStripComponent,
@@ -133,18 +129,14 @@ export class TransaccionarPageComponent {
 
   /**
    * Solo las cuentas marcadas "En Transaccionar" en Sistema → Bancos (el
-   * backend rechaza cualquier otra), primero las cuyo nombre coincide con el
-   * banco agente elegido. En un Reintegro la línea Génesis nunca es el
-   * origen: es la cuenta a la que se abona.
+   * backend rechaza cualquier otra). En un Reintegro la línea Génesis nunca
+   * es el origen: es la cuenta a la que se abona.
    */
   readonly selectableAccounts = computed(() => {
     const isReintegro = this.isReintegro();
-    const agentName = normalizeName(this.selectedBankName());
-    const matches = (bank: Bank) =>
-      agentName !== '' && (normalizeName(bank.name).includes(agentName) || agentName.includes(normalizeName(bank.name)));
-    return this.bankAccounts()
-      .filter((bank) => bank.availableInTransaccionar && !(isReintegro && bank.specialAccount === 'GENESIS'))
-      .sort((a, b) => Number(matches(b)) - Number(matches(a)) || a.name.localeCompare(b.name));
+    return this.bankAccounts().filter(
+      (bank) => bank.availableInTransaccionar && !(isReintegro && bank.specialAccount === 'GENESIS'),
+    );
   });
 
   readonly genesisAccount = computed(() => this.bankAccounts().find((bank) => bank.specialAccount === 'GENESIS') ?? null);
@@ -213,7 +205,33 @@ export class TransaccionarPageComponent {
     return null;
   });
 
-  readonly canSubmit = computed(() => this.draft.canSave() && this.balanceError() === null);
+  /**
+   * Depósito/Retiro/Reintegro: el banco agente y la cuenta los fija el modal
+   * de bancos (`resolveTransactionBankAccount`). Un borrador restaurado cuya
+   * cuenta ya no corresponde al banco (o falta) no se deja guardar: hay que
+   * volver a elegir el banco.
+   */
+  readonly bankSelectionError = computed<string | null>(() => {
+    if (!this.draft.needsBankAccount() || this.loadingBanks() || this.loadingAccounts()) {
+      return null;
+    }
+    const agent = this.selectedTransactionBank();
+    if (!agent || !this.draft.bankAccountId()) {
+      return 'Selecciona el banco de la operación.';
+    }
+    const resolution = resolveTransactionBankAccount(agent, this.bankAccounts(), this.draft.transactionTypeBalanceEffect());
+    if (resolution.status !== 'ok') {
+      return resolution.message;
+    }
+    if (!resolution.accounts.some((account) => account.id === this.draft.bankAccountId())) {
+      return `La cuenta seleccionada no corresponde a ${agent.name}. Vuelve a seleccionar el banco.`;
+    }
+    return null;
+  });
+
+  readonly canSubmit = computed(
+    () => this.draft.canSave() && this.balanceError() === null && this.bankSelectionError() === null,
+  );
 
   readonly formSubtitle = computed(() => {
     if (this.draft.isGenesisType()) {
@@ -241,8 +259,24 @@ export class TransaccionarPageComponent {
   readonly isChangeConfirmOpen = signal(false);
   readonly pendingChangeAmount = signal(0);
 
-  readonly selectedBankName = computed(
-    () => this.transactionBanks().find((b) => b.id === this.draft.transactionBankId())?.name ?? '',
+  readonly selectedTransactionBank = computed(
+    () => this.transactionBanks().find((b) => b.id === this.draft.transactionBankId()) ?? null,
+  );
+
+  readonly selectedBankName = computed(() => this.selectedTransactionBank()?.name ?? '');
+
+  readonly selectedBankMonogram = computed(() => {
+    const bank = this.selectedTransactionBank();
+    return bank ? transactionBankMonogram(bank) : '';
+  });
+
+  /**
+   * Modal "Selecciona el banco" — `type` presente = arranca una operación
+   * nueva desde las tarjetas; `null` = "Cambiar banco" dentro del formulario
+   * ya abierto (solo cambia banco/cuenta, conserva lo demás).
+   */
+  readonly bankPicker = signal<{ effect: TransactionTypeBalanceEffect; name: string; type: TransactionType | null } | null>(
+    null,
   );
 
   readonly selectedTypeIcon = computed(
@@ -311,13 +345,46 @@ export class TransaccionarPageComponent {
   }
 
   selectType(type: TransactionType): void {
+    if (this.bankPicker()) {
+      return;
+    }
+    // Depósito / Retiro / Reintegro: primero se elige el banco (y con él la cuenta) en el modal.
+    if (requiresBankAccount(type.balanceEffect)) {
+      this.bankPicker.set({ effect: type.balanceEffect!, name: type.name, type });
+      this.loadBankAccounts();
+      return;
+    }
     this.draft.setTransactionType(type.id, type.name, type.balanceEffect ?? null);
     this.view.set('form');
     this.loadBankAccounts();
   }
 
-  onBankAccountChange(id: string): void {
-    this.draft.setBankAccount(id);
+  /** "Cambiar banco" desde el formulario — mismo modal, misma operación. */
+  openBankPicker(): void {
+    const effect = this.draft.transactionTypeBalanceEffect();
+    if (this.bankPicker() || !requiresBankAccount(effect)) {
+      return;
+    }
+    this.bankPicker.set({ effect: effect!, name: this.draft.transactionTypeName(), type: null });
+    this.loadBankAccounts();
+  }
+
+  onBankPicked(selection: BankPickerSelection): void {
+    const picker = this.bankPicker();
+    if (!picker) {
+      return;
+    }
+    if (picker.type) {
+      this.draft.setTransactionType(picker.type.id, picker.type.name, picker.type.balanceEffect ?? null);
+    }
+    this.draft.setTransactionBank(selection.transactionBank.id);
+    this.draft.setBankAccount(selection.account.id);
+    this.bankPicker.set(null);
+    this.view.set('form');
+  }
+
+  onBankPickerCancelled(): void {
+    this.bankPicker.set(null);
   }
 
   /** Refresca los saldos actuales desde el backend (fuente de verdad) — al entrar al formulario y después de guardar. */

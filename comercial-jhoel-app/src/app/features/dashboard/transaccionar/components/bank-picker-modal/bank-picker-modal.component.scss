@@ -1,0 +1,298 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+@keyframes bank-picker-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes bank-picker-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+// 140ms — mismo valor que `CLOSE_ANIMATION_MS` en el componente.
+@keyframes bank-picker-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(5, 7, 12, 0.6);
+  backdrop-filter: blur(4px);
+  animation: bank-picker-backdrop-in 0.18s ease-out;
+
+  &.is-closing {
+    animation: bank-picker-out 0.14s ease-in forwards;
+
+    .modal {
+      animation: bank-picker-out 0.14s ease-in forwards;
+    }
+  }
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 44rem;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  background: var(--color-surface-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: bank-picker-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+
+  @include bp.respond(sm) {
+    padding: var(--space-8);
+  }
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.modal__eyebrow {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary-600);
+  margin-bottom: var(--space-1);
+}
+
+.modal__title {
+  font-size: var(--fs-md);
+  color: var(--color-text-on-light);
+  overflow-wrap: anywhere;
+}
+
+.modal__close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  color: var(--color-text-on-light-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  @include focus-ring;
+
+  &:hover {
+    background: var(--color-surface-light-hover);
+    color: var(--color-text-on-light);
+  }
+}
+
+.modal__state,
+.modal__hint {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.modal__state {
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+.modal__hint {
+  margin-bottom: var(--space-4);
+}
+
+.modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+// ---- Cuadrícula de bancos ----
+
+.bank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.bank-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-5) var(--space-3);
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  @include focus-ring;
+
+  &:not(:disabled):hover,
+  &:not(:disabled):focus-visible {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-primary-100), var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+
+    .bank-mark {
+      background: var(--color-surface-light-hover);
+      color: var(--color-text-on-light-subtle);
+    }
+  }
+}
+
+.bank-tile--current {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.bank-tile__name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+  overflow-wrap: anywhere;
+}
+
+.bank-tile__detail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+  overflow-wrap: anywhere;
+
+  app-icon {
+    flex-shrink: 0;
+    color: var(--color-danger);
+  }
+}
+
+// Icono del banco: sigla sobre el degradado suave de marca (mismo estilo que los iconos de los tipos de transacción).
+.bank-mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary-600);
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.02em;
+}
+
+.bank-mark--sm {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: var(--fs-xs);
+}
+
+// ---- Varias cuentas del mismo banco ----
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.account-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  @include focus-ring;
+
+  &:not(:disabled):hover,
+  &:not(:disabled):focus-visible {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+  }
+
+  > app-icon {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--color-text-on-light-subtle);
+  }
+}
+
+.account-option__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+
+  strong {
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+    overflow-wrap: anywhere;
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal,
+  .bank-tile {
+    animation: none !important;
+    transition: none;
+  }
+}

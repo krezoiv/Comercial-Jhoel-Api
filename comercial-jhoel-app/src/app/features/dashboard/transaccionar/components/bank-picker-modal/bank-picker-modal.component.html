@@ -1,0 +1,85 @@
+@if (open) {
+  <div class="modal-backdrop" [class.is-closing]="closing()" (click)="cancel()">
+    <div
+      #dialog
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bank-picker-title"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal__header">
+        <div>
+          @if (operationName) {
+            <span class="modal__eyebrow">{{ operationName }}</span>
+          }
+          <h2 id="bank-picker-title" class="modal__title">
+            {{ pendingOption() ? 'Selecciona la cuenta ' + pendingOption()!.bank.name : title() }}
+          </h2>
+        </div>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="closing()" (click)="cancel()">
+          <app-icon name="close" [size]="20" />
+        </button>
+      </header>
+
+      @if (loading) {
+        <p class="modal__state">Cargando bancos…</p>
+      } @else if (pendingOption()) {
+        <p class="modal__hint">{{ pendingOption()!.bank.name }} tiene varias cuentas habilitadas. Elige la cuenta que se afectará.</p>
+        <ul class="account-list">
+          @for (account of pendingAccounts(); track account.id) {
+            <li>
+              <button type="button" class="account-option" [disabled]="closing()" (click)="chooseAccount(account)">
+                <span class="bank-mark bank-mark--sm" aria-hidden="true">{{ pendingOption()!.monogram }}</span>
+                <span class="account-option__text">
+                  <strong>{{ accountLabel(account) }}</strong>
+                  <span>Saldo actual: {{ formatSigned(account.finalBalance) }}</span>
+                </span>
+                <app-icon name="chevron-right" [size]="18" />
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (options().length === 0) {
+        <p class="modal__state">No hay bancos agente activos. Un administrador puede crearlos en Sistema → Banco Agente.</p>
+      } @else {
+        <div class="bank-grid" role="list">
+          @for (option of options(); track option.bank.id) {
+            <button
+              type="button"
+              role="listitem"
+              class="bank-tile"
+              [class.bank-tile--current]="option.bank.id === currentBankId"
+              [disabled]="option.resolution.status !== 'ok' || closing()"
+              [attr.aria-describedby]="'bank-tile-detail-' + option.bank.id"
+              (click)="choose(option)"
+            >
+              <span class="bank-mark" aria-hidden="true">{{ option.monogram }}</span>
+              <span class="bank-tile__name">{{ option.bank.name }}</span>
+              <span class="bank-tile__detail" [id]="'bank-tile-detail-' + option.bank.id">
+                @if (option.resolution.status === 'ok') {
+                  @if (option.resolution.accounts.length === 1) {
+                    {{ option.resolution.accounts[0].name }}
+                  } @else {
+                    {{ option.resolution.accounts.length }} cuentas
+                  }
+                } @else {
+                  <app-icon name="alert-circle" [size]="14" />
+                  {{ option.resolution.message }}
+                }
+              </span>
+            </button>
+          }
+        </div>
+      }
+
+      <footer class="modal__actions">
+        @if (pendingOption()) {
+          <app-button variant="ghost" [disabled]="closing()" (click)="backToBanks()">Volver a bancos</app-button>
+        }
+        <app-button variant="ghost" [disabled]="closing()" (click)="cancel()">Cancelar</app-button>
+      </footer>
+    </div>
+  </div>
+}

@@ -36,7 +36,7 @@
     } @else {
       <div class="type-grid">
         @for (type of transactionTypes(); track type.id) {
-          <button type="button" class="type-card" (click)="selectType(type)">
+          <button type="button" class="type-card" [disabled]="bankPicker() !== null" (click)="selectType(type)">
             <span class="type-card__icon">
               <app-icon [name]="type.icon" [size]="28" />
             </span>
@@ -60,7 +60,37 @@
 
     <section class="transaccionar__card">
       <div class="transaccionar__row">
-        @if (!draft.isGenesisType()) {
+        @if (draft.needsBankAccount()) {
+          <!-- Depósito / Retiro / Reintegro: banco y cuenta ya fijados en el modal de bancos (sin selectores manuales). -->
+          <div class="bank-selection" [class.bank-selection--error]="bankSelectionError() !== null">
+            @if (selectedTransactionBank(); as agent) {
+              <span class="bank-selection__mark" aria-hidden="true">{{ selectedBankMonogram() }}</span>
+              <div class="bank-selection__text">
+                <span class="bank-selection__label">Banco seleccionado</span>
+                <strong>{{ agent.name }}</strong>
+                <span class="bank-selection__account">
+                  {{ isReintegro() ? 'Cuenta origen del abono' : 'Cuenta afectada' }}:
+                  <strong>{{ affectedAccount() ? accountLabel(affectedAccount()!) : '—' }}</strong>
+                </span>
+              </div>
+            } @else {
+              <span class="bank-selection__mark bank-selection__mark--empty" aria-hidden="true">
+                <app-icon name="bank" [size]="20" />
+              </span>
+              <div class="bank-selection__text">
+                <span class="bank-selection__label">Banco seleccionado</span>
+                <strong>{{ loadingBanks() ? 'Cargando…' : 'Sin banco seleccionado' }}</strong>
+              </div>
+            }
+            <app-button variant="ghost" [disabled]="bankPicker() !== null" (click)="openBankPicker()">Cambiar banco</app-button>
+            @if (bankSelectionError(); as message) {
+              <p class="bank-selection__error" role="alert">
+                <app-icon name="alert-triangle" [size]="16" />
+                {{ message }}
+              </p>
+            }
+          </div>
+        } @else if (!draft.isGenesisType()) {
           <div class="field">
             <label for="transaction-bank">Banco Agente</label>
             <select
@@ -74,28 +104,6 @@
                 <option [value]="bank.id">{{ bank.name }}</option>
               }
             </select>
-          </div>
-        }
-
-        @if (draft.needsBankAccount()) {
-          <div class="field">
-            <label for="bank-account">{{ isReintegro() ? 'Cuenta origen del abono' : 'Cuenta bancaria afectada' }}</label>
-            <select
-              id="bank-account"
-              [ngModel]="draft.bankAccountId()"
-              (ngModelChange)="onBankAccountChange($event)"
-              [disabled]="loadingAccounts()"
-            >
-              <option value="" disabled>Seleccionar cuenta</option>
-              @for (account of selectableAccounts(); track account.id) {
-                <option [value]="account.id">{{ accountLabel(account) }} — {{ formatSigned(account.finalBalance) }}</option>
-              }
-            </select>
-            @if (!loadingAccounts() && selectableAccounts().length === 0) {
-              <span class="field__hint">
-                No hay cuentas habilitadas. Un administrador puede activarlas en Sistema → Bancos («En Transaccionar»).
-              </span>
-            }
           </div>
         }
 
@@ -319,3 +327,15 @@
     (cancelled)="onChangeCancelled()"
   />
 }
+
+<app-bank-picker-modal
+  [open]="bankPicker() !== null"
+  [effect]="bankPicker()?.effect ?? null"
+  [operationName]="bankPicker()?.name ?? ''"
+  [transactionBanks]="transactionBanks()"
+  [bankAccounts]="bankAccounts()"
+  [loading]="loadingBanks() || loadingAccounts()"
+  [currentBankId]="bankPicker()?.type ? null : draft.transactionBankId()"
+  (picked)="onBankPicked($event)"
+  (cancelled)="onBankPickerCancelled()"
+/>

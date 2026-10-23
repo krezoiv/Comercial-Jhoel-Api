@@ -47,7 +47,7 @@
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--color-primary-500);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
@@ -336,4 +336,87 @@ app-transaction-monthly-chart {
 
 .transaccionar__balance-strip {
   margin-bottom: var(--space-6);
+}
+
+// Depósito / Retiro / Reintegro — banco y cuenta fijados en el modal de
+// bancos: ocupa toda la fila superior del formulario en lugar de los dos
+// selectores que reemplaza.
+.bank-selection {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-md);
+  background: var(--gradient-brand-soft);
+
+  app-button {
+    margin-left: auto;
+  }
+}
+
+.bank-selection--error {
+  border-color: var(--color-danger);
+}
+
+.bank-selection__mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-light);
+  color: var(--color-primary-600);
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  box-shadow: var(--shadow-sm);
+}
+
+.bank-selection__mark--empty {
+  color: var(--color-text-on-light-subtle);
+}
+
+.bank-selection__text {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+
+  > strong {
+    font-size: var(--fs-base);
+    color: var(--color-text-on-light);
+  }
+}
+
+.bank-selection__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-on-light-muted);
+}
+
+.bank-selection__account {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  overflow-wrap: anywhere;
+
+  strong {
+    color: var(--color-text-on-light);
+  }
+}
+
+.bank-selection__error {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--color-danger);
 }
