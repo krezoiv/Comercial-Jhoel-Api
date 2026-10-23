@@ -580,6 +580,28 @@
   color: var(--color-text-on-light-muted);
 }
 
+// ---- Efecto "atravesar la pantalla" al elegir un banco ----
+// El icono que vuela es `app-bank-fly-effect`; aquí solo se aleja el modal.
+
+@keyframes modal-recede {
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(2px);
+  }
+}
+
+// El modal se aleja mientras el icono sale hacia el frente.
+.modal-backdrop.is-flying .modal {
+  animation: modal-recede 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+// El icono original "se despega": su lugar queda vacío mientras vuela la copia.
+.modal-backdrop.is-flying .bank-tile--selected .bank-mark-wrap,
+.modal-backdrop.is-flying .account-option--selected .bank-mark {
+  visibility: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop,
   .modal,

@@ -23,6 +23,7 @@ import {
 import { formatSignedBankBalance } from '../../../../../core/utils/bank-balance.util';
 import { transactionBankImageUrl } from '../../../../../core/services/transaction-bank.service';
 import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { BankFlyEffectComponent, FlyingMark } from '../bank-fly-effect/bank-fly-effect.component';
 
 export interface BankPickerSelection {
   transactionBank: TransactionBank;
@@ -47,8 +48,9 @@ const TITLES: Partial<Record<TransactionTypeBalanceEffect, string>> = {
 
 /** Duración de la animación de salida — debe coincidir con `bank-picker-out` en el SCSS. */
 const CLOSE_ANIMATION_MS = 140;
-/** Efecto de selección (pulso + check) antes de cerrar — debe coincidir con `bank-tile-picked` en el SCSS. */
-const SELECT_ANIMATION_MS = 520;
+/** Efecto de selección: el icono sale de la tarjeta, crece y "atraviesa" la pantalla — debe coincidir con `fly-through` en el SCSS. */
+const SELECT_ANIMATION_MS = 950;
+
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -68,7 +70,7 @@ function prefersReducedMotion(): boolean {
 @Component({
   selector: 'app-bank-picker-modal',
   standalone: true,
-  imports: [BankBalanceAmountComponent, ButtonComponent, IconComponent],
+  imports: [BankBalanceAmountComponent, BankFlyEffectComponent, ButtonComponent, IconComponent],
   templateUrl: './bank-picker-modal.component.html',
   styleUrl: './bank-picker-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,6 +106,7 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   /** Banco/cuenta recién elegidos — dispara el efecto de selección mientras el modal se cierra. */
   readonly selectedBankId = signal<string | null>(null);
   readonly selectedAccountId = signal<string | null>(null);
+  readonly flyingMark = signal<FlyingMark | null>(null);
 
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
   private loggedProblems = false;
@@ -144,6 +147,7 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
       this.pendingOption.set(null);
       this.selectedBankId.set(null);
       this.selectedAccountId.set(null);
+      this.flyingMark.set(null);
       this.loggedProblems = false;
       queueMicrotask(() => this.dialog()?.nativeElement.focus());
     }
@@ -171,24 +175,26 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
     this.cancel();
   }
 
-  choose(option: BankPickerOption): void {
+  choose(option: BankPickerOption, event?: Event): void {
     if (this.busy() || option.resolution.status !== 'ok') {
       return;
     }
     const accounts = option.resolution.accounts;
     if (accounts.length === 1) {
       this.selectedBankId.set(option.bank.id);
+      this.launchMark(option, event);
       this.finish(option.bank, accounts[0]);
       return;
     }
     this.pendingOption.set(option);
   }
 
-  chooseAccount(account: Bank): void {
+  chooseAccount(account: Bank, event?: Event): void {
     const option = this.pendingOption();
     if (option && !this.busy()) {
       this.selectedBankId.set(option.bank.id);
       this.selectedAccountId.set(account.id);
+      this.launchMark(option, event);
       this.finish(option.bank, account);
     }
   }
@@ -207,6 +213,32 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
   pendingAccounts(): Bank[] {
     const resolution = this.pendingOption()?.resolution;
     return resolution?.status === 'ok' ? resolution.accounts : [];
+  }
+
+  /** Toma la posición real del icono pulsado y crea su copia voladora, que parte exactamente de ahí. */
+  private launchMark(option: BankPickerOption, event?: Event): void {
+    if (prefersReducedMotion() || typeof window === 'undefined') {
+      return;
+    }
+    const mark = (event?.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('.bank-mark');
+    if (!mark) {
+      return;
+    }
+    const rect = mark.getBoundingClientRect();
+    const size = rect.width;
+    if (size <= 0) {
+      return;
+    }
+    this.flyingMark.set({
+      left: rect.left,
+      top: rect.top,
+      size,
+      dx: window.innerWidth / 2 - (rect.left + size / 2),
+      dy: window.innerHeight / 2 - (rect.top + size / 2),
+      scale: (Math.hypot(window.innerWidth, window.innerHeight) / size) * 1.4,
+      imageUrl: option.imageUrl,
+      monogram: option.monogram,
+    });
   }
 
   private finish(transactionBank: TransactionBank, account: Bank): void {

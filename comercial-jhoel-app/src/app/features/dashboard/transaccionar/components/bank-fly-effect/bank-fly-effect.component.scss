@@ -1,0 +1,86 @@
+// 950ms — mismo valor que `SELECT_ANIMATION_MS` en `BankPickerModalComponent`.
+
+@keyframes fly-through {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  // Se despega de la tarjeta y viene al frente, al centro de la pantalla.
+  38% {
+    transform: translate(var(--dx), var(--dy)) scale(2.6);
+    opacity: 1;
+    filter: blur(0);
+    box-shadow: 0 30px 80px -20px rgba(26, 99, 184, 0.7), 0 0 0 6px rgba(255, 255, 255, 0.9);
+  }
+  // Breve pausa de frente antes del impulso.
+  52% {
+    transform: translate(var(--dx), var(--dy)) scale(3.1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  // Crece hasta rebasar la pantalla y se disuelve: atraviesa al usuario.
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(var(--scale-end, 30));
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+@keyframes fly-flash {
+  0%,
+  55% {
+    opacity: 0;
+  }
+  78% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + 1);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fly-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0%, var(--color-primary-100) 35%, transparent 75%);
+  opacity: 0;
+  animation: fly-flash 0.95s ease-out forwards;
+}
+
+.fly-mark {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary-600);
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 12px 30px -10px rgba(26, 99, 184, 0.5);
+  transform-origin: center;
+  will-change: transform, opacity, filter;
+  animation: fly-through 0.95s cubic-bezier(0.55, 0, 0.25, 1) forwards;
+}
+
+.fly-mark--image {
+  padding: 6px;
+  background: var(--color-white);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+

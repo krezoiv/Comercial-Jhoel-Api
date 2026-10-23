@@ -1,5 +1,10 @@
 @if (open) {
-  <div class="modal-backdrop" [class.is-closing]="closing()" (click)="cancel()">
+  <div
+    class="modal-backdrop"
+    [class.is-flying]="flyingMark() !== null"
+    [class.is-closing]="closing()"
+    (click)="cancel()"
+  >
     <div
       #dialog
       class="modal"
@@ -35,7 +40,7 @@
                 class="account-option"
                 [class.account-option--selected]="account.id === selectedAccountId()"
                 [disabled]="busy()"
-                (click)="chooseAccount(account)"
+                (click)="chooseAccount(account, $event)"
               >
                 <span class="bank-mark bank-mark--sm" [class.bank-mark--image]="pendingOption()!.imageUrl" aria-hidden="true">
                   @if (pendingOption()!.imageUrl; as url) {
@@ -76,7 +81,7 @@
               [class.bank-tile--selected]="option.bank.id === selectedBankId()"
               [disabled]="option.resolution.status !== 'ok' || busy()"
               [attr.aria-describedby]="'bank-tile-detail-' + option.bank.id"
-              (click)="choose(option)"
+              (click)="choose(option, $event)"
             >
               @if (option.bank.id === selectedBankId()) {
                 <span class="pick-check pick-check--tile" aria-hidden="true"><app-icon name="check" [size]="16" /></span>
@@ -118,4 +123,9 @@
       </footer>
     </div>
   </div>
+
+  <!-- Efecto de selección: el icono viene al frente, crece y atraviesa la pantalla. -->
+  @if (flyingMark(); as fly) {
+    <app-bank-fly-effect [mark]="fly" />
+  }
 }

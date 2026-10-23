@@ -90,7 +90,7 @@ describe('BankPickerModalComponent', () => {
   it('Depositar → Akisi emite Fundación Génesis Empresarial', fakeAsync(() => {
     open('DEPOSITO');
     tile('Akísi').click();
-    tick(1000);
+    tick(1500);
     expect(picked.length).toBe(1);
     expect(picked[0].transactionBank.id).toBe('a-akisi');
     expect(picked[0].account.id).toBe('genesis');
@@ -135,11 +135,16 @@ describe('BankPickerModalComponent', () => {
     expect(tile('Akísi').classList).toContain('bank-tile--selected');
     expect(tile('Akísi').querySelector('.pick-check')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.bank-grid--picked')).not.toBeNull();
+    // El icono sale de la tarjeta hacia el frente.
+    const fly: HTMLElement | null = fixture.nativeElement.querySelector('app-bank-fly-effect .fly-mark');
+    expect(fly).not.toBeNull();
+    expect(fly!.textContent!.trim()).toBe('AK');
+    expect(fixture.nativeElement.querySelector('.modal-backdrop.is-flying')).not.toBeNull();
     tile('GTC').click();
     (fixture.nativeElement.querySelector('.modal__close') as HTMLButtonElement).click();
     tick(300);
     expect(picked.length).toBe(0);
-    tick(700);
+    tick(1200);
     expect(picked.length).toBe(1);
     expect(picked[0].account.id).toBe('genesis');
     expect(cancelled).toBe(0);
@@ -159,7 +164,7 @@ describe('BankPickerModalComponent', () => {
     const options: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.account-option'));
     expect(options.length).toBe(2);
     options[1].click();
-    tick(1000);
+    tick(1500);
     expect(picked[0].account.id).toBe('gtc-2');
   }));
 
