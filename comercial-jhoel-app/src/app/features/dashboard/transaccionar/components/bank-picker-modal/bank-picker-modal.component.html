@@ -31,7 +31,13 @@
           @for (account of pendingAccounts(); track account.id) {
             <li>
               <button type="button" class="account-option" [disabled]="closing()" (click)="chooseAccount(account)">
-                <span class="bank-mark bank-mark--sm" aria-hidden="true">{{ pendingOption()!.monogram }}</span>
+                <span class="bank-mark bank-mark--sm" [class.bank-mark--image]="pendingOption()!.imageUrl" aria-hidden="true">
+                  @if (pendingOption()!.imageUrl; as url) {
+                    <img [src]="url" alt="" />
+                  } @else {
+                    {{ pendingOption()!.monogram }}
+                  }
+                </span>
                 <span class="account-option__text">
                   <strong>{{ accountLabel(account) }}</strong>
                   <span>Saldo actual: {{ formatSigned(account.finalBalance) }}</span>
@@ -55,7 +61,13 @@
               [attr.aria-describedby]="'bank-tile-detail-' + option.bank.id"
               (click)="choose(option)"
             >
-              <span class="bank-mark" aria-hidden="true">{{ option.monogram }}</span>
+              <span class="bank-mark" [class.bank-mark--image]="option.imageUrl" aria-hidden="true">
+                @if (option.imageUrl; as url) {
+                  <img [src]="url" alt="" />
+                } @else {
+                  {{ option.monogram }}
+                }
+              </span>
               <span class="bank-tile__name">{{ option.bank.name }}</span>
               <span class="bank-tile__detail" [id]="'bank-tile-detail-' + option.bank.id">
                 @if (option.resolution.status === 'ok') {

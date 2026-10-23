@@ -27,6 +27,16 @@ export class TransactionBankOrmEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  /** `select: false` — mismo patrón que Catálogo de Bancos: los bytes solo los lee `getImage()`. */
+  @Column({ name: 'image_data', type: 'bytea', nullable: true, select: false })
+  imageData: Buffer | null;
+
+  @Column({ name: 'image_mime_type', type: 'varchar', length: 50, nullable: true })
+  imageMimeType: string | null;
+
+  @Column({ name: 'image_size_bytes', type: 'integer', nullable: true })
+  imageSizeBytes: number | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

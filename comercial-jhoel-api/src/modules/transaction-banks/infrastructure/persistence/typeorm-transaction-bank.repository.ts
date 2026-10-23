@@ -5,6 +5,7 @@ import { TransactionBank } from '../../domain/entities/transaction-bank.entity';
 import {
   CreateTransactionBankData,
   FindTransactionBanksOptions,
+  TransactionBankImageBytes,
   TransactionBankRepository,
   UpdateTransactionBankData,
 } from '../../domain/repositories/transaction-bank.repository';
@@ -73,6 +74,41 @@ export class TypeOrmTransactionBankRepository implements TransactionBankReposito
 
   async deactivate(id: string): Promise<void> {
     await this.repository.update({ id }, { isActive: false });
+  }
+
+  async setImage(
+    id: string,
+    image: { data: Buffer; mimeType: string; sizeBytes: number },
+    updatedBy: string,
+  ): Promise<void> {
+    await this.repository.update(
+      { id },
+      {
+        imageData: image.data,
+        imageMimeType: image.mimeType,
+        imageSizeBytes: image.sizeBytes,
+        updatedBy,
+      },
+    );
+  }
+
+  async removeImage(id: string, updatedBy: string): Promise<void> {
+    await this.repository.update(
+      { id },
+      { imageData: null, imageMimeType: null, imageSizeBytes: null, updatedBy },
+    );
+  }
+
+  async getImage(id: string): Promise<TransactionBankImageBytes | null> {
+    const orm = await this.repository
+      .createQueryBuilder('b')
+      .select(['b.id', 'b.imageData', 'b.imageMimeType'])
+      .where('b.id = :id', { id })
+      .getOne();
+    if (!orm || !orm.imageData || !orm.imageMimeType) {
+      return null;
+    }
+    return { data: orm.imageData, mimeType: orm.imageMimeType };
   }
 
   /** Safety net for the create/update race the use case's own pre-check can't close — see `TypeOrmCategoryRepository.translateUniqueViolation`'s own doc comment. */

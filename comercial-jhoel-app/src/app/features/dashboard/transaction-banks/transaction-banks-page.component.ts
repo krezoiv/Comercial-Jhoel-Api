@@ -12,6 +12,7 @@ import { TransactionBankToolbarComponent, TransactionBankStatusFilterValue } fro
 import { TransactionBankTableComponent } from './components/transaction-bank-table/transaction-bank-table.component';
 import { TransactionBankFormModalComponent } from './components/transaction-bank-form-modal/transaction-bank-form-modal.component';
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
+import { TransactionBankImageModalComponent } from './components/transaction-bank-image-modal/transaction-bank-image-modal.component';
 
 @Component({
   selector: 'app-transaction-banks-page',
@@ -23,6 +24,7 @@ import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/d
     TransactionBankTableComponent,
     TransactionBankFormModalComponent,
     DeleteConfirmModalComponent,
+    TransactionBankImageModalComponent,
   ],
   templateUrl: './transaction-banks-page.component.html',
   styleUrl: './transaction-banks-page.component.scss',
@@ -54,6 +56,9 @@ export class TransactionBanksPageComponent {
   readonly isDeleteOpen = signal(false);
   readonly deletingTransactionBank = signal<TransactionBank | null>(null);
   readonly isDeleting = signal(false);
+
+  /** Banco cuyo logo se está editando — `null` = modal cerrado. */
+  readonly imageTransactionBank = signal<TransactionBank | null>(null);
 
   readonly filteredTransactionBanks = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -148,6 +153,19 @@ export class TransactionBanksPageComponent {
         this.notificationService.error(extractErrorMessage(error, 'No se pudo desactivar el banco agente.'));
       },
     });
+  }
+
+  openImageModal(transactionBank: TransactionBank): void {
+    this.imageTransactionBank.set(transactionBank);
+  }
+
+  closeImageModal(): void {
+    this.imageTransactionBank.set(null);
+  }
+
+  onImageChanged(updated: TransactionBank): void {
+    this.transactionBanks.update((list) => list.map((a) => (a.id === updated.id ? updated : a)));
+    this.imageTransactionBank.set(updated);
   }
 
   clearFilters(): void {

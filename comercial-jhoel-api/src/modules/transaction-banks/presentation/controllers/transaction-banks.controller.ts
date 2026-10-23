@@ -10,8 +10,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../../shared/decorators/roles.decorator';
@@ -21,10 +24,18 @@ import { ListTransactionBanksUseCase } from '../../application/use-cases/list-tr
 import { GetTransactionBankByIdUseCase } from '../../application/use-cases/get-transaction-bank-by-id.use-case';
 import { UpdateTransactionBankUseCase } from '../../application/use-cases/update-transaction-bank.use-case';
 import { DeactivateTransactionBankUseCase } from '../../application/use-cases/deactivate-transaction-bank.use-case';
+import { SetTransactionBankImageUseCase } from '../../application/use-cases/set-transaction-bank-image.use-case';
+import { RemoveTransactionBankImageUseCase } from '../../application/use-cases/remove-transaction-bank-image.use-case';
 import { CreateTransactionBankRequestDto } from '../dtos/create-transaction-bank.request.dto';
 import { UpdateTransactionBankRequestDto } from '../dtos/update-transaction-bank.request.dto';
 import { ListTransactionBanksQueryDto } from '../dtos/list-transaction-banks.query.dto';
 import { TransactionBankResponseDto } from '../dtos/transaction-bank.response.dto';
+
+interface UploadedImageFile {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+}
 
 /** CRUD is admin-only (create/update/deactivate) — same policy as AccountTypesController/CategoriesController. A USER can still read the list (needed for the Transaccionar form's banco agente dropdown). */
 @UseGuards(JwtAuthGuard)
@@ -36,6 +47,8 @@ export class TransactionBanksController {
     private readonly getTransactionBankByIdUseCase: GetTransactionBankByIdUseCase,
     private readonly updateTransactionBankUseCase: UpdateTransactionBankUseCase,
     private readonly deactivateTransactionBankUseCase: DeactivateTransactionBankUseCase,
+    private readonly setTransactionBankImageUseCase: SetTransactionBankImageUseCase,
+    private readonly removeTransactionBankImageUseCase: RemoveTransactionBankImageUseCase,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -86,5 +99,34 @@ export class TransactionBanksController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.deactivateTransactionBankUseCase.execute(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('image'))
+  @HttpCode(HttpStatus.OK)
+  setImage(
+    @Param('id', ParseUUIDPipe) transactionBankId: string,
+    @UploadedFile() image: UploadedImageFile | undefined,
+    @CurrentUser('userId') userId: string,
+  ): Promise<TransactionBankResponseDto> {
+    return this.setTransactionBankImageUseCase.execute({
+      transactionBankId,
+      image: image
+        ? { buffer: image.buffer, mimetype: image.mimetype, size: image.size }
+        : undefined,
+      userId,
+    });
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Delete(':id/image')
+  removeImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<TransactionBankResponseDto> {
+    return this.removeTransactionBankImageUseCase.execute(id, userId);
   }
 }

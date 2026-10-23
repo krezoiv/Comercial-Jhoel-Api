@@ -26,6 +26,7 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
+import { transactionBankImageUrl } from '../../../core/services/transaction-bank.service';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import {
   BankBalanceAmountComponent,
@@ -264,6 +265,11 @@ export class TransaccionarPageComponent {
   );
 
   readonly selectedBankName = computed(() => this.selectedTransactionBank()?.name ?? '');
+
+  readonly selectedBankImageUrl = computed(() => {
+    const bank = this.selectedTransactionBank();
+    return bank ? transactionBankImageUrl(bank) : null;
+  });
 
   readonly selectedBankMonogram = computed(() => {
     const bank = this.selectedTransactionBank();

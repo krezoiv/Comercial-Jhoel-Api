@@ -377,6 +377,18 @@ app-transaction-monthly-chart {
   box-shadow: var(--shadow-sm);
 }
 
+.bank-selection__mark--image {
+  overflow: hidden;
+  padding: 3px;
+  background: var(--color-white);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
 .bank-selection__mark--empty {
   color: var(--color-text-on-light-subtle);
 }

@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Bank, TransactionBank } from '../../../../../core/models';
 import { BankPickerModalComponent, BankPickerSelection } from './bank-picker-modal.component';
 
-function agent(id: string, name: string): TransactionBank {
-  return { id, name, isActive: true, createdAt: '', updatedAt: '' };
+function agent(id: string, name: string, hasImage = false): TransactionBank {
+  return { id, name, isActive: true, hasImage, createdAt: '', updatedAt: '2026-10-22T00:00:00Z' };
 }
 
 function account(id: string, name: string, overrides: Partial<Bank> = {}): Bank {
@@ -106,6 +106,18 @@ describe('BankPickerModalComponent', () => {
     tick(200);
     expect(picked.length).toBe(0);
   }));
+
+  it('muestra el logo si el banco tiene imagen, si no las iniciales', () => {
+    fixture.componentRef.setInput('transactionBanks', [agent('a-akisi', 'Akísi', true), agent('a-gtc', 'GTC')]);
+    fixture.componentRef.setInput('bankAccounts', ACCOUNTS);
+    fixture.componentRef.setInput('effect', 'DEPOSITO');
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    const img: HTMLImageElement | null = tile('Akísi').querySelector('.bank-mark img');
+    expect(img?.src).toContain('/public-transaction-banks/images/a-akisi?v=');
+    expect(tile('GTC').querySelector('.bank-mark img')).toBeNull();
+    expect(tile('GTC').querySelector('.bank-mark')!.textContent!.trim()).toBe('GTC');
+  });
 
   it('Reintegro → Akisi queda deshabilitado (Génesis no puede ser el origen)', () => {
     open('REINTEGRO');

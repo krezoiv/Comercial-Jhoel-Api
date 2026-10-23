@@ -22,6 +22,7 @@
     [hasActiveFilters]="hasActiveFilters()"
     [canManage]="isAdmin()"
     (edit)="openEditForm($event)"
+    (image)="openImageModal($event)"
     (delete)="requestDelete($event)"
     (clearFilters)="clearFilters()"
     (addTransactionBank)="openCreateForm()"
@@ -41,4 +42,10 @@
   [isDeleting]="isDeleting()"
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"
+/>
+
+<app-transaction-bank-image-modal
+  [bank]="imageTransactionBank()"
+  (closed)="closeImageModal()"
+  (changed)="onImageChanged($event)"
 />

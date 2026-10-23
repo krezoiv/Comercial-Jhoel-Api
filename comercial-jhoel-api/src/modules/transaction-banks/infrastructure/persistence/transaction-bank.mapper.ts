@@ -13,6 +13,7 @@ export class TransactionBankMapper {
       createdByUsername: orm.createdByUser?.username ?? '',
       updatedBy: orm.updatedBy,
       updatedByUsername: orm.updatedByUser?.username ?? null,
+      hasImage: orm.imageMimeType != null,
     });
   }
 }

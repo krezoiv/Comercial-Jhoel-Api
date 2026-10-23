@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiSuccessResponse, TransactionBank, TransactionBankInput } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/transaction-banks`;
+const IMAGE_BASE_URL = `${environment.apiUrl}/public-transaction-banks/images`;
 
 @Injectable({ providedIn: 'root' })
 export class TransactionBankService {
@@ -40,4 +41,27 @@ export class TransactionBankService {
   deleteTransactionBank(id: string): Observable<void> {
     return this.http.delete<void>(`${BASE_URL}/${id}`);
   }
+
+  /** Sube/reemplaza el logo (JPG/PNG/WEBP, máx. 5 MB) — devuelve el banco ya actualizado. */
+  setImage(id: string, file: File): Observable<TransactionBank> {
+    const formData = new FormData();
+    formData.set('image', file);
+    return this.http
+      .post<ApiSuccessResponse<TransactionBank>>(`${BASE_URL}/${id}/image`, formData)
+      .pipe(map((response) => response.data));
+  }
+
+  removeImage(id: string): Observable<TransactionBank> {
+    return this.http
+      .delete<ApiSuccessResponse<TransactionBank>>(`${BASE_URL}/${id}/image`)
+      .pipe(map((response) => response.data));
+  }
+}
+
+/**
+ * URL pública del logo (un `<img>` no puede mandar el token), o `null` si no
+ * tiene. `?v=updatedAt` invalida la caché de 24 h del backend al reemplazarla.
+ */
+export function transactionBankImageUrl(bank: Pick<TransactionBank, 'id' | 'hasImage' | 'updatedAt'>): string | null {
+  return bank.hasImage ? `${IMAGE_BASE_URL}/${bank.id}?v=${encodeURIComponent(bank.updatedAt)}` : null;
 }

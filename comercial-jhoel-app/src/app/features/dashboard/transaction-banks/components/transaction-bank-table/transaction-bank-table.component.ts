@@ -1,6 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 
 import { TransactionBank } from '../../../../../core/models';
+import { transactionBankImageUrl } from '../../../../../core/services/transaction-bank.service';
+import { transactionBankMonogram } from '../../../../../core/utils/transaction-bank-account.util';
 import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
 
 export type TransactionBankSortColumn = 'name' | 'isActive' | 'createdAt';
@@ -12,7 +15,7 @@ const SKELETON_ROWS = 4;
 @Component({
   selector: 'app-transaction-bank-table',
   standalone: true,
-  imports: [BadgeComponent, ButtonComponent, IconComponent, EmptyStateComponent],
+  imports: [NgTemplateOutlet, BadgeComponent, ButtonComponent, IconComponent, EmptyStateComponent],
   templateUrl: './transaction-bank-table.component.html',
   styleUrl: './transaction-bank-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,11 +34,16 @@ export class TransactionBankTableComponent {
   @Input() canManage = true;
 
   @Output() edit = new EventEmitter<TransactionBank>();
+  /** Abre el gestor de imagen (logo del icono en Transaccionar). */
+  @Output() image = new EventEmitter<TransactionBank>();
   @Output() delete = new EventEmitter<TransactionBank>();
   @Output() clearFilters = new EventEmitter<void>();
   @Output() addTransactionBank = new EventEmitter<void>();
 
   readonly skeletonRows = Array.from({ length: SKELETON_ROWS });
+
+  readonly imageUrl = transactionBankImageUrl;
+  readonly monogram = transactionBankMonogram;
 
   readonly sortColumn = signal<TransactionBankSortColumn>('createdAt');
   readonly sortDirection = signal<SortDirection>('desc');

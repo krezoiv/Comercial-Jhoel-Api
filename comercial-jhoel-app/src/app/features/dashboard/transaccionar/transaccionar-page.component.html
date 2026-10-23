@@ -64,7 +64,13 @@
           <!-- Depósito / Retiro / Reintegro: banco y cuenta ya fijados en el modal de bancos (sin selectores manuales). -->
           <div class="bank-selection" [class.bank-selection--error]="bankSelectionError() !== null">
             @if (selectedTransactionBank(); as agent) {
-              <span class="bank-selection__mark" aria-hidden="true">{{ selectedBankMonogram() }}</span>
+              <span class="bank-selection__mark" [class.bank-selection__mark--image]="selectedBankImageUrl()" aria-hidden="true">
+                @if (selectedBankImageUrl(); as url) {
+                  <img [src]="url" alt="" />
+                } @else {
+                  {{ selectedBankMonogram() }}
+                }
+              </span>
               <div class="bank-selection__text">
                 <span class="bank-selection__label">Banco seleccionado</span>
                 <strong>{{ agent.name }}</strong>

@@ -21,6 +21,7 @@ import {
   transactionBankMonogram,
 } from '../../../../../core/utils/transaction-bank-account.util';
 import { formatSignedBankBalance } from '../../../../../core/utils/bank-balance.util';
+import { transactionBankImageUrl } from '../../../../../core/services/transaction-bank.service';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 export interface BankPickerSelection {
@@ -31,6 +32,8 @@ export interface BankPickerSelection {
 interface BankPickerOption {
   bank: TransactionBank;
   monogram: string;
+  /** Logo subido en Sistema → Banco Agente; sin logo se muestran las iniciales. */
+  imageUrl: string | null;
   resolution: TransactionBankResolution;
 }
 
@@ -96,6 +99,7 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
     return banks.map((bank) => ({
       bank,
       monogram: transactionBankMonogram(bank),
+      imageUrl: transactionBankImageUrl(bank),
       resolution: resolveTransactionBankAccount(bank, accounts, effect),
     }));
   });

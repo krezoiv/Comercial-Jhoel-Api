@@ -18,6 +18,11 @@ export interface FindTransactionBanksOptions {
   activeOnly: boolean;
 }
 
+export interface TransactionBankImageBytes {
+  data: Buffer;
+  mimeType: string;
+}
+
 export interface TransactionBankRepository {
   findAll(options: FindTransactionBanksOptions): Promise<TransactionBank[]>;
   findById(id: string): Promise<TransactionBank | null>;
@@ -25,4 +30,11 @@ export interface TransactionBankRepository {
   create(data: CreateTransactionBankData): Promise<TransactionBank>;
   update(id: string, data: UpdateTransactionBankData): Promise<TransactionBank>;
   deactivate(id: string): Promise<void>;
+  setImage(
+    id: string,
+    image: { data: Buffer; mimeType: string; sizeBytes: number },
+    updatedBy: string,
+  ): Promise<void>;
+  removeImage(id: string, updatedBy: string): Promise<void>;
+  getImage(id: string): Promise<TransactionBankImageBytes | null>;
 }

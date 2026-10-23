@@ -3,6 +3,8 @@ export interface TransactionBank {
   id: string;
   name: string;
   isActive: boolean;
+  /** Logo opcional — el icono del banco en el modal "Selecciona el banco" de Transaccionar. Se sube en Sistema → Banco Agente. */
+  hasImage: boolean;
   createdAt: string;
   updatedAt: string;
 }

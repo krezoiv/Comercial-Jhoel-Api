@@ -10,6 +10,7 @@ export interface TransactionBankOutput {
   createdByUsername: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
+  hasImage: boolean;
 }
 
 export function toTransactionBankOutput(
@@ -25,5 +26,6 @@ export function toTransactionBankOutput(
     createdByUsername: transactionBank.createdByUsername,
     updatedBy: transactionBank.updatedBy,
     updatedByUsername: transactionBank.updatedByUsername,
+    hasImage: transactionBank.hasImage,
   };
 }

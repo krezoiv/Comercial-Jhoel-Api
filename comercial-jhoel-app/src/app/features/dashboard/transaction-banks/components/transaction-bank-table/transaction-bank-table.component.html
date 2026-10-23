@@ -3,6 +3,7 @@
     <table class="transaction-bank-table">
       <thead>
         <tr>
+          <th>Imagen</th>
           <th>Nombre</th>
           <th>Estado</th>
           <th>Acciones</th>
@@ -11,6 +12,7 @@
       <tbody>
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--lg"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
@@ -47,6 +49,7 @@
     <table class="transaction-bank-table">
       <thead>
         <tr>
+          <th>Imagen</th>
           <th>
             <button type="button" class="sort-btn" (click)="toggleSort('name')">
               Nombre
@@ -67,6 +70,9 @@
       <tbody>
         @for (transactionBank of sortedTransactionBanks(); track transactionBank.id) {
           <tr>
+            <td>
+              <ng-container *ngTemplateOutlet="bankMark; context: { $implicit: transactionBank }" />
+            </td>
             <td class="transaction-bank-table__name">{{ transactionBank.name }}</td>
             <td>
               <app-badge [tone]="transactionBank.isActive ? 'success' : 'danger'">
@@ -76,6 +82,15 @@
             @if (canManage) {
               <td>
                 <div class="actions">
+                  <button
+                    type="button"
+                    class="action-btn"
+                    (click)="image.emit(transactionBank)"
+                    [attr.aria-label]="'Imagen de ' + transactionBank.name"
+                    title="Imagen del banco"
+                  >
+                    <app-icon name="camera" [size]="16" />
+                  </button>
                   <button
                     type="button"
                     class="action-btn"
@@ -106,6 +121,7 @@
     @for (transactionBank of sortedTransactionBanks(); track transactionBank.id) {
       <div class="transaction-bank-card">
         <div class="transaction-bank-card__header">
+          <ng-container *ngTemplateOutlet="bankMark; context: { $implicit: transactionBank }" />
           <p class="transaction-bank-card__name">{{ transactionBank.name }}</p>
           <app-badge [tone]="transactionBank.isActive ? 'success' : 'danger'">
             {{ transactionBank.isActive ? 'Activo' : 'Inactivo' }}
@@ -114,6 +130,15 @@
 
         @if (canManage) {
           <div class="actions">
+            <button
+              type="button"
+              class="action-btn"
+              (click)="image.emit(transactionBank)"
+              [attr.aria-label]="'Imagen de ' + transactionBank.name"
+              title="Imagen del banco"
+            >
+              <app-icon name="camera" [size]="16" />
+            </button>
             <button
               type="button"
               class="action-btn"
@@ -137,3 +162,13 @@
     }
   </div>
 }
+
+<ng-template #bankMark let-bank>
+  <span class="bank-mark" [class.bank-mark--image]="imageUrl(bank)" aria-hidden="true">
+    @if (imageUrl(bank); as url) {
+      <img [src]="url" alt="" loading="lazy" />
+    } @else {
+      {{ monogram(bank) }}
+    }
+  </span>
+</ng-template>

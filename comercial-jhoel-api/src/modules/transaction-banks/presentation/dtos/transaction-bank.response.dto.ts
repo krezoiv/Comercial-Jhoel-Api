@@ -8,4 +8,5 @@ export class TransactionBankResponseDto {
   createdByUsername: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
+  hasImage: boolean;
 }

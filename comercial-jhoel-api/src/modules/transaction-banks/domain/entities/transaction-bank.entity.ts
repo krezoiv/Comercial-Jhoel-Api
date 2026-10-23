@@ -8,6 +8,8 @@ export interface TransactionBankProps {
   createdByUsername: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
+  /** Logo opcional (icono del banco en el modal de Transaccionar) — los bytes nunca viajan en el listado. */
+  hasImage?: boolean;
 }
 
 /** "Banco Agente" — the simple catalog Transaccionar's dropdown reads from. Deliberately separate from `banks` (Sistema→Bancos / Agentes Bancarios→Bancos), which is a heavier entity tied to account numbers and Cuadre de Agentes balances. */
@@ -52,5 +54,9 @@ export class TransactionBank {
 
   get updatedByUsername(): string | null {
     return this.props.updatedByUsername;
+  }
+
+  get hasImage(): boolean {
+    return this.props.hasImage ?? false;
   }
 }
