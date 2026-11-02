@@ -158,6 +158,44 @@ describe('TransaccionarPageComponent — payload del desglose opcional y última
     expect(component.canSubmit()).toBeTrue();
   });
 
+  describe('Cooperativa Guayacán — vista previa del saldo al revés', () => {
+    function prepare(effect: 'DEPOSITO' | 'RETIRO', cashBoxCode: 'GUAYACAN' | null, total: number): void {
+      component.transactionBanks.set([
+        { id: 'agent-1', name: 'Cooperativa', isActive: true, hasImage: false, cashBoxCode, commissionPerTransaction: cashBoxCode ? 3 : null, createdAt: '', updatedAt: '' },
+      ]);
+      component.bankAccounts.set([
+        {
+          id: 'account-1', name: 'Cooperativa Guayacán', accountNumber: '1', accountTypeId: 't', accountTypeName: 'Monetaria',
+          previousBalance: 0, finalBalance: 1000, specialAccount: null, maxBalance: null,
+          availableInTransaccionar: true, isActive: true, createdAt: '', updatedAt: '',
+        },
+      ]);
+      draft.setTransactionType('type-1', effect, effect);
+      draft.setTransactionBank('agent-1');
+      draft.setBankAccount('account-1');
+      draft.setTotalAmount(total);
+    }
+
+    it('Depósito Guayacán suma al saldo', () => {
+      prepare('DEPOSITO', 'GUAYACAN', 200);
+      expect(component.balancePreview()).toEqual({ before: 1000, after: 1200, amount: 200 });
+    });
+
+    it('Retiro Guayacán resta y avisa si no alcanza', () => {
+      prepare('RETIRO', 'GUAYACAN', 300);
+      expect(component.balancePreview()?.after).toBe(700);
+      draft.setTotalAmount(1500);
+      expect(component.balanceError()).toBe('Saldo insuficiente para realizar el retiro.');
+    });
+
+    it('otro banco agente: sin cambio (Depósito resta, Retiro suma)', () => {
+      prepare('DEPOSITO', null, 200);
+      expect(component.balancePreview()?.after).toBe(800);
+      prepare('RETIRO', null, 200);
+      expect(component.balancePreview()?.after).toBe(1200);
+    });
+  });
+
   it('loads the recent operations on start', () => {
     expect(recentSpy).toHaveBeenCalledTimes(1);
     expect(component.recentOperations().map((row) => row.id)).toEqual(['op-1']);

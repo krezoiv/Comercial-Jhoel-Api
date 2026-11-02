@@ -12,8 +12,12 @@ CREATE FUNCTION pg_temp.admin_id() RETURNS UUID LANGUAGE sql AS $$
   WHERE r.name IN ('SUPER_ADMIN', 'ADMIN') ORDER BY u.created_at LIMIT 1
 $$;
 
+CREATE FUNCTION pg_temp.type_id(p_effect VARCHAR) RETURNS UUID LANGUAGE sql AS $$
+  SELECT id FROM transaction_types WHERE balance_effect = p_effect AND is_active ORDER BY created_at LIMIT 1
+$$;
+
 CREATE FUNCTION pg_temp.retiro_type() RETURNS UUID LANGUAGE sql AS $$
-  SELECT id FROM transaction_types WHERE balance_effect = 'RETIRO' AND is_active ORDER BY created_at LIMIT 1
+  SELECT pg_temp.type_id('RETIRO')
 $$;
 
 CREATE FUNCTION pg_temp.account_id() RETURNS UUID LANGUAGE sql AS $$
@@ -34,14 +38,33 @@ CREATE FUNCTION pg_temp.cash_balance() RETURNS NUMERIC LANGUAGE sql AS $$
   SELECT COALESCE((SELECT balance_after FROM guayacan_cash_movements ORDER BY sequence DESC LIMIT 1), 0)
 $$;
 
--- Retiro (suma saldo bancario, nunca falla por saldo) con N transacciones de Q10.
+CREATE FUNCTION pg_temp.balance(p_bank UUID) RETURNS NUMERIC LANGUAGE sql AS $$
+  SELECT final_balance FROM banks WHERE id = p_bank
+$$;
+
+-- Operación que SUMA al saldo de la cuenta (nunca falla por saldo) con N
+-- transacciones de Q10: Depósito en Guayacán, Retiro en cualquier otro banco.
 CREATE FUNCTION pg_temp.retiro(p_agent UUID, p_count INT) RETURNS UUID LANGUAGE plpgsql AS $$
 BEGIN
   RETURN register_bank_deposit_operation(
     p_agent, p_count * 10, CURRENT_DATE, '[]'::jsonb,
     (SELECT jsonb_agg(10) FROM generate_series(1, p_count)),
-    pg_temp.admin_id(), pg_temp.retiro_type(), 'Prueba Guayacán', 0, NULL, pg_temp.account_id(), false
+    pg_temp.admin_id(),
+    pg_temp.type_id(CASE WHEN p_agent = pg_temp.guayacan() THEN 'DEPOSITO' ELSE 'RETIRO' END),
+    'Prueba Guayacán', 0, NULL, pg_temp.account_id(), false
   );
+END $$;
+
+-- Una operación de p_amount con un solo tipo/banco, devuelve el código de error o 'OK'.
+CREATE FUNCTION pg_temp.op(p_agent UUID, p_effect VARCHAR, p_amount NUMERIC) RETURNS TEXT LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM register_bank_deposit_operation(
+    p_agent, p_amount, CURRENT_DATE, '[]'::jsonb, jsonb_build_array(p_amount),
+    pg_temp.admin_id(), pg_temp.type_id(p_effect), 'Prueba signo', 0, NULL, pg_temp.account_id(), false
+  );
+  RETURN 'OK';
+EXCEPTION WHEN OTHERS THEN
+  RETURN split_part(SQLERRM, ':', 1);
 END $$;
 
 CREATE FUNCTION pg_temp.err(p_sql TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
@@ -130,6 +153,33 @@ BEGIN
   PERFORM pg_temp.expect('C8 anular dos veces no duplica el reverso', pg_temp.err(format(
     'SELECT void_bank_deposit_operation(%L, CURRENT_DATE, %L, ''otra vez'')', v_commission.reference_id, v_admin)),
     'BANK_DEPOSIT_OPERATION_ALREADY_VOIDED');
+
+  -- ===== Signo del saldo bancario: Guayacán al revés que los demás =====
+  v_before := pg_temp.balance(pg_temp.account_id());
+  PERFORM pg_temp.expect('S1 Depósito Guayacán', pg_temp.op(pg_temp.guayacan(), 'DEPOSITO', 200), 'OK');
+  PERFORM pg_temp.expect('S1 Depósito Guayacán SUMA a la cuenta',
+    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '200.00');
+  v_before := pg_temp.balance(pg_temp.account_id());
+  PERFORM pg_temp.expect('S2 Retiro Guayacán', pg_temp.op(pg_temp.guayacan(), 'RETIRO', 50), 'OK');
+  PERFORM pg_temp.expect('S2 Retiro Guayacán RESTA de la cuenta',
+    (v_before - pg_temp.balance(pg_temp.account_id()))::TEXT, '50.00');
+  PERFORM pg_temp.expect('S3 Retiro Guayacán sin saldo suficiente',
+    pg_temp.op(pg_temp.guayacan(), 'RETIRO', pg_temp.balance(pg_temp.account_id()) + 1), 'INSUFFICIENT_BALANCE');
+  v_before := pg_temp.balance(pg_temp.account_id());
+  PERFORM pg_temp.expect('S4 Retiro de otro banco', pg_temp.op(pg_temp.other_agent(), 'RETIRO', 70), 'OK');
+  PERFORM pg_temp.expect('S4 otros bancos sin cambio: el Retiro SUMA',
+    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '70.00');
+  v_before := pg_temp.balance(pg_temp.account_id());
+  PERFORM pg_temp.expect('S5 Depósito de otro banco', pg_temp.op(pg_temp.other_agent(), 'DEPOSITO', 30), 'OK');
+  PERFORM pg_temp.expect('S5 otros bancos sin cambio: el Depósito RESTA',
+    (v_before - pg_temp.balance(pg_temp.account_id()))::TEXT, '30.00');
+  -- Anular un Depósito Guayacán devuelve el saldo (revierte lo realmente aplicado).
+  v_before := pg_temp.balance(pg_temp.account_id());
+  v_op := register_bank_deposit_operation(pg_temp.guayacan(), 120, CURRENT_DATE, '[]', '[120]', v_admin,
+    pg_temp.type_id('DEPOSITO'), NULL, 0, NULL, pg_temp.account_id(), false);
+  PERFORM void_bank_deposit_operation(v_op, CURRENT_DATE, v_admin, 'Prueba de signo');
+  PERFORM pg_temp.expect('S6 anular Depósito Guayacán deja el saldo igual',
+    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '0.00');
 
   -- ===== Kardex manual =====
   v_before := pg_temp.cash_balance();

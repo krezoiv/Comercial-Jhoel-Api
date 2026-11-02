@@ -79,9 +79,19 @@ export function requiresBankAccount(effect: TransactionTypeBalanceEffect | null 
   return effect === 'DEPOSITO' || effect === 'RETIRO' || effect === 'REINTEGRO';
 }
 
-/** `+1` suma al saldo, `-1` resta, `0` no lo mueve — solo para la vista previa; el backend recalcula siempre. */
-export function balanceEffectDirection(effect: TransactionTypeBalanceEffect | null | undefined): 1 | -1 | 0 {
-  if (effect === 'RETIRO' || effect === 'PAGO_GENESIS') return 1;
-  if (effect === 'DEPOSITO' || effect === 'DESEMBOLSO_GENESIS' || effect === 'REINTEGRO') return -1;
+/**
+ * `+1` suma al saldo, `-1` resta, `0` no lo mueve — solo para la vista previa;
+ * el backend recalcula siempre. Con el banco agente Cooperativa Guayacán
+ * (`agentCashBoxCode = 'GUAYACAN'`) Depósito y Retiro van al revés (el
+ * depósito suma, el retiro resta) — misma regla que
+ * `register_bank_deposit_operation` (migración `GuayacanInvertsDepositWithdrawal`).
+ */
+export function balanceEffectDirection(
+  effect: TransactionTypeBalanceEffect | null | undefined,
+  agentCashBoxCode: string | null = null,
+): 1 | -1 | 0 {
+  const invert = agentCashBoxCode === 'GUAYACAN' && (effect === 'DEPOSITO' || effect === 'RETIRO');
+  if (effect === 'RETIRO' || effect === 'PAGO_GENESIS') return invert ? -1 : 1;
+  if (effect === 'DEPOSITO' || effect === 'DESEMBOLSO_GENESIS' || effect === 'REINTEGRO') return invert ? 1 : -1;
   return 0;
 }

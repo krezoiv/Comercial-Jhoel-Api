@@ -59,6 +59,8 @@ function round2(value: number): number {
 const INSUFFICIENT_MESSAGES: Record<string, string> = {
   DEPOSITO: 'Saldo insuficiente para realizar el depósito.',
   REINTEGRO: 'Saldo insuficiente para realizar el reintegro.',
+  // Solo ocurre con Cooperativa Guayacán, donde el retiro resta de la cuenta.
+  RETIRO: 'Saldo insuficiente para realizar el retiro.',
 };
 
 /**
@@ -163,7 +165,10 @@ export class TransaccionarPageComponent {
   /** Vista previa: saldo actual → saldo después, por el MONTO APLICADO (no el efectivo recibido). Informativa — el backend recalcula bajo lock. */
   readonly balancePreview = computed(() => {
     const account = this.affectedAccount();
-    const direction = balanceEffectDirection(this.draft.transactionTypeBalanceEffect());
+    const direction = balanceEffectDirection(
+      this.draft.transactionTypeBalanceEffect(),
+      this.selectedTransactionBank()?.cashBoxCode ?? null,
+    );
     if (!account || direction === 0) {
       return null;
     }

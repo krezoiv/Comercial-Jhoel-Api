@@ -1388,7 +1388,10 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   `POST movements/:id/void` — `@Roles` admin. Períodos (día, semana lunes–domingo, mes) calculados en SQL con
   `America/Guatemala`; transacciones = `SUM(transaction_count)` de operaciones Guayacán no anuladas; en
   ingresos/egresos del período un anulado y su contrapartida se cancelan.
-- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 35 casos).
+- **Signo invertido para Guayacán** (migración `1760006400000-GuayacanInvertsDepositWithdrawal`): con el banco agente
+  GUAYACAN, Depósito SUMA y Retiro RESTA al saldo de la cuenta (al revés que los demás bancos); Reintegro y Génesis
+  sin cambio. Espejo en el frontend: `balanceEffectDirection(effect, agentCashBoxCode)`.
+- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 45 casos).
 
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 
