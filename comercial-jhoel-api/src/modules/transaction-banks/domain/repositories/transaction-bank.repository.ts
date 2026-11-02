@@ -11,6 +11,8 @@ export interface CreateTransactionBankData {
 
 export interface UpdateTransactionBankData {
   name?: string;
+  cashBoxCode?: 'GUAYACAN' | null;
+  commissionPerTransaction?: number | null;
   updatedBy: string;
 }
 

@@ -1,0 +1,230 @@
+// Estilos compartidos por los modales de la Caja Guayacán (mismo lenguaje que los modales de Sistema).
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(5, 7, 12, 0.6);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 40rem;
+  background: var(--color-surface-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-lg);
+  margin-block: auto;
+
+  @include bp.respond(sm) {
+    padding: var(--space-8);
+  }
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.modal__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+
+  app-icon {
+    color: var(--color-success);
+  }
+
+  &--out app-icon {
+    color: var(--color-danger);
+  }
+}
+
+.modal__close {
+  display: flex;
+  color: var(--color-text-on-light-subtle);
+
+  &:hover {
+    color: var(--color-text-on-light);
+  }
+}
+
+.modal__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+
+  label,
+  .field__label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    background: var(--color-bg-light-muted);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-on-light);
+    font-size: var(--fs-sm);
+    font-family: var(--font-body);
+    @include focus-ring;
+
+    &:focus {
+      border-color: var(--color-primary-500);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.field--wide {
+  @include bp.respond(sm) {
+    grid-column: 1 / -1;
+  }
+}
+
+.field__optional {
+  font-weight: var(--fw-regular, 400);
+  color: var(--color-text-on-light-subtle);
+}
+
+.segmented {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+
+  button {
+    flex: 1;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+    @include focus-ring;
+  }
+
+  .segmented__option--on {
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  font-variant-numeric: tabular-nums;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  app-icon {
+    color: var(--color-text-on-light-subtle);
+  }
+
+  &--error {
+    border-color: var(--color-danger);
+  }
+}
+
+.preview__label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+.preview__in {
+  color: var(--color-success);
+}
+
+.preview__out {
+  color: var(--color-danger);
+}
+
+.breakdown {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.breakdown__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light);
+  cursor: pointer;
+
+  input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--color-primary-500);
+  }
+}
+
+.modal__error,
+.modal__hint {
+  margin-top: var(--space-4);
+  font-size: var(--fs-sm);
+}
+
+.modal__error {
+  color: var(--color-danger);
+}
+
+.modal__hint {
+  color: var(--color-text-on-light-subtle);
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  flex-wrap: wrap;
+}

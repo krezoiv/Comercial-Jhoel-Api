@@ -80,6 +80,28 @@ describe('Transaccionar — mapeo banco agente → cuenta afectada', () => {
     expect(resolvedIds('Industrial', ACCOUNTS, 'RETIRO')).not.toContain('biclub');
   });
 
+  describe('Cooperativa Guayacán (marca de Sistema → Banco Agente)', () => {
+    const guayacanAccount = account('guayacan', 'Cooperativa Guayacán');
+
+    it('el banco agente marcado resuelve a la cuenta "Cooperativa Guayacán", aunque se llame solo "Cooperativa"', () => {
+      const result = resolveTransactionBankAccount(
+        { name: 'Cooperativa', cashBoxCode: 'GUAYACAN' },
+        [...ACCOUNTS, guayacanAccount],
+        'DEPOSITO',
+      );
+      expect(result.status === 'ok' ? result.accounts.map((a) => a.id) : result.status).toEqual(['guayacan']);
+    });
+
+    it('sin la cuenta creada en Sistema → Bancos: missing (nunca cae en otra cuenta)', () => {
+      const result = resolveTransactionBankAccount({ name: 'Cooperativa', cashBoxCode: 'GUAYACAN' }, ACCOUNTS, 'RETIRO');
+      expect(result.status).toBe('missing');
+    });
+
+    it('monograma CG', () => {
+      expect(transactionBankMonogram({ name: 'Cooperativa', cashBoxCode: 'GUAYACAN' })).toBe('CG');
+    });
+  });
+
   it('banco sin regla: no se asigna ninguna cuenta', () => {
     expect(resolvedIds('Cooperativa', ACCOUNTS, 'DEPOSITO')).toBe('unmapped');
   });

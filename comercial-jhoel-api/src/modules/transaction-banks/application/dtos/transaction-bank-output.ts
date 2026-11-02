@@ -11,6 +11,9 @@ export interface TransactionBankOutput {
   updatedBy: string | null;
   updatedByUsername: string | null;
   hasImage: boolean;
+  /** 'GUAYACAN' = Cooperativa Guayacán. */
+  cashBoxCode: 'GUAYACAN' | null;
+  commissionPerTransaction: number | null;
 }
 
 export function toTransactionBankOutput(
@@ -27,5 +30,7 @@ export function toTransactionBankOutput(
     updatedBy: transactionBank.updatedBy,
     updatedByUsername: transactionBank.updatedByUsername,
     hasImage: transactionBank.hasImage,
+    cashBoxCode: transactionBank.cashBoxCode,
+    commissionPerTransaction: transactionBank.commissionPerTransaction,
   };
 }

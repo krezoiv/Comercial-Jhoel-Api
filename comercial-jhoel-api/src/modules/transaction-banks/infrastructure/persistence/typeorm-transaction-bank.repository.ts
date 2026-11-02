@@ -9,6 +9,7 @@ import {
   TransactionBankRepository,
   UpdateTransactionBankData,
 } from '../../domain/repositories/transaction-bank.repository';
+import { TransactionBankCashBoxAlreadyAssignedError } from '../../domain/errors/transaction-bank-cash-box.error';
 import { TransactionBankNameAlreadyExistsError } from '../../domain/errors/transaction-bank-name-already-exists.error';
 import { TransactionBankOrmEntity } from './transaction-bank.orm-entity';
 import { TransactionBankMapper } from './transaction-bank.mapper';
@@ -119,6 +120,9 @@ export class TypeOrmTransactionBankRepository implements TransactionBankReposito
       )?.constraint;
       if (constraint === 'UQ_transaction_banks_name_active') {
         return new TransactionBankNameAlreadyExistsError(name);
+      }
+      if (constraint === 'UQ_transaction_banks_cash_box_code') {
+        return new TransactionBankCashBoxAlreadyAssignedError();
       }
     }
     return error;

@@ -1,0 +1,232 @@
+<div class="guayacan">
+  <app-page-header
+    icon="wallet"
+    title="Cuadre de Caja Guayacán"
+    subtitle="Kardex de efectivo de Cooperativa Guayacán: comisiones, ingresos, egresos y arqueos."
+  />
+
+  @if (summary(); as s) {
+    @if (!s.agent) {
+      <p class="notice" role="status">
+        <app-icon name="alert-triangle" [size]="16" />
+        Ningún banco agente está marcado como Cooperativa Guayacán. Márcalo en Sistema → Banco Agente para que sus
+        transacciones generen comisión.
+      </p>
+    } @else {
+      <p class="agent-line">
+        Banco agente: <strong>{{ s.agent.name }}</strong> · Comisión vigente:
+        <strong>{{ formatCurrency(s.agent.commissionPerTransaction ?? 0) }}</strong> por transacción
+      </p>
+    }
+  }
+
+  <div class="actions">
+    <app-button variant="primary" (click)="openForm('INGRESO')">
+      <app-icon name="plus" [size]="16" />
+      Ingreso a caja
+    </app-button>
+    <app-button variant="danger" (click)="openForm('EGRESO')">
+      <app-icon name="minus" [size]="16" />
+      Egreso de caja
+    </app-button>
+    @if (isAdmin()) {
+      <app-button variant="ghost" (click)="openForm('AJUSTE')">
+        <app-icon name="edit-2" [size]="16" />
+        Ajuste
+      </app-button>
+    }
+  </div>
+
+  @if (summaryFailed() && !summary()) {
+    <p class="state state--error" role="alert">
+      No se pudo cargar el resumen de la caja.
+      <button type="button" (click)="loadSummary()">Reintentar</button>
+    </p>
+  }
+
+  <!-- Tarjetas de resumen -->
+  <div class="cards">
+    <app-card padding="lg" class="stat stat--balance">
+      <span class="stat__label">Efectivo disponible en caja</span>
+      <span class="stat__value stat__value--xl" [class.stat__value--negative]="balance() < 0">
+        {{ loadingSummary() ? '…' : formatCurrency(balance()) }}
+      </span>
+      <span class="stat__hint">Saldo del Kardex</span>
+    </app-card>
+
+    @for (period of periods(); track period.key) {
+      <app-card padding="lg" class="stat">
+        <span class="stat__label">Transacciones · {{ periodLabel[period.key] }}</span>
+        <span class="stat__value">{{ formatQuantity(period.data.transactionCount) }}</span>
+        <span class="stat__hint">Comisiones: <strong>{{ formatCurrency(period.data.commissionTotal) }}</strong></span>
+      </app-card>
+    }
+
+    <app-card padding="lg" class="stat stat--in">
+      <span class="stat__label">Ingresos de caja · {{ periodLabel[cashPeriod()] }}</span>
+      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.incomeTotal ?? 0) }}</span>
+      <span class="stat__hint">Incluye comisiones</span>
+    </app-card>
+
+    <app-card padding="lg" class="stat stat--out">
+      <span class="stat__label">Egresos de caja · {{ periodLabel[cashPeriod()] }}</span>
+      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.expenseTotal ?? 0) }}</span>
+      <div class="segmented" role="radiogroup" aria-label="Período de ingresos y egresos">
+        @for (option of periodOptions; track option) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="cashPeriod() === option"
+            [class.segmented__option--on]="cashPeriod() === option"
+            (click)="cashPeriod.set(option)"
+          >
+            {{ periodLabel[option] }}
+          </button>
+        }
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Indicadores por período -->
+  @if (summary(); as s) {
+    <section class="periods" aria-label="Resumen de transacciones por período">
+      @for (period of periods(); track period.key) {
+        <app-card padding="lg" class="period">
+          <div class="period__header">
+            <h2 class="period__title">{{ period.title }}</h2>
+            <span class="period__range">
+              @if (period.key === 'daily') {
+                {{ formatIsoDate(period.data.startDate) }}
+              } @else {
+                {{ formatIsoDate(period.data.startDate) }} – {{ formatIsoDate(period.data.endDate) }}
+              }
+            </span>
+          </div>
+          <p class="period__formula">
+            {{ formatQuantity(period.data.transactionCount) }} transacciones
+            @if (commissionRate() !== null) {
+              × {{ formatCurrency(commissionRate()!) }}
+            }
+            = <strong>{{ formatCurrency(period.data.commissionTotal) }}</strong>
+          </p>
+          <dl class="period__rows">
+            <div><dt>Operaciones</dt><dd>{{ formatQuantity(period.data.operationCount) }}</dd></div>
+            <div><dt>Ingresos</dt><dd class="amount--in">{{ formatCurrency(period.data.incomeTotal) }}</dd></div>
+            <div><dt>Egresos</dt><dd class="amount--out">{{ formatCurrency(period.data.expenseTotal) }}</dd></div>
+            @if (period.key === 'daily') {
+              <div><dt>Saldo de caja</dt><dd><strong>{{ formatCurrency(s.balance) }}</strong></dd></div>
+            }
+          </dl>
+        </app-card>
+      }
+    </section>
+  }
+
+  <app-guayacan-cash-count-panel
+    class="count"
+    [balance]="balance()"
+    [isAdmin]="isAdmin()"
+    (adjustRequested)="openForm('AJUSTE', $event)"
+  />
+
+  <!-- Kardex -->
+  <app-card padding="lg" class="kardex">
+    <div class="kardex__header">
+      <h2 class="kardex__title">Kardex de caja</h2>
+      <span class="kardex__count">{{ formatQuantity(totalMovements()) }} movimientos</span>
+    </div>
+
+    <div class="filters">
+      <div class="filters__field">
+        <label for="guayacan-from">Desde</label>
+        <input id="guayacan-from" type="date" [ngModel]="draftStartDate()" (ngModelChange)="draftStartDate.set($event)" />
+      </div>
+      <div class="filters__field">
+        <label for="guayacan-to">Hasta</label>
+        <input id="guayacan-to" type="date" [ngModel]="draftEndDate()" (ngModelChange)="draftEndDate.set($event)" />
+      </div>
+      <div class="filters__field">
+        <label for="guayacan-type">Tipo</label>
+        <select id="guayacan-type" [ngModel]="draftType()" (ngModelChange)="draftType.set($event)">
+          <option value="">Todos</option>
+          @for (type of movementTypes; track type) {
+            <option [value]="type">{{ typeLabel[type] }}</option>
+          }
+        </select>
+      </div>
+      <div class="filters__actions">
+        <app-button variant="primary" size="sm" (click)="applyFilters()">Aplicar</app-button>
+        <app-button variant="ghost" size="sm" [disabled]="!hasFilters()" (click)="clearFilters()">Limpiar</app-button>
+      </div>
+    </div>
+
+    @if (loadingMovements()) {
+      <p class="state">Cargando movimientos…</p>
+    } @else if (movementsFailed()) {
+      <p class="state state--error" role="alert">
+        No se pudieron cargar los movimientos.
+        <button type="button" (click)="loadMovements()">Reintentar</button>
+      </p>
+    } @else if (movements().length === 0) {
+      <p class="state">{{ hasFilters() ? 'Ningún movimiento coincide con los filtros.' : 'Aún no hay movimientos en la caja.' }}</p>
+    } @else {
+      <table class="kardex-table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Concepto</th>
+            <th scope="col" class="num">Ingreso</th>
+            <th scope="col" class="num">Egreso</th>
+            <th scope="col" class="num">Saldo</th>
+            <th scope="col">Usuario</th>
+            <th scope="col" aria-label="Detalle"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of movements(); track m.id) {
+            <tr [class.row--voided]="m.status === 'ANULADO'">
+              <td class="cell-date">
+                <span>{{ formatIsoDate(m.businessDate) }}</span>
+                <small>#{{ m.sequence }}</small>
+              </td>
+              <td class="cell-type">
+                <span class="type type--{{ m.movementType.toLowerCase() }}">{{ typeLabel[m.movementType] }}</span>
+                @if (m.status === 'ANULADO') {
+                  <span class="badge-voided">Anulado</span>
+                }
+              </td>
+              <td class="cell-concept" [title]="m.concept">{{ m.concept }}</td>
+              <td class="num cell-in" [class.cell--empty]="!isIncome(m)">{{ isIncome(m) ? formatCurrency(m.amount) : '—' }}</td>
+              <td class="num cell-out" [class.cell--empty]="isIncome(m)">{{ isIncome(m) ? '—' : formatCurrency(Math.abs(m.amount)) }}</td>
+              <td class="num cell-balance">{{ formatCurrency(m.balanceAfter) }}</td>
+              <td class="cell-user">{{ m.createdByUsername }}</td>
+              <td class="cell-action">
+                <button type="button" class="icon-btn" (click)="detailId.set(m.id)" [attr.aria-label]="'Ver detalle del movimiento ' + m.sequence">
+                  <app-icon name="eye" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <app-report-pagination [total]="totalMovements()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+    }
+  </app-card>
+</div>
+
+<app-guayacan-movement-form-modal
+  [open]="formMode() !== null"
+  [mode]="formMode() ?? 'INGRESO'"
+  [currentBalance]="balance()"
+  [suggestedAmount]="suggestedAdjustment()"
+  (closed)="formMode.set(null)"
+  (saved)="onSaved($event)"
+/>
+
+<app-guayacan-movement-detail-modal
+  [movementId]="detailId()"
+  [isAdmin]="isAdmin()"
+  (closed)="detailId.set(null)"
+  (changed)="onDetailChanged()"
+/>

@@ -1,0 +1,123 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="title()">
+      <div class="modal__header">
+        <h2 class="modal__title" [class.modal__title--out]="mode === 'EGRESO'">
+          <app-icon [name]="mode === 'EGRESO' ? 'arrow-up-circle' : mode === 'AJUSTE' ? 'edit-2' : 'arrow-down-circle'" [size]="20" />
+          {{ title() }}
+        </h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="modal__grid">
+        <div class="field">
+          <label for="guayacan-date">Fecha</label>
+          <input id="guayacan-date" type="date" [max]="today" [ngModel]="businessDate()" (ngModelChange)="businessDate.set($event)" />
+        </div>
+
+        @if (isAdjustment()) {
+          <div class="field">
+            <span class="field__label">Tipo de ajuste</span>
+            <div class="segmented" role="radiogroup" aria-label="Tipo de ajuste">
+              <button type="button" role="radio" [attr.aria-checked]="adjustmentSign() === 1" [class.segmented__option--on]="adjustmentSign() === 1" (click)="adjustmentSign.set(1)">
+                Sobrante (+)
+              </button>
+              <button type="button" role="radio" [attr.aria-checked]="adjustmentSign() === -1" [class.segmented__option--on]="adjustmentSign() === -1" (click)="adjustmentSign.set(-1)">
+                Faltante (−)
+              </button>
+            </div>
+          </div>
+        }
+
+        <div class="field">
+          <label for="guayacan-amount">Monto</label>
+          <input
+            id="guayacan-amount"
+            type="text"
+            inputmode="decimal"
+            appDecimalInput
+            thousands
+            placeholder="0.00"
+            [ngModel]="amount() || null"
+            (ngModelChange)="onAmountChange($event)"
+          />
+        </div>
+
+        <div class="field field--wide">
+          <label for="guayacan-concept">Descripción o concepto</label>
+          <input id="guayacan-concept" type="text" maxlength="150" placeholder="Ej. Fondo de caja" [ngModel]="concept()" (ngModelChange)="concept.set($event)" />
+        </div>
+
+        <div class="field field--wide">
+          <label for="guayacan-reason">
+            Motivo
+            @if (!isAdjustment()) {
+              <span class="field__optional">(opcional)</span>
+            }
+          </label>
+          <input id="guayacan-reason" type="text" maxlength="255" [ngModel]="reason()" (ngModelChange)="reason.set($event)" />
+        </div>
+
+        <div class="field field--wide">
+          <label for="guayacan-notes">Observaciones <span class="field__optional">(opcional)</span></label>
+          <textarea id="guayacan-notes" rows="2" maxlength="500" [ngModel]="notes()" (ngModelChange)="notes.set($event)"></textarea>
+        </div>
+      </div>
+
+      <div class="preview" [class.preview--error]="balanceAfter() < 0">
+        <div>
+          <span class="preview__label">Saldo anterior</span>
+          <strong>{{ formatCurrency(currentBalance) }}</strong>
+        </div>
+        <app-icon name="arrow-right" [size]="16" />
+        <div>
+          <span class="preview__label">{{ signedAmount() < 0 ? 'Egreso' : 'Ingreso' }}</span>
+          <strong [class.preview__in]="signedAmount() > 0" [class.preview__out]="signedAmount() < 0">
+            {{ signedAmount() < 0 ? '−' : '+' }}{{ formatCurrency(Math.abs(signedAmount())) }}
+          </strong>
+        </div>
+        <app-icon name="arrow-right" [size]="16" />
+        <div>
+          <span class="preview__label">Saldo nuevo</span>
+          <strong>{{ formatCurrency(balanceAfter()) }}</strong>
+        </div>
+      </div>
+
+      @if (!isAdjustment()) {
+        <div class="breakdown">
+          <label class="breakdown__toggle">
+            <input type="checkbox" [checked]="useBreakdown()" (change)="toggleBreakdown()" />
+            Desglosar por denominaciones
+          </label>
+          @if (useBreakdown()) {
+            <app-cash-breakdown-table
+              [cashCounts]="cashCounts()"
+              [totalCash]="breakdownTotal()"
+              [totalAmount]="amount()"
+              [status]="breakdownStatus()"
+              emptyAmountText="Ingresa el monto del movimiento"
+              (quantityChange)="onQuantityChange($event)"
+            />
+          }
+        </div>
+      }
+
+      @if (errorMessage(); as message) {
+        <p class="modal__error" role="alert">{{ message }}</p>
+      } @else {
+        @if (validationError(); as hint) {
+          <p class="modal__hint">{{ hint }}</p>
+        }
+      }
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="close()">Cancelar</app-button>
+        <app-button [variant]="mode === 'EGRESO' ? 'danger' : 'primary'" [disabled]="isSaving() || validationError() !== null" (click)="submit()">
+          {{ isSaving() ? 'Guardando…' : 'Guardar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

@@ -19,6 +19,8 @@ export interface TransactionBankAccountRule {
   monogram: string;
   /** Nombres aceptados del Banco Agente (catálogo `transaction_banks`), ya normalizados. */
   agentNames: string[];
+  /** Marca estable del banco agente (Sistema → Banco Agente) — tiene prioridad sobre el nombre. */
+  agentCashBoxCode?: TransactionBank['cashBoxCode'];
   /** Cuenta esperada — por cuenta especial, o por nombre exacto normalizado. */
   account: { specialAccount: BankSpecialAccount } | { names: string[] };
   /** Nombre de la cuenta esperada, para mensajes. */
@@ -70,6 +72,15 @@ export const TRANSACTION_BANK_ACCOUNT_RULES: readonly TransactionBankAccountRule
     accountName: 'Banco Industrial',
   },
   {
+    // Identificado por la marca "Cooperativa Guayacán" de Sistema → Banco Agente, no por su nombre.
+    key: 'GUAYACAN',
+    monogram: 'CG',
+    agentNames: ['cooperativa guayacan', 'guayacan'],
+    agentCashBoxCode: 'GUAYACAN',
+    account: { names: ['cooperativa guayacan', 'guayacan'] },
+    accountName: 'Cooperativa Guayacán',
+  },
+  {
     key: 'BANCO_AZTECA',
     monogram: 'AZ',
     agentNames: ['azteca', 'banco azteca'],
@@ -88,7 +99,15 @@ export function normalizeBankName(value: string): string {
     .trim();
 }
 
-export function findTransactionBankRule(agent: Pick<TransactionBank, 'name'>): TransactionBankAccountRule | null {
+type AgentIdentity = Pick<TransactionBank, 'name'> & Partial<Pick<TransactionBank, 'cashBoxCode'>>;
+
+export function findTransactionBankRule(agent: AgentIdentity): TransactionBankAccountRule | null {
+  if (agent.cashBoxCode) {
+    const byCode = TRANSACTION_BANK_ACCOUNT_RULES.find((rule) => rule.agentCashBoxCode === agent.cashBoxCode);
+    if (byCode) {
+      return byCode;
+    }
+  }
   const name = normalizeBankName(agent.name);
   return TRANSACTION_BANK_ACCOUNT_RULES.find((rule) => rule.agentNames.includes(name)) ?? null;
 }
@@ -110,7 +129,7 @@ export type TransactionBankResolution =
  * propio modal — nunca se toma la primera por defecto.
  */
 export function resolveTransactionBankAccount(
-  agent: Pick<TransactionBank, 'name'>,
+  agent: AgentIdentity,
   bankAccounts: Bank[],
   effect: TransactionTypeBalanceEffect | null,
 ): TransactionBankResolution {
@@ -151,7 +170,7 @@ export function resolveTransactionBankAccount(
 }
 
 /** Sigla del icono — la de la regla, o las iniciales del banco si no tiene regla. */
-export function transactionBankMonogram(agent: Pick<TransactionBank, 'name'>): string {
+export function transactionBankMonogram(agent: AgentIdentity): string {
   const rule = findTransactionBankRule(agent);
   if (rule) {
     return rule.monogram;

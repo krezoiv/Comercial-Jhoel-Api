@@ -4,7 +4,16 @@ import { Bank, TransactionBank } from '../../../../../core/models';
 import { BankPickerModalComponent, BankPickerSelection } from './bank-picker-modal.component';
 
 function agent(id: string, name: string, hasImage = false): TransactionBank {
-  return { id, name, isActive: true, hasImage, createdAt: '', updatedAt: '2026-10-22T00:00:00Z' };
+  return {
+    id,
+    name,
+    isActive: true,
+    hasImage,
+    cashBoxCode: null,
+    commissionPerTransaction: null,
+    createdAt: '',
+    updatedAt: '2026-10-22T00:00:00Z',
+  };
 }
 
 function account(id: string, name: string, overrides: Partial<Bank> = {}): Bank {

@@ -1,0 +1,137 @@
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.count-card {
+  display: block;
+  height: 100%;
+}
+
+.count-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.count-card__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-on-light);
+}
+
+.count-card__subtitle {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.count-card__last {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  text-align: right;
+
+  strong {
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+  }
+
+  em {
+    font-style: normal;
+  }
+}
+
+.count-card__compare {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  font-variant-numeric: tabular-nums;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  strong {
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+  }
+
+  &--ok {
+    border-color: var(--color-success);
+  }
+}
+
+.diff--over {
+  color: var(--color-danger);
+}
+
+.diff--under {
+  color: var(--color-warning, #b45309);
+}
+
+.diff--ok {
+  color: var(--color-success);
+}
+
+.count-card__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+
+  label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+
+    span {
+      font-weight: var(--fw-regular, 400);
+      color: var(--color-text-on-light-subtle);
+    }
+  }
+
+  input {
+    background: var(--color-surface-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+    @include focus-ring;
+  }
+}
+
+.count-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.count-card__hint {
+  margin-top: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+  text-align: right;
+}

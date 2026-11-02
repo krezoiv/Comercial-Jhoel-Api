@@ -26,6 +26,8 @@ export class CashBreakdownTableComponent {
   @Input({ required: true }) totalAmount = 0;
   @Input({ required: true }) status!: CuadreStatus;
   @Input() disabled = false;
+  /** Texto cuando aún no hay monto contra el cual cuadrar — Transaccionar usa el de siempre; otras pantallas (Caja Guayacán) pasan el suyo. */
+  @Input() emptyAmountText = 'Ingresa el monto total a depositar';
 
   @Output() quantityChange = new EventEmitter<{ denomination: number; quantity: number }>();
 
@@ -50,7 +52,7 @@ export class CashBreakdownTableComponent {
       return 'Efectivo cuadrado';
     }
     if (this.totalAmount <= 0) {
-      return 'Ingresa el monto total a depositar';
+      return this.emptyAmountText;
     }
     const diff = this.totalAmount - this.totalCash;
     return diff > 0

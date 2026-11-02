@@ -14,6 +14,8 @@ export class TransactionBankMapper {
       updatedBy: orm.updatedBy,
       updatedByUsername: orm.updatedByUser?.username ?? null,
       hasImage: orm.imageMimeType != null,
+      cashBoxCode: orm.cashBoxCode ?? null,
+      commissionPerTransaction: orm.commissionPerTransaction ?? null,
     });
   }
 }

@@ -17,6 +17,35 @@
           }
         </div>
 
+        @if (isEditMode) {
+          <div class="guayacan">
+            <label class="guayacan__check">
+              <input type="checkbox" formControlName="isGuayacan" />
+              <span>
+                <strong>Cooperativa Guayacán</strong>
+                <small>Genera comisión por cada transacción y la registra en el Cuadre de Caja Guayacán. Solo un banco agente puede tenerla.</small>
+              </span>
+            </label>
+            @if (form.controls.isGuayacan.value) {
+              <div class="field">
+                <label for="transaction-bank-commission">Comisión por transacción (Q)</label>
+                <input
+                  id="transaction-bank-commission"
+                  type="number"
+                  inputmode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  formControlName="commissionPerTransaction"
+                />
+                <span class="field__hint">Las comisiones ya registradas conservan su tarifa original.</span>
+                @if (form.controls.commissionPerTransaction.invalid) {
+                  <span class="field__error">Ingresa una comisión mayor que cero.</span>
+                }
+              </div>
+            }
+          </div>
+        }
+
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>
         }

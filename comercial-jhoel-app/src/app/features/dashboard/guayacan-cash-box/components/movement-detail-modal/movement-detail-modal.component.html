@@ -1,0 +1,117 @@
+@if (movementId) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del movimiento">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <app-icon name="receipt" [size]="20" />
+          Detalle del movimiento
+        </h2>
+        <button type="button" class="modal__close" (click)="close()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (loading()) {
+        <p class="modal__hint">Cargando…</p>
+      }
+      @if (movement(); as m) {
+        @if (m.status === 'ANULADO') {
+          <div class="banner banner--voided" role="status">
+            <app-icon name="x-circle" [size]="18" />
+            <div>
+              <strong>Anulado</strong>
+              <span>
+                {{ m.voidedByUsername ?? '—' }} · {{ m.voidedAt ? formatDateTime(m.voidedAt) : '' }}
+                @if (m.voidReason) {
+                  — {{ m.voidReason }}
+                }
+              </span>
+            </div>
+          </div>
+        }
+
+        <dl class="detail">
+          <div><dt>Tipo</dt><dd>{{ typeLabel[m.movementType] }}</dd></div>
+          <div><dt>N.º</dt><dd>#{{ m.sequence }}</dd></div>
+          <div><dt>Fecha</dt><dd>{{ formatIsoDate(m.businessDate) }}</dd></div>
+          <div><dt>Registrado</dt><dd>{{ m.createdByUsername }} · {{ formatDateTime(m.createdAt) }}</dd></div>
+          <div class="detail__wide"><dt>Concepto</dt><dd>{{ m.concept }}</dd></div>
+          @if (m.reason) {
+            <div class="detail__wide"><dt>Motivo</dt><dd>{{ m.reason }}</dd></div>
+          }
+          @if (m.notes) {
+            <div class="detail__wide"><dt>Observaciones</dt><dd>{{ m.notes }}</dd></div>
+          }
+          <div><dt>Saldo anterior</dt><dd>{{ formatCurrency(m.balanceBefore) }}</dd></div>
+          <div>
+            <dt>{{ m.amount < 0 ? 'Egreso' : 'Ingreso' }}</dt>
+            <dd [class.amount--in]="m.amount > 0" [class.amount--out]="m.amount < 0">
+              {{ m.amount < 0 ? '−' : '+' }}{{ formatCurrency(Math.abs(m.amount)) }}
+            </dd>
+          </div>
+          <div><dt>Saldo nuevo</dt><dd><strong>{{ formatCurrency(m.balanceAfter) }}</strong></dd></div>
+          @if (m.transactionCount !== null && m.commissionRate !== null) {
+            <div>
+              <dt>Cálculo</dt>
+              <dd>{{ formatQuantity(m.transactionCount) }} × {{ formatCurrency(m.commissionRate) }}</dd>
+            </div>
+          }
+        </dl>
+
+        @if (m.operation; as op) {
+          <div class="section">
+            <h3 class="section__title">Operación de Transaccionar</h3>
+            <p class="section__text">
+              {{ op.transactionTypeName }} · {{ formatIsoDate(op.operationDate) }} · {{ formatCurrency(op.totalAmount) }} ·
+              {{ formatQuantity(op.transactionCount) }} {{ op.transactionCount === 1 ? 'transacción' : 'transacciones' }}
+              @if (op.isVoided) {
+                <span class="tag tag--voided">Anulada</span>
+              }
+            </p>
+          </div>
+        }
+
+        @if (m.cashDetails.length > 0) {
+          <div class="section">
+            <h3 class="section__title">Desglose de efectivo</h3>
+            <ul class="denominations">
+              @for (row of m.cashDetails; track row.denomination) {
+                <li>
+                  <span>{{ formatCurrency(row.denomination) }} × {{ formatQuantity(row.quantity) }}</span>
+                  <span>{{ formatCurrency(row.subtotal) }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (voiding()) {
+          <div class="section">
+            <div class="field">
+              <label for="guayacan-void-reason">Motivo de la anulación</label>
+              <input id="guayacan-void-reason" type="text" maxlength="255" [ngModel]="voidReason()" (ngModelChange)="voidReason.set($event)" />
+            </div>
+          </div>
+        }
+      }
+
+      @if (errorMessage(); as message) {
+        <p class="modal__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="modal__actions">
+        @if (voiding()) {
+          <app-button variant="ghost" [disabled]="isSaving()" (click)="voiding.set(false)">Volver</app-button>
+          <app-button variant="danger" [disabled]="isSaving() || voidReason().trim().length < 5" (click)="confirmVoid()">
+            {{ isSaving() ? 'Anulando…' : 'Confirmar anulación' }}
+          </app-button>
+        } @else {
+          @if (canVoid()) {
+            <app-button variant="danger" (click)="voiding.set(true)">Anular movimiento</app-button>
+          }
+          <app-button variant="ghost" (click)="close()">Cerrar</app-button>
+        }
+      </div>
+    </div>
+  </div>
+}

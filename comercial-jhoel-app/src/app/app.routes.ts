@@ -311,6 +311,14 @@ export const routes: Routes = [
         title: 'Presentaciones y Medidas — Sistema',
       },
       {
+        path: 'caja-guayacan',
+        loadComponent: () =>
+          import('./features/dashboard/guayacan-cash-box/guayacan-cash-box-page.component').then(
+            (m) => m.GuayacanCashBoxPageComponent
+          ),
+        title: 'Cuadre de Caja Guayacán — Sistema',
+      },
+      {
         path: 'gestion-caja-recargas',
         loadComponent: () =>
           import('./features/dashboard/recharge-cash-box/recharge-cash-box-page.component').then(

@@ -43,6 +43,8 @@ export class TransactionBankFormModalComponent implements OnChanges {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    isGuayacan: [false],
+    commissionPerTransaction: [3, [Validators.required, Validators.min(0.01), Validators.max(1000)]],
   });
 
   get isEditMode(): boolean {
@@ -57,13 +59,18 @@ export class TransactionBankFormModalComponent implements OnChanges {
     this.errorMessage.set(null);
     this.isSubmitting.set(false);
 
-    this.form.reset({ name: this.transactionBank?.name ?? '' });
+    this.form.reset({
+      name: this.transactionBank?.name ?? '',
+      isGuayacan: this.transactionBank?.cashBoxCode === 'GUAYACAN',
+      commissionPerTransaction: this.transactionBank?.commissionPerTransaction ?? 3,
+    });
   }
 
   async submit(): Promise<void> {
     this.errorMessage.set(null);
 
-    if (this.form.invalid || this.isSubmitting()) {
+    const commissionInvalid = this.form.controls.isGuayacan.value && this.form.controls.commissionPerTransaction.invalid;
+    if (this.form.controls.name.invalid || commissionInvalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -75,11 +82,16 @@ export class TransactionBankFormModalComponent implements OnChanges {
       return;
     }
 
-    const { name } = this.form.getRawValue();
+    const { name, isGuayacan, commissionPerTransaction } = this.form.getRawValue();
     this.isSubmitting.set(true);
 
+    // La marca Guayacán solo existe en edición (el alta no la acepta).
     const request$ = this.isEditMode
-      ? this.transactionBankService.updateTransactionBank(this.transactionBank!.id, { name })
+      ? this.transactionBankService.updateTransactionBank(this.transactionBank!.id, {
+          name,
+          isGuayacan,
+          ...(isGuayacan ? { commissionPerTransaction: Number(commissionPerTransaction) } : {}),
+        })
       : this.transactionBankService.createTransactionBank({ name });
 
     request$.subscribe({

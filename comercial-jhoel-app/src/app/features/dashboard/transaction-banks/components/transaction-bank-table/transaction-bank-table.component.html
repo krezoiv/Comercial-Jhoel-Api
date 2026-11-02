@@ -73,7 +73,12 @@
             <td>
               <ng-container *ngTemplateOutlet="bankMark; context: { $implicit: transactionBank }" />
             </td>
-            <td class="transaction-bank-table__name">{{ transactionBank.name }}</td>
+            <td class="transaction-bank-table__name">
+              {{ transactionBank.name }}
+              @if (transactionBank.cashBoxCode === 'GUAYACAN') {
+                <app-badge tone="gold">Guayacán · {{ formatCurrency(transactionBank.commissionPerTransaction ?? 0) }}/trans.</app-badge>
+              }
+            </td>
             <td>
               <app-badge [tone]="transactionBank.isActive ? 'success' : 'danger'">
                 {{ transactionBank.isActive ? 'Activo' : 'Inactivo' }}
@@ -123,6 +128,9 @@
         <div class="transaction-bank-card__header">
           <ng-container *ngTemplateOutlet="bankMark; context: { $implicit: transactionBank }" />
           <p class="transaction-bank-card__name">{{ transactionBank.name }}</p>
+          @if (transactionBank.cashBoxCode === 'GUAYACAN') {
+            <app-badge tone="gold">Guayacán · {{ formatCurrency(transactionBank.commissionPerTransaction ?? 0) }}/trans.</app-badge>
+          }
           <app-badge [tone]="transactionBank.isActive ? 'success' : 'danger'">
             {{ transactionBank.isActive ? 'Activo' : 'Inactivo' }}
           </app-badge>

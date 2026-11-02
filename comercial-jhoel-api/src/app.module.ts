@@ -49,6 +49,7 @@ import { LandingBackgroundsModule } from './modules/landing-backgrounds/landing-
 import { SiteVisitsModule } from './modules/site-visits/site-visits.module';
 import { SalesRegisterModule } from './modules/sales-register/sales-register.module';
 import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.module';
+import { GuayacanCashBoxModule } from './modules/guayacan-cash-box/guayacan-cash-box.module';
 
 @Module({
   imports: [
@@ -117,6 +118,7 @@ import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.modu
     SiteVisitsModule,
     SalesRegisterModule,
     SalesCashBoxModule,
+    GuayacanCashBoxModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

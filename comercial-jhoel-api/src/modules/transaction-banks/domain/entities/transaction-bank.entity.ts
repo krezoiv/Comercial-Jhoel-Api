@@ -10,6 +10,10 @@ export interface TransactionBankProps {
   updatedByUsername: string | null;
   /** Logo opcional (icono del banco en el modal de Transaccionar) — los bytes nunca viajan en el listado. */
   hasImage?: boolean;
+  /** 'GUAYACAN' = Cooperativa Guayacán (caja propia + comisión por transacción). `null` en cualquier otro banco agente. */
+  cashBoxCode?: 'GUAYACAN' | null;
+  /** Tarifa vigente por transacción individual — solo con `cashBoxCode`. Las comisiones guardan la suya: cambiarla no altera el histórico. */
+  commissionPerTransaction?: number | null;
 }
 
 /** "Banco Agente" — the simple catalog Transaccionar's dropdown reads from. Deliberately separate from `banks` (Sistema→Bancos / Agentes Bancarios→Bancos), which is a heavier entity tied to account numbers and Cuadre de Agentes balances. */
@@ -58,5 +62,13 @@ export class TransactionBank {
 
   get hasImage(): boolean {
     return this.props.hasImage ?? false;
+  }
+
+  get cashBoxCode(): 'GUAYACAN' | null {
+    return this.props.cashBoxCode ?? null;
+  }
+
+  get commissionPerTransaction(): number | null {
+    return this.props.commissionPerTransaction ?? null;
   }
 }

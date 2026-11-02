@@ -9,4 +9,6 @@ export class TransactionBankResponseDto {
   updatedBy: string | null;
   updatedByUsername: string | null;
   hasImage: boolean;
+  cashBoxCode: 'GUAYACAN' | null;
+  commissionPerTransaction: number | null;
 }

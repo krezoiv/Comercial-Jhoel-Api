@@ -1654,6 +1654,18 @@ Catálogo Web ▸, Noticias ▸, Usuarios y Configuración ▸). Rutas hoja y `r
 - Resumen: `.home` es una sola columna con `gap` uniforme; las secciones que solo viven ahí
   (`app-recharge-indicators-section`, `app-financial-indicators`) ya no traen margen exterior propio.
 
+### Cuadre de Caja Guayacán (`features/dashboard/guayacan-cash-box/`, `/dashboard/caja-guayacan`)
+
+Bajo "Agentes Bancarios" en el sidebar. `GuayacanCashBoxService` (`/guayacan-cash-box`); todo saldo/período viene del
+backend (ver el `CLAUDE.md` del API) — la página nunca calcula el saldo, solo recarga tras cada escritura.
+- Tarjetas (saldo, transacciones + comisión día/semana/mes, ingresos/egresos con selector de período), indicadores
+  por período, arqueo (`GuayacanCashCountPanelComponent`) y Kardex paginado con filtros (borrador/aplicado).
+- `GuayacanMovementFormModalComponent`: Ingreso / Egreso / Ajuste (admin); vista previa saldo anterior → nuevo,
+  confirmación, `clientRequestId` por apertura del modal (reintentos idempotentes); no cierra con clic fuera.
+- `GuayacanMovementDetailModalComponent`: auditoría + "Anular" (admin, motivo). Comisiones no se anulan aquí.
+- Reutiliza `CashBreakdownTableComponent` de Transaccionar (input opcional `emptyAmountText`) y
+  `ReportPaginationComponent`. La marca Guayacán y su comisión se editan en Sistema → Banco Agente (solo edición).
+
 ### Notifications
 
 `NotificationService` (`core/services/notification.service.ts`) is a global toast queue —

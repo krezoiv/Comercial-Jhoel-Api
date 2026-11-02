@@ -1364,6 +1364,32 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   (transacción con ROLLBACK) y `sql/tests/bank-balance-concurrency.sh` (dos sesiones reales sobre una copia
   temporal de la base).
 
+### Cooperativa Guayacán — comisión por transacción + Caja propia (`modules/guayacan-cash-box/`, migración `1760006300000`)
+
+- **Identificación y tarifa**: `transaction_banks.cash_box_code = 'GUAYACAN'` (único, índice parcial) y
+  `transaction_banks.commission_per_transaction` (Q3.00 por defecto) — ambas `NULL` en todo otro banco agente.
+  Se marcan en Sistema → Banco Agente (`PATCH /transaction-banks/:id` con `isGuayacan`/`commissionPerTransaction`,
+  admin). La migración solo marca sola si hay exactamente UN banco agente activo cuyo nombre normalizado contiene
+  "guayacan" o es "cooperativa". En el selector de bancos de Transaccionar la regla `GUAYACAN` resuelve a la cuenta
+  "Cooperativa Guayacán" de Sistema → Bancos (debe existir con su número real).
+- **Ledger `guayacan_cash_movements`**: saldo anterior / monto con signo / saldo posterior (`CHECK`), `sequence`
+  estricta, saldo inicial 0. Único escritor: `apply_guayacan_cash_movement` (advisory lock `guayacan_cash_box`, saldo
+  leído bajo lock). `register_guayacan_cash_movement` (INGRESO/EGRESO positivos, AJUSTE con signo y motivo) y
+  `void_guayacan_cash_movement` (marca ANULADO + ANULACION inversa; solo INGRESO/EGRESO/AJUSTE). `client_request_id`
+  único = idempotencia (doble clic). Desglose opcional en `guayacan_cash_movement_details` (debe sumar el monto).
+- **Comisión automática por TRIGGER** sobre `bank_deposit_operations` (no se tocó `register_/void_bank_deposit_operation`):
+  AFTER INSERT → `COMISION_TRANSACCION` = `transaction_count × tarifa` en la misma transacción (índice único por
+  operación); AFTER UPDATE `is_voided` → `REVERSO_COMISION` independiente (puede dejar la caja en negativo: anular la
+  operación no se bloquea por la caja). Tarifa y cantidad quedan guardadas en el movimiento.
+- **Arqueos** `guayacan_cash_counts` (+ detalles): conteo físico vs saldo del Kardex bajo el mismo lock; nunca cambian
+  el saldo — una diferencia se corrige con AJUSTE (admin).
+- **Rutas** `/guayacan-cash-box` (`JwtAuthGuard`): `summary`, `movements` (paginado, filtros fecha/tipo),
+  `movements/:id`, `POST movements`, `counts/latest`, `POST counts` — operativos; `POST adjustments` y
+  `POST movements/:id/void` — `@Roles` admin. Períodos (día, semana lunes–domingo, mes) calculados en SQL con
+  `America/Guatemala`; transacciones = `SUM(transaction_count)` de operaciones Guayacán no anuladas; en
+  ingresos/egresos del período un anulado y su contrapartida se cancelan.
+- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 35 casos).
+
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 
 `GET /dashboard/summary` — admin-only (`@Roles('ADMIN', 'SUPER_ADMIN')`, class-level), backs the Resumen

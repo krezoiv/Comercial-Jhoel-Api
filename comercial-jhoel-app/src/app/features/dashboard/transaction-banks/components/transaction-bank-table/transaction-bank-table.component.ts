@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 
-import { TransactionBank } from '../../../../../core/models';
+import { TransactionBank, formatCurrency } from '../../../../../core/models';
 import { transactionBankImageUrl } from '../../../../../core/services/transaction-bank.service';
 import { transactionBankMonogram } from '../../../../../core/utils/transaction-bank-account.util';
 import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
@@ -21,6 +21,8 @@ const SKELETON_ROWS = 4;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionBankTableComponent {
+  readonly formatCurrency = formatCurrency;
+
   private readonly transactionBanksInput = signal<TransactionBank[]>([]);
 
   @Input()

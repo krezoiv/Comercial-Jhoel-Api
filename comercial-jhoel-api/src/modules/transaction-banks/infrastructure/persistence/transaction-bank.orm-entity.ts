@@ -1,3 +1,4 @@
+import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import {
   Column,
   CreateDateColumn,
@@ -31,11 +32,35 @@ export class TransactionBankOrmEntity {
   @Column({ name: 'image_data', type: 'bytea', nullable: true, select: false })
   imageData: Buffer | null;
 
-  @Column({ name: 'image_mime_type', type: 'varchar', length: 50, nullable: true })
+  @Column({
+    name: 'image_mime_type',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   imageMimeType: string | null;
 
   @Column({ name: 'image_size_bytes', type: 'integer', nullable: true })
   imageSizeBytes: number | null;
+
+  /** 'GUAYACAN' = Cooperativa Guayacán (ver migración `CreateGuayacanCashBox`). */
+  @Column({
+    name: 'cash_box_code',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  cashBoxCode: 'GUAYACAN' | null;
+
+  @Column({
+    name: 'commission_per_transaction',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    transformer: new DecimalColumnTransformer(),
+  })
+  commissionPerTransaction: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

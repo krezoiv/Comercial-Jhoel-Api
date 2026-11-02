@@ -1,0 +1,95 @@
+@use '../../guayacan-modal';
+
+.banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &--voided {
+    background: var(--color-danger-soft);
+    color: var(--color-danger-strong);
+  }
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  font-size: var(--fs-sm);
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    color: var(--color-text-on-light);
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.detail__wide {
+  grid-column: 1 / -1;
+}
+
+.amount--in {
+  color: var(--color-success);
+  font-weight: var(--fw-semibold);
+}
+
+.amount--out {
+  color: var(--color-danger);
+  font-weight: var(--fw-semibold);
+}
+
+.section {
+  margin-top: var(--space-5);
+}
+
+.section__title {
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-on-light-subtle);
+}
+
+.section__text {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light);
+}
+
+.tag--voided {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.denominations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+  }
+}

@@ -1,0 +1,66 @@
+<app-card padding="lg" class="count-card">
+  <div class="count-card__header">
+    <div>
+      <h2 class="count-card__title">Conteo de efectivo en caja</h2>
+      <p class="count-card__subtitle">Billetes y monedas físicos comparados contra el saldo del Kardex.</p>
+    </div>
+    @if (latest(); as last) {
+      <div class="count-card__last">
+        <span>Último arqueo · {{ formatDateTime(last.createdAt) }} · {{ last.createdByUsername }}</span>
+        <strong>
+          {{ formatCurrency(last.totalCounted) }}
+          @if (last.difference !== 0) {
+            <em [class.diff--over]="last.difference > 0" [class.diff--under]="last.difference < 0">
+              ({{ last.difference > 0 ? '+' : '' }}{{ formatCurrency(last.difference) }})
+            </em>
+          } @else {
+            <em class="diff--ok">(cuadró)</em>
+          }
+        </strong>
+      </div>
+    } @else if (!loading()) {
+      <span class="count-card__last">Aún no hay arqueos registrados.</span>
+    }
+  </div>
+
+  <app-cash-breakdown-table
+    [cashCounts]="cashCounts()"
+    [totalCash]="totalCounted()"
+    [totalAmount]="balance"
+    [status]="status()"
+    emptyAmountText="El Kardex no tiene saldo"
+    (quantityChange)="onQuantityChange($event)"
+  />
+
+  <div class="count-card__compare" [class.count-card__compare--ok]="difference() === 0">
+    <div><span>Contado</span><strong>{{ formatCurrency(totalCounted()) }}</strong></div>
+    <div><span>Kardex</span><strong>{{ formatCurrency(balance) }}</strong></div>
+    <div>
+      <span>Diferencia</span>
+      <strong [class.diff--over]="difference() > 0" [class.diff--under]="difference() < 0">
+        {{ difference() > 0 ? '+' : '' }}{{ formatCurrency(difference()) }}
+      </strong>
+    </div>
+  </div>
+
+  <div class="count-card__notes">
+    <label for="guayacan-count-notes">Observaciones <span>(opcional)</span></label>
+    <input id="guayacan-count-notes" type="text" maxlength="500" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+  </div>
+
+  <div class="count-card__actions">
+    <app-button variant="ghost" size="sm" [disabled]="isSaving()" (click)="clear()">Limpiar</app-button>
+    @if (isAdmin && difference() !== 0) {
+      <app-button variant="ghost" size="sm" (click)="adjustRequested.emit(difference())">
+        <app-icon name="edit-2" [size]="14" />
+        Ajustar diferencia
+      </app-button>
+    }
+    <app-button variant="primary" size="sm" [disabled]="isSaving() || loading()" (click)="save()">
+      {{ isSaving() ? 'Guardando…' : 'Registrar arqueo' }}
+    </app-button>
+  </div>
+  @if (difference() !== 0 && !isAdmin) {
+    <p class="count-card__hint">Si la diferencia se confirma, un administrador debe registrar un ajuste autorizado.</p>
+  }
+</app-card>
