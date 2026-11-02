@@ -30,6 +30,8 @@ export interface BankDepositOperationOutput {
   changeGiven: number;
   /** `totalCash - changeGiven` — el efectivo realmente aplicado al depósito, siempre igual a `totalAmount` en una operación guardada. */
   netCashApplied: number;
+  /** `false` = registrada sin desglose de efectivo: `cashDetails` vacío y `totalCash` 0. */
+  cashBreakdownEnabled: boolean;
   clientName: string | null;
   clientId: string | null;
   transactionTypeId: string;
@@ -99,6 +101,7 @@ export function toBankDepositOperationOutput(
     operationDate: operation.operationDate,
     changeGiven: operation.changeGiven,
     netCashApplied: operation.netCashApplied,
+    cashBreakdownEnabled: operation.cashBreakdownEnabled,
     clientName: operation.clientName,
     clientId: operation.clientId,
     transactionTypeId: operation.transactionTypeId,

@@ -22,9 +22,13 @@ import { GetBankDepositTransactionSummaryUseCase } from '../../application/use-c
 import { GetBankDepositDailyStatsUseCase } from '../../application/use-cases/get-bank-deposit-daily-stats.use-case';
 import { GetBankDepositWeeklyStatsUseCase } from '../../application/use-cases/get-bank-deposit-weekly-stats.use-case';
 import { GetBankDepositYearlyStatsUseCase } from '../../application/use-cases/get-bank-deposit-yearly-stats.use-case';
+import { ListRecentBankDepositOperationsUseCase } from '../../application/use-cases/list-recent-bank-deposit-operations.use-case';
 import { CreateBankDepositRequestDto } from '../dtos/create-bank-deposit.request.dto';
 import { VoidBankDepositOperationRequestDto } from '../dtos/void-bank-deposit-operation.request.dto';
-import { BankDepositOperationResponseDto } from '../dtos/bank-deposit.response.dto';
+import {
+  BankDepositOperationResponseDto,
+  BankDepositOperationSummaryResponseDto,
+} from '../dtos/bank-deposit.response.dto';
 import { BankDepositMonthlyCountResponseDto } from '../dtos/bank-deposit-monthly-count.response.dto';
 import { BankDepositTransactionSummaryResponseDto } from '../dtos/bank-deposit-transaction-summary.response.dto';
 import { BankDepositDailyStatsResponseDto } from '../dtos/bank-deposit-daily-stats.response.dto';
@@ -60,6 +64,7 @@ export class BankDepositsController {
     private readonly getBankDepositDailyStatsUseCase: GetBankDepositDailyStatsUseCase,
     private readonly getBankDepositWeeklyStatsUseCase: GetBankDepositWeeklyStatsUseCase,
     private readonly getBankDepositYearlyStatsUseCase: GetBankDepositYearlyStatsUseCase,
+    private readonly listRecentBankDepositOperationsUseCase: ListRecentBankDepositOperationsUseCase,
   ) {}
 
   @Post()
@@ -82,6 +87,7 @@ export class BankDepositsController {
       sendToAssets: dto.sendToAssets ?? false,
       isAdmin: ADMIN_ROLES.includes(user.role),
       changeGiven: dto.changeGiven ?? 0,
+      cashBreakdownEnabled: dto.cashBreakdownEnabled ?? true,
     });
   }
 
@@ -113,6 +119,12 @@ export class BankDepositsController {
   @Get('yearly-stats')
   yearlyStats(): Promise<BankDepositYearlyStatsResponseDto> {
     return this.getBankDepositYearlyStatsUseCase.execute();
+  }
+
+  /** Tarjeta "Últimas transacciones" de Transaccionar — las 10 más recientes (fijo, sin parámetros). Misma política que el resto del controlador: cualquier cuenta autenticada, igual que la propia pantalla Transaccionar. Debe declararse antes de `:id`. */
+  @Get('recent')
+  recent(): Promise<BankDepositOperationSummaryResponseDto[]> {
+    return this.listRecentBankDepositOperationsUseCase.execute();
   }
 
   @Get(':id')

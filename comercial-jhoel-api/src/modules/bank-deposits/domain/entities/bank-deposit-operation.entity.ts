@@ -18,6 +18,8 @@ export interface BankDepositOperationProps {
   operationDate: string;
   /** "Vuelto" — always `0` for an operation that didn't need one. `totalCash - changeGiven` is the net amount actually applied to the deposit. */
   changeGiven: number;
+  /** `false` = registrada sin desglose de efectivo (sin denominaciones, `totalCash` 0, sin vuelto). Toda operación previa a esa opción es `true`. */
+  cashBreakdownEnabled: boolean;
   clientName: string | null;
   /** A REGISTERED client (the `clients` table also used by Cuentas por Cobrar/Activos) — `null` unless one was picked. Independent of `clientName`, which stays free-text for every other case. */
   clientId: string | null;
@@ -95,6 +97,10 @@ export class BankDepositOperation {
 
   get changeGiven(): number {
     return this.props.changeGiven;
+  }
+
+  get cashBreakdownEnabled(): boolean {
+    return this.props.cashBreakdownEnabled;
   }
 
   /** The net cash actually applied to the deposit — always equal to `totalAmount` for a saved operation, per `register_bank_deposit_operation`'s own cuadre check. Derived, never stored twice. */

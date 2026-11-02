@@ -28,6 +28,8 @@ export class SaveConfirmModalComponent {
   @Input() sendToAccountsReceivable = false;
   @Input() sendToAssets = false;
   @Input() totalAmount = 0;
+  /** `false` = operación sin desglose: el resumen lo dice y no lista denominaciones. */
+  @Input() cashBreakdownEnabled = true;
   @Input() cashCounts: Record<string, number> = {};
   @Input() transactionAmounts: number[] = [];
   /** "Vuelto" confirmado — `0` cuando la operación no lo necesitó. */

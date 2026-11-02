@@ -17,6 +17,7 @@ interface PersistedBankDepositDraft {
   transactionBankId: string;
   bankAccountId?: string;
   totalAmount: number;
+  cashBreakdownEnabled?: boolean;
   cashCounts: Record<string, number>;
   transactionAmounts: number[];
   clientName: string;
@@ -64,10 +65,18 @@ export class BankDepositDraftStore {
   readonly isGenesisType = computed(() => isGenesisBalanceEffect(this.transactionTypeBalanceEffect()));
   readonly needsBankAccount = computed(() => requiresBankAccount(this.transactionTypeBalanceEffect()));
   readonly totalAmount = signal(0);
+  /**
+   * Interruptor "Desglose de efectivo" — `false` (NO) por defecto. Apagado:
+   * no se piden ni se envían denominaciones, el cuadre de efectivo no
+   * participa en `overallStatus`/`canSave` y no hay vuelto. Al apagarlo se
+   * vacían las cantidades (ver `setCashBreakdownEnabled`), así nunca queda
+   * un desglose viejo en memoria que pueda colarse en el guardado.
+   */
+  readonly cashBreakdownEnabled = signal(false);
   /** Keyed by denomination (as string, since object keys are always strings) — quantity per fixed denomination row. */
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
-  /** One entry per sub-transaction row — length is "cantidad de transacciones". */
-  readonly transactionAmounts = signal<number[]>([]);
+  /** One entry per sub-transaction row — length is "cantidad de transacciones". Starts at ONE row that mirrors `totalAmount` (see `setTotalAmount`), so a single-transaction operation never needs a typed amount. */
+  readonly transactionAmounts = signal<number[]>([0]);
   /** Free text, never required to save — see `RegisterBankDepositInput.clientName`'s own doc comment. Independent of `clientId` below: both can be set at once, though the backend resolves the display name from the real client whenever `clientId` is present. */
   readonly clientName = signal('');
 
@@ -123,8 +132,10 @@ export class BankDepositDraftStore {
     this.changeConfirmed() ? round2(this.totalCash() - this.changeGiven()) : this.totalCash(),
   );
 
-  /** Drives the "Dar vuelto" action — true only while there's a real, not-yet-confirmed excess. */
-  readonly hasPendingChange = computed(() => !this.changeConfirmed() && this.excessAmount() > 0);
+  /** Drives the "Dar vuelto" action — true only while there's a real, not-yet-confirmed excess. Never without a desglose. */
+  readonly hasPendingChange = computed(
+    () => this.cashBreakdownEnabled() && !this.changeConfirmed() && this.excessAmount() > 0,
+  );
 
   readonly cashStatus = computed<CuadreStatus>(() => {
     const total = round2(this.totalAmount());
@@ -144,9 +155,11 @@ export class BankDepositDraftStore {
     return distributed > total ? 'red' : 'yellow';
   });
 
-  /** The worst of the two sub-statuses — red beats yellow beats green. */
+  /** The worst of the sub-statuses — red beats yellow beats green. The cash one only counts while the desglose is ON; the distribution always counts. */
   readonly overallStatus = computed<CuadreStatus>(() => {
-    const statuses = [this.cashStatus(), this.transactionsStatus()];
+    const statuses = this.cashBreakdownEnabled()
+      ? [this.cashStatus(), this.transactionsStatus()]
+      : [this.transactionsStatus()];
     if (statuses.includes('red')) return 'red';
     if (statuses.includes('yellow')) return 'yellow';
     return 'green';
@@ -170,7 +183,8 @@ export class BankDepositDraftStore {
       this.bankAccountId() !== '' ||
       this.totalAmount() > 0 ||
       this.totalCash() > 0 ||
-      this.transactionAmounts().length > 0 ||
+      // One row is the automatic default (mirrors the total) — only a manual multi-row split is progress of its own.
+      this.transactionAmounts().length > 1 ||
       this.clientName().trim() !== '' ||
       this.clientId() !== null,
   );
@@ -215,6 +229,17 @@ export class BankDepositDraftStore {
     // it always mirrors the total, so a change here must stay in sync too.
     if (this.transactionAmounts().length === 1) {
       this.transactionAmounts.set([amount]);
+    }
+    this.persist();
+  }
+
+  /** Turning the desglose OFF discards every typed quantity and any confirmed vuelto — nothing stale may reach the cuadre or the payload. Never touches `totalAmount` or the distribution. */
+  setCashBreakdownEnabled(enabled: boolean): void {
+    this.cashBreakdownEnabled.set(enabled);
+    if (!enabled) {
+      this.cashCounts.set(emptyCashCounts());
+      this.changeGiven.set(0);
+      this.changeConfirmed.set(false);
     }
     this.persist();
   }
@@ -313,8 +338,9 @@ export class BankDepositDraftStore {
     this.transactionBankId.set('');
     this.bankAccountId.set('');
     this.totalAmount.set(0);
+    this.cashBreakdownEnabled.set(false);
     this.cashCounts.set(emptyCashCounts());
-    this.transactionAmounts.set([]);
+    this.transactionAmounts.set([0]);
     this.clientName.set('');
     this.clientId.set(null);
     this.clientDisplayName.set(null);
@@ -337,6 +363,7 @@ export class BankDepositDraftStore {
       transactionBankId: this.transactionBankId(),
       bankAccountId: this.bankAccountId(),
       totalAmount: this.totalAmount(),
+      cashBreakdownEnabled: this.cashBreakdownEnabled(),
       cashCounts: this.cashCounts(),
       transactionAmounts: this.transactionAmounts(),
       clientName: this.clientName(),
@@ -373,15 +400,21 @@ export class BankDepositDraftStore {
       this.transactionTypeBalanceEffect.set(parsed.transactionTypeBalanceEffect ?? null);
       this.bankAccountId.set(parsed.bankAccountId ?? '');
       this.totalAmount.set(parsed.totalAmount ?? 0);
-      this.cashCounts.set({ ...emptyCashCounts(), ...(parsed.cashCounts ?? {}) });
-      this.transactionAmounts.set(Array.isArray(parsed.transactionAmounts) ? parsed.transactionAmounts : []);
+      // A draft saved before this toggle existed always had a desglose — keep it on, never drop counts silently.
+      const cashBreakdownEnabled = parsed.cashBreakdownEnabled ?? true;
+      this.cashBreakdownEnabled.set(cashBreakdownEnabled);
+      this.cashCounts.set(
+        cashBreakdownEnabled ? { ...emptyCashCounts(), ...(parsed.cashCounts ?? {}) } : emptyCashCounts(),
+      );
+      const amounts = Array.isArray(parsed.transactionAmounts) ? parsed.transactionAmounts : [];
+      this.transactionAmounts.set(amounts.length > 0 ? amounts : [round2(parsed.totalAmount ?? 0)]);
       this.clientName.set(parsed.clientName ?? '');
       this.clientId.set(parsed.clientId ?? null);
       this.clientDisplayName.set(parsed.clientDisplayName ?? null);
       this.sendToAccountsReceivable.set(parsed.sendToAccountsReceivable ?? false);
       this.sendToAssets.set(parsed.sendToAssets ?? false);
-      this.changeGiven.set(parsed.changeGiven ?? 0);
-      this.changeConfirmed.set(parsed.changeConfirmed ?? false);
+      this.changeGiven.set(cashBreakdownEnabled ? (parsed.changeGiven ?? 0) : 0);
+      this.changeConfirmed.set(cashBreakdownEnabled ? (parsed.changeConfirmed ?? false) : false);
     } catch {
       sessionStorage.removeItem(key);
     }

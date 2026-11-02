@@ -25,6 +25,7 @@ export class BankDepositOperationResponseDto {
   operationDate: string;
   changeGiven: number;
   netCashApplied: number;
+  cashBreakdownEnabled: boolean;
   clientName: string | null;
   clientId: string | null;
   transactionTypeId: string;

@@ -41,10 +41,8 @@ export class CreateBankDepositRequestDto {
   @Min(0.01)
   totalAmount: number;
 
+  /** Vacío solo cuando `cashBreakdownEnabled` es `false`; con desglose activo el use case (y el SQL) exigen al menos una denominación. */
   @IsArray()
-  @ArrayMinSize(1, {
-    message: 'Debe incluir el desglose de efectivo.',
-  })
   @ValidateNested({ each: true })
   @Type(() => BankDepositCashDetailRequestDto)
   cashDetails: BankDepositCashDetailRequestDto[];
@@ -83,4 +81,9 @@ export class CreateBankDepositRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   changeGiven?: number;
+
+  /** "Desglose de efectivo" (interruptor del formulario). Omitido = `true`, idéntico al comportamiento previo. `false` = sin denominaciones ni vuelto. */
+  @IsOptional()
+  @IsBoolean()
+  cashBreakdownEnabled?: boolean;
 }

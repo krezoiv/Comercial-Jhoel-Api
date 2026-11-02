@@ -6,6 +6,7 @@ import { catchError, of } from 'rxjs';
 
 import {
   Bank,
+  BankDepositOperationSummary,
   BankDepositTransactionSummary,
   Client,
   TransactionBank,
@@ -25,6 +26,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { TransactionBankService } from '../../../core/services/transaction-bank.service';
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
+import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
 import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
 import { transactionBankImageUrl } from '../../../core/services/transaction-bank.service';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
@@ -46,6 +48,7 @@ import { CommissionSummaryCardComponent } from './components/commission-summary-
 import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadre-result-card.component';
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 import { BankPickerModalComponent, BankPickerSelection } from './components/bank-picker-modal/bank-picker-modal.component';
+import { RecentTransactionsCardComponent } from './components/recent-transactions-card/recent-transactions-card.component';
 
 type TransaccionarView = 'dashboard' | 'form';
 
@@ -62,9 +65,9 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
  * "Transaccionar" — a two-step flow. Step one is a dashboard of cards, one
  * per active "Tipo de Transacción" (Depósito, Retiro, Desembolso Préstamo,
  * Pago Cheque, ...), managed under Sistema. Picking one moves to step two:
- * the actual registration form (banco agente, monto, desglose de efectivo,
- * distribución de transacciones — unchanged from before this ticket, just
- * now tagged with the chosen type). Saving successfully — or explicitly
+ * the actual registration form (banco agente, monto, desglose de efectivo
+ * — opcional, interruptor NO por defecto — y distribución de transacciones,
+ * que arranca en 1 igual al monto). Saving successfully — or explicitly
  * changing the type mid-form — resets the module straight back to the
  * dashboard, never leaving the just-used form sitting on screen.
  *
@@ -98,6 +101,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     ClientSearchSelectComponent,
     BankBalanceAmountComponent,
     BankBalanceStripComponent,
+    RecentTransactionsCardComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -247,6 +251,11 @@ export class TransaccionarPageComponent {
   /** `GET /bank-deposits/summary` — the same call the Resumen dashboard's own "Resumen Diario de Transacciones" section reads, see `BankDepositService.getTransactionSummary()`'s own doc comment. Fetched once when the dashboard view mounts; a transient failure just leaves both cards showing zero rather than breaking this screen. */
   readonly transactionSummary = signal<BankDepositTransactionSummary | null>(null);
   readonly loadingSummary = signal(true);
+  /** "Últimas transacciones" — `GET /bank-deposits/recent` (10 filas, orden y límite del backend). Se vuelve a pedir tras cada guardado y al volver a la pestaña. */
+  readonly recentOperations = signal<BankDepositOperationSummary[]>([]);
+  readonly loadingRecent = signal(true);
+  readonly recentFailed = signal(false);
+
   /** Purely a display label ("Septiembre 2026") — never used for any filtering, that's entirely server-side. */
   readonly currentMonthDate = new Date();
 
@@ -305,9 +314,9 @@ export class TransaccionarPageComponent {
       case 'green':
         return 'Cuadre correcto — listo para guardar';
       case 'red':
-        return 'El cuadre excede el monto total';
+        return this.draft.cashBreakdownEnabled() ? 'El cuadre excede el monto total' : 'La distribución excede el monto total';
       default:
-        return 'El cuadre aún no coincide';
+        return this.draft.cashBreakdownEnabled() ? 'El cuadre aún no coincide' : 'La distribución aún no coincide con el monto';
     }
   });
 
@@ -348,6 +357,27 @@ export class TransaccionarPageComponent {
         this.transactionSummary.set(summary);
         this.loadingSummary.set(false);
       });
+
+    this.loadRecentOperations();
+    refetchOnTabVisible(() => this.loadRecentOperations());
+  }
+
+  /** Solo muestra el estado de carga la primera vez — un refresco (tras guardar) conserva las filas visibles hasta que llegan las nuevas. */
+  loadRecentOperations(): void {
+    if (this.recentOperations().length === 0) {
+      this.loadingRecent.set(true);
+    }
+    this.recentFailed.set(false);
+    this.bankDepositService.getRecentOperations().subscribe({
+      next: (operations) => {
+        this.recentOperations.set(operations);
+        this.loadingRecent.set(false);
+      },
+      error: () => {
+        this.loadingRecent.set(false);
+        this.recentFailed.set(true);
+      },
+    });
   }
 
   selectType(type: TransactionType): void {
@@ -449,6 +479,23 @@ export class TransaccionarPageComponent {
     this.draft.setTotalAmount(value === null || Number.isNaN(value) ? 0 : Math.max(value, 0));
   }
 
+  /** Interruptor "Desglose de efectivo". Apagarlo descarta las cantidades ya escritas (nunca participan en el guardado) — se confirma solo si había algo contado. */
+  async onCashBreakdownToggle(): Promise<void> {
+    const enabled = !this.draft.cashBreakdownEnabled();
+    if (!enabled && this.draft.totalCash() > 0) {
+      const confirmed = await this.confirmDialogService.confirm({
+        type: 'UPDATE',
+        title: 'Desactivar desglose de efectivo',
+        message: 'Se descartarán las cantidades por denominación que ya ingresaste. El monto y la distribución no cambian. ¿Deseas continuar?',
+        confirmText: 'Sí, desactivar',
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+    this.draft.setCashBreakdownEnabled(enabled);
+  }
+
   onCashQuantityChange(event: { denomination: number; quantity: number }): void {
     this.draft.setCashQuantity(event.denomination, event.quantity);
   }
@@ -511,21 +558,26 @@ export class TransaccionarPageComponent {
     }
 
     this.isSaving.set(true);
+    // Sin desglose: ni denominaciones ni vuelto — jamás lo que haya quedado en memoria.
+    const cashBreakdownEnabled = this.draft.cashBreakdownEnabled();
     this.bankDepositService
       .registerOperation({
         transactionBankId: this.draft.isGenesisType() ? null : this.draft.transactionBankId(),
         bankAccountId: this.draft.needsBankAccount() ? this.draft.bankAccountId() : null,
         transactionTypeId: this.draft.transactionTypeId(),
         totalAmount: this.draft.totalAmount(),
-        cashDetails: Object.entries(this.draft.cashCounts())
-          .map(([denomination, quantity]) => ({ denomination: Number(denomination), quantity }))
-          .filter((row) => row.quantity > 0),
+        cashBreakdownEnabled,
+        cashDetails: cashBreakdownEnabled
+          ? Object.entries(this.draft.cashCounts())
+              .map(([denomination, quantity]) => ({ denomination: Number(denomination), quantity }))
+              .filter((row) => row.quantity > 0)
+          : [],
         transactionAmounts: this.draft.transactionAmounts(),
         clientName: this.draft.clientName().trim() || null,
         clientId: this.draft.clientId(),
         sendToAccountsReceivable: this.draft.sendToAccountsReceivable(),
         sendToAssets: this.canSendToAssets() && this.draft.sendToAssets(),
-        changeGiven: this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
+        changeGiven: cashBreakdownEnabled && this.draft.changeConfirmed() ? this.draft.changeGiven() : 0,
       })
       .subscribe({
         next: (operation) => {
@@ -544,6 +596,7 @@ export class TransaccionarPageComponent {
             .getTransactionSummary()
             .pipe(catchError(() => of(null)))
             .subscribe((summary) => summary && this.transactionSummary.set(summary));
+          this.loadRecentOperations();
         },
         error: (error: HttpErrorResponse) => {
           this.isSaving.set(false);

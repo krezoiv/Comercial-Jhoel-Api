@@ -95,6 +95,11 @@
   margin-bottom: var(--space-2);
 }
 
+.modal__note {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
 .modal__list {
   list-style: none;
   display: flex;

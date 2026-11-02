@@ -49,7 +49,7 @@ const TITLES: Partial<Record<TransactionTypeBalanceEffect, string>> = {
 /** Duración de la animación de salida — debe coincidir con `bank-picker-out` en el SCSS. */
 const CLOSE_ANIMATION_MS = 140;
 /** Efecto de selección: el icono sale de la tarjeta, crece y "atraviesa" la pantalla — debe coincidir con `fly-through` en el SCSS. */
-const SELECT_ANIMATION_MS = 950;
+const SELECT_ANIMATION_MS = 1300;
 
 
 function round2(value: number): number {
@@ -217,7 +217,12 @@ export class BankPickerModalComponent implements OnChanges, OnDestroy {
 
   /** Toma la posición real del icono pulsado y crea su copia voladora, que parte exactamente de ahí. */
   private launchMark(option: BankPickerOption, event?: Event): void {
-    if (prefersReducedMotion() || typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (prefersReducedMotion()) {
+      // Diagnóstico: con "reducir movimiento" del sistema operativo el efecto se omite a propósito.
+      console.info('[Transaccionar] Efecto de selección omitido: el sistema tiene activado "reducir movimiento".');
       return;
     }
     const mark = (event?.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('.bank-mark');

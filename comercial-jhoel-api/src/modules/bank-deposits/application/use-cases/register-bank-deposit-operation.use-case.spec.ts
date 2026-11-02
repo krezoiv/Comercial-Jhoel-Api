@@ -26,6 +26,10 @@ import {
 } from '../../domain/errors/bank-deposit-assets.error';
 import { todayIsoDate } from '../utils/today-iso-date';
 import { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
+import {
+  CashBreakdownNotExpectedError,
+  CashBreakdownRequiredError,
+} from '../../domain/errors/cash-breakdown.error';
 
 function buildDayOpening(overrides: { closedAt: Date | null }): DayOpening {
   return DayOpening.create({
@@ -67,6 +71,7 @@ function buildOperation(
     totalDistributed: 500,
     operationDate: todayIsoDate(),
     changeGiven: 0,
+    cashBreakdownEnabled: true,
     clientName: null,
     clientId: overrides.clientId ?? null,
     userId: 'user-1',
@@ -215,6 +220,70 @@ describe('RegisterBankDepositOperationUseCase', () => {
       }),
     );
     expect(result.id).toBe('op-1');
+  });
+
+  describe('desglose de efectivo opcional', () => {
+    it('defaults to cashBreakdownEnabled = true when omitted (previous behavior)', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+
+      await useCase.execute(input);
+
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cashBreakdownEnabled: true,
+          cashDetails: input.cashDetails,
+        }),
+      );
+    });
+
+    it('registers without breakdown: empty cashDetails, no vuelto, flag false', async () => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+
+      await useCase.execute({
+        ...input,
+        cashDetails: [],
+        cashBreakdownEnabled: false,
+      });
+
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cashBreakdownEnabled: false,
+          cashDetails: [],
+          changeGiven: 0,
+          transactionAmounts: input.transactionAmounts,
+        }),
+      );
+    });
+
+    it('rejects an enabled breakdown with no denominations', async () => {
+      await expect(
+        useCase.execute({ ...input, cashDetails: [] }),
+      ).rejects.toThrow(CashBreakdownRequiredError);
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
+
+    it('rejects denominations sent while the breakdown is disabled (no stale/fake breakdown)', async () => {
+      await expect(
+        useCase.execute({ ...input, cashBreakdownEnabled: false }),
+      ).rejects.toThrow(CashBreakdownNotExpectedError);
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
+
+    it('rejects a vuelto while the breakdown is disabled', async () => {
+      await expect(
+        useCase.execute({
+          ...input,
+          cashDetails: [],
+          cashBreakdownEnabled: false,
+          changeGiven: 50,
+        }),
+      ).rejects.toThrow(CashBreakdownNotExpectedError);
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
   });
 
   it('defaults a missing clientName to null rather than undefined', async () => {

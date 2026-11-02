@@ -25,6 +25,8 @@ export interface RegisterBankDepositOperationData {
   transactionTypeId: string;
   /** "Vuelto" — omitted/`0` means no vuelto, byte-identical to this operation's behavior before vuelto existed. The SQL function recomputes/validates this server-side regardless of what's sent. */
   changeGiven?: number;
+  /** `false` = sin desglose de efectivo: `cashDetails` debe ir vacío y `changeGiven` en 0 (el SQL lo exige). Omitido = `true`, el comportamiento de siempre. */
+  cashBreakdownEnabled?: boolean;
 }
 
 export interface FindBankDepositOperationsOptions {
@@ -95,6 +97,8 @@ export interface BankDepositRepository {
     id: string,
     context?: TransactionContext,
   ): Promise<BankDepositOperation | null>;
+  /** Las `limit` operaciones más recientes por `createdAt DESC, id DESC` (anuladas incluidas, marcadas) — limitado en SQL. Respalda la tarjeta "Últimas transacciones" de Transaccionar. */
+  findRecent(limit: number): Promise<BankDepositOperation[]>;
   /** Excludes voided operations — a report is about real deposited money, see `TypeOrmBankDepositRepository.getReportSummary`'s own doc comment. */
   getReportSummary(
     filters: BankDepositReportFilters,

@@ -22,6 +22,7 @@ function buildOperation(
     totalDistributed: 500,
     operationDate: '2026-09-03',
     changeGiven: 0,
+    cashBreakdownEnabled: true,
     clientName: null,
     clientId: null,
     userId: 'user-1',

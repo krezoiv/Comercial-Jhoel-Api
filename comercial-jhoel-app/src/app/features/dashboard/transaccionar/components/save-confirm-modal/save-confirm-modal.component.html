@@ -90,14 +90,18 @@
 
       <div class="modal__section">
         <h3 class="modal__section-title">Desglose de efectivo</h3>
-        <ul class="modal__list">
-          @for (row of cashRows; track row.denomination) {
-            <li>
-              <span>{{ formatDenomination(row.denomination) }} × {{ formatQuantity(row.quantity) }}</span>
-              <span>{{ formatCurrency(row.subtotal) }}</span>
-            </li>
-          }
-        </ul>
+        @if (cashBreakdownEnabled) {
+          <ul class="modal__list">
+            @for (row of cashRows; track row.denomination) {
+              <li>
+                <span>{{ formatDenomination(row.denomination) }} × {{ formatQuantity(row.quantity) }}</span>
+                <span>{{ formatCurrency(row.subtotal) }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="modal__note">Sin desglose de efectivo.</p>
+        }
       </div>
 
       <div class="modal__section">

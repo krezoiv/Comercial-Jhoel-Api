@@ -34,6 +34,10 @@ import {
   toBankDepositOperationOutput,
 } from '../dtos/bank-deposit-output';
 import { todayIsoDate } from '../utils/today-iso-date';
+import {
+  CashBreakdownNotExpectedError,
+  CashBreakdownRequiredError,
+} from '../../domain/errors/cash-breakdown.error';
 
 /** Tipos cuyo monto puede enviarse a Activos: dinero que sale hacia el cliente. */
 const ASSET_ELIGIBLE_BALANCE_EFFECTS: readonly TransactionTypeBalanceEffect[] =
@@ -64,6 +68,8 @@ export interface RegisterBankDepositOperationInput {
   isAdmin: boolean;
   /** "Vuelto" — omitted/`0` means no vuelto. `register_bank_deposit_operation` recomputes/validates this against the actual cash total server-side regardless of what's sent here. */
   changeGiven?: number;
+  /** "Desglose de efectivo" — omitido = `true` (comportamiento de siempre). Con `false` no se envían denominaciones ni vuelto; `register_bank_deposit_operation` lo vuelve a exigir. */
+  cashBreakdownEnabled?: boolean;
 }
 
 /**
@@ -123,6 +129,18 @@ export class RegisterBankDepositOperationUseCase {
       throw new BankDepositDayAlreadyClosedError(operationDate);
     }
 
+    // Error claro antes de tocar la base — el SQL vuelve a validarlo igual.
+    const cashBreakdownEnabled = input.cashBreakdownEnabled ?? true;
+    if (cashBreakdownEnabled && input.cashDetails.length === 0) {
+      throw new CashBreakdownRequiredError();
+    }
+    if (
+      !cashBreakdownEnabled &&
+      (input.cashDetails.length > 0 || (input.changeGiven ?? 0) !== 0)
+    ) {
+      throw new CashBreakdownNotExpectedError();
+    }
+
     const sendToAccountsReceivable = input.sendToAccountsReceivable ?? false;
     const sendToAssets = input.sendToAssets ?? false;
 
@@ -175,6 +193,7 @@ export class RegisterBankDepositOperationUseCase {
       clientName,
       clientId,
       changeGiven: input.changeGiven ?? 0,
+      cashBreakdownEnabled,
     };
 
     if (!sendToAccountsReceivable && !sendToAssets) {

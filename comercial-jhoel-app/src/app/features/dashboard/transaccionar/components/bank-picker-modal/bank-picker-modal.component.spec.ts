@@ -90,7 +90,7 @@ describe('BankPickerModalComponent', () => {
   it('Depositar → Akisi emite Fundación Génesis Empresarial', fakeAsync(() => {
     open('DEPOSITO');
     tile('Akísi').click();
-    tick(1500);
+    tick(1800);
     expect(picked.length).toBe(1);
     expect(picked[0].transactionBank.id).toBe('a-akisi');
     expect(picked[0].account.id).toBe('genesis');
@@ -144,7 +144,7 @@ describe('BankPickerModalComponent', () => {
     (fixture.nativeElement.querySelector('.modal__close') as HTMLButtonElement).click();
     tick(300);
     expect(picked.length).toBe(0);
-    tick(1200);
+    tick(1500);
     expect(picked.length).toBe(1);
     expect(picked[0].account.id).toBe('genesis');
     expect(cancelled).toBe(0);
@@ -164,7 +164,7 @@ describe('BankPickerModalComponent', () => {
     const options: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.account-option'));
     expect(options.length).toBe(2);
     options[1].click();
-    tick(1500);
+    tick(1800);
     expect(picked[0].account.id).toBe('gtc-2');
   }));
 

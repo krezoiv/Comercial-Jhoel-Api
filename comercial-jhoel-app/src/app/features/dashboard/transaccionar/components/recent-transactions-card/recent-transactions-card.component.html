@@ -1,0 +1,65 @@
+<app-card padding="lg" class="recent-card">
+  <div class="recent-card__header">
+    <h3 class="recent-card__title">Últimas transacciones</h3>
+    <span class="recent-card__subtitle">Los 10 registros más recientes</span>
+  </div>
+
+  @if (loading) {
+    <ul class="recent-card__skeleton" aria-label="Cargando últimas transacciones">
+      @for (row of [1, 2, 3, 4]; track row) {
+        <li></li>
+      }
+    </ul>
+  } @else if (failed) {
+    <div class="recent-card__state recent-card__state--error" role="alert">
+      <app-icon name="alert-triangle" [size]="20" />
+      <p>No se pudieron cargar las últimas transacciones.</p>
+      <button type="button" class="recent-card__retry" (click)="retry.emit()">Reintentar</button>
+    </div>
+  } @else if (operations.length === 0) {
+    <div class="recent-card__state">
+      <app-icon name="arrow-left-right" [size]="22" />
+      <p>Aún no hay transacciones registradas.</p>
+      <span>La primera que guardes aparecerá aquí.</span>
+    </div>
+  } @else {
+    <table class="recent-table">
+      <thead>
+        <tr>
+          <th scope="col">Fecha</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Banco / Cuenta</th>
+          <th scope="col" class="recent-table__amount">Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (operation of operations; track operation.id) {
+          <tr [class.recent-table__row--voided]="operation.isVoided" [title]="rowTitle(operation)">
+            <td class="recent-table__date">
+              <span>{{ shortDate(operation.createdAt) }}</span>
+              <span class="recent-table__muted">{{ shortTime(operation.createdAt) }}</span>
+            </td>
+            <td class="recent-table__type">
+              <span class="recent-table__ellipsis">{{ operation.transactionTypeName }}</span>
+              @if (operation.isVoided) {
+                <span class="recent-table__badge">Anulada</span>
+              }
+            </td>
+            <td class="recent-table__account">
+              <span class="recent-table__ellipsis">{{ accountName(operation) }}</span>
+              @if (operation.bankAccountNumber) {
+                <span class="recent-table__muted recent-table__ellipsis">{{ operation.bankAccountNumber }}</span>
+              }
+            </td>
+            <td class="recent-table__amount">
+              <span class="recent-table__value">{{ formatCurrency(operation.totalAmount) }}</span>
+              @if (operation.transactionCount > 1) {
+                <span class="recent-table__muted">{{ operation.transactionCount }} trans.</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</app-card>

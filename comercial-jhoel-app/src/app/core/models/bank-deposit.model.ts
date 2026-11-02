@@ -33,6 +33,8 @@ export interface BankDepositOperation {
   changeGiven: number;
   /** `totalCash - changeGiven` — el efectivo realmente aplicado al depósito, siempre igual a `totalAmount` en una operación guardada. */
   netCashApplied: number;
+  /** `false` = registrada sin desglose de efectivo (`cashDetails` vacío, `totalCash` 0). */
+  cashBreakdownEnabled: boolean;
   /** Free text, typed by whoever registers the deposit — never looked up against the clients table. */
   clientName: string | null;
   /** A REGISTERED client (the same `clients` table Cuentas por Cobrar uses) — `null` unless one was linked. Independent of `clientName`; see "Enviar a cuentas por cobrar" on the Depósito form. */
@@ -68,6 +70,10 @@ export interface BankDepositOperationSummary {
   /** `null` para Desembolsos/Pagos Génesis (sin banco agente). */
   transactionBankId: string | null;
   transactionBankName: string;
+  /** Cuenta cuyo saldo movió la operación — `null` si el tipo no mueve saldo. */
+  bankAccountId: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
   totalAmount: number;
   transactionCount: number;
   operationDate: string;
@@ -108,6 +114,8 @@ export interface RegisterBankDepositInput {
   sendToAssets?: boolean;
   /** "Vuelto" — omitido/`0` significa que no hubo vuelto, idéntico al comportamiento de siempre. El backend recalcula/valida esto contra el efectivo real. */
   changeGiven?: number;
+  /** Interruptor "Desglose de efectivo". `false` = sin denominaciones ni vuelto (el backend lo exige así). Omitido = `true`. */
+  cashBreakdownEnabled?: boolean;
 }
 
 /** `GET /bank-deposits/monthly-count` — backs the Resumen dashboard's "Bancos" tile. `count` excludes anuladas and always covers the 1st of the current month through today; it resets on its own the moment the calendar rolls into a new month, there's nothing to reset client-side. */

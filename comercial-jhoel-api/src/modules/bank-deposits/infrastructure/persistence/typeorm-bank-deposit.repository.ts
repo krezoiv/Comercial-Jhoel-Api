@@ -25,6 +25,10 @@ import { InvalidDepositAmountError } from '../../domain/errors/invalid-deposit-a
 import { InvalidCashQuantityError } from '../../domain/errors/invalid-cash-quantity.error';
 import { CashTotalMismatchError } from '../../domain/errors/cash-total-mismatch.error';
 import { TransactionTotalMismatchError } from '../../domain/errors/transaction-total-mismatch.error';
+import {
+  CashBreakdownNotExpectedError,
+  CashBreakdownRequiredError,
+} from '../../domain/errors/cash-breakdown.error';
 import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-deposit-client.error';
 import { BankDepositOperationNotFoundError } from '../../domain/errors/bank-deposit-operation-not-found.error';
 import { BankDepositOperationAlreadyVoidedError } from '../../domain/errors/bank-deposit-operation-already-voided.error';
@@ -58,7 +62,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       const rows = await manager.query<
         { register_bank_deposit_operation: string }[]
       >(
-        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11)',
+        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12)',
         [
           data.transactionBankId,
           data.totalAmount,
@@ -71,6 +75,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
           data.changeGiven ?? 0,
           data.clientId ?? null,
           data.bankAccountId ?? null,
+          data.cashBreakdownEnabled ?? true,
         ],
       );
       operationId = rows[0].register_bank_deposit_operation;
@@ -119,6 +124,22 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       page: options.page,
       limit: options.limit,
     };
+  }
+
+  /** Las `limit` operaciones registradas más recientes (anuladas incluidas, igual que `findAll`) — `ORDER BY created_at DESC, id DESC` + `LIMIT` en SQL, nunca el historial completo. Sin joins a desglose/transacciones: es un resumen. */
+  async findRecent(limit: number): Promise<BankDepositOperation[]> {
+    const orms = await this.repository
+      .createQueryBuilder('operation')
+      .leftJoinAndSelect('operation.transactionBank', 'transactionBank')
+      .leftJoinAndSelect('operation.transactionType', 'transactionType')
+      .leftJoinAndSelect('operation.bankAccount', 'bankAccount')
+      .leftJoinAndSelect('operation.user', 'user')
+      .leftJoinAndSelect('operation.voidedByUser', 'voidedByUser')
+      .orderBy('operation.createdAt', 'DESC')
+      .addOrderBy('operation.id', 'DESC')
+      .limit(limit)
+      .getMany();
+    return orms.map((orm) => BankDepositOperationMapper.toDomain(orm));
   }
 
   async findById(
@@ -350,6 +371,10 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         return new InvalidCashQuantityError();
       case 'CASH_TOTAL_MISMATCH':
         return new CashTotalMismatchError();
+      case 'CASH_BREAKDOWN_REQUIRED':
+        return new CashBreakdownRequiredError();
+      case 'CASH_BREAKDOWN_NOT_EXPECTED':
+        return new CashBreakdownNotExpectedError();
       case 'TRANSACTION_TOTAL_MISMATCH':
         return new TransactionTotalMismatchError();
       case 'INVALID_CHANGE_GIVEN':

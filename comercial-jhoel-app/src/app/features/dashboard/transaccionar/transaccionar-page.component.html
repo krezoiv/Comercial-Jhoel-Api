@@ -21,6 +21,13 @@
         [monthlyTransactions]="transactionSummary()?.monthly?.totalTransactions ?? 0"
         [loading]="loadingSummary()"
       />
+      <app-recent-transactions-card
+        class="summary-row__recent"
+        [operations]="recentOperations()"
+        [loading]="loadingRecent()"
+        [failed]="recentFailed()"
+        (retry)="loadRecentOperations()"
+      />
     </div>
 
     <app-bank-balance-strip class="transaccionar__balance-strip" />
@@ -126,6 +133,29 @@
             [ngModel]="draft.totalAmount() || null"
             (ngModelChange)="onTotalAmountChange($event)"
           />
+        </div>
+
+        <div class="field">
+          <span class="field__label" id="cash-breakdown-label">Desglose de efectivo</span>
+          <button
+            type="button"
+            role="switch"
+            class="breakdown-switch"
+            [class.breakdown-switch--on]="draft.cashBreakdownEnabled()"
+            [attr.aria-checked]="draft.cashBreakdownEnabled()"
+            aria-labelledby="cash-breakdown-label"
+            aria-describedby="cash-breakdown-hint"
+            (click)="onCashBreakdownToggle()"
+          >
+            <span class="breakdown-switch__track" aria-hidden="true">
+              <span class="breakdown-switch__text breakdown-switch__text--yes">SÍ</span>
+              <span class="breakdown-switch__text breakdown-switch__text--no">NO</span>
+              <span class="breakdown-switch__thumb"></span>
+            </span>
+          </button>
+          <span class="field__hint" id="cash-breakdown-hint">
+            {{ draft.cashBreakdownEnabled() ? 'Ingresa las cantidades por denominación.' : 'Sin desglose — no es necesario para guardar.' }}
+          </span>
         </div>
 
         <div class="field">
@@ -254,7 +284,8 @@
       }
     </section>
 
-    <section class="transaccionar__card">
+    @if (draft.cashBreakdownEnabled()) {
+    <section class="transaccionar__card transaccionar__card--breakdown">
       <div class="transaccionar__cuadre-grid">
         <div>
           <h2 class="transaccionar__section-title">Desglose de Efectivo</h2>
@@ -280,6 +311,7 @@
         />
       </div>
     </section>
+    }
 
     <section class="transaccionar__card">
       <h2 class="transaccionar__section-title">Distribución de Transacciones</h2>
@@ -311,9 +343,10 @@
     [sendToAccountsReceivable]="draft.sendToAccountsReceivable()"
     [sendToAssets]="canSendToAssets() && draft.sendToAssets()"
     [totalAmount]="draft.totalAmount()"
+    [cashBreakdownEnabled]="draft.cashBreakdownEnabled()"
     [cashCounts]="draft.cashCounts()"
     [transactionAmounts]="draft.transactionAmounts()"
-    [changeGiven]="draft.changeConfirmed() ? draft.changeGiven() : 0"
+    [changeGiven]="draft.cashBreakdownEnabled() && draft.changeConfirmed() ? draft.changeGiven() : 0"
     [affectedAccountLabel]="affectedAccount() ? accountLabel(affectedAccount()!) : null"
     [affectedAccountSpecial]="affectedAccount()?.specialAccount ?? null"
     [balanceBefore]="balancePreview()?.before ?? null"

@@ -85,6 +85,10 @@ export class BankDepositOperationOrmEntity {
   })
   changeGiven: number;
 
+  /** `false` = sin desglose de efectivo (ver `register_bank_deposit_operation`). Default `true`: todo lo histórico se registró con desglose. */
+  @Column({ name: 'cash_breakdown_enabled', type: 'boolean', default: true })
+  cashBreakdownEnabled: boolean;
+
   @Column({ name: 'client_name', type: 'varchar', length: 150, nullable: true })
   clientName: string | null;
 

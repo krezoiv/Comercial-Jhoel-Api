@@ -1,39 +1,49 @@
-// 950ms — mismo valor que `SELECT_ANIMATION_MS` en `BankPickerModalComponent`.
+// 1.3s — mismo valor que `SELECT_ANIMATION_MS` en `BankPickerModalComponent`.
 
 @keyframes fly-through {
+  // Se despega de la tarjeta y viene al frente, al centro de la pantalla.
   0% {
     transform: translate(0, 0) scale(1);
     opacity: 1;
     filter: blur(0);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  // Se despega de la tarjeta y viene al frente, al centro de la pantalla.
-  38% {
-    transform: translate(var(--dx), var(--dy)) scale(2.6);
+  // De frente, iluminado: breve pausa antes del impulso.
+  32% {
+    transform: translate(var(--dx), var(--dy)) scale(2.8);
     opacity: 1;
     filter: blur(0);
     box-shadow: 0 30px 80px -20px rgba(26, 99, 184, 0.7), 0 0 0 6px rgba(255, 255, 255, 0.9);
+    animation-timing-function: ease-in-out;
   }
-  // Breve pausa de frente antes del impulso.
-  52% {
-    transform: translate(var(--dx), var(--dy)) scale(3.1);
+  // Impulso: acelera y crece hasta rebasar la pantalla, todavía visible.
+  48% {
+    transform: translate(var(--dx), var(--dy)) scale(3.2);
     opacity: 1;
     filter: blur(0);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4);
   }
-  // Crece hasta rebasar la pantalla y se disuelve: atraviesa al usuario.
+  90% {
+    transform: translate(var(--dx), var(--dy)) scale(var(--scale-end, 30));
+    opacity: 0.9;
+    filter: blur(2px);
+    animation-timing-function: linear;
+  }
+  // Ya la atravesó: se disuelve.
   100% {
     transform: translate(var(--dx), var(--dy)) scale(var(--scale-end, 30));
     opacity: 0;
-    filter: blur(8px);
+    filter: blur(10px);
   }
 }
 
 @keyframes fly-flash {
   0%,
-  55% {
+  70% {
     opacity: 0;
   }
-  78% {
-    opacity: 0.7;
+  90% {
+    opacity: 0.75;
   }
   100% {
     opacity: 0;
@@ -53,7 +63,7 @@
   inset: 0;
   background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0%, var(--color-primary-100) 35%, transparent 75%);
   opacity: 0;
-  animation: fly-flash 0.95s ease-out forwards;
+  animation: fly-flash 1.3s ease-out forwards;
 }
 
 .fly-mark {
@@ -70,7 +80,7 @@
   box-shadow: 0 12px 30px -10px rgba(26, 99, 184, 0.5);
   transform-origin: center;
   will-change: transform, opacity, filter;
-  animation: fly-through 0.95s cubic-bezier(0.55, 0, 0.25, 1) forwards;
+  animation: fly-through 1.3s linear forwards;
 }
 
 .fly-mark--image {

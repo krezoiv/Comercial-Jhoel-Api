@@ -140,16 +140,41 @@ app-transaction-monthly-chart {
 // enough room at `lg`.
 .summary-row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   margin-bottom: var(--space-6);
 
   @include bp.respond(sm) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @include bp.respond(lg) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  // Escritorio: las cuatro en una fila; "Últimas transacciones" más ancha por su tabla.
+  @include bp.respond(xl) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr);
+  }
+}
+
+// Teléfono grande y laptop pequeña: la tabla ocupa su propia fila completa
+// (en tablet vertical cabe junto a la tarjeta de comisión).
+.summary-row__recent {
+  @include bp.respond(sm) {
+    grid-column: 1 / -1;
+  }
+
+  @include bp.respond(md) {
+    grid-column: auto;
+  }
+
+  @include bp.respond(lg) {
+    grid-column: 1 / -1;
+  }
+
+  @include bp.respond(xl) {
+    grid-column: auto;
   }
 }
 
@@ -159,6 +184,12 @@ app-transaction-monthly-chart {
   gap: var(--space-2);
 
   label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+  }
+
+  .field__label {
     font-size: var(--fs-sm);
     font-weight: var(--fw-medium);
     color: var(--color-text-on-light-muted);
@@ -220,6 +251,110 @@ app-transaction-monthly-chart {
   .field__hint {
     font-size: var(--fs-xs);
     color: var(--color-text-on-light-subtle);
+  }
+}
+
+// ---- Interruptor "Desglose de efectivo" (NO / SÍ) ----
+
+.breakdown-switch {
+  align-self: flex-start;
+  padding: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  @include focus-ring;
+}
+
+.breakdown-switch__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light-muted);
+  border: 1px solid var(--color-border-light);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition:
+    background-color var(--duration-fast, 0.15s) var(--ease-out, ease),
+    border-color var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.breakdown-switch__text {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  transition: opacity var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.breakdown-switch__text--no {
+  right: 0.85rem;
+  color: var(--color-text-on-light-muted);
+}
+
+.breakdown-switch__text--yes {
+  left: 0.95rem;
+  color: #fff;
+  opacity: 0;
+}
+
+.breakdown-switch__thumb {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: #fff;
+  box-shadow: var(--shadow-sm), 0 1px 3px rgba(15, 23, 42, 0.18);
+  transition: transform var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.breakdown-switch--on {
+  .breakdown-switch__track {
+    background: var(--color-success);
+    border-color: var(--color-success);
+  }
+
+  .breakdown-switch__text--no {
+    opacity: 0;
+  }
+
+  .breakdown-switch__text--yes {
+    opacity: 1;
+  }
+
+  .breakdown-switch__thumb {
+    transform: translateX(2.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breakdown-switch__track,
+  .breakdown-switch__text,
+  .breakdown-switch__thumb {
+    transition: none;
+  }
+}
+
+.transaccionar__card--breakdown {
+  animation: breakdown-reveal 0.18s var(--ease-out, ease);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes breakdown-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

@@ -8,6 +8,7 @@ import {
   BankDepositDailyStats,
   BankDepositMonthlyCount,
   BankDepositOperation,
+  BankDepositOperationSummary,
   BankDepositTransactionSummary,
   BankDepositWeeklyStats,
   BankDepositYearlyStats,
@@ -24,6 +25,13 @@ export class BankDepositService {
   registerOperation(input: RegisterBankDepositInput): Observable<BankDepositOperation> {
     return this.http
       .post<ApiSuccessResponse<BankDepositOperation>>(BASE_URL, input)
+      .pipe(map((response) => response.data));
+  }
+
+  /** "Últimas transacciones" de Transaccionar — las 10 más recientes, ya ordenadas (más reciente primero) y limitadas por el backend; nunca el historial completo. Cualquier cuenta autenticada, igual que la pantalla. */
+  getRecentOperations(): Observable<BankDepositOperationSummary[]> {
+    return this.http
+      .get<ApiSuccessResponse<BankDepositOperationSummary[]>>(`${BASE_URL}/recent`)
       .pipe(map((response) => response.data));
   }
 

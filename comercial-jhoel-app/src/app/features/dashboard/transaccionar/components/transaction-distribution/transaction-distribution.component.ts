@@ -9,7 +9,8 @@ const MAX_TRANSACTIONS = 50;
 
 /**
  * "Distribución de Transacciones" — an integer "cantidad de transacciones"
- * that generates that many amount rows. Resizing is delegated to the
+ * (starts at 1, minimum 1) that generates that many amount rows. With one
+ * row its amount is locked to the total; with more, each is typed manually. Resizing is delegated to the
  * parent via `transactionCountRequested` rather than applied directly here,
  * because shrinking a count that would discard already-typed amounts needs
  * a confirmation the parent owns (`ConfirmDialogService`), not this dumb
@@ -35,12 +36,14 @@ export class TransactionDistributionComponent {
 
   formatCurrency = formatCurrency;
 
-  onCountInput(value: string): void {
-    const parsed = parseInt(value, 10);
-    if (Number.isNaN(parsed)) {
-      return;
+  /** Minimum is 1 — an operation always has at least one transaction (which then mirrors the total). An invalid or clamped value is written back so the field never shows a count that isn't real. */
+  onCountInput(input: HTMLInputElement): void {
+    const parsed = parseInt(input.value, 10);
+    const count = Number.isNaN(parsed) ? this.transactionAmounts.length : Math.min(Math.max(parsed, 1), MAX_TRANSACTIONS);
+    input.value = String(count);
+    if (count !== this.transactionAmounts.length) {
+      this.transactionCountRequested.emit(count);
     }
-    this.transactionCountRequested.emit(Math.min(Math.max(parsed, 0), MAX_TRANSACTIONS));
   }
 
   onAmountInput(index: number, value: string): void {
