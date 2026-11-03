@@ -3,6 +3,7 @@ import {
   cashCountsTotal,
   cashStatus,
   emptyCashCounts,
+  formatDifference,
   formatGuatemalaDateTime,
   formatIsoDate,
 } from './guayacan-cash.util';
@@ -36,5 +37,11 @@ describe('guayacan-cash.util', () => {
     expect(formatIsoDate('2026-11-02')).toBe('02/11/2026');
     // 02:05 UTC del 3 = 20:05 del 2 en Guatemala (UTC−6).
     expect(formatGuatemalaDateTime('2026-11-03T02:05:00Z')).toBe('02/11/2026 20:05');
+  });
+
+  it('formats an arqueo difference with an explicit sign', () => {
+    expect(formatDifference(-50)).toBe('-Q 50.00');
+    expect(formatDifference(25)).toBe('+Q 25.00');
+    expect(formatDifference(0)).toBe('Q 0.00');
   });
 });

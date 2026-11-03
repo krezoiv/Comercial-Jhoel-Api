@@ -67,6 +67,53 @@ EXCEPTION WHEN OTHERS THEN
   RETURN split_part(SQLERRM, ':', 1);
 END $$;
 
+CREATE FUNCTION pg_temp.op_id(p_agent UUID, p_effect VARCHAR, p_amount NUMERIC) RETURNS UUID LANGUAGE sql AS $$
+  SELECT register_bank_deposit_operation(
+    p_agent, p_amount, CURRENT_DATE, '[]'::jsonb, jsonb_build_array(p_amount),
+    pg_temp.admin_id(), pg_temp.type_id(p_effect), NULL, 0, NULL, pg_temp.account_id(), false
+  )
+$$;
+
+-- Mismos pasos de reclasificación que la migración 1760006600000 (copia + reverso).
+CREATE FUNCTION pg_temp.reclassify() RETURNS VOID LANGUAGE plpgsql AS $$
+DECLARE
+  v_movement RECORD;
+BEGIN
+  INSERT INTO guayacan_commissions (
+    operation_id, business_date, transaction_count, commission_rate, amount,
+    status, voided_at, voided_by, void_reason, legacy_movement_id, created_by, created_at
+  )
+  SELECT m.reference_id, m.business_date, m.transaction_count, m.commission_rate, m.amount,
+         CASE WHEN o.is_voided THEN 'ANULADO' ELSE 'VIGENTE' END,
+         CASE WHEN o.is_voided THEN COALESCE(o.voided_at, m.voided_at, now()) END,
+         CASE WHEN o.is_voided THEN COALESCE(o.voided_by, m.voided_by, m.created_by) END,
+         CASE WHEN o.is_voided THEN COALESCE(o.void_reason, m.void_reason) END,
+         m.id, m.created_by, m.created_at
+  FROM guayacan_cash_movements m
+  JOIN bank_deposit_operations o ON o.id = m.reference_id
+  WHERE m.movement_type = 'COMISION_TRANSACCION' AND m.reference_type = 'BANK_DEPOSIT'
+  ON CONFLICT (operation_id) DO NOTHING;
+
+  FOR v_movement IN
+    SELECT id, amount, transaction_count, commission_rate, reference_id, created_by
+    FROM guayacan_cash_movements
+    WHERE movement_type = 'COMISION_TRANSACCION' AND status = 'VIGENTE'
+    ORDER BY sequence
+  LOOP
+    UPDATE guayacan_cash_movements
+    SET status = 'ANULADO', voided_at = now(), voided_by = v_movement.created_by,
+        void_reason = 'Reclasificada: las comisiones no son efectivo de caja'
+    WHERE id = v_movement.id;
+    PERFORM apply_guayacan_cash_movement(
+      'REVERSO_COMISION', -v_movement.amount, CURRENT_DATE, v_movement.created_by,
+      'Reclasificación — comisión fuera del efectivo de caja',
+      'Las comisiones se registran aparte (no son efectivo de caja)', NULL,
+      'BANK_DEPOSIT', v_movement.reference_id, v_movement.transaction_count,
+      v_movement.commission_rate, v_movement.id, NULL, NULL, true
+    );
+  END LOOP;
+END $$;
+
 CREATE FUNCTION pg_temp.err(p_sql TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
 BEGIN
   EXECUTE p_sql;
@@ -99,60 +146,117 @@ BEGIN
   END IF;
   UPDATE transaction_banks SET commission_per_transaction = 3.00 WHERE id = pg_temp.guayacan();
 
-  -- ===== Comisiones =====
-  v_before := pg_temp.cash_balance();
+  -- ===== Comisiones: concepto propio, NUNCA efectivo de caja =====
+  v_count := (SELECT count(*) FROM guayacan_cash_movements WHERE movement_type IN ('COMISION_TRANSACCION', 'INGRESO'));
   v_op := pg_temp.retiro(pg_temp.guayacan(), 1);
   PERFORM pg_temp.expect('C1 1 transacción = Q3.00',
-    (SELECT amount::TEXT FROM guayacan_cash_movements WHERE reference_id = v_op AND movement_type = 'COMISION_TRANSACCION'), '3.00');
-  PERFORM pg_temp.expect('C1 la caja sube Q3.00', (pg_temp.cash_balance() - v_before)::TEXT, '3.00');
-
+    (SELECT amount::TEXT FROM guayacan_commissions WHERE operation_id = v_op), '3.00');
   v_op := pg_temp.retiro(pg_temp.guayacan(), 5);
   PERFORM pg_temp.expect('C2 5 transacciones = Q15.00',
-    (SELECT amount::TEXT FROM guayacan_cash_movements WHERE reference_id = v_op AND movement_type = 'COMISION_TRANSACCION'), '15.00');
-
+    (SELECT amount::TEXT FROM guayacan_commissions WHERE operation_id = v_op), '15.00');
   v_op := pg_temp.retiro(pg_temp.guayacan(), 10);
-  SELECT * INTO v_commission FROM guayacan_cash_movements WHERE reference_id = v_op AND movement_type = 'COMISION_TRANSACCION';
+  SELECT * INTO v_commission FROM guayacan_commissions WHERE operation_id = v_op;
   PERFORM pg_temp.expect('C3 10 transacciones = Q30.00', v_commission.amount::TEXT, '30.00');
   PERFORM pg_temp.expect('C3 guarda cantidad y tarifa histórica',
     v_commission.transaction_count || '×' || v_commission.commission_rate, '10×3.00');
+  PERFORM pg_temp.expect('C4 las comisiones no generan movimientos de caja (ni COMISION ni INGRESO)',
+    ((SELECT count(*) FROM guayacan_cash_movements WHERE movement_type IN ('COMISION_TRANSACCION', 'INGRESO')) - v_count)::TEXT, '0');
+  PERFORM pg_temp.expect('C4 el efectivo de esas operaciones = solo sus depósitos (Q160), sin comisión',
+    (SELECT sum(amount)::TEXT FROM guayacan_cash_movements
+      WHERE reference_id IN (SELECT operation_id FROM guayacan_commissions)), '160.00');
 
-  -- Otro banco agente: ninguna comisión.
-  v_count := (SELECT count(*) FROM guayacan_cash_movements);
+  v_count := (SELECT count(*) FROM guayacan_commissions);
   v_op := pg_temp.retiro(pg_temp.other_agent(), 4);
-  PERFORM pg_temp.expect('C4 otro banco no genera comisión',
-    ((SELECT count(*) FROM guayacan_cash_movements) - v_count)::TEXT, '0');
+  PERFORM pg_temp.expect('C5 otro banco no genera comisión',
+    ((SELECT count(*) FROM guayacan_commissions) - v_count)::TEXT, '0');
 
-  -- Operación fallida (distribución no cuadra): ni operación ni comisión.
-  v_count := (SELECT count(*) FROM guayacan_cash_movements);
-  PERFORM pg_temp.expect('C5 operación fallida rechazada', pg_temp.err(format(
+  v_count := (SELECT count(*) FROM guayacan_commissions);
+  PERFORM pg_temp.expect('C6 operación fallida rechazada', pg_temp.err(format(
     'SELECT register_bank_deposit_operation(%L, 100, CURRENT_DATE, ''[]'', ''[50]'', %L, %L, NULL, 0, NULL, %L, false)',
-    pg_temp.guayacan(), v_admin, pg_temp.retiro_type(), pg_temp.account_id())), 'TRANSACTION_TOTAL_MISMATCH');
-  PERFORM pg_temp.expect('C5 sin comisión por la fallida',
-    ((SELECT count(*) FROM guayacan_cash_movements) - v_count)::TEXT, '0');
+    pg_temp.guayacan(), v_admin, pg_temp.type_id('DEPOSITO'), pg_temp.account_id())), 'TRANSACTION_TOTAL_MISMATCH');
+  PERFORM pg_temp.expect('C6 sin comisión ni efectivo por la fallida',
+    ((SELECT count(*) FROM guayacan_commissions) - v_count)::TEXT, '0');
 
-  -- No duplicar: una segunda comisión para la misma operación viola el índice único.
-  PERFORM pg_temp.expect('C6 comisión duplicada imposible', pg_temp.err(format(
-    'SELECT apply_guayacan_cash_movement(''COMISION_TRANSACCION'', 30, CURRENT_DATE, %L, ''dup'', NULL, NULL, ''BANK_DEPOSIT'', %L, 10, 3, NULL, NULL, NULL, true)',
-    v_admin, (SELECT reference_id FROM guayacan_cash_movements WHERE id = v_commission.id))),
-    'duplicate key value violates unique constraint "UQ_guayacan_cash_movements_commission"');
+  PERFORM pg_temp.expect('C7 comisión duplicada imposible', pg_temp.err(format(
+    'INSERT INTO guayacan_commissions (operation_id, business_date, transaction_count, commission_rate, amount, created_by) VALUES (%L, CURRENT_DATE, 10, 3, 30, %L)',
+    v_commission.operation_id, v_admin)),
+    'duplicate key value violates unique constraint "UQ_guayacan_commissions_operation"');
 
-  -- Cambiar la tarifa no altera comisiones históricas.
   UPDATE transaction_banks SET commission_per_transaction = 4.00 WHERE id = pg_temp.guayacan();
-  PERFORM pg_temp.expect('C7 tarifa nueva no toca el histórico',
-    (SELECT amount::TEXT FROM guayacan_cash_movements WHERE id = v_commission.id), '30.00');
+  PERFORM pg_temp.expect('C8 tarifa nueva no toca el histórico',
+    (SELECT amount::TEXT FROM guayacan_commissions WHERE id = v_commission.id), '30.00');
   UPDATE transaction_banks SET commission_per_transaction = 3.00 WHERE id = pg_temp.guayacan();
 
-  -- Anular la operación: reverso independiente, original ANULADO, nada borrado.
   v_before := pg_temp.cash_balance();
-  PERFORM void_bank_deposit_operation(v_commission.reference_id, CURRENT_DATE, v_admin, 'Prueba de anulación');
-  PERFORM pg_temp.expect('C8 comisión original queda ANULADO',
-    (SELECT status FROM guayacan_cash_movements WHERE id = v_commission.id), 'ANULADO');
-  PERFORM pg_temp.expect('C8 reverso de -Q30.00 ligado a la comisión',
-    (SELECT amount::TEXT FROM guayacan_cash_movements WHERE reversal_of_id = v_commission.id AND movement_type = 'REVERSO_COMISION'), '-30.00');
-  PERFORM pg_temp.expect('C8 la caja baja Q30.00', (v_before - pg_temp.cash_balance())::TEXT, '30.00');
-  PERFORM pg_temp.expect('C8 anular dos veces no duplica el reverso', pg_temp.err(format(
-    'SELECT void_bank_deposit_operation(%L, CURRENT_DATE, %L, ''otra vez'')', v_commission.reference_id, v_admin)),
+  PERFORM void_bank_deposit_operation(v_commission.operation_id, CURRENT_DATE, v_admin, 'Prueba de anulación');
+  PERFORM pg_temp.expect('C9 anular la operación anula su comisión (se conserva)',
+    (SELECT status FROM guayacan_commissions WHERE id = v_commission.id), 'ANULADO');
+  PERFORM pg_temp.expect('C9 y revierte su efectivo (Q100 del depósito, nunca la comisión)',
+    (v_before - pg_temp.cash_balance())::TEXT, '100.00');
+  PERFORM pg_temp.expect('C9 anular dos veces no duplica nada', pg_temp.err(format(
+    'SELECT void_bank_deposit_operation(%L, CURRENT_DATE, %L, ''otra vez'')', v_commission.operation_id, v_admin)),
     'BANK_DEPOSIT_OPERATION_ALREADY_VOIDED');
+
+  -- ===== Efectivo desde Transaccionar (solo Guayacán) =====
+  v_before := pg_temp.cash_balance();
+  v_op := register_bank_deposit_operation(pg_temp.guayacan(), 850, CURRENT_DATE, '[]', '[500, 350]', v_admin,
+    pg_temp.type_id('DEPOSITO'), 'Cliente', 0, NULL, pg_temp.account_id(), false);
+  PERFORM pg_temp.expect('T1 Depósito Guayacán: entra efectivo a la caja',
+    (pg_temp.cash_balance() - v_before)::TEXT, '850.00');
+  PERFORM pg_temp.expect('T1 un solo movimiento TRANSACCION_DEPOSITO ligado a la operación',
+    (SELECT count(*) || ' ' || max(movement_type) FROM guayacan_cash_movements WHERE reference_id = v_op), '1 TRANSACCION_DEPOSITO');
+  PERFORM pg_temp.expect('T2 no se puede duplicar el movimiento de la operación', pg_temp.err(format(
+    'SELECT apply_guayacan_cash_movement(''TRANSACCION_DEPOSITO'', 850, CURRENT_DATE, %L, ''dup'', NULL, NULL, ''BANK_DEPOSIT'', %L, 2, NULL, NULL, NULL, NULL, true)',
+    v_admin, v_op)), 'duplicate key value violates unique constraint "UQ_guayacan_cash_movements_transaction"');
+
+  v_before := pg_temp.cash_balance();
+  v_op := register_bank_deposit_operation(pg_temp.guayacan(), 300, CURRENT_DATE, '[]', '[300]', v_admin,
+    pg_temp.type_id('RETIRO'), NULL, 0, NULL, pg_temp.account_id(), false);
+  PERFORM pg_temp.expect('T3 Retiro Guayacán: sale efectivo de la caja',
+    (v_before - pg_temp.cash_balance())::TEXT, '300.00');
+  PERFORM pg_temp.expect('T3 tipo TRANSACCION_RETIRO',
+    (SELECT movement_type FROM guayacan_cash_movements WHERE reference_id = v_op), 'TRANSACCION_RETIRO');
+
+  -- Depósito con desglose y vuelto: entra el monto APLICADO (no el efectivo bruto).
+  v_before := pg_temp.cash_balance();
+  PERFORM register_bank_deposit_operation(pg_temp.guayacan(), 150, CURRENT_DATE,
+    '[{"denomination":200,"quantity":1}]', '[150]', v_admin,
+    pg_temp.type_id('DEPOSITO'), NULL, 50, NULL, pg_temp.account_id(), true);
+  PERFORM pg_temp.expect('T4 con vuelto entra el neto (Q150)', (pg_temp.cash_balance() - v_before)::TEXT, '150.00');
+
+  v_count := (SELECT count(*) FROM guayacan_cash_movements);
+  PERFORM pg_temp.op(pg_temp.other_agent(), 'DEPOSITO', 40);
+  PERFORM pg_temp.op(pg_temp.other_agent(), 'RETIRO', 40);
+  PERFORM pg_temp.expect('T5 otros bancos no tocan la caja Guayacán',
+    ((SELECT count(*) FROM guayacan_cash_movements) - v_count)::TEXT, '0');
+
+  -- Un Retiro de Transaccionar no se bloquea por la caja (puede quedar negativa).
+  v_before := pg_temp.cash_balance();
+  -- La cuenta bancaria sí necesita saldo (regla de siempre): se fondea con un Retiro de otro banco, que no toca la caja.
+  PERFORM pg_temp.op(pg_temp.other_agent(), 'RETIRO', v_before + 1000);
+  PERFORM pg_temp.expect('T6 Retiro mayor que la caja no bloquea la operación bancaria',
+    pg_temp.op(pg_temp.guayacan(), 'RETIRO', v_before + 100), 'OK');
+  PERFORM pg_temp.expect('T6 la caja queda en −Q100 (visible para corregir con un ingreso)',
+    pg_temp.cash_balance()::TEXT, '-100.00');
+  PERFORM register_guayacan_cash_movement('INGRESO', 100, CURRENT_DATE, v_admin, 'Fondo inicial de caja', NULL, NULL, NULL, NULL);
+
+  -- ===== Reclasificación de comisiones antiguas (simula datos previos) =====
+  v_op := pg_temp.op_id(pg_temp.guayacan(), 'DEPOSITO', 20);
+  DELETE FROM guayacan_commissions WHERE operation_id = v_op;  -- solo dentro de esta prueba (ROLLBACK)
+  v_id := apply_guayacan_cash_movement('COMISION_TRANSACCION', 3, CURRENT_DATE, v_admin, 'Comisión antigua',
+    NULL, NULL, 'BANK_DEPOSIT', v_op, 1, 3, NULL, NULL, NULL, true);
+  v_before := pg_temp.cash_balance();
+  PERFORM pg_temp.reclassify();
+  PERFORM pg_temp.expect('R1 comisión antigua copiada a guayacan_commissions',
+    (SELECT amount || ' ' || status FROM guayacan_commissions WHERE operation_id = v_op), '3.00 VIGENTE');
+  PERFORM pg_temp.expect('R2 movimiento original conservado como ANULADO',
+    (SELECT status FROM guayacan_cash_movements WHERE id = v_id), 'ANULADO');
+  PERFORM pg_temp.expect('R3 reverso ligado y el efectivo baja Q3.00',
+    (SELECT movement_type FROM guayacan_cash_movements WHERE reversal_of_id = v_id) || ' ' ||
+    (v_before - pg_temp.cash_balance())::TEXT, 'REVERSO_COMISION 3.00');
+  PERFORM pg_temp.reclassify();
+  PERFORM pg_temp.expect('R4 reclasificar otra vez no duplica',
+    (SELECT count(*) FROM guayacan_cash_movements WHERE reversal_of_id = v_id)::TEXT, '1');
 
   -- ===== Signo del saldo bancario: Guayacán al revés que los demás =====
   v_before := pg_temp.balance(pg_temp.account_id());
@@ -240,9 +344,9 @@ BEGIN
   PERFORM pg_temp.expect('K8 saldo vuelve', (v_before - pg_temp.cash_balance())::TEXT, '75.00');
   PERFORM pg_temp.expect('K9 no se anula dos veces', pg_temp.err(format(
     'SELECT void_guayacan_cash_movement(%L, CURRENT_DATE, %L, ''otra vez'')', v_id, v_admin)), 'CASH_MOVEMENT_ALREADY_VOIDED');
-  PERFORM pg_temp.expect('K9 comisión no se anula a mano', pg_temp.err(format(
+  PERFORM pg_temp.expect('K9 un movimiento de Transaccionar no se anula desde la caja', pg_temp.err(format(
     'SELECT void_guayacan_cash_movement(%L, CURRENT_DATE, %L, ''manual'')',
-    (SELECT id FROM guayacan_cash_movements WHERE movement_type = 'COMISION_TRANSACCION' AND status = 'VIGENTE' LIMIT 1), v_admin)),
+    (SELECT id FROM guayacan_cash_movements WHERE movement_type = 'TRANSACCION_DEPOSITO' AND status = 'VIGENTE' LIMIT 1), v_admin)),
     'CASH_MOVEMENT_NOT_VOIDABLE');
 
   -- ===== Integridad =====
@@ -252,15 +356,17 @@ BEGIN
     (SELECT count(*)::TEXT FROM (
        SELECT balance_before, lag(balance_after, 1, 0::NUMERIC) OVER (ORDER BY sequence) AS prev
        FROM guayacan_cash_movements) t WHERE balance_before <> prev), '0');
-  PERFORM pg_temp.expect('I3 comisiones vigentes = comisiones − reversos',
-    ((SELECT sum(amount) FROM guayacan_cash_movements WHERE movement_type = 'COMISION_TRANSACCION' AND status = 'VIGENTE')
-      = (SELECT sum(amount) FROM guayacan_cash_movements WHERE movement_type IN ('COMISION_TRANSACCION', 'REVERSO_COMISION')))::TEXT,
-    'true');
-  PERFORM pg_temp.expect('I4 cada comisión ligada a una operación Guayacán',
-    (SELECT count(*)::TEXT FROM guayacan_cash_movements m
-       LEFT JOIN bank_deposit_operations o ON o.id = m.reference_id
-       LEFT JOIN transaction_banks t ON t.id = o.transaction_bank_id
-      WHERE m.movement_type = 'COMISION_TRANSACCION' AND (o.id IS NULL OR t.cash_box_code IS DISTINCT FROM 'GUAYACAN')), '0');
+  PERFORM pg_temp.expect('I3 ninguna comisión vigente suma al efectivo',
+    (SELECT count(*)::TEXT FROM guayacan_cash_movements WHERE movement_type = 'COMISION_TRANSACCION' AND status = 'VIGENTE'), '0');
+  PERFORM pg_temp.expect('I4 cada comisión y cada efectivo de Transaccionar ligado a una operación Guayacán',
+    (SELECT count(*)::TEXT FROM (
+       SELECT operation_id AS op FROM guayacan_commissions
+       UNION ALL
+       SELECT reference_id FROM guayacan_cash_movements WHERE movement_type IN ('TRANSACCION_DEPOSITO', 'TRANSACCION_RETIRO')
+     ) x
+     LEFT JOIN bank_deposit_operations o ON o.id = x.op
+     LEFT JOIN transaction_banks t ON t.id = o.transaction_bank_id
+     WHERE o.id IS NULL OR t.cash_box_code IS DISTINCT FROM 'GUAYACAN'), '0');
 END $$;
 
 ROLLBACK;

@@ -1,0 +1,76 @@
+@if (countId) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del arqueo">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <app-icon name="file-check" [size]="20" />
+          Arqueo {{ count()?.number ?? '' }}
+        </h2>
+        <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (loading()) {
+        <p class="modal__hint">Cargando…</p>
+      }
+      @if (errorMessage(); as message) {
+        <p class="modal__error" role="alert">{{ message }}</p>
+      }
+      @if (count(); as c) {
+        <dl class="detail">
+          <div><dt>Número</dt><dd>{{ c.number }}</dd></div>
+          <div><dt>Fecha y hora</dt><dd>{{ formatDateTime(c.createdAt) }}</dd></div>
+          <div><dt>Usuario</dt><dd>{{ c.createdByUsername }}</dd></div>
+          <div>
+            <dt>Estado</dt>
+            <dd><span class="diff-tag diff-tag--{{ c.status.toLowerCase() }}">{{ statusLabel[c.status] }}</span></dd>
+          </div>
+          <div><dt>Saldo del sistema</dt><dd>{{ formatCurrency(c.systemBalance) }}</dd></div>
+          <div><dt>Total contado</dt><dd>{{ formatCurrency(c.totalCounted) }}</dd></div>
+          <div>
+            <dt>Diferencia</dt>
+            <dd class="diff diff--{{ c.status.toLowerCase() }}">{{ formatDifference(c.difference) }}</dd>
+          </div>
+          <div>
+            <dt>Kardex al contar</dt>
+            <dd>{{ c.lastMovementSequence !== null ? 'Movimiento #' + c.lastMovementSequence : 'Sin movimientos' }}</dd>
+          </div>
+          @if (c.notes) {
+            <div class="detail__wide"><dt>Observaciones</dt><dd>{{ c.notes }}</dd></div>
+          }
+        </dl>
+
+        <table class="denominations">
+          <caption>Desglose físico</caption>
+          <thead>
+            <tr>
+              <th scope="col">Denominación</th>
+              <th scope="col" class="num">Cantidad</th>
+              <th scope="col" class="num">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.denomination) {
+              <tr [class.denominations__row--zero]="row.quantity === 0">
+                <td>{{ formatDenomination(row.denomination) }}</td>
+                <td class="num">{{ formatQuantity(row.quantity) }}</td>
+                <td class="num">{{ formatCurrency(row.subtotal) }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="2">Total</th>
+              <td class="num">{{ formatCurrency(c.totalCounted) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      }
+
+      <div class="modal__actions">
+        <app-button variant="ghost" (click)="closed.emit()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

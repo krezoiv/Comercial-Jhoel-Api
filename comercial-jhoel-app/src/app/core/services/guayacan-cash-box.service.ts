@@ -7,15 +7,28 @@ import {
   ApiSuccessResponse,
   GuayacanCashBoxSummary,
   GuayacanCashCount,
+  GuayacanCashCountFilters,
   GuayacanCashMovementDetail,
   GuayacanCashMovementFilters,
+  PaginatedGuayacanCashCounts,
   PaginatedGuayacanCashMovements,
+  PaginatedGuayacanCommissions,
   RegisterGuayacanCashAdjustmentInput,
   RegisterGuayacanCashCountInput,
   RegisterGuayacanCashMovementInput,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/guayacan-cash-box`;
+
+function toParams(filters: object): HttpParams {
+  let params = new HttpParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== '') {
+      params = params.set(key, String(value));
+    }
+  }
+  return params;
+}
 
 /**
  * Cuadre de Caja Guayacán. El backend es la única fuente del saldo: cada
@@ -34,14 +47,34 @@ export class GuayacanCashBoxService {
   }
 
   getMovements(filters: GuayacanCashMovementFilters): Observable<PaginatedGuayacanCashMovements> {
-    let params = new HttpParams();
-    for (const [key, value] of Object.entries(filters)) {
-      if (value !== undefined && value !== null && value !== '') {
-        params = params.set(key, String(value));
-      }
-    }
     return this.http
-      .get<ApiSuccessResponse<PaginatedGuayacanCashMovements>>(`${BASE_URL}/movements`, { params })
+      .get<ApiSuccessResponse<PaginatedGuayacanCashMovements>>(`${BASE_URL}/movements`, { params: toParams(filters) })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Comisiones (concepto aparte del efectivo), más reciente primero. */
+  getCommissions(filters: { startDate?: string; endDate?: string; page?: number; limit?: number }): Observable<PaginatedGuayacanCommissions> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedGuayacanCommissions>>(`${BASE_URL}/commissions`, { params: toParams(filters) })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Historial de arqueos (Cajas y Cierres → Arqueos — Guayacán). */
+  getCounts(filters: GuayacanCashCountFilters): Observable<PaginatedGuayacanCashCounts> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedGuayacanCashCounts>>(`${BASE_URL}/counts`, { params: toParams(filters) })
+      .pipe(map((response) => response.data));
+  }
+
+  getCount(id: string): Observable<GuayacanCashCount> {
+    return this.http
+      .get<ApiSuccessResponse<GuayacanCashCount>>(`${BASE_URL}/counts/${id}`)
+      .pipe(map((response) => response.data));
+  }
+
+  getCountUsers(): Observable<{ id: string; username: string }[]> {
+    return this.http
+      .get<ApiSuccessResponse<{ id: string; username: string }[]>>(`${BASE_URL}/counts/users`)
       .pipe(map((response) => response.data));
   }
 

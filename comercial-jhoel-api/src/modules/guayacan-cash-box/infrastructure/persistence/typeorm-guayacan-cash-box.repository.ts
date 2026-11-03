@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, QueryFailedError } from 'typeorm';
 import {
+  FindGuayacanCashCountsOptions,
   FindGuayacanCashMovementsOptions,
   GuayacanCashBoxRepository,
   GuayacanCashBoxSummary,
@@ -11,7 +12,9 @@ import {
   GuayacanCashMovementRow,
   GuayacanCashMovementType,
   GuayacanPeriodSummary,
+  PaginatedGuayacanCashCounts,
   PaginatedGuayacanCashMovements,
+  PaginatedGuayacanCommissions,
   RegisterGuayacanCashCountData,
   RegisterGuayacanCashMovementData,
 } from '../../domain/repositories/guayacan-cash-box.repository';
@@ -54,6 +57,63 @@ const MOVEMENT_FROM = `
   JOIN users cu ON cu.id = m.created_by
   LEFT JOIN users vu ON vu.id = m.voided_by
 `;
+
+interface CountSqlRow {
+  id: string;
+  sequence: string;
+  business_date: string;
+  total_counted: string;
+  system_balance: string;
+  difference: string;
+  notes: string | null;
+  last_movement_id: string | null;
+  last_movement_sequence: string | null;
+  created_by: string;
+  created_by_username: string | null;
+  created_at: Date;
+}
+
+const COUNT_COLUMNS = `
+  c.id, c.sequence, to_char(c.business_date, 'YYYY-MM-DD') AS business_date,
+  c.total_counted, c.system_balance, c.difference, c.notes,
+  c.last_movement_id, lm.sequence AS last_movement_sequence,
+  c.created_by, u.username AS created_by_username, c.created_at
+`;
+const COUNT_FROM = `
+  FROM guayacan_cash_counts c
+  JOIN users u ON u.id = c.created_by
+  LEFT JOIN guayacan_cash_movements lm ON lm.id = c.last_movement_id
+`;
+
+/** Número visible del arqueo: correlativo con ceros ("ARQ-0007"). */
+export function formatCountNumber(sequence: number): string {
+  return `ARQ-${String(sequence).padStart(4, '0')}`;
+}
+
+function toCount(row: CountSqlRow): Omit<GuayacanCashCountRow, 'details'> {
+  const sequence = Number(row.sequence);
+  const difference = toNumber(row.difference);
+  return {
+    id: row.id,
+    sequence,
+    number: formatCountNumber(sequence),
+    status:
+      difference === 0 ? 'CUADRADO' : difference > 0 ? 'SOBRANTE' : 'FALTANTE',
+    lastMovementId: row.last_movement_id,
+    lastMovementSequence:
+      row.last_movement_sequence === null
+        ? null
+        : Number(row.last_movement_sequence),
+    businessDate: row.business_date,
+    totalCounted: toNumber(row.total_counted),
+    systemBalance: toNumber(row.system_balance),
+    difference,
+    notes: row.notes,
+    createdBy: row.created_by,
+    createdByUsername: row.created_by_username ?? '',
+    createdAt: row.created_at,
+  };
+}
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -179,28 +239,43 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
         {
           id: string;
           transaction_type_name: string;
+          transaction_bank_name: string | null;
           total_amount: string;
           transaction_count: number;
           operation_date: string;
           is_voided: boolean;
+          change_given: string;
         }[]
       >(
-        `SELECT o.id, tt.name AS transaction_type_name, o.total_amount, o.transaction_count,
-                to_char(o.operation_date, 'YYYY-MM-DD') AS operation_date, o.is_voided
+        `SELECT o.id, tt.name AS transaction_type_name, tb.name AS transaction_bank_name,
+                o.total_amount, o.transaction_count,
+                to_char(o.operation_date, 'YYYY-MM-DD') AS operation_date, o.is_voided, o.change_given
          FROM bank_deposit_operations o
          JOIN transaction_types tt ON tt.id = o.transaction_type_id
+         LEFT JOIN transaction_banks tb ON tb.id = o.transaction_bank_id
          WHERE o.id = $1`,
         [movement.referenceId],
       );
       if (operations[0]) {
         const row = operations[0];
+        // El desglose físico de la operación (si se registró con desglose).
+        const operationCash = await this.dataSource.query<
+          { denomination: string; quantity: number; subtotal: string }[]
+        >(
+          `SELECT denomination, quantity, subtotal FROM bank_deposit_cash_details
+           WHERE operation_id = $1 AND quantity > 0 ORDER BY denomination DESC`,
+          [row.id],
+        );
         operation = {
           id: row.id,
           transactionTypeName: row.transaction_type_name,
+          transactionBankName: row.transaction_bank_name,
           totalAmount: toNumber(row.total_amount),
           transactionCount: Number(row.transaction_count),
           operationDate: row.operation_date,
           isVoided: row.is_voided,
+          changeGiven: toNumber(row.change_given),
+          cashDetails: toDenominations(operationCash),
         };
       }
     }
@@ -324,25 +399,33 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
          AND o.operation_date BETWEEN $1 AND $2`,
       [startDate, endDate],
     );
+    const [commissions] = await this.dataSource.query<
+      { commission_total: string }[]
+    >(
+      `SELECT COALESCE(SUM(amount), 0) AS commission_total
+       FROM guayacan_commissions
+       WHERE status = 'VIGENTE' AND business_date BETWEEN $1 AND $2`,
+      [startDate, endDate],
+    );
+    // Solo movimientos vigentes: un anulado y su contrapartida (ANULACION /
+    // REVERSO_COMISION) se cancelan y no inflan ningún total.
     const [movements] = await this.dataSource.query<
       {
-        commission_total: string;
-        income_total: string;
-        expense_total: string;
+        manual_income: string;
+        manual_expense: string;
+        transaction_in: string;
+        transaction_out: string;
+        adjustment: string;
       }[]
     >(
       `SELECT
-         COALESCE(SUM(amount) FILTER (WHERE movement_type = 'COMISION_TRANSACCION' AND status = 'VIGENTE'), 0) AS commission_total,
-         COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND vigente), 0) AS income_total,
-         COALESCE(-SUM(amount) FILTER (WHERE amount < 0 AND vigente), 0) AS expense_total
-       FROM (
-         -- Un movimiento anulado y su contrapartida (ANULACION / REVERSO_COMISION)
-         -- se cancelan: ninguno cuenta como ingreso ni egreso del período.
-         SELECT amount, movement_type, status,
-                (status = 'VIGENTE' AND movement_type NOT IN ('ANULACION', 'REVERSO_COMISION')) AS vigente
-         FROM guayacan_cash_movements
-         WHERE business_date BETWEEN $1 AND $2
-       ) m`,
+         COALESCE(SUM(amount) FILTER (WHERE movement_type = 'INGRESO'), 0) AS manual_income,
+         COALESCE(-SUM(amount) FILTER (WHERE movement_type = 'EGRESO'), 0) AS manual_expense,
+         COALESCE(SUM(amount) FILTER (WHERE movement_type = 'TRANSACCION_DEPOSITO'), 0) AS transaction_in,
+         COALESCE(-SUM(amount) FILTER (WHERE movement_type = 'TRANSACCION_RETIRO'), 0) AS transaction_out,
+         COALESCE(SUM(amount) FILTER (WHERE movement_type = 'AJUSTE'), 0) AS adjustment
+       FROM guayacan_cash_movements
+       WHERE status = 'VIGENTE' AND business_date BETWEEN $1 AND $2`,
       [startDate, endDate],
     );
     return {
@@ -350,9 +433,12 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
       endDate,
       transactionCount: Number(operations?.transaction_count ?? 0),
       operationCount: Number(operations?.operation_count ?? 0),
-      commissionTotal: toNumber(movements?.commission_total ?? null),
-      incomeTotal: toNumber(movements?.income_total ?? null),
-      expenseTotal: toNumber(movements?.expense_total ?? null),
+      commissionTotal: toNumber(commissions?.commission_total ?? null),
+      manualIncomeTotal: toNumber(movements?.manual_income ?? null),
+      manualExpenseTotal: toNumber(movements?.manual_expense ?? null),
+      transactionInTotal: toNumber(movements?.transaction_in ?? null),
+      transactionOutTotal: toNumber(movements?.transaction_out ?? null),
+      adjustmentTotal: toNumber(movements?.adjustment ?? null),
     };
   }
 
@@ -373,10 +459,13 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
         }
       }
 
-      const balanceRows = await manager.query<{ balance: string | null }[]>(
-        'SELECT balance_after AS balance FROM guayacan_cash_movements ORDER BY sequence DESC LIMIT 1',
+      const balanceRows = await manager.query<
+        { id: string; balance: string }[]
+      >(
+        'SELECT id, balance_after AS balance FROM guayacan_cash_movements ORDER BY sequence DESC LIMIT 1',
       );
       const systemBalance = toNumber(balanceRows[0]?.balance ?? null);
+      const lastMovementId = balanceRows[0]?.id ?? null;
       const totalCounted = round2(
         data.details.reduce(
           (sum, row) => sum + row.denomination * row.quantity,
@@ -389,8 +478,8 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
       // igualmente `difference = total_counted - system_balance`.
       const [count] = await manager.query<{ id: string }[]>(
         `INSERT INTO guayacan_cash_counts
-           (business_date, total_counted, system_balance, difference, notes, client_request_id, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+           (business_date, total_counted, system_balance, difference, notes, client_request_id, created_by, last_movement_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id`,
         [
           data.businessDate,
@@ -400,6 +489,7 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
           data.notes,
           data.clientRequestId,
           data.userId,
+          lastMovementId,
         ],
       );
 
@@ -427,22 +517,8 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
   }
 
   async findCountById(id: string): Promise<GuayacanCashCountRow | null> {
-    const rows = await this.dataSource.query<
-      {
-        id: string;
-        business_date: string;
-        total_counted: string;
-        system_balance: string;
-        difference: string;
-        notes: string | null;
-        created_by_username: string | null;
-        created_at: Date;
-      }[]
-    >(
-      `SELECT c.id, to_char(c.business_date, 'YYYY-MM-DD') AS business_date, c.total_counted,
-              c.system_balance, c.difference, c.notes, u.username AS created_by_username, c.created_at
-       FROM guayacan_cash_counts c JOIN users u ON u.id = c.created_by
-       WHERE c.id = $1`,
+    const rows = await this.dataSource.query<CountSqlRow[]>(
+      `SELECT ${COUNT_COLUMNS} ${COUNT_FROM} WHERE c.id = $1`,
       [id],
     );
     if (!rows[0]) {
@@ -455,17 +531,139 @@ export class TypeOrmGuayacanCashBoxRepository implements GuayacanCashBoxReposito
        WHERE count_id = $1 ORDER BY denomination DESC`,
       [id],
     );
-    const row = rows[0];
+    return { ...toCount(rows[0]), details: toDenominations(details) };
+  }
+
+  async findCounts(
+    options: FindGuayacanCashCountsOptions,
+  ): Promise<PaginatedGuayacanCashCounts> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (options.startDate) {
+      params.push(options.startDate);
+      conditions.push(
+        `(c.created_at AT TIME ZONE 'America/Guatemala')::date >= $${params.length}`,
+      );
+    }
+    if (options.endDate) {
+      params.push(options.endDate);
+      conditions.push(
+        `(c.created_at AT TIME ZONE 'America/Guatemala')::date <= $${params.length}`,
+      );
+    }
+    if (options.userId) {
+      params.push(options.userId);
+      conditions.push(`c.created_by = $${params.length}`);
+    }
+    if (options.sequence !== undefined) {
+      params.push(options.sequence);
+      conditions.push(`c.sequence = $${params.length}`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const totalRows = await this.dataSource.query<{ total: string }[]>(
+      `SELECT count(*) AS total FROM guayacan_cash_counts c ${where}`,
+      params,
+    );
+    const pageParams = [
+      ...params,
+      options.limit,
+      (options.page - 1) * options.limit,
+    ];
+    const rows = await this.dataSource.query<CountSqlRow[]>(
+      `SELECT ${COUNT_COLUMNS} ${COUNT_FROM} ${where}
+       ORDER BY c.sequence DESC
+       LIMIT $${pageParams.length - 1} OFFSET $${pageParams.length}`,
+      pageParams,
+    );
     return {
-      id: row.id,
-      businessDate: row.business_date,
-      totalCounted: toNumber(row.total_counted),
-      systemBalance: toNumber(row.system_balance),
-      difference: toNumber(row.difference),
-      notes: row.notes,
-      createdByUsername: row.created_by_username ?? '',
-      createdAt: row.created_at,
-      details: toDenominations(details),
+      items: rows.map(toCount),
+      total: Number(totalRows[0]?.total ?? 0),
+      page: options.page,
+      limit: options.limit,
+    };
+  }
+
+  findCountUsers(): Promise<{ id: string; username: string }[]> {
+    return this.dataSource.query<{ id: string; username: string }[]>(
+      `SELECT DISTINCT u.id, u.username FROM guayacan_cash_counts c
+       JOIN users u ON u.id = c.created_by ORDER BY u.username`,
+    );
+  }
+
+  async findCommissions(options: {
+    startDate?: string;
+    endDate?: string;
+    page: number;
+    limit: number;
+  }): Promise<PaginatedGuayacanCommissions> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (options.startDate) {
+      params.push(options.startDate);
+      conditions.push(`g.business_date >= $${params.length}`);
+    }
+    if (options.endDate) {
+      params.push(options.endDate);
+      conditions.push(`g.business_date <= $${params.length}`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const totalRows = await this.dataSource.query<{ total: string }[]>(
+      `SELECT count(*) AS total FROM guayacan_commissions g ${where}`,
+      params,
+    );
+    const pageParams = [
+      ...params,
+      options.limit,
+      (options.page - 1) * options.limit,
+    ];
+    const rows = await this.dataSource.query<
+      {
+        id: string;
+        operation_id: string;
+        transaction_type_name: string;
+        business_date: string;
+        transaction_count: number;
+        commission_rate: string;
+        amount: string;
+        status: 'VIGENTE' | 'ANULADO';
+        voided_at: Date | null;
+        void_reason: string | null;
+        created_by_username: string | null;
+        created_at: Date;
+      }[]
+    >(
+      `SELECT g.id, g.operation_id, tt.name AS transaction_type_name,
+              to_char(g.business_date, 'YYYY-MM-DD') AS business_date, g.transaction_count,
+              g.commission_rate, g.amount, g.status, g.voided_at, g.void_reason,
+              u.username AS created_by_username, g.created_at
+       FROM guayacan_commissions g
+       JOIN bank_deposit_operations o ON o.id = g.operation_id
+       JOIN transaction_types tt ON tt.id = o.transaction_type_id
+       JOIN users u ON u.id = g.created_by
+       ${where}
+       ORDER BY g.sequence DESC
+       LIMIT $${pageParams.length - 1} OFFSET $${pageParams.length}`,
+      pageParams,
+    );
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        operationId: row.operation_id,
+        transactionTypeName: row.transaction_type_name,
+        businessDate: row.business_date,
+        transactionCount: Number(row.transaction_count),
+        commissionRate: toNumber(row.commission_rate),
+        amount: toNumber(row.amount),
+        status: row.status,
+        voidedAt: row.voided_at,
+        voidReason: row.void_reason,
+        createdByUsername: row.created_by_username ?? '',
+        createdAt: row.created_at,
+      })),
+      total: Number(totalRows[0]?.total ?? 0),
+      page: options.page,
+      limit: options.limit,
     };
   }
 

@@ -1,0 +1,108 @@
+@use '../../guayacan-modal';
+
+.detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    color: var(--color-text-on-light);
+    overflow-wrap: anywhere;
+  }
+}
+
+.detail__wide {
+  grid-column: 1 / -1;
+}
+
+// Verde = cuadra, amarillo = sobrante, rojo = faltante.
+.diff {
+  font-weight: var(--fw-semibold);
+
+  &--cuadrado {
+    color: var(--color-success);
+  }
+
+  &--sobrante {
+    color: var(--color-accent-gold);
+  }
+
+  &--faltante {
+    color: var(--color-danger);
+  }
+}
+
+.diff-tag {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+
+  &--cuadrado {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+
+  &--sobrante {
+    background: var(--color-accent-gold-soft);
+    color: var(--color-accent-gold);
+  }
+
+  &--faltante {
+    background: var(--color-danger-soft);
+    color: var(--color-danger-strong);
+  }
+}
+
+.denominations {
+  width: 100%;
+  margin-top: var(--space-5);
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+
+  caption {
+    margin-bottom: var(--space-2);
+    text-align: left;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-on-light-subtle);
+  }
+
+  th,
+  td {
+    padding: var(--space-1) var(--space-2);
+    border-bottom: 1px solid var(--color-border-light);
+    text-align: left;
+  }
+
+  thead th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  tfoot th,
+  tfoot td {
+    border-bottom: none;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-on-light);
+  }
+}
+
+.denominations__row--zero td {
+  color: var(--color-text-on-light-subtle);
+}

@@ -319,6 +319,14 @@ export const routes: Routes = [
         title: 'Cuadre de Caja Guayacán — Sistema',
       },
       {
+        path: 'arqueos-guayacan',
+        loadComponent: () =>
+          import('./features/dashboard/guayacan-cash-counts/guayacan-cash-counts-page.component').then(
+            (m) => m.GuayacanCashCountsPageComponent
+          ),
+        title: 'Arqueos — Guayacán — Sistema',
+      },
+      {
         path: 'gestion-caja-recargas',
         loadComponent: () =>
           import('./features/dashboard/recharge-cash-box/recharge-cash-box-page.component').then(

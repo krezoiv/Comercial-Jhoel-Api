@@ -1,13 +1,22 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { GuayacanCashCount } from '../../../../../core/models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
+import { NotificationService } from '../../../../../core/services/notification.service';
 import { GuayacanCashBoxService } from '../../../../../core/services/guayacan-cash-box.service';
 import { GuayacanCashCountPanelComponent } from './cash-count-panel.component';
 
 const LAST_COUNT: GuayacanCashCount = {
   id: 'count-1',
+  sequence: 1,
+  number: 'ARQ-0001',
+  status: 'CUADRADO',
+  lastMovementId: 'mov-1',
+  lastMovementSequence: 7,
+  createdBy: 'user-1',
   businessDate: '2026-11-02',
   totalCounted: 300,
   systemBalance: 300,
@@ -23,6 +32,8 @@ const LAST_COUNT: GuayacanCashCount = {
 
 describe('GuayacanCashCountPanelComponent (arqueo)', () => {
   let service: jasmine.SpyObj<GuayacanCashBoxService>;
+  let confirm: jasmine.SpyObj<ConfirmDialogService>;
+  let notifications: jasmine.SpyObj<NotificationService>;
 
   function create(balance: number, isAdmin = false) {
     const fixture = TestBed.createComponent(GuayacanCashCountPanelComponent);
@@ -40,13 +51,16 @@ describe('GuayacanCashCountPanelComponent (arqueo)', () => {
     ]);
     service.getLatestCount.and.returnValue(of(LAST_COUNT));
     service.registerCount.and.returnValue(of(LAST_COUNT));
-    const confirm = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['confirm']);
+    confirm = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['confirm']);
     confirm.confirm.and.resolveTo(true);
+    notifications = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error']);
     TestBed.configureTestingModule({
       imports: [GuayacanCashCountPanelComponent],
       providers: [
         { provide: GuayacanCashBoxService, useValue: service },
         { provide: ConfirmDialogService, useValue: confirm },
+        { provide: NotificationService, useValue: notifications },
+        { provide: AuthService, useValue: { currentUser: signal({ username: 'erick' }) } },
       ],
     });
   });
@@ -87,5 +101,42 @@ describe('GuayacanCashCountPanelComponent (arqueo)', () => {
     )!;
     button.click();
     expect(requested).toEqual([-10]);
+  });
+
+  it('colors: zero green, positive (sobrante) yellow, negative (faltante) red', () => {
+    expect(create(300).componentInstance.status()).toBe('green');
+    expect(create(250).componentInstance.status()).toBe('yellow');
+    expect(create(350).componentInstance.status()).toBe('red');
+  });
+
+  it('confirmation shows counted, system balance, difference, user and date; success shows the number', async () => {
+    const component = create(350).componentInstance;
+    service.registerCount.and.returnValue(of({ ...LAST_COUNT, number: 'ARQ-0042' }));
+
+    await component.save();
+
+    const message = confirm.confirm.calls.mostRecent().args[0].message ?? '';
+    expect(message).toContain('Total contado: Q 300.00');
+    expect(message).toContain('Saldo según el sistema: Q 350.00');
+    expect(message).toContain('Diferencia: -Q 50.00');
+    expect(message).toContain('faltante');
+    expect(message).toContain('Usuario: erick');
+    expect(message).toContain('Fecha:');
+    expect(notifications.success).toHaveBeenCalledWith('Arqueo ARQ-0042 registrado.');
+  });
+
+  it('retrying the same arqueo reuses its request id; a new arqueo gets a new one', async () => {
+    const component = create(300).componentInstance;
+    service.registerCount.and.returnValue(throwError(() => new Error('red')));
+    await component.save();
+    await component.save();
+    const [first, second] = service.registerCount.calls.all().map((call) => call.args[0].clientRequestId);
+    expect(first).toBe(second);
+
+    service.registerCount.and.returnValue(of(LAST_COUNT));
+    await component.save();
+    await component.save();
+    const ids = service.registerCount.calls.all().map((call) => call.args[0].clientRequestId);
+    expect(ids[3]).not.toBe(ids[2]);
   });
 });

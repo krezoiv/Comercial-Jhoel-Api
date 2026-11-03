@@ -135,6 +135,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         children: [
           { label: 'Gestión Caja Recargas', icon: 'wallet', path: 'gestion-caja-recargas' },
           { label: 'Gestión de Caja de Ventas', icon: 'receipt', path: 'gestion-caja-ventas' },
+          { label: 'Arqueos — Guayacán', icon: 'file-check', path: 'arqueos-guayacan' },
           { label: 'Gestión de Días Cerrados', icon: 'lock', path: 'gestion-dias-cerrados', roles: ADMIN_ONLY },
           { label: 'Gestión de Días de Recargas', icon: 'lock', path: 'gestion-dias-recargas', roles: ADMIN_ONLY },
           { label: 'Gestión de Transacciones', icon: 'lock', path: 'gestion-transacciones', roles: ADMIN_ONLY },

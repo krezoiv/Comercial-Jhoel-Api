@@ -1663,6 +1663,11 @@ backend (ver el `CLAUDE.md` del API) — la página nunca calcula el saldo, solo
 - `GuayacanMovementFormModalComponent`: Ingreso / Egreso / Ajuste (admin); vista previa saldo anterior → nuevo,
   confirmación, `clientRequestId` por apertura del modal (reintentos idempotentes); no cierra con clic fuera.
 - `GuayacanMovementDetailModalComponent`: auditoría + "Anular" (admin, motivo). Comisiones no se anulan aquí.
+- Efectivo = ingresos/egresos manuales + depósitos/retiros de Transaccionar (Guayacán). Las comisiones van en su propia
+  sección ("Comisiones generadas") y nunca suman al efectivo ni a los ingresos manuales.
+- Arqueos: colores verde (cuadra) / amarillo (sobrante) / rojo (faltante) con `formatDifference()`; el detalle
+  (`GuayacanCountDetailModalComponent`) lo comparten el panel y **Cajas y Cierres → Arqueos — Guayacán**
+  (`features/dashboard/guayacan-cash-counts/`, `/dashboard/arqueos-guayacan`).
 - Reutiliza `CashBreakdownTableComponent` de Transaccionar (input opcional `emptyAmountText`) y
   `ReportPaginationComponent`. La marca Guayacán y su comisión se editan en Sistema → Banco Agente (solo edición).
 

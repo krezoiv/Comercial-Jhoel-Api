@@ -81,12 +81,22 @@
   }
 }
 
+// Verde = cuadra, amarillo = sobrante (contado > sistema), rojo = faltante.
 .diff--over {
-  color: var(--color-danger);
+  color: var(--color-accent-gold);
 }
 
 .diff--under {
-  color: var(--color-warning, #b45309);
+  color: var(--color-danger);
+}
+
+.count-card__link {
+  align-self: flex-end;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary-600);
+  text-decoration: underline;
+  @include focus-ring;
 }
 
 .diff--ok {

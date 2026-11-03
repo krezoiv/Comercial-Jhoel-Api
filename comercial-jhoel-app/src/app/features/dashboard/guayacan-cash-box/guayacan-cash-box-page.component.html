@@ -2,7 +2,7 @@
   <app-page-header
     icon="wallet"
     title="Cuadre de Caja Guayacán"
-    subtitle="Kardex de efectivo de Cooperativa Guayacán: comisiones, ingresos, egresos y arqueos."
+    subtitle="Efectivo de Cooperativa Guayacán: ingresos y egresos manuales, depósitos y retiros de Transaccionar, y arqueos. Las comisiones se llevan aparte."
   />
 
   @if (summary(); as s) {
@@ -37,6 +37,14 @@
     }
   </div>
 
+  @if (summary() && balance() < 0) {
+    <p class="notice" role="status">
+      <app-icon name="alert-triangle" [size]="16" />
+      El efectivo en caja es negativo: hay retiros de Transaccionar sin un fondo de caja registrado. Registra el efectivo
+      inicial con "Ingreso a caja".
+    </p>
+  }
+
   @if (summaryFailed() && !summary()) {
     <p class="state state--error" role="alert">
       No se pudo cargar el resumen de la caja.
@@ -51,7 +59,7 @@
       <span class="stat__value stat__value--xl" [class.stat__value--negative]="balance() < 0">
         {{ loadingSummary() ? '…' : formatCurrency(balance()) }}
       </span>
-      <span class="stat__hint">Saldo del Kardex</span>
+      <span class="stat__hint">Ingresos + depósitos − egresos − retiros (sin comisiones)</span>
     </app-card>
 
     @for (period of periods(); track period.key) {
@@ -63,14 +71,14 @@
     }
 
     <app-card padding="lg" class="stat stat--in">
-      <span class="stat__label">Ingresos de caja · {{ periodLabel[cashPeriod()] }}</span>
-      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.incomeTotal ?? 0) }}</span>
-      <span class="stat__hint">Incluye comisiones</span>
+      <span class="stat__label">Ingresos manuales · {{ periodLabel[cashPeriod()] }}</span>
+      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.manualIncomeTotal ?? 0) }}</span>
+      <span class="stat__hint">Botón "Ingreso a caja" (sin comisiones)</span>
     </app-card>
 
     <app-card padding="lg" class="stat stat--out">
-      <span class="stat__label">Egresos de caja · {{ periodLabel[cashPeriod()] }}</span>
-      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.expenseTotal ?? 0) }}</span>
+      <span class="stat__label">Egresos manuales · {{ periodLabel[cashPeriod()] }}</span>
+      <span class="stat__value">{{ formatCurrency(cashPeriodSummary()?.manualExpenseTotal ?? 0) }}</span>
       <div class="segmented" role="radiogroup" aria-label="Período de ingresos y egresos">
         @for (option of periodOptions; track option) {
           <button
@@ -111,8 +119,13 @@
           </p>
           <dl class="period__rows">
             <div><dt>Operaciones</dt><dd>{{ formatQuantity(period.data.operationCount) }}</dd></div>
-            <div><dt>Ingresos</dt><dd class="amount--in">{{ formatCurrency(period.data.incomeTotal) }}</dd></div>
-            <div><dt>Egresos</dt><dd class="amount--out">{{ formatCurrency(period.data.expenseTotal) }}</dd></div>
+            <div><dt>Ingresos manuales</dt><dd class="amount--in">{{ formatCurrency(period.data.manualIncomeTotal) }}</dd></div>
+            <div><dt>Depósitos (Transaccionar)</dt><dd class="amount--in">{{ formatCurrency(period.data.transactionInTotal) }}</dd></div>
+            <div><dt>Egresos manuales</dt><dd class="amount--out">{{ formatCurrency(period.data.manualExpenseTotal) }}</dd></div>
+            <div><dt>Retiros (Transaccionar)</dt><dd class="amount--out">{{ formatCurrency(period.data.transactionOutTotal) }}</dd></div>
+            @if (period.data.adjustmentTotal !== 0) {
+              <div><dt>Ajustes</dt><dd>{{ period.data.adjustmentTotal > 0 ? '+' : '' }}{{ formatCurrency(period.data.adjustmentTotal) }}</dd></div>
+            }
             @if (period.key === 'daily') {
               <div><dt>Saldo de caja</dt><dd><strong>{{ formatCurrency(s.balance) }}</strong></dd></div>
             }
@@ -128,6 +141,57 @@
     [isAdmin]="isAdmin()"
     (adjustRequested)="openForm('AJUSTE', $event)"
   />
+
+  <!-- Comisiones: concepto aparte, nunca efectivo de caja -->
+  <app-card padding="lg" class="kardex">
+    <div class="kardex__header">
+      <h2 class="kardex__title">Comisiones generadas</h2>
+      <span class="kardex__count">No forman parte del efectivo en caja</span>
+    </div>
+    @if (commissionsFailed()) {
+      <p class="state state--error" role="alert">
+        No se pudieron cargar las comisiones.
+        <button type="button" (click)="loadCommissions()">Reintentar</button>
+      </p>
+    } @else if (commissions().length === 0) {
+      <p class="state">{{ loadingCommissions() ? 'Cargando comisiones…' : 'Aún no hay comisiones registradas.' }}</p>
+    } @else {
+      <table class="kardex-table commissions-table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Operación</th>
+            <th scope="col" class="num">Cálculo</th>
+            <th scope="col" class="num">Comisión</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of commissions(); track c.id) {
+            <tr [class.row--voided]="c.status === 'ANULADO'">
+              <td>{{ formatIsoDate(c.businessDate) }}</td>
+              <td>{{ c.transactionTypeName }}</td>
+              <td class="num">{{ formatQuantity(c.transactionCount) }} × {{ formatCurrency(c.commissionRate) }}</td>
+              <td class="num cell-amount">{{ formatCurrency(c.amount) }}</td>
+              <td>
+                @if (c.status === 'ANULADO') {
+                  <span class="badge-voided" [title]="c.voidReason ?? ''">Anulada</span>
+                } @else {
+                  Vigente
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <app-report-pagination
+        [total]="totalCommissions()"
+        [page]="commissionsPage()"
+        [limit]="commissionsPageSize"
+        (pageChange)="onCommissionsPageChange($event)"
+      />
+    }
+  </app-card>
 
   <!-- Kardex -->
   <app-card padding="lg" class="kardex">
@@ -149,7 +213,7 @@
         <label for="guayacan-type">Tipo</label>
         <select id="guayacan-type" [ngModel]="draftType()" (ngModelChange)="draftType.set($event)">
           <option value="">Todos</option>
-          @for (type of movementTypes; track type) {
+          @for (type of filterTypes; track type) {
             <option [value]="type">{{ typeLabel[type] }}</option>
           }
         </select>

@@ -1,21 +1,41 @@
 /** Cuadre de Caja Guayacán — mismo contrato que `GET/POST /guayacan-cash-box/*` (ver el módulo `guayacan-cash-box` del API). */
 
+/**
+ * Tipos del Kardex de EFECTIVO. INGRESO/EGRESO = manuales (botones de la
+ * caja); TRANSACCION_DEPOSITO/RETIRO = efectivo de Transaccionar. Las
+ * comisiones NO son efectivo (`GuayacanCommission`): COMISION_TRANSACCION /
+ * REVERSO_COMISION solo aparecen como historial previo a esa separación.
+ */
 export type GuayacanCashMovementType =
   | 'INGRESO'
   | 'EGRESO'
+  | 'TRANSACCION_DEPOSITO'
+  | 'TRANSACCION_RETIRO'
   | 'AJUSTE'
+  | 'ANULACION'
   | 'COMISION_TRANSACCION'
-  | 'REVERSO_COMISION'
-  | 'ANULACION';
+  | 'REVERSO_COMISION';
 
 export const GUAYACAN_MOVEMENT_TYPE_LABEL: Record<GuayacanCashMovementType, string> = {
-  INGRESO: 'Ingreso',
-  EGRESO: 'Egreso',
+  INGRESO: 'Ingreso manual',
+  EGRESO: 'Egreso manual',
+  TRANSACCION_DEPOSITO: 'Depósito (Transaccionar)',
+  TRANSACCION_RETIRO: 'Retiro (Transaccionar)',
   AJUSTE: 'Ajuste',
-  COMISION_TRANSACCION: 'Comisión',
-  REVERSO_COMISION: 'Reverso de comisión',
   ANULACION: 'Anulación',
+  COMISION_TRANSACCION: 'Comisión (histórico)',
+  REVERSO_COMISION: 'Reverso de comisión',
 };
+
+/** Tipos que se ofrecen en el filtro del Kardex (los históricos de comisión siguen visibles en "Todos"). */
+export const GUAYACAN_FILTER_MOVEMENT_TYPES: GuayacanCashMovementType[] = [
+  'INGRESO',
+  'EGRESO',
+  'TRANSACCION_DEPOSITO',
+  'TRANSACCION_RETIRO',
+  'AJUSTE',
+  'ANULACION',
+];
 
 export interface GuayacanCashDenomination {
   denomination: number;
@@ -57,10 +77,14 @@ export interface GuayacanCashMovementDetail extends GuayacanCashMovement {
   operation: {
     id: string;
     transactionTypeName: string;
+    transactionBankName: string | null;
     totalAmount: number;
     transactionCount: number;
     operationDate: string;
     isVoided: boolean;
+    changeGiven: number;
+    /** Desglose físico con que se registró la operación (vacío si fue sin desglose). */
+    cashDetails: GuayacanCashDenominationRow[];
   } | null;
 }
 
@@ -69,9 +93,14 @@ export interface GuayacanPeriodSummary {
   endDate: string;
   transactionCount: number;
   operationCount: number;
+  /** Comisiones vigentes — concepto aparte, NUNCA efectivo. */
   commissionTotal: number;
-  incomeTotal: number;
-  expenseTotal: number;
+  manualIncomeTotal: number;
+  manualExpenseTotal: number;
+  /** Efectivo de Transaccionar: Depósitos entran, Retiros salen. */
+  transactionInTotal: number;
+  transactionOutTotal: number;
+  adjustmentTotal: number;
 }
 
 export interface GuayacanCashBoxSummary {
@@ -83,16 +112,76 @@ export interface GuayacanCashBoxSummary {
   monthly: GuayacanPeriodSummary;
 }
 
-export interface GuayacanCashCount {
+export type GuayacanCashCountStatus = 'CUADRADO' | 'SOBRANTE' | 'FALTANTE';
+
+export const GUAYACAN_COUNT_STATUS_LABEL: Record<GuayacanCashCountStatus, string> = {
+  CUADRADO: 'Cuadrado',
+  SOBRANTE: 'Sobrante',
+  FALTANTE: 'Faltante',
+};
+
+/** Arqueo guardado — foto histórica e inmutable (saldo del sistema, contado y diferencia de ese momento). */
+export interface GuayacanCashCountSummary {
   id: string;
+  sequence: number;
+  /** "ARQ-0001". */
+  number: string;
+  status: GuayacanCashCountStatus;
+  lastMovementId: string | null;
+  lastMovementSequence: number | null;
   businessDate: string;
   totalCounted: number;
   systemBalance: number;
+  /** Contado − sistema: 0 cuadra, >0 sobrante, <0 faltante. */
   difference: number;
   notes: string | null;
+  createdBy: string;
   createdByUsername: string;
   createdAt: string;
+}
+
+export interface GuayacanCashCount extends GuayacanCashCountSummary {
+  /** Las 11 denominaciones tal como se guardaron. */
   details: GuayacanCashDenominationRow[];
+}
+
+export interface GuayacanCashCountFilters {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  number?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedGuayacanCashCounts {
+  items: GuayacanCashCountSummary[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/** Comisión de una operación Guayacán — concepto propio, fuera del efectivo de caja. */
+export interface GuayacanCommission {
+  id: string;
+  operationId: string;
+  transactionTypeName: string;
+  businessDate: string;
+  transactionCount: number;
+  commissionRate: number;
+  amount: number;
+  status: 'VIGENTE' | 'ANULADO';
+  voidedAt: string | null;
+  voidReason: string | null;
+  createdByUsername: string;
+  createdAt: string;
+}
+
+export interface PaginatedGuayacanCommissions {
+  items: GuayacanCommission[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface PaginatedGuayacanCashMovements {

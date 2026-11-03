@@ -60,14 +60,33 @@
 
         @if (m.operation; as op) {
           <div class="section">
-            <h3 class="section__title">Operación de Transaccionar</h3>
+            <h3 class="section__title">Origen: operación de Transaccionar</h3>
             <p class="section__text">
-              {{ op.transactionTypeName }} · {{ formatIsoDate(op.operationDate) }} · {{ formatCurrency(op.totalAmount) }} ·
+              {{ op.transactionTypeName }}
+              @if (op.transactionBankName) {
+                · {{ op.transactionBankName }}
+              }
+              · {{ formatIsoDate(op.operationDate) }} · {{ formatCurrency(op.totalAmount) }} ·
               {{ formatQuantity(op.transactionCount) }} {{ op.transactionCount === 1 ? 'transacción' : 'transacciones' }}
               @if (op.isVoided) {
                 <span class="tag tag--voided">Anulada</span>
               }
             </p>
+            @if (op.cashDetails.length > 0) {
+              <ul class="denominations">
+                @for (row of op.cashDetails; track row.denomination) {
+                  <li>
+                    <span>{{ formatCurrency(row.denomination) }} × {{ formatQuantity(row.quantity) }}</span>
+                    <span>{{ formatCurrency(row.subtotal) }}</span>
+                  </li>
+                }
+              </ul>
+              @if (op.changeGiven > 0) {
+                <p class="section__text">Vuelto entregado: {{ formatCurrency(op.changeGiven) }} — a la caja entra el monto aplicado.</p>
+              }
+            } @else {
+              <p class="section__text section__text--muted">Registrada sin desglose de efectivo.</p>
+            }
           </div>
         }
 

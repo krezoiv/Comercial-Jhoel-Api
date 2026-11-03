@@ -14,8 +14,11 @@ function period(transactionCount: number, commissionTotal: number) {
     transactionCount,
     operationCount: 1,
     commissionTotal,
-    incomeTotal: commissionTotal + 500,
-    expenseTotal: 200,
+    manualIncomeTotal: 500,
+    manualExpenseTotal: 200,
+    transactionInTotal: 1000,
+    transactionOutTotal: 400,
+    adjustmentTotal: 0,
   };
 }
 
@@ -70,7 +73,31 @@ describe('GuayacanCashBoxPageComponent', () => {
       'getSummary',
       'getMovements',
       'getLatestCount',
+      'getCommissions',
     ]);
+    service.getCommissions.and.returnValue(
+      of({
+        items: [
+          {
+            id: 'c1',
+            operationId: 'op-1',
+            transactionTypeName: 'Depósito',
+            businessDate: '2026-11-02',
+            transactionCount: 3,
+            commissionRate: 3,
+            amount: 9,
+            status: 'VIGENTE',
+            voidedAt: null,
+            voidReason: null,
+            createdByUsername: 'erick',
+            createdAt: '2026-11-02T20:00:00Z',
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+      }),
+    );
     service.getSummary.and.returnValue(of(SUMMARY));
     service.getMovements.and.returnValue(
       of({
@@ -104,7 +131,7 @@ describe('GuayacanCashBoxPageComponent', () => {
   });
 
   it('renders ingresos in green, egresos in red, newest first, and marks voided rows', () => {
-    const rows = Array.from((render().nativeElement as HTMLElement).querySelectorAll('.kardex-table tbody tr'));
+    const rows = Array.from((render().nativeElement as HTMLElement).querySelectorAll('.kardex-table:not(.commissions-table) tbody tr'));
     expect(rows.length).toBe(2);
     expect(rows[0].querySelector('.cell-out')?.textContent?.trim()).toBe('Q 200.00');
     expect(rows[1].querySelector('.cell-in')?.textContent?.trim()).toBe('Q 500.00');
@@ -143,5 +170,32 @@ describe('GuayacanCashBoxPageComponent', () => {
   it('warns when no banco agente is marked as Guayacán', () => {
     service.getSummary.and.returnValue(of({ ...SUMMARY, agent: null }));
     expect((render().nativeElement as HTMLElement).querySelector('.notice')?.textContent).toContain('Sistema → Banco Agente');
+  });
+
+  it('manual ingreso/egreso cards never include commissions or Transaccionar cash', () => {
+    const el = render().nativeElement as HTMLElement;
+    expect(el.querySelector('.stat--in .stat__value')?.textContent).toContain('Q 500.00');
+    expect(el.querySelector('.stat--out .stat__value')?.textContent).toContain('Q 200.00');
+    expect(el.querySelector('.stat--in')?.textContent).toContain('sin comisiones');
+  });
+
+  it('shows Transaccionar deposits/retiros separately in each period', () => {
+    const text = (render().nativeElement as HTMLElement).querySelector('.periods')?.textContent ?? '';
+    expect(text).toContain('Depósitos (Transaccionar)');
+    expect(text).toContain('Q 1,000.00');
+    expect(text).toContain('Retiros (Transaccionar)');
+    expect(text).toContain('Q 400.00');
+  });
+
+  it('lists commissions in their own section', () => {
+    const el = render().nativeElement as HTMLElement;
+    const row = el.querySelector('.commissions-table tbody tr');
+    expect(row?.textContent).toContain('3 × Q 3.00');
+    expect(row?.textContent).toContain('Q 9.00');
+  });
+
+  it('warns when the cash is negative', () => {
+    service.getSummary.and.returnValue(of({ ...SUMMARY, balance: -100 }));
+    expect((render().nativeElement as HTMLElement).textContent).toContain('El efectivo en caja es negativo');
   });
 });

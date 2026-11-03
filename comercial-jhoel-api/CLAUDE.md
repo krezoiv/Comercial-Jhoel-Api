@@ -1396,7 +1396,18 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   "guayacan") no entra en el desglose ni en los totales de `GetCuadreAgentesSummaryUseCase` y no se exige su saldo del
   día para cerrar (`ValidateBankBalancesForDateUseCase`) — `isOutsideAgentReconciliation()`. No cambia reglas de saldo.
   Los cierres ya guardados (`agent_reconciliations`) no se recalculan.
-- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 45 casos).
+- **Comisiones fuera del efectivo; Transaccionar dentro** (migración `1760006600000-GuayacanCashSeparateCommissionsAndTransactions`):
+  las comisiones viven en `guayacan_commissions` (una por operación, `UNIQUE(operation_id)`, VIGENTE/ANULADO) y NO
+  mueven el ledger; las que ya estaban en el ledger se copiaron y se reclasificaron (original ANULADO + `REVERSO_COMISION`,
+  nada borrado). El trigger AFTER INSERT ahora registra el efectivo físico de Transaccionar: Depósito Guayacán →
+  `TRANSACCION_DEPOSITO` (+monto aplicado), Retiro → `TRANSACCION_RETIRO` (−); uno por operación (índice único), sin
+  bloqueo por saldo de caja (puede quedar negativa). Anular la operación → comisión ANULADO + ANULACION del efectivo.
+  INGRESO/EGRESO del ledger = ingresos/egresos manuales. Resumen por período: `manualIncome/Expense`,
+  `transactionIn/Out`, `adjustment`, `commission` (de `guayacan_commissions`).
+- **Arqueos en Cajas y Cierres**: `GET /guayacan-cash-box/counts` (filtros fecha Guatemala/usuario/número, paginado),
+  `counts/users`, `counts/:id`; número `ARQ-` + `sequence` (puede tener huecos: una secuencia no se reutiliza),
+  estado derivado de la diferencia, `last_movement_id` = movimiento del Kardex al contar. `GET commissions` paginado.
+- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 58 casos).
 
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 

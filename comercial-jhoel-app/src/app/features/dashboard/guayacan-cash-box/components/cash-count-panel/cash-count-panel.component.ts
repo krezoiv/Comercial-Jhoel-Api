@@ -3,17 +3,20 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 import { GuayacanCashCount, formatCurrency } from '../../../../../core/models';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { CuadreStatus } from '../../../../../core/services/bank-deposit-draft.store';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { GuayacanCashBoxService } from '../../../../../core/services/guayacan-cash-box.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent } from '../../../../../shared/ui';
 import { CashBreakdownTableComponent } from '../../../transaccionar/components/cash-breakdown-table/cash-breakdown-table.component';
+import { GuayacanCountDetailModalComponent } from '../count-detail-modal/count-detail-modal.component';
 import {
   cashCountsToDetails,
   cashCountsTotal,
-  cashStatus,
   emptyCashCounts,
+  formatDifference,
   formatGuatemalaDateTime,
   round2,
 } from '../../guayacan-cash.util';
@@ -28,7 +31,14 @@ import {
 @Component({
   selector: 'app-guayacan-cash-count-panel',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, CardComponent, IconComponent, CashBreakdownTableComponent],
+  imports: [
+    FormsModule,
+    ButtonComponent,
+    CardComponent,
+    IconComponent,
+    CashBreakdownTableComponent,
+    GuayacanCountDetailModalComponent,
+  ],
   templateUrl: './cash-count-panel.component.html',
   styleUrl: './cash-count-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,21 +54,29 @@ export class GuayacanCashCountPanelComponent implements OnChanges {
   private readonly service = inject(GuayacanCashBoxService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly notifications = inject(NotificationService);
+  private readonly authService = inject(AuthService);
 
   formatCurrency = formatCurrency;
   formatDateTime = formatGuatemalaDateTime;
+  formatDifference = formatDifference;
 
   readonly latest = signal<GuayacanCashCount | null>(null);
   readonly loading = signal(true);
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
   readonly notes = signal('');
   readonly isSaving = signal(false);
+  /** Arqueo abierto en el modal de detalle. */
+  readonly detailCountId = signal<string | null>(null);
   private requestId = crypto.randomUUID();
   private readonly balanceSignal = signal(0);
 
   readonly totalCounted = computed(() => cashCountsTotal(this.cashCounts()));
   readonly difference = computed(() => round2(this.totalCounted() - this.balanceSignal()));
-  readonly status = computed(() => cashStatus(this.totalCounted(), this.balanceSignal()));
+  /** Arqueo: verde cuadra, amarillo sobrante (contado > sistema), rojo faltante. */
+  readonly status = computed<CuadreStatus>(() => {
+    const difference = this.difference();
+    return difference === 0 ? 'green' : difference > 0 ? 'yellow' : 'red';
+  });
 
   constructor() {
     this.loadLatest();
@@ -97,13 +115,20 @@ export class GuayacanCashCountPanelComponent implements OnChanges {
       return;
     }
     const difference = this.difference();
+    const differenceText =
+      difference === 0
+        ? 'Q 0.00 (cuadra)'
+        : `${formatDifference(difference)} (${difference > 0 ? 'sobrante' : 'faltante'})`;
     const confirmed = await this.confirmDialog.confirm({
       type: 'SAVE',
       title: 'Registrar arqueo de caja',
       message:
-        `Contado ${formatCurrency(this.totalCounted())} contra ${formatCurrency(this.balanceSignal())} del Kardex` +
-        (difference === 0 ? ' — cuadra.' : ` — diferencia ${formatCurrency(difference)}.`) +
-        ' El arqueo no modifica el saldo.',
+        `Total contado: ${formatCurrency(this.totalCounted())} · ` +
+        `Saldo según el sistema: ${formatCurrency(this.balanceSignal())} · ` +
+        `Diferencia: ${differenceText} · ` +
+        `Usuario: ${this.authService.currentUser()?.username ?? '—'} · ` +
+        `Fecha: ${formatGuatemalaDateTime(new Date().toISOString())}. ` +
+        'El arqueo queda guardado tal cual y no modifica el saldo de caja.',
       confirmText: 'Sí, registrar',
     });
     if (!confirmed) {
@@ -121,8 +146,9 @@ export class GuayacanCashCountPanelComponent implements OnChanges {
           this.isSaving.set(false);
           this.latest.set(count);
           this.notes.set('');
+          // Un nuevo id solo tras guardar: un reintento del MISMO arqueo devuelve el mismo registro.
           this.requestId = crypto.randomUUID();
-          this.notifications.success('Arqueo registrado.');
+          this.notifications.success(`Arqueo ${count.number} registrado.`);
         },
         error: (error: HttpErrorResponse) => {
           this.isSaving.set(false);

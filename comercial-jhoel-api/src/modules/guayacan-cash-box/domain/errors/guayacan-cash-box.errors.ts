@@ -63,12 +63,12 @@ export class GuayacanMovementAlreadyVoidedError extends DomainError {
   }
 }
 
-/** Comisiones y reversos se corrigen anulando la operación de Transaccionar, nunca desde la caja. */
+/** Los movimientos de Transaccionar (y su historial) se corrigen anulando la operación en Transaccionar, nunca desde la caja. */
 export class GuayacanMovementNotVoidableError extends DomainError {
   readonly status = 400;
   constructor() {
     super(
-      'Este movimiento no se anula desde la caja. Las comisiones se revierten al anular su operación en Transaccionar.',
+      'Este movimiento no se anula desde la caja: los depósitos y retiros de Transaccionar se revierten al anular su operación.',
     );
   }
 }

@@ -9,6 +9,10 @@ import { RegisterGuayacanCashAdjustmentUseCase } from './application/use-cases/r
 import { VoidGuayacanCashMovementUseCase } from './application/use-cases/void-guayacan-cash-movement.use-case';
 import { RegisterGuayacanCashCountUseCase } from './application/use-cases/register-guayacan-cash-count.use-case';
 import { GetLatestGuayacanCashCountUseCase } from './application/use-cases/get-latest-guayacan-cash-count.use-case';
+import { ListGuayacanCashCountsUseCase } from './application/use-cases/list-guayacan-cash-counts.use-case';
+import { GetGuayacanCashCountUseCase } from './application/use-cases/get-guayacan-cash-count.use-case';
+import { ListGuayacanCashCountUsersUseCase } from './application/use-cases/list-guayacan-cash-count-users.use-case';
+import { ListGuayacanCommissionsUseCase } from './application/use-cases/list-guayacan-commissions.use-case';
 import { GuayacanCashBoxController } from './presentation/controllers/guayacan-cash-box.controller';
 
 /**
@@ -34,6 +38,10 @@ import { GuayacanCashBoxController } from './presentation/controllers/guayacan-c
     VoidGuayacanCashMovementUseCase,
     RegisterGuayacanCashCountUseCase,
     GetLatestGuayacanCashCountUseCase,
+    ListGuayacanCashCountsUseCase,
+    GetGuayacanCashCountUseCase,
+    ListGuayacanCashCountUsersUseCase,
+    ListGuayacanCommissionsUseCase,
   ],
 })
 export class GuayacanCashBoxModule {}

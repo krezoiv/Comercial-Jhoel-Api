@@ -4,6 +4,12 @@ import { VoidGuayacanCashMovementUseCase } from './void-guayacan-cash-movement.u
 import { ListGuayacanCashMovementsUseCase } from './list-guayacan-cash-movements.use-case';
 import { RegisterGuayacanCashCountUseCase } from './register-guayacan-cash-count.use-case';
 import {
+  ListGuayacanCashCountsUseCase,
+  parseCountNumber,
+} from './list-guayacan-cash-counts.use-case';
+import { GetGuayacanCashCountUseCase } from './get-guayacan-cash-count.use-case';
+import { ListGuayacanCommissionsUseCase } from './list-guayacan-commissions.use-case';
+import {
   GuayacanCashBoxRepository,
   GuayacanCashMovementDetail,
 } from '../../domain/repositories/guayacan-cash-box.repository';
@@ -12,6 +18,7 @@ import {
   GuayacanInvalidAmountError,
   GuayacanInvalidDateError,
   GuayacanInvalidDenominationError,
+  GuayacanCountNotFoundError,
   GuayacanReasonRequiredError,
 } from '../../domain/errors/guayacan-cash-box.errors';
 import { todayIsoDate } from '../utils/today-iso-date';
@@ -30,6 +37,13 @@ function buildRepository(): jest.Mocked<GuayacanCashBoxRepository> {
     registerCount: jest.fn().mockResolvedValue('count-1'),
     findLatestCount: jest.fn(),
     findCountById: jest.fn().mockResolvedValue({ id: 'count-1' }),
+    findCounts: jest
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
+    findCountUsers: jest.fn().mockResolvedValue([]),
+    findCommissions: jest
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, page: 1, limit: 10 }),
   };
 }
 
@@ -265,5 +279,75 @@ describe('RegisterGuayacanCashCountUseCase', () => {
         userId: 'u',
       }),
     ).rejects.toThrow(GuayacanInvalidDenominationError);
+  });
+});
+
+describe('ListGuayacanCashCountsUseCase (Cajas y Cierres → Arqueos)', () => {
+  it.each([
+    ['ARQ-0007', 7],
+    ['arq 12', 12],
+    ['3', 3],
+    ['', null],
+    ['ARQ-', null],
+  ])('parses the arqueo number %p', (value, expected) => {
+    expect(parseCountNumber(value)).toBe(expected);
+  });
+
+  it('passes date/user/number filters and paginates', async () => {
+    const repository = buildRepository();
+    await new ListGuayacanCashCountsUseCase(repository).execute({
+      startDate: '2026-11-01',
+      endDate: '2026-11-30',
+      userId: 'user-1',
+      number: 'ARQ-0007',
+      page: 2,
+      limit: 500,
+    });
+    expect(repository.findCounts).toHaveBeenCalledWith({
+      startDate: '2026-11-01',
+      endDate: '2026-11-30',
+      userId: 'user-1',
+      sequence: 7,
+      page: 2,
+      limit: 100,
+    });
+  });
+
+  it('a search without a number returns nothing (never "all")', async () => {
+    const repository = buildRepository();
+    const result = await new ListGuayacanCashCountsUseCase(repository).execute({
+      number: 'abc',
+    });
+    expect(result.total).toBe(0);
+    expect(repository.findCounts).not.toHaveBeenCalled();
+  });
+
+  it('rejects an inverted date range', () => {
+    expect(() =>
+      new ListGuayacanCashCountsUseCase(buildRepository()).execute({
+        startDate: '2026-11-05',
+        endDate: '2026-11-01',
+      }),
+    ).toThrow(GuayacanInvalidDateError);
+  });
+});
+
+describe('GetGuayacanCashCountUseCase', () => {
+  it('404 when the arqueo does not exist', async () => {
+    const repository = buildRepository();
+    repository.findCountById.mockResolvedValue(null);
+    await expect(
+      new GetGuayacanCashCountUseCase(repository).execute('x'),
+    ).rejects.toThrow(GuayacanCountNotFoundError);
+  });
+});
+
+describe('ListGuayacanCommissionsUseCase', () => {
+  it('defaults to 10 rows per page', async () => {
+    const repository = buildRepository();
+    await new ListGuayacanCommissionsUseCase(repository).execute({});
+    expect(repository.findCommissions).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, limit: 10 }),
+    );
   });
 });

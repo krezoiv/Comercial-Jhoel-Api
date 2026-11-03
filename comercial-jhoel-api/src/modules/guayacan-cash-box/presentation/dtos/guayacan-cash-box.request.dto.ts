@@ -150,3 +150,59 @@ export class GuayacanCashMovementsQueryDto {
   @Max(100)
   limit?: number;
 }
+
+export class GuayacanCashCountsQueryDto {
+  @IsOptional()
+  @IsDateString({ strict: true })
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString({ strict: true })
+  endDate?: string;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  /** "ARQ-0007" o "7". */
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  number?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class GuayacanCommissionsQueryDto {
+  @IsOptional()
+  @IsDateString({ strict: true })
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString({ strict: true })
+  endDate?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}

@@ -392,13 +392,13 @@
   color: var(--color-text-on-light-muted);
 
   &--ingreso,
-  &--comision_transaccion {
+  &--transaccion_deposito {
     background: var(--color-success-soft);
     color: var(--color-success);
   }
 
   &--egreso,
-  &--reverso_comision {
+  &--transaccion_retiro {
     background: var(--color-danger-soft);
     color: var(--color-danger-strong);
   }
@@ -506,5 +506,37 @@
   .cell-action {
     grid-area: action;
     justify-self: end;
+  }
+}
+
+.commissions-table {
+  .cell-amount {
+    font-weight: var(--fw-semibold);
+  }
+
+  th:nth-child(1) {
+    width: 6.5rem;
+  }
+
+  th:nth-child(3),
+  th:nth-child(4) {
+    width: 8rem;
+  }
+
+  th:nth-child(5) {
+    width: 6rem;
+  }
+}
+
+// Comisiones en teléfono: la tabla se apila igual que el Kardex, sin columnas fijas.
+@media (max-width: #{bp.$bp-md - 1px}) {
+  .commissions-table tbody tr {
+    grid-template-areas: none;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .commissions-table tbody td {
+    grid-area: auto;
+    display: block;
   }
 }

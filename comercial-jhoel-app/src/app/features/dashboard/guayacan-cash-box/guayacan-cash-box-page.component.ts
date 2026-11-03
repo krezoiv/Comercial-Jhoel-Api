@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 
 import {
+  GUAYACAN_FILTER_MOVEMENT_TYPES,
   GUAYACAN_MOVEMENT_TYPE_LABEL,
   GuayacanCashBoxSummary,
+  GuayacanCommission,
   GuayacanCashMovement,
   GuayacanCashMovementDetail,
   GuayacanCashMovementType,
@@ -28,6 +30,7 @@ import { formatGuatemalaDateTime, formatIsoDate } from './guayacan-cash.util';
 type Period = 'daily' | 'weekly' | 'monthly';
 
 const PAGE_SIZE = 15;
+const COMMISSIONS_PAGE_SIZE = 10;
 
 const PERIOD_LABEL: Record<Period, string> = { daily: 'Hoy', weekly: 'Semana', monthly: 'Mes' };
 
@@ -71,8 +74,15 @@ export class GuayacanCashBoxPageComponent {
   periodLabel = PERIOD_LABEL;
   readonly periodOptions: Period[] = ['daily', 'weekly', 'monthly'];
   readonly Math = Math;
-  readonly movementTypes = Object.keys(GUAYACAN_MOVEMENT_TYPE_LABEL) as GuayacanCashMovementType[];
+  readonly filterTypes = GUAYACAN_FILTER_MOVEMENT_TYPES;
   readonly pageSize = PAGE_SIZE;
+  readonly commissionsPageSize = COMMISSIONS_PAGE_SIZE;
+
+  readonly commissions = signal<GuayacanCommission[]>([]);
+  readonly totalCommissions = signal(0);
+  readonly commissionsPage = signal(1);
+  readonly loadingCommissions = signal(true);
+  readonly commissionsFailed = signal(false);
 
   readonly summary = signal<GuayacanCashBoxSummary | null>(null);
   readonly loadingSummary = signal(true);
@@ -121,10 +131,33 @@ export class GuayacanCashBoxPageComponent {
   constructor() {
     this.loadSummary();
     this.loadMovements();
+    this.loadCommissions();
+    // Las operaciones de Transaccionar mueven esta caja: al volver a la pestaña se relee todo del backend.
     refetchOnTabVisible(() => {
       this.loadSummary();
       this.loadMovements();
+      this.loadCommissions();
     });
+  }
+
+  loadCommissions(): void {
+    this.commissionsFailed.set(false);
+    this.service.getCommissions({ page: this.commissionsPage(), limit: COMMISSIONS_PAGE_SIZE }).subscribe({
+      next: (result) => {
+        this.commissions.set(result.items);
+        this.totalCommissions.set(result.total);
+        this.loadingCommissions.set(false);
+      },
+      error: () => {
+        this.loadingCommissions.set(false);
+        this.commissionsFailed.set(true);
+      },
+    });
+  }
+
+  onCommissionsPageChange(page: number): void {
+    this.commissionsPage.set(page);
+    this.loadCommissions();
   }
 
   loadSummary(): void {

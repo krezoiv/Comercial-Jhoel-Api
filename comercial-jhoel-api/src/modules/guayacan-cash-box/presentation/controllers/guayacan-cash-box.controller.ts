@@ -22,8 +22,14 @@ import { RegisterGuayacanCashAdjustmentUseCase } from '../../application/use-cas
 import { VoidGuayacanCashMovementUseCase } from '../../application/use-cases/void-guayacan-cash-movement.use-case';
 import { RegisterGuayacanCashCountUseCase } from '../../application/use-cases/register-guayacan-cash-count.use-case';
 import { GetLatestGuayacanCashCountUseCase } from '../../application/use-cases/get-latest-guayacan-cash-count.use-case';
+import { ListGuayacanCashCountsUseCase } from '../../application/use-cases/list-guayacan-cash-counts.use-case';
+import { GetGuayacanCashCountUseCase } from '../../application/use-cases/get-guayacan-cash-count.use-case';
+import { ListGuayacanCashCountUsersUseCase } from '../../application/use-cases/list-guayacan-cash-count-users.use-case';
+import { ListGuayacanCommissionsUseCase } from '../../application/use-cases/list-guayacan-commissions.use-case';
 import {
+  GuayacanCashCountsQueryDto,
   GuayacanCashMovementsQueryDto,
+  GuayacanCommissionsQueryDto,
   RegisterGuayacanCashAdjustmentRequestDto,
   RegisterGuayacanCashCountRequestDto,
   RegisterGuayacanCashMovementRequestDto,
@@ -51,7 +57,28 @@ export class GuayacanCashBoxController {
     private readonly voidMovementUseCase: VoidGuayacanCashMovementUseCase,
     private readonly registerCountUseCase: RegisterGuayacanCashCountUseCase,
     private readonly getLatestCountUseCase: GetLatestGuayacanCashCountUseCase,
+    private readonly listCountsUseCase: ListGuayacanCashCountsUseCase,
+    private readonly getCountUseCase: GetGuayacanCashCountUseCase,
+    private readonly listCountUsersUseCase: ListGuayacanCashCountUsersUseCase,
+    private readonly listCommissionsUseCase: ListGuayacanCommissionsUseCase,
   ) {}
+
+  /** Comisiones (concepto propio — nunca efectivo de caja). */
+  @Get('commissions')
+  commissions(@Query() query: GuayacanCommissionsQueryDto) {
+    return this.listCommissionsUseCase.execute(query);
+  }
+
+  /** Historial de arqueos (Cajas y Cierres). `latest`/`users` se declaran antes de `:id`. */
+  @Get('counts')
+  counts(@Query() query: GuayacanCashCountsQueryDto) {
+    return this.listCountsUseCase.execute(query);
+  }
+
+  @Get('counts/users')
+  countUsers() {
+    return this.listCountUsersUseCase.execute();
+  }
 
   @Get('summary')
   summary() {
@@ -102,6 +129,11 @@ export class GuayacanCashBoxController {
   @Get('counts/latest')
   latestCount() {
     return this.getLatestCountUseCase.execute();
+  }
+
+  @Get('counts/:id')
+  count(@Param('id', ParseUUIDPipe) id: string) {
+    return this.getCountUseCase.execute(id);
   }
 
   @Post('counts')

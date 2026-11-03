@@ -6,17 +6,18 @@
     </div>
     @if (latest(); as last) {
       <div class="count-card__last">
-        <span>Último arqueo · {{ formatDateTime(last.createdAt) }} · {{ last.createdByUsername }}</span>
+        <span>Último arqueo {{ last.number }} · {{ formatDateTime(last.createdAt) }} · {{ last.createdByUsername }}</span>
         <strong>
           {{ formatCurrency(last.totalCounted) }}
           @if (last.difference !== 0) {
             <em [class.diff--over]="last.difference > 0" [class.diff--under]="last.difference < 0">
-              ({{ last.difference > 0 ? '+' : '' }}{{ formatCurrency(last.difference) }})
+              ({{ formatDifference(last.difference) }})
             </em>
           } @else {
             <em class="diff--ok">(cuadró)</em>
           }
         </strong>
+        <button type="button" class="count-card__link" (click)="detailCountId.set(last.id)">Ver detalle</button>
       </div>
     } @else if (!loading()) {
       <span class="count-card__last">Aún no hay arqueos registrados.</span>
@@ -38,7 +39,7 @@
     <div>
       <span>Diferencia</span>
       <strong [class.diff--over]="difference() > 0" [class.diff--under]="difference() < 0">
-        {{ difference() > 0 ? '+' : '' }}{{ formatCurrency(difference()) }}
+        {{ formatDifference(difference()) }}
       </strong>
     </div>
   </div>
@@ -64,3 +65,5 @@
     <p class="count-card__hint">Si la diferencia se confirma, un administrador debe registrar un ajuste autorizado.</p>
   }
 </app-card>
+
+<app-guayacan-count-detail-modal [countId]="detailCountId()" (closed)="detailCountId.set(null)" />

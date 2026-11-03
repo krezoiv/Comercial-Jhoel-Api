@@ -1,5 +1,6 @@
 import { BANK_DEPOSIT_CASH_DENOMINATIONS, GuayacanCashDenomination } from '../../../core/models';
 import { CuadreStatus } from '../../../core/services/bank-deposit-draft.store';
+import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
 
 /** Mismas 11 denominaciones de Transaccionar (y de la validación SQL de la caja). */
 export const GUAYACAN_DENOMINATIONS = BANK_DEPOSIT_CASH_DENOMINATIONS;
@@ -66,4 +67,9 @@ export function formatGuatemalaDateTime(iso: string): string {
   }).formatToParts(new Date(iso));
   const get = (type: string) => (parts.find((part) => part.type === type)?.value ?? '').padStart(2, '0');
   return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`;
+}
+
+/** Diferencia de arqueo con signo explícito: "+Q 25.00", "-Q 50.00", "Q 0.00". */
+export function formatDifference(value: number): string {
+  return value > 0 ? `+${formatSignedBankBalance(value)}` : formatSignedBankBalance(value);
 }

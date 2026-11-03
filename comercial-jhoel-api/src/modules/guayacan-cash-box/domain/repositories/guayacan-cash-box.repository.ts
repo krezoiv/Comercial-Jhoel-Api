@@ -2,18 +2,28 @@ export const GUAYACAN_CASH_BOX_REPOSITORY = Symbol(
   'GUAYACAN_CASH_BOX_REPOSITORY',
 );
 
+/**
+ * Tipos del Kardex de efectivo. INGRESO/EGRESO = ingresos/egresos MANUALES
+ * (botones de la caja); TRANSACCION_DEPOSITO/RETIRO = efectivo de
+ * Transaccionar; AJUSTE (admin); ANULACION = inverso de un anulado.
+ * COMISION_TRANSACCION/REVERSO_COMISION solo existen como historial previo
+ * a la migración `GuayacanCashSeparateCommissionsAndTransactions`: las
+ * comisiones ya no son efectivo (viven en `guayacan_commissions`).
+ */
 export const GUAYACAN_CASH_MOVEMENT_TYPES = [
   'INGRESO',
   'EGRESO',
+  'TRANSACCION_DEPOSITO',
+  'TRANSACCION_RETIRO',
   'AJUSTE',
+  'ANULACION',
   'COMISION_TRANSACCION',
   'REVERSO_COMISION',
-  'ANULACION',
 ] as const;
 export type GuayacanCashMovementType =
   (typeof GUAYACAN_CASH_MOVEMENT_TYPES)[number];
 
-/** Tipos que un usuario registra a mano — el resto los genera el sistema (comisiones, reversos, anulaciones). */
+/** Tipos que un usuario registra a mano — el resto los genera el sistema (Transaccionar, anulaciones). */
 export type GuayacanManualMovementType = 'INGRESO' | 'EGRESO' | 'AJUSTE';
 
 export interface GuayacanCashDenominationData {
@@ -53,14 +63,17 @@ export interface GuayacanCashMovementRow {
 
 export interface GuayacanCashMovementDetail extends GuayacanCashMovementRow {
   cashDetails: GuayacanCashDenominationRow[];
-  /** Solo comisiones/reversos: la operación de Transaccionar que los originó. */
+  /** Movimientos de Transaccionar: la operación que los originó (con su propio desglose de efectivo, si lo tuvo). */
   operation: {
     id: string;
     transactionTypeName: string;
+    transactionBankName: string | null;
     totalAmount: number;
     transactionCount: number;
     operationDate: string;
     isVoided: boolean;
+    changeGiven: number;
+    cashDetails: GuayacanCashDenominationRow[];
   } | null;
 }
 
@@ -92,11 +105,16 @@ export interface GuayacanPeriodSummary {
   /** `SUM(transaction_count)` de operaciones Guayacán NO anuladas — transacciones individuales, no operaciones. */
   transactionCount: number;
   operationCount: number;
-  /** Comisiones vigentes (no revertidas) del período. */
+  /** Comisiones vigentes del período (`guayacan_commissions`) — NUNCA parte del efectivo. */
   commissionTotal: number;
-  /** Movimientos vigentes positivos / |negativos| del período. Un anulado y su contrapartida se cancelan (no inflan ninguno de los dos totales). */
-  incomeTotal: number;
-  expenseTotal: number;
+  /** Ingresos / egresos MANUALES vigentes (botones de la caja). */
+  manualIncomeTotal: number;
+  manualExpenseTotal: number;
+  /** Efectivo de Transaccionar vigente: Depósitos (entra) / Retiros (sale). */
+  transactionInTotal: number;
+  transactionOutTotal: number;
+  /** Ajustes vigentes, con signo. */
+  adjustmentTotal: number;
 }
 
 export interface GuayacanCashBoxSummary {
@@ -114,16 +132,67 @@ export interface GuayacanCashBoxSummary {
   monthly: GuayacanPeriodSummary;
 }
 
+export type GuayacanCashCountStatus = 'CUADRADO' | 'SOBRANTE' | 'FALTANTE';
+
 export interface GuayacanCashCountRow {
   id: string;
+  /** Correlativo inmutable — `number` = "ARQ-0001". */
+  sequence: number;
+  number: string;
+  /** Derivado de la diferencia guardada: 0 → CUADRADO, >0 → SOBRANTE, <0 → FALTANTE. */
+  status: GuayacanCashCountStatus;
+  /** Último movimiento del Kardex al momento del arqueo (null si la caja no tenía movimientos). */
+  lastMovementId: string | null;
+  lastMovementSequence: number | null;
   businessDate: string;
   totalCounted: number;
   systemBalance: number;
   difference: number;
   notes: string | null;
+  createdBy: string;
   createdByUsername: string;
   createdAt: Date;
   details: GuayacanCashDenominationRow[];
+}
+
+export interface FindGuayacanCashCountsOptions {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  /** Búsqueda por número ("ARQ-0007" / "7"). */
+  sequence?: number;
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedGuayacanCashCounts {
+  /** Sin `details` en el listado — el detalle completo viene de `findCountById`. */
+  items: Omit<GuayacanCashCountRow, 'details'>[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface GuayacanCommissionRow {
+  id: string;
+  operationId: string;
+  transactionTypeName: string;
+  businessDate: string;
+  transactionCount: number;
+  commissionRate: number;
+  amount: number;
+  status: 'VIGENTE' | 'ANULADO';
+  voidedAt: Date | null;
+  voidReason: string | null;
+  createdByUsername: string;
+  createdAt: Date;
+}
+
+export interface PaginatedGuayacanCommissions {
+  items: GuayacanCommissionRow[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface RegisterGuayacanCashCountData {
@@ -162,4 +231,17 @@ export interface GuayacanCashBoxRepository {
   registerCount(data: RegisterGuayacanCashCountData): Promise<string>;
   findLatestCount(): Promise<GuayacanCashCountRow | null>;
   findCountById(id: string): Promise<GuayacanCashCountRow | null>;
+  /** Historial de arqueos (Cajas y Cierres), más reciente primero, paginado en SQL. */
+  findCounts(
+    options: FindGuayacanCashCountsOptions,
+  ): Promise<PaginatedGuayacanCashCounts>;
+  /** Usuarios que han registrado arqueos (para el filtro). */
+  findCountUsers(): Promise<{ id: string; username: string }[]>;
+  /** Comisiones (concepto propio, fuera del efectivo), más reciente primero. */
+  findCommissions(options: {
+    startDate?: string;
+    endDate?: string;
+    page: number;
+    limit: number;
+  }): Promise<PaginatedGuayacanCommissions>;
 }

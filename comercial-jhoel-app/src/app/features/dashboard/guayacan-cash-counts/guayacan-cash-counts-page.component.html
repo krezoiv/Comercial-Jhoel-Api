@@ -1,0 +1,94 @@
+<div class="counts">
+  <app-page-header
+    icon="file-check"
+    title="Arqueos — Guayacán"
+    subtitle="Historial de arqueos de Cuadre de Caja Guayacán. Cada arqueo conserva el saldo del sistema, el efectivo contado y su desglose tal como se registraron."
+  />
+
+  <app-card padding="lg" class="panel">
+    <div class="filters">
+      <div class="filters__field">
+        <label for="counts-from">Desde</label>
+        <input id="counts-from" type="date" [ngModel]="draft().startDate" (ngModelChange)="setDraft('startDate', $event)" />
+      </div>
+      <div class="filters__field">
+        <label for="counts-to">Hasta</label>
+        <input id="counts-to" type="date" [ngModel]="draft().endDate" (ngModelChange)="setDraft('endDate', $event)" />
+      </div>
+      <div class="filters__field">
+        <label for="counts-user">Usuario</label>
+        <select id="counts-user" [ngModel]="draft().userId" (ngModelChange)="setDraft('userId', $event)">
+          <option value="">Todos</option>
+          @for (user of users(); track user.id) {
+            <option [value]="user.id">{{ user.username }}</option>
+          }
+        </select>
+      </div>
+      <div class="filters__field">
+        <label for="counts-number">Número</label>
+        <input
+          id="counts-number"
+          type="search"
+          placeholder="ARQ-0001"
+          maxlength="20"
+          [ngModel]="draft().number"
+          (ngModelChange)="setDraft('number', $event)"
+          (keydown.enter)="applyFilters()"
+        />
+      </div>
+      <div class="filters__actions">
+        <app-button variant="primary" size="sm" (click)="applyFilters()">Aplicar</app-button>
+        <app-button variant="ghost" size="sm" [disabled]="!hasFilters()" (click)="clearFilters()">Limpiar</app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="state">Cargando arqueos…</p>
+    } @else if (failed()) {
+      <p class="state state--error" role="alert">
+        No se pudieron cargar los arqueos.
+        <button type="button" (click)="load()">Reintentar</button>
+      </p>
+    } @else if (counts().length === 0) {
+      <p class="state">{{ hasFilters() ? 'Ningún arqueo coincide con los filtros.' : 'Aún no hay arqueos registrados.' }}</p>
+    } @else {
+      <table class="counts-table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Número</th>
+            <th scope="col">Usuario</th>
+            <th scope="col" class="num">Efectivo del sistema</th>
+            <th scope="col" class="num">Efectivo contado</th>
+            <th scope="col" class="num">Diferencia</th>
+            <th scope="col" aria-label="Detalle"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of counts(); track c.id) {
+            <tr>
+              <td class="cell-date">{{ formatDateTime(c.createdAt) }}</td>
+              <td class="cell-number"><strong>{{ c.number }}</strong></td>
+              <td class="cell-user">{{ c.createdByUsername }}</td>
+              <td class="num cell-system"><span class="cell-label">Sistema</span>{{ formatCurrency(c.systemBalance) }}</td>
+              <td class="num cell-counted"><span class="cell-label">Contado</span>{{ formatCurrency(c.totalCounted) }}</td>
+              <td class="num cell-diff">
+                <span class="diff diff--{{ c.status.toLowerCase() }}" [title]="statusLabel[c.status]">
+                  {{ formatDifference(c.difference) }}
+                </span>
+              </td>
+              <td class="cell-action">
+                <button type="button" class="icon-btn" (click)="detailId.set(c.id)" [attr.aria-label]="'Ver arqueo ' + c.number">
+                  <app-icon name="eye" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <app-report-pagination [total]="total()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+    }
+  </app-card>
+</div>
+
+<app-guayacan-count-detail-modal [countId]="detailId()" (closed)="detailId.set(null)" />
