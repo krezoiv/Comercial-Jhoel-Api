@@ -3,6 +3,7 @@ import { BANK_BALANCE_REPOSITORY } from '../../domain/repositories/bank-balance.
 import type { BankBalanceRepository } from '../../domain/repositories/bank-balance.repository';
 import { InvalidBankBalanceDateError } from '../../domain/errors/invalid-bank-balance.error';
 import { BankBalancesValidationOutput } from '../dtos/bank-balances-validation-output';
+import { isOutsideAgentReconciliation } from '../../domain/entities/bank-account-movement.entity';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -31,7 +32,10 @@ export class ValidateBankBalancesForDateUseCase {
       throw new InvalidBankBalanceDateError();
     }
 
-    const rows = await this.bankBalanceRepository.findBalancesView(date);
+    // Las cuentas con cuadre propio (Guayacán) no bloquean Cuadre de Agentes.
+    const rows = (
+      await this.bankBalanceRepository.findBalancesView(date)
+    ).filter((row) => !isOutsideAgentReconciliation(row.specialAccount));
     const missingBanks = rows
       .filter((row) => row.finalBalance === null)
       .map((row) => ({ id: row.bankId, name: row.bankName }));

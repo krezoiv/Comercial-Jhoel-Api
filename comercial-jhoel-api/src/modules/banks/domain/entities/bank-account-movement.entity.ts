@@ -31,7 +31,8 @@ export type BankMovementStatus = 'APLICADO' | 'ANULADO';
  * Reglas especiales de una cuenta (`banks.special_account`) — ver la
  * migración `CreateBankAccountMovements`. `GENESIS` puede quedar en negativo
  * ("saldo a favor"); `BI_CLUB` solo recibe de `BANCO_INDUSTRIAL`; `DISTRICOL`
- * solo recibe de `BANCO_AGROMERCANTIL`.
+ * solo recibe de `BANCO_AGROMERCANTIL`. `GUAYACAN` (Cooperativa Guayacán) no
+ * cambia ninguna regla de saldo: solo la saca de Cuadre de Agentes.
  */
 export const BANK_SPECIAL_ACCOUNTS = [
   'GENESIS',
@@ -39,8 +40,29 @@ export const BANK_SPECIAL_ACCOUNTS = [
   'DISTRICOL',
   'BANCO_INDUSTRIAL',
   'BANCO_AGROMERCANTIL',
+  'GUAYACAN',
 ] as const;
 export type BankSpecialAccount = (typeof BANK_SPECIAL_ACCOUNTS)[number];
+
+/**
+ * Cuentas con cuadre propio (Cooperativa Guayacán → Cuadre de Caja
+ * Guayacán): fuera del desglose y los totales de Cuadre de Agentes y sin
+ * exigir su saldo del día para cerrarlo. Migración
+ * `GuayacanAccountOutsideAgentReconciliation`.
+ */
+export const ACCOUNTS_OUTSIDE_AGENT_RECONCILIATION: readonly BankSpecialAccount[] =
+  ['GUAYACAN'];
+
+export function isOutsideAgentReconciliation(
+  specialAccount: string | null | undefined,
+): boolean {
+  return (
+    !!specialAccount &&
+    (ACCOUNTS_OUTSIDE_AGENT_RECONCILIATION as readonly string[]).includes(
+      specialAccount,
+    )
+  );
+}
 
 /**
  * Un renglón del ledger `bank_account_movements` — proyección de solo

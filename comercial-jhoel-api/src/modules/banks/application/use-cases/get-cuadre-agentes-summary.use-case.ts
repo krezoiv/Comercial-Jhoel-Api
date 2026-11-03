@@ -5,6 +5,7 @@ import { ASSET_REPOSITORY } from '../../../assets/domain/repositories/asset.repo
 import type { AssetRepository } from '../../../assets/domain/repositories/asset.repository';
 import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
 import type { AccountReceivableRepository } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
+import { isOutsideAgentReconciliation } from '../../domain/entities/bank-account-movement.entity';
 import {
   BankBalanceCalculationType,
   CuadreAgentesSummaryOutput,
@@ -85,22 +86,25 @@ export class GetCuadreAgentesSummaryUseCase {
     // línea (BI Club → Banco Industrial) resta a BI Club y suma a Banco
     // Industrial el mismo monto: el total no cambia, como toda transferencia
     // entre cuentas propias. Restarlo como las demás líneas lo duplicaría.
-    const bankItems = banks.map((bank) => {
-      const calculationType: BankBalanceCalculationType =
-        bank.specialAccount !== 'BI_CLUB' &&
-        isCreditLineAccountType(bank.accountTypeName)
-          ? 'subtract'
-          : 'sum';
-      return {
-        id: bank.id,
-        name: bank.name,
-        accountTypeId: bank.accountTypeId,
-        accountTypeName: bank.accountTypeName,
-        finalBalance: bank.finalBalance,
-        specialAccount: bank.specialAccount,
-        calculationType,
-      };
-    });
+    // Cooperativa Guayacán tiene su propio cuadre: ni desglose ni totales aquí.
+    const bankItems = banks
+      .filter((bank) => !isOutsideAgentReconciliation(bank.specialAccount))
+      .map((bank) => {
+        const calculationType: BankBalanceCalculationType =
+          bank.specialAccount !== 'BI_CLUB' &&
+          isCreditLineAccountType(bank.accountTypeName)
+            ? 'subtract'
+            : 'sum';
+        return {
+          id: bank.id,
+          name: bank.name,
+          accountTypeId: bank.accountTypeId,
+          accountTypeName: bank.accountTypeName,
+          finalBalance: bank.finalBalance,
+          specialAccount: bank.specialAccount,
+          calculationType,
+        };
+      });
 
     // Ahorro/Monetaria (anything not identified as a línea de crédito) add;
     // línea de crédito subtracts — `finalBalance` itself is never negated

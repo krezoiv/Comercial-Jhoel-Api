@@ -32,7 +32,7 @@ export interface BankInput {
 }
 
 /** Reglas especiales de saldo — espejo de `BANK_SPECIAL_ACCOUNTS` del backend (`banks.special_account`). */
-export type BankSpecialAccount = 'GENESIS' | 'BI_CLUB' | 'DISTRICOL' | 'BANCO_INDUSTRIAL' | 'BANCO_AGROMERCANTIL';
+export type BankSpecialAccount = 'GENESIS' | 'BI_CLUB' | 'DISTRICOL' | 'BANCO_INDUSTRIAL' | 'BANCO_AGROMERCANTIL' | 'GUAYACAN';
 
 export const BANK_SPECIAL_ACCOUNT_OPTIONS: { value: BankSpecialAccount; label: string; hint: string }[] = [
   {
@@ -48,6 +48,11 @@ export const BANK_SPECIAL_ACCOUNT_OPTIONS: { value: BankSpecialAccount; label: s
   { value: 'DISTRICOL', label: 'Districol', hint: 'Solo recibe transferencias de Banco Agromercantil.' },
   { value: 'BANCO_INDUSTRIAL', label: 'Banco Industrial', hint: 'Puede transferir a BI Club Empresarial.' },
   { value: 'BANCO_AGROMERCANTIL', label: 'Banco Agromercantil', hint: 'Puede transferir a Districol.' },
+  {
+    value: 'GUAYACAN',
+    label: 'Cooperativa Guayacán — cuadre independiente',
+    hint: 'No entra en Cuadre de Agentes (ni desglose ni totales); su cuadre es Cuadre de Caja Guayacán. El depósito suma y el retiro resta.',
+  },
 ];
 
 /** "Banco · Tipo · No. cuenta" — la etiqueta única de una cuenta en selectores (un mismo banco puede tener varias cuentas). */

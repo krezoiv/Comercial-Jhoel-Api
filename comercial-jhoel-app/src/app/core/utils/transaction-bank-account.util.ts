@@ -21,8 +21,8 @@ export interface TransactionBankAccountRule {
   agentNames: string[];
   /** Marca estable del banco agente (Sistema → Banco Agente) — tiene prioridad sobre el nombre. */
   agentCashBoxCode?: TransactionBank['cashBoxCode'];
-  /** Cuenta esperada — por cuenta especial, o por nombre exacto normalizado. */
-  account: { specialAccount: BankSpecialAccount } | { names: string[] };
+  /** Cuenta esperada — por cuenta especial y/o por nombre exacto normalizado (basta con que coincida uno). */
+  account: { specialAccount: BankSpecialAccount; names?: string[] } | { names: string[] };
   /** Nombre de la cuenta esperada, para mensajes. */
   accountName: string;
 }
@@ -77,7 +77,8 @@ export const TRANSACTION_BANK_ACCOUNT_RULES: readonly TransactionBankAccountRule
     monogram: 'CG',
     agentNames: ['cooperativa guayacan', 'guayacan'],
     agentCashBoxCode: 'GUAYACAN',
-    account: { names: ['cooperativa guayacan', 'guayacan'] },
+    // Por la cuenta especial GUAYACAN (Sistema → Bancos) o, si aún no está marcada, por su nombre.
+    account: { specialAccount: 'GUAYACAN', names: ['cooperativa guayacan', 'guayacan'] },
     accountName: 'Cooperativa Guayacán',
   },
   {
@@ -113,10 +114,11 @@ export function findTransactionBankRule(agent: AgentIdentity): TransactionBankAc
 }
 
 function accountMatchesRule(account: Bank, rule: TransactionBankAccountRule): boolean {
-  if ('specialAccount' in rule.account) {
-    return account.specialAccount === rule.account.specialAccount;
+  const { names } = rule.account;
+  if ('specialAccount' in rule.account && account.specialAccount === rule.account.specialAccount) {
+    return true;
   }
-  return rule.account.names.includes(normalizeBankName(account.name));
+  return names?.includes(normalizeBankName(account.name)) ?? false;
 }
 
 export type TransactionBankResolution =

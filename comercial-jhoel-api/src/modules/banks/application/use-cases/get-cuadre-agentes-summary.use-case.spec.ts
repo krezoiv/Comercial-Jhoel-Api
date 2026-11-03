@@ -89,3 +89,28 @@ describe('GetCuadreAgentesSummaryUseCase — BI Club como línea de crédito', (
     expect(afterPayment.totalBanks).toBe(10000);
   });
 });
+
+describe('GetCuadreAgentesSummaryUseCase — Cooperativa Guayacán (cuadre propio)', () => {
+  it('no aparece en el desglose ni suma al total de bancos', async () => {
+    const summary = await run([
+      bank('gtc', 5000, null),
+      bank('guay', 3000, 'GUAYACAN'),
+    ]);
+    expect(summary.banks.map((item) => item.id)).toEqual(['gtc']);
+    expect(summary.totalBanks).toBe(5000);
+    expect(summary.totalPositiveAccounts).toBe(5000);
+  });
+
+  it('las demás cuentas no cambian', async () => {
+    const withGuayacan = await run([
+      bank('gtc', 5000, null),
+      bank('gen', 1000, 'GENESIS', 'Linea Crédito'),
+      bank('guay', 3000, 'GUAYACAN'),
+    ]);
+    const without = await run([
+      bank('gtc', 5000, null),
+      bank('gen', 1000, 'GENESIS', 'Linea Crédito'),
+    ]);
+    expect(withGuayacan).toEqual(without);
+  });
+});

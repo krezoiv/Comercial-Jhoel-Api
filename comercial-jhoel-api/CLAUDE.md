@@ -1391,6 +1391,11 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Signo invertido para Guayacán** (migración `1760006400000-GuayacanInvertsDepositWithdrawal`): con el banco agente
   GUAYACAN, Depósito SUMA y Retiro RESTA al saldo de la cuenta (al revés que los demás bancos); Reintegro y Génesis
   sin cambio. Espejo en el frontend: `balanceEffectDirection(effect, agentCashBoxCode)`.
+- **Fuera de Cuadre de Agentes** (migración `1760006500000-GuayacanAccountOutsideAgentReconciliation`): la cuenta con
+  `banks.special_account = 'GUAYACAN'` (Sistema → Bancos; se marca sola si hay UNA cuenta activa cuyo nombre contiene
+  "guayacan") no entra en el desglose ni en los totales de `GetCuadreAgentesSummaryUseCase` y no se exige su saldo del
+  día para cerrar (`ValidateBankBalancesForDateUseCase`) — `isOutsideAgentReconciliation()`. No cambia reglas de saldo.
+  Los cierres ya guardados (`agent_reconciliations`) no se recalculan.
 - Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 45 casos).
 
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias

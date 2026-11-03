@@ -97,6 +97,12 @@ describe('Transaccionar — mapeo banco agente → cuenta afectada', () => {
       expect(result.status).toBe('missing');
     });
 
+    it('también por la cuenta especial GUAYACAN, aunque la cuenta se llame distinto', () => {
+      const marked = account('coop', 'Cooperativa Cuenta Monetaria', 'GUAYACAN');
+      const result = resolveTransactionBankAccount({ name: 'Cooperativa', cashBoxCode: 'GUAYACAN' }, [...ACCOUNTS, marked], 'DEPOSITO');
+      expect(result.status === 'ok' ? result.accounts.map((a) => a.id) : result.status).toEqual(['coop']);
+    });
+
     it('monograma CG', () => {
       expect(transactionBankMonogram({ name: 'Cooperativa', cashBoxCode: 'GUAYACAN' })).toBe('CG');
     });
