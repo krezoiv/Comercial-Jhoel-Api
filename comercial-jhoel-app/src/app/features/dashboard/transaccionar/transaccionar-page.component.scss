@@ -152,8 +152,10 @@ app-transaction-monthly-chart {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  // Escritorio: las cuatro en una fila; "Últimas transacciones" más ancha por su tabla.
-  @include bp.respond(xl) {
+  // Escritorio grande: las cuatro en una fila; "Últimas transacciones" más ancha
+  // por su tabla. (En 1280–1535 px, con el sidebar abierto, cada tarjeta quedaba
+  // en ~190 px y sus importes no cabían: ahí van 3 + la tabla debajo.)
+  @include bp.respond(xxl) {
     grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr);
   }
 }
@@ -173,7 +175,7 @@ app-transaction-monthly-chart {
     grid-column: 1 / -1;
   }
 
-  @include bp.respond(xl) {
+  @include bp.respond(xxl) {
     grid-column: auto;
   }
 }

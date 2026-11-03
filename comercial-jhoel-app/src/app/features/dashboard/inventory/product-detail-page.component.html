@@ -55,81 +55,83 @@
         @if (d.stockByLocation.length === 0) {
           <p class="empty-note">Sin registros de stock.</p>
         } @else {
-          <table class="mini-table">
-            <thead>
-              <tr>
-                <th>Ubicación</th>
-                @if (bulkPresentation) {
-                  <th class="align-right">Equivalencia ({{ bulkPresentation.name }})</th>
-                }
-                <th class="align-right">Cantidad (unidades base)</th>
-                @if (isAdmin()) {
-                  <th class="align-right">Stock mínimo</th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of d.stockByLocation; track row.locationId) {
+          <div class="table-wrapper">
+            <table class="mini-table">
+              <thead>
                 <tr>
-                  <td>{{ row.locationName }}</td>
+                  <th>Ubicación</th>
                   @if (bulkPresentation) {
-                    @let breakdown = bulkBreakdown(row.quantity)!;
-                    <td class="align-right">
-                      {{ formatQuantity(breakdown.count) }} {{ bulkPresentation.name }}(s)
-                      @if (breakdown.remainder > 0) {
-                        + {{ formatQuantity(breakdown.remainder) }}
-                      }
-                    </td>
+                    <th class="align-right">Equivalencia ({{ bulkPresentation.name }})</th>
                   }
-                  <td class="align-right">{{ formatQuantity(row.quantity) }}</td>
+                  <th class="align-right">Cantidad (unidades base)</th>
                   @if (isAdmin()) {
-                    <td class="align-right">
-                      <div class="min-stock-editor">
-                        <input
-                          type="text"
-                          inputmode="numeric"
-                          [appDecimalInput]="0"
-                          class="min-stock-input"
-                          [attr.aria-label]="'Stock mínimo en ' + row.locationName"
-                          [value]="draftMinStock()[row.locationId]"
-                          (input)="onMinStockInput(row.locationId, $any($event.target).value)"
-                        />
-                        <button
-                          type="button"
-                          class="action-btn"
-                          [disabled]="!canSaveMinStock(row.locationId) || savingMinStockLocationId() === row.locationId"
-                          (click)="saveMinStock(row.locationId)"
-                          aria-label="Guardar stock mínimo"
-                        >
-                          <app-icon name="check" [size]="16" />
-                        </button>
-                      </div>
-                    </td>
+                    <th class="align-right">Stock mínimo</th>
                   }
                 </tr>
-              }
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Total</td>
-                @if (bulkPresentation) {
-                  @let totalBreakdown = bulkBreakdown(d.totalStock)!;
-                  <td class="align-right">
-                    <strong>
-                      {{ formatQuantity(totalBreakdown.count) }} {{ bulkPresentation.name }}(s)
-                      @if (totalBreakdown.remainder > 0) {
-                        + {{ formatQuantity(totalBreakdown.remainder) }}
-                      }
-                    </strong>
-                  </td>
+              </thead>
+              <tbody>
+                @for (row of d.stockByLocation; track row.locationId) {
+                  <tr>
+                    <td>{{ row.locationName }}</td>
+                    @if (bulkPresentation) {
+                      @let breakdown = bulkBreakdown(row.quantity)!;
+                      <td class="align-right">
+                        {{ formatQuantity(breakdown.count) }} {{ bulkPresentation.name }}(s)
+                        @if (breakdown.remainder > 0) {
+                          + {{ formatQuantity(breakdown.remainder) }}
+                        }
+                      </td>
+                    }
+                    <td class="align-right">{{ formatQuantity(row.quantity) }}</td>
+                    @if (isAdmin()) {
+                      <td class="align-right">
+                        <div class="min-stock-editor">
+                          <input
+                            type="text"
+                            inputmode="numeric"
+                            [appDecimalInput]="0"
+                            class="min-stock-input"
+                            [attr.aria-label]="'Stock mínimo en ' + row.locationName"
+                            [value]="draftMinStock()[row.locationId]"
+                            (input)="onMinStockInput(row.locationId, $any($event.target).value)"
+                          />
+                          <button
+                            type="button"
+                            class="action-btn"
+                            [disabled]="!canSaveMinStock(row.locationId) || savingMinStockLocationId() === row.locationId"
+                            (click)="saveMinStock(row.locationId)"
+                            aria-label="Guardar stock mínimo"
+                          >
+                            <app-icon name="check" [size]="16" />
+                          </button>
+                        </div>
+                      </td>
+                    }
+                  </tr>
                 }
-                <td class="align-right"><strong>{{ formatQuantity(d.totalStock) }}</strong></td>
-                @if (isAdmin()) {
-                  <td></td>
-                }
-              </tr>
-            </tfoot>
-          </table>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  @if (bulkPresentation) {
+                    @let totalBreakdown = bulkBreakdown(d.totalStock)!;
+                    <td class="align-right">
+                      <strong>
+                        {{ formatQuantity(totalBreakdown.count) }} {{ bulkPresentation.name }}(s)
+                        @if (totalBreakdown.remainder > 0) {
+                          + {{ formatQuantity(totalBreakdown.remainder) }}
+                        }
+                      </strong>
+                    </td>
+                  }
+                  <td class="align-right"><strong>{{ formatQuantity(d.totalStock) }}</strong></td>
+                  @if (isAdmin()) {
+                    <td></td>
+                  }
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         }
       </app-card>
 

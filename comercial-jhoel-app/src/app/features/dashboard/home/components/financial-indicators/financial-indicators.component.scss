@@ -34,6 +34,13 @@
   color: var(--color-text-on-light-subtle);
 }
 
+// Cada celda es contenedor de su propia tarjeta: el importe se dimensiona por
+// el ancho de la tarjeta, no por el de la pantalla.
+.indicators__grid > * {
+  min-width: 0;
+  container-type: inline-size;
+}
+
 .indicators__grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -135,7 +142,10 @@
 }
 
 .metric-card__hero {
-  font-size: var(--fs-2xl);
+  // Se ajusta al ancho de la tarjeta (ver `.indicators__grid > *`): 36 px con
+  // espacio, mínimo 20 px, y se parte entre "Q" y la cifra antes que salirse.
+  font-size: clamp(var(--fs-md), 10.5cqi, var(--fs-2xl));
+  overflow-wrap: break-word;
   font-weight: var(--fw-bold);
   line-height: 1.1;
   color: var(--metric-accent);

@@ -5,7 +5,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  padding: var(--space-6);
+  // El contenedor del dashboard ya da su padding: en pantallas pequeñas no se duplica.
+  padding: 0;
+
+  @include bp.respond(md) {
+    padding: var(--space-6);
+  }
 }
 
 .alert-settings__grid {
@@ -14,7 +19,7 @@
   gap: var(--space-5);
 
   @include bp.respond(lg) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -32,16 +37,19 @@
 
 .field-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   margin-bottom: var(--space-3);
 
   &:last-child {
     margin-bottom: 0;
   }
 
+  // Si etiqueta + campo + botón no caben, la etiqueta pasa a su propia línea.
   label {
-    flex: 1;
+    flex: 1 1 10rem;
+    min-width: 0;
     font-size: var(--fs-sm);
     color: var(--color-text-on-light);
   }

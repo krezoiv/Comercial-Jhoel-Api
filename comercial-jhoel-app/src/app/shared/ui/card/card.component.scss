@@ -1,10 +1,18 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
   height: 100%;
+  // Como celda de un grid/flex, la tarjeta nunca se ensancha por su contenido
+  // (un importe largo, una tabla, un select): se ajusta a su columna y es el
+  // contenido el que se acomoda dentro.
+  min-width: 0;
+  max-width: 100%;
 }
 
 .card {
   height: 100%;
+  min-width: 0;
   border-radius: var(--radius-lg);
   transition:
     transform var(--duration-base) var(--ease-out),
@@ -20,8 +28,14 @@
   padding: var(--space-6);
 }
 
+// 32 px por lado en un teléfono de 360 px dejaba ~260 px de contenido: en
+// pantallas pequeñas el padding "lg" baja a 20 px y recupera su valor desde md.
 .card--pad-lg {
-  padding: var(--space-8);
+  padding: var(--space-5);
+
+  @include bp.respond(md) {
+    padding: var(--space-8);
+  }
 }
 
 .card--light {

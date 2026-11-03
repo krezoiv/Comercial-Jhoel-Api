@@ -7,8 +7,13 @@
 
 .summary-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // Igual que los demás resúmenes del panel: apilado en teléfono, 3 columnas desde sm.
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   margin-bottom: var(--space-6);
 }
 

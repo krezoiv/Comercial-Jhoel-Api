@@ -1,7 +1,9 @@
-@use 'breakpoints' as bp;
-
 :host {
   display: block;
+  min-width: 0;
+  // Las columnas internas dependen del ancho de ESTA tarjeta, no de la pantalla:
+  // en la fila de 4 tarjetas de Transaccionar es angosta aunque la pantalla sea ancha.
+  container-type: inline-size;
 }
 
 .commission-card {
@@ -26,11 +28,11 @@
 
 .commission-card__grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
 
-  @include bp.respond(sm) {
-    grid-template-columns: 1fr 1fr;
+  @container (min-width: 26rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -38,12 +40,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
 
-  // A vertical divider between "Hoy" and "Acumulado del mes" once they sit
-  // side by side — the same visual language the sibling summary cards
-  // already use for their own dividers, just oriented vertically here.
-  @include bp.respond(sm) {
+  // Apiladas: separador horizontal. Lado a lado (la tarjeta tiene espacio):
+  // separador vertical — el mismo lenguaje visual de las tarjetas vecinas.
+  &:not(:first-child) {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  @container (min-width: 26rem) {
     &:not(:first-child) {
+      padding-top: 0;
+      border-top: none;
       padding-left: var(--space-5);
       border-left: 1px solid var(--color-border-light);
     }
@@ -59,12 +68,16 @@
 
 .commission-card__value {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
+  // Importe fluido: 36 px con espacio, se reduce con el ancho de la tarjeta (`cqi`)
+  // y, solo si aún no cabe, baja de línea entre "Q" y la cifra (nunca a mitad del número).
+  font-size: clamp(var(--fs-md), 10.5cqi, var(--fs-2xl));
+  overflow-wrap: break-word;
   font-weight: var(--fw-bold);
   color: var(--color-text-on-light);
 }
 
 .commission-card__detail {
   font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
   color: var(--color-text-on-light-subtle);
 }

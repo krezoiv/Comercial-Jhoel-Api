@@ -14,8 +14,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  // Columnas según el espacio real: con el sidebar abierto (1024 px) caben menos;
+  // ningún campo o tarjeta baja de 12.5rem.
   @include bp.respond(lg) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
   }
 }
 

@@ -50,6 +50,8 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .stat-pill {
@@ -60,7 +62,9 @@
   border-radius: var(--radius-full);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
-  white-space: nowrap;
+  // En pantallas angostas la píldora puede ocupar dos líneas antes que salirse de la tarjeta.
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .stat-pill--max {

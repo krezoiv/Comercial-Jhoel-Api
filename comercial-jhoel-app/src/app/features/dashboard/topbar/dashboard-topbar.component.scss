@@ -58,21 +58,26 @@
   box-shadow: var(--shadow-md), 0 1px 0 rgba(23, 195, 214, 0.35);
 }
 
-// Nombre del módulo actual, centrado sobre la barra completa — posicionado
-// de forma absoluta (no como un hijo flex más) para que quede centrado
-// respecto al ancho total del topbar sin importar cuántos controles haya
-// a cada lado, y para que nunca empuje ni comprima al resto de elementos.
+// Nombre del módulo actual: ocupa el espacio libre ENTRE la fecha y los
+// controles, centrado en él, y se recorta con "…" si no cabe. Antes iba
+// centrado en absoluto sobre toda la barra con `max-width: 40%`, y en 1024 px
+// (sidebar abierto) ese 40% se montaba encima de la fecha y el selector de tema.
+// `order` lo coloca después de la fecha sin mover el DOM.
+.topbar__menu-btn {
+  order: -2;
+}
+
+.topbar__datetime {
+  order: -1;
+}
+
 .topbar__page-title {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  flex: 1 1 0;
+  min-width: 0;
   display: none;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  max-width: 40%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
@@ -81,7 +86,9 @@
   color: var(--color-primary-700);
   pointer-events: none;
 
-  @include bp.respond(md) {
+  // Solo desde xl: con menos ancho (sidebar abierto) no queda espacio tras la
+  // fecha y el título ya aparece en el encabezado de cada página.
+  @include bp.respond(xl) {
     display: flex;
   }
 }
@@ -89,6 +96,12 @@
 .topbar__page-title-icon {
   flex-shrink: 0;
   color: var(--color-primary-500);
+}
+
+.topbar__page-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar__menu-btn {

@@ -117,11 +117,9 @@
   grid-template-columns: 1fr;
   gap: var(--space-5);
 
+  // Cada tarjeta necesita ≥ 17rem para su importe y su pie de 2 columnas: con el
+  // sidebar abierto (1024 px) quedan 2 por fila en vez de 3 apretadas.
   @include bp.respond(sm) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include bp.respond(lg) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
   }
 }

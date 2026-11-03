@@ -1,5 +1,7 @@
 :host {
   display: block;
+  min-width: 0;
+  container-type: inline-size;
 }
 
 .summary-card {
@@ -49,7 +51,10 @@
 
 .summary-card__total-value {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
+  // Importe fluido: 36 px con espacio, se reduce con el ancho de la tarjeta (`cqi`)
+  // y, solo si aún no cabe, baja de línea entre "Q" y la cifra (nunca a mitad del número).
+  font-size: clamp(var(--fs-md), 10.5cqi, var(--fs-2xl));
+  overflow-wrap: break-word;
   font-weight: var(--fw-bold);
   color: var(--color-text-on-light);
 }

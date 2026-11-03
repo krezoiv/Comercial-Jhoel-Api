@@ -50,6 +50,7 @@
 .stat {
   display: block;
   height: 100%;
+  container-type: inline-size;
 }
 
 .stat__label {
@@ -64,14 +65,14 @@
   display: block;
   margin-top: var(--space-1);
   font-family: var(--font-heading);
-  font-size: var(--fs-xl);
+  font-size: clamp(var(--fs-md), 9cqi, var(--fs-xl));
   font-weight: var(--fw-bold);
   color: var(--color-text-on-light);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 
   &--xl {
-    font-size: var(--fs-2xl);
+    font-size: clamp(var(--fs-lg), 10.5cqi, var(--fs-2xl));
   }
 
   &--negative {
@@ -127,12 +128,10 @@
 
 .periods {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  // 3 columnas solo cuando cada resumen tiene ≥ 16rem (etiqueta + importe en
+  // una línea); con el sidebar abierto en 1024 px quedan 2 + 1 en vez de apretarse.
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: var(--space-4);
-
-  @include bp.respond(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 .period {
@@ -178,8 +177,14 @@
 
   div {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    gap: var(--space-3);
+    gap: 0 var(--space-3);
+  }
+
+  dd {
+    margin-left: auto;
+    white-space: nowrap;
   }
 
   dt {

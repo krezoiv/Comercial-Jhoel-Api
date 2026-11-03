@@ -168,3 +168,25 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+// ---------------------------------------------------------------------------
+// Contención de layout (auditoría de cards). Especificidad CERO (`:where`):
+// cualquier ancho que un componente defina sigue ganando.
+//
+// Un campo de formulario dentro de un grid/flex tiene `min-width: auto` por
+// defecto, así que un <select> con opciones largas o un <input> no bajaban de
+// su ancho natural y estiraban la columna — y con ella toda la página (en
+// 1024 px, con el sidebar abierto, las cuadrículas de filtros de Reportería,
+// Compras, Facturas... desbordaban la pantalla). Con `width: 100%` el control
+// pasa a ser "comprimible" y la columna puede encogerse; dentro de un `.field`
+// (columna flex) el aspecto es el mismo que antes.
+// ---------------------------------------------------------------------------
+:where(.field) {
+  min-width: 0;
+}
+
+:where(.field) > :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}

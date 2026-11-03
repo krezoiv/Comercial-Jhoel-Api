@@ -1,5 +1,8 @@
 :host {
   display: block;
+  min-width: 0;
+  // El valor se dimensiona por el ancho de la tarjeta que lo contiene (`cqi`).
+  container-type: inline-size;
 }
 
 .summary-tile {
@@ -22,6 +25,8 @@
 }
 
 .summary-tile__title {
+  max-width: 100%;
+  overflow-wrap: break-word;
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   color: var(--color-text-on-light-muted);
@@ -29,12 +34,18 @@
 
 .summary-tile__value {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
+  // 36 px con espacio; en tarjetas angostas se reduce con su ancho (`cqi`) y, si
+  // un importe grande aún no cabe, baja de línea entre "Q" y la cifra.
+  font-size: clamp(var(--fs-md), 10.5cqi, var(--fs-2xl));
+  max-width: 100%;
+  overflow-wrap: break-word;
   font-weight: var(--fw-bold);
   color: var(--color-text-on-light);
 }
 
 .summary-tile__description {
+  max-width: 100%;
+  overflow-wrap: break-word;
   font-size: var(--fs-xs);
   color: var(--color-text-on-light-subtle);
 }

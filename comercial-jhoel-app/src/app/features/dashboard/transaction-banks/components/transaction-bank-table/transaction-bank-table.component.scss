@@ -149,12 +149,17 @@
 
 .transaction-bank-card__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
 }
 
+// El nombre ocupa el espacio libre y cede: las insignias bajan de línea en vez de salirse.
 .transaction-bank-card__name {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--color-text-on-light);
   font-weight: var(--fw-medium);
   font-size: var(--fs-sm);
