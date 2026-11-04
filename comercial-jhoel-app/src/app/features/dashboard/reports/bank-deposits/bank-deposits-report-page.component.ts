@@ -14,6 +14,7 @@ import {
   formatQuantity,
 } from '../../../../core/models';
 import { BankDepositService } from '../../../../core/services/bank-deposit.service';
+import { GuayacanCashSyncService } from '../../../../core/services/guayacan-cash-sync.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { TransactionBankService } from '../../../../core/services/transaction-bank.service';
@@ -98,6 +99,7 @@ export class BankDepositsReportPageComponent {
   private readonly userService = inject(UserService);
   private readonly bankDepositService = inject(BankDepositService);
   private readonly notificationService = inject(NotificationService);
+  private readonly cashSync = inject(GuayacanCashSyncService);
 
   private readonly LIMIT = 20;
 
@@ -275,6 +277,8 @@ export class BankDepositsReportPageComponent {
         this.isVoidModalOpen.set(false);
         this.notificationService.success('La transacción fue anulada correctamente.');
         this.fetchAll();
+        // Si era de Guayacán, su efectivo se revirtió: las vistas abiertas lo re-leen.
+        this.cashSync.notifyChanged();
       },
       error: (error: HttpErrorResponse) => {
         this.isSavingVoid.set(false);

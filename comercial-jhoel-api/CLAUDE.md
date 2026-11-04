@@ -1407,7 +1407,15 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Arqueos en Cajas y Cierres**: `GET /guayacan-cash-box/counts` (filtros fecha Guatemala/usuario/número, paginado),
   `counts/users`, `counts/:id`; número `ARQ-` + `sequence` (puede tener huecos: una secuencia no se reutiliza),
   estado derivado de la diferencia, `last_movement_id` = movimiento del Kardex al contar. `GET commissions` paginado.
-- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 58 casos).
+- **Un solo saldo** (migración `1760006700000-GuayacanSingleBalanceFromCashBox`): `guayacan_cash_balance()` (último
+  `balance_after` del Kardex) es la única fuente. La cuenta `special_account = 'GUAYACAN'` ya no tiene saldo propio:
+  `TypeOrmBankRepository` (findAll/findById/…), `findBalancesView` y `getLastMovementByBank` (tendencia) leen la caja.
+  `register_bank_deposit_operation` no aplica movimiento bancario con el banco agente GUAYACAN; Retiro/Reintegro
+  Guayacán salen de la caja y se rechazan sin efectivo (`CASH_BOX_INSUFFICIENT_BALANCE`). Trigger
+  `trg_guard_guayacan_bank_account_movement` bloquea todo movimiento bancario sobre esa cuenta salvo ANULACION
+  (`GUAYACAN_BALANCE_IN_CASH_BOX`). El `final_balance` histórico y su ledger no se tocaron: una diferencia real se
+  concilia con arqueo + AJUSTE de la caja.
+- Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 57 casos) y `sql/tests/guayacan-single-balance.test.sql` (17).
 
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 

@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { GuayacanCashBoxSummary, GuayacanCashMovement, GuayacanCashMovementDetail } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { GuayacanCashBoxService } from '../../../core/services/guayacan-cash-box.service';
+import { GuayacanCashSyncService } from '../../../core/services/guayacan-cash-sync.service';
 import { GuayacanCashBoxPageComponent } from './guayacan-cash-box-page.component';
 
 function period(transactionCount: number, commissionTotal: number) {
@@ -165,6 +166,19 @@ describe('GuayacanCashBoxPageComponent', () => {
 
     expect(service.getSummary).toHaveBeenCalledTimes(1);
     expect(service.getMovements).toHaveBeenCalledTimes(1);
+  });
+
+  it('after a save it notifies the other views (Transaccionar, other tabs)', () => {
+    const notify = spyOn(TestBed.inject(GuayacanCashSyncService), 'notifyChanged').and.callThrough();
+    render().componentInstance.onSaved({ movementType: 'INGRESO', balanceAfter: 6350 } as GuayacanCashMovementDetail);
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('a Guayacán cash change from Transaccionar or another tab reloads the balance', () => {
+    render();
+    service.getSummary.calls.reset();
+    TestBed.inject(GuayacanCashSyncService).notifyChanged();
+    expect(service.getSummary).toHaveBeenCalledTimes(1);
   });
 
   it('warns when no banco agente is marked as Guayacán', () => {

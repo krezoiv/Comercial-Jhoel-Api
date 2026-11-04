@@ -295,6 +295,31 @@ export class ReintegroSourceIsGenesisError extends DomainError {
  * Los códigos de cuenta no encontrada/inactiva se dejan al llamador: cada
  * módulo ya tiene su propio error para eso.
  */
+/** La cuenta GUAYACAN no tiene saldo bancario propio: su saldo es el efectivo del Cuadre de Caja Guayacán (migración `GuayacanSingleBalanceFromCashBox`). */
+export class GuayacanBalanceInCashBoxError extends DomainError {
+  readonly status = 400;
+
+  constructor() {
+    super(
+      'El saldo de Cooperativa Guayacán es el efectivo del Cuadre de Caja Guayacán: usa Ingreso, Egreso o Ajuste de esa caja.',
+    );
+  }
+}
+
+/** Retiro/Reintegro de Cooperativa Guayacán por más del efectivo disponible en su caja (fuente única de su saldo). */
+export class GuayacanCashInsufficientError extends DomainError {
+  readonly status = 400;
+
+  constructor(available: string) {
+    const amount = Number(available);
+    super(
+      Number.isFinite(amount)
+        ? `Efectivo insuficiente en la Caja Guayacán (disponible: Q ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`
+        : 'Efectivo insuficiente en la Caja Guayacán.',
+    );
+  }
+}
+
 export function bankMovementErrorFromMessage(
   message: string,
 ): DomainError | null {
@@ -302,6 +327,10 @@ export function bankMovementErrorFromMessage(
   switch (code) {
     case 'INSUFFICIENT_BALANCE':
       return new InsufficientBankBalanceError(details[0] ?? '');
+    case 'GUAYACAN_BALANCE_IN_CASH_BOX':
+      return new GuayacanBalanceInCashBoxError();
+    case 'CASH_BOX_INSUFFICIENT_BALANCE':
+      return new GuayacanCashInsufficientError(details[0] ?? '');
     case 'BALANCE_LIMIT_EXCEEDED':
       return new BankBalanceLimitExceededError(
         details[0] ?? '',

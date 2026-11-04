@@ -1668,6 +1668,9 @@ backend (ver el `CLAUDE.md` del API) — la página nunca calcula el saldo, solo
 - Arqueos: colores verde (cuadra) / amarillo (sobrante) / rojo (faltante) con `formatDifference()`; el detalle
   (`GuayacanCountDetailModalComponent`) lo comparten el panel y **Cajas y Cierres → Arqueos — Guayacán**
   (`features/dashboard/guayacan-cash-counts/`, `/dashboard/arqueos-guayacan`).
+- Saldo único con Transaccionar: `GuayacanCashSyncService` (`core/services/`) avisa tras cada escritura que mueve el
+  efectivo (Subject + `BroadcastChannel('cj-guayacan-cash')` entre pestañas); la tira de saldos, Transaccionar y la caja
+  se suscriben con `onGuayacanCashChanged()` y vuelven a leer del backend — nunca calculan el saldo.
 - Reutiliza `CashBreakdownTableComponent` de Transaccionar (input opcional `emptyAmountText`) y
   `ReportPaginationComponent`. La marca Guayacán y su comisión se editan en Sistema → Banco Agente (solo edición).
 

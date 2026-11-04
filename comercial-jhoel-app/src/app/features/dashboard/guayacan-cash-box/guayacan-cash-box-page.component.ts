@@ -15,6 +15,7 @@ import {
 } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { GuayacanCashBoxService } from '../../../core/services/guayacan-cash-box.service';
+import { GuayacanCashSyncService, onGuayacanCashChanged } from '../../../core/services/guayacan-cash-sync.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
@@ -64,6 +65,7 @@ const PERIOD_LABEL: Record<Period, string> = { daily: 'Hoy', weekly: 'Semana', m
 export class GuayacanCashBoxPageComponent {
   private readonly service = inject(GuayacanCashBoxService);
   private readonly notifications = inject(NotificationService);
+  private readonly cashSync = inject(GuayacanCashSyncService);
   readonly isAdmin = inject(AuthService).isAdmin;
 
   formatCurrency = formatCurrency;
@@ -138,6 +140,8 @@ export class GuayacanCashBoxPageComponent {
       this.loadMovements();
       this.loadCommissions();
     });
+    // Cualquier escritura que mueva el efectivo (esta página, Transaccionar u otra pestaña).
+    onGuayacanCashChanged(() => this.refreshAfterChange());
   }
 
   loadCommissions(): void {
@@ -231,12 +235,12 @@ export class GuayacanCashBoxPageComponent {
   onSaved(movement: GuayacanCashMovementDetail): void {
     this.formMode.set(null);
     this.notifications.success(`${this.typeLabel[movement.movementType]} registrado. Saldo de caja: ${formatCurrency(movement.balanceAfter)}.`);
-    this.refreshAfterChange();
+    this.cashSync.notifyChanged();
   }
 
   onDetailChanged(): void {
     this.notifications.success('Movimiento anulado. Se registró el movimiento inverso.');
-    this.refreshAfterChange();
+    this.cashSync.notifyChanged();
   }
 
   /** Tras cualquier escritura: saldo e indicadores del backend, y el Kardex desde la primera página. */
@@ -244,6 +248,7 @@ export class GuayacanCashBoxPageComponent {
     this.loadSummary();
     this.page.set(1);
     this.loadMovements();
+    this.loadCommissions();
   }
 
   isIncome(movement: GuayacanCashMovement): boolean {

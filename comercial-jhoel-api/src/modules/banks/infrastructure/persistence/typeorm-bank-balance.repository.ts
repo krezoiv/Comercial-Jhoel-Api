@@ -64,7 +64,11 @@ export class TypeOrmBankBalanceRepository implements BankBalanceRepository {
         'lastFinalBalance',
       )
       .addSelect('bank.previousBalance', 'bankPreviousBalance')
-      .addSelect('bank.finalBalance', 'currentBalance')
+      // Guayacán: su saldo es el efectivo del Cuadre de Caja (fuente única).
+      .addSelect(
+        "CASE WHEN bank.specialAccount = 'GUAYACAN' THEN guayacan_cash_balance() ELSE bank.finalBalance END",
+        'currentBalance',
+      )
       .addSelect('bank.specialAccount', 'specialAccount')
       .addSelect('bank.maxBalance', 'maxBalance')
       .addSelect(

@@ -7,7 +7,9 @@ import { NEVER, of, throwError } from 'rxjs';
 import { BankDepositOperation, BankDepositOperationSummary, RegisterBankDepositInput } from '../../../core/models';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
+import { BankService } from '../../../core/services/bank.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { GuayacanCashSyncService } from '../../../core/services/guayacan-cash-sync.service';
 import { TransaccionarPageComponent } from './transaccionar-page.component';
 
 function recent(id: string): BankDepositOperationSummary {
@@ -186,6 +188,44 @@ describe('TransaccionarPageComponent — payload del desglose opcional y última
       expect(component.balancePreview()?.after).toBe(700);
       draft.setTotalAmount(1500);
       expect(component.balanceError()).toBe('Saldo insuficiente para realizar el retiro.');
+    });
+
+    it('la cuenta Guayacán (saldo = caja) avisa con el mensaje de la caja y sin límite máximo', () => {
+      prepare('RETIRO', 'GUAYACAN', 1500);
+      component.bankAccounts.update((accounts) => accounts.map((a) => ({ ...a, specialAccount: 'GUAYACAN' as const, maxBalance: 10 })));
+      expect(component.balanceError()).toBe('Efectivo insuficiente en la Caja Guayacán para esta operación.');
+
+      prepare('DEPOSITO', 'GUAYACAN', 5000);
+      component.bankAccounts.update((accounts) => accounts.map((a) => ({ ...a, specialAccount: 'GUAYACAN' as const, maxBalance: 10 })));
+      expect(component.balanceError()).toBeNull();
+    });
+
+    it('guardar una operación Guayacán avisa a las demás vistas (caja, tira de saldos, otras pestañas)', () => {
+      const sync = TestBed.inject(GuayacanCashSyncService);
+      const notify = spyOn(sync, 'notifyChanged');
+      registerSpy.and.returnValue(of({ balanceMovement: null } as unknown as BankDepositOperation));
+      prepare('DEPOSITO', 'GUAYACAN', 200);
+
+      component.confirmSave();
+
+      expect(notify).toHaveBeenCalledTimes(1);
+    });
+
+    it('una operación de otro banco no avisa', () => {
+      const sync = TestBed.inject(GuayacanCashSyncService);
+      const notify = spyOn(sync, 'notifyChanged');
+      registerSpy.and.returnValue(of({ balanceMovement: null } as unknown as BankDepositOperation));
+      prepare('DEPOSITO', null, 200);
+
+      component.confirmSave();
+
+      expect(notify).not.toHaveBeenCalled();
+    });
+
+    it('un cambio de efectivo de Guayacán (aquí u otra pestaña) re-lee las cuentas del backend', () => {
+      const getBanks = spyOn(TestBed.inject(BankService), 'getBanks').and.returnValue(of([]));
+      TestBed.inject(GuayacanCashSyncService).notifyChanged();
+      expect(getBanks).toHaveBeenCalled();
     });
 
     it('otro banco agente: sin cambio (Depósito resta, Retiro suma)', () => {

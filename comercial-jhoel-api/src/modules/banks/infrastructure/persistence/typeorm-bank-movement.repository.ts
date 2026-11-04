@@ -321,11 +321,32 @@ export class TypeOrmBankMovementRepository implements BankMovementRepository {
        WHERE movement_type <> 'SALDO_INICIAL'
        ORDER BY bank_id, sequence DESC`,
     );
+    // Guayacán: su "última transacción" es el último movimiento del Kardex de
+    // caja (fuente única de su saldo), no el de su ledger bancario histórico.
+    const guayacan = await this.manager.query<
+      { bank_id: string; amount: string; created_at: Date }[]
+    >(
+      `SELECT b.id AS bank_id, m.amount, m.created_at
+       FROM banks b
+       JOIN LATERAL (
+         SELECT amount, created_at FROM guayacan_cash_movements ORDER BY sequence DESC LIMIT 1
+       ) m ON true
+       WHERE b.special_account = 'GUAYACAN'`,
+    );
+    const guayacanIds = new Set(
+      (
+        await this.manager.query<{ id: string }[]>(
+          "SELECT id FROM banks WHERE special_account = 'GUAYACAN'",
+        )
+      ).map((row) => row.id),
+    );
     return new Map(
-      rows.map((row) => [
-        row.bank_id,
-        { amount: parseFloat(row.amount), createdAt: row.created_at },
-      ]),
+      [...rows.filter((row) => !guayacanIds.has(row.bank_id)), ...guayacan].map(
+        (row) => [
+          row.bank_id,
+          { amount: parseFloat(row.amount), createdAt: row.created_at },
+        ],
+      ),
     );
   }
 

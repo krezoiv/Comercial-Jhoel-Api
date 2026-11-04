@@ -4,6 +4,7 @@ import { BankBalanceStripItem } from '../../../core/models';
 import { BankService } from '../../../core/services/bank.service';
 import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
 import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
+import { onGuayacanCashChanged } from '../../../core/services/guayacan-cash-sync.service';
 import { BankBalanceAmountComponent } from '../bank-balance-amount/bank-balance-amount.component';
 import { IconComponent } from '../icon/icon.component';
 
@@ -33,6 +34,8 @@ export class BankBalanceStripComponent {
   constructor() {
     this.load();
     refetchOnTabVisible(() => this.load());
+    // El saldo de Guayacán es el efectivo de su caja: se re-lee al cambiar (aquí u otra pestaña).
+    onGuayacanCashChanged(() => this.load());
   }
 
   /** Tooltip: cuánto movió el saldo la última transacción y cuándo. */

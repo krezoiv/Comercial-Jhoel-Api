@@ -230,15 +230,13 @@ BEGIN
   PERFORM pg_temp.expect('T5 otros bancos no tocan la caja Guayacán',
     ((SELECT count(*) FROM guayacan_cash_movements) - v_count)::TEXT, '0');
 
-  -- Un Retiro de Transaccionar no se bloquea por la caja (puede quedar negativa).
+  -- Un Retiro de Transaccionar por más del efectivo en caja se rechaza (y no deja rastro).
   v_before := pg_temp.cash_balance();
-  -- La cuenta bancaria sí necesita saldo (regla de siempre): se fondea con un Retiro de otro banco, que no toca la caja.
-  PERFORM pg_temp.op(pg_temp.other_agent(), 'RETIRO', v_before + 1000);
-  PERFORM pg_temp.expect('T6 Retiro mayor que la caja no bloquea la operación bancaria',
-    pg_temp.op(pg_temp.guayacan(), 'RETIRO', v_before + 100), 'OK');
-  PERFORM pg_temp.expect('T6 la caja queda en −Q100 (visible para corregir con un ingreso)',
-    pg_temp.cash_balance()::TEXT, '-100.00');
-  PERFORM register_guayacan_cash_movement('INGRESO', 100, CURRENT_DATE, v_admin, 'Fondo inicial de caja', NULL, NULL, NULL, NULL);
+  v_count := (SELECT count(*) FROM bank_deposit_operations);
+  PERFORM pg_temp.expect('T6 Retiro mayor que la caja rechazado',
+    pg_temp.op(pg_temp.guayacan(), 'RETIRO', v_before + 100), 'CASH_BOX_INSUFFICIENT_BALANCE');
+  PERFORM pg_temp.expect('T6 ni operación ni movimiento',
+    ((SELECT count(*) FROM bank_deposit_operations) - v_count)::TEXT || '/' || (pg_temp.cash_balance() - v_before)::TEXT, '0/0.00');
 
   -- ===== Reclasificación de comisiones antiguas (simula datos previos) =====
   v_op := pg_temp.op_id(pg_temp.guayacan(), 'DEPOSITO', 20);
@@ -258,32 +256,27 @@ BEGIN
   PERFORM pg_temp.expect('R4 reclasificar otra vez no duplica',
     (SELECT count(*) FROM guayacan_cash_movements WHERE reversal_of_id = v_id)::TEXT, '1');
 
-  -- ===== Signo del saldo bancario: Guayacán al revés que los demás =====
+  -- ===== Guayacán no mueve ninguna cuenta bancaria: su saldo es la caja =====
+  -- (migración 1760006700000). Se fondea la caja para los retiros.
+  PERFORM register_guayacan_cash_movement('INGRESO', 1000, CURRENT_DATE, v_admin, 'Fondo para pruebas S', NULL, NULL, NULL, NULL);
   v_before := pg_temp.balance(pg_temp.account_id());
+  v_count := (SELECT count(*) FROM bank_account_movements);
   PERFORM pg_temp.expect('S1 Depósito Guayacán', pg_temp.op(pg_temp.guayacan(), 'DEPOSITO', 200), 'OK');
-  PERFORM pg_temp.expect('S1 Depósito Guayacán SUMA a la cuenta',
-    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '200.00');
-  v_before := pg_temp.balance(pg_temp.account_id());
   PERFORM pg_temp.expect('S2 Retiro Guayacán', pg_temp.op(pg_temp.guayacan(), 'RETIRO', 50), 'OK');
-  PERFORM pg_temp.expect('S2 Retiro Guayacán RESTA de la cuenta',
-    (v_before - pg_temp.balance(pg_temp.account_id()))::TEXT, '50.00');
-  PERFORM pg_temp.expect('S3 Retiro Guayacán sin saldo suficiente',
-    pg_temp.op(pg_temp.guayacan(), 'RETIRO', pg_temp.balance(pg_temp.account_id()) + 1), 'INSUFFICIENT_BALANCE');
+  PERFORM pg_temp.expect('S3 la cuenta bancaria elegida no se mueve',
+    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '0.00');
+  PERFORM pg_temp.expect('S3 ningún movimiento bancario nuevo por Guayacán',
+    ((SELECT count(*) FROM bank_account_movements) - v_count)::TEXT, '0');
+  PERFORM pg_temp.expect('S4 Retiro Guayacán sin efectivo suficiente en caja',
+    pg_temp.op(pg_temp.guayacan(), 'RETIRO', pg_temp.cash_balance() + 1), 'CASH_BOX_INSUFFICIENT_BALANCE');
   v_before := pg_temp.balance(pg_temp.account_id());
-  PERFORM pg_temp.expect('S4 Retiro de otro banco', pg_temp.op(pg_temp.other_agent(), 'RETIRO', 70), 'OK');
-  PERFORM pg_temp.expect('S4 otros bancos sin cambio: el Retiro SUMA',
+  PERFORM pg_temp.expect('S5 Retiro de otro banco', pg_temp.op(pg_temp.other_agent(), 'RETIRO', 70), 'OK');
+  PERFORM pg_temp.expect('S5 otros bancos sin cambio: el Retiro SUMA',
     (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '70.00');
   v_before := pg_temp.balance(pg_temp.account_id());
-  PERFORM pg_temp.expect('S5 Depósito de otro banco', pg_temp.op(pg_temp.other_agent(), 'DEPOSITO', 30), 'OK');
-  PERFORM pg_temp.expect('S5 otros bancos sin cambio: el Depósito RESTA',
+  PERFORM pg_temp.expect('S6 Depósito de otro banco', pg_temp.op(pg_temp.other_agent(), 'DEPOSITO', 30), 'OK');
+  PERFORM pg_temp.expect('S6 otros bancos sin cambio: el Depósito RESTA',
     (v_before - pg_temp.balance(pg_temp.account_id()))::TEXT, '30.00');
-  -- Anular un Depósito Guayacán devuelve el saldo (revierte lo realmente aplicado).
-  v_before := pg_temp.balance(pg_temp.account_id());
-  v_op := register_bank_deposit_operation(pg_temp.guayacan(), 120, CURRENT_DATE, '[]', '[120]', v_admin,
-    pg_temp.type_id('DEPOSITO'), NULL, 0, NULL, pg_temp.account_id(), false);
-  PERFORM void_bank_deposit_operation(v_op, CURRENT_DATE, v_admin, 'Prueba de signo');
-  PERFORM pg_temp.expect('S6 anular Depósito Guayacán deja el saldo igual',
-    (pg_temp.balance(pg_temp.account_id()) - v_before)::TEXT, '0.00');
 
   -- ===== Kardex manual =====
   v_before := pg_temp.cash_balance();

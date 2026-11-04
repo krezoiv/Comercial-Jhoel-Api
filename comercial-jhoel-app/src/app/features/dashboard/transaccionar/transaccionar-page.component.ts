@@ -27,6 +27,7 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
+import { GuayacanCashSyncService, onGuayacanCashChanged } from '../../../core/services/guayacan-cash-sync.service';
 import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
 import { transactionBankImageUrl } from '../../../core/services/transaction-bank.service';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
@@ -117,6 +118,7 @@ export class TransaccionarPageComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
   private readonly bankService = inject(BankService);
+  private readonly cashSync = inject(GuayacanCashSyncService);
 
   readonly draft = inject(BankDepositDraftStore);
   readonly isAdmin = this.authService.isAdmin;
@@ -203,6 +205,13 @@ export class TransaccionarPageComponent {
     // BI Club Empresarial = línea de crédito: -límite ≤ saldo ≤ 0 (Depósito usa la línea, Retiro la paga).
     if (isCreditLineAccount(account.specialAccount)) {
       return creditLineMovementError(preview.before, round2(preview.after - preview.before), account.maxBalance);
+    }
+    // Cooperativa Guayacán: su saldo es el efectivo del Cuadre de Caja (sin límite máximo);
+    // el backend rechaza un retiro mayor que ese efectivo.
+    if (account.specialAccount === 'GUAYACAN') {
+      return preview.after < 0 && preview.after < preview.before
+        ? 'Efectivo insuficiente en la Caja Guayacán para esta operación.'
+        : null;
     }
     if (preview.after < 0 && preview.after < preview.before && account.specialAccount !== 'GENESIS') {
       return INSUFFICIENT_MESSAGES[effect ?? ''] ?? 'Saldo insuficiente para realizar la operación.';
@@ -365,6 +374,12 @@ export class TransaccionarPageComponent {
 
     this.loadRecentOperations();
     refetchOnTabVisible(() => this.loadRecentOperations());
+    // El saldo de la cuenta Guayacán es el efectivo de su caja: si cambia (ingreso/egreso
+    // manual, ajuste, anulación, aquí u otra pestaña) se re-lee del backend.
+    onGuayacanCashChanged(() => {
+      this.loadBankAccounts();
+      this.loadRecentOperations();
+    });
   }
 
   /** Solo muestra el estado de carga la primera vez — un refresco (tras guardar) conserva las filas visibles hasta que llegan las nuevas. */
@@ -563,6 +578,8 @@ export class TransaccionarPageComponent {
     }
 
     this.isSaving.set(true);
+    // Se captura antes de limpiar el borrador: ¿esta operación mueve el efectivo de Guayacán?
+    const movesGuayacanCash = this.selectedTransactionBank()?.cashBoxCode === 'GUAYACAN';
     // Sin desglose: ni denominaciones ni vuelto — jamás lo que haya quedado en memoria.
     const cashBreakdownEnabled = this.draft.cashBreakdownEnabled();
     this.bankDepositService
@@ -597,6 +614,9 @@ export class TransaccionarPageComponent {
               : 'Transacción registrada correctamente.',
           );
           this.loadBankAccounts();
+          if (movesGuayacanCash) {
+            this.cashSync.notifyChanged();
+          }
           this.bankDepositService
             .getTransactionSummary()
             .pipe(catchError(() => of(null)))

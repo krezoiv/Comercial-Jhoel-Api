@@ -40,12 +40,12 @@ export class TypeOrmBankRepository implements BankRepository {
     }
 
     const orms = await qb.getMany();
-    return orms.map((orm) => BankMapper.toDomain(orm));
+    return this.toDomainList(orms);
   }
 
   async findById(id: string): Promise<Bank | null> {
     const orm = await this.repository.findOne({ where: { id } });
-    return orm ? BankMapper.toDomain(orm) : null;
+    return orm ? this.toDomain(orm) : null;
   }
 
   async findByActiveNameAndAccountNumber(
@@ -55,7 +55,7 @@ export class TypeOrmBankRepository implements BankRepository {
     const orm = await this.repository.findOne({
       where: { name, accountNumber, isActive: true },
     });
-    return orm ? BankMapper.toDomain(orm) : null;
+    return orm ? this.toDomain(orm) : null;
   }
 
   async create(data: CreateBankData): Promise<Bank> {
@@ -90,7 +90,7 @@ export class TypeOrmBankRepository implements BankRepository {
       const withRelations = await this.repository.findOneOrFail({
         where: { id: savedId },
       });
-      return BankMapper.toDomain(withRelations);
+      return this.toDomain(withRelations);
     } catch (error) {
       throw this.translateUniqueViolation(error, data.name, data.accountNumber);
     }
@@ -108,7 +108,7 @@ export class TypeOrmBankRepository implements BankRepository {
       );
     }
     const updated = await this.repository.findOneOrFail({ where: { id } });
-    return BankMapper.toDomain(updated);
+    return this.toDomain(updated);
   }
 
   async deactivate(id: string): Promise<void> {
@@ -133,5 +133,35 @@ export class TypeOrmBankRepository implements BankRepository {
       }
     }
     return error;
+  }
+
+  /**
+   * Cooperativa Guayacán (`special_account = 'GUAYACAN'`) no tiene un saldo
+   * bancario propio: su saldo es el efectivo del Cuadre de Caja Guayacán,
+   * leído de la única fuente, `guayacan_cash_balance()` (migración
+   * `GuayacanSingleBalanceFromCashBox`). Su `final_balance` histórico no se usa.
+   */
+  private async toDomainList(orms: BankOrmEntity[]): Promise<Bank[]> {
+    if (orms.some((orm) => orm.specialAccount === 'GUAYACAN')) {
+      const balance = await this.guayacanCashBalance();
+      for (const orm of orms) {
+        if (orm.specialAccount === 'GUAYACAN') {
+          orm.finalBalance = balance;
+        }
+      }
+    }
+    return orms.map((orm) => BankMapper.toDomain(orm));
+  }
+
+  private async toDomain(orm: BankOrmEntity): Promise<Bank> {
+    const [bank] = await this.toDomainList([orm]);
+    return bank;
+  }
+
+  private async guayacanCashBalance(): Promise<number> {
+    const [row] = await this.repository.manager.query<{ balance: string }[]>(
+      'SELECT guayacan_cash_balance() AS balance',
+    );
+    return parseFloat(row?.balance ?? '0');
   }
 }
