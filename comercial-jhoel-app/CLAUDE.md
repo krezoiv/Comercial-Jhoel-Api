@@ -1690,6 +1690,9 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
 - **Transaccionar → "Últimas transacciones"** (misma tarjeta) ahora lee `GET /cash-control/movements/recent`: incluye
   gastos por cobrar, activos, retiros bancarios, manuales y anulaciones; última columna "Efectivo disponible" =
   `newBalance` del backend; verde entrada / rojo salida / gris sin efecto. Ocupa siempre su propia fila.
+- **Depósito bancario**: `CashBankDepositModalComponent` (cuenta — sin Guayacán —, monto, desglose obligatorio con
+  `app-cash-breakdown-table` en verde solo si cuadra, vista previa caja ↓ / banco ↑). En el Kardex, "Ver desglose" lee
+  `GET /cash-control/movements/:id` (`details`); anularlo revierte caja y banco.
 - Sistema → Tipo de Transacción edita `cashEffect` (sugerido desde el efecto bancario con `defaultCashEffect`).
 
 ### Notifications

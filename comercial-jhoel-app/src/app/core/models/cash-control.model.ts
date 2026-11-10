@@ -22,7 +22,9 @@ export type CashMovementType =
   | 'SALIDA_MANUAL'
   | 'AJUSTE'
   | 'SALDO_INICIAL'
-  | 'ANULACION';
+  | 'ANULACION'
+  /** Efectivo de caja depositado a una cuenta bancaria registrada (con desglose). */
+  | 'DEPOSITO_BANCARIO';
 
 export type ManualCashMovementType = 'ENTRADA_MANUAL' | 'SALIDA_MANUAL' | 'AJUSTE' | 'SALDO_INICIAL';
 
@@ -43,6 +45,7 @@ export const CASH_MOVEMENT_TYPE_LABEL: Record<CashMovementType, string> = {
   AJUSTE: 'Ajuste',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
+  DEPOSITO_BANCARIO: 'Depósito bancario',
 };
 
 export const CASH_DIRECTION_LABEL: Record<CashDirection, string> = {
@@ -78,6 +81,17 @@ export interface CashMovement {
   createdBy: string;
   createdByUsername: string;
   createdAt: string;
+  /** Desglose por denominación — solo en `GET /cash-control/movements/:id` y en la respuesta del depósito bancario. */
+  details?: { denomination: number; quantity: number; subtotal: number }[];
+}
+
+/** `POST /cash-control/bank-deposits` — el backend valida desglose, efectivo suficiente y reglas de la cuenta. */
+export interface RegisterCashBankDepositInput {
+  bankId: string;
+  amount: number;
+  details: { denomination: number; quantity: number }[];
+  description?: string;
+  clientRequestId: string;
 }
 
 export interface CashBalanceSnapshot {

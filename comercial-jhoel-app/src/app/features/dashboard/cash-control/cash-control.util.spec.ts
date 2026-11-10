@@ -17,11 +17,12 @@ describe('Control de Efectivo — util', () => {
       'GASTO_POR_COBRAR',
       'ACTIVO',
       'RETIRO_BANCARIO',
+      'DEPOSITO_BANCARIO',
       'OTROS',
     ]);
     expect(cards[0]).toEqual(jasmine.objectContaining({ totalIn: 5000, count: 2 }));
     expect(cards[4]).toEqual(jasmine.objectContaining({ totalOut: 500, count: 1 }));
-    expect(cards[7]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
+    expect(cards[8]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
   });
 
   it('formats times in America/Guatemala', () => {

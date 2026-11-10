@@ -33,6 +33,7 @@ import {
   referenceLabel,
 } from './cash-control.util';
 import { CashMovementFormModalComponent } from './components/cash-movement-form-modal/cash-movement-form-modal.component';
+import { CashBankDepositModalComponent } from './components/cash-bank-deposit-modal/cash-bank-deposit-modal.component';
 import { CashCutControlPanelComponent } from './components/cut-control-panel/cut-control-panel.component';
 import { CashCutHistoryComponent } from './components/cut-history/cut-history.component';
 import { CashReasonModalComponent } from './components/reason-modal/reason-modal.component';
@@ -59,6 +60,7 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     PageHeaderComponent,
     ReportPaginationComponent,
     CashMovementFormModalComponent,
+    CashBankDepositModalComponent,
     CashCutControlPanelComponent,
     CashCutHistoryComponent,
     CashReasonModalComponent,
@@ -107,6 +109,11 @@ export class CashControlPageComponent {
   readonly hasFilters = computed(() => Object.values(this.draft()).some((value) => value !== '' && value !== undefined));
 
   readonly formMode = signal<ManualCashMovementType | null>(null);
+  /** "Depósito bancario" modal (cash → registered account, with breakdown). */
+  readonly depositOpen = signal(false);
+  /** Movement whose denomination breakdown is being shown (loaded from the backend). */
+  readonly breakdown = signal<CashMovement | null>(null);
+  readonly loadingBreakdown = signal(false);
   readonly voidTarget = signal<CashMovement | null>(null);
   readonly voiding = signal(false);
   readonly lastRefresh = signal<string | null>(null);
@@ -198,6 +205,33 @@ export class CashControlPageComponent {
       return `Anulación · ${this.typeLabel[movement.originalMovementType]}`;
     }
     return this.typeLabel[movement.movementType];
+  }
+
+  onDepositSaved(): void {
+    this.depositOpen.set(false);
+    this.refresh();
+  }
+
+  showBreakdown(movement: CashMovement): void {
+    this.loadingBreakdown.set(true);
+    this.breakdown.set(movement);
+    this.service.getMovement(movement.id).subscribe({
+      next: (detail) => {
+        this.breakdown.set(detail);
+        this.loadingBreakdown.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loadingBreakdown.set(false);
+        this.breakdown.set(null);
+        this.notifications.error(extractErrorMessage(error, 'No se pudo cargar el desglose.'));
+      },
+    });
+  }
+
+  voidMessage(): string {
+    return this.voidTarget()?.movementType === 'DEPOSITO_BANCARIO'
+      ? 'Se devolverá el efectivo a la caja y se revertirá el depósito en la cuenta bancaria. Ambos movimientos quedan visibles como anulados.'
+      : 'Se registrará el movimiento inverso; el original queda visible como anulado. No se elimina nada.';
   }
 
   onMovementSaved(): void {

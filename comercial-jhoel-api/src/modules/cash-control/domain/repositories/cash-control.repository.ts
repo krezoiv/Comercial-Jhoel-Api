@@ -27,6 +27,8 @@ export const CASH_MOVEMENT_TYPES = [
   'AJUSTE',
   'SALDO_INICIAL',
   'ANULACION',
+  /** Cash deposited from the caja into a registered bank account (with breakdown). */
+  'DEPOSITO_BANCARIO',
 ] as const;
 export type CashMovementType = (typeof CASH_MOVEMENT_TYPES)[number];
 
@@ -76,6 +78,8 @@ export interface CashMovementRow {
   createdBy: string;
   createdByUsername: string;
   createdAt: Date;
+  /** Denomination breakdown — only loaded by `findMovementById` (empty when the movement has none). */
+  details?: CashCountDetailRow[];
 }
 
 export interface CashBalanceSnapshot {
@@ -297,6 +301,15 @@ export interface OpenCashDayData {
   secondEnd: string | null;
 }
 
+export interface RegisterCashBankDepositData {
+  bankId: string;
+  amount: number;
+  details: CashDenominationData[];
+  description: string | null;
+  idempotencyKey: string;
+  userId: string;
+}
+
 export interface CashDenominationData {
   denomination: number;
   quantity: number;
@@ -341,6 +354,8 @@ export interface CashControlRepository {
     userId: string,
     reason: string,
   ): Promise<string>;
+  /** Cash → bank deposit with breakdown; returns the Kardex movement id. */
+  registerBankDeposit(data: RegisterCashBankDepositData): Promise<string>;
 
   findDayByDate(date: string): Promise<CashOperationalDayRow | null>;
   findDayById(id: string): Promise<CashOperationalDayRow | null>;

@@ -379,4 +379,68 @@ BEGIN
   RAISE NOTICE 'Control de Efectivo: todas las pruebas pasaron.';
 END $$;
 
+-- ===== Depósito bancario desde caja (migración 1760006900000-CashBankDeposit) =====
+DO $$
+DECLARE
+  v_admin UUID := pg_temp.admin_id();
+  v_cash NUMERIC;
+  v_bank NUMERIC;
+  v_id UUID;
+  v_id2 UUID;
+  v_row cash_movements;
+  v_details JSONB := '[{"denomination":200,"quantity":4},{"denomination":100,"quantity":2}]';
+BEGIN
+  v_cash := cash_balance();
+  v_bank := (SELECT final_balance FROM banks WHERE id = pg_temp.account());
+
+  PERFORM pg_temp.expect('DB1 sin desglose rechazado',
+    pg_temp.err(format('SELECT register_cash_bank_deposit(%L, 1000, %L, %L, NULL, %L)', pg_temp.account(), '[]', v_admin, 'DEP:0')),
+    'CASH_BREAKDOWN_REQUIRED');
+  PERFORM pg_temp.expect('DB2 desglose que no suma el monto rechazado',
+    pg_temp.err(format('SELECT register_cash_bank_deposit(%L, 1000, %L, %L, NULL, %L)', pg_temp.account(),
+      '[{"denomination":200,"quantity":4}]', v_admin, 'DEP:1')),
+    'CASH_BREAKDOWN_MISMATCH');
+  PERFORM pg_temp.expect('DB3 sin efectivo suficiente rechazado (y el banco no cambia)',
+    pg_temp.err(format('SELECT register_cash_bank_deposit(%L, %s, %L, %L, NULL, %L)', pg_temp.account(),
+      v_cash + 200, jsonb_build_array(jsonb_build_object('denomination', 0.05, 'quantity', ((v_cash + 200) / 0.05)::int)), v_admin, 'DEP:2')),
+    'CASH_INSUFFICIENT_BALANCE');
+  PERFORM pg_temp.expect('DB3 saldo bancario intacto',
+    (SELECT final_balance FROM banks WHERE id = pg_temp.account())::TEXT, v_bank::TEXT);
+  IF EXISTS (SELECT 1 FROM banks WHERE special_account = 'GUAYACAN' AND is_active) THEN
+    PERFORM pg_temp.expect('DB4 cuenta Guayacán rechazada',
+      pg_temp.err(format('SELECT register_cash_bank_deposit(%L, 1000, %L, %L, NULL, %L)',
+        (SELECT id FROM banks WHERE special_account = 'GUAYACAN' AND is_active LIMIT 1), v_details, v_admin, 'DEP:3')),
+      'CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED');
+  END IF;
+
+  v_id := register_cash_bank_deposit(pg_temp.account(), 1000, v_details, v_admin, 'Depósito del día', 'DEP:OK');
+  SELECT * INTO v_row FROM cash_movements WHERE id = v_id;
+  PERFORM pg_temp.expect('DB5 caja disminuye', v_row.movement_type || ' ' || v_row.direction || ' ' || cash_balance(),
+    'DEPOSITO_BANCARIO OUT ' || (v_cash - 1000)::NUMERIC(14,2));
+  PERFORM pg_temp.expect('DB5 banco aumenta', (SELECT final_balance FROM banks WHERE id = pg_temp.account())::TEXT,
+    (v_bank + 1000)::NUMERIC(14,2)::TEXT);
+  PERFORM pg_temp.expect('DB5 movimiento bancario ligado',
+    (SELECT movement_type || '/' || origin FROM bank_account_movements WHERE reference_type = 'DEPOSITO_CAJA' AND reference_id = v_row.reference_id),
+    'DEPOSITO_CAJA/CONTROL_EFECTIVO');
+  PERFORM pg_temp.expect('DB5 desglose guardado',
+    (SELECT count(*) || ':' || sum(subtotal) FROM cash_movement_details WHERE movement_id = v_id), '2:1000.00');
+
+  v_id2 := register_cash_bank_deposit(pg_temp.account(), 1000, v_details, v_admin, 'Depósito del día', 'DEP:OK');
+  PERFORM pg_temp.expect('DB6 reintento devuelve el mismo depósito', v_id2::TEXT, v_id::TEXT);
+  PERFORM pg_temp.expect('DB6 un solo movimiento bancario',
+    (SELECT count(*) FROM bank_account_movements WHERE reference_type = 'DEPOSITO_CAJA' AND reference_id = v_row.reference_id)::TEXT, '1');
+
+  PERFORM void_manual_cash_movement(v_id, v_admin, 'Depósito equivocado');
+  PERFORM pg_temp.expect('DB7 anular devuelve el efectivo', cash_balance()::TEXT, v_cash::NUMERIC(14,2)::TEXT);
+  PERFORM pg_temp.expect('DB7 anular revierte el banco', (SELECT final_balance FROM banks WHERE id = pg_temp.account())::TEXT, v_bank::TEXT);
+  PERFORM pg_temp.expect('DB7 ambos lados marcados',
+    (SELECT status FROM cash_movements WHERE id = v_id) || '/' ||
+    (SELECT status FROM bank_account_movements WHERE reference_type = 'DEPOSITO_CAJA' AND reference_id = v_row.reference_id AND movement_type = 'DEPOSITO_CAJA'),
+    'ANULADO/ANULADO');
+  PERFORM pg_temp.expect('DB7 doble anulación rechazada',
+    pg_temp.err(format('SELECT void_manual_cash_movement(%L, %L, %L)', v_id, v_admin, 'Otra vez')), 'CASH_MOVEMENT_ALREADY_VOIDED');
+
+  RAISE NOTICE 'Depósito bancario desde caja: todas las pruebas pasaron.';
+END $$;
+
 ROLLBACK;

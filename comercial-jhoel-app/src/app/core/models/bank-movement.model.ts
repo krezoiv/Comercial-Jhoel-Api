@@ -12,7 +12,9 @@ export type BankMovementType =
   | 'SALDO_INICIAL'
   | 'ANULACION'
   /** Transferencias Bancarias → "Acreditar saldo": suma directa a una cuenta, sin contrapartida (≠ Depósito de Transaccionar). */
-  | 'ACREDITACION_SALDO';
+  | 'ACREDITACION_SALDO'
+  /** Control de Efectivo → "Depósito bancario": efectivo de caja depositado a la cuenta. */
+  | 'DEPOSITO_CAJA';
 
 export type BankMovementOrigin =
   | 'TRANSACCIONAR'
@@ -20,7 +22,8 @@ export type BankMovementOrigin =
   | 'AJUSTE_MANUAL'
   | 'SALDO_INICIAL'
   | 'ANULACION'
-  | 'ACREDITACION_SALDO';
+  | 'ACREDITACION_SALDO'
+  | 'CONTROL_EFECTIVO';
 
 export type BankMovementStatus = 'APLICADO' | 'ANULADO';
 
@@ -35,6 +38,7 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   RETIRO_EFECTIVO: 'Retiro de efectivo',
   AJUSTE_MANUAL: 'Ajuste manual',
   ACREDITACION_SALDO: 'Acreditación de saldo',
+  DEPOSITO_CAJA: 'Depósito desde caja',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };
@@ -46,6 +50,7 @@ export const BANK_MOVEMENT_ORIGIN_LABELS: Record<BankMovementOrigin, string> = {
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
   ACREDITACION_SALDO: 'Acreditación de saldo',
+  CONTROL_EFECTIVO: 'Control de Efectivo',
 };
 
 /** Datos que se envían al acreditar saldo — el backend calcula saldos y valida todo. */

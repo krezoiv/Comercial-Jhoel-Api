@@ -167,4 +167,53 @@ describe('Control de Efectivo (e2e)', () => {
     expect(persisted.dayState).toBe('CERRADO');
     expect(Number(persisted.balance)).toBe(system);
   });
+
+  it('Depósito bancario: cash out of the caja, bank account up, with breakdown; void reverses both', async () => {
+    // Like every balance-moving bank operation, the business day must be open (Agentes Bancarios cycle).
+    await dataSource.query(
+      `INSERT INTO day_openings (date, opened_by)
+       SELECT (now() AT TIME ZONE 'America/Guatemala')::date, $1
+       WHERE NOT EXISTS (SELECT 1 FROM day_openings WHERE date = (now() AT TIME ZONE 'America/Guatemala')::date)`,
+      [adminId],
+    );
+    const [account] = (await dataSource.query(
+      `SELECT id, final_balance FROM banks WHERE is_active AND special_account IS NULL ORDER BY created_at LIMIT 1`,
+    )) as Body[];
+    const before = Number(data(await asAdmin(api().get('/api/cash-control/balance')).expect(200)).balance);
+    const payload = {
+      bankId: account.id,
+      amount: 450,
+      details: [
+        { denomination: 200, quantity: 2 },
+        { denomination: 50, quantity: 1 },
+      ],
+      description: 'Depósito e2e',
+      clientRequestId: randomUUID(),
+    };
+
+    await asUser(api().post('/api/cash-control/bank-deposits').send(payload)).expect(403);
+    await asAdmin(
+      api().post('/api/cash-control/bank-deposits').send({ ...payload, details: [{ denomination: 200, quantity: 2 }] }),
+    ).expect(400);
+
+    const created = data(await asAdmin(api().post('/api/cash-control/bank-deposits').send(payload)).expect(201));
+    const retried = data(await asAdmin(api().post('/api/cash-control/bank-deposits').send(payload)).expect(201));
+    expect(retried.movement.id).toBe(created.movement.id);
+    expect(created.movement.movementType).toBe('DEPOSITO_BANCARIO');
+    expect(created.movement.direction).toBe('OUT');
+    expect(Number(created.balance)).toBe(before - 450);
+    expect((created.movement.details as Body[]).map((d) => [Number(d.denomination), d.quantity])).toEqual([
+      [200, 2],
+      [50, 1],
+    ]);
+    const [afterDeposit] = (await dataSource.query(`SELECT final_balance FROM banks WHERE id = $1`, [account.id])) as Body[];
+    expect(Number(afterDeposit.final_balance)).toBe(Number(account.final_balance) + 450);
+
+    const voided = data(
+      await asAdmin(api().post(`/api/cash-control/movements/${created.movement.id}/void`).send({ reason: 'Depósito e2e erróneo' })).expect(201),
+    );
+    expect(Number(voided.balance)).toBe(before);
+    const [afterVoid] = (await dataSource.query(`SELECT final_balance FROM banks WHERE id = $1`, [account.id])) as Body[];
+    expect(Number(afterVoid.final_balance)).toBe(Number(account.final_balance));
+  });
 });

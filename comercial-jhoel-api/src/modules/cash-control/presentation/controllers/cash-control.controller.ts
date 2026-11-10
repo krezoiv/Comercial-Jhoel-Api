@@ -17,6 +17,7 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { GetCashPositionUseCase } from '../../application/use-cases/get-cash-position.use-case';
+import { RegisterCashBankDepositUseCase } from '../../application/use-cases/register-cash-bank-deposit.use-case';
 import {
   GetCashBalanceUseCase,
   GetCashBankBalancesUseCase,
@@ -49,6 +50,7 @@ import {
   OpenCashDayRequestDto,
   ReasonRequestDto,
   RecentCashMovementsQueryDto,
+  RegisterCashBankDepositRequestDto,
   RegisterCashMovementRequestDto,
   UpdateCashCutScheduleRequestDto,
 } from '../dtos/cash-control.request.dto';
@@ -85,6 +87,7 @@ export class CashControlController {
     private readonly reopenCutUseCase: ReopenCashCutUseCase,
     private readonly closeDayUseCase: CloseCashDayUseCase,
     private readonly listDaysUseCase: ListCashDaysUseCase,
+    private readonly registerBankDepositUseCase: RegisterCashBankDepositUseCase,
     private readonly getCutDetailUseCase: GetCashCutDetailUseCase,
   ) {}
 
@@ -132,6 +135,22 @@ export class CashControlController {
     @CurrentUser() user: RequestUser,
   ) {
     return this.registerMovementUseCase.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  /** "Depósito bancario": cash leaves the caja and is credited to the selected account (with breakdown). */
+  @Post('bank-deposits')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO')
+  @HttpCode(HttpStatus.CREATED)
+  registerBankDeposit(
+    @Body() dto: RegisterCashBankDepositRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerBankDepositUseCase.execute({
       ...dto,
       userId: user.userId,
       role: user.role,

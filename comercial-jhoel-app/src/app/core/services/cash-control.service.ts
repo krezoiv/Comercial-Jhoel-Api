@@ -17,6 +17,7 @@ import {
   OpenCashDayInput,
   PaginatedCashDays,
   PaginatedCashMovements,
+  RegisterCashBankDepositInput,
   RegisterCashMovementInput,
 } from '../models';
 
@@ -74,6 +75,18 @@ export class CashControlService {
 
   registerMovement(input: RegisterCashMovementInput): Observable<CashMovementResult> {
     return this.http.post<ApiSuccessResponse<CashMovementResult>>(`${BASE_URL}/movements`, input).pipe(map((r) => r.data));
+  }
+
+  /** One movement with its denomination breakdown (if any). */
+  getMovement(id: string): Observable<CashMovement> {
+    return this.http.get<ApiSuccessResponse<CashMovement>>(`${BASE_URL}/movements/${id}`).pipe(map((r) => r.data));
+  }
+
+  /** "Depósito bancario": cash leaves the caja and the selected account increases — one backend transaction. */
+  registerBankDeposit(input: RegisterCashBankDepositInput): Observable<CashMovementResult> {
+    return this.http
+      .post<ApiSuccessResponse<CashMovementResult>>(`${BASE_URL}/bank-deposits`, input)
+      .pipe(map((r) => r.data));
   }
 
   voidMovement(id: string, reason: string): Observable<CashMovementResult> {

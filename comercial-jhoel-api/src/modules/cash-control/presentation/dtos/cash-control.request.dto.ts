@@ -156,3 +156,30 @@ export class CashDaysQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
 }
+
+/** Control de Efectivo → "Depósito bancario" (cash → registered account) with mandatory breakdown. */
+export class RegisterCashBankDepositRequestDto {
+  @IsUUID()
+  bankId: string;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(MAX_AMOUNT)
+  amount: number;
+
+  @IsArray()
+  @ArrayMaxSize(11)
+  @ValidateNested({ each: true })
+  @Type(() => CashDenominationRequestDto)
+  details: CashDenominationRequestDto[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  description?: string;
+
+  /** One per modal opening: a double click or retry returns the same deposit. */
+  @IsOptional()
+  @IsUUID()
+  clientRequestId?: string;
+}

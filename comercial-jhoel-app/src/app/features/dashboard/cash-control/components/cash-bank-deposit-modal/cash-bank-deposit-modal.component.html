@@ -1,0 +1,102 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="cash-deposit-title">
+      <div class="modal__header">
+        <h2 class="modal__title modal__title--out" id="cash-deposit-title">
+          <app-icon name="upload" [size]="20" />
+          Depósito bancario
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      <p class="modal__hint modal__hint--top">
+        El efectivo sale de la caja y se deposita en la cuenta seleccionada: la caja disminuye y el saldo de la cuenta aumenta.
+      </p>
+
+      <div class="modal__grid">
+        <div class="field">
+          <label for="deposit-bank">Cuenta bancaria</label>
+          @if (banksFailed()) {
+            <p class="modal__error">No se pudieron cargar las cuentas. <button type="button" (click)="loadBanks()">Reintentar</button></p>
+          } @else {
+            <select id="deposit-bank" [disabled]="loadingBanks()" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
+              <option value="">{{ loadingBanks() ? 'Cargando…' : 'Selecciona una cuenta' }}</option>
+              @for (bank of banks(); track bank.bankId) {
+                <option [value]="bank.bankId">{{ bank.bankName }}{{ bank.accountNumber ? ' · ' + bank.accountNumber : '' }}</option>
+              }
+            </select>
+          }
+        </div>
+
+        <div class="field">
+          <label for="deposit-amount">Monto a depositar</label>
+          <input id="deposit-amount" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+            [ngModel]="amount() || null" (ngModelChange)="amount.set($event)" />
+        </div>
+
+        <div class="field field--wide">
+          <label for="deposit-description">Descripción / boleta <span class="field__optional">(opcional)</span></label>
+          <input id="deposit-description" type="text" maxlength="255" placeholder="Ej. Boleta 123456"
+            [ngModel]="description()" (ngModelChange)="description.set($event)" />
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown__header">
+          <span class="field__label">Desglose del efectivo depositado <span class="field__optional">(obligatorio)</span></span>
+          @if (totalCounted() > 0 && totalCounted() !== (amount() ?? 0)) {
+            <button type="button" class="link" (click)="useCountedAsAmount()">Usar {{ formatCurrency(totalCounted()) }} como monto</button>
+          }
+        </div>
+        <app-cash-breakdown-table
+          [cashCounts]="cashCounts()"
+          [totalCash]="totalCounted()"
+          [totalAmount]="amount() ?? 0"
+          [status]="breakdownStatus()"
+          emptyAmountText="Ingresa el monto a depositar"
+          (quantityChange)="onQuantityChange($event)"
+        />
+      </div>
+
+      <div class="previews" aria-live="polite">
+        <div class="preview" [class.preview--error]="insufficientCash()">
+          <div>
+            <span class="preview__label">Efectivo en caja</span>
+            <strong>{{ formatCurrency(currentBalance) }}</strong>
+          </div>
+          <app-icon name="arrow-right" [size]="18" />
+          <div>
+            <span class="preview__label">Después (vista previa)</span>
+            <strong class="preview__out">{{ formatCurrency(cashAfter()) }}</strong>
+          </div>
+        </div>
+        <div class="preview">
+          <div>
+            <span class="preview__label">{{ selectedBank()?.bankName ?? 'Cuenta' }}</span>
+            <strong>{{ selectedBank() ? formatCurrency(selectedBank()!.balance) : '—' }}</strong>
+          </div>
+          <app-icon name="arrow-right" [size]="18" />
+          <div>
+            <span class="preview__label">Después (vista previa)</span>
+            <strong class="preview__in">{{ selectedBank() ? formatCurrency(bankAfter()) : '—' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      @if (insufficientCash()) {
+        <p class="modal__error" role="alert">El monto supera el efectivo disponible en caja.</p>
+      }
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Registrar depósito' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

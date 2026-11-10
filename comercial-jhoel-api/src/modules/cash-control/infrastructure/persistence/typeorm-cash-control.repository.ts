@@ -23,9 +23,11 @@ import {
   OpenCashDayData,
   PaginatedCashDays,
   PaginatedCashMovements,
+  RegisterCashBankDepositData,
   RegisterManualCashMovementData,
 } from '../../domain/repositories/cash-control.repository';
 import { cashControlErrorFromMessage } from '../../domain/errors/cash-control.errors';
+import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
 
 type SqlRow = Record<string, unknown>;
 
@@ -236,7 +238,10 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
       return await this.dataSource.query<T>(sql, params);
     } catch (error) {
       if (error instanceof QueryFailedError) {
-        const mapped = cashControlErrorFromMessage(error.message);
+        // Cash rules first; a bank deposit can also hit the bank account's own rules.
+        const mapped =
+          cashControlErrorFromMessage(error.message) ??
+          bankMovementErrorFromMessage(error.message);
         if (mapped) {
           throw mapped;
         }
@@ -365,7 +370,39 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
       `SELECT ${MOVEMENT_COLUMNS} ${MOVEMENT_FROM} WHERE m.id = $1`,
       [id],
     );
-    return row ? toMovement(row) : null;
+    if (!row) {
+      return null;
+    }
+    const details = await this.dataSource.query<SqlRow[]>(
+      `SELECT denomination, quantity, subtotal FROM cash_movement_details
+       WHERE movement_id = $1 ORDER BY denomination DESC`,
+      [id],
+    );
+    return {
+      ...toMovement(row),
+      details: details.map((detail) => ({
+        denomination: num(detail.denomination),
+        quantity: num(detail.quantity),
+        subtotal: num(detail.subtotal),
+      })),
+    };
+  }
+
+  async registerBankDeposit(
+    data: RegisterCashBankDepositData,
+  ): Promise<string> {
+    const [row] = await this.write<SqlRow[]>(
+      `SELECT register_cash_bank_deposit($1, $2, $3::jsonb, $4, $5, $6) AS id`,
+      [
+        data.bankId,
+        data.amount,
+        JSON.stringify(data.details),
+        data.userId,
+        data.description,
+        data.idempotencyKey,
+      ],
+    );
+    return text(row.id);
   }
 
   async findMovementsByReference(

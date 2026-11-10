@@ -1,3 +1,5 @@
+import { RegisterCashBankDepositUseCase } from './register-cash-bank-deposit.use-case';
+import type { DayOpeningRepository } from '../../../banks/domain/repositories/day-opening.repository';
 import {
   CashControlRepository,
   CashCutPeriodRow,
@@ -123,6 +125,7 @@ function repositoryMock(): jest.Mocked<CashControlRepository> {
     findUsers: jest.fn(),
     registerManualMovement: jest.fn().mockResolvedValue('mov-1'),
     voidManualMovement: jest.fn().mockResolvedValue('mov-2'),
+    registerBankDeposit: jest.fn().mockResolvedValue('mov-3'),
     findDayByDate: jest.fn().mockResolvedValue(null),
     findDayById: jest.fn(),
     findPeriodsByDay: jest.fn().mockResolvedValue([]),
@@ -555,5 +558,88 @@ describe('Control de Efectivo — day and cuts', () => {
       }),
       'CASH_CUT_NOT_FOUND',
     );
+  });
+});
+
+describe('Control de Efectivo — depósito bancario desde caja', () => {
+  let repository: jest.Mocked<CashControlRepository>;
+  let dayOpenings: jest.Mocked<DayOpeningRepository>;
+  let useCase: RegisterCashBankDepositUseCase;
+  const base = {
+    bankId: 'bank-1',
+    amount: 1000,
+    details: [
+      { denomination: 200, quantity: 4 },
+      { denomination: 100, quantity: 2 },
+    ],
+    clientRequestId: '22222222-2222-2222-2222-222222222222',
+    userId: 'u',
+    role: 'SUPERVISOR_DE_TURNO',
+  };
+
+  beforeEach(() => {
+    repository = repositoryMock();
+    repository.findMovementById.mockResolvedValue(
+      movement({
+        id: 'mov-3',
+        movementType: 'DEPOSITO_BANCARIO',
+        direction: 'OUT',
+        amount: 1000,
+      }),
+    );
+    dayOpenings = {
+      findByDate: jest.fn().mockResolvedValue({ isClosed: false }),
+    } as unknown as jest.Mocked<DayOpeningRepository>;
+    useCase = new RegisterCashBankDepositUseCase(repository, dayOpenings);
+  });
+
+  it('registers the deposit with its breakdown and an idempotency key, returning the official balance', async () => {
+    const result = await useCase.execute({
+      ...base,
+      description: '  Depósito BI  ',
+    });
+    expect(repository.registerBankDeposit).toHaveBeenCalledWith({
+      bankId: 'bank-1',
+      amount: 1000,
+      details: base.details,
+      description: 'Depósito BI',
+      idempotencyKey: 'DEP:22222222-2222-2222-2222-222222222222',
+      userId: 'u',
+    });
+    expect(result.movement.movementType).toBe('DEPOSITO_BANCARIO');
+    expect(result.balance).toBe(155000);
+  });
+
+  it('requires a breakdown that adds up to the amount', async () => {
+    await expectRule(
+      useCase.execute({ ...base, details: [] }),
+      'CASH_BREAKDOWN_REQUIRED',
+    );
+    await expectRule(
+      useCase.execute({
+        ...base,
+        details: [{ denomination: 200, quantity: 4 }],
+      }),
+      'CASH_BREAKDOWN_MISMATCH',
+    );
+    await expectRule(
+      useCase.execute({
+        ...base,
+        amount: 3,
+        details: [{ denomination: 3, quantity: 1 }],
+      }),
+      'CASH_INVALID_DENOMINATION',
+    );
+    expect(repository.registerBankDeposit).not.toHaveBeenCalled();
+  });
+
+  it('is restricted to cut managers and needs the business day open', async () => {
+    await expectRule(
+      useCase.execute({ ...base, role: 'USER' }),
+      'CASH_FORBIDDEN',
+    );
+    dayOpenings.findByDate.mockResolvedValue(null);
+    await expect(useCase.execute(base)).rejects.toBeDefined();
+    expect(repository.registerBankDeposit).not.toHaveBeenCalled();
   });
 });

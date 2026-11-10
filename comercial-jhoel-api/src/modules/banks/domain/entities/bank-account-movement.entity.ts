@@ -12,6 +12,8 @@ export const BANK_MOVEMENT_TYPES = [
   'ANULACION',
   /** Finanzas → Transferencias Bancarias → "Acreditar saldo": suma directa a una cuenta, sin contrapartida (≠ Depósito de Transaccionar). */
   'ACREDITACION_SALDO',
+  /** Control de Efectivo → "Depósito bancario": efectivo de caja depositado a la cuenta (suma). */
+  'DEPOSITO_CAJA',
 ] as const;
 export type BankMovementType = (typeof BANK_MOVEMENT_TYPES)[number];
 
@@ -22,6 +24,7 @@ export const BANK_MOVEMENT_ORIGINS = [
   'SALDO_INICIAL',
   'ANULACION',
   'ACREDITACION_SALDO',
+  'CONTROL_EFECTIVO',
 ] as const;
 export type BankMovementOrigin = (typeof BANK_MOVEMENT_ORIGINS)[number];
 

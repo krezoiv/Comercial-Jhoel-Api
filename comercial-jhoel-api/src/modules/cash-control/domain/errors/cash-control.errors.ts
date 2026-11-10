@@ -109,6 +109,23 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   CASH_CUT_BANKS_INCOMPLETE: {
     message: 'Debe verificar el saldo de todas las cuentas bancarias activas.',
   },
+  CASH_BREAKDOWN_REQUIRED: {
+    message:
+      'El depósito bancario requiere el desglose del efectivo por denominación.',
+  },
+  CASH_BREAKDOWN_MISMATCH: {
+    message: 'El desglose del efectivo no coincide con el monto del depósito.',
+  },
+  CASH_INSUFFICIENT_BALANCE: {
+    message: 'El efectivo disponible en caja no alcanza para este depósito.',
+  },
+  CASH_DEPOSIT_INVALID_BANK: {
+    message: 'Seleccione una cuenta bancaria activa.',
+  },
+  CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED: {
+    message:
+      'La cuenta de Cooperativa Guayacán no recibe depósitos desde esta caja: su saldo es el de su propia caja.',
+  },
   CASH_INVALID_DATE_RANGE: {
     message: 'La fecha inicial no puede ser posterior a la fecha final.',
   },

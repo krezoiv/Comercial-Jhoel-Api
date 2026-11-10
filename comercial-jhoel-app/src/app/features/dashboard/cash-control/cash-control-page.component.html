@@ -63,6 +63,7 @@
         @if (canManage()) {
           <app-button variant="primary" (click)="formMode.set('ENTRADA_MANUAL')"><app-icon name="plus" [size]="16" /> Entrada de efectivo</app-button>
           <app-button variant="danger" (click)="formMode.set('SALIDA_MANUAL')"><app-icon name="minus" [size]="16" /> Salida de efectivo</app-button>
+          <app-button variant="secondary" (click)="depositOpen.set(true)"><app-icon name="upload" [size]="16" /> Depósito bancario</app-button>
         }
         @if (isAdmin()) {
           <app-button variant="ghost" (click)="formMode.set('AJUSTE')"><app-icon name="edit-2" [size]="16" /> Ajuste</app-button>
@@ -185,7 +186,12 @@
                   <td class="num">{{ formatCurrency(m.previousBalance) }}</td>
                   <td class="num sticky-right"><strong [class.out]="m.newBalance < 0">{{ formatCurrency(m.newBalance) }}</strong></td>
                   <td>{{ m.createdByUsername }}</td>
-                  <td>
+                  <td class="nowrap">
+                    @if (m.movementType === 'DEPOSITO_BANCARIO') {
+                      <button type="button" class="icon-btn icon-btn--view" (click)="showBreakdown(m)" [attr.aria-label]="'Ver desglose del movimiento ' + m.sequence" title="Ver desglose">
+                        <app-icon name="eye" [size]="16" />
+                      </button>
+                    }
                     @if (isAdmin() && isManualMovement(m) && m.status === 'VIGENTE') {
                       <button type="button" class="icon-btn" (click)="voidTarget.set(m)" [attr.aria-label]="'Anular movimiento ' + m.sequence" title="Anular">
                         <app-icon name="rotate-ccw" [size]="16" />
@@ -227,9 +233,50 @@
   [open]="voidTarget() !== null"
   [busy]="voiding()"
   title="Anular movimiento"
-  message="Se registrará el movimiento inverso; el original queda visible como anulado. No se elimina nada."
+  [message]="voidMessage()"
   confirmText="Anular movimiento"
   [danger]="true"
   (confirmed)="voidMovement($event)"
   (cancelled)="voidTarget.set(null)"
 />
+
+<app-cash-bank-deposit-modal
+  [open]="depositOpen()"
+  [currentBalance]="position()?.balance ?? 0"
+  (closed)="depositOpen.set(false)"
+  (saved)="onDepositSaved()"
+/>
+
+@if (breakdown(); as b) {
+  <div class="modal-backdrop" role="presentation" (click)="breakdown.set(null)">
+    <div class="modal breakdown-modal" role="dialog" aria-modal="true" aria-labelledby="breakdown-title" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title" id="breakdown-title">Desglose · {{ typeLabel[b.movementType] }} #{{ b.sequence }}</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="breakdown.set(null)">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      <p class="breakdown-modal__meta">
+        {{ b.bankName ?? '' }} · {{ formatDateTime(b.createdAt) }} · {{ b.createdByUsername }}
+        @if (b.status === 'ANULADO') {
+          <span class="badge-voided">Anulado</span>
+        }
+      </p>
+      @if (loadingBreakdown()) {
+        <p class="state">Cargando desglose…</p>
+      } @else {
+        <table class="breakdown-table">
+          <thead><tr><th>Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr></thead>
+          <tbody>
+            @for (row of b.details ?? []; track row.denomination) {
+              <tr><td>{{ formatCurrency(row.denomination) }}</td><td class="num">{{ row.quantity }}</td><td class="num">{{ formatCurrency(row.subtotal) }}</td></tr>
+            } @empty {
+              <tr><td colspan="3">Este movimiento no tiene desglose.</td></tr>
+            }
+          </tbody>
+          <tfoot><tr><th>Total</th><th></th><th class="num">{{ formatCurrency(b.amount) }}</th></tr></tfoot>
+        </table>
+      }
+    </div>
+  </div>
+}

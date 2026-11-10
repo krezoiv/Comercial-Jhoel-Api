@@ -1446,6 +1446,12 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   (`cash_cut_bank_reconciliations`). Reabrir: solo admin, solo el último corte, motivo; el arqueo previo queda con
   `is_current = false`. `close_cash_operational_day` exige ambos cortes finalizados y consolida el rango del día.
   Auditoría: `cash_cut_events`, `cash_cut_schedule_changes` (quién y por qué). Horarios en `America/Guatemala`.
+- **Depósito bancario** (migración `1760006900000-CashBankDeposit`, `POST /cash-control/bank-deposits`, gestores de
+  corte, exige día abierto como toda operación bancaria): `register_cash_bank_deposit` aplica en UNA transacción el
+  movimiento bancario `DEPOSITO_CAJA` (origen `CONTROL_EFECTIVO`, vía `apply_bank_account_movement`, +monto a la
+  cuenta) y el `DEPOSITO_BANCARIO` OUT del Kardex, con desglose obligatorio en `cash_movement_details` (debe sumar el
+  monto) y rechazo si no alcanza el efectivo (`CASH_INSUFFICIENT_BALANCE`). Guayacán excluida. Orden de bloqueo banco →
+  caja (igual que Transaccionar). Anular (admin, `POST movements/:id/void`) revierte ambos lados.
 - **RBAC**: lectura cualquier autenticado; abrir/cerrar día, horarios, iniciar/finalizar cortes y entradas/salidas
   manuales: SUPER_ADMIN, ADMIN, `SUPERVISOR_DE_TURNO` (rol personalizado; `Roles()` acepta `SHIFT_SUPERVISOR_ROLE`);
   ajustes, saldo inicial, anulaciones, reabrir y apertura manual: admin. Los casos de uso re-validan el rol.

@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { BanksModule } from '../banks/banks.module';
+import { RegisterCashBankDepositUseCase } from './application/use-cases/register-cash-bank-deposit.use-case';
 import { CASH_CONTROL_REPOSITORY } from './domain/repositories/cash-control.repository';
 import { TypeOrmCashControlRepository } from './infrastructure/persistence/typeorm-cash-control.repository';
 import { GetCashPositionUseCase } from './application/use-cases/get-cash-position.use-case';
@@ -38,6 +40,8 @@ import { CashControlController } from './presentation/controllers/cash-control.c
  * an operation produced.
  */
 @Module({
+  // DAY_OPENING_REPOSITORY: a bank deposit, like every balance-moving bank operation, needs the day open.
+  imports: [BanksModule],
   controllers: [CashControlController],
   providers: [
     {
@@ -61,6 +65,7 @@ import { CashControlController } from './presentation/controllers/cash-control.c
     CloseCashDayUseCase,
     ListCashDaysUseCase,
     GetCashCutDetailUseCase,
+    RegisterCashBankDepositUseCase,
   ],
   exports: [CASH_CONTROL_REPOSITORY],
 })
