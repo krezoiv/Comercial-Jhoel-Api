@@ -15,6 +15,10 @@ export class AccountReceivableResponseDto {
   createdByUsername: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
+  /** List only: pending amount / collected amount / PENDIENTE·PARCIAL·CANCELADA of an active CARGO. */
+  pendingAmount?: number | null;
+  paidAmount?: number | null;
+  paymentStatus?: 'PENDIENTE' | 'PARCIAL' | 'CANCELADA' | null;
 }
 
 export class PaginatedAccountsReceivableResponseDto {

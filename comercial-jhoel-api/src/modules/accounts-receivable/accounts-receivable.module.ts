@@ -15,13 +15,28 @@ import { GetAccountReceivableStatementUseCase } from './application/use-cases/ge
 import { GetAccountReceivableCurrentBalanceUseCase } from './application/use-cases/get-account-receivable-current-balance.use-case';
 import { GetAccountReceivableActiveBalanceUseCase } from './application/use-cases/get-account-receivable-active-balance.use-case';
 import { AccountsReceivableController } from './presentation/controllers/accounts-receivable.controller';
+import { AccountReceivablePaymentsController } from './presentation/controllers/account-receivable-payments.controller';
+import { ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY } from './domain/repositories/account-receivable-settlement.repository';
+import { TypeOrmAccountReceivableSettlementRepository } from './infrastructure/persistence/typeorm-account-receivable-settlement.repository';
+import {
+  GetAccountReceivableSettlementUseCase,
+  GetChargePaymentHistoryUseCase,
+  GetClientPendingChargesUseCase,
+  ListAccountReceivableSettlementsUseCase,
+  PreviewAccountReceivableSettlementUseCase,
+  SettleAccountsReceivableUseCase,
+  VoidAccountReceivableSettlementUseCase,
+} from './application/use-cases/account-receivable-settlement.use-cases';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AccountReceivableOrmEntity]),
     ClientsModule,
   ],
-  controllers: [AccountsReceivableController],
+  controllers: [
+    AccountsReceivableController,
+    AccountReceivablePaymentsController,
+  ],
   providers: [
     {
       provide: ACCOUNT_RECEIVABLE_REPOSITORY,
@@ -37,6 +52,17 @@ import { AccountsReceivableController } from './presentation/controllers/account
     GetAccountReceivableStatementUseCase,
     GetAccountReceivableCurrentBalanceUseCase,
     GetAccountReceivableActiveBalanceUseCase,
+    {
+      provide: ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY,
+      useClass: TypeOrmAccountReceivableSettlementRepository,
+    },
+    GetClientPendingChargesUseCase,
+    PreviewAccountReceivableSettlementUseCase,
+    SettleAccountsReceivableUseCase,
+    VoidAccountReceivableSettlementUseCase,
+    ListAccountReceivableSettlementsUseCase,
+    GetAccountReceivableSettlementUseCase,
+    GetChargePaymentHistoryUseCase,
   ],
   // Exported for ReportsModule's Cuentas por Cobrar report: ACCOUNT_RECEIVABLE_REPOSITORY
   // backs its own summary use case, and ListAccountsReceivableUseCase is reused directly

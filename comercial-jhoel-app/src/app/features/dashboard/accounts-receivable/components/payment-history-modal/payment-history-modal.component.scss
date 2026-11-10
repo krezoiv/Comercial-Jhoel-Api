@@ -1,0 +1,146 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+@use 'breakpoints' as bp;
+
+.modal--wide {
+  max-width: 56rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    background: var(--color-bg-light-muted);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-on-light-muted);
+  }
+
+  tbody tr + tr td {
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  tr.voided td {
+    opacity: 0.6;
+  }
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+
+.strong {
+  font-weight: var(--fw-semibold);
+}
+
+.muted {
+  color: var(--color-text-on-light-muted);
+}
+
+.empty {
+  margin: var(--space-4) 0;
+}
+
+.link {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary-600);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.charge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__label {
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.op-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  font-variant-numeric: tabular-nums;
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__wide {
+    @include bp.respond(sm) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  dt {
+    color: var(--color-text-on-light-muted);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+  }
+}
+
+.void-form {
+  margin-top: var(--space-4);
+
+  textarea {
+    width: 100%;
+  }
+}

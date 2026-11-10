@@ -34,6 +34,7 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   AJUSTE_MANUAL: 'Ajuste manual',
   ACREDITACION_SALDO: 'Acreditación de saldo',
   DEPOSITO_CAJA: 'Depósito desde caja',
+  COBRO_CXC: 'Cobro cuenta por cobrar',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };

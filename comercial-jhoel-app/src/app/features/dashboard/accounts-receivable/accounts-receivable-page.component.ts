@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 
-import { AccountReceivable, ActiveBalanceSummary, Client } from '../../../core/models';
+import { AccountReceivable, ActiveBalanceSummary, Client, SettlementResult } from '../../../core/models';
+import { AccountReceivablePaymentService } from '../../../core/services/account-receivable-payment.service';
 import { AccountReceivableService } from '../../../core/services/account-receivable.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -15,6 +16,9 @@ import { AccountReceivableToolbarComponent, AccountReceivableStatusFilterValue }
 import { AccountReceivableTableComponent } from './components/account-receivable-table/account-receivable-table.component';
 import { AccountReceivableFormModalComponent } from './components/account-receivable-form-modal/account-receivable-form-modal.component';
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
+import { SettlementModalComponent } from './components/settlement-modal/settlement-modal.component';
+import { PaymentHistoryModalComponent } from './components/payment-history-modal/payment-history-modal.component';
+import { ButtonComponent, IconComponent } from '../../../shared/ui';
 
 const LIMIT = 20;
 
@@ -31,6 +35,10 @@ const LIMIT = 20;
     AccountStatementModalComponent,
     CardComponent,
     SummaryTileComponent,
+    SettlementModalComponent,
+    PaymentHistoryModalComponent,
+    ButtonComponent,
+    IconComponent,
   ],
   templateUrl: './accounts-receivable-page.component.html',
   styleUrl: './accounts-receivable-page.component.scss',
@@ -42,6 +50,7 @@ export class AccountsReceivablePageComponent {
   readonly accountReceivableService = inject(AccountReceivableService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
+  private readonly paymentService = inject(AccountReceivablePaymentService);
 
   /** ADMIN/SUPER_ADMIN only — passed down to hide add/edit/delete for other roles. The backend enforces this regardless. */
   readonly isAdmin = this.authService.isAdmin;
@@ -67,6 +76,30 @@ export class AccountsReceivablePageComponent {
 
   readonly isStatementOpen = signal(false);
   readonly statementClient = signal<KardexStatementClient | null>(null);
+
+  /**
+   * Multi-account cancellation: selected CARGO ids → their pending amount
+   * (as last read from the backend, display only — the settlement preview
+   * recomputes everything in PostgreSQL). All of ONE client.
+   */
+  readonly selection = signal<ReadonlyMap<string, number>>(new Map());
+  readonly selectionClientId = signal<string | null>(null);
+  readonly selectionClientName = signal('');
+  readonly selectedIds = computed<ReadonlySet<string>>(() => new Set(this.selection().keys()));
+  readonly selectedCount = computed(() => this.selection().size);
+  readonly selectedTotal = computed(() =>
+    Math.round([...this.selection().values()].reduce((sum, value) => sum + value, 0) * 100) / 100,
+  );
+  readonly loadingClientPending = signal(false);
+
+  readonly isSettlementOpen = signal(false);
+  readonly settlementClientId = signal<string | null>(null);
+  readonly settlementClientName = signal('');
+  readonly settlementAccountIds = signal<string[]>([]);
+
+  readonly isPaymentsOpen = signal(false);
+  readonly paymentsChargeId = signal<string | null>(null);
+  readonly paymentsClientName = signal('');
 
   /** Saldo total de cuentas activas — always unfiltered (independent of search/date/estado above), refetched whenever the underlying data actually changes (not on a plain filter/page change). */
   readonly activeBalance = signal<ActiveBalanceSummary | null>(null);
@@ -237,5 +270,110 @@ export class AccountsReceivablePageComponent {
         this.notificationService.error(extractErrorMessage(error, 'No se pudo desactivar la cuenta por cobrar.'));
       },
     });
+  }
+
+  /** Checkbox of one account; accounts of another client are refused until the selection is cleared. */
+  toggleSelect(record: AccountReceivable): void {
+    const current = this.selection();
+    if (current.size > 0 && record.clientId !== this.selectionClientId()) {
+      this.notificationService.warning(
+        `Ya tiene cuentas seleccionadas de ${this.selectionClientName()}. Finalice o limpie la selección actual para seleccionar cuentas de otro cliente.`,
+      );
+      return;
+    }
+    const next = new Map(current);
+    if (next.has(record.id)) {
+      next.delete(record.id);
+    } else {
+      next.set(record.id, record.pendingAmount ?? 0);
+    }
+    this.selection.set(next);
+    this.selectionClientId.set(next.size > 0 ? record.clientId : null);
+    this.selectionClientName.set(next.size > 0 ? record.clientName : '');
+  }
+
+  /** Selects every pending account of the selection's client (all pages, read from the backend). */
+  selectAllClientPending(): void {
+    const clientId = this.selectionClientId() ?? this.clientFilter()?.id ?? null;
+    if (!clientId) {
+      return;
+    }
+    this.loadingClientPending.set(true);
+    this.paymentService.getPendingCharges(clientId).subscribe({
+      next: (result) => {
+        this.loadingClientPending.set(false);
+        this.selection.set(new Map(result.charges.map((charge) => [charge.id, charge.pendingAmount])));
+        this.selectionClientId.set(result.charges.length > 0 ? clientId : null);
+        this.selectionClientName.set(result.charges.length > 0 ? result.clientName : '');
+        if (result.charges.length === 0) {
+          this.notificationService.info(`${result.clientName} no tiene cuentas pendientes.`);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loadingClientPending.set(false);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudieron cargar las cuentas pendientes.'));
+      },
+    });
+  }
+
+  clearSelection(): void {
+    this.selection.set(new Map());
+    this.selectionClientId.set(null);
+    this.selectionClientName.set('');
+  }
+
+  /** "Cancelar cuentas seleccionadas". */
+  openSelectionSettlement(): void {
+    const clientId = this.selectionClientId();
+    if (!clientId || this.selectedCount() === 0) {
+      return;
+    }
+    this.settlementClientId.set(clientId);
+    this.settlementClientName.set(this.selectionClientName());
+    this.settlementAccountIds.set([...this.selection().keys()]);
+    this.isSettlementOpen.set(true);
+  }
+
+  /** "Cobrar" one account (allows a partial amount). */
+  openSingleSettlement(record: AccountReceivable): void {
+    this.settlementClientId.set(record.clientId);
+    this.settlementClientName.set(record.clientName);
+    this.settlementAccountIds.set([record.id]);
+    this.isSettlementOpen.set(true);
+  }
+
+  closeSettlement(): void {
+    this.isSettlementOpen.set(false);
+  }
+
+  onSettled(result: SettlementResult): void {
+    this.isSettlementOpen.set(false);
+    // Drop the accounts that were just collected from the selection (all of them for a batch).
+    const paid = new Set(result.operation.details.map((detail) => detail.accountReceivableId));
+    const remaining = new Map([...this.selection()].filter(([id]) => !paid.has(id)));
+    if (remaining.size === 0) {
+      this.clearSelection();
+    } else {
+      this.selection.set(remaining);
+    }
+    this.fetchRecords();
+    this.fetchActiveBalance();
+  }
+
+  openPayments(record: AccountReceivable): void {
+    this.paymentsChargeId.set(record.id);
+    this.paymentsClientName.set(record.clientName);
+    this.isPaymentsOpen.set(true);
+  }
+
+  closePayments(): void {
+    this.isPaymentsOpen.set(false);
+  }
+
+  /** A collection was voided from the history modal. */
+  onPaymentsChanged(): void {
+    this.clearSelection();
+    this.fetchRecords();
+    this.fetchActiveBalance();
   }
 }

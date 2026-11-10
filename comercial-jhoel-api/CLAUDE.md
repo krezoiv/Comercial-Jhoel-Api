@@ -1463,6 +1463,37 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   AppModule completo contra una copia `<db>_e2e` que se elimina al terminar — el Kardex es append-only, nunca correr el
   e2e contra la base real).
 
+### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
+
+- **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`
+  EFECTIVO/DEPOSITO_BANCARIO, banco, `reference_number`, total, estado APLICADO/ANULADO, día operativo/corte,
+  `idempotency_key` UNIQUE) + `account_receivable_payment_details` (una fila por cuenta: pagado, saldo
+  anterior/posterior). El dinero es UN `ABONO` consolidado en `accounts_receivable` (`reference_type = 'AR_PAYMENT'`)
+  → saldo del cliente, estado de cuenta, Cuadre de Agentes y reportes siguen igual.
+- **Efectivo**: ese ABONO dispara el trigger existente `cash_on_portfolio_row` (ABONO_POR_COBRAR IN, un solo
+  movimiento por operación). **Depósito**: el trigger omite los ABONO de una operación DEPOSITO_BANCARIO y la cuenta
+  sube por `apply_bank_account_movement` (tipo `COBRO_CXC`, origen `CUENTAS_POR_COBRAR`, referencia en
+  `reference_text`). Guayacán rechazada.
+- **Pendiente por cargo** = `ar_charge_balances(uuid[])`: monto − pagos asignados − su parte FIFO de los abonos
+  generales ("Registrar Abono", sin asignar). La suma de pendientes = saldo del cliente siempre.
+- **`settle_accounts_receivable`** (una transacción): lock por solicitud + idempotencia, orden banco → caja → cliente
+  (como Transaccionar), `FOR UPDATE` de cada cargo, mismo cliente, pendiente > 0, parcial solo con UNA cuenta,
+  `expected_total` debe coincidir con el total calculado (`AR_SETTLEMENT_TOTAL_MISMATCH` 409). Cualquier error
+  revierte todo. **`void_account_receivable_payment`** (admin, motivo): desactiva el ABONO (la caja recibe su
+  ANULACION por el trigger), revierte el banco, marca ANULADO; nada se borra.
+- **Guarda** `trg_ar_payment_guard`: el ABONO de una operación no se edita/desactiva fuera de la anulación
+  (`AR_PAYMENT_ROW_LOCKED`) y un cargo con pagos vigentes no se desactiva, cambia de cliente ni baja de lo pagado
+  (`AR_CHARGE_HAS_PAYMENTS`); mapeado a 409 en `update`/`deactivate` del repositorio.
+- **Rutas** `/account-receivable-payments` (base propia para no chocar con `GET /accounts-receivable/:id`):
+  `GET` (historial paginado), `GET clients/:id/pending`, `GET charges/:id` (historial de una cuenta), `GET :id`
+  (detalle con cuentas), `POST preview` (sin escritura: líneas, total, efectivo/banco resultante) — cualquier
+  autenticado; `POST` (cancelar) y `POST :id/void` — ADMIN/SUPER_ADMIN (misma política que "Registrar Abono").
+  `GET /accounts-receivable` agrega `pendingAmount`/`paidAmount`/`paymentStatus` (PENDIENTE/PARCIAL/CANCELADA).
+- Pruebas: `sql/tests/ar-settlements.test.sql` (ROLLBACK), caso CxC en `sql/tests/cash-control-concurrency.sh`,
+  `account-receivable-settlement.use-cases.spec.ts`, `test/ar-settlements.e2e-spec.ts`
+  (`test/run-cash-control-e2e.sh test/ar-settlements.e2e-spec.ts`; correr separado del e2e de efectivo, ambos
+  cargan saldo inicial).
+
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 
 `GET /dashboard/summary` — admin-only (`@Roles('ADMIN', 'SUPER_ADMIN')`, class-level), backs the Resumen

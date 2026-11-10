@@ -3,9 +3,11 @@
     <table class="ar-table">
       <thead>
         <tr>
+          <th></th>
           <th>Cliente</th>
           <th>Fecha</th>
           <th>Monto</th>
+          <th>Pendiente</th>
           <th>Descripción</th>
           <th>Estado</th>
           <th>Acciones</th>
@@ -14,6 +16,8 @@
       <tbody>
         @for (row of skeletonRows; track $index) {
           <tr class="skeleton-row">
+            <td></td>
+            <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--lg"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
             <td><span class="skeleton skeleton--sm"></span></td>
@@ -53,9 +57,13 @@
     <table class="ar-table">
       <thead>
         <tr>
+          @if (canManage) {
+            <th class="ar-table__check" aria-label="Seleccionar"></th>
+          }
           <th>Cliente</th>
           <th>Fecha</th>
           <th class="align-right">Monto</th>
+          <th class="align-right">Pendiente</th>
           <th>Descripción</th>
           <th>Estado</th>
           <th>Acciones</th>
@@ -63,18 +71,63 @@
       </thead>
       <tbody>
         @for (record of records; track record.id) {
-          <tr>
+          <tr [class.ar-table__row--selected]="selectedIds.has(record.id)">
+            @if (canManage) {
+              <td class="ar-table__check">
+                @if (isPayable(record)) {
+                  <input
+                    type="checkbox"
+                    [checked]="selectedIds.has(record.id)"
+                    (change)="toggleSelect.emit(record)"
+                    [attr.aria-label]="'Seleccionar cuenta de ' + record.clientName"
+                  />
+                }
+              </td>
+            }
             <td class="ar-table__client">{{ record.clientName }}</td>
             <td>{{ record.date | date: 'dd/MM/yyyy' }}</td>
-            <td class="align-right">{{ formatCurrency(record.amount) }}</td>
+            <td class="align-right">
+              {{ formatCurrency(record.amount) }}
+              @if (record.movementType === 'ABONO') {
+                <span class="ar-table__kind">Abono</span>
+              }
+            </td>
+            <td class="align-right">{{ hasPaymentState(record) ? formatCurrency(record.pendingAmount ?? 0) : '—' }}</td>
             <td class="ar-table__description">{{ record.description || '—' }}</td>
             <td>
-              <app-badge [tone]="record.isActive ? 'success' : 'danger'">
-                {{ record.isActive ? 'Activo' : 'Inactivo' }}
-              </app-badge>
+              <div class="ar-table__badges">
+                <app-badge [tone]="record.isActive ? 'success' : 'danger'">
+                  {{ record.isActive ? 'Activo' : 'Inactivo' }}
+                </app-badge>
+                @if (hasPaymentState(record)) {
+                  <app-badge [tone]="statusTone[record.paymentStatus!]">{{ statusLabel[record.paymentStatus!] }}</app-badge>
+                }
+              </div>
             </td>
             <td>
               <div class="actions">
+                @if (canManage && isPayable(record)) {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--pay"
+                    (click)="settle.emit(record)"
+                    [attr.aria-label]="'Cobrar cuenta de ' + record.clientName"
+                    title="Cobrar / cancelar"
+                  >
+                    <app-icon name="check-circle" [size]="16" />
+                  </button>
+                }
+                @if (record.movementType === 'CARGO') {
+                  <button
+                    type="button"
+                    class="action-btn"
+                    (click)="viewPayments.emit(record)"
+                    [attr.aria-label]="'Historial de pagos de ' + record.clientName"
+                    title="Historial de pagos"
+                  >
+                    <app-icon name="clock" [size]="16" />
+                  </button>
+                }
                 <button
                   type="button"
                   class="action-btn"
@@ -114,18 +167,53 @@
     @for (record of records; track record.id) {
       <div class="ar-card">
         <div class="ar-card__header">
+          @if (canManage && isPayable(record)) {
+            <input
+              type="checkbox"
+              class="ar-card__check"
+              [checked]="selectedIds.has(record.id)"
+              (change)="toggleSelect.emit(record)"
+              [attr.aria-label]="'Seleccionar cuenta de ' + record.clientName"
+            />
+          }
           <p class="ar-card__client">{{ record.clientName }}</p>
           <app-badge [tone]="record.isActive ? 'success' : 'danger'">
             {{ record.isActive ? 'Activo' : 'Inactivo' }}
           </app-badge>
+          @if (hasPaymentState(record)) {
+            <app-badge [tone]="statusTone[record.paymentStatus!]">{{ statusLabel[record.paymentStatus!] }}</app-badge>
+          }
         </div>
         <p class="ar-card__row"><span>Fecha</span>{{ record.date | date: 'dd/MM/yyyy' }}</p>
-        <p class="ar-card__row"><span>Monto</span>{{ formatCurrency(record.amount) }}</p>
+        <p class="ar-card__row"><span>Monto</span>{{ formatCurrency(record.amount) }}{{ record.movementType === 'ABONO' ? ' (abono)' : '' }}</p>
+        @if (hasPaymentState(record)) {
+          <p class="ar-card__row"><span>Pendiente</span>{{ formatCurrency(record.pendingAmount ?? 0) }}</p>
+        }
         @if (record.description) {
           <p class="ar-card__description">{{ record.description }}</p>
         }
 
         <div class="actions">
+          @if (canManage && isPayable(record)) {
+            <button
+              type="button"
+              class="action-btn action-btn--pay"
+              (click)="settle.emit(record)"
+              [attr.aria-label]="'Cobrar cuenta de ' + record.clientName"
+            >
+              <app-icon name="check-circle" [size]="16" />
+            </button>
+          }
+          @if (record.movementType === 'CARGO') {
+            <button
+              type="button"
+              class="action-btn"
+              (click)="viewPayments.emit(record)"
+              [attr.aria-label]="'Historial de pagos de ' + record.clientName"
+            >
+              <app-icon name="clock" [size]="16" />
+            </button>
+          }
           <button
             type="button"
             class="action-btn"

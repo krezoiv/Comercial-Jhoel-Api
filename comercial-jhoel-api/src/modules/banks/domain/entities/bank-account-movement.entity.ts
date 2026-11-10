@@ -14,6 +14,8 @@ export const BANK_MOVEMENT_TYPES = [
   'ACREDITACION_SALDO',
   /** Control de Efectivo → "Depósito bancario": efectivo de caja depositado a la cuenta (suma). */
   'DEPOSITO_CAJA',
+  /** Cuentas por Cobrar → cancelación pagada por depósito bancario (suma a la cuenta, no al efectivo). */
+  'COBRO_CXC',
 ] as const;
 export type BankMovementType = (typeof BANK_MOVEMENT_TYPES)[number];
 
@@ -25,6 +27,7 @@ export const BANK_MOVEMENT_ORIGINS = [
   'ANULACION',
   'ACREDITACION_SALDO',
   'CONTROL_EFECTIVO',
+  'CUENTAS_POR_COBRAR',
 ] as const;
 export type BankMovementOrigin = (typeof BANK_MOVEMENT_ORIGINS)[number];
 

@@ -9,6 +9,8 @@ import {
   AccountReceivableOutput,
   toAccountReceivableOutput,
 } from '../dtos/account-receivable-output';
+import { ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY } from '../../domain/repositories/account-receivable-settlement.repository';
+import type { AccountReceivableSettlementRepository } from '../../domain/repositories/account-receivable-settlement.repository';
 
 export interface ListAccountsReceivableInput {
   clientId?: string;
@@ -41,6 +43,8 @@ export class ListAccountsReceivableUseCase {
   constructor(
     @Inject(ACCOUNT_RECEIVABLE_REPOSITORY)
     private readonly accountReceivableRepository: AccountReceivableRepository,
+    @Inject(ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY)
+    private readonly settlementRepository: AccountReceivableSettlementRepository,
   ) {}
 
   async execute(
@@ -66,8 +70,24 @@ export class ListAccountsReceivableUseCase {
       limit,
     });
 
+    // Pending/collection state of each CARGO on the page — one SQL call for all of its clients.
+    const clientIds = [...new Set(result.items.map((item) => item.clientId))];
+    const balances = new Map(
+      (await this.settlementRepository.findChargeBalances(clientIds)).map(
+        (charge) => [charge.id, charge],
+      ),
+    );
+
     return {
-      items: result.items.map(toAccountReceivableOutput),
+      items: result.items.map((item) => {
+        const balance = balances.get(item.id);
+        return {
+          ...toAccountReceivableOutput(item),
+          pendingAmount: balance ? balance.pendingAmount : null,
+          paidAmount: balance ? balance.paidAmount : null,
+          paymentStatus: balance ? balance.status : null,
+        };
+      }),
       total: result.total,
       page: result.page,
       limit: result.limit,

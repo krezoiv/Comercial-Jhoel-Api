@@ -1731,3 +1731,21 @@ relative-path climbing.
   exists. `FragmentScrollService` instead subscribes to `router.routerState.root.fragment` directly and
   retries the `document.getElementById` lookup across animation frames. Any new anchor link just needs
   a matching `id`/`sectionId` on the target `SectionComponent` — no router config changes needed.
+
+### Cuentas por Cobrar — Cobrar / Cancelar cuentas (`features/dashboard/accounts-receivable/`)
+
+`AccountReceivablePaymentService` (`/account-receivable-payments`); pendientes, totales y saldos resultantes vienen
+siempre del backend (ver el `CLAUDE.md` del API).
+- Tabla: casilla por cargo cobrable (admin), columna "Pendiente", insignia Pendiente/Parcial/Cancelada, acción
+  "Cobrar" (check) e "Historial de pagos" (reloj). El botón papelera sigue siendo "desactivar" (corrección), no cobro.
+- Barra de selección (admin): cliente, contador, total, "Seleccionar todas las pendientes del cliente" (lee
+  `clients/:id/pending`, todas las páginas), "Limpiar selección", "Cancelar cuentas seleccionadas". Una cuenta de
+  otro cliente se rechaza con aviso hasta limpiar.
+- `SettlementModalComponent`: paso 1 tabla de cuentas + forma de pago (Efectivo / Depósito bancario: cuenta sin
+  Guayacán, referencia, observaciones) con vista previa del backend (`POST preview`, debounce + `switchMap`); monto
+  parcial solo con una cuenta. Paso 2 confirmación explícita; envía `expectedTotal` + `clientRequestId` por apertura.
+  Un 409 (saldos cambiaron) vuelve al paso 1 con datos frescos. No cierra con clic fuera.
+- `PaymentHistoryModalComponent`: pagos de una cuenta → "Ver operación" (todas las cuentas del cobro) → "Anular
+  cobro" (admin, motivo).
+- `cashMutationInterceptor` también avisa tras escribir en `account-receivable-payments` (excepto `/preview`).
+

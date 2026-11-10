@@ -1,0 +1,206 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="settlement-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="settlement-title">
+          <app-icon name="check-circle" [size]="20" />
+          {{ isSingle() ? 'Cancelar cuenta por cobrar' : 'Cancelar cuentas seleccionadas' }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="cancel()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="client-line">
+        <span class="client-line__label">Cliente</span>
+        <strong>{{ preview()?.clientName ?? clientName }}</strong>
+        <span class="client-line__count">{{ accountIds.length }} {{ accountIds.length === 1 ? 'cuenta' : 'cuentas' }}</span>
+      </div>
+
+      @if (step() === 'form') {
+        <!-- Accounts with the pendings computed by the backend. -->
+        <div class="table-wrapper">
+          <table class="lines">
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Concepto</th>
+                <th>Fecha</th>
+                <th class="num">Monto original</th>
+                <th class="num">Abonos anteriores</th>
+                <th class="num">Saldo pendiente</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (loadingPreview() && !preview()) {
+                <tr><td colspan="6" class="muted">Calculando saldos…</td></tr>
+              }
+              @for (line of preview()?.lines ?? []; track line.id) {
+                <tr>
+                  <td class="mono">{{ accountCode(line.id) }}</td>
+                  <td>{{ line.description || '—' }}</td>
+                  <td>{{ line.date | date: 'dd/MM/yyyy' }}</td>
+                  <td class="num">{{ formatCurrency(line.originalAmount) }}</td>
+                  <td class="num">{{ formatCurrency(line.paidAmount) }}</td>
+                  <td class="num strong">{{ formatCurrency(line.pendingAmount) }}</td>
+                </tr>
+              }
+            </tbody>
+            @if (preview(); as p) {
+              <tfoot>
+                <tr>
+                  <td colspan="5">Total a cancelar</td>
+                  <td class="num strong">{{ formatCurrency(p.total) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+
+        @if (isSingle()) {
+          <div class="field partial">
+            <label for="settlement-amount">Monto recibido <span class="field__optional">(vacío = saldo completo)</span></label>
+            <input id="settlement-amount" type="text" inputmode="decimal" appDecimalInput thousands
+              [placeholder]="formatCurrency(singlePending())"
+              [ngModel]="partialAmount()" (ngModelChange)="onPartialChange($event)" />
+            @if (partialInvalid()) {
+              <p class="modal__error" role="alert">El monto debe ser mayor a 0 y no puede superar el saldo pendiente.</p>
+            } @else if (preview()?.lines?.[0]) {
+              @let line = preview()!.lines[0];
+              @if (line.pendingAfter > 0) {
+                <p class="modal__hint">Saldo pendiente después del pago: <strong>{{ formatCurrency(line.pendingAfter) }}</strong> (abono parcial).</p>
+              }
+            }
+          </div>
+        }
+
+        <fieldset class="method">
+          <legend class="field__label">{{ isSingle() ? '¿Cómo recibió el pago de esta cuenta por cobrar?' : '¿Cómo recibió el pago de estas cuentas?' }}</legend>
+          <div class="method__options">
+            <button type="button" class="method__option" [class.method__option--on]="method() === 'EFECTIVO'"
+              [attr.aria-pressed]="method() === 'EFECTIVO'" (click)="selectMethod('EFECTIVO')">
+              <app-icon name="wallet" [size]="20" />
+              <span>Efectivo</span>
+              <small>Aumenta el efectivo físico disponible.</small>
+            </button>
+            <button type="button" class="method__option" [class.method__option--on]="method() === 'DEPOSITO_BANCARIO'"
+              [attr.aria-pressed]="method() === 'DEPOSITO_BANCARIO'" (click)="selectMethod('DEPOSITO_BANCARIO')">
+              <app-icon name="bank" [size]="20" />
+              <span>Depósito bancario</span>
+              <small>Aumenta el saldo de la cuenta; el efectivo no cambia.</small>
+            </button>
+          </div>
+        </fieldset>
+
+        @if (method() === 'DEPOSITO_BANCARIO') {
+          <div class="modal__grid">
+            <div class="field">
+              <label for="settlement-bank">Cuenta que recibió el depósito</label>
+              @if (banksFailed()) {
+                <p class="modal__error">No se pudieron cargar las cuentas. <button type="button" (click)="loadBanks()">Reintentar</button></p>
+              } @else {
+                <select id="settlement-bank" [ngModel]="bankId()" (ngModelChange)="onBankChange($event)">
+                  <option value="">Selecciona una cuenta</option>
+                  @for (bank of banks(); track bank.bankId) {
+                    <option [value]="bank.bankId">{{ bank.bankName }}{{ bank.accountNumber ? ' · ' + bank.accountNumber : '' }}</option>
+                  }
+                </select>
+              }
+            </div>
+            <div class="field">
+              <label for="settlement-reference">Referencia / boleta <span class="field__optional">(opcional)</span></label>
+              <input id="settlement-reference" type="text" maxlength="100" placeholder="Ej. 123456"
+                [ngModel]="referenceNumber()" (ngModelChange)="referenceNumber.set($event)" />
+            </div>
+          </div>
+        }
+
+        @if (method()) {
+          <div class="field">
+            <label for="settlement-notes">Observaciones <span class="field__optional">(opcional)</span></label>
+            <input id="settlement-notes" type="text" maxlength="500"
+              [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+          </div>
+        }
+
+        @if (previewReady()) {
+          @if (preview(); as p) {
+            <div class="preview" aria-live="polite">
+              @if (p.cash; as cash) {
+                <div>
+                  <span class="preview__label">Efectivo disponible</span>
+                  <strong>{{ formatCurrency(cash.current) }}</strong>
+                </div>
+                <app-icon name="arrow-right" [size]="18" />
+                <div>
+                  <span class="preview__label">Después del cobro</span>
+                  <strong class="preview__in">{{ formatCurrency(cash.after) }}</strong>
+                </div>
+              } @else if (p.bank) {
+                @let bank = p.bank!;
+                <div>
+                  <span class="preview__label">{{ bank.name }} — saldo actual</span>
+                  <strong>{{ formatCurrency(bank.current) }}</strong>
+                </div>
+                <app-icon name="arrow-right" [size]="18" />
+                <div>
+                  <span class="preview__label">Después del depósito</span>
+                  <strong class="preview__in">{{ formatCurrency(bank.after) }}</strong>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (previewError()) {
+          <p class="modal__error" role="alert">{{ previewError() }}</p>
+        }
+        @if (errorMessage()) {
+          <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" (click)="cancel()">Cancelar</app-button>
+          <app-button variant="primary" [disabled]="!canContinue() || !previewReady()" (click)="goToConfirm()">
+            Continuar
+          </app-button>
+        </div>
+      } @else {
+        @if (preview(); as p) {
+          <!-- Final confirmation: nothing is written until "Confirmar cancelación". -->
+          <dl class="summary">
+            <div><dt>Cliente</dt><dd>{{ p.clientName }}</dd></div>
+            <div><dt>Cuentas</dt><dd>{{ p.lines.length }}</dd></div>
+            <div><dt>Total a cancelar</dt><dd class="strong">{{ formatCurrency(p.total) }}</dd></div>
+            <div><dt>Forma de pago</dt><dd>{{ methodLabel[p.paymentMethod] }}</dd></div>
+            @if (p.bank; as bank) {
+              <div><dt>Banco</dt><dd>{{ bank.name }}{{ bank.accountNumber ? ' · ' + bank.accountNumber : '' }}</dd></div>
+              <div><dt>Referencia</dt><dd>{{ referenceNumber().trim() || '—' }}</dd></div>
+              <div><dt>Saldo bancario resultante</dt><dd class="strong preview__in">{{ formatCurrency(bank.after) }}</dd></div>
+            }
+            @if (p.cash; as cash) {
+              <div><dt>Efectivo resultante</dt><dd class="strong preview__in">{{ formatCurrency(cash.after) }}</dd></div>
+            }
+            @if (isSingle() && p.lines[0].pendingAfter > 0) {
+              <div><dt>Saldo pendiente después</dt><dd>{{ formatCurrency(p.lines[0].pendingAfter) }}</dd></div>
+            }
+          </dl>
+          <p class="modal__hint">
+            Al confirmar se registrará el pago de cada cuenta en una sola operación. Si algo falla, no se aplica ningún cambio.
+          </p>
+        }
+
+        @if (errorMessage()) {
+          <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="isSaving()" (click)="back()">Volver</app-button>
+          <app-button variant="primary" [disabled]="isSaving()" (click)="confirm()">
+            {{ isSaving() ? 'Registrando…' : 'Confirmar cancelación' }}
+          </app-button>
+        </div>
+      }
+    </div>
+  </div>
+}

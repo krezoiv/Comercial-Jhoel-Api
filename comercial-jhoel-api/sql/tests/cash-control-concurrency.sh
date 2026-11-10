@@ -73,3 +73,36 @@ else
   echo "FALLÓ concurrencia"
   exit 1
 fi
+
+# Cuentas por Cobrar (migración 1760007000000): dos usuarios cancelan la MISMA
+# cuenta a la vez con solicitudes distintas. Debe quedar exactamente un cobro,
+# una sola entrada de efectivo y la cuenta en 0; el segundo recibe
+# AR_SETTLEMENT_ALREADY_SETTLED.
+AR_CLIENT=$("${PSQL[@]}" -d "$TEST_DB" -c "INSERT INTO clients (name, created_by) VALUES ('Cliente concurrencia', '$ADMIN_ID') RETURNING id" | head -1)
+AR_CHARGE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT register_account_receivable_movement('$AR_CLIENT', 'CARGO', 800, CURRENT_DATE, 'Cargo concurrencia', '$ADMIN_ID')")
+CASH_BEFORE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
+
+settle_sql() {
+  cat <<SQL
+BEGIN;
+SELECT settle_accounts_receivable('$AR_CLIENT', '[{"id":"$AR_CHARGE"}]'::jsonb, 'EFECTIVO', NULL, NULL, NULL, 800, '$ADMIN_ID', 'CONC:AR:$1');
+SELECT pg_sleep($2);
+COMMIT;
+SQL
+}
+(settle_sql X 2 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+sleep 0.5
+(settle_sql Y 0 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+wait
+
+AR_OPS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT count(*) FROM account_receivable_payment_operations WHERE client_id = '$AR_CLIENT' AND status = 'APLICADO'")
+AR_PENDING=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT pending FROM ar_charge_balances(ARRAY['$AR_CLIENT'::uuid]) WHERE charge_id = '$AR_CHARGE'")
+CASH_AFTER=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
+CASH_EXPECTED=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT ($CASH_BEFORE + 800)::numeric(14,2)")
+echo "CxC: cobros aplicados $AR_OPS (esperado 1) · pendiente $AR_PENDING (esperado 0.00) · efectivo $CASH_AFTER (esperado $CASH_EXPECTED)"
+if [[ "$AR_OPS" == "1" && "$AR_PENDING" == "0.00" && "$CASH_AFTER" == "$CASH_EXPECTED" ]]; then
+  echo "OK  concurrencia CxC: una sola cancelación, sin efectivo duplicado"
+else
+  echo "FALLÓ concurrencia CxC"
+  exit 1
+fi

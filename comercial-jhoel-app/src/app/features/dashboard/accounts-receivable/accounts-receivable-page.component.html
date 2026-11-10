@@ -30,6 +30,41 @@
     (addRecord)="openCreateForm()"
   />
 
+  @if (isAdmin()) {
+    <div class="selection-bar" [class.selection-bar--active]="selectedCount() > 0" aria-live="polite">
+      @if (selectedCount() > 0) {
+        <div class="selection-bar__info">
+          <span class="selection-bar__client">{{ selectionClientName() }}</span>
+          <span>{{ selectedCount() }} {{ selectedCount() === 1 ? 'cuenta seleccionada' : 'cuentas seleccionadas' }}</span>
+          <strong>Total: {{ formatCurrency(selectedTotal()) }}</strong>
+        </div>
+        <div class="selection-bar__actions">
+          <app-button variant="ghost" [disabled]="loadingClientPending()" (click)="selectAllClientPending()">
+            {{ loadingClientPending() ? 'Cargando…' : 'Seleccionar todas las pendientes del cliente' }}
+          </app-button>
+          <app-button variant="ghost" (click)="clearSelection()">Limpiar selección</app-button>
+          <app-button variant="primary" [disabled]="selectedCount() === 0" (click)="openSelectionSettlement()">
+            <app-icon name="check-circle" [size]="16" />
+            Cancelar cuentas seleccionadas
+          </app-button>
+        </div>
+      } @else {
+        <p class="selection-bar__hint">
+          <app-icon name="check-circle" [size]="16" />
+          Marque las cuentas pendientes de un mismo cliente para cancelarlas en una sola operación.
+        </p>
+        <div class="selection-bar__actions">
+          @if (clientFilter()) {
+            <app-button variant="ghost" [disabled]="loadingClientPending()" (click)="selectAllClientPending()">
+              {{ loadingClientPending() ? 'Cargando…' : 'Seleccionar todas las pendientes de ' + clientFilter()!.name }}
+            </app-button>
+          }
+          <app-button variant="primary" [disabled]="true">Cancelar cuentas seleccionadas</app-button>
+        </div>
+      }
+    </div>
+  }
+
   <app-account-receivable-table
     [records]="records()"
     [loading]="loading()"
@@ -40,6 +75,10 @@
     (clearFilters)="clearFilters()"
     (addRecord)="openCreateForm()"
     (viewStatement)="openStatement($event)"
+    [selectedIds]="selectedIds()"
+    (toggleSelect)="toggleSelect($event)"
+    (settle)="openSingleSettlement($event)"
+    (viewPayments)="openPayments($event)"
   />
 
   <app-report-pagination [total]="total()" [page]="page()" [limit]="limit" (pageChange)="onPageChange($event)" />
@@ -68,4 +107,22 @@
   [canManage]="isAdmin()"
   (closed)="closeStatement()"
   (changed)="fetchRecords(); fetchActiveBalance()"
+/>
+
+<app-settlement-modal
+  [open]="isSettlementOpen()"
+  [clientId]="settlementClientId()"
+  [clientName]="settlementClientName()"
+  [accountIds]="settlementAccountIds()"
+  (closed)="closeSettlement()"
+  (saved)="onSettled($event)"
+/>
+
+<app-payment-history-modal
+  [open]="isPaymentsOpen()"
+  [chargeId]="paymentsChargeId()"
+  [clientName]="paymentsClientName()"
+  [canManage]="isAdmin()"
+  (closed)="closePayments()"
+  (changed)="onPaymentsChanged()"
 />

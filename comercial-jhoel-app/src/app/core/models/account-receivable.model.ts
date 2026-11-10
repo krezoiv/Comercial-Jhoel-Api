@@ -1,3 +1,4 @@
+import { ChargePaymentStatus } from './account-receivable-settlement.model';
 import { KardexMovementType } from './kardex.model';
 
 export interface AccountReceivable {
@@ -13,6 +14,10 @@ export interface AccountReceivable {
   updatedAt: string;
   createdByUsername: string;
   updatedByUsername: string | null;
+  /** List only, active CARGO rows: what is still owed / already collected / its state. `null` for ABONOs and inactive rows. */
+  pendingAmount?: number | null;
+  paidAmount?: number | null;
+  paymentStatus?: ChargePaymentStatus | null;
 }
 
 /** Payload for create/update — the backend assigns id/isActive/timestamps/clientName. */

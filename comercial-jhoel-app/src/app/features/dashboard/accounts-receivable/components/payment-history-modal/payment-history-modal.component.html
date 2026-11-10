@@ -1,0 +1,176 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="payment-history-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="payment-history-title">
+          <app-icon name="clock" [size]="20" />
+          {{ operation() ? 'Detalle del cobro' : 'Historial de pagos' }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isVoidSaving()" (click)="close()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (operation(); as op) {
+        <!-- Consolidated operation: every account it covered. -->
+        <div class="op-header">
+          <app-badge [tone]="op.status === 'ANULADO' ? 'danger' : 'success'">{{ op.status === 'ANULADO' ? 'Anulado' : 'Aplicado' }}</app-badge>
+          <span>{{ op.createdAt | date: 'dd/MM/yyyy HH:mm' }} · {{ op.createdByUsername }}</span>
+        </div>
+        <dl class="summary">
+          <div><dt>Cliente</dt><dd>{{ op.clientName }}</dd></div>
+          <div><dt>Forma de pago</dt><dd>{{ methodLabel[op.paymentMethod] }}</dd></div>
+          <div><dt>Total</dt><dd class="strong">{{ formatCurrency(op.totalAmount) }}</dd></div>
+          <div><dt>Cuentas</dt><dd>{{ op.accountsCount }}</dd></div>
+          @if (op.bankName) {
+            <div><dt>Banco</dt><dd>{{ op.bankName }}{{ op.bankAccountNumber ? ' · ' + op.bankAccountNumber : '' }}</dd></div>
+            <div><dt>Referencia</dt><dd>{{ op.referenceNumber || '—' }}</dd></div>
+          }
+          @if (op.operationalDate) {
+            <div><dt>Día operativo</dt><dd>{{ op.operationalDate | date: 'dd/MM/yyyy' }}{{ op.cutPeriodNumber ? ' · corte ' + op.cutPeriodNumber : '' }}</dd></div>
+          }
+          @if (op.observations) {
+            <div class="summary__wide"><dt>Observaciones</dt><dd>{{ op.observations }}</dd></div>
+          }
+          @if (op.status === 'ANULADO') {
+            <div class="summary__wide"><dt>Anulado</dt><dd>{{ op.voidedAt | date: 'dd/MM/yyyy HH:mm' }} · {{ op.voidedByUsername }} — {{ op.voidReason }}</dd></div>
+          }
+        </dl>
+
+        <div class="table-wrapper">
+          <table class="lines">
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Concepto</th>
+                <th>Fecha</th>
+                <th class="num">Saldo anterior</th>
+                <th class="num">Pagado</th>
+                <th class="num">Saldo posterior</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (detail of op.details; track detail.id) {
+                <tr>
+                  <td class="mono">{{ accountCode(detail.accountReceivableId) }}</td>
+                  <td>{{ detail.accountDescription || '—' }}</td>
+                  <td>{{ detail.accountDate | date: 'dd/MM/yyyy' }}</td>
+                  <td class="num">{{ formatCurrency(detail.previousBalance) }}</td>
+                  <td class="num strong">{{ formatCurrency(detail.amountPaid) }}</td>
+                  <td class="num">{{ formatCurrency(detail.newBalance) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (showVoidForm()) {
+          <div class="field void-form">
+            <label for="void-reason">Motivo de la anulación</label>
+            <textarea id="void-reason" rows="2" maxlength="255" placeholder="Mínimo 5 caracteres"
+              [ngModel]="voidReason()" (ngModelChange)="voidReason.set($event)"></textarea>
+            <p class="modal__hint">
+              Las cuentas vuelven a quedar pendientes y se revierte
+              {{ op.paymentMethod === 'EFECTIVO' ? 'la entrada de efectivo' : 'el depósito en el banco' }}. Nada se elimina.
+            </p>
+          </div>
+        }
+        @if (voidError()) {
+          <p class="modal__error" role="alert">{{ voidError() }}</p>
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="isVoidSaving()" (click)="backToHistory()">Volver</app-button>
+          @if (canManage && op.status === 'APLICADO') {
+            @if (showVoidForm()) {
+              <app-button variant="danger" [disabled]="voidReason().trim().length < 5 || isVoidSaving()" (click)="confirmVoid()">
+                {{ isVoidSaving() ? 'Anulando…' : 'Confirmar anulación' }}
+              </app-button>
+            } @else {
+              <app-button variant="danger" (click)="startVoid()">Anular cobro</app-button>
+            }
+          }
+        </div>
+      } @else {
+        @if (loading()) {
+          <p class="muted">Cargando historial…</p>
+        } @else if (errorMessage()) {
+          <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+        } @else if (history()) {
+          @let h = history()!;
+          @if (h.charge; as charge) {
+            <div class="charge">
+              <div>
+                <span class="charge__label">{{ clientName }}</span>
+                <strong>{{ charge.description || 'Cuenta ' + accountCode(charge.id) }}</strong>
+                <span class="muted">{{ charge.date | date: 'dd/MM/yyyy' }} · {{ accountCode(charge.id) }}</span>
+              </div>
+              <app-badge [tone]="statusTone[charge.status]">{{ statusLabel[charge.status] }}</app-badge>
+            </div>
+            <dl class="summary">
+              <div><dt>Monto original</dt><dd>{{ formatCurrency(charge.originalAmount) }}</dd></div>
+              <div><dt>Cobrado</dt><dd>{{ formatCurrency(charge.paidAmount) }}</dd></div>
+              <div><dt>Saldo pendiente</dt><dd class="strong">{{ formatCurrency(charge.pendingAmount) }}</dd></div>
+            </dl>
+            @if (charge.paidAmount > 0 && h.payments.length === 0) {
+              <p class="modal__hint">Lo cobrado proviene de abonos generales del estado de cuenta (Registrar Abono).</p>
+            }
+          }
+
+          @if (h.payments.length === 0) {
+            <p class="muted empty">Esta cuenta aún no tiene cobros registrados.</p>
+          } @else {
+            <div class="table-wrapper">
+              <table class="lines">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Forma de pago</th>
+                    <th class="num">Pagado</th>
+                    <th class="num">Saldo posterior</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (payment of h.payments; track payment.operationId) {
+                    <tr [class.voided]="payment.status === 'ANULADO'">
+                      <td>{{ payment.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>
+                        {{ methodLabel[payment.paymentMethod] }}
+                        @if (payment.bankName) {
+                          <span class="muted"> · {{ payment.bankName }}{{ payment.referenceNumber ? ' · ' + payment.referenceNumber : '' }}</span>
+                        }
+                        @if (payment.accountsCount > 1) {
+                          <span class="muted"> · {{ payment.accountsCount }} cuentas</span>
+                        }
+                      </td>
+                      <td class="num strong">{{ formatCurrency(payment.amountPaid) }}</td>
+                      <td class="num">{{ formatCurrency(payment.newBalance) }}</td>
+                      <td>{{ payment.createdByUsername }}</td>
+                      <td>
+                        <app-badge [tone]="payment.status === 'ANULADO' ? 'danger' : 'success'">
+                          {{ payment.status === 'ANULADO' ? 'Anulado' : 'Aplicado' }}
+                        </app-badge>
+                      </td>
+                      <td>
+                        <button type="button" class="link" [disabled]="loadingOperation()" (click)="openOperation(payment.operationId)">
+                          Ver operación
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+
+        <div class="modal__actions">
+          <app-button variant="ghost" (click)="close()">Cerrar</app-button>
+        </div>
+      }
+    </div>
+  </div>
+}

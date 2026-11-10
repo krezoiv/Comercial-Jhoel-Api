@@ -23,6 +23,7 @@ import {
   InvalidMovementTypeError,
 } from '../../domain/errors/invalid-movement.error';
 import { AccountReceivableOrmEntity } from './account-receivable.orm-entity';
+import { settlementErrorFromMessage } from '../../domain/errors/account-receivable-settlement.errors';
 import { AccountReceivableMapper } from './account-receivable.mapper';
 
 const SORT_COLUMN: Record<AccountReceivableSortField, string> = {
@@ -179,13 +180,34 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
     id: string,
     data: UpdateAccountReceivableData,
   ): Promise<AccountReceivable> {
-    await this.repository.update({ id }, data);
+    await this.guardPaymentRules(() => this.repository.update({ id }, data));
     const updated = await this.repository.findOneOrFail({ where: { id } });
     return AccountReceivableMapper.toDomain(updated);
   }
 
   async deactivate(id: string): Promise<void> {
-    await this.repository.update({ id }, { isActive: false });
+    await this.guardPaymentRules(() =>
+      this.repository.update({ id }, { isActive: false }),
+    );
+  }
+
+  /**
+   * `trg_ar_payment_guard` rejects editing/deactivating the ABONO of a
+   * collection operation or a CARGO that already received payments — turned
+   * into its 409 domain error here instead of a raw 500.
+   */
+  private async guardPaymentRules<T>(write: () => Promise<T>): Promise<T> {
+    try {
+      return await write();
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        const mapped = settlementErrorFromMessage(error.message);
+        if (mapped) {
+          throw mapped;
+        }
+      }
+      throw error;
+    }
   }
 
   /** Invokes `register_account_receivable_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for the `ABONO_EXCEEDS_BALANCE` rule this table enforces, unlike Activos. */

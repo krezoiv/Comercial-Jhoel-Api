@@ -33,6 +33,7 @@ export * from './bank-movement.model';
 export * from './cuadre-agentes.model';
 export * from './client.model';
 export * from './account-receivable.model';
+export * from './account-receivable-settlement.model';
 export * from './asset.model';
 export * from './api-response.model';
 export * from './toast.model';

@@ -204,3 +204,55 @@
     background-position: -200% 0;
   }
 }
+
+// Collection (Cobrar / cancelar) additions.
+.action-btn--pay {
+  background: rgba(34, 160, 98, 0.12);
+  color: var(--color-success, #1f9d5c);
+
+  &:hover:not(:disabled) {
+    background: rgba(34, 160, 98, 0.2);
+  }
+}
+
+.ar-table__check {
+  width: 2.5rem;
+  text-align: center;
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+  }
+}
+
+.ar-table__row--selected td {
+  background: rgba(47, 131, 224, 0.06);
+}
+
+.ar-table__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1, 4px);
+}
+
+.ar-table__kind {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.ar-card__check {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.ar-card__header {
+  flex-wrap: wrap;
+
+  .ar-card__client {
+    flex: 1;
+  }
+}

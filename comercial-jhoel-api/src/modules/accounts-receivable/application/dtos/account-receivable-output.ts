@@ -1,3 +1,4 @@
+import type { ChargePaymentStatus } from '../../domain/repositories/account-receivable-settlement.repository';
 import {
   AccountReceivable,
   AccountReceivableMovementType,
@@ -20,6 +21,14 @@ export interface AccountReceivableOutput {
   createdByUsername: string;
   updatedBy: string | null;
   updatedByUsername: string | null;
+  /**
+   * Collection state of an active CARGO (computed in PostgreSQL by
+   * `ar_charge_balances`); only filled by the list — `null` for ABONOs,
+   * deactivated rows and single-record reads.
+   */
+  pendingAmount?: number | null;
+  paidAmount?: number | null;
+  paymentStatus?: ChargePaymentStatus | null;
 }
 
 export function toAccountReceivableOutput(
