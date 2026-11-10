@@ -1,0 +1,142 @@
+@if (open && period) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="cut-finish-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="cut-finish-title">
+          <app-icon name="lock" [size]="20" />
+          Finalizar {{ cutName[period.periodNumber] }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <!-- Resumen -->
+      <section class="block" aria-label="Resumen del corte">
+        <h3 class="block__title">Resumen</h3>
+        <dl class="summary">
+          <div><dt>Hora de inicio</dt><dd>{{ formatTime(period.actualStartedAt) }}</dd></div>
+          <div><dt>Hora de finalización</dt><dd>{{ formatTime(now()) }}</dd></div>
+          <div><dt>Entradas de efectivo</dt><dd class="in">{{ formatCurrency(period.liveTotalIn ?? 0) }}</dd></div>
+          <div><dt>Salidas de efectivo</dt><dd class="out">{{ formatCurrency(period.liveTotalOut ?? 0) }}</dd></div>
+          <div><dt>Movimientos</dt><dd>{{ period.liveMovementCount ?? 0 }}</dd></div>
+          <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(period.openingPhysicalCash ?? 0) }}</dd></div>
+          <div><dt>Efectivo final (contado)</dt><dd>{{ formatCurrency(totalCounted()) }}</dd></div>
+          <div>
+            <dt>Diferencia</dt>
+            <dd [class.in]="difference() > 0" [class.out]="difference() < 0">{{ formatDifference(difference()) }}</dd>
+          </div>
+          @if ((period.inheritedDifference ?? 0) !== 0) {
+            <div class="summary__wide">
+              <dt>Diferencia heredada (se conserva aparte)</dt>
+              <dd>{{ formatDifference(period.inheritedDifference ?? 0) }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <!-- Efectivo -->
+      <section class="block" aria-label="Arqueo de efectivo">
+        <h3 class="block__title">Efectivo</h3>
+        <div class="compare" [class.compare--ok]="difference() === 0">
+          <div><span>Efectivo teórico del sistema</span><strong>{{ formatCurrency(period.liveSystemCash ?? 0) }}</strong></div>
+          <div>
+            <span>Efectivo físico esperado (inicial contado + movimientos del corte)</span>
+            <strong>{{ formatCurrency(expectedPhysical()) }}</strong>
+          </div>
+          <div><span>Total contado</span><strong>{{ formatCurrency(totalCounted()) }}</strong></div>
+          <div>
+            <span>Diferencia (contado − sistema)</span>
+            <strong [class.in]="difference() > 0" [class.out]="difference() < 0">{{ formatDifference(difference()) }}</strong>
+          </div>
+        </div>
+        <app-cash-breakdown-table
+          [cashCounts]="cashCounts()"
+          [totalCash]="totalCounted()"
+          [totalAmount]="period.liveSystemCash ?? 0"
+          [status]="status()"
+          emptyAmountText="El Kardex no tiene saldo"
+          (quantityChange)="onQuantityChange($event)"
+        />
+        <div class="field">
+          <label for="cut-cash-notes">Observaciones del arqueo <span class="field__optional">(opcional)</span></label>
+          <input id="cut-cash-notes" type="text" maxlength="500" [ngModel]="cashObservations()" (ngModelChange)="cashObservations.set($event)" />
+        </div>
+      </section>
+
+      <!-- Bancos -->
+      <section class="block" aria-label="Conciliación bancaria">
+        <h3 class="block__title">
+          Bancos
+          <span>Diferencia total: <strong [class.in]="bankDifferenceTotal() > 0" [class.out]="bankDifferenceTotal() < 0">{{ formatDifference(bankDifferenceTotal()) }}</strong></span>
+        </h3>
+        @if (loadingBanks()) {
+          <p class="state">Cargando saldos bancarios…</p>
+        } @else if (banksFailed()) {
+          <p class="state state--error" role="alert">
+            No se pudieron cargar los saldos bancarios.
+            <button type="button" (click)="loadBanks()">Reintentar</button>
+          </p>
+        } @else {
+          <div class="table-scroll">
+            <table class="banks">
+              <thead>
+                <tr>
+                  <th scope="col">Banco</th>
+                  <th scope="col" class="num">Saldo del sistema</th>
+                  <th scope="col" class="num">Saldo verificado</th>
+                  <th scope="col" class="num">Diferencia</th>
+                  <th scope="col">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (bank of banks(); track bank.bankId) {
+                  <tr>
+                    <td>
+                      <span class="bank-name">{{ bank.bankName }}</span>
+                      @if (bank.accountNumber) {
+                        <small>{{ bank.accountNumber }}</small>
+                      }
+                    </td>
+                    <td class="num">{{ formatCurrency(bank.balance) }}</td>
+                    <td class="num">
+                      <input type="text" inputmode="decimal" appDecimalInput thousands [allowNegative]="true"
+                        [attr.aria-label]="'Saldo verificado ' + bank.bankName"
+                        [ngModel]="bank.verified" (ngModelChange)="updateBank(bank.bankId, { verified: $event })" />
+                    </td>
+                    <td class="num" [class.in]="bankDifference(bank) > 0" [class.out]="bankDifference(bank) < 0">
+                      {{ formatDifference(bankDifference(bank)) }}
+                    </td>
+                    <td>
+                      <input type="text" maxlength="500" [attr.aria-label]="'Observaciones ' + bank.bankName"
+                        [ngModel]="bank.observations" (ngModelChange)="updateBank(bank.bankId, { observations: $event })" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <div class="field">
+        <label for="cut-notes">Observaciones del corte <span class="field__optional">(opcional)</span></label>
+        <textarea id="cut-notes" rows="2" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
+      </div>
+
+      <p class="modal__hint">
+        Las cifras del sistema son las de este momento; al guardar, el servidor las vuelve a calcular y guarda la fotografía definitiva.
+      </p>
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Finalizar corte' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

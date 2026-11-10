@@ -151,33 +151,12 @@ app-transaction-monthly-chart {
   @include bp.respond(lg) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  // Escritorio grande: las cuatro en una fila; "Últimas transacciones" más ancha
-  // por su tabla. (En 1280–1535 px, con el sidebar abierto, cada tarjeta quedaba
-  // en ~190 px y sus importes no cabían: ahí van 3 + la tabla debajo.)
-  @include bp.respond(xxl) {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr);
-  }
 }
 
-// Teléfono grande y laptop pequeña: la tabla ocupa su propia fila completa
-// (en tablet vertical cabe junto a la tarjeta de comisión).
+// "Últimas transacciones" (movimientos de efectivo con su saldo disponible)
+// siempre ocupa su propia fila completa: su tabla necesita el ancho.
 .summary-row__recent {
-  @include bp.respond(sm) {
-    grid-column: 1 / -1;
-  }
-
-  @include bp.respond(md) {
-    grid-column: auto;
-  }
-
-  @include bp.respond(lg) {
-    grid-column: 1 / -1;
-  }
-
-  @include bp.respond(xxl) {
-    grid-column: auto;
-  }
+  grid-column: 1 / -1;
 }
 
 .field {

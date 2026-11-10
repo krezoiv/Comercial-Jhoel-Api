@@ -16,6 +16,8 @@ import type { TransactionTypeBalanceEffect } from '../../../transaction-types/do
 import { BANK_MOVEMENT_REPOSITORY } from '../../../banks/domain/repositories/bank-movement.repository';
 import type { BankMovementRepository } from '../../../banks/domain/repositories/bank-movement.repository';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
+import { CASH_CONTROL_REPOSITORY } from '../../../cash-control/domain/repositories/cash-control.repository';
+import type { CashControlRepository } from '../../../cash-control/domain/repositories/cash-control.repository';
 import { TRANSACTION_MANAGER } from '../../../../shared/application/ports/transaction-manager.port';
 import type { TransactionManager } from '../../../../shared/application/ports/transaction-manager.port';
 import { BankDepositDayNotOpenedError } from '../../domain/errors/bank-deposit-day-not-opened.error';
@@ -113,6 +115,8 @@ export class RegisterBankDepositOperationUseCase {
     private readonly transactionTypeRepository: TransactionTypeRepository,
     @Inject(BANK_MOVEMENT_REPOSITORY)
     private readonly bankMovementRepository: BankMovementRepository,
+    @Inject(CASH_CONTROL_REPOSITORY)
+    private readonly cashControlRepository: CashControlRepository,
   ) {}
 
   async execute(
@@ -238,10 +242,27 @@ export class RegisterBankDepositOperationUseCase {
     operation: BankDepositOperation,
   ): Promise<BankDepositOperationOutput> {
     const output = toBankDepositOperationOutput(operation);
-    const [movement] = await this.bankMovementRepository.findByReference(
-      'BANK_DEPOSIT',
-      operation.id,
-    );
+    const [[movement], cashMovements, cashBalance] = await Promise.all([
+      this.bankMovementRepository.findByReference('BANK_DEPOSIT', operation.id),
+      this.cashControlRepository.findMovementsByReference(
+        'BANK_DEPOSIT',
+        operation.id,
+      ),
+      this.cashControlRepository.getBalance(),
+    ]);
+    const cash = cashMovements.find((row) => row.movementType !== 'ANULACION');
+    // Official physical-cash effect (Control de Efectivo), written by the
+    // `trg_cash_bank_deposit_insert` trigger in the same transaction.
+    output.cashMovement = cash
+      ? {
+          movementType: cash.movementType,
+          direction: cash.direction,
+          amount: cash.amount,
+          previousBalance: cash.previousBalance,
+          newBalance: cash.newBalance,
+          currentBalance: cashBalance.balance,
+        }
+      : null;
     output.balanceMovement = movement
       ? {
           bankId: movement.bankId,

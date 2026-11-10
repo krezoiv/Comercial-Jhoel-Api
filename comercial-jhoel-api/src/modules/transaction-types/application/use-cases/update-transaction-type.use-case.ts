@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TRANSACTION_TYPE_REPOSITORY } from '../../domain/repositories/transaction-type.repository';
 import type { TransactionTypeRepository } from '../../domain/repositories/transaction-type.repository';
-import { TransactionTypeBalanceEffect } from '../../domain/entities/transaction-type.entity';
+import {
+  TransactionTypeBalanceEffect,
+  TransactionTypeCashEffect,
+} from '../../domain/entities/transaction-type.entity';
 import { TransactionTypeNotFoundError } from '../../domain/errors/transaction-type-not-found.error';
 import { TransactionTypeNameAlreadyExistsError } from '../../domain/errors/transaction-type-name-already-exists.error';
 import {
@@ -13,6 +16,7 @@ export interface UpdateTransactionTypeInput {
   name?: string;
   icon?: string;
   balanceEffect?: string | null;
+  cashEffect?: string | null;
   updatedBy: string;
 }
 
@@ -49,6 +53,9 @@ export class UpdateTransactionTypeUseCase {
             balanceEffect: (input.balanceEffect ??
               null) as TransactionTypeBalanceEffect | null,
           }
+        : {}),
+      ...(input.cashEffect
+        ? { cashEffect: input.cashEffect as TransactionTypeCashEffect }
         : {}),
       updatedBy: input.updatedBy,
     });

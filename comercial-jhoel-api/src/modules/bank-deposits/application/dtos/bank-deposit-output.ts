@@ -49,6 +49,17 @@ export interface BankDepositOperationOutput {
   voidReason: string | null;
   /** Solo en la respuesta de `POST /bank-deposits`: el movimiento de saldo que generó la operación (saldo anterior → posterior). */
   balanceMovement?: BankDepositBalanceMovementOutput | null;
+  /** Solo en la respuesta de `POST /bank-deposits`: el movimiento del Kardex oficial de efectivo (Control de Efectivo). `currentBalance` incluye lo que la misma operación haya enviado a CxC/Activos. */
+  cashMovement?: BankDepositCashMovementOutput | null;
+}
+
+export interface BankDepositCashMovementOutput {
+  movementType: string;
+  direction: 'IN' | 'OUT' | 'NONE';
+  amount: number;
+  previousBalance: number;
+  newBalance: number;
+  currentBalance: number;
 }
 
 export interface BankDepositBalanceMovementOutput {

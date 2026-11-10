@@ -388,6 +388,23 @@ export const routes: Routes = [
         title: 'Transaccionar — Sistema',
       },
       {
+        path: 'control-efectivo',
+        loadComponent: () =>
+          import('./features/dashboard/cash-control/cash-control-page.component').then(
+            (m) => m.CashControlPageComponent
+          ),
+        title: 'Control de Efectivo — Sistema',
+      },
+      {
+        path: 'historial-cortes',
+        loadComponent: () =>
+          import('./features/dashboard/cash-control/cash-control-page.component').then(
+            (m) => m.CashControlPageComponent
+          ),
+        data: { tab: 'historial' },
+        title: 'Historial de Cortes — Sistema',
+      },
+      {
         path: 'transferencias-bancarias',
         loadComponent: () =>
           import('./features/dashboard/bank-transfers/bank-transfers-page.component').then(

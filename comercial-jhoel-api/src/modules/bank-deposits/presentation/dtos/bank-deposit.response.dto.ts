@@ -49,6 +49,14 @@ export class BankDepositOperationResponseDto {
     balanceBefore: number;
     balanceAfter: number;
   } | null;
+  cashMovement?: {
+    movementType: string;
+    direction: 'IN' | 'OUT' | 'NONE';
+    amount: number;
+    previousBalance: number;
+    newBalance: number;
+    currentBalance: number;
+  } | null;
 }
 
 export class BankDepositOperationSummaryResponseDto {

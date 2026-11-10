@@ -1,0 +1,139 @@
+@if (periodId) {
+  <div class="modal-backdrop" role="presentation" (click)="closed.emit()">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="cut-detail-title" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title" id="cut-detail-title">
+          <app-icon name="file-check" [size]="20" />
+          @if (detail(); as d) {
+            {{ cutName[d.period.periodNumber] }} · {{ formatIsoDate(d.period.operationalDate) }}
+          } @else {
+            Detalle del corte
+          }
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (loading()) {
+        <p class="state">Cargando detalle…</p>
+      } @else if (failed()) {
+        <p class="state state--error" role="alert">
+          No se pudo cargar el detalle.
+          <button type="button" (click)="load(periodId)">Reintentar</button>
+        </p>
+      } @else if (detail()) {
+        @let d = detail()!;
+        <dl class="grid">
+          <div><dt>Estado</dt><dd><span class="status status--{{ d.period.status.toLowerCase() }}">{{ statusLabel[d.period.status] }}</span></dd></div>
+          <div><dt>Horario programado</dt><dd>{{ formatTime(d.period.scheduledStartAt) }} – {{ formatTime(d.period.scheduledEndAt) }}</dd></div>
+          <div><dt>Horario real</dt><dd>{{ formatTime(d.period.actualStartedAt) }} – {{ formatTime(d.period.actualFinishedAt) }}</dd></div>
+          <div><dt>Responsables</dt><dd>{{ d.period.openedByUsername ?? '—' }} / {{ d.period.closedByUsername ?? '—' }}</dd></div>
+          <div><dt>Efectivo inicial (físico)</dt><dd>{{ d.period.openingPhysicalCash === null ? '—' : formatCurrency(d.period.openingPhysicalCash) }}</dd></div>
+          <div><dt>Efectivo inicial (sistema)</dt><dd>{{ d.period.openingSystemCash === null ? '—' : formatCurrency(d.period.openingSystemCash) }}</dd></div>
+          <div><dt>Diferencia heredada</dt><dd>{{ d.period.inheritedDifference === null ? '—' : formatDifference(d.period.inheritedDifference) }}</dd></div>
+          <div><dt>Entradas / salidas</dt><dd><span class="in">{{ formatCurrency(d.period.totalIn ?? 0) }}</span> / <span class="out">{{ formatCurrency(d.period.totalOut ?? 0) }}</span></dd></div>
+          <div><dt>Movimientos</dt><dd>{{ d.period.movementCount ?? '—' }}</dd></div>
+          <div><dt>Efectivo final (contado)</dt><dd>{{ d.period.closingPhysicalCash === null ? '—' : formatCurrency(d.period.closingPhysicalCash) }}</dd></div>
+          <div><dt>Efectivo final (sistema)</dt><dd>{{ d.period.closingSystemCash === null ? '—' : formatCurrency(d.period.closingSystemCash) }}</dd></div>
+          <div>
+            <dt>Diferencia del corte</dt>
+            <dd [class.in]="(d.period.cashDifference ?? 0) > 0" [class.out]="(d.period.cashDifference ?? 0) < 0">
+              {{ d.period.cashDifference === null ? '—' : formatDifference(d.period.cashDifference) }}
+            </dd>
+          </div>
+        </dl>
+        @if (d.period.periodNumber === 1) {
+          <p class="note">Apertura del día: {{ policyLabel[d.day.openingPolicy] }} · {{ d.day.openedByUsername }} · {{ formatDateTime(d.day.openedAt) }}</p>
+        }
+        @if (d.period.observations) {
+          <p class="note">Observaciones: {{ d.period.observations }}</p>
+        }
+
+        @if (currentCount(); as count) {
+          <h3 class="section">Arqueo</h3>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr><th>Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr></thead>
+              <tbody>
+                @for (row of count.details; track row.denomination) {
+                  <tr><td>{{ formatCurrency(row.denomination) }}</td><td class="num">{{ row.quantity }}</td><td class="num">{{ formatCurrency(row.subtotal) }}</td></tr>
+                } @empty {
+                  <tr><td colspan="3">Sin efectivo contado.</td></tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr><th>Total contado</th><th></th><th class="num">{{ formatCurrency(count.totalCounted) }}</th></tr>
+              </tfoot>
+            </table>
+          </div>
+          @if (count.observations) {
+            <p class="note">Observaciones del arqueo: {{ count.observations }}</p>
+          }
+
+          <h3 class="section">Conciliación bancaria</h3>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr><th>Banco</th><th class="num">Sistema</th><th class="num">Verificado</th><th class="num">Diferencia</th><th>Observaciones</th></tr></thead>
+              <tbody>
+                @for (bank of currentBanks(); track bank.id) {
+                  <tr>
+                    <td>{{ bank.bankName }}</td>
+                    <td class="num">{{ formatCurrency(bank.systemBalance) }}</td>
+                    <td class="num">{{ formatCurrency(bank.verifiedBalance) }}</td>
+                    <td class="num" [class.in]="bank.difference > 0" [class.out]="bank.difference < 0">{{ formatDifference(bank.difference) }}</td>
+                    <td>{{ bank.observations ?? '' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (supersededCounts().length > 0) {
+          <h3 class="section">Arqueos anteriores (corte reabierto)</h3>
+          <ul class="list">
+            @for (count of supersededCounts(); track count.id) {
+              <li>{{ formatDateTime(count.createdAt) }} · {{ count.createdByUsername }} · contado {{ formatCurrency(count.totalCounted) }} · diferencia {{ formatDifference(count.difference) }}</li>
+            }
+          </ul>
+        }
+
+        <h3 class="section">Historial</h3>
+        <ul class="list">
+          @for (event of d.events; track event.id) {
+            <li>{{ formatDateTime(event.performedAt) }} · <strong>{{ event.action }}</strong> · {{ event.performedByUsername }}@if (event.reason) { — {{ event.reason }}}</li>
+          }
+          @for (change of d.scheduleChanges; track change.id) {
+            <li>
+              {{ formatDateTime(change.changedAt) }} · <strong>Horario</strong> {{ formatTime(change.previousStartAt) }}–{{ formatTime(change.previousEndAt) }}
+              → {{ formatTime(change.newStartAt) }}–{{ formatTime(change.newEndAt) }} · {{ change.changedByUsername }} — {{ change.reason }}
+            </li>
+          }
+        </ul>
+
+        <h3 class="section">Movimientos del corte ({{ d.movements.length }})</h3>
+        <div class="table-scroll">
+          <table class="table">
+            <thead><tr><th>Hora</th><th>Operación</th><th class="num">Monto</th><th class="num">Saldo posterior</th><th>Usuario</th></tr></thead>
+            <tbody>
+              @for (m of d.movements; track m.id) {
+                <tr>
+                  <td>{{ formatDateTime(m.createdAt) }}</td>
+                  <td>{{ typeLabel[m.movementType] }} <small>{{ m.description }}</small></td>
+                  <td class="num" [class.in]="m.direction === 'IN'" [class.out]="m.direction === 'OUT'">
+                    {{ m.direction === 'OUT' ? '−' : m.direction === 'IN' ? '+' : '' }}{{ formatCurrency(m.amount) }}
+                  </td>
+                  <td class="num">{{ formatCurrency(m.newBalance) }}</td>
+                  <td>{{ m.createdByUsername }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5">Sin movimientos en este corte.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+}

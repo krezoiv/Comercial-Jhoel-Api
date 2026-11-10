@@ -1674,6 +1674,24 @@ backend (ver el `CLAUDE.md` del API) — la página nunca calcula el saldo, solo
 - Reutiliza `CashBreakdownTableComponent` de Transaccionar (input opcional `emptyAmountText`) y
   `ReportPaginationComponent`. La marca Guayacán y su comisión se editan en Sistema → Banco Agente (solo edición).
 
+### Control de Efectivo (`features/dashboard/cash-control/`, `/dashboard/control-efectivo`, `/dashboard/historial-cortes`)
+
+Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historial de Cortes". `CashControlService`
+(`/cash-control`); el backend es la única fuente del efectivo (ver el `CLAUDE.md` del API) — ninguna vista calcula saldos.
+- Pestañas: Efectivo y Kardex (tarjeta principal, tarjetas por tipo con `buildSummaryCards`, Kardex con filtros
+  borrador/aplicado), Cortes del día (`CashCutControlPanelComponent`: apertura heredada, horarios con motivo, iniciar/
+  finalizar/reabrir, cierre definitivo) e Historial (`CashCutHistoryComponent`). Modales: `CashCutFinishModalComponent`
+  (arqueo reutilizando `app-cash-breakdown-table` + conciliación de todas las cuentas), `CashCutDetailModalComponent`,
+  `CashMovementFormModalComponent` (`clientRequestId` por apertura), `CashReasonModalComponent`.
+- **Tiempo real**: `cashMutationInterceptor` (registrado en `app.config.ts`) avisa a `CashControlSyncService` tras toda
+  escritura exitosa a `bank-deposits`/`accounts-receivable`/`assets`/`bank-transfers`/`cash-control`; `onCashChanged()`
+  re-lee del backend (misma pestaña, otras pestañas vía `BroadcastChannel`, y otros usuarios por sondeo de
+  `GET /cash-control/balance` cada 15 s mientras la pestaña está visible — no hay WebSocket en esta app).
+- **Transaccionar → "Últimas transacciones"** (misma tarjeta) ahora lee `GET /cash-control/movements/recent`: incluye
+  gastos por cobrar, activos, retiros bancarios, manuales y anulaciones; última columna "Efectivo disponible" =
+  `newBalance` del backend; verde entrada / rojo salida / gris sin efecto. Ocupa siempre su propia fila.
+- Sistema → Tipo de Transacción edita `cashEffect` (sugerido desde el efecto bancario con `defaultCashEffect`).
+
 ### Notifications
 
 `NotificationService` (`core/services/notification.service.ts`) is a global toast queue —

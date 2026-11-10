@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import {
   TRANSACTION_TYPE_BALANCE_EFFECTS,
+  TRANSACTION_TYPE_CASH_EFFECTS,
   TRANSACTION_TYPE_ICONS,
 } from '../../domain/entities/transaction-type.entity';
 
@@ -27,4 +28,9 @@ export class UpdateTransactionTypeRequestDto {
   @IsOptional()
   @IsIn(TRANSACTION_TYPE_BALANCE_EFFECTS)
   balanceEffect?: string | null;
+
+  /** Effect on physical cash (Control de Efectivo); omitted on create = derived from `balanceEffect`. */
+  @IsOptional()
+  @IsIn(TRANSACTION_TYPE_CASH_EFFECTS)
+  cashEffect?: string;
 }

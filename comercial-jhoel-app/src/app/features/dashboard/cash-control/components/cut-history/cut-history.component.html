@@ -1,0 +1,104 @@
+<app-card padding="lg">
+  <div class="header">
+    <h2 class="title"><app-icon name="file-check" [size]="18" /> Historial de cortes</h2>
+    <span class="count">{{ total() }} días</span>
+  </div>
+
+  <div class="filters">
+    <label>Desde <input type="date" [ngModel]="draft().dateFrom" (ngModelChange)="setDraft({ dateFrom: $event })" /></label>
+    <label>Hasta <input type="date" [ngModel]="draft().dateTo" (ngModelChange)="setDraft({ dateTo: $event })" /></label>
+    <label>Período
+      <select [ngModel]="draft().periodNumber" (ngModelChange)="setDraft({ periodNumber: $event })">
+        <option value="">Ambos</option>
+        <option [ngValue]="1">Primer corte</option>
+        <option [ngValue]="2">Segundo corte</option>
+      </select>
+    </label>
+    <label>Estado
+      <select [ngModel]="draft().status" (ngModelChange)="setDraft({ status: $event })">
+        <option value="">Todos</option>
+        <option value="PROGRAMADO">Programado</option>
+        <option value="ABIERTO">Abierto</option>
+        <option value="FINALIZADO">Finalizado</option>
+        <option value="CERRADO">Día cerrado</option>
+      </select>
+    </label>
+    <label>Usuario
+      <select [ngModel]="draft().userId" (ngModelChange)="setDraft({ userId: $event })">
+        <option value="">Todos</option>
+        @for (user of users(); track user.id) {
+          <option [value]="user.id">{{ user.username }}</option>
+        }
+      </select>
+    </label>
+    <div class="filters__actions">
+      <app-button variant="primary" size="sm" (click)="applyFilters()">Aplicar</app-button>
+      <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="state">Cargando historial…</p>
+  } @else if (failed()) {
+    <p class="state state--error" role="alert">No se pudo cargar el historial. <button type="button" (click)="load()">Reintentar</button></p>
+  } @else if (rows().length === 0) {
+    <p class="state">No hay cortes registrados con esos filtros.</p>
+  } @else {
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha operativa</th>
+            <th scope="col">Corte</th>
+            <th scope="col">Programado</th>
+            <th scope="col">Real</th>
+            <th scope="col">Responsable</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="num">Efectivo inicial</th>
+            <th scope="col" class="num">Efectivo final</th>
+            <th scope="col" class="num">Diferencia</th>
+            <th scope="col" class="num">Bancos (dif.)</th>
+            <th scope="col"><span class="sr-only">Detalle</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.day.id) {
+            @for (number of [1, 2]; track number) {
+              @if (cut(row, $any(number)); as period) {
+                <tr [class.first]="number === 1">
+                  @if (number === 1) {
+                    <td rowspan="2" class="day">
+                      <strong>{{ formatIsoDate(row.day.operationalDate) }}</strong>
+                      <span class="pill pill--{{ row.day.status === 'CERRADO' ? 'closed' : 'open' }}">{{ row.day.status === 'CERRADO' ? 'Cerrado' : 'Abierto' }}</span>
+                    </td>
+                  }
+                  <td>{{ number === 1 ? 'Mediodía' : 'Final del día' }}</td>
+                  <td class="nowrap">{{ formatTime(period.scheduledStartAt) }}–{{ formatTime(period.scheduledEndAt) }}</td>
+                  <td class="nowrap">{{ formatTime(period.actualStartedAt) }}–{{ formatTime(period.actualFinishedAt) }}</td>
+                  <td>{{ period.openedByUsername ?? '—' }}@if (period.closedByUsername) { / {{ period.closedByUsername }}}</td>
+                  <td><span class="pill pill--{{ period.status.toLowerCase() }}">{{ statusLabel[period.status] }}</span></td>
+                  <td class="num">{{ period.openingPhysicalCash === null ? '—' : formatCurrency(period.openingPhysicalCash) }}</td>
+                  <td class="num">{{ period.closingPhysicalCash === null ? '—' : formatCurrency(period.closingPhysicalCash) }}</td>
+                  <td class="num" [class.in]="(period.cashDifference ?? 0) > 0" [class.out]="(period.cashDifference ?? 0) < 0">
+                    {{ period.cashDifference === null ? '—' : formatDifference(period.cashDifference) }}
+                  </td>
+                  <td class="num">{{ period.bankDifferenceTotal === null ? '—' : formatDifference(period.bankDifferenceTotal) }}</td>
+                  <td>
+                    @if (period.status !== 'PROGRAMADO') {
+                      <button type="button" class="icon-btn" (click)="detailPeriodId.set(period.id)" [attr.aria-label]="'Ver detalle del corte ' + number">
+                        <app-icon name="eye" [size]="16" />
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="total()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+  }
+</app-card>
+
+<app-cash-cut-detail-modal [periodId]="detailPeriodId()" (closed)="detailPeriodId.set(null)" />

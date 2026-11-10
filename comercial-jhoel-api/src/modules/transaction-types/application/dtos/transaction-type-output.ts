@@ -5,6 +5,7 @@ export interface TransactionTypeOutput {
   name: string;
   icon: string;
   balanceEffect: string | null;
+  cashEffect: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -22,6 +23,7 @@ export function toTransactionTypeOutput(
     name: transactionType.name,
     icon: transactionType.icon,
     balanceEffect: transactionType.balanceEffect,
+    cashEffect: transactionType.cashEffect,
     isActive: transactionType.isActive,
     createdAt: transactionType.createdAt,
     updatedAt: transactionType.updatedAt,

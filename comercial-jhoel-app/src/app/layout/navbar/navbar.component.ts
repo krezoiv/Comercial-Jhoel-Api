@@ -30,7 +30,9 @@ import { NotificationsModalService } from '../../core/services/notifications-mod
  * navbar que las representa. Los catálogos viven bajo "Servicios", así que
  * al recorrerlos el enlace activo sigue siendo "Servicios".
  */
-const SECTION_TO_LINK: ReadonlyArray<readonly [sectionId: string, linkLabel: string]> = [
+const SECTION_TO_LINK: ReadonlyArray<
+  readonly [sectionId: string, linkLabel: string]
+> = [
   ['inicio', 'Inicio'],
   ['servicios', 'Servicios'],
   ['telefonos', 'Servicios'],
@@ -45,7 +47,13 @@ const SECTION_TO_LINK: ReadonlyArray<readonly [sectionId: string, linkLabel: str
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, ContainerComponent, ButtonComponent, IconComponent, NotificationsModalComponent],
+  imports: [
+    RouterLink,
+    ContainerComponent,
+    ButtonComponent,
+    IconComponent,
+    NotificationsModalComponent,
+  ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +64,8 @@ export class NavbarComponent {
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly progressBar = viewChild<ElementRef<HTMLElement>>('progressBar');
+  private readonly progressBar =
+    viewChild<ElementRef<HTMLElement>>('progressBar');
 
   readonly site = SITE;
   readonly navLinks = NAV_LINKS;
@@ -85,7 +94,9 @@ export class NavbarComponent {
 
   /** Solo en la landing (`/`) el navbar arranca transparente sobre el Hero; en el resto de páginas públicas siempre es sólido. */
   readonly isLanding = signal(this.isLandingUrl(this.router.url));
-  readonly isOverlay = computed(() => this.isLanding() && !this.isScrolled() && !this.isMenuOpen());
+  readonly isOverlay = computed(
+    () => this.isLanding() && !this.isScrolled() && !this.isMenuOpen(),
+  );
 
   /** Etiqueta del enlace cuya sección está en pantalla (scrollspy) — `null` fuera de la landing. */
   readonly activeLink = signal<string | null>(null);
@@ -95,7 +106,9 @@ export class NavbarComponent {
   constructor() {
     this.router.events
       .pipe(
-        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        filter(
+          (event): event is NavigationEnd => event instanceof NavigationEnd,
+        ),
         takeUntilDestroyed(),
       )
       .subscribe((event) => {
@@ -111,8 +124,12 @@ export class NavbarComponent {
     // el DOM, sin detección de cambios.
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => {
-        window.addEventListener('scroll', this.requestScrollUpdate, { passive: true });
-        window.addEventListener('resize', this.requestScrollUpdate, { passive: true });
+        window.addEventListener('scroll', this.requestScrollUpdate, {
+          passive: true,
+        });
+        window.addEventListener('resize', this.requestScrollUpdate, {
+          passive: true,
+        });
       });
       this.requestScrollUpdate();
     });
@@ -127,7 +144,10 @@ export class NavbarComponent {
   }
 
   private readonly requestScrollUpdate = (): void => {
-    if (this.scrollRaf !== null || typeof requestAnimationFrame === 'undefined') {
+    if (
+      this.scrollRaf !== null ||
+      typeof requestAnimationFrame === 'undefined'
+    ) {
       return;
     }
     this.scrollRaf = requestAnimationFrame(() => {
@@ -209,7 +229,9 @@ export class NavbarComponent {
   }
 
   toggleDropdown(label: string): void {
-    this.openDropdownLabel.update((current) => (current === label ? null : label));
+    this.openDropdownLabel.update((current) =>
+      current === label ? null : label,
+    );
   }
 
   closeDropdown(): void {
@@ -221,7 +243,9 @@ export class NavbarComponent {
   }
 
   toggleMobileGroup(label: string): void {
-    this.openMobileGroupLabel.update((current) => (current === label ? null : label));
+    this.openMobileGroupLabel.update((current) =>
+      current === label ? null : label,
+    );
   }
 
   openNotificationsModal(): void {

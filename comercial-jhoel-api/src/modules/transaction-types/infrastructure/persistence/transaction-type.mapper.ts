@@ -1,6 +1,7 @@
 import {
   TransactionType,
   TransactionTypeBalanceEffect,
+  TransactionTypeCashEffect,
 } from '../../domain/entities/transaction-type.entity';
 import { TransactionTypeOrmEntity } from './transaction-type.orm-entity';
 
@@ -12,6 +13,7 @@ export class TransactionTypeMapper {
       icon: orm.icon,
       balanceEffect:
         (orm.balanceEffect as TransactionTypeBalanceEffect | null) ?? null,
+      cashEffect: (orm.cashEffect as TransactionTypeCashEffect) ?? 'NONE',
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

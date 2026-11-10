@@ -1,7 +1,16 @@
 <app-card padding="lg" class="recent-card">
   <div class="recent-card__header">
-    <h3 class="recent-card__title">Últimas transacciones</h3>
-    <span class="recent-card__subtitle">Los 10 registros más recientes</span>
+    <div>
+      <h3 class="recent-card__title">Últimas transacciones</h3>
+      <span class="recent-card__subtitle">Los 10 movimientos de efectivo más recientes</span>
+    </div>
+    <div class="recent-card__balance">
+      <span>Efectivo disponible</span>
+      <strong [class.recent-card__balance--negative]="(currentBalance ?? 0) < 0">
+        {{ currentBalance === null ? '—' : formatCurrency(currentBalance) }}
+      </strong>
+      <a routerLink="/dashboard/control-efectivo" class="recent-card__link">Ver Control de Efectivo</a>
+    </div>
   </div>
 
   @if (loading) {
@@ -16,50 +25,64 @@
       <p>No se pudieron cargar las últimas transacciones.</p>
       <button type="button" class="recent-card__retry" (click)="retry.emit()">Reintentar</button>
     </div>
-  } @else if (operations.length === 0) {
+  } @else if (movements.length === 0) {
     <div class="recent-card__state">
       <app-icon name="arrow-left-right" [size]="22" />
-      <p>Aún no hay transacciones registradas.</p>
-      <span>La primera que guardes aparecerá aquí.</span>
+      <p>Aún no hay movimientos de efectivo registrados.</p>
+      <span>El primero que guardes aparecerá aquí.</span>
     </div>
   } @else {
-    <table class="recent-table">
-      <thead>
-        <tr>
-          <th scope="col">Fecha</th>
-          <th scope="col">Tipo</th>
-          <th scope="col">Banco / Cuenta</th>
-          <th scope="col" class="recent-table__amount">Monto</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (operation of operations; track operation.id) {
-          <tr [class.recent-table__row--voided]="operation.isVoided" [title]="rowTitle(operation)">
-            <td class="recent-table__date">
-              <span>{{ shortDate(operation.createdAt) }}</span>
-              <span class="recent-table__muted">{{ shortTime(operation.createdAt) }}</span>
-            </td>
-            <td class="recent-table__type">
-              <span class="recent-table__ellipsis">{{ operation.transactionTypeName }}</span>
-              @if (operation.isVoided) {
-                <span class="recent-table__badge">Anulada</span>
-              }
-            </td>
-            <td class="recent-table__account">
-              <span class="recent-table__ellipsis">{{ accountName(operation) }}</span>
-              @if (operation.bankAccountNumber) {
-                <span class="recent-table__muted recent-table__ellipsis">{{ operation.bankAccountNumber }}</span>
-              }
-            </td>
-            <td class="recent-table__amount">
-              <span class="recent-table__value">{{ formatCurrency(operation.totalAmount) }}</span>
-              @if (operation.transactionCount > 1) {
-                <span class="recent-table__muted">{{ operation.transactionCount }} trans.</span>
-              }
-            </td>
+    <div class="recent-table__scroll" tabindex="0" aria-label="Últimas transacciones con efectivo disponible">
+      <table class="recent-table">
+        <thead>
+          <tr>
+            <th scope="col" class="recent-table__date">Fecha</th>
+            <th scope="col">Operación</th>
+            <th scope="col">Banco</th>
+            <th scope="col" class="recent-table__num">Monto</th>
+            <th scope="col" class="recent-table__num recent-table__balance">Efectivo disponible</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (movement of movements; track movement.id) {
+            <tr
+              [class.recent-table__row--voided]="movement.status === 'ANULADO'"
+              [class.recent-table__row--none]="movement.direction === 'NONE'"
+              [title]="rowTitle(movement)"
+            >
+              <td class="recent-table__date">
+                <span>{{ shortDate(movement.createdAt) }}</span>
+                <span class="recent-table__muted">{{ shortTime(movement.createdAt) }}</span>
+              </td>
+              <td class="recent-table__type">
+                <span class="recent-table__ellipsis">{{ typeLabel(movement) }}</span>
+                <span class="recent-table__muted recent-table__ellipsis">{{ movement.description }}</span>
+                @if (movement.status === 'ANULADO') {
+                  <span class="recent-table__badge">Anulada</span>
+                }
+              </td>
+              <td class="recent-table__bank">
+                <span class="recent-table__ellipsis">{{ movement.bankName ?? '—' }}</span>
+              </td>
+              <td class="recent-table__num">
+                <span class="recent-table__value recent-table__value--{{ tone(movement) }}">{{ signedAmount(movement) }}</span>
+                <span class="recent-table__flow recent-table__flow--{{ tone(movement) }}">
+                  <app-icon
+                    [name]="movement.direction === 'IN' ? 'arrow-down-circle' : movement.direction === 'OUT' ? 'arrow-up-circle' : 'minus'"
+                    [size]="11"
+                  />
+                  {{ directionLabel[movement.direction] }}
+                </span>
+              </td>
+              <td class="recent-table__num recent-table__balance">
+                <span class="recent-table__value" [class.recent-table__value--negative]="movement.newBalance < 0">
+                  {{ formatCurrency(movement.newBalance) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   }
 </app-card>

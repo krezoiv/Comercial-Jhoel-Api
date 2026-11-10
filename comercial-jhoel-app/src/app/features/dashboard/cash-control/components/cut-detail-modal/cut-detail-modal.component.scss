@@ -1,0 +1,119 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+@use 'breakpoints' as bp;
+
+.modal--wide {
+  max-width: 60rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include bp.respond(md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.section {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.note {
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+
+  th,
+  td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  th {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    color: var(--color-text-on-light-subtle);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  small {
+    display: block;
+    color: var(--color-text-on-light-subtle);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.status {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  background: var(--color-bg-light-muted);
+}
+
+.status--abierto {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.status--finalizado {
+  background: var(--color-primary-100, var(--color-bg-light-muted));
+}
+
+.in {
+  color: var(--color-success);
+}
+
+.out {
+  color: var(--color-danger);
+}
+
+.state {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+
+  button {
+    margin-left: var(--space-2);
+    color: var(--color-primary-600);
+    font-weight: var(--fw-semibold);
+  }
+}
+
+.state--error {
+  color: var(--color-danger);
+}

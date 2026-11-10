@@ -1,6 +1,7 @@
 import {
   TransactionType,
   TransactionTypeBalanceEffect,
+  TransactionTypeCashEffect,
 } from '../entities/transaction-type.entity';
 
 export const TRANSACTION_TYPE_REPOSITORY = Symbol(
@@ -11,6 +12,7 @@ export interface CreateTransactionTypeData {
   name: string;
   icon: string;
   balanceEffect: TransactionTypeBalanceEffect | null;
+  cashEffect: TransactionTypeCashEffect;
   createdBy: string;
 }
 
@@ -18,6 +20,7 @@ export interface UpdateTransactionTypeData {
   name?: string;
   icon?: string;
   balanceEffect?: TransactionTypeBalanceEffect | null;
+  cashEffect?: TransactionTypeCashEffect;
   updatedBy: string;
 }
 

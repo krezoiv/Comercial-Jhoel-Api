@@ -23,7 +23,8 @@
       />
       <app-recent-transactions-card
         class="summary-row__recent"
-        [operations]="recentOperations()"
+        [movements]="recentMovements()"
+        [currentBalance]="cashBalance()"
         [loading]="loadingRecent()"
         [failed]="recentFailed()"
         (retry)="loadRecentOperations()"

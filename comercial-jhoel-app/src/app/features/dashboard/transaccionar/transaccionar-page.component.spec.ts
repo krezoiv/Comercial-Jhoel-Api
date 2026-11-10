@@ -4,7 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
 
-import { BankDepositOperation, BankDepositOperationSummary, RegisterBankDepositInput } from '../../../core/models';
+import { BankDepositOperation, CashMovement, RegisterBankDepositInput } from '../../../core/models';
+import { CashControlService } from '../../../core/services/cash-control.service';
 import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { BankService } from '../../../core/services/bank.service';
@@ -12,28 +13,33 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { GuayacanCashSyncService } from '../../../core/services/guayacan-cash-sync.service';
 import { TransaccionarPageComponent } from './transaccionar-page.component';
 
-function recent(id: string): BankDepositOperationSummary {
+function recent(id: string, newBalance = 150000): CashMovement {
   return {
     id,
-    transactionBankId: 'agent-1',
-    transactionBankName: 'GTC',
-    bankAccountId: 'account-1',
-    bankAccountName: 'GTC',
-    bankAccountNumber: '1',
-    totalAmount: 850,
-    transactionCount: 1,
-    operationDate: '2026-11-02',
-    clientName: null,
-    clientId: null,
-    transactionTypeId: 'type-1',
-    transactionTypeName: 'Retiros',
-    userId: 'u',
-    username: 'u',
-    createdAt: '2026-11-02T20:00:00Z',
-    isVoided: false,
+    sequence: 1,
+    operationalDate: '2026-11-10',
+    operationalDayId: null,
+    cutPeriodId: null,
+    cutPeriodNumber: null,
+    movementType: 'RETIRO',
+    originalMovementType: null,
+    direction: 'OUT',
+    amount: 850,
+    previousBalance: newBalance + 850,
+    newBalance,
+    referenceType: 'BANK_DEPOSIT',
+    referenceId: 'op-1',
+    description: 'Retiros — 1 trans.',
+    bankName: 'GTC',
+    reason: null,
+    reversalOfId: null,
+    status: 'VIGENTE',
     voidedAt: null,
     voidedByUsername: null,
     voidReason: null,
+    createdBy: 'u',
+    createdByUsername: 'u',
+    createdAt: '2026-11-10T20:00:00Z',
   };
 }
 
@@ -76,7 +82,9 @@ describe('TransaccionarPageComponent — payload del desglose opcional y última
     });
 
     bankDepositService = TestBed.inject(BankDepositService);
-    recentSpy = spyOn(bankDepositService, 'getRecentOperations').and.returnValue(of([recent('op-1')]));
+    const cashControlService = TestBed.inject(CashControlService);
+    recentSpy = spyOn(cashControlService, 'getRecentMovements').and.returnValue(of([recent('op-1')]));
+    spyOn(cashControlService, 'getBalance').and.returnValue(of({ balance: 150000, lastSequence: 1, lastMovementAt: null }));
     spyOn(bankDepositService, 'getTransactionSummary').and.returnValue(NEVER);
     registerSpy = spyOn(bankDepositService, 'registerOperation').and.returnValue(NEVER);
 
@@ -236,21 +244,28 @@ describe('TransaccionarPageComponent — payload del desglose opcional y última
     });
   });
 
-  it('loads the recent operations on start', () => {
-    expect(recentSpy).toHaveBeenCalledTimes(1);
-    expect(component.recentOperations().map((row) => row.id)).toEqual(['op-1']);
+  it('loads the last 10 cash movements and the official balance on start', () => {
+    expect(recentSpy).toHaveBeenCalledOnceWith(10);
+    expect(component.recentMovements().map((row) => row.id)).toEqual(['op-1']);
+    expect(component.cashBalance()).toBe(150000);
     expect(component.loadingRecent()).toBeFalse();
   });
 
-  it('refreshes the recent operations after a successful save, newest first', () => {
+  it('refreshes the recent movements after a successful save, newest first, with the backend cash balance', () => {
     prepareRetiro(850);
-    registerSpy.and.returnValue(of({ balanceMovement: null } as unknown as BankDepositOperation));
-    recentSpy.and.returnValue(of([recent('op-new'), recent('op-1')]));
+    registerSpy.and.returnValue(
+      of({
+        balanceMovement: null,
+        cashMovement: { movementType: 'RETIRO', direction: 'OUT', amount: 850, previousBalance: 150000, newBalance: 149150, currentBalance: 149150 },
+      } as unknown as BankDepositOperation),
+    );
+    recentSpy.and.returnValue(of([recent('op-new', 149150), recent('op-1')]));
 
     component.confirmSave();
 
     expect(recentSpy).toHaveBeenCalledTimes(2);
-    expect(component.recentOperations().map((row) => row.id)).toEqual(['op-new', 'op-1']);
+    expect(component.recentMovements().map((row) => row.id)).toEqual(['op-new', 'op-1']);
+    expect(component.recentMovements()[0].newBalance).toBe(149150);
   });
 
   it('flags the error state when the recent query fails', () => {

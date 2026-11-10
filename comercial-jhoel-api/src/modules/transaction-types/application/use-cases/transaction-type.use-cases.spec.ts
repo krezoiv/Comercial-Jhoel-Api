@@ -1,4 +1,7 @@
-import { CreateTransactionTypeUseCase } from './create-transaction-type.use-case';
+import {
+  CreateTransactionTypeUseCase,
+  defaultCashEffect,
+} from './create-transaction-type.use-case';
 import { UpdateTransactionTypeUseCase } from './update-transaction-type.use-case';
 import { DeactivateTransactionTypeUseCase } from './deactivate-transaction-type.use-case';
 import { TransactionTypeNameAlreadyExistsError } from '../../domain/errors/transaction-type-name-already-exists.error';
@@ -14,6 +17,7 @@ function buildTransactionType(
     name: overrides.name ?? 'Depósito',
     icon: overrides.icon ?? 'arrow-down-circle',
     balanceEffect: null,
+    cashEffect: 'NONE',
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -63,6 +67,7 @@ describe('CreateTransactionTypeUseCase', () => {
       name: 'Pago de Cheque',
       icon: 'file-check',
       balanceEffect: null,
+      cashEffect: 'NONE',
       createdBy: 'user-1',
     });
   });
@@ -143,5 +148,16 @@ describe('DeactivateTransactionTypeUseCase', () => {
     await useCase.execute('type-1');
 
     expect(repository.deactivate).toHaveBeenCalledWith('type-1');
+  });
+});
+
+describe('defaultCashEffect (Control de Efectivo classification)', () => {
+  it('derives the physical-cash effect from the bank effect', () => {
+    expect(defaultCashEffect('DEPOSITO')).toBe('IN');
+    expect(defaultCashEffect('PAGO_GENESIS')).toBe('IN');
+    expect(defaultCashEffect('RETIRO')).toBe('OUT');
+    expect(defaultCashEffect('DESEMBOLSO_GENESIS')).toBe('OUT');
+    expect(defaultCashEffect('REINTEGRO')).toBe('NONE');
+    expect(defaultCashEffect(null)).toBe('NONE');
   });
 });

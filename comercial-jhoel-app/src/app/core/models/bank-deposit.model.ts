@@ -62,6 +62,16 @@ export interface BankDepositOperation {
     balanceBefore: number;
     balanceAfter: number;
   } | null;
+  /** Solo en la respuesta de `POST /bank-deposits`: el movimiento del Kardex oficial de efectivo que generó la operación (Control de Efectivo). */
+  cashMovement?: {
+    movementType: string;
+    direction: 'IN' | 'OUT' | 'NONE';
+    amount: number;
+    previousBalance: number;
+    newBalance: number;
+    /** Saldo oficial tras la operación completa (incluye su envío a CxC/Activos). */
+    currentBalance: number;
+  } | null;
 }
 
 /** Lighter shape for listings (`GET /bank-deposits`/`GET /reports/bank-deposits`) — no cash-detail/transaction rows. Still carries the void fields — a voided operation stays visible in the list (with a badge), it just doesn't count toward the report's own totals (see `ReportsService.getBankDepositsReportSummary`). */

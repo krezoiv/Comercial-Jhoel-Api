@@ -1,0 +1,200 @@
+<section class="panel" aria-label="Configuración y control de cortes">
+  @if (position.openPeriod && position.openPeriod.operationalDate !== position.date) {
+    <p class="notice" role="status">
+      <app-icon name="alert-triangle" [size]="16" />
+      Hay un corte abierto del {{ formatIsoDate(position.openPeriod.operationalDate) }}. Finalícelo antes de continuar.
+    </p>
+  }
+
+  <!-- Apertura del día -->
+  @if (position.dayState === 'SIN_APERTURA') {
+    <app-card padding="lg" class="block">
+      <h2 class="block__title"><app-icon name="clock" [size]="18" /> Apertura del día · {{ formatIsoDate(position.date) }}</h2>
+      <p class="block__hint">
+        El efectivo inicial se hereda del físico contado en el último corte. Nunca se reinicia a cero ni se toma un saldo bancario.
+      </p>
+      <div class="schedule-grid">
+        <fieldset>
+          <legend>Primer corte · mediodía</legend>
+          <label>Inicio <input type="time" [ngModel]="firstStart()" (ngModelChange)="firstStart.set($event)" /></label>
+          <label>Fin <input type="time" [ngModel]="firstEnd()" (ngModelChange)="firstEnd.set($event)" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Segundo corte · final del día</legend>
+          <label>Inicio <input type="time" [ngModel]="secondStart()" (ngModelChange)="secondStart.set($event)" /></label>
+          <label>Fin <input type="time" [ngModel]="secondEnd()" (ngModelChange)="secondEnd.set($event)" /></label>
+        </fieldset>
+      </div>
+      @if (openingScheduleError(); as error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+      @if (isAdmin) {
+        <label class="toggle">
+          <input type="checkbox" [ngModel]="manualOpening()" (ngModelChange)="manualOpening.set($event)" />
+          Autorizar un efectivo de apertura distinto (administrador, con motivo)
+        </label>
+        @if (manualOpening()) {
+          <div class="manual">
+            <label>Efectivo físico de apertura
+              <input type="text" inputmode="decimal" appDecimalInput thousands [ngModel]="manualAmount()" (ngModelChange)="manualAmount.set($event)" />
+            </label>
+            <label>Motivo
+              <input type="text" maxlength="255" [ngModel]="manualReason()" (ngModelChange)="manualReason.set($event)" />
+            </label>
+          </div>
+        }
+      }
+      @if (canManage) {
+        <div class="actions">
+          <app-button variant="primary"
+            [disabled]="busy() || !!openingScheduleError() || (manualOpening() && isAdmin && (manualAmount() === null || manualReason().trim().length < 5))"
+            (click)="openDay()">
+            <app-icon name="clock" [size]="16" /> Abrir día operativo
+          </app-button>
+        </div>
+      } @else {
+        <p class="block__hint">Solo un administrador o supervisor de turno puede abrir el día.</p>
+      }
+    </app-card>
+  } @else if (position.day) {
+    @let day = position.day!;
+    <app-card padding="lg" class="block">
+      <h2 class="block__title">
+        <app-icon name="clock" [size]="18" /> Apertura del día · {{ formatIsoDate(day.operationalDate) }}
+        <span class="badge badge--{{ day.status === 'ABIERTO' ? 'open' : 'closed' }}">{{ day.status === 'ABIERTO' ? 'Día abierto' : 'Día cerrado' }}</span>
+      </h2>
+      <dl class="facts">
+        <div><dt>Físico final del día anterior</dt><dd>{{ day.previousClosingPhysicalCash === null ? '—' : formatCurrency(day.previousClosingPhysicalCash) }}</dd></div>
+        <div><dt>Teórico del sistema (anterior)</dt><dd>{{ day.previousClosingSystemCash === null ? '—' : formatCurrency(day.previousClosingSystemCash) }}</dd></div>
+        <div><dt>Diferencia pendiente</dt><dd [class.out]="day.inheritedDifference < 0" [class.in]="day.inheritedDifference > 0">{{ formatDifference(day.inheritedDifference) }}</dd></div>
+        <div><dt>Físico de apertura</dt><dd><strong>{{ formatCurrency(day.openingPhysicalCash) }}</strong></dd></div>
+        <div><dt>Sistema al abrir</dt><dd>{{ formatCurrency(day.openingSystemCash) }}</dd></div>
+        <div><dt>Responsable</dt><dd>{{ day.openedByUsername }} · {{ formatDateTime(day.openedAt) }}</dd></div>
+      </dl>
+      <p class="block__hint">
+        {{ policyLabel[day.openingPolicy] }}@if (day.openingReason) { — Motivo: {{ day.openingReason }}}
+      </p>
+    </app-card>
+
+    <!-- Los dos cortes -->
+    <div class="cuts">
+      @for (period of position.periods; track period.id) {
+        <app-card padding="lg" class="cut cut--{{ period.status.toLowerCase() }}">
+          <div class="cut__header">
+            <h3 class="cut__title">{{ cutName[period.periodNumber] }}</h3>
+            <span class="badge badge--{{ period.status.toLowerCase() }}">{{ statusLabel[period.status] }}</span>
+          </div>
+          <p class="cut__date">Fecha operativa: {{ formatIsoDate(period.operationalDate) }}</p>
+
+          <div class="cut__schedule">
+            <label>Hora programada de inicio
+              <input type="time" [disabled]="!canManage || period.status === 'FINALIZADO' || busy()"
+                [ngModel]="scheduleDraft()[period.id]?.start" (ngModelChange)="updateScheduleDraft(period.id, 'start', $event)" />
+            </label>
+            <label>Hora programada de finalización
+              <input type="time" [disabled]="!canManage || period.status === 'FINALIZADO' || busy()"
+                [ngModel]="scheduleDraft()[period.id]?.end" (ngModelChange)="updateScheduleDraft(period.id, 'end', $event)" />
+            </label>
+          </div>
+          @if (scheduleChanged(period)) {
+            @if (scheduleError(period); as error) {
+              <p class="error" role="alert">{{ error }}</p>
+            } @else {
+              <app-button size="sm" variant="ghost" [disabled]="busy()" (click)="requestScheduleSave(period)">Guardar horario</app-button>
+            }
+          }
+
+          <dl class="facts facts--compact">
+            <div><dt>Hora real de inicio</dt><dd>{{ formatTime(period.actualStartedAt) }}</dd></div>
+            <div><dt>Hora real de finalización</dt><dd>{{ formatTime(period.actualFinishedAt) }}</dd></div>
+            @if (period.status === 'ABIERTO') {
+              <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(period.openingPhysicalCash ?? 0) }}</dd></div>
+              <div><dt>Efectivo actual (sistema)</dt><dd><strong>{{ formatCurrency(period.liveSystemCash ?? 0) }}</strong></dd></div>
+              <div><dt>Entradas</dt><dd class="in">{{ formatCurrency(period.liveTotalIn ?? 0) }}</dd></div>
+              <div><dt>Salidas</dt><dd class="out">{{ formatCurrency(period.liveTotalOut ?? 0) }}</dd></div>
+              <div><dt>Movimientos</dt><dd>{{ period.liveMovementCount ?? 0 }}</dd></div>
+              <div><dt>Abrió</dt><dd>{{ period.openedByUsername }}</dd></div>
+            }
+            @if (period.status === 'FINALIZADO') {
+              <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(period.openingPhysicalCash ?? 0) }}</dd></div>
+              <div><dt>Efectivo final (contado)</dt><dd><strong>{{ formatCurrency(period.closingPhysicalCash ?? 0) }}</strong></dd></div>
+              <div><dt>Sistema al finalizar</dt><dd>{{ formatCurrency(period.closingSystemCash ?? 0) }}</dd></div>
+              <div><dt>Diferencia</dt><dd [class.in]="(period.cashDifference ?? 0) > 0" [class.out]="(period.cashDifference ?? 0) < 0">{{ formatDifference(period.cashDifference ?? 0) }}</dd></div>
+              <div><dt>Bancos (dif. total)</dt><dd>{{ formatDifference(period.bankDifferenceTotal ?? 0) }}</dd></div>
+              <div><dt>Responsables</dt><dd>{{ period.openedByUsername }} / {{ period.closedByUsername }}</dd></div>
+            }
+          </dl>
+
+          <div class="actions">
+            @if (canManage && period.status === 'PROGRAMADO') {
+              <app-button variant="primary" size="sm" [disabled]="busy() || !canStart(period)" (click)="startCut(period)">
+                Iniciar {{ period.periodNumber === 1 ? 'primer' : 'segundo' }} corte
+              </app-button>
+            }
+            @if (canManage && period.status === 'ABIERTO') {
+              <app-button variant="danger" size="sm" [disabled]="busy()" (click)="finishPeriod.set(period)">
+                <app-icon name="lock" [size]="14" /> Finalizar {{ period.periodNumber === 1 ? 'primer' : 'segundo' }} corte
+              </app-button>
+            }
+            @if (period.status !== 'PROGRAMADO') {
+              <app-button variant="ghost" size="sm" (click)="detailPeriodId.set(period.id)">
+                <app-icon name="eye" [size]="14" /> Ver detalle
+              </app-button>
+            }
+            @if (canReopen(period)) {
+              <app-button variant="ghost" size="sm" [disabled]="busy()" (click)="reasonAction.set({ kind: 'reopen', period: period })">
+                <app-icon name="rotate-ccw" [size]="14" /> Reabrir
+              </app-button>
+            }
+          </div>
+          @if (period.periodNumber === 2 && period.status === 'PROGRAMADO' && position.periods[0]?.status !== 'FINALIZADO') {
+            <p class="block__hint">Se habilita al finalizar el primer corte.</p>
+          }
+        </app-card>
+      }
+    </div>
+
+    <!-- Cierre definitivo -->
+    <app-card padding="lg" class="block">
+      <h2 class="block__title"><app-icon name="lock" [size]="18" /> Cierre definitivo del día</h2>
+      @if (day.status === 'CERRADO') {
+        <dl class="facts">
+          <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(day.openingPhysicalCash) }}</dd></div>
+          <div><dt>Entradas</dt><dd class="in">{{ formatCurrency(day.totalIn ?? 0) }}</dd></div>
+          <div><dt>Salidas</dt><dd class="out">{{ formatCurrency(day.totalOut ?? 0) }}</dd></div>
+          <div><dt>Movimientos</dt><dd>{{ day.movementCount }}</dd></div>
+          <div><dt>Efectivo final (contado)</dt><dd><strong>{{ formatCurrency(day.closingPhysicalCash ?? 0) }}</strong></dd></div>
+          <div><dt>Diferencia final</dt><dd [class.in]="(day.closingDifference ?? 0) > 0" [class.out]="(day.closingDifference ?? 0) < 0">{{ formatDifference(day.closingDifference ?? 0) }}</dd></div>
+          <div><dt>Cerró</dt><dd>{{ day.closedByUsername }} · {{ formatDateTime(day.closedAt) }}</dd></div>
+        </dl>
+      } @else {
+        <p class="block__hint">Disponible cuando el primer y el segundo corte estén finalizados. Consolida ambos sin duplicar operaciones.</p>
+        @if (canManage) {
+          <div class="manual">
+            <label>Observaciones (opcional)
+              <input type="text" maxlength="500" [disabled]="!position.canCloseDay" [ngModel]="closeObservations()" (ngModelChange)="closeObservations.set($event)" />
+            </label>
+          </div>
+          <div class="actions">
+            <app-button variant="primary" [disabled]="busy() || !position.canCloseDay" (click)="closeDay()">Cerrar día operativo</app-button>
+          </div>
+        }
+      }
+    </app-card>
+  }
+</section>
+
+<app-cash-cut-finish-modal [open]="finishPeriod() !== null" [period]="finishPeriod()" (closed)="finishPeriod.set(null)" (saved)="onFinished($event)" />
+<app-cash-cut-detail-modal [periodId]="detailPeriodId()" (closed)="detailPeriodId.set(null)" />
+<app-cash-reason-modal
+  [open]="reasonAction() !== null"
+  [busy]="busy()"
+  [title]="reasonAction()?.kind === 'reopen' ? 'Reabrir corte' : 'Cambiar horario del corte'"
+  [message]="reasonAction()?.kind === 'reopen'
+    ? 'El arqueo actual se conserva en el historial y el corte vuelve a quedar abierto.'
+    : 'Se registrará quién cambió el horario y por qué.'"
+  [confirmText]="reasonAction()?.kind === 'reopen' ? 'Reabrir corte' : 'Guardar horario'"
+  [danger]="reasonAction()?.kind === 'reopen'"
+  (confirmed)="onReason($event)"
+  (cancelled)="reasonAction.set(null)"
+/>

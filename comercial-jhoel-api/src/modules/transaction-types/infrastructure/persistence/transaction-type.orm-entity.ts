@@ -35,6 +35,10 @@ export class TransactionTypeOrmEntity {
   })
   balanceEffect: string | null;
 
+  /** Physical cash effect (IN/OUT/NONE) — see `TRANSACTION_TYPE_CASH_EFFECTS`. */
+  @Column({ name: 'cash_effect', type: 'varchar', length: 10, default: 'NONE' })
+  cashEffect: string;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

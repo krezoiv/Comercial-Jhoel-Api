@@ -1,0 +1,235 @@
+<div class="cash">
+  <app-page-header
+    icon="wallet"
+    title="Control de Efectivo"
+    subtitle="Efectivo físico disponible en tiempo real, Kardex de movimientos y cortes de mediodía y final del día."
+  />
+
+  <div class="tabs" role="tablist" aria-label="Secciones de Control de Efectivo">
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'efectivo'" [class.tabs__tab--on]="tab() === 'efectivo'" (click)="setTab('efectivo')">
+      <app-icon name="wallet" [size]="16" /> Efectivo y Kardex
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'cortes'" [class.tabs__tab--on]="tab() === 'cortes'" (click)="setTab('cortes')">
+      <app-icon name="clock" [size]="16" /> Cortes del día
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'historial'" [class.tabs__tab--on]="tab() === 'historial'" (click)="setTab('historial')">
+      <app-icon name="file-check" [size]="16" /> Historial de cortes
+    </button>
+  </div>
+
+  @if (positionFailed() && !position()) {
+    <p class="state state--error" role="alert">No se pudo cargar el efectivo. <button type="button" (click)="refresh()">Reintentar</button></p>
+  }
+
+  @if (tab() === 'efectivo') {
+    @if (position(); as p) {
+      @if (!p.hasInitialBalance) {
+        <p class="notice" role="status">
+          <app-icon name="alert-triangle" [size]="16" />
+          Aún no se registró el saldo inicial de efectivo. Un administrador debe cargarlo una sola vez con "Saldo inicial".
+        </p>
+      }
+
+      <!-- Tarjeta principal -->
+      <app-card padding="lg" class="hero">
+        <div class="hero__main">
+          <span class="hero__label">Efectivo físico disponible</span>
+          <span class="hero__value" [class.hero__value--negative]="p.balance < 0">{{ formatCurrency(p.balance) }}</span>
+          <span class="hero__meta">
+            Última actualización: {{ p.lastMovementAt ? formatDateTime(p.lastMovementAt) : 'sin movimientos' }}
+            · consultado {{ lastRefresh() ? formatTime(lastRefresh()) : '' }}
+          </span>
+        </div>
+        <dl class="hero__facts">
+          <div><dt>Saldo inicial del día</dt><dd>{{ formatCurrency(p.summary.openingBalance) }}</dd></div>
+          <div><dt>Total de entradas</dt><dd class="in">+{{ formatCurrency(p.summary.totalIn) }}</dd></div>
+          <div><dt>Total de salidas</dt><dd class="out">−{{ formatCurrency(p.summary.totalOut) }}</dd></div>
+          <div><dt>Movimientos</dt><dd>{{ p.summary.movementCount }}</dd></div>
+          <div>
+            <dt>Estado del día</dt>
+            <dd>
+              <span class="pill pill--{{ p.dayState.toLowerCase() }}">
+                {{ p.dayState === 'SIN_APERTURA' ? 'Sin apertura' : p.dayState === 'ABIERTO' ? 'Abierto' : 'Cerrado' }}
+              </span>
+              @if (p.openPeriod) {
+                <span class="pill pill--abierto">Corte {{ p.openPeriod.periodNumber }} abierto</span>
+              }
+            </dd>
+          </div>
+        </dl>
+      </app-card>
+
+      <div class="actions">
+        @if (canManage()) {
+          <app-button variant="primary" (click)="formMode.set('ENTRADA_MANUAL')"><app-icon name="plus" [size]="16" /> Entrada de efectivo</app-button>
+          <app-button variant="danger" (click)="formMode.set('SALIDA_MANUAL')"><app-icon name="minus" [size]="16" /> Salida de efectivo</app-button>
+        }
+        @if (isAdmin()) {
+          <app-button variant="ghost" (click)="formMode.set('AJUSTE')"><app-icon name="edit-2" [size]="16" /> Ajuste</app-button>
+          @if (!p.hasInitialBalance) {
+            <app-button variant="ghost" (click)="formMode.set('SALDO_INICIAL')"><app-icon name="wallet" [size]="16" /> Saldo inicial</app-button>
+          }
+        }
+      </div>
+
+      <!-- Resumen por tipo -->
+      <section class="summary" aria-label="Resumen de movimientos del día">
+        @for (card of summaryCards(); track card.key) {
+          <app-card padding="md" class="summary__card">
+            <span class="summary__label"><app-icon [name]="card.icon" [size]="14" /> {{ card.label }}</span>
+            @if (card.totalIn > 0 && card.totalOut > 0) {
+              <span class="summary__value"><span class="in">+{{ formatCurrency(card.totalIn) }}</span> <span class="out">−{{ formatCurrency(card.totalOut) }}</span></span>
+            } @else if (card.totalOut > 0) {
+              <span class="summary__value out">−{{ formatCurrency(card.totalOut) }}</span>
+            } @else {
+              <span class="summary__value" [class.in]="card.totalIn > 0">{{ card.totalIn > 0 ? '+' : '' }}{{ formatCurrency(card.totalIn) }}</span>
+            }
+            <span class="summary__count">{{ card.count }} {{ card.count === 1 ? 'operación' : 'operaciones' }}</span>
+          </app-card>
+        }
+      </section>
+    } @else if (loadingPosition()) {
+      <p class="state">Cargando efectivo…</p>
+    }
+
+    <!-- Kardex -->
+    <app-card padding="lg" class="kardex">
+      <div class="kardex__header">
+        <h2 class="kardex__title">Kardex de efectivo</h2>
+        <span class="kardex__count">
+          {{ totalMovements() }} movimientos ·
+          <span class="in">+{{ formatCurrency(pageTotals().totalIn) }}</span> /
+          <span class="out">−{{ formatCurrency(pageTotals().totalOut) }}</span>
+        </span>
+      </div>
+
+      <div class="filters">
+        <label>Fecha <input type="date" [ngModel]="draft().dateFrom === draft().dateTo ? draft().dateFrom : ''" (ngModelChange)="setSingleDate($event)" /></label>
+        <label>Desde <input type="date" [ngModel]="draft().dateFrom" (ngModelChange)="setDraft({ dateFrom: $event })" /></label>
+        <label>Hasta <input type="date" [ngModel]="draft().dateTo" (ngModelChange)="setDraft({ dateTo: $event })" /></label>
+        <label>Tipo
+          <select [ngModel]="draft().movementType" (ngModelChange)="setDraft({ movementType: $event })">
+            <option value="">Todos</option>
+            @for (type of movementTypes; track type) {
+              <option [value]="type">{{ typeLabel[type] }}</option>
+            }
+          </select>
+        </label>
+        <label>Entradas / salidas
+          <select [ngModel]="draft().direction" (ngModelChange)="setDraft({ direction: $event })">
+            <option value="">Todas</option>
+            <option value="IN">Entradas</option>
+            <option value="OUT">Salidas</option>
+            <option value="NONE">Sin efecto</option>
+          </select>
+        </label>
+        <label>Usuario
+          <select [ngModel]="draft().userId" (ngModelChange)="setDraft({ userId: $event })">
+            <option value="">Todos</option>
+            @for (user of users(); track user.id) {
+              <option [value]="user.id">{{ user.username }}</option>
+            }
+          </select>
+        </label>
+        <div class="filters__actions">
+          <app-button variant="primary" size="sm" (click)="applyFilters()">Aplicar</app-button>
+          <app-button variant="ghost" size="sm" [disabled]="!hasFilters()" (click)="clearFilters()">Limpiar</app-button>
+        </div>
+      </div>
+
+      @if (loadingMovements()) {
+        <p class="state">Cargando movimientos…</p>
+      } @else if (movementsFailed()) {
+        <p class="state state--error" role="alert">No se pudieron cargar los movimientos. <button type="button" (click)="loadMovements()">Reintentar</button></p>
+      } @else if (movements().length === 0) {
+        <p class="state">No hay movimientos con esos filtros.</p>
+      } @else {
+        <div class="table-scroll" tabindex="0" aria-label="Kardex de efectivo">
+          <table class="kardex-table">
+            <thead>
+              <tr>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Tipo de operación</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Referencia</th>
+                <th scope="col" class="num">Entrada</th>
+                <th scope="col" class="num">Salida</th>
+                <th scope="col" class="num">Saldo anterior</th>
+                <th scope="col" class="num sticky-right">Saldo posterior</th>
+                <th scope="col">Usuario</th>
+                <th scope="col"><span class="sr-only">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of movements(); track m.id) {
+                <tr [class.row--voided]="m.status === 'ANULADO'" [class.row--none]="m.direction === 'NONE'">
+                  <td class="nowrap">{{ formatDateTime(m.createdAt) }} <small>#{{ m.sequence }}</small></td>
+                  <td>
+                    <span class="type type--{{ m.direction.toLowerCase() }}">{{ signedLabel(m) }}</span>
+                    @if (m.status === 'ANULADO') {
+                      <span class="badge-voided" [title]="m.voidReason ?? ''">Anulado</span>
+                    }
+                    @if (m.cutPeriodNumber) {
+                      <small>Corte {{ m.cutPeriodNumber }}</small>
+                    }
+                  </td>
+                  <td class="desc" [title]="m.description + (m.reason ? ' — ' + m.reason : '')">
+                    {{ m.description }}
+                    @if (m.bankName) {
+                      <small>{{ m.bankName }}</small>
+                    }
+                  </td>
+                  <td class="nowrap"><small>{{ referenceLabel(m) }}</small></td>
+                  <td class="num in">{{ m.direction === 'IN' ? formatCurrency(m.amount) : '—' }}</td>
+                  <td class="num out">{{ m.direction === 'OUT' ? formatCurrency(m.amount) : '—' }}</td>
+                  <td class="num">{{ formatCurrency(m.previousBalance) }}</td>
+                  <td class="num sticky-right"><strong [class.out]="m.newBalance < 0">{{ formatCurrency(m.newBalance) }}</strong></td>
+                  <td>{{ m.createdByUsername }}</td>
+                  <td>
+                    @if (isAdmin() && isManualMovement(m) && m.status === 'VIGENTE') {
+                      <button type="button" class="icon-btn" (click)="voidTarget.set(m)" [attr.aria-label]="'Anular movimiento ' + m.sequence" title="Anular">
+                        <app-icon name="rotate-ccw" [size]="16" />
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-report-pagination [total]="totalMovements()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+      }
+    </app-card>
+  }
+
+  @if (tab() === 'cortes') {
+    @if (position(); as p) {
+      <app-cash-cut-control-panel [position]="p" [canManage]="canManage()" [isAdmin]="isAdmin()" (changed)="setPosition($event)" />
+    } @else if (loadingPosition()) {
+      <p class="state">Cargando cortes…</p>
+    }
+  }
+
+  @if (tab() === 'historial') {
+    <app-cash-cut-history />
+  }
+</div>
+
+<app-cash-movement-form-modal
+  [open]="formMode() !== null"
+  [mode]="formMode() ?? 'ENTRADA_MANUAL'"
+  [currentBalance]="position()?.balance ?? 0"
+  (closed)="formMode.set(null)"
+  (saved)="onMovementSaved()"
+/>
+
+<app-cash-reason-modal
+  [open]="voidTarget() !== null"
+  [busy]="voiding()"
+  title="Anular movimiento"
+  message="Se registrará el movimiento inverso; el original queda visible como anulado. No se elimina nada."
+  confirmText="Anular movimiento"
+  [danger]="true"
+  (confirmed)="voidMovement($event)"
+  (cancelled)="voidTarget.set(null)"
+/>

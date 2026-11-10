@@ -40,12 +40,27 @@ export const TRANSACTION_TYPE_BALANCE_EFFECTS = [
 export type TransactionTypeBalanceEffect =
   (typeof TRANSACTION_TYPE_BALANCE_EFFECTS)[number];
 
+/**
+ * Explicit classification of a transaction type's effect on the PHYSICAL
+ * cash on hand (Control de Efectivo), independent of `balanceEffect` (the
+ * bank-account effect). IN = the customer hands cash over (Depósito, Pago
+ * Génesis); OUT = cash leaves the box (Retiro, Desembolso Génesis); NONE =
+ * no physical cash changes hands (Reintegro: bank-to-bank). Only read by the
+ * `cash_on_bank_deposit_insert` trigger when an operation is registered, so
+ * changing it never rewrites past Kardex rows.
+ */
+export const TRANSACTION_TYPE_CASH_EFFECTS = ['IN', 'OUT', 'NONE'] as const;
+
+export type TransactionTypeCashEffect =
+  (typeof TRANSACTION_TYPE_CASH_EFFECTS)[number];
+
 export interface TransactionTypeProps {
   id: string;
   name: string;
   /** Icon key from the frontend's shared icon registry — rendered on the Transaccionar dashboard's type cards. */
   icon: string;
   balanceEffect: TransactionTypeBalanceEffect | null;
+  cashEffect: TransactionTypeCashEffect;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -77,6 +92,11 @@ export class TransactionType {
 
   get balanceEffect(): TransactionTypeBalanceEffect | null {
     return this.props.balanceEffect;
+  }
+
+  /** Effect on physical cash — see `TRANSACTION_TYPE_CASH_EFFECTS`. */
+  get cashEffect(): TransactionTypeCashEffect {
+    return this.props.cashEffect;
   }
 
   get isActive(): boolean {

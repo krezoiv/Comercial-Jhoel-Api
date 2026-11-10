@@ -11,6 +11,13 @@
 export const ROLE_NAMES = ['SUPER_ADMIN', 'ADMIN', 'USER'] as const;
 export type RoleName = (typeof ROLE_NAMES)[number];
 
+/**
+ * Custom (admin-created, not seeded) role that Control de Efectivo authorizes
+ * to start/finish the cash cuts. Referenced by name only — if the role does
+ * not exist in a database, no account can satisfy it and nothing breaks.
+ */
+export const SHIFT_SUPERVISOR_ROLE = 'SUPERVISOR_DE_TURNO' as const;
+
 export interface RoleProps {
   id: string;
   name: RoleName;

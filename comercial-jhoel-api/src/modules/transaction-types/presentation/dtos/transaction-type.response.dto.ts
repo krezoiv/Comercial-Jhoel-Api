@@ -3,6 +3,7 @@ export class TransactionTypeResponseDto {
   name: string;
   icon: string;
   balanceEffect: string | null;
+  cashEffect: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

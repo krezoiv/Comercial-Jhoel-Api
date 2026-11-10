@@ -7,6 +7,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { cashMutationInterceptor } from './core/interceptors/cash-mutation.interceptor';
 
 registerLocaleData(localeEs);
 
@@ -22,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     // is ready, nor does it fire when only the fragment changes on an
     // already-active route.
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, cashMutationInterceptor])),
     // Registrado solo en producción (build), nunca en `ng serve` — el mismo
     // Service Worker sirve como PWA offline shell Y como receptor de Web
     // Push (`SwPush`) — nunca un segundo Service Worker aparte.

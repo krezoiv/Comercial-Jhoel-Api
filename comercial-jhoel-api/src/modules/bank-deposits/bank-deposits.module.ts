@@ -1,3 +1,4 @@
+import { CashControlModule } from '../cash-control/cash-control.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BankDepositOperationOrmEntity } from './infrastructure/persistence/bank-deposit-operation.orm-entity';
@@ -44,6 +45,9 @@ import { SharedModule } from '../../shared/shared.module';
     ClientsModule,
     // For RegisterAccountReceivableChargeUseCase — reused as-is when a deposit is sent
     // to Cuentas por Cobrar, rather than duplicating its validation/SQL call.
+    // For CASH_CONTROL_REPOSITORY — the response carries the official physical-cash
+    // movement the operation produced (written by a DB trigger, never computed here).
+    CashControlModule,
     AccountsReceivableModule,
     // For RegisterAssetChargeUseCase — "Enviar a Activos" (Retiros/Desembolsos Génesis).
     AssetsModule,

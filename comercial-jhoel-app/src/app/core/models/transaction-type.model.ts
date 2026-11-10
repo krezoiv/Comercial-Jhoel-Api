@@ -30,6 +30,8 @@ export interface TransactionType {
   icon: string;
   /** Efecto sobre el saldo bancario — `null` = no mueve saldo (Remesas, Pago de Cheque...). */
   balanceEffect: TransactionTypeBalanceEffect | null;
+  /** Efecto sobre el EFECTIVO FÍSICO (Control de Efectivo) — independiente del efecto bancario. */
+  cashEffect: TransactionTypeCashEffect;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +42,23 @@ export interface TransactionTypeInput {
   name: string;
   icon: string;
   balanceEffect?: TransactionTypeBalanceEffect | null;
+  cashEffect?: TransactionTypeCashEffect;
+}
+
+/** Espejo de `TRANSACTION_TYPE_CASH_EFFECTS` del backend: entrada, salida o sin efecto sobre el efectivo físico. */
+export type TransactionTypeCashEffect = 'IN' | 'OUT' | 'NONE';
+
+export const TRANSACTION_TYPE_CASH_EFFECT_OPTIONS: { value: TransactionTypeCashEffect; label: string; hint: string }[] = [
+  { value: 'IN', label: 'Entrada de efectivo', hint: 'El cliente entrega efectivo: suma al efectivo físico disponible.' },
+  { value: 'OUT', label: 'Salida de efectivo', hint: 'Se entrega efectivo desde caja: resta del efectivo físico disponible.' },
+  { value: 'NONE', label: 'Sin efecto en efectivo', hint: 'No hay entrada ni salida física de dinero (p. ej. Reintegro).' },
+];
+
+/** Sugerencia al elegir el efecto bancario — la misma derivación que usa el backend si no se indica. */
+export function defaultCashEffect(effect: TransactionTypeBalanceEffect | null | undefined): TransactionTypeCashEffect {
+  if (effect === 'DEPOSITO' || effect === 'PAGO_GENESIS') return 'IN';
+  if (effect === 'RETIRO' || effect === 'DESEMBOLSO_GENESIS') return 'OUT';
+  return 'NONE';
 }
 
 /** Espejo de `TRANSACTION_TYPE_BALANCE_EFFECTS` del backend. */

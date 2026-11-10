@@ -14,6 +14,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import {
   TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS,
+  TRANSACTION_TYPE_CASH_EFFECT_OPTIONS,
+  TransactionTypeCashEffect,
+  defaultCashEffect,
   TRANSACTION_TYPE_ICONS,
   TransactionType,
   TransactionTypeBalanceEffect,
@@ -48,6 +51,18 @@ export class TransactionTypeFormModalComponent implements OnChanges {
 
   readonly icons = TRANSACTION_TYPE_ICONS;
   readonly balanceEffectOptions = TRANSACTION_TYPE_BALANCE_EFFECT_OPTIONS;
+  readonly cashEffectOptions = TRANSACTION_TYPE_CASH_EFFECT_OPTIONS;
+
+  get selectedCashEffectHint(): string {
+    const value = this.form.controls.cashEffect.value;
+    return this.cashEffectOptions.find((option) => option.value === value)?.hint ?? '';
+  }
+
+  /** Changing the bank effect suggests the matching cash effect; the admin can still override it. */
+  onBalanceEffectChange(): void {
+    const effect = this.form.controls.balanceEffect.value;
+    this.form.controls.cashEffect.setValue(defaultCashEffect(effect || null));
+  }
 
   get selectedEffectHint(): string {
     const value = this.form.controls.balanceEffect.value;
@@ -61,6 +76,7 @@ export class TransactionTypeFormModalComponent implements OnChanges {
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
     icon: [TRANSACTION_TYPE_ICONS[0] as string, Validators.required],
     balanceEffect: ['' as TransactionTypeBalanceEffect | ''],
+    cashEffect: ['NONE' as TransactionTypeCashEffect, Validators.required],
   });
 
   get isEditMode(): boolean {
@@ -79,6 +95,7 @@ export class TransactionTypeFormModalComponent implements OnChanges {
       name: this.transactionType?.name ?? '',
       icon: this.transactionType?.icon ?? TRANSACTION_TYPE_ICONS[0],
       balanceEffect: this.transactionType?.balanceEffect ?? '',
+      cashEffect: this.transactionType?.cashEffect ?? 'NONE',
     });
   }
 
@@ -97,8 +114,8 @@ export class TransactionTypeFormModalComponent implements OnChanges {
       return;
     }
 
-    const { name, icon, balanceEffect } = this.form.getRawValue();
-    const input = { name, icon, balanceEffect: balanceEffect || null };
+    const { name, icon, balanceEffect, cashEffect } = this.form.getRawValue();
+    const input = { name, icon, balanceEffect: balanceEffect || null, cashEffect };
     this.isSubmitting.set(true);
 
     const request$ = this.isEditMode

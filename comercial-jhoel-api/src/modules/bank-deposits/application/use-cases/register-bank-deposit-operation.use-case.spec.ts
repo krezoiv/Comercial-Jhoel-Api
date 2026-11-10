@@ -1,3 +1,4 @@
+import type { CashControlRepository } from '../../../cash-control/domain/repositories/cash-control.repository';
 import { RegisterBankDepositOperationUseCase } from './register-bank-deposit-operation.use-case';
 import { BankDepositDayNotOpenedError } from '../../domain/errors/bank-deposit-day-not-opened.error';
 import { BankDepositDayAlreadyClosedError } from '../../domain/errors/bank-deposit-day-already-closed.error';
@@ -110,6 +111,7 @@ function buildTransactionType(
     name: 'Retiros',
     icon: 'bank',
     balanceEffect,
+    cashEffect: 'NONE',
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -121,6 +123,7 @@ function buildTransactionType(
 }
 
 describe('RegisterBankDepositOperationUseCase', () => {
+  let cashControlRepository: jest.Mocked<CashControlRepository>;
   let bankDepositRepository: jest.Mocked<BankDepositRepository>;
   let dayOpeningRepository: jest.Mocked<DayOpeningRepository>;
   let clientRepository: jest.Mocked<ClientRepository>;
@@ -153,7 +156,7 @@ describe('RegisterBankDepositOperationUseCase', () => {
     } as unknown as jest.Mocked<ClientRepository>;
     transactionManager = {
       runInTransaction: jest.fn((work) => work('ctx')),
-    } as unknown as jest.Mocked<TransactionManager>;
+    };
     registerAssetChargeUseCase = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<RegisterAssetChargeUseCase>;
@@ -167,6 +170,14 @@ describe('RegisterBankDepositOperationUseCase', () => {
     bankMovementRepository = {
       findByReference: jest.fn().mockResolvedValue([]),
     } as unknown as jest.Mocked<BankMovementRepository>;
+    cashControlRepository = {
+      findMovementsByReference: jest.fn().mockResolvedValue([]),
+      getBalance: jest.fn().mockResolvedValue({
+        balance: 0,
+        lastSequence: 0,
+        lastMovementAt: null,
+      }),
+    } as unknown as jest.Mocked<CashControlRepository>;
 
     useCase = new RegisterBankDepositOperationUseCase(
       bankDepositRepository,
@@ -177,6 +188,7 @@ describe('RegisterBankDepositOperationUseCase', () => {
       registerAssetChargeUseCase,
       transactionTypeRepository,
       bankMovementRepository,
+      cashControlRepository,
     );
 
     dayOpeningRepository.findByDate.mockResolvedValue(

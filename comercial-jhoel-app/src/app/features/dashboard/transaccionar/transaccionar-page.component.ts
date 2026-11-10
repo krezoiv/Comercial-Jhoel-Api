@@ -2,11 +2,11 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import {
   Bank,
-  BankDepositOperationSummary,
+  CashMovement,
   BankDepositTransactionSummary,
   Client,
   TransactionBank,
@@ -14,6 +14,7 @@ import {
   TransactionTypeBalanceEffect,
   balanceEffectDirection,
   bankAccountLabel,
+  formatCurrency,
   requiresBankAccount,
 } from '../../../core/models';
 import { BankService } from '../../../core/services/bank.service';
@@ -27,6 +28,8 @@ import { TransactionBankService } from '../../../core/services/transaction-bank.
 import { TransactionTypeService } from '../../../core/services/transaction-type.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
+import { CashControlService } from '../../../core/services/cash-control.service';
+import { onCashChanged } from '../../../core/services/cash-control-sync.service';
 import { GuayacanCashSyncService, onGuayacanCashChanged } from '../../../core/services/guayacan-cash-sync.service';
 import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
 import { transactionBankImageUrl } from '../../../core/services/transaction-bank.service';
@@ -114,6 +117,7 @@ export class TransaccionarPageComponent {
   private readonly transactionBankService = inject(TransactionBankService);
   private readonly transactionTypeService = inject(TransactionTypeService);
   private readonly bankDepositService = inject(BankDepositService);
+  private readonly cashControlService = inject(CashControlService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
@@ -265,8 +269,17 @@ export class TransaccionarPageComponent {
   /** `GET /bank-deposits/summary` — the same call the Resumen dashboard's own "Resumen Diario de Transacciones" section reads, see `BankDepositService.getTransactionSummary()`'s own doc comment. Fetched once when the dashboard view mounts; a transient failure just leaves both cards showing zero rather than breaking this screen. */
   readonly transactionSummary = signal<BankDepositTransactionSummary | null>(null);
   readonly loadingSummary = signal(true);
-  /** "Últimas transacciones" — `GET /bank-deposits/recent` (10 filas, orden y límite del backend). Se vuelve a pedir tras cada guardado y al volver a la pestaña. */
-  readonly recentOperations = signal<BankDepositOperationSummary[]>([]);
+  /**
+   * "Últimas transacciones" — the 10 latest movements of the official cash
+   * Kardex (`GET /cash-control/movements/recent`): Transaccionar operations
+   * plus gastos por cobrar, activos, retiros bancarios hacia caja, manual
+   * movements and voids, each with the backend's "efectivo disponible"
+   * after it. Refreshed after each save, on tab focus and whenever
+   * `onCashChanged` reports a change (this tab, another tab or another user).
+   */
+  readonly recentMovements = signal<CashMovement[]>([]);
+  /** Official current cash balance (backend) for the card header. */
+  readonly cashBalance = signal<number | null>(null);
   readonly loadingRecent = signal(true);
   readonly recentFailed = signal(false);
 
@@ -374,6 +387,7 @@ export class TransaccionarPageComponent {
 
     this.loadRecentOperations();
     refetchOnTabVisible(() => this.loadRecentOperations());
+    onCashChanged(() => this.loadRecentOperations());
     // El saldo de la cuenta Guayacán es el efectivo de su caja: si cambia (ingreso/egreso
     // manual, ajuste, anulación, aquí u otra pestaña) se re-lee del backend.
     onGuayacanCashChanged(() => {
@@ -384,13 +398,17 @@ export class TransaccionarPageComponent {
 
   /** Solo muestra el estado de carga la primera vez — un refresco (tras guardar) conserva las filas visibles hasta que llegan las nuevas. */
   loadRecentOperations(): void {
-    if (this.recentOperations().length === 0) {
+    if (this.recentMovements().length === 0) {
       this.loadingRecent.set(true);
     }
     this.recentFailed.set(false);
-    this.bankDepositService.getRecentOperations().subscribe({
-      next: (operations) => {
-        this.recentOperations.set(operations);
+    forkJoin({
+      movements: this.cashControlService.getRecentMovements(10),
+      balance: this.cashControlService.getBalance(),
+    }).subscribe({
+      next: ({ movements, balance }) => {
+        this.recentMovements.set(movements);
+        this.cashBalance.set(balance.balance);
         this.loadingRecent.set(false);
       },
       error: () => {
@@ -399,6 +417,7 @@ export class TransaccionarPageComponent {
       },
     });
   }
+
 
   selectType(type: TransactionType): void {
     if (this.bankPicker()) {
@@ -608,11 +627,17 @@ export class TransaccionarPageComponent {
           this.draft.reset();
           this.view.set('dashboard');
           const movement = operation.balanceMovement;
+          const cash = operation.cashMovement;
+          const cashText =
+            cash && cash.direction !== 'NONE' ? ` Efectivo disponible: ${formatCurrency(cash.currentBalance)}.` : '';
           this.notificationService.success(
-            movement
+            (movement
               ? `Transacción registrada. Nuevo saldo de ${movement.bankName}: ${formatSignedBankBalance(movement.balanceAfter)}.`
-              : 'Transacción registrada correctamente.',
+              : 'Transacción registrada correctamente.') + cashText,
           );
+          if (cash) {
+            this.cashBalance.set(cash.currentBalance);
+          }
           this.loadBankAccounts();
           if (movesGuayacanCash) {
             this.cashSync.notifyChanged();

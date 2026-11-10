@@ -1417,6 +1417,46 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   concilia con arqueo + AJUSTE de la caja.
 - Pruebas: `sql/tests/guayacan-cash-box.test.sql` (ROLLBACK, 57 casos) y `sql/tests/guayacan-single-balance.test.sql` (17).
 
+### Control de Efectivo — Kardex oficial de efectivo físico + dos cortes diarios (`modules/cash-control/`, migración `1760006800000`)
+
+- **Única fuente del efectivo físico**: `cash_movements` (saldo anterior / monto / dirección IN·OUT·NONE / saldo posterior,
+  `CHECK` de consistencia, `sequence`). `cash_balance()` = `new_balance` del último renglón. Único escritor:
+  `apply_cash_movement` (advisory lock `cash_control_main`, saldo leído bajo el lock, `idempotency_key` UNIQUE → un
+  reintento devuelve el mismo movimiento). Nunca se borra ni edita: anular = original ANULADO + `ANULACION` inversa
+  (`reversal_of_id`, `REV:<id>`). Los renglones NONE (operaciones sin efecto físico) también se guardan, con saldo sin
+  cambio, para que "Últimas transacciones" los muestre en gris. Sin backfill histórico: arranca en 0 y un admin carga
+  una sola vez el `SALDO_INICIAL` (índice único parcial).
+- **Clasificación explícita**: `transaction_types.cash_effect` (IN/OUT/NONE, editable en Sistema → Tipo de Transacción;
+  backfill: Depósito/Pago Génesis IN, Retiro/Desembolso Génesis OUT, resto NONE). Independiente de `balance_effect`.
+- **Triggers (misma transacción que la operación de origen)**: `bank_deposit_operations` insert/anulación (Guayacán
+  siempre NONE: tiene su propia caja, decisión del usuario 2026-11-10); `accounts_receivable` CARGO = gasto por cobrar OUT,
+  ABONO IN; `assets` CARGO = activo IN, ABONO OUT (inverso, decisión del usuario; mantiene constante efectivo + CxC −
+  Activos del Cuadre de Agentes); ediciones/desactivaciones de filas ya rastreadas = reversa + re-aplicación (las filas
+  anteriores a la migración no se tocan); `bank_account_movements` `RETIRO_EFECTIVO` (retiro en banco hacia caja) IN y
+  su anulación. Transferencias entre cuentas, Acreditar saldo y comisiones Guayacán no tocan el efectivo.
+- **Día operativo** `cash_operational_days` (independiente de `day_openings`/Cuadre de Agentes): apertura hereda el
+  físico CONTADO del último corte finalizado (`INHERITED_FROM_CLOSE`/`_LAST_CUT`); sin arqueos previos usa el Kardex
+  marcado `SYSTEM_UNVERIFIED`; `AUTHORIZED_MANUAL` solo admin con motivo. Guarda físico/teórico anterior, diferencia
+  heredada, usuario y hora. No se abre una fecha anterior a otra ya abierta.
+- **Cortes** `cash_cut_periods` (2 por día, `PROGRAMADO → ABIERTO → FINALIZADO`, a lo sumo UNO abierto en todo el
+  sistema por índice único). Cada corte cubre el rango del Kardex `(start_sequence, closing_sequence]`; el segundo
+  arranca donde terminó el primero (los movimientos entre cortes son del segundo) → nada se cuenta dos veces ni se pierde.
+  El segundo hereda el físico contado del primero y conserva su diferencia en `inherited_difference`. Finalizar = arqueo
+  (`cash_cut_counts` + detalles, diferencia = contado − sistema) + verificación de TODAS las cuentas activas
+  (`cash_cut_bank_reconciliations`). Reabrir: solo admin, solo el último corte, motivo; el arqueo previo queda con
+  `is_current = false`. `close_cash_operational_day` exige ambos cortes finalizados y consolida el rango del día.
+  Auditoría: `cash_cut_events`, `cash_cut_schedule_changes` (quién y por qué). Horarios en `America/Guatemala`.
+- **RBAC**: lectura cualquier autenticado; abrir/cerrar día, horarios, iniciar/finalizar cortes y entradas/salidas
+  manuales: SUPER_ADMIN, ADMIN, `SUPERVISOR_DE_TURNO` (rol personalizado; `Roles()` acepta `SHIFT_SUPERVISOR_ROLE`);
+  ajustes, saldo inicial, anulaciones, reabrir y apertura manual: admin. Los casos de uso re-validan el rol.
+- **Rutas** `/cash-control`: `position`, `balance`, `movements` (+`/recent`, `/:id`), `users`, `bank-balances`, `days`,
+  `cuts/:id`; `POST movements`, `movements/:id/void`, `days/open`, `days/:id/close`, `cuts/:id/start|finish|reopen`,
+  `PATCH cuts/:id/schedule`. `POST /bank-deposits` devuelve además `cashMovement` (saldo oficial tras la operación).
+- Pruebas: `sql/tests/cash-control.test.sql` (ROLLBACK, 86 casos), `sql/tests/cash-control-concurrency.sh` (sesiones
+  reales sobre una copia temporal), `cash-control.use-cases.spec.ts`, y `test/run-cash-control-e2e.sh` (HTTP e2e con el
+  AppModule completo contra una copia `<db>_e2e` que se elimina al terminar — el Kardex es append-only, nunca correr el
+  e2e contra la base real).
+
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 
 `GET /dashboard/summary` — admin-only (`@Roles('ADMIN', 'SUPER_ADMIN')`, class-level), backs the Resumen

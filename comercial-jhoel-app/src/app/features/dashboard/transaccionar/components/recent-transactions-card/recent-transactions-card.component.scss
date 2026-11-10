@@ -13,8 +13,10 @@
 
 .recent-card__header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
 
@@ -27,6 +29,44 @@
 .recent-card__subtitle {
   font-size: var(--fs-sm);
   color: var(--color-text-on-light-muted);
+}
+
+.recent-card__balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+
+  span {
+    font-size: 0.6875rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-on-light-subtle);
+  }
+
+  strong {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light);
+  }
+}
+
+.recent-card__balance--negative {
+  color: var(--color-danger) !important;
+}
+
+.recent-card__link {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary-600);
+  @include focus-ring;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 // ---- Estados ----
@@ -107,11 +147,18 @@
   }
 }
 
-// ---- Tabla compacta ----
+// ---- Tabla compacta (desplazable en pantallas pequeñas; fecha y efectivo siempre visibles) ----
+
+.recent-table__scroll {
+  overflow-x: auto;
+  @include focus-ring;
+}
 
 .recent-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 40rem;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
   font-size: var(--fs-xs);
 
@@ -124,6 +171,7 @@
     letter-spacing: 0.03em;
     color: var(--color-text-on-light-subtle);
     border-bottom: 1px solid var(--color-border-light);
+    background: var(--color-surface-light);
   }
 
   td {
@@ -131,6 +179,11 @@
     vertical-align: top;
     border-bottom: 1px solid var(--color-border-light);
     color: var(--color-text-on-light);
+    background: var(--color-surface-light);
+  }
+
+  td > span {
+    display: block;
   }
 
   tbody tr:last-child td {
@@ -141,30 +194,38 @@
     background: var(--color-surface-light-hover);
   }
 
-  th:first-child,
-  td:first-child {
-    padding-left: 0;
-  }
-
-  th:last-child,
-  td:last-child {
-    padding-right: 0;
-  }
-
-  // Proporciones: fecha y monto fijos; tipo y cuenta reparten el resto.
+  // Proporciones: fecha, monto y efectivo fijos; operación y banco reparten el resto.
   th:nth-child(1) {
-    width: 3.75rem;
+    width: 4rem;
+  }
+
+  th:nth-child(3) {
+    width: 22%;
   }
 
   th:nth-child(4) {
-    width: 6.5rem;
+    width: 7.5rem;
+  }
+
+  th:nth-child(5) {
+    width: 8.5rem;
   }
 }
 
-.recent-table td {
-  > span {
-    display: block;
-  }
+// Columnas clave fijas al desplazar: fecha a la izquierda, efectivo disponible a la derecha.
+.recent-table .recent-table__date {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: 0;
+}
+
+.recent-table .recent-table__balance {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  padding-right: 0;
+  box-shadow: -1px 0 0 var(--color-border-light);
 }
 
 .recent-table__muted {
@@ -178,11 +239,11 @@
   text-overflow: ellipsis;
 }
 
-.recent-table__type {
+.recent-table__type > span:first-child {
   font-weight: var(--fw-medium);
 }
 
-.recent-table__amount {
+.recent-table__num {
   text-align: right !important;
   white-space: nowrap;
 }
@@ -190,6 +251,54 @@
 .recent-table__value {
   font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
+}
+
+.recent-table__value--in {
+  color: var(--color-success);
+}
+
+.recent-table__value--out {
+  color: var(--color-danger);
+}
+
+.recent-table__value--none {
+  color: var(--color-text-on-light-muted);
+}
+
+.recent-table__value--negative {
+  color: var(--color-danger);
+}
+
+.recent-table__balance .recent-table__value {
+  font-size: var(--fs-sm);
+}
+
+.recent-table__flow {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.recent-table__flow--in {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.recent-table__flow--out {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+}
+
+.recent-table__flow--none {
+  background: var(--color-bg-light-muted);
+  color: var(--color-text-on-light-muted);
 }
 
 .recent-table .recent-table__badge {
@@ -205,63 +314,11 @@
   letter-spacing: 0.03em;
 }
 
-.recent-table__row--voided td {
+.recent-table__row--none td:not(.recent-table__balance) {
   color: var(--color-text-on-light-muted);
 }
 
-.recent-table__row--voided .recent-table__value {
+.recent-table__row--voided .recent-table__type > span:first-child,
+.recent-table__row--voided .recent-table__num:not(.recent-table__balance) .recent-table__value {
   text-decoration: line-through;
-}
-
-// Teléfonos: cada operación en dos líneas (fecha · monto / tipo · cuenta) — sin scroll horizontal.
-@media (max-width: #{bp.$bp-sm - 1px}) {
-  .recent-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
-
-  .recent-table tbody tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'date amount'
-      'type account';
-    column-gap: var(--space-3);
-    padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--color-border-light);
-  }
-
-  .recent-table tbody tr:last-child {
-    border-bottom: none;
-  }
-
-  .recent-table td {
-    padding: 0 !important;
-    border: none;
-  }
-
-  .recent-table__date {
-    grid-area: date;
-    display: flex;
-    gap: var(--space-2);
-  }
-
-  .recent-table__amount {
-    grid-area: amount;
-  }
-
-  .recent-table__type {
-    grid-area: type;
-    min-width: 0;
-  }
-
-  .recent-table__account {
-    grid-area: account;
-    min-width: 0;
-    max-width: 9rem;
-    text-align: right;
-  }
 }
