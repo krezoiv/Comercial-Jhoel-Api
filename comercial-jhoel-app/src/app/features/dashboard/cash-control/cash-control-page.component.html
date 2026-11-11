@@ -102,53 +102,15 @@
 
       <!-- Acumulados del día operativo (se reinician en cada apertura de Agentes Bancarios; el saldo no) -->
       @if (viewedDay(); as v) {
-        <app-card padding="lg" class="daily" [class.daily--past]="v.isPast">
-          <div class="daily__head">
-            <div>
-              <h2 class="daily__title">
-                Acumulados del día operativo
-                @if (v.header) {
-                  · {{ formatIsoDate(v.header.businessDate) }}
-                }
-              </h2>
-              <p class="daily__hint">
-                @if (v.isPast) {
-                  Consulta histórica — solo lectura. Valores originales de ese día.
-                } @else if (v.header) {
-                  Desde la apertura bancaria ({{ formatDateTime(v.header.openedAt) }} por {{ v.header.openedByUsername }}).
-                  Se reinician en la próxima apertura; el efectivo físico disponible no se reinicia.
-                } @else {
-                  Aún no hay apertura en Agentes Bancarios: se muestran los movimientos de la fecha de hoy.
-                }
-              </p>
-            </div>
-            <label class="daily__select">
-              Día operativo
-              <select [ngModel]="selectedBankDate() ?? ''" (ngModelChange)="selectBankDate($event)">
-                <option value="">Actual{{ position()?.bankDay ? ' (' + formatIsoDate(position()!.bankDay!.businessDate) + ')' : '' }}</option>
-                @for (day of bankDays(); track day.businessDate) {
-                  @if (!day.isCurrent) {
-                    <option [value]="day.businessDate">{{ formatIsoDate(day.businessDate) }} · {{ day.agentDayStatus.toLowerCase() }}</option>
-                  }
-                }
-              </select>
-            </label>
-          </div>
-          <dl class="daily__facts">
-            <div><dt>Efectivo al inicio del día</dt><dd>{{ formatCurrency(v.summary.openingBalance) }}</dd></div>
-            <div><dt>Entradas del día</dt><dd class="in">+{{ formatCurrency(v.summary.totalIn) }}</dd></div>
-            <div><dt>Salidas del día</dt><dd class="out">−{{ formatCurrency(v.summary.totalOut) }}</dd></div>
-            <div><dt>Operaciones</dt><dd>{{ v.summary.movementCount }}</dd></div>
-            <div>
-              <dt>{{ v.isPast ? 'Efectivo al cierre del día' : 'Efectivo actual' }}</dt>
-              <dd>{{ formatCurrency(v.isPast ? v.header!.closingBalance : p.balance) }}</dd>
-            </div>
-            <div>
-              <dt>Última actualización</dt>
-              <dd>{{ v.header?.lastMovementAt ? formatDateTime(v.header!.lastMovementAt!) : (v.isPast ? 'sin movimientos' : (lastRefresh() ? formatTime(lastRefresh()) : '—')) }}</dd>
-            </div>
-          </dl>
-        </app-card>
+        <app-cash-bank-day-card
+          [view]="v"
+          [bankDays]="bankDays()"
+          [currentBankDate]="p.bankDay?.businessDate ?? null"
+          [selectedBankDate]="selectedBankDate()"
+          [balance]="p.balance"
+          [lastRefresh]="lastRefresh()"
+          (select)="selectBankDate($event)"
+        />
       }
 
       <!-- Resumen por tipo -->
@@ -170,49 +132,11 @@
 
       <!-- Historial de acumulados diarios (solo lectura) -->
       @if (bankDays().length) {
-        <app-card padding="lg" class="history">
-          <h2 class="history__title">Historial por día operativo</h2>
-          <div class="history__wrapper">
-            <table class="history__table">
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th class="num">Depósitos</th>
-                  <th class="num">Retiros</th>
-                  <th class="num">Desembolsos</th>
-                  <th class="num">Pagos Génesis</th>
-                  <th class="num">Reintegros</th>
-                  <th class="num">Entradas</th>
-                  <th class="num">Salidas</th>
-                  <th class="num">Operaciones</th>
-                  <th class="num">Efectivo inicial</th>
-                  <th class="num">Efectivo final</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (day of bankDays(); track day.businessDate) {
-                  <tr
-                    class="history__row"
-                    [class.history__row--on]="(selectedBankDate() ?? position()?.bankDay?.businessDate) === day.businessDate"
-                    (click)="selectBankDate(day.isCurrent ? '' : day.businessDate)"
-                  >
-                    <td>{{ formatIsoDate(day.businessDate) }}@if (day.isCurrent) { <span class="pill pill--abierto">actual</span> }</td>
-                    <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'DEPOSITO')) }}</td>
-                    <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'RETIRO')) }}</td>
-                    <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'DESEMBOLSO_GENESIS')) }}</td>
-                    <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'PAGO_GENESIS')) }}</td>
-                    <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'REINTEGRO')) }}</td>
-                    <td class="num in">+{{ formatCurrency(day.totalIn) }}</td>
-                    <td class="num out">−{{ formatCurrency(day.totalOut) }}</td>
-                    <td class="num">{{ day.movementCount }}</td>
-                    <td class="num">{{ formatCurrency(day.openingBalance) }}</td>
-                    <td class="num">{{ formatCurrency(day.closingBalance) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </app-card>
+        <app-cash-bank-day-history
+          [bankDays]="bankDays()"
+          [activeDate]="selectedBankDate() ?? p.bankDay?.businessDate ?? null"
+          (select)="selectBankDate($event)"
+        />
       }
     } @else if (loadingPosition()) {
       <p class="state">Cargando efectivo…</p>

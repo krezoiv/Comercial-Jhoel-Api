@@ -1,0 +1,47 @@
+<app-card padding="lg" class="daily" [class.daily--past]="view.isPast">
+  <div class="daily__head">
+    <div>
+      <h2 class="daily__title">
+        Acumulados del día operativo
+        @if (view.header) {
+          · {{ formatIsoDate(view.header.businessDate) }}
+        }
+      </h2>
+      <p class="daily__hint">
+        @if (view.isPast) {
+          Consulta histórica — solo lectura. Valores originales de ese día.
+        } @else if (view.header) {
+          Desde la apertura bancaria ({{ formatDateTime(view.header.openedAt) }} por {{ view.header.openedByUsername }}).
+          Se reinician en la próxima apertura; el efectivo físico disponible no se reinicia.
+        } @else {
+          Aún no hay apertura en Agentes Bancarios: se muestran los movimientos de la fecha de hoy.
+        }
+      </p>
+    </div>
+    <label class="daily__select">
+      Día operativo
+      <select [ngModel]="selectedBankDate ?? ''" (ngModelChange)="select.emit($event)">
+        <option value="">Actual{{ currentBankDate ? ' (' + formatIsoDate(currentBankDate) + ')' : '' }}</option>
+        @for (day of bankDays; track day.businessDate) {
+          @if (!day.isCurrent) {
+            <option [value]="day.businessDate">{{ formatIsoDate(day.businessDate) }} · {{ day.agentDayStatus.toLowerCase() }}</option>
+          }
+        }
+      </select>
+    </label>
+  </div>
+  <dl class="daily__facts">
+    <div><dt>Efectivo al inicio del día</dt><dd>{{ formatCurrency(view.summary.openingBalance) }}</dd></div>
+    <div><dt>Entradas del día</dt><dd class="in">+{{ formatCurrency(view.summary.totalIn) }}</dd></div>
+    <div><dt>Salidas del día</dt><dd class="out">−{{ formatCurrency(view.summary.totalOut) }}</dd></div>
+    <div><dt>Operaciones</dt><dd>{{ view.summary.movementCount }}</dd></div>
+    <div>
+      <dt>{{ view.isPast ? 'Efectivo al cierre del día' : 'Efectivo actual' }}</dt>
+      <dd>{{ formatCurrency(view.isPast ? view.header!.closingBalance : balance) }}</dd>
+    </div>
+    <div>
+      <dt>Última actualización</dt>
+      <dd>{{ view.header?.lastMovementAt ? formatDateTime(view.header!.lastMovementAt!) : (view.isPast ? 'sin movimientos' : (lastRefresh ? formatTime(lastRefresh) : '—')) }}</dd>
+    </div>
+  </dl>
+</app-card>

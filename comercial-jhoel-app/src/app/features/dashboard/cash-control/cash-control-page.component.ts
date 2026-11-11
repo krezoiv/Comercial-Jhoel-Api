@@ -50,6 +50,8 @@ import { CashCountModalComponent } from './components/cash-count-modal/cash-coun
 import { WarehouseTransferModalComponent } from './components/warehouse-transfer-modal/warehouse-transfer-modal.component';
 import { CashCountsPanelComponent } from './components/cash-counts-panel/cash-counts-panel.component';
 import { WarehousePanelComponent } from './components/warehouse-panel/warehouse-panel.component';
+import { CashBankDayCardComponent } from './components/bank-day-card/bank-day-card.component';
+import { CashBankDayHistoryComponent } from './components/bank-day-history/bank-day-history.component';
 
 type CashTab = 'efectivo' | 'cortes' | 'historial' | 'arqueos' | 'bodega';
 
@@ -81,6 +83,8 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     WarehouseTransferModalComponent,
     CashCountsPanelComponent,
     WarehousePanelComponent,
+    CashBankDayCardComponent,
+    CashBankDayHistoryComponent,
   ],
   templateUrl: './cash-control-page.component.html',
   styleUrl: './cash-control-page.component.scss',

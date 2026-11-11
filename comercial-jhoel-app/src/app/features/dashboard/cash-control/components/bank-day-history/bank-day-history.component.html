@@ -1,0 +1,43 @@
+<app-card padding="lg" class="history">
+  <h2 class="history__title">Historial por día operativo</h2>
+  <div class="history__wrapper">
+    <table class="history__table">
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th class="num">Depósitos</th>
+          <th class="num">Retiros</th>
+          <th class="num">Desembolsos</th>
+          <th class="num">Pagos Génesis</th>
+          <th class="num">Reintegros</th>
+          <th class="num">Entradas</th>
+          <th class="num">Salidas</th>
+          <th class="num">Operaciones</th>
+          <th class="num">Efectivo inicial</th>
+          <th class="num">Efectivo final</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (day of bankDays; track day.businessDate) {
+          <tr
+            class="history__row"
+            [class.history__row--on]="activeDate === day.businessDate"
+            (click)="select.emit(day.isCurrent ? '' : day.businessDate)"
+          >
+            <td>{{ formatIsoDate(day.businessDate) }}@if (day.isCurrent) { <span class="pill pill--abierto">actual</span> }</td>
+            <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'DEPOSITO')) }}</td>
+            <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'RETIRO')) }}</td>
+            <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'DESEMBOLSO_GENESIS')) }}</td>
+            <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'PAGO_GENESIS')) }}</td>
+            <td class="num">{{ formatCurrency(bucketAmount(day.buckets, 'REINTEGRO')) }}</td>
+            <td class="num in">+{{ formatCurrency(day.totalIn) }}</td>
+            <td class="num out">−{{ formatCurrency(day.totalOut) }}</td>
+            <td class="num">{{ day.movementCount }}</td>
+            <td class="num">{{ formatCurrency(day.openingBalance) }}</td>
+            <td class="num">{{ formatCurrency(day.closingBalance) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</app-card>

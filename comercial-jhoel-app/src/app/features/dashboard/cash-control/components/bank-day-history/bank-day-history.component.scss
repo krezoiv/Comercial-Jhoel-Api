@@ -1,0 +1,68 @@
+// History of daily indicators per bank operational day (read only).
+.history__title {
+  font-size: var(--fs-md);
+  color: var(--color-text-on-light);
+  margin-bottom: var(--space-3);
+}
+
+.history__wrapper {
+  overflow-x: auto;
+}
+
+.history__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+
+  th,
+  td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--color-border-light);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.history__row {
+  cursor: pointer;
+
+  &:hover td {
+    background: rgba(37, 99, 235, 0.04);
+  }
+}
+
+.history__row--on td {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.in {
+  color: #15803d;
+}
+
+.out {
+  color: #b91c1c;
+}
+
+.pill {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.pill--abierto {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary-600);
+}
