@@ -270,4 +270,100 @@ describe('Control de Efectivo — arqueo y Bodega (e2e)', () => {
     );
     expect(summary.totalWarehouseCash).toBe(35000);
   });
+
+  it('withdrawals from Bodega: back to the caja (custody unchanged) and deposited into a bank account', async () => {
+    const [account] = (await dataSource.query(
+      `SELECT id, final_balance FROM banks WHERE is_active AND special_account IS NULL ORDER BY created_at LIMIT 1`,
+    )) as Body[];
+    const before = await custody();
+    const toCash = data(
+      await as(adminToken)(
+        api()
+          .post('/api/cash-control/warehouse/withdrawals')
+          .send({
+            destination: 'CAJA',
+            amount: 5000,
+            details: [{ denomination: 100, quantity: 50 }],
+            deliveredBy: 'Ana Bodega',
+            receivedBy: 'Juan Caja',
+            clientRequestId: randomUUID(),
+          }),
+      ).expect(201),
+    );
+    expect(toCash.custody.cashBalance).toBe(before.cashBalance + 5000);
+    expect(toCash.custody.warehouseBalance).toBe(
+      before.warehouseBalance - 5000,
+    );
+    expect(toCash.custody.custodyTotal).toBe(before.custodyTotal);
+    const cashMovement = data(
+      await as(adminToken)(
+        api().get(
+          `/api/cash-control/movements/${toCash.withdrawal.cashMovementId}`,
+        ),
+      ).expect(200),
+    );
+    expect([cashMovement.movementType, cashMovement.direction]).toEqual([
+      'DEVOLUCION_BODEGA',
+      'IN',
+    ]);
+
+    // Deposit into a bank account: Bodega down, the account up, the caja unchanged.
+    await as(adminToken)(
+      api()
+        .post('/api/cash-control/warehouse/withdrawals')
+        .send({
+          destination: 'BANCO',
+          amount: 1000,
+          details: [{ denomination: 100, quantity: 10 }],
+          deliveredBy: 'Ana Bodega',
+          receivedBy: 'Mensajero',
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(400);
+    const toBank = data(
+      await as(adminToken)(
+        api()
+          .post('/api/cash-control/warehouse/withdrawals')
+          .send({
+            destination: 'BANCO',
+            bankId: account.id,
+            amount: 1000,
+            details: [{ denomination: 100, quantity: 10 }],
+            deliveredBy: 'Ana Bodega',
+            receivedBy: 'Mensajero',
+            voucherReference: 'BOLETA-1',
+            clientRequestId: randomUUID(),
+          }),
+      ).expect(201),
+    );
+    expect(toBank.custody.warehouseBalance).toBe(
+      toCash.custody.warehouseBalance - 1000,
+    );
+    expect(toBank.custody.cashBalance).toBe(toCash.custody.cashBalance);
+    const [after] = (await dataSource.query(
+      `SELECT final_balance FROM banks WHERE id = $1`,
+      [account.id],
+    )) as Body[];
+    expect(
+      Number(after.final_balance) - Number(account.final_balance),
+    ).toBeCloseTo(1000, 2);
+
+    // Void (admin): the deposit is reversed and the cash goes back to Bodega.
+    const voided = data(
+      await as(adminToken)(
+        api()
+          .post(
+            `/api/cash-control/warehouse/withdrawals/${toBank.withdrawal.id}/void`,
+          )
+          .send({ reason: 'Depósito no realizado' }),
+      ).expect(200),
+    );
+    expect(voided.withdrawal.status).toBe('ANULADO');
+    expect(voided.custody.warehouseBalance).toBe(
+      toCash.custody.warehouseBalance,
+    );
+    await as(userToken)(
+      api().get('/api/cash-control/warehouse/withdrawals'),
+    ).expect(403);
+  });
 });

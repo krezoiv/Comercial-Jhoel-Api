@@ -19,6 +19,12 @@
   gap: var(--space-3);
 }
 
+.panel__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .panel__title {
   display: flex;
   align-items: center;
@@ -39,7 +45,7 @@
   gap: var(--space-3);
 
   @include bp.respond(md) {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   div {

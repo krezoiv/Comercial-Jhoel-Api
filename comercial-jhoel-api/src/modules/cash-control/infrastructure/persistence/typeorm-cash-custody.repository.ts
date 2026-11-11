@@ -12,10 +12,13 @@ import {
   Paginated,
   RegisterCashCountData,
   RegisterTransferData,
+  RegisterWithdrawalData,
   WarehouseMovementRow,
   WarehouseTransferRow,
+  WarehouseWithdrawalRow,
 } from '../../domain/repositories/cash-custody.repository';
 import { cashControlErrorFromMessage } from '../../domain/errors/cash-control.errors';
+import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
 
 type SqlRow = Record<string, unknown>;
 
@@ -70,6 +73,22 @@ const TRANSFER_SELECT = `
   JOIN warehouse_cash_movements wm ON wm.id = t.warehouse_movement_id
 `;
 
+const WITHDRAWAL_SELECT = `
+  SELECT w.*, to_char(w.business_date, 'YYYY-MM-DD') AS business_date_text,
+         cu.username AS created_by_username, vu.username AS voided_by_username,
+         b.name AS bank_name, b.account_number AS bank_account_number,
+         wm.sequence AS warehouse_sequence, cm.sequence AS cash_sequence,
+         COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
+                     'subtotal', d.subtotal) ORDER BY d.denomination DESC)
+                   FROM warehouse_cash_movement_details d WHERE d.movement_id = w.warehouse_movement_id), '[]') AS details
+  FROM warehouse_cash_withdrawals w
+  JOIN users cu ON cu.id = w.created_by
+  LEFT JOIN users vu ON vu.id = w.voided_by
+  LEFT JOIN banks b ON b.id = w.bank_id
+  JOIN warehouse_cash_movements wm ON wm.id = w.warehouse_movement_id
+  LEFT JOIN cash_movements cm ON cm.id = w.cash_movement_id
+`;
+
 const COUNT_SELECT = `
   SELECT c.*, to_char(c.business_date, 'YYYY-MM-DD') AS business_date_text, u.username,
          COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
@@ -96,7 +115,11 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
              to_char(d.business_date, 'YYYY-MM-DD') AS business_date, d.is_open,
              (SELECT COALESCE(sum(CASE WHEN w.direction = 'IN' THEN w.amount ELSE -w.amount END), 0)
               FROM warehouse_cash_movements w
-              WHERE w.reference_type = 'WAREHOUSE_TRANSFER' AND w.day_opening_id = d.day_opening_id) AS delivered_today
+              WHERE w.reference_type = 'WAREHOUSE_TRANSFER' AND w.day_opening_id = d.day_opening_id) AS delivered_today,
+             (SELECT COALESCE(sum(x.amount), 0) FROM warehouse_cash_withdrawals x
+              WHERE x.status = 'APLICADO' AND x.destination = 'CAJA' AND x.day_opening_id = d.day_opening_id) AS returned_today,
+             (SELECT COALESCE(sum(x.amount), 0) FROM warehouse_cash_withdrawals x
+              WHERE x.status = 'APLICADO' AND x.destination = 'BANCO' AND x.day_opening_id = d.day_opening_id) AS deposited_today
       FROM (SELECT 1) x LEFT JOIN LATERAL (SELECT * FROM cash_current_bank_day()) d ON true
     `);
     const cash = num(row.cash);
@@ -114,6 +137,8 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
           }
         : null,
       deliveredToday: num(row.delivered_today),
+      returnedToCashToday: num(row.returned_today),
+      depositedToBankToday: num(row.deposited_today),
     };
   }
 
@@ -211,10 +236,11 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
     );
     const rows = await this.dataSource.query<SqlRow[]>(
       `SELECT w.*, to_char(w.business_date, 'YYYY-MM-DD') AS business_date_text, u.username,
-              t.reference_number AS transfer_reference
+              COALESCE(t.reference_number, x.reference_number) AS transfer_reference
        FROM warehouse_cash_movements w
        JOIN users u ON u.id = w.created_by
        LEFT JOIN cash_warehouse_transfers t ON w.reference_type = 'WAREHOUSE_TRANSFER' AND t.id = w.reference_id
+       LEFT JOIN warehouse_cash_withdrawals x ON w.reference_type = 'WAREHOUSE_WITHDRAWAL' AND x.id = w.reference_id
        ORDER BY w.sequence DESC LIMIT $1 OFFSET $2`,
       [limit, (page - 1) * limit],
     );
@@ -243,6 +269,112 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       total: num(count?.total),
       page,
       limit,
+    };
+  }
+
+  async registerWithdrawal(data: RegisterWithdrawalData): Promise<string> {
+    const [row] = await this.write<SqlRow[]>(
+      `SELECT register_warehouse_withdrawal($1, $2, $3::jsonb, $4, $5, $6, $7, $8, $9, $10) AS id`,
+      [
+        data.destination,
+        data.amount,
+        data.details.length ? JSON.stringify(data.details) : null,
+        data.bankId ?? null,
+        data.deliveredBy,
+        data.receivedBy,
+        data.voucherReference ?? null,
+        data.observations ?? null,
+        data.userId,
+        data.idempotencyKey,
+      ],
+    );
+    return text(row.id);
+  }
+
+  async voidWithdrawal(
+    id: string,
+    userId: string,
+    reason: string,
+  ): Promise<string> {
+    const [row] = await this.write<SqlRow[]>(
+      `SELECT void_warehouse_withdrawal($1, $2, $3) AS id`,
+      [id, userId, reason],
+    );
+    return text(row.id);
+  }
+
+  async findWithdrawals(
+    options: FindTransfersOptions,
+  ): Promise<Paginated<WarehouseWithdrawalRow>> {
+    const where: string[] = [];
+    const params: unknown[] = [];
+    if (options.dateFrom) {
+      params.push(options.dateFrom);
+      where.push(`w.business_date >= $${params.length}::date`);
+    }
+    if (options.dateTo) {
+      params.push(options.dateTo);
+      where.push(`w.business_date <= $${params.length}::date`);
+    }
+    if (options.status) {
+      params.push(options.status === 'ANULADA' ? 'ANULADO' : 'APLICADO');
+      where.push(`w.status = $${params.length}`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const [count] = await this.dataSource.query<SqlRow[]>(
+      `SELECT count(*) AS total FROM warehouse_cash_withdrawals w ${whereSql}`,
+      params,
+    );
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `${WITHDRAWAL_SELECT} ${whereSql} ORDER BY w.number DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, options.limit, (options.page - 1) * options.limit],
+    );
+    return {
+      items: rows.map((r) => this.toWithdrawal(r)),
+      total: num(count?.total),
+      page: options.page,
+      limit: options.limit,
+    };
+  }
+
+  async findWithdrawalById(id: string): Promise<WarehouseWithdrawalRow | null> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `${WITHDRAWAL_SELECT} WHERE w.id = $1`,
+      [id],
+    );
+    return row ? this.toWithdrawal(row) : null;
+  }
+
+  private toWithdrawal(row: SqlRow): WarehouseWithdrawalRow {
+    return {
+      id: text(row.id),
+      referenceNumber: text(row.reference_number),
+      destination: text(
+        row.destination,
+      ) as WarehouseWithdrawalRow['destination'],
+      amount: num(row.amount),
+      bankId: textOrNull(row.bank_id),
+      bankName: textOrNull(row.bank_name),
+      bankAccountNumber: textOrNull(row.bank_account_number),
+      deliveredBy: text(row.delivered_by),
+      receivedBy: text(row.received_by),
+      voucherReference: textOrNull(row.voucher_reference),
+      observations: textOrNull(row.observations),
+      hasBreakdown: row.has_breakdown === true,
+      businessDate: text(row.business_date_text),
+      warehouseMovementId: text(row.warehouse_movement_id),
+      warehouseMovementSequence: num(row.warehouse_sequence),
+      cashMovementId: textOrNull(row.cash_movement_id),
+      cashMovementSequence: numOrNull(row.cash_sequence),
+      bankMovementId: textOrNull(row.bank_movement_id),
+      status: text(row.status) as WarehouseWithdrawalRow['status'],
+      voidedAt: (row.voided_at as Date | null) ?? null,
+      voidedByUsername: textOrNull(row.voided_by_username),
+      voidReason: textOrNull(row.void_reason),
+      createdByUsername: text(row.created_by_username),
+      createdAt: row.created_at as Date,
+      details: toDetails(row.details),
     };
   }
 
@@ -379,7 +511,10 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       return await this.dataSource.query<T>(sql, params);
     } catch (error) {
       if (error instanceof QueryFailedError) {
-        const mapped = cashControlErrorFromMessage(error.message);
+        // Custody rules first; a deposit from Bodega can also hit the bank account's own rules.
+        const mapped =
+          cashControlErrorFromMessage(error.message) ??
+          bankMovementErrorFromMessage(error.message);
         if (mapped) {
           throw mapped;
         }

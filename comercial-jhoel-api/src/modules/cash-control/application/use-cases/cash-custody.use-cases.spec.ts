@@ -3,6 +3,8 @@ import type {
   CashCustodySnapshot,
 } from '../../domain/repositories/cash-custody.repository';
 import {
+  RegisterWarehouseWithdrawalUseCase,
+  VoidWarehouseWithdrawalUseCase,
   GetCashCustodyUseCase,
   ListCashCountsUseCase,
   RegisterCashCountUseCase,
@@ -23,6 +25,8 @@ const custody: CashCustodySnapshot = {
   warehouseLastMovementAt: null,
   currentDay: { businessDate: '2026-11-11', isOpen: true },
   deliveredToday: 15000,
+  returnedToCashToday: 0,
+  depositedToBankToday: 0,
 };
 
 function repository(): jest.Mocked<CashCustodyRepository> {
@@ -40,6 +44,12 @@ function repository(): jest.Mocked<CashCustodyRepository> {
     findCounts: jest
       .fn()
       .mockResolvedValue({ items: [], total: 0, page: 1, limit: 25 }),
+    registerWithdrawal: jest.fn().mockResolvedValue('w1'),
+    voidWithdrawal: jest.fn().mockResolvedValue('w1'),
+    findWithdrawals: jest.fn(),
+    findWithdrawalById: jest
+      .fn()
+      .mockResolvedValue({ id: 'w1', referenceNumber: 'RET-000001' }),
     findCountById: jest.fn().mockResolvedValue({
       id: 'c1',
       difference: -500,
@@ -237,6 +247,91 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
         ...SUPER,
       }),
       'CASH_INVALID_DATE_RANGE',
+    );
+  });
+
+  it('withdrawal: to caja or bank, bank required for a deposit, namespaced key', async () => {
+    const repo = repository();
+    const base = {
+      amount: 5000,
+      details: [{ denomination: 100, quantity: 50 }],
+      deliveredBy: 'Ana Bodega',
+      receivedBy: 'Juan Caja',
+      clientRequestId: 'w-1',
+    };
+    await new RegisterWarehouseWithdrawalUseCase(repo).execute({
+      ...base,
+      destination: 'CAJA',
+      bankId: 'ignored',
+      ...SUPERVISOR,
+    });
+    expect(repo.registerWithdrawal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        destination: 'CAJA',
+        bankId: null,
+        idempotencyKey: 'WHW:w-1',
+      }),
+    );
+    await expectCode(
+      new RegisterWarehouseWithdrawalUseCase(repo).execute({
+        ...base,
+        destination: 'BANCO',
+        ...SUPERVISOR,
+      }),
+      'WAREHOUSE_WITHDRAWAL_BANK_REQUIRED',
+    );
+    await new RegisterWarehouseWithdrawalUseCase(repo).execute({
+      ...base,
+      destination: 'BANCO',
+      bankId: 'b1',
+      ...SUPERVISOR,
+    });
+    expect(repo.registerWithdrawal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ destination: 'BANCO', bankId: 'b1' }),
+    );
+  });
+
+  it('withdrawal: without breakdown needs authorize; cashiers cannot withdraw; voids need authorize', async () => {
+    const repo = repository();
+    const base = {
+      amount: 100,
+      deliveredBy: 'Ana Bodega',
+      receivedBy: 'Juan Caja',
+      clientRequestId: 'w-2',
+      destination: 'CAJA' as const,
+    };
+    await expectCode(
+      new RegisterWarehouseWithdrawalUseCase(repo).execute({
+        ...base,
+        ...SUPERVISOR,
+      }),
+      'CASH_CUSTODY_FORBIDDEN',
+    );
+    await expectCode(
+      new RegisterWarehouseWithdrawalUseCase(repo).execute({
+        ...base,
+        details: [{ denomination: 100, quantity: 1 }],
+        ...USER,
+      }),
+      'CASH_CUSTODY_FORBIDDEN',
+    );
+    await expectCode(
+      new VoidWarehouseWithdrawalUseCase(repo).execute({
+        id: 'w1',
+        reason: 'Error de registro',
+        ...SUPERVISOR,
+      }),
+      'CASH_CUSTODY_FORBIDDEN',
+    );
+    await new VoidWarehouseWithdrawalUseCase(repo).execute({
+      id: 'w1',
+      reason: 'Error de registro',
+      ...SUPER,
+    });
+    expect(repo.voidWithdrawal).toHaveBeenCalledWith(
+      'w1',
+      SUPER.userId,
+      'Error de registro',
     );
   });
 });

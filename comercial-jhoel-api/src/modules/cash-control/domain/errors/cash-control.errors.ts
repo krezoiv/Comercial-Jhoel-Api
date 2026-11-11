@@ -147,6 +147,22 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message: 'La entrega a Bodega ya está anulada.',
     status: 409,
   },
+  WAREHOUSE_WITHDRAWAL_INVALID_DESTINATION: {
+    message:
+      'Indique si el retiro de Bodega va a la caja o a una cuenta bancaria.',
+  },
+  WAREHOUSE_WITHDRAWAL_BANK_REQUIRED: {
+    message:
+      'Seleccione la cuenta bancaria donde se deposita el efectivo de Bodega.',
+  },
+  WAREHOUSE_WITHDRAWAL_NOT_FOUND: {
+    message: 'No se encontró el retiro de Bodega.',
+    status: 404,
+  },
+  WAREHOUSE_WITHDRAWAL_ALREADY_VOIDED: {
+    message: 'El retiro de Bodega ya está anulado.',
+    status: 409,
+  },
   WAREHOUSE_INSUFFICIENT_BALANCE: {
     message: 'Bodega no tiene efectivo suficiente para esta operación.',
     status: 409,

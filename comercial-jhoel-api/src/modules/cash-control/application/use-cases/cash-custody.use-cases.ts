@@ -8,6 +8,8 @@ import type {
   Paginated,
   WarehouseMovementRow,
   WarehouseTransferRow,
+  WarehouseWithdrawalDestination,
+  WarehouseWithdrawalRow,
 } from '../../domain/repositories/cash-custody.repository';
 import { assertCashCustodyPermission } from '../../domain/policies/cash-control.policy';
 import { cashControlError } from '../../domain/errors/cash-control.errors';
@@ -337,5 +339,148 @@ export class GetCashCountUseCase {
       throw cashControlError('CASH_COUNT_NOT_FOUND');
     }
     return count;
+  }
+}
+
+/**
+ * "Retiro de Bodega": cash leaves Bodega either back to the caja (internal
+ * transfer, total custody unchanged) or deposited into a bank account (Bodega
+ * down, bank up). One atomic SQL call; without a breakdown it needs
+ * `cash_custody.authorize` (same policy as the deliveries).
+ */
+@Injectable()
+export class RegisterWarehouseWithdrawalUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(
+    input: {
+      destination: WarehouseWithdrawalDestination;
+      amount: number;
+      details?: DenominationInput[];
+      bankId?: string;
+      deliveredBy: string;
+      receivedBy: string;
+      voucherReference?: string;
+      observations?: string;
+      clientRequestId: string;
+    } & CustodyActor,
+  ): Promise<{
+    withdrawal: WarehouseWithdrawalRow;
+    custody: CashCustodySnapshot;
+  }> {
+    assertCashCustodyPermission(input.role, 'cash_custody.operate');
+    const details = nonZero(input.details);
+    if (details.length === 0) {
+      assertCashCustodyPermission(input.role, 'cash_custody.authorize');
+    }
+    if (input.destination === 'BANCO' && !input.bankId) {
+      throw cashControlError('WAREHOUSE_WITHDRAWAL_BANK_REQUIRED');
+    }
+    const id = await this.repository.registerWithdrawal({
+      destination: input.destination,
+      amount: input.amount,
+      details,
+      bankId: input.destination === 'BANCO' ? input.bankId : null,
+      deliveredBy: input.deliveredBy.trim(),
+      receivedBy: input.receivedBy.trim(),
+      voucherReference: input.voucherReference?.trim() || null,
+      observations: input.observations?.trim() || null,
+      userId: input.userId,
+      idempotencyKey: `WHW:${input.clientRequestId}`,
+    });
+    const [withdrawal, custody] = await Promise.all([
+      this.repository.findWithdrawalById(id),
+      this.repository.getCustody(),
+    ]);
+    if (!withdrawal) {
+      throw cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND');
+    }
+    return { withdrawal, custody };
+  }
+}
+
+/** Voids a withdrawal (both sides reversed together). Admin + reason. */
+@Injectable()
+export class VoidWarehouseWithdrawalUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: { id: string; reason: string } & CustodyActor): Promise<{
+    withdrawal: WarehouseWithdrawalRow;
+    custody: CashCustodySnapshot;
+  }> {
+    assertCashCustodyPermission(input.role, 'cash_custody.authorize');
+    if (!input.reason || input.reason.trim().length < 5) {
+      throw cashControlError('CASH_REASON_REQUIRED');
+    }
+    await this.repository.voidWithdrawal(
+      input.id,
+      input.userId,
+      input.reason.trim(),
+    );
+    const [withdrawal, custody] = await Promise.all([
+      this.repository.findWithdrawalById(input.id),
+      this.repository.getCustody(),
+    ]);
+    if (!withdrawal) {
+      throw cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND');
+    }
+    return { withdrawal, custody };
+  }
+}
+
+/** History of withdrawals from Bodega. */
+@Injectable()
+export class ListWarehouseWithdrawalsUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    dateFrom?: string;
+    dateTo?: string;
+    status?: 'APLICADA' | 'ANULADA';
+    page?: number;
+    limit?: number;
+    role: string;
+  }): Promise<Paginated<WarehouseWithdrawalRow>> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    if (input.dateFrom && input.dateTo && input.dateFrom > input.dateTo) {
+      throw cashControlError('CASH_INVALID_DATE_RANGE');
+    }
+    return this.repository.findWithdrawals({
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+      status: input.status,
+      page: page(input.page),
+      limit: limit(input.limit),
+    });
+  }
+}
+
+/** One withdrawal with its related movements and breakdown. */
+@Injectable()
+export class GetWarehouseWithdrawalUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    id: string;
+    role: string;
+  }): Promise<WarehouseWithdrawalRow> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    const withdrawal = await this.repository.findWithdrawalById(input.id);
+    if (!withdrawal) {
+      throw cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND');
+    }
+    return withdrawal;
   }
 }

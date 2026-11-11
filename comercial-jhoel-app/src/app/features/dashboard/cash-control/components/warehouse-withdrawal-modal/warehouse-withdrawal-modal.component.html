@@ -1,0 +1,135 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="warehouse-withdrawal-title">
+      <div class="modal__header">
+        <h2 class="modal__title modal__title--out" id="warehouse-withdrawal-title">
+          <app-icon name="package" [size]="20" />
+          Retiro de efectivo de Bodega
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="segmented" role="radiogroup" aria-label="Destino del retiro">
+        <button type="button" role="radio" [attr.aria-checked]="destination() === 'CAJA'" [class.segmented__option--on]="destination() === 'CAJA'" (click)="destination.set('CAJA')">
+          Ingresar a caja
+        </button>
+        <button type="button" role="radio" [attr.aria-checked]="destination() === 'BANCO'" [class.segmented__option--on]="destination() === 'BANCO'" (click)="destination.set('BANCO')">
+          Depositar en cuenta
+        </button>
+      </div>
+      <p class="modal__hint modal__hint--top">
+        @if (destination() === 'CAJA') {
+          Transferencia interna: el efectivo vuelve de Bodega a la caja. No es un ingreso; el total bajo custodia no cambia.
+        } @else {
+          El efectivo sale de Bodega y se deposita en la cuenta seleccionada: Bodega disminuye y el saldo de la cuenta aumenta.
+        }
+      </p>
+      @if (!dayOpen()) {
+        <p class="modal__error" role="alert">No hay un día operativo abierto en Agentes Bancarios: apertura el día para registrar retiros.</p>
+      }
+
+      <div class="modal__grid">
+        @if (destination() === 'BANCO') {
+          <div class="field field--wide">
+            <label for="ww-bank">Cuenta bancaria</label>
+            <select id="ww-bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
+              <option value="">Selecciona una cuenta</option>
+              @for (bank of banks(); track bank.bankId) {
+                <option [value]="bank.bankId">{{ bank.bankName }}{{ bank.accountNumber ? ' · ' + bank.accountNumber : '' }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="field">
+          <label for="ww-amount">Monto del retiro</label>
+          <input id="ww-amount" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+            [ngModel]="amount() || null" (ngModelChange)="amount.set($event)" />
+        </div>
+        <div class="field">
+          <label for="ww-voucher">{{ destination() === 'BANCO' ? 'Boleta de depósito' : 'Referencia / comprobante' }} <span class="field__optional">(opcional)</span></label>
+          <input id="ww-voucher" type="text" maxlength="100" [ngModel]="voucher()" (ngModelChange)="voucher.set($event)" />
+        </div>
+        <div class="field">
+          <label for="ww-delivered">Persona que entrega (Bodega)</label>
+          <input id="ww-delivered" type="text" maxlength="150" placeholder="Nombre de quien entrega"
+            [ngModel]="deliveredBy()" (ngModelChange)="deliveredBy.set($event)" />
+        </div>
+        <div class="field">
+          <label for="ww-received">{{ destination() === 'BANCO' ? 'Persona que lleva el depósito' : 'Persona que recibe en caja' }}</label>
+          <input id="ww-received" type="text" maxlength="150" [ngModel]="receivedBy()" (ngModelChange)="receivedBy.set($event)" />
+        </div>
+        <div class="field field--wide">
+          <label for="ww-observations">Observaciones <span class="field__optional">(opcional)</span></label>
+          <input id="ww-observations" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown__header">
+          <label class="field__label">
+            <input type="checkbox" [ngModel]="withBreakdown()" [disabled]="!canSkipBreakdown" (ngModelChange)="withBreakdown.set($event)" />
+            Registrar desglose de denominaciones
+            @if (!canSkipBreakdown) {
+              <span class="field__optional">(obligatorio para su rol)</span>
+            }
+          </label>
+          @if (withBreakdown() && totalCounted() > 0 && totalCounted() !== (amount() ?? 0)) {
+            <button type="button" class="link" (click)="useCountedAsAmount()">Usar {{ formatCurrency(totalCounted()) }} como monto</button>
+          }
+        </div>
+        @if (withBreakdown()) {
+          <app-cash-breakdown-table
+            [cashCounts]="cashCounts()"
+            [totalCash]="totalCounted()"
+            [totalAmount]="amount() ?? 0"
+            [status]="breakdownStatus()"
+            emptyAmountText="Ingresa el monto del retiro"
+            (quantityChange)="onQuantityChange($event)"
+          />
+        } @else {
+          <p class="modal__hint">El retiro quedará registrado sin detalle de denominaciones.</p>
+        }
+      </div>
+
+      <div class="previews" aria-live="polite">
+        <div class="preview" [class.preview--error]="insufficient()">
+          <div>
+            <span class="preview__label">Efectivo en Bodega</span>
+            <strong>{{ formatCurrency(warehouseBalance()) }}</strong>
+          </div>
+          <app-icon name="arrow-right" [size]="18" />
+          <div>
+            <span class="preview__label">Después (vista previa)</span>
+            <strong class="preview__out">{{ formatCurrency(warehouseAfter()) }}</strong>
+          </div>
+        </div>
+        <div class="preview">
+          <div>
+            <span class="preview__label">{{ destination() === 'CAJA' ? 'Efectivo en caja' : (selectedBank()?.bankName ?? 'Cuenta') }}</span>
+            <strong>{{ destination() === 'CAJA' || selectedBank() ? formatCurrency(targetBefore()) : '—' }}</strong>
+          </div>
+          <app-icon name="arrow-right" [size]="18" />
+          <div>
+            <span class="preview__label">Después (vista previa)</span>
+            <strong class="preview__in">{{ destination() === 'CAJA' || selectedBank() ? formatCurrency(targetAfter()) : '—' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      @if (insufficient()) {
+        <p class="modal__error" role="alert">El monto supera el efectivo disponible en Bodega.</p>
+      }
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Revisar y confirmar retiro' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

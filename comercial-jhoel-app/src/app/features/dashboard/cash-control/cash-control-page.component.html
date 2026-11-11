@@ -91,6 +91,7 @@
         @if (canCustody()) {
           <app-button variant="secondary" (click)="openCount()"><app-icon name="check-check" [size]="16" /> Arqueo de caja</app-button>
           <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Entregar a Bodega</app-button>
+          <app-button variant="secondary" (click)="openWithdrawal()"><app-icon name="arrow-up-circle" [size]="16" /> Retirar de Bodega</app-button>
         }
         @if (isAdmin()) {
           <app-button variant="ghost" (click)="formMode.set('AJUSTE')"><app-icon name="edit-2" [size]="16" /> Ajuste</app-button>
@@ -288,6 +289,7 @@
       [canOperate]="canCustody()"
       [refreshKey]="custodyRefresh()"
       (deliver)="openTransfer()"
+      (withdraw)="openWithdrawal()"
       (changed)="onCustodyChanged()"
     />
   }
@@ -326,6 +328,14 @@
   [canSkipBreakdown]="isAdmin()"
   (saved)="onTransferSaved($event)"
   (closed)="transferOpen.set(false)"
+/>
+
+<app-warehouse-withdrawal-modal
+  [open]="withdrawalOpen()"
+  [custody]="custody()"
+  [canSkipBreakdown]="isAdmin()"
+  (saved)="onWithdrawalSaved($event)"
+  (closed)="withdrawalOpen.set(false)"
 />
 
 <app-cash-bank-deposit-modal

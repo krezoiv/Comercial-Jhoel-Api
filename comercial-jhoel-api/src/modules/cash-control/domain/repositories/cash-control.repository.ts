@@ -31,6 +31,8 @@ export const CASH_MOVEMENT_TYPES = [
   'DEPOSITO_BANCARIO',
   /** Internal transfer: cash handed from the caja to Bodega (never an expense). */
   'ENTREGA_BODEGA',
+  /** Internal transfer: cash returned from Bodega to the caja (never an income). */
+  'DEVOLUCION_BODEGA',
 ] as const;
 export type CashMovementType = (typeof CASH_MOVEMENT_TYPES)[number];
 

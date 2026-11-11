@@ -14,6 +14,53 @@ export interface CashCustody {
   warehouseLastMovementAt: string | null;
   currentDay: { businessDate: string; isOpen: boolean } | null;
   deliveredToday: number;
+  /** Returned from Bodega to the caja on the current bank day. */
+  returnedToCashToday: number;
+  /** Deposited from Bodega into bank accounts on the current bank day. */
+  depositedToBankToday: number;
+}
+
+export type WarehouseWithdrawalDestination = 'CAJA' | 'BANCO';
+
+/** "Retiro de Bodega": back to the caja or deposited into a bank account. */
+export interface WarehouseWithdrawal {
+  id: string;
+  referenceNumber: string;
+  destination: WarehouseWithdrawalDestination;
+  amount: number;
+  bankId: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference: string | null;
+  observations: string | null;
+  hasBreakdown: boolean;
+  businessDate: string;
+  warehouseMovementId: string;
+  warehouseMovementSequence: number;
+  cashMovementId: string | null;
+  cashMovementSequence: number | null;
+  bankMovementId: string | null;
+  status: 'APLICADO' | 'ANULADO';
+  voidedAt: string | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
+  createdByUsername: string;
+  createdAt: string;
+  details: CashDenominationRow[];
+}
+
+export interface RegisterWarehouseWithdrawalInput {
+  destination: WarehouseWithdrawalDestination;
+  amount: number;
+  details?: { denomination: number; quantity: number }[];
+  bankId?: string;
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference?: string;
+  observations?: string;
+  clientRequestId: string;
 }
 
 export interface CashDenominationRow {
@@ -49,7 +96,7 @@ export interface WarehouseMovement {
   id: string;
   sequence: number;
   businessDate: string | null;
-  movementType: 'SALDO_INICIAL' | 'ENTREGA_DESDE_CAJA' | 'ANULACION';
+  movementType: 'SALDO_INICIAL' | 'ENTREGA_DESDE_CAJA' | 'DEVOLUCION_A_CAJA' | 'DEPOSITO_BANCARIO' | 'ANULACION';
   direction: 'IN' | 'OUT';
   amount: number;
   previousBalance: number;

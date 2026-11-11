@@ -11,8 +11,10 @@ import {
   PaginatedResult,
   RegisterCashCountInput,
   RegisterWarehouseTransferInput,
+  RegisterWarehouseWithdrawalInput,
   WarehouseMovement,
   WarehouseTransfer,
+  WarehouseWithdrawal,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/cash-control`;
@@ -79,6 +81,25 @@ export class CashCustodyService {
   voidTransfer(id: string, reason: string): Observable<{ transfer: WarehouseTransfer; custody: CashCustody }> {
     return this.http
       .post<ApiSuccessResponse<{ transfer: WarehouseTransfer; custody: CashCustody }>>(`${BASE_URL}/warehouse/transfers/${id}/void`, { reason })
+      .pipe(map((r) => r.data));
+  }
+
+  getWithdrawals(filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }): Observable<PaginatedResult<WarehouseWithdrawal>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResult<WarehouseWithdrawal>>>(`${BASE_URL}/warehouse/withdrawals`, { params: toParams(filters) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Cash out of Bodega: back to the caja or deposited into a bank account (one transaction in the backend). */
+  registerWithdrawal(input: RegisterWarehouseWithdrawalInput): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }> {
+    return this.http
+      .post<ApiSuccessResponse<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>>(`${BASE_URL}/warehouse/withdrawals`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  voidWithdrawal(id: string, reason: string): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }> {
+    return this.http
+      .post<ApiSuccessResponse<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>>(`${BASE_URL}/warehouse/withdrawals/${id}/void`, { reason })
       .pipe(map((r) => r.data));
   }
 

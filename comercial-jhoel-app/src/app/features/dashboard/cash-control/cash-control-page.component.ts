@@ -50,6 +50,7 @@ import { CashCountModalComponent } from './components/cash-count-modal/cash-coun
 import { WarehouseTransferModalComponent } from './components/warehouse-transfer-modal/warehouse-transfer-modal.component';
 import { CashCountsPanelComponent } from './components/cash-counts-panel/cash-counts-panel.component';
 import { WarehousePanelComponent } from './components/warehouse-panel/warehouse-panel.component';
+import { WarehouseWithdrawalModalComponent } from './components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component';
 import { CashBankDayCardComponent } from './components/bank-day-card/bank-day-card.component';
 import { CashBankDayHistoryComponent } from './components/bank-day-history/bank-day-history.component';
 
@@ -83,6 +84,7 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     WarehouseTransferModalComponent,
     CashCountsPanelComponent,
     WarehousePanelComponent,
+    WarehouseWithdrawalModalComponent,
     CashBankDayCardComponent,
     CashBankDayHistoryComponent,
   ],
@@ -121,6 +123,7 @@ export class CashControlPageComponent {
   readonly countOpen = signal(false);
   readonly countCorrection = signal<CashCountRecord | null>(null);
   readonly transferOpen = signal(false);
+  readonly withdrawalOpen = signal(false);
   /** Bumped after a count/transfer so the history panels reload. */
   readonly custodyRefresh = signal(0);
 
@@ -225,6 +228,18 @@ export class CashControlPageComponent {
 
   onTransferSaved(result: { custody: CashCustody }): void {
     this.transferOpen.set(false);
+    this.custody.set(result.custody);
+    this.custodyRefresh.update((value) => value + 1);
+    this.refresh();
+  }
+
+  openWithdrawal(): void {
+    this.loadCustody();
+    this.withdrawalOpen.set(true);
+  }
+
+  onWithdrawalSaved(result: { custody: CashCustody }): void {
+    this.withdrawalOpen.set(false);
     this.custody.set(result.custody);
     this.custodyRefresh.update((value) => value + 1);
     this.refresh();
@@ -368,6 +383,9 @@ export class CashControlPageComponent {
   }
 
   voidMessage(): string {
+    if (this.voidTarget()?.movementType === 'DEVOLUCION_BODEGA') {
+      return 'Se retirará el efectivo de la caja y volverá a Bodega (anulación de la transferencia interna). Ambos movimientos quedan visibles como anulados.';
+    }
     if (this.voidTarget()?.movementType === 'ENTREGA_BODEGA') {
       return 'Se devolverá el efectivo a la caja y se retirará de Bodega (anulación de la transferencia interna). Ambos movimientos quedan visibles como anulados.';
     }

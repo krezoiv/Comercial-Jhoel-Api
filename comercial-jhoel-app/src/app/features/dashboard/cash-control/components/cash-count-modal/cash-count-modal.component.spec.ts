@@ -16,6 +16,8 @@ const custody: CashCustody = {
   warehouseLastMovementAt: null,
   currentDay: { businessDate: '2026-11-11', isOpen: true },
   deliveredToday: 15000,
+  returnedToCashToday: 0,
+  depositedToBankToday: 0,
 };
 
 describe('CashCountModalComponent (arqueo de caja)', () => {

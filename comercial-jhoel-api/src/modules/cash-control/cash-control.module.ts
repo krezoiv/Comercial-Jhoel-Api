@@ -45,6 +45,10 @@ import {
   RegisterWarehouseInitialBalanceUseCase,
   RegisterWarehouseTransferUseCase,
   VoidWarehouseTransferUseCase,
+  GetWarehouseWithdrawalUseCase,
+  ListWarehouseWithdrawalsUseCase,
+  RegisterWarehouseWithdrawalUseCase,
+  VoidWarehouseWithdrawalUseCase,
 } from './application/use-cases/cash-custody.use-cases';
 
 /**
@@ -80,6 +84,10 @@ import {
     GetWarehouseTransferUseCase,
     RegisterWarehouseInitialBalanceUseCase,
     ListWarehouseMovementsUseCase,
+    RegisterWarehouseWithdrawalUseCase,
+    VoidWarehouseWithdrawalUseCase,
+    ListWarehouseWithdrawalsUseCase,
+    GetWarehouseWithdrawalUseCase,
     GetCashPositionUseCase,
     GetCashBalanceUseCase,
     ListCashMovementsUseCase,

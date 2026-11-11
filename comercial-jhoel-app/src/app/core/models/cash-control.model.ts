@@ -26,7 +26,9 @@ export type CashMovementType =
   /** Efectivo de caja depositado a una cuenta bancaria registrada (con desglose). */
   | 'DEPOSITO_BANCARIO'
   /** Internal transfer caja → Bodega (never an expense). */
-  | 'ENTREGA_BODEGA';
+  | 'ENTREGA_BODEGA'
+  /** Internal transfer Bodega → caja (never an income). */
+  | 'DEVOLUCION_BODEGA';
 
 export type ManualCashMovementType = 'ENTRADA_MANUAL' | 'SALIDA_MANUAL' | 'AJUSTE' | 'SALDO_INICIAL';
 
@@ -49,6 +51,7 @@ export const CASH_MOVEMENT_TYPE_LABEL: Record<CashMovementType, string> = {
   ANULACION: 'Anulación',
   DEPOSITO_BANCARIO: 'Depósito bancario',
   ENTREGA_BODEGA: 'Entrega a Bodega (transferencia interna)',
+  DEVOLUCION_BODEGA: 'Devolución de Bodega (transferencia interna)',
 };
 
 export const CASH_DIRECTION_LABEL: Record<CashDirection, string> = {

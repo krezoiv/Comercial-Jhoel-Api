@@ -1795,4 +1795,7 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   `WarehousePanelComponent` (entregas con ambas secuencias de Kardex, Kardex de Bodega, anulación y saldo inicial admin).
   `CashCustodyService`; las escrituras a `/cash-control` ya disparan la sincronización (`cashMutationInterceptor`).
 - Cuadre de Agentes muestra "Efectivo en Bodega" y `calculateCuadreResult` lo suma (mismo criterio que el backend).
+- Retiro de Bodega: `WarehouseWithdrawalModalComponent` (destino "Ingresar a caja" / "Depositar en cuenta", cuentas sin
+  Guayacán, desglose por defecto, sin desglose solo admin). Botón en la tarjeta principal y en el panel de Bodega, que
+  además muestra el historial de retiros (anulación admin) y lo devuelto/depositado en el día.
 

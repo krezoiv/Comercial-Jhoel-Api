@@ -24,6 +24,10 @@ import {
   RegisterWarehouseInitialBalanceUseCase,
   RegisterWarehouseTransferUseCase,
   VoidWarehouseTransferUseCase,
+  GetWarehouseWithdrawalUseCase,
+  ListWarehouseWithdrawalsUseCase,
+  RegisterWarehouseWithdrawalUseCase,
+  VoidWarehouseWithdrawalUseCase,
 } from '../../application/use-cases/cash-custody.use-cases';
 import { ReasonRequestDto } from '../dtos/cash-control.request.dto';
 import {
@@ -31,6 +35,7 @@ import {
   CorrectCashCountRequestDto,
   RegisterCashCountRequestDto,
   RegisterWarehouseTransferRequestDto,
+  RegisterWarehouseWithdrawalRequestDto,
   WarehouseInitialBalanceRequestDto,
   WarehouseMovementsQueryDto,
   WarehouseTransfersQueryDto,
@@ -55,7 +60,57 @@ export class CashCustodyController {
     private readonly getTransfer: GetWarehouseTransferUseCase,
     private readonly initialBalance: RegisterWarehouseInitialBalanceUseCase,
     private readonly listWarehouseMovements: ListWarehouseMovementsUseCase,
+    private readonly registerWithdrawal: RegisterWarehouseWithdrawalUseCase,
+    private readonly voidWithdrawal: VoidWarehouseWithdrawalUseCase,
+    private readonly listWithdrawals: ListWarehouseWithdrawalsUseCase,
+    private readonly getWithdrawal: GetWarehouseWithdrawalUseCase,
   ) {}
+
+  /** "Retiro de Bodega" history. */
+  @Get('warehouse/withdrawals')
+  withdrawals(
+    @Query() query: WarehouseTransfersQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listWithdrawals.execute({ ...query, role: user.role });
+  }
+
+  @Get('warehouse/withdrawals/:id')
+  withdrawal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.getWithdrawal.execute({ id, role: user.role });
+  }
+
+  /** Cash out of Bodega: back to the caja or deposited into a bank account. */
+  @Post('warehouse/withdrawals')
+  @HttpCode(HttpStatus.CREATED)
+  createWithdrawal(
+    @Body() dto: RegisterWarehouseWithdrawalRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerWithdrawal.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  @Post('warehouse/withdrawals/:id/void')
+  @HttpCode(HttpStatus.OK)
+  voidWarehouseWithdrawal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReasonRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.voidWithdrawal.execute({
+      id,
+      reason: dto.reason,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
 
   /** Caja, Bodega and total under custody. */
   @Get('custody')

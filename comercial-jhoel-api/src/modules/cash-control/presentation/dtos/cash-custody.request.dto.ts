@@ -15,8 +15,14 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { CASH_COUNT_RESULTS } from '../../domain/repositories/cash-custody.repository';
-import type { CashCountResult } from '../../domain/repositories/cash-custody.repository';
+import {
+  CASH_COUNT_RESULTS,
+  WAREHOUSE_WITHDRAWAL_DESTINATIONS,
+} from '../../domain/repositories/cash-custody.repository';
+import type {
+  CashCountResult,
+  WarehouseWithdrawalDestination,
+} from '../../domain/repositories/cash-custody.repository';
 
 const MAX_AMOUNT = 99_999_999.99;
 const DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05];
@@ -116,5 +122,33 @@ export class WarehouseInitialBalanceRequestDto {
   @MaxLength(255)
   reason: string;
 
+  @IsUUID() clientRequestId: string;
+}
+
+/** "Retiro de Bodega" — to the caja or to a bank account. */
+export class RegisterWarehouseWithdrawalRequestDto {
+  @IsIn(WAREHOUSE_WITHDRAWAL_DESTINATIONS)
+  destination: WarehouseWithdrawalDestination;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(MAX_AMOUNT)
+  amount: number;
+
+  /** Optional breakdown; without it the withdrawal needs an administrator. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(11)
+  @ValidateNested({ each: true })
+  @Type(() => DenominationRequestDto)
+  details?: DenominationRequestDto[];
+
+  /** Required when `destination` is BANCO. */
+  @IsOptional() @IsUUID() bankId?: string;
+
+  @IsString() @MinLength(3) @MaxLength(150) deliveredBy: string;
+  @IsString() @MinLength(3) @MaxLength(150) receivedBy: string;
+  @IsOptional() @IsString() @MaxLength(100) voucherReference?: string;
+  @IsOptional() @IsString() @MaxLength(500) observations?: string;
   @IsUUID() clientRequestId: string;
 }

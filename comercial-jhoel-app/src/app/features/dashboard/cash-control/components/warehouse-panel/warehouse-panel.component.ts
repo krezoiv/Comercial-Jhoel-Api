@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Out
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
-import { CashCustody, WarehouseMovement, WarehouseTransfer, formatCurrency } from '../../../../../core/models';
+import {
+  CashCustody,
+  WarehouseMovement,
+  WarehouseTransfer,
+  WarehouseWithdrawal,
+  formatCurrency,
+} from '../../../../../core/models';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
@@ -35,6 +41,8 @@ export class WarehousePanelComponent implements OnChanges {
   @Input() refreshKey = 0;
 
   @Output() deliver = new EventEmitter<void>();
+  /** "Retirar de Bodega" (to the caja or to a bank account). */
+  @Output() withdraw = new EventEmitter<void>();
   @Output() changed = new EventEmitter<void>();
 
   private readonly service = inject(CashCustodyService);
@@ -48,6 +56,17 @@ export class WarehousePanelComponent implements OnChanges {
   readonly transfers = signal<WarehouseTransfer[]>([]);
   readonly transfersTotal = signal(0);
   readonly transfersPage = signal(1);
+  readonly withdrawals = signal<WarehouseWithdrawal[]>([]);
+  readonly withdrawalsTotal = signal(0);
+  readonly withdrawalsPage = signal(1);
+  readonly voidWithdrawalTarget = signal<WarehouseWithdrawal | null>(null);
+  readonly movementLabel: Record<WarehouseMovement['movementType'], string> = {
+    SALDO_INICIAL: 'Saldo inicial',
+    ENTREGA_DESDE_CAJA: 'Entrega desde caja',
+    DEVOLUCION_A_CAJA: 'Devolución a caja',
+    DEPOSITO_BANCARIO: 'Depósito en cuenta',
+    ANULACION: 'Anulación',
+  };
   readonly movements = signal<WarehouseMovement[]>([]);
   readonly movementsTotal = signal(0);
   readonly movementsPage = signal(1);
@@ -61,7 +80,43 @@ export class WarehousePanelComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.loadTransfers();
+    this.loadWithdrawals();
     this.loadMovements();
+  }
+
+  loadWithdrawals(): void {
+    this.service.getWithdrawals({ page: this.withdrawalsPage(), limit: this.pageSize }).subscribe({
+      next: (result) => {
+        this.withdrawals.set(result.items);
+        this.withdrawalsTotal.set(result.total);
+      },
+      error: () => this.failed.set(true),
+    });
+  }
+
+  onWithdrawalsPage(page: number): void {
+    this.withdrawalsPage.set(page);
+    this.loadWithdrawals();
+  }
+
+  confirmVoidWithdrawal(reason: string): void {
+    const target = this.voidWithdrawalTarget();
+    if (!target || this.voiding()) {
+      return;
+    }
+    this.voiding.set(true);
+    this.service.voidWithdrawal(target.id, reason).subscribe({
+      next: (result) => {
+        this.voiding.set(false);
+        this.voidWithdrawalTarget.set(null);
+        this.notifications.success(`Retiro ${result.withdrawal.referenceNumber} anulado: el efectivo volvió a Bodega.`);
+        this.changed.emit();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.voiding.set(false);
+        this.notifications.error(extractErrorMessage(error, 'No se pudo anular el retiro.'));
+      },
+    });
   }
 
   loadTransfers(): void {

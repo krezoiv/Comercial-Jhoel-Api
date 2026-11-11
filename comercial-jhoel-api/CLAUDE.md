@@ -1524,6 +1524,22 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - Pruebas: `sql/tests/cash-custody.test.sql` (41 casos, escenario de aceptación), caso Bodega en
   `cash-control-concurrency.sh`, `cash-custody.use-cases.spec.ts`, `test/cash-custody.e2e-spec.ts`.
 
+### Retiro de Bodega — a caja o a cuenta bancaria (migración `1760007500000`)
+
+- `register_warehouse_withdrawal(destino CAJA|BANCO, …)` / `warehouse_cash_withdrawals` (`RET-000001`): UNA transacción.
+  CAJA: Bodega `DEVOLUCION_A_CAJA` OUT + caja `DEVOLUCION_BODEGA` IN (tipo nuevo, transferencia interna, custodia sin
+  cambio). BANCO: Bodega `DEPOSITO_BANCARIO` OUT + `apply_bank_account_movement` tipo `DEPOSITO_CAJA` / origen
+  `CONTROL_EFECTIVO`, referencia `WAREHOUSE_WITHDRAWAL` (sin cambiar reglas bancarias; Guayacán excluida). Cuadre de
+  Agentes no cambia (Bodega − = banco +).
+- Mismas reglas que la entrega: día bancario abierto, saldo de Bodega bajo su lock (orden banco → caja → Bodega), personas,
+  desglose en `warehouse_cash_movement_details` (sin desglose solo admin), idempotencia, inmutable.
+- Anular (admin, motivo) revierte ambos lados (banco con sus propias reglas; a caja exige efectivo suficiente); anular el
+  renglón `DEVOLUCION_BODEGA` desde el Kardex de caja enruta a `void_warehouse_withdrawal`.
+- Rutas: `GET/POST warehouse/withdrawals`, `GET warehouse/withdrawals/:id`, `POST warehouse/withdrawals/:id/void`;
+  `custody` agrega `returnedToCashToday` / `depositedToBankToday`.
+- Pruebas: `sql/tests/warehouse-withdrawals.test.sql` (27 casos), casos en `cash-custody.use-cases.spec.ts` y
+  `test/cash-custody.e2e-spec.ts`.
+
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 
 - **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`

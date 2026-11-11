@@ -21,6 +21,56 @@ export interface CashCustodySnapshot {
   currentDay: { businessDate: string; isOpen: boolean } | null;
   /** Bodega entries received from the caja on the current bank day (net of voids). */
   deliveredToday: number;
+  /** Cash returned from Bodega to the caja on the current bank day (net of voids). */
+  returnedToCashToday: number;
+  /** Cash deposited from Bodega into bank accounts on the current bank day (net of voids). */
+  depositedToBankToday: number;
+}
+
+export const WAREHOUSE_WITHDRAWAL_DESTINATIONS = ['CAJA', 'BANCO'] as const;
+export type WarehouseWithdrawalDestination =
+  (typeof WAREHOUSE_WITHDRAWAL_DESTINATIONS)[number];
+
+/** "Retiro de Bodega": back to the caja or deposited into a bank account. */
+export interface WarehouseWithdrawalRow {
+  id: string;
+  referenceNumber: string;
+  destination: WarehouseWithdrawalDestination;
+  amount: number;
+  bankId: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference: string | null;
+  observations: string | null;
+  hasBreakdown: boolean;
+  businessDate: string;
+  warehouseMovementId: string;
+  warehouseMovementSequence: number;
+  cashMovementId: string | null;
+  cashMovementSequence: number | null;
+  bankMovementId: string | null;
+  status: 'APLICADO' | 'ANULADO';
+  voidedAt: Date | null;
+  voidedByUsername: string | null;
+  voidReason: string | null;
+  createdByUsername: string;
+  createdAt: Date;
+  details: DenominationRow[];
+}
+
+export interface RegisterWithdrawalData {
+  destination: WarehouseWithdrawalDestination;
+  amount: number;
+  details: Array<{ denomination: number; quantity: number }>;
+  bankId?: string | null;
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference?: string | null;
+  observations?: string | null;
+  userId: string;
+  idempotencyKey: string;
 }
 
 export interface DenominationRow {
@@ -56,14 +106,19 @@ export interface WarehouseMovementRow {
   id: string;
   sequence: number;
   businessDate: string | null;
-  movementType: 'SALDO_INICIAL' | 'ENTREGA_DESDE_CAJA' | 'ANULACION';
+  movementType:
+    | 'SALDO_INICIAL'
+    | 'ENTREGA_DESDE_CAJA'
+    | 'DEVOLUCION_A_CAJA'
+    | 'DEPOSITO_BANCARIO'
+    | 'ANULACION';
   direction: 'IN' | 'OUT';
   amount: number;
   previousBalance: number;
   newBalance: number;
   referenceType: string | null;
   referenceId: string | null;
-  /** Reference number of the related delivery (`ENT-000001`), if any. */
+  /** Reference number of the related delivery (`ENT-…`) or withdrawal (`RET-…`), if any. */
   transferReference: string | null;
   description: string;
   counterpart: string | null;
@@ -164,6 +219,12 @@ export interface CashCustodyRepository {
     page: number,
     limit: number,
   ): Promise<Paginated<WarehouseMovementRow>>;
+  registerWithdrawal(data: RegisterWithdrawalData): Promise<string>;
+  voidWithdrawal(id: string, userId: string, reason: string): Promise<string>;
+  findWithdrawals(
+    options: FindTransfersOptions,
+  ): Promise<Paginated<WarehouseWithdrawalRow>>;
+  findWithdrawalById(id: string): Promise<WarehouseWithdrawalRow | null>;
   registerCount(data: RegisterCashCountData): Promise<string>;
   findCounts(options: FindCashCountsOptions): Promise<Paginated<CashCountRow>>;
   findCountById(id: string): Promise<CashCountRow | null>;

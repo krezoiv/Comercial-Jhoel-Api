@@ -2,13 +2,18 @@
   <div class="panel__head">
     <h2 class="panel__title"><app-icon name="package" [size]="18" /> Efectivo en Bodega</h2>
     @if (canOperate) {
-      <app-button variant="primary" size="sm" (click)="deliver.emit()"><app-icon name="package" [size]="14" /> Entregar efectivo a Bodega</app-button>
+      <div class="panel__buttons">
+        <app-button variant="primary" size="sm" (click)="deliver.emit()"><app-icon name="package" [size]="14" /> Entregar efectivo a Bodega</app-button>
+        <app-button variant="secondary" size="sm" (click)="withdraw.emit()"><app-icon name="arrow-up-circle" [size]="14" /> Retirar de Bodega</app-button>
+      </div>
     }
   </div>
   @if (custody; as c) {
     <dl class="kpis">
       <div><dt>Disponible en Bodega</dt><dd>{{ formatCurrency(c.warehouseBalance) }}</dd></div>
       <div><dt>Recibido de caja en el día operativo</dt><dd>{{ formatCurrency(c.deliveredToday) }}</dd></div>
+      <div><dt>Devuelto a caja en el día</dt><dd>{{ formatCurrency(c.returnedToCashToday) }}</dd></div>
+      <div><dt>Depositado en cuentas en el día</dt><dd>{{ formatCurrency(c.depositedToBankToday) }}</dd></div>
       <div><dt>Efectivo en caja</dt><dd>{{ formatCurrency(c.cashBalance) }}</dd></div>
       <div><dt>Total bajo custodia</dt><dd>{{ formatCurrency(c.custodyTotal) }}</dd></div>
       <div><dt>Último movimiento de Bodega</dt><dd>{{ c.warehouseLastMovementAt ? formatDateTime(c.warehouseLastMovementAt) : 'sin movimientos' }}</dd></div>
@@ -86,6 +91,64 @@
     <app-report-pagination [total]="transfersTotal()" [page]="transfersPage()" [limit]="pageSize" (pageChange)="onTransfersPage($event)" />
   }
 
+  <h3 class="panel__subtitle">Historial de retiros de Bodega</h3>
+  @if (withdrawals().length === 0) {
+    <p class="state">Sin retiros registrados.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Fecha y hora</th>
+            <th>Destino</th>
+            <th class="num">Monto</th>
+            <th>Entrega</th>
+            <th>Recibe</th>
+            <th>Registró</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (w of withdrawals(); track w.id) {
+            <tr [class.row--muted]="w.status === 'ANULADO'">
+              <td>
+                {{ w.referenceNumber }}
+                @if (w.voucherReference) { <small class="muted block">{{ w.voucherReference }}</small> }
+              </td>
+              <td>{{ formatDateTime(w.createdAt) }}</td>
+              <td>
+                @if (w.destination === 'CAJA') {
+                  Caja <small class="muted block">Kardex caja #{{ w.cashMovementSequence }}</small>
+                } @else {
+                  {{ w.bankName }} <small class="muted block">{{ w.bankAccountNumber ?? '' }}</small>
+                }
+              </td>
+              <td class="num">
+                {{ formatCurrency(w.amount) }}
+                @if (!w.hasBreakdown) { <small class="muted block">sin desglose</small> }
+              </td>
+              <td>{{ w.deliveredBy }}</td>
+              <td>{{ w.receivedBy }}</td>
+              <td>{{ w.createdByUsername }}</td>
+              <td>
+                <span class="badge" [class]="'badge badge--' + (w.status === 'APLICADO' ? 'cuadrado' : 'muted')">{{ w.status === 'APLICADO' ? 'Aplicado' : 'Anulado' }}</span>
+                @if (w.voidReason) { <small class="muted block">{{ w.voidReason }}</small> }
+              </td>
+              <td class="actions">
+                @if (isAdmin && w.status === 'APLICADO') {
+                  <button type="button" class="icon-btn" title="Anular retiro" (click)="voidWithdrawalTarget.set(w)"><app-icon name="x-circle" [size]="16" /></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="withdrawalsTotal()" [page]="withdrawalsPage()" [limit]="pageSize" (pageChange)="onWithdrawalsPage($event)" />
+  }
+
   <h3 class="panel__subtitle">Kardex de Bodega</h3>
   @if (movements().length === 0) {
     <p class="state">Sin movimientos.</p>
@@ -112,7 +175,7 @@
               <td>{{ m.sequence }}</td>
               <td>{{ formatDateTime(m.createdAt) }}</td>
               <td>
-                {{ m.movementType === 'SALDO_INICIAL' ? 'Saldo inicial' : m.movementType === 'ENTREGA_DESDE_CAJA' ? 'Entrega desde caja' : 'Anulación' }}
+                {{ movementLabel[m.movementType] }}
                 @if (m.status === 'ANULADO') { <small class="muted block">anulado</small> }
               </td>
               <td>{{ m.transferReference ?? '—' }}</td>
@@ -130,6 +193,17 @@
     <app-report-pagination [total]="movementsTotal()" [page]="movementsPage()" [limit]="pageSize" (pageChange)="onMovementsPage($event)" />
   }
 </section>
+
+<app-cash-reason-modal
+  [open]="!!voidWithdrawalTarget()"
+  title="Anular retiro de Bodega"
+  [message]="'El efectivo (' + formatCurrency(voidWithdrawalTarget()?.amount ?? 0) + ') volverá a Bodega y se revertirá ' + (voidWithdrawalTarget()?.destination === 'BANCO' ? 'el depósito en la cuenta.' : 'la entrada en caja.') + ' Ambos movimientos quedan visibles como anulados.'"
+  confirmText="Anular retiro"
+  [danger]="true"
+  [busy]="voiding()"
+  (confirmed)="confirmVoidWithdrawal($event)"
+  (cancelled)="voidWithdrawalTarget.set(null)"
+/>
 
 <app-cash-reason-modal
   [open]="!!voidTarget()"

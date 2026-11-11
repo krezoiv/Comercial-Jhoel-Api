@@ -20,11 +20,12 @@ describe('Control de Efectivo — util', () => {
       'RETIRO_BANCARIO',
       'DEPOSITO_BANCARIO',
       'ENTREGA_BODEGA',
+      'DEVOLUCION_BODEGA',
       'OTROS',
     ]);
     expect(cards[0]).toEqual(jasmine.objectContaining({ totalIn: 5000, count: 2 }));
     expect(cards[5]).toEqual(jasmine.objectContaining({ totalOut: 500, count: 1 }));
-    expect(cards[10]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
+    expect(cards[11]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
   });
 
   it('reports the gross amount of one type per day (Reintegros have their own card)', () => {
