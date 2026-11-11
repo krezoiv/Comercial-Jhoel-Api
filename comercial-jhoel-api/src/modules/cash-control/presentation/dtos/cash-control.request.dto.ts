@@ -43,8 +43,14 @@ export class CashMovementsQueryDto {
   @IsOptional() @IsIn(CASH_DIRECTIONS) direction?: CashDirection;
   @IsOptional() @IsUUID() userId?: string;
   @IsOptional() @IsUUID() cutPeriodId?: string;
+  /** Bank operational day: only the movements between its opening and the next one. */
+  @IsOptional() @IsDateString({ strict: true }) bankDate?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(200) limit?: number;
+}
+
+export class CashBankDaysQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(370) limit?: number;
 }
 
 export class RecentCashMovementsQueryDto {

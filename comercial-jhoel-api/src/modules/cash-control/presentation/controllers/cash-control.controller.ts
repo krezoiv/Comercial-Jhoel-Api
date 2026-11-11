@@ -24,6 +24,8 @@ import {
   GetCashMovementUseCase,
   GetRecentCashMovementsUseCase,
   ListCashMovementsUseCase,
+  ListCashBankDaysUseCase,
+  GetCashBankDayUseCase,
   ListCashUsersUseCase,
 } from '../../application/use-cases/cash-movement-queries.use-cases';
 import {
@@ -45,6 +47,7 @@ import {
 import {
   CashDaysQueryDto,
   CashMovementsQueryDto,
+  CashBankDaysQueryDto,
   CloseCashDayRequestDto,
   FinishCashCutRequestDto,
   OpenCashDayRequestDto,
@@ -74,6 +77,8 @@ export class CashControlController {
     private readonly getPositionUseCase: GetCashPositionUseCase,
     private readonly getBalanceUseCase: GetCashBalanceUseCase,
     private readonly listMovementsUseCase: ListCashMovementsUseCase,
+    private readonly listBankDaysUseCase: ListCashBankDaysUseCase,
+    private readonly getBankDayUseCase: GetCashBankDayUseCase,
     private readonly getRecentUseCase: GetRecentCashMovementsUseCase,
     private readonly getMovementUseCase: GetCashMovementUseCase,
     private readonly listUsersUseCase: ListCashUsersUseCase,
@@ -104,6 +109,18 @@ export class CashControlController {
   @Get('movements')
   movements(@Query() query: CashMovementsQueryDto) {
     return this.listMovementsUseCase.execute(query);
+  }
+
+  /** Bank operational days (Agentes Bancarios openings) with their daily indicators — newest first. */
+  @Get('bank-days')
+  bankDays(@Query() query: CashBankDaysQueryDto) {
+    return this.listBankDaysUseCase.execute(query.limit ?? 60);
+  }
+
+  /** Original indicators of one bank day (read only). */
+  @Get('bank-days/:date')
+  bankDay(@Param('date') date: string) {
+    return this.getBankDayUseCase.execute(date);
   }
 
   @Get('movements/recent')

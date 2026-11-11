@@ -17,6 +17,11 @@ import {
 } from '../../domain/policies/cash-control.policy';
 import { GetCashPositionUseCase } from './get-cash-position.use-case';
 import {
+  GetCashBankDayUseCase,
+  ListCashBankDaysUseCase,
+} from './cash-movement-queries.use-cases';
+import type { CashBankDaySummary } from '../../domain/repositories/cash-control.repository';
+import {
   GetRecentCashMovementsUseCase,
   ListCashMovementsUseCase,
 } from './cash-movement-queries.use-cases';
@@ -118,6 +123,9 @@ function repositoryMock(): jest.Mocked<CashControlRepository> {
       .fn()
       .mockResolvedValue({ totalIn: 5000, totalOut: 2000, movementCount: 2 }),
     hasInitialBalance: jest.fn().mockResolvedValue(true),
+    // No anchored bank day by default: the calendar-date fallback (previous behaviour).
+    getBankDaySummary: jest.fn().mockResolvedValue(null),
+    findBankDays: jest.fn().mockResolvedValue([]),
     findMovements: jest.fn(),
     findRecentMovements: jest.fn().mockResolvedValue([movement()]),
     findMovementById: jest.fn().mockResolvedValue(movement()),
@@ -641,5 +649,118 @@ describe('Control de Efectivo — depósito bancario desde caja', () => {
     dayOpenings.findByDate.mockResolvedValue(null);
     await expect(useCase.execute(base)).rejects.toBeDefined();
     expect(repository.registerBankDeposit).not.toHaveBeenCalled();
+  });
+});
+
+function bankDay(
+  overrides: Partial<CashBankDaySummary> = {},
+): CashBankDaySummary {
+  return {
+    businessDate: '2026-11-11',
+    dayOpeningId: 'opening-2',
+    agentDayStatus: 'ABIERTO',
+    startSequence: 12,
+    endSequence: null,
+    isCurrent: true,
+    openedAt: new Date('2026-11-11T13:00:00Z'),
+    openedByUsername: 'admin',
+    source: 'APERTURA',
+    openingBalance: 105000,
+    closingBalance: 105000,
+    lastMovementAt: null,
+    totalIn: 0,
+    totalOut: 0,
+    movementCount: 0,
+    buckets: [],
+    ...overrides,
+  };
+}
+
+describe('Control de Efectivo — acumulados por día bancario', () => {
+  it('right after the bank-day opening every daily indicator is zero and the balance keeps its continuity', async () => {
+    const repository = repositoryMock();
+    repository.getBalance.mockResolvedValue({
+      balance: 105000,
+      lastSequence: 12,
+      lastMovementAt: null,
+    });
+    repository.getBankDaySummary.mockResolvedValue(bankDay());
+
+    const position = await new GetCashPositionUseCase(repository).execute(
+      '2026-11-11',
+    );
+
+    expect(position.balance).toBe(105000);
+    expect(position.summary).toEqual({
+      openingBalance: 105000,
+      totalIn: 0,
+      totalOut: 0,
+      movementCount: 0,
+      buckets: [],
+    });
+    expect(position.bankDay?.businessDate).toBe('2026-11-11');
+    // The calendar-date summary (which could hold earlier movements) is not used.
+    expect(position.summary.totalIn).not.toBe(5000);
+  });
+
+  it('indicators grow with the day operations only', async () => {
+    const repository = repositoryMock();
+    repository.getBankDaySummary.mockResolvedValue(
+      bankDay({
+        totalIn: 8000,
+        totalOut: 3000,
+        movementCount: 2,
+        buckets: [
+          { movementType: 'DEPOSITO', totalIn: 8000, totalOut: 0, count: 1 },
+          { movementType: 'RETIRO', totalIn: 0, totalOut: 3000, count: 1 },
+        ],
+      }),
+    );
+    const position = await new GetCashPositionUseCase(repository).execute();
+    expect(position.summary.totalIn).toBe(8000);
+    expect(position.summary.totalOut).toBe(3000);
+    expect(position.summary.openingBalance).toBe(105000);
+  });
+
+  it('falls back to the calendar date when no bank day was ever anchored', async () => {
+    const position = await new GetCashPositionUseCase(repositoryMock()).execute(
+      '2026-11-10',
+    );
+    expect(position.bankDay).toBeNull();
+    expect(position.summary.totalIn).toBe(5000);
+  });
+
+  it('a past bank day keeps its original values; an unknown day is a 404', async () => {
+    const repository = repositoryMock();
+    repository.getBankDaySummary.mockImplementation((date?: string) =>
+      Promise.resolve(
+        date === '2026-11-10'
+          ? bankDay({
+              businessDate: '2026-11-10',
+              isCurrent: false,
+              endSequence: 12,
+              openingBalance: 100000,
+              closingBalance: 105000,
+              totalIn: 10000,
+              totalOut: 5000,
+            })
+          : null,
+      ),
+    );
+    const useCase = new GetCashBankDayUseCase(repository);
+    const day = await useCase.execute('2026-11-10');
+    expect([day.totalIn, day.totalOut, day.closingBalance]).toEqual([
+      10000, 5000, 105000,
+    ]);
+    await expect(useCase.execute('2026-11-09')).rejects.toMatchObject({
+      status: 404,
+    });
+    await expect(useCase.execute('10/11/2026')).rejects.toBeDefined();
+  });
+
+  it('lists bank days with a bounded limit', async () => {
+    const repository = repositoryMock();
+    await new ListCashBankDaysUseCase(repository).execute(5000);
+    expect(repository.findBankDays).toHaveBeenCalledWith(370);
   });
 });

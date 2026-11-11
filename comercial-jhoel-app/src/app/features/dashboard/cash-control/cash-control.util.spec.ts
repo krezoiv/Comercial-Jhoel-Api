@@ -1,5 +1,5 @@
 import { CashMovement } from '../../../core/models';
-import { buildSummaryCards, canManageCuts, formatGuatemalaTime, isManualMovement, referenceLabel } from './cash-control.util';
+import { bucketAmount, buildSummaryCards, canManageCuts, formatGuatemalaTime, isManualMovement, referenceLabel } from './cash-control.util';
 
 describe('Control de Efectivo — util', () => {
   it('groups backend buckets into the summary cards without recomputing amounts', () => {
@@ -14,6 +14,7 @@ describe('Control de Efectivo — util', () => {
       'RETIRO',
       'DESEMBOLSO_GENESIS',
       'PAGO_GENESIS',
+      'REINTEGRO',
       'GASTO_POR_COBRAR',
       'ACTIVO',
       'RETIRO_BANCARIO',
@@ -21,8 +22,18 @@ describe('Control de Efectivo — util', () => {
       'OTROS',
     ]);
     expect(cards[0]).toEqual(jasmine.objectContaining({ totalIn: 5000, count: 2 }));
-    expect(cards[4]).toEqual(jasmine.objectContaining({ totalOut: 500, count: 1 }));
-    expect(cards[8]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
+    expect(cards[5]).toEqual(jasmine.objectContaining({ totalOut: 500, count: 1 }));
+    expect(cards[9]).toEqual(jasmine.objectContaining({ totalIn: 100, totalOut: 5000, count: 2 }));
+  });
+
+  it('reports the gross amount of one type per day (Reintegros have their own card)', () => {
+    const buckets = [
+      { movementType: 'REINTEGRO' as const, totalIn: 300, totalOut: 0, count: 1 },
+      { movementType: 'RETIRO' as const, totalIn: 0, totalOut: 5000, count: 2 },
+    ];
+    expect(bucketAmount(buckets, 'RETIRO')).toBe(5000);
+    expect(bucketAmount(buckets, 'DEPOSITO')).toBe(0);
+    expect(buildSummaryCards(buckets).find((card) => card.key === 'REINTEGRO')?.totalIn).toBe(300);
   });
 
   it('formats times in America/Guatemala', () => {

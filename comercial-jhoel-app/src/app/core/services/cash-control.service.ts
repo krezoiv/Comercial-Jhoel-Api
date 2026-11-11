@@ -19,6 +19,7 @@ import {
   PaginatedCashMovements,
   RegisterCashBankDepositInput,
   RegisterCashMovementInput,
+  CashBankDaySummary,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/cash-control`;
@@ -45,6 +46,18 @@ export class CashControlService {
   /** Main card, day state, cuts (with live totals) and today's summary in one call. */
   getPosition(): Observable<CashPosition> {
     return this.http.get<ApiSuccessResponse<CashPosition>>(`${BASE_URL}/position`).pipe(map((r) => r.data));
+  }
+
+  /** Bank operational days (newest first) with their own daily indicators — the day selector/history. */
+  getBankDays(limit = 60): Observable<CashBankDaySummary[]> {
+    return this.http
+      .get<ApiSuccessResponse<CashBankDaySummary[]>>(`${BASE_URL}/bank-days`, { params: toParams({ limit }) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Original indicators of one bank day (read only). */
+  getBankDay(date: string): Observable<CashBankDaySummary> {
+    return this.http.get<ApiSuccessResponse<CashBankDaySummary>>(`${BASE_URL}/bank-days/${date}`).pipe(map((r) => r.data));
   }
 
   /** Lightweight balance + last sequence, used for change detection polling. */

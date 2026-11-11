@@ -107,6 +107,31 @@ export interface CashDateSummary extends CashRangeTotals {
   buckets: CashMovementBucket[];
 }
 
+/**
+ * Daily indicators of ONE bank operational day (Agentes Bancarios →
+ * "Aperturar día"). They cover the Kardex range
+ * (startSequence, endSequence] — from that day's opening up to the next
+ * bank-day opening — and are always recomputed from the movements; the
+ * physical balance keeps its continuity (opening/closing balances are read
+ * from the Kardex, never reset).
+ */
+export interface CashBankDaySummary extends CashDateSummary {
+  businessDate: string;
+  dayOpeningId: string;
+  agentDayStatus: 'ABIERTO' | 'CERRADO' | 'CANCELADO';
+  startSequence: number;
+  /** `null` while it is the current bank day (no later opening yet). */
+  endSequence: number | null;
+  isCurrent: boolean;
+  openedAt: Date;
+  openedByUsername: string;
+  /** `APERTURA` = anchored at the opening itself; `BACKFILL` = reconstructed from the Kardex for days opened before this feature. */
+  source: 'APERTURA' | 'BACKFILL';
+  /** Balance at the end of the range (the live balance for the current day). */
+  closingBalance: number;
+  lastMovementAt: Date | null;
+}
+
 export interface CashOperationalDayRow {
   id: string;
   operationalDate: string;
@@ -245,6 +270,8 @@ export interface FindCashMovementsOptions {
   direction?: CashDirection;
   userId?: string;
   cutPeriodId?: string;
+  /** Bank operational day (`yyyy-MM-dd`): only that day's Kardex range. */
+  bankDate?: string;
   page: number;
   limit: number;
 }
@@ -333,6 +360,10 @@ export interface FinishCashCutData {
 export interface CashControlRepository {
   getBalance(): Promise<CashBalanceSnapshot>;
   getDateSummary(date: string): Promise<CashDateSummary>;
+  /** Indicators of one bank day; omit `date` for the current (latest opened) one. `null` if there is none. */
+  getBankDaySummary(date?: string): Promise<CashBankDaySummary | null>;
+  /** Latest bank days with their indicators (newest first). */
+  findBankDays(limit: number): Promise<CashBankDaySummary[]>;
   getRangeTotals(
     afterSequence: number,
     upToSequence: number | null,

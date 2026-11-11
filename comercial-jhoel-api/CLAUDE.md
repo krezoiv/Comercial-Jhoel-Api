@@ -1480,6 +1480,23 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   AppModule completo contra una copia `<db>_e2e` que se elimina al terminar — el Kardex es append-only, nunca correr el
   e2e contra la base real).
 
+### Control de Efectivo — acumulados diarios por apertura bancaria (migración `1760007300000`)
+
+- Los indicadores diarios (entradas, salidas, operaciones, totales por tipo) se reinician en cada **apertura de día en
+  Agentes Bancarios** (`POST /banks/day-status/open`). El efectivo físico disponible y el Kardex NO se reinician: no se
+  crea, edita ni re-fecha ningún movimiento.
+- Mecanismo: trigger AFTER INSERT en `day_openings` → `cash_bank_day_openings` (ancla inmutable: `opening_sequence` del
+  Kardex y `opening_cash_balance` en el instante de la apertura, bajo el lock `cash_control_main`, UNIQUE por fecha → una
+  segunda apertura no reinicia nada). Vista `cash_bank_day_ranges`: el día bancario = movimientos con
+  `start_sequence < sequence <= siguiente apertura`. Totales siempre recalculados desde el Kardex; los días previos se
+  rellenaron (`BACKFILL`) desde el Kardex según `opened_at`.
+- `GET /cash-control/position`: `summary` = día bancario actual (fallback a fecha calendario si no hay ancla) + `bankDay`.
+  Nuevos: `GET /cash-control/bank-days?limit=` (historial), `GET /cash-control/bank-days/:date` (solo lectura, 404 si no
+  existe), filtro `bankDate` en `GET /cash-control/movements`. No cambia los cortes (`cash_operational_days`): siguen
+  abriéndose desde Control de Efectivo.
+- Pruebas: `sql/tests/cash-daily-indicators.test.sql` (30 casos, escenario de aceptación Día 1 / Día 2),
+  `cash-control.use-cases.spec.ts`, `test/cash-daily-indicators.e2e-spec.ts`.
+
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 
 - **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`

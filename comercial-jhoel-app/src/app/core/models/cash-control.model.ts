@@ -115,6 +115,27 @@ export interface CashDateSummary {
   buckets: CashMovementBucket[];
 }
 
+/**
+ * Daily indicators of one BANK operational day (Agentes Bancarios →
+ * "Aperturar día"): they restart at each opening and cover the Kardex
+ * movements up to the next opening. The physical balance never restarts.
+ */
+export interface CashBankDayHeader {
+  businessDate: string;
+  dayOpeningId: string;
+  agentDayStatus: 'ABIERTO' | 'CERRADO' | 'CANCELADO';
+  startSequence: number;
+  endSequence: number | null;
+  isCurrent: boolean;
+  openedAt: string;
+  openedByUsername: string;
+  source: 'APERTURA' | 'BACKFILL';
+  closingBalance: number;
+  lastMovementAt: string | null;
+}
+
+export type CashBankDaySummary = CashBankDayHeader & CashDateSummary;
+
 export type CashOpeningPolicy = 'INHERITED_FROM_CLOSE' | 'INHERITED_FROM_LAST_CUT' | 'AUTHORIZED_MANUAL' | 'SYSTEM_UNVERIFIED';
 
 export const CASH_OPENING_POLICY_LABEL: Record<CashOpeningPolicy, string> = {
@@ -220,7 +241,10 @@ export interface CashPosition {
   day: CashOperationalDay | null;
   periods: CashCutPeriod[];
   openPeriod: CashCutPeriod | null;
+  /** Indicators of the current bank day (or of the calendar date when no bank day was anchored yet). */
   summary: CashDateSummary;
+  /** The bank day the indicators belong to; `null` = calendar-date fallback. */
+  bankDay: CashBankDayHeader | null;
   canCloseDay: boolean;
 }
 
@@ -231,6 +255,8 @@ export interface CashMovementFilters {
   direction?: CashDirection | '';
   userId?: string;
   cutPeriodId?: string;
+  /** Bank operational day: only the Kardex movements between its opening and the next one. */
+  bankDate?: string;
   page?: number;
   limit?: number;
 }

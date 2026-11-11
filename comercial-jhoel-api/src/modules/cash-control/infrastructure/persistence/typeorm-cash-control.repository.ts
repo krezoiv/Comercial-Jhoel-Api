@@ -10,6 +10,7 @@ import {
   CashCutDetail,
   CashCutEventRow,
   CashCutPeriodRow,
+  CashBankDaySummary,
   CashDateSummary,
   CashDayHistoryRow,
   CashMovementRow,
@@ -290,6 +291,87 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
     };
   }
 
+  async getBankDaySummary(date?: string): Promise<CashBankDaySummary | null> {
+    const days = await this.loadBankDays(date ?? null, 1);
+    return days[0] ?? null;
+  }
+
+  findBankDays(limit: number): Promise<CashBankDaySummary[]> {
+    return this.loadBankDays(null, limit, true);
+  }
+
+  /**
+   * Bank days with their indicators, computed from the Kardex range of each
+   * day (`cash_bank_day_ranges`). With `date` = that day; without it = the
+   * current day (or the latest `limit` days when `all`).
+   */
+  private async loadBankDays(
+    date: string | null,
+    limit: number,
+    all = false,
+  ): Promise<CashBankDaySummary[]> {
+    const days = await this.dataSource.query<SqlRow[]>(
+      `SELECT r.*, to_char(r.business_date, 'YYYY-MM-DD') AS business_date_text, u.username,
+              CASE WHEN o.is_cancelled THEN 'CANCELADO' WHEN o.closed_at IS NULL THEN 'ABIERTO' ELSE 'CERRADO' END AS agent_status,
+              CASE WHEN r.end_sequence IS NULL THEN cash_balance() ELSE cash_balance_at(r.end_sequence) END AS closing_balance,
+              (SELECT max(m.created_at) FROM cash_movements m
+               WHERE m.sequence > r.start_sequence AND (r.end_sequence IS NULL OR m.sequence <= r.end_sequence)) AS last_movement_at
+       FROM cash_bank_day_ranges r
+       JOIN day_openings o ON o.id = r.day_opening_id
+       JOIN users u ON u.id = r.opened_by
+       WHERE ($1::date IS NOT NULL AND r.business_date = $1::date)
+          OR ($1::date IS NULL AND ($2::boolean OR r.is_current))
+       ORDER BY r.start_sequence DESC, r.opened_at DESC
+       LIMIT $3`,
+      [date, all, limit],
+    );
+    if (!days.length) {
+      return [];
+    }
+    const buckets = await this.dataSource.query<SqlRow[]>(
+      `SELECT r.id AS range_id, m.movement_type,
+              COALESCE(SUM(m.amount) FILTER (WHERE m.direction = 'IN'), 0) AS total_in,
+              COALESCE(SUM(m.amount) FILTER (WHERE m.direction = 'OUT'), 0) AS total_out,
+              count(*) AS count
+       FROM cash_bank_day_ranges r
+       JOIN cash_movements m ON m.sequence > r.start_sequence
+        AND (r.end_sequence IS NULL OR m.sequence <= r.end_sequence)
+       WHERE r.id = ANY($1::uuid[])
+       GROUP BY r.id, m.movement_type`,
+      [days.map((day) => text(day.id))],
+    );
+    return days.map((day) => {
+      const mine = buckets
+        .filter((bucket) => text(bucket.range_id) === text(day.id))
+        .map((row) => ({
+          movementType: row.movement_type as CashMovementRow['movementType'],
+          totalIn: num(row.total_in),
+          totalOut: num(row.total_out),
+          count: num(row.count),
+        }));
+      return {
+        businessDate: text(day.business_date_text),
+        dayOpeningId: text(day.day_opening_id),
+        agentDayStatus: text(
+          day.agent_status,
+        ) as CashBankDaySummary['agentDayStatus'],
+        startSequence: num(day.start_sequence),
+        endSequence: day.end_sequence === null ? null : num(day.end_sequence),
+        isCurrent: day.is_current === true,
+        openedAt: day.opened_at as Date,
+        openedByUsername: text(day.username),
+        source: text(day.source) as CashBankDaySummary['source'],
+        openingBalance: num(day.opening_cash_balance),
+        closingBalance: num(day.closing_balance),
+        lastMovementAt: (day.last_movement_at as Date | null) ?? null,
+        totalIn: mine.reduce((sum, b) => sum + b.totalIn, 0),
+        totalOut: mine.reduce((sum, b) => sum + b.totalOut, 0),
+        movementCount: mine.reduce((sum, b) => sum + b.count, 0),
+        buckets: mine,
+      };
+    });
+  }
+
   async getRangeTotals(
     afterSequence: number,
     upToSequence: number | null,
@@ -333,6 +415,12 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
     if (options.userId) add('m.created_by = ?::uuid', options.userId);
     if (options.cutPeriodId)
       add('m.cut_period_id = ?::uuid', options.cutPeriodId);
+    if (options.bankDate)
+      add(
+        `EXISTS (SELECT 1 FROM cash_bank_day_ranges r WHERE r.business_date = ?::date
+           AND m.sequence > r.start_sequence AND (r.end_sequence IS NULL OR m.sequence <= r.end_sequence))`,
+        options.bankDate,
+      );
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const [totals] = await this.dataSource.query<SqlRow[]>(

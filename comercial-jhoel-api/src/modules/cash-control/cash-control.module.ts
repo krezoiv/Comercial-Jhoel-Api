@@ -10,6 +10,8 @@ import {
   GetCashMovementUseCase,
   GetRecentCashMovementsUseCase,
   ListCashMovementsUseCase,
+  ListCashBankDaysUseCase,
+  GetCashBankDayUseCase,
   ListCashUsersUseCase,
 } from './application/use-cases/cash-movement-queries.use-cases';
 import {
@@ -51,6 +53,8 @@ import { CashControlController } from './presentation/controllers/cash-control.c
     GetCashPositionUseCase,
     GetCashBalanceUseCase,
     ListCashMovementsUseCase,
+    ListCashBankDaysUseCase,
+    GetCashBankDayUseCase,
     GetRecentCashMovementsUseCase,
     GetCashMovementUseCase,
     ListCashUsersUseCase,

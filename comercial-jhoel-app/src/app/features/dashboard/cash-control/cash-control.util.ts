@@ -34,6 +34,7 @@ export const CASH_SUMMARY_CARDS: { key: CashMovementType; label: string; icon: s
   { key: 'RETIRO', label: 'Retiros', icon: 'arrow-up-circle' },
   { key: 'DESEMBOLSO_GENESIS', label: 'Desembolsos Génesis', icon: 'arrow-up-circle' },
   { key: 'PAGO_GENESIS', label: 'Pagos préstamos Génesis', icon: 'arrow-down-circle' },
+  { key: 'REINTEGRO', label: 'Reintegros', icon: 'rotate-ccw' },
   { key: 'GASTO_POR_COBRAR', label: 'Gastos por cobrar', icon: 'receipt' },
   { key: 'ACTIVO', label: 'Activos', icon: 'package' },
   { key: 'RETIRO_BANCARIO', label: 'Retiros bancarios a caja', icon: 'bank' },
@@ -66,6 +67,12 @@ export function buildSummaryCards(buckets: CashMovementBucket[]): CashSummaryCar
     count: others.reduce((sum, row) => sum + row.count, 0),
   });
   return cards;
+}
+
+/** Gross amount of one movement type in a day (entries + exits of that type), as reported by the backend. */
+export function bucketAmount(buckets: CashMovementBucket[], type: CashMovementType): number {
+  const bucket = buckets.find((row) => row.movementType === type);
+  return bucket ? bucket.totalIn + bucket.totalOut : 0;
 }
 
 /** Movements registered in Control de Efectivo itself — the only ones voided from here (a bank deposit reverses both sides). */

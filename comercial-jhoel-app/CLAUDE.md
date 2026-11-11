@@ -1776,3 +1776,12 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   la muestran. Sin descripción → "Sin descripción registrada".
 - La app NO usa Prettier (sigue `.editorconfig`, líneas ~120): no formatear archivos existentes con Prettier.
 
+## Control de Efectivo — acumulados por día operativo bancario
+
+- La tarjeta principal conserva solo el efectivo físico disponible (+ día bancario y estado de cortes). Los acumulados van
+  en la tarjeta "Acumulados del día operativo" (se reinician en cada apertura de Agentes Bancarios) con selector
+  "Día operativo": "Actual" = `position.summary`; un día anterior = `GET /cash-control/bank-days/:date` (solo lectura,
+  fondo dorado). Tabla "Historial por día operativo" (`bank-days`) y el Kardex sigue al día elegido (`bankDate`); un
+  filtro de fechas manual reemplaza `bankDate`. Tarjeta nueva "Reintegros" en el resumen por tipo.
+- Spec: `cash-control-page.component.spec.ts`.
+

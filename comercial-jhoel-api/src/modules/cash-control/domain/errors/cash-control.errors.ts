@@ -126,6 +126,10 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message:
       'La cuenta de Cooperativa Guayacán no recibe depósitos desde esta caja: su saldo es el de su propia caja.',
   },
+  CASH_BANK_DAY_NOT_FOUND: {
+    message: 'Ese día no tiene apertura en Agentes Bancarios.',
+    status: 404,
+  },
   CASH_INVALID_DATE_RANGE: {
     message: 'La fecha inicial no puede ser posterior a la fecha final.',
   },

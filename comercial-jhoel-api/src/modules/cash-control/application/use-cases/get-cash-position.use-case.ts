@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CASH_CONTROL_REPOSITORY } from '../../domain/repositories/cash-control.repository';
 import type {
+  CashBankDaySummary,
   CashControlRepository,
   CashCutPeriodRow,
   CashDateSummary,
@@ -30,7 +31,17 @@ export interface CashPositionOutput {
   periods: CashCutPeriodView[];
   /** The open cut, wherever it is (it may belong to a previous day that was never finished). */
   openPeriod: CashCutPeriodView | null;
+  /**
+   * Daily indicators. Since migration 1760007300000 they belong to the
+   * CURRENT BANK DAY (restart at every Agentes Bancarios opening); before
+   * the first anchored opening they fall back to the calendar date.
+   */
   summary: CashDateSummary;
+  /** The current bank operational day the indicators belong to (`null` = calendar-date fallback). */
+  bankDay: Omit<
+    CashBankDaySummary,
+    'buckets' | 'totalIn' | 'totalOut' | 'movementCount' | 'openingBalance'
+  > | null;
   canCloseDay: boolean;
 }
 
@@ -39,6 +50,25 @@ export interface CashPositionOutput {
  * is the last `new_balance` of the official Kardex; the day summary groups
  * today's movements (America/Guatemala) by type. Nothing here writes.
  */
+/** The identification part of a bank-day summary (without its totals). */
+export function toBankDayHeader(
+  day: CashBankDaySummary,
+): NonNullable<CashPositionOutput['bankDay']> {
+  return {
+    businessDate: day.businessDate,
+    dayOpeningId: day.dayOpeningId,
+    agentDayStatus: day.agentDayStatus,
+    startSequence: day.startSequence,
+    endSequence: day.endSequence,
+    isCurrent: day.isCurrent,
+    openedAt: day.openedAt,
+    openedByUsername: day.openedByUsername,
+    source: day.source,
+    closingBalance: day.closingBalance,
+    lastMovementAt: day.lastMovementAt,
+  };
+}
+
 @Injectable()
 export class GetCashPositionUseCase {
   constructor(
@@ -49,13 +79,14 @@ export class GetCashPositionUseCase {
   async execute(
     date: string = guatemalaIsoDate(),
   ): Promise<CashPositionOutput> {
-    const [balance, hasInitialBalance, day, summary, openRow] =
+    const [balance, hasInitialBalance, day, summary, openRow, bankDay] =
       await Promise.all([
         this.repository.getBalance(),
         this.repository.hasInitialBalance(),
         this.repository.findDayByDate(date),
         this.repository.getDateSummary(date),
         this.repository.findOpenPeriod(),
+        this.repository.getBankDaySummary(),
       ]);
     const periodRows = day
       ? await this.repository.findPeriodsByDay(day.id)
@@ -77,9 +108,19 @@ export class GetCashPositionUseCase {
       day,
       periods,
       openPeriod,
-      summary: day
-        ? { ...summary, openingBalance: day.openingSystemCash }
-        : summary,
+      // Bank-day indicators restart at each opening; the balance never does.
+      summary: bankDay
+        ? {
+            openingBalance: bankDay.openingBalance,
+            totalIn: bankDay.totalIn,
+            totalOut: bankDay.totalOut,
+            movementCount: bankDay.movementCount,
+            buckets: bankDay.buckets,
+          }
+        : day
+          ? { ...summary, openingBalance: day.openingSystemCash }
+          : summary,
+      bankDay: bankDay ? toBankDayHeader(bankDay) : null,
       canCloseDay:
         !!day &&
         day.status === 'ABIERTO' &&

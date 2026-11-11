@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CASH_CONTROL_REPOSITORY } from '../../domain/repositories/cash-control.repository';
 import type {
+  CashBankDaySummary,
   CashBalanceSnapshot,
   CashBankBalance,
   CashControlRepository,
@@ -21,6 +22,43 @@ export class GetCashBalanceUseCase {
 
   execute(): Promise<CashBalanceSnapshot> {
     return this.repository.getBalance();
+  }
+}
+
+/**
+ * Bank-day history for Control de Efectivo's day selector: the latest bank
+ * operational days (Agentes Bancarios openings) with their own indicators,
+ * each recomputed from its Kardex range. Read only.
+ */
+@Injectable()
+export class ListCashBankDaysUseCase {
+  constructor(
+    @Inject(CASH_CONTROL_REPOSITORY)
+    private readonly repository: CashControlRepository,
+  ) {}
+
+  execute(limit = 60): Promise<CashBankDaySummary[]> {
+    return this.repository.findBankDays(Math.min(370, Math.max(1, limit)));
+  }
+}
+
+/** Indicators of one bank operational day (original values, read only). */
+@Injectable()
+export class GetCashBankDayUseCase {
+  constructor(
+    @Inject(CASH_CONTROL_REPOSITORY)
+    private readonly repository: CashControlRepository,
+  ) {}
+
+  async execute(date: string): Promise<CashBankDaySummary> {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw cashControlError('CASH_INVALID_DATE_RANGE');
+    }
+    const day = await this.repository.getBankDaySummary(date);
+    if (!day) {
+      throw cashControlError('CASH_BANK_DAY_NOT_FOUND');
+    }
+    return day;
   }
 }
 

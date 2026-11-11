@@ -7,6 +7,9 @@ import { catchError, of } from 'rxjs';
 import {
   CASH_DIRECTION_LABEL,
   CASH_MOVEMENT_TYPE_LABEL,
+  CashBankDayHeader,
+  CashBankDaySummary,
+  CashDateSummary,
   CashMovement,
   CashMovementFilters,
   CashMovementType,
@@ -23,11 +26,13 @@ import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible'
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent } from '../../../shared/ui';
 import { ReportPaginationComponent } from '../reports/components/report-pagination/report-pagination.component';
 import {
+  bucketAmount,
   buildSummaryCards,
   canManageCuts,
   formatDifference,
   formatGuatemalaDateTime,
   formatGuatemalaTime,
+  formatIsoDate,
   guatemalaToday,
   isManualMovement,
   referenceLabel,
@@ -82,6 +87,7 @@ export class CashControlPageComponent {
   readonly formatDifference = formatDifference;
   readonly formatDateTime = formatGuatemalaDateTime;
   readonly formatTime = formatGuatemalaTime;
+  readonly formatIsoDate = formatIsoDate;
   readonly referenceLabel = referenceLabel;
   readonly isManualMovement = isManualMovement;
   readonly movementTypes = Object.keys(CASH_MOVEMENT_TYPE_LABEL) as CashMovementType[];
@@ -94,7 +100,27 @@ export class CashControlPageComponent {
   readonly position = signal<CashPosition | null>(null);
   readonly loadingPosition = signal(true);
   readonly positionFailed = signal(false);
-  readonly summaryCards = computed(() => buildSummaryCards(this.position()?.summary.buckets ?? []));
+  /** Bank operational days (newest first) with their own indicators — selector and history table. */
+  readonly bankDays = signal<CashBankDaySummary[]>([]);
+  /** Bank day chosen in the selector; `null` = the current one (live, from the position). */
+  readonly selectedBankDate = signal<string | null>(null);
+  /** The past bank day being consulted (read only), loaded from the backend. */
+  readonly pastDay = signal<CashBankDaySummary | null>(null);
+  readonly bucketAmount = bucketAmount;
+
+  /** Indicators on screen: the consulted past day, or the current bank day from the position. */
+  readonly viewedDay = computed<{ header: CashBankDayHeader | null; summary: CashDateSummary; isPast: boolean } | null>(() => {
+    const past = this.pastDay();
+    if (this.selectedBankDate() && past && past.businessDate === this.selectedBankDate()) {
+      return { header: past, summary: past, isPast: true };
+    }
+    const position = this.position();
+    return position ? { header: position.bankDay, summary: position.summary, isPast: false } : null;
+  });
+
+  readonly summaryCards = computed(() => buildSummaryCards(this.viewedDay()?.summary.buckets ?? []));
+  /** Until the user touches the Kardex filters, the Kardex follows the bank day on screen. */
+  private filtersTouched = false;
 
   readonly movements = signal<CashMovement[]>([]);
   readonly totalMovements = signal(0);
@@ -136,6 +162,40 @@ export class CashControlPageComponent {
   refresh(): void {
     this.loadPosition();
     this.loadMovements();
+    this.loadBankDays();
+  }
+
+  loadBankDays(): void {
+    this.service
+      .getBankDays(60)
+      .pipe(catchError(() => of([])))
+      .subscribe((days) => this.bankDays.set(days));
+  }
+
+  /**
+   * Day selector: '' = current bank day (live); a date = that day's original
+   * indicators (read only). The Kardex below switches to the same bank day.
+   */
+  selectBankDate(date: string): void {
+    const current = this.position()?.bankDay?.businessDate ?? null;
+    const target = date && date !== current ? date : null;
+    this.selectedBankDate.set(target);
+    this.pastDay.set(null);
+    if (target) {
+      this.service.getBankDay(target).subscribe({
+        next: (day) => this.pastDay.set(day),
+        error: (error: HttpErrorResponse) => {
+          this.selectedBankDate.set(null);
+          this.notifications.error(extractErrorMessage(error, 'No se pudo consultar ese día.'));
+        },
+      });
+    }
+    const kardexDay = target ?? current;
+    if (kardexDay) {
+      this.draft.set({ ...EMPTY_FILTERS, bankDate: kardexDay });
+      this.applyFilters();
+      this.filtersTouched = false;
+    }
   }
 
   loadPosition(): void {
@@ -153,9 +213,15 @@ export class CashControlPageComponent {
   }
 
   setPosition(position: CashPosition): void {
+    const first = this.position() === null;
     this.position.set(position);
     this.loadingPosition.set(false);
     this.lastRefresh.set(new Date().toISOString());
+    // The Kardex starts on the current bank day (from its opening), like the indicators.
+    if (first && position.bankDay && !this.filtersTouched && !this.selectedBankDate()) {
+      this.draft.set({ ...EMPTY_FILTERS, bankDate: position.bankDay.businessDate });
+      this.applyFilters();
+    }
   }
 
   loadMovements(): void {
@@ -176,7 +242,10 @@ export class CashControlPageComponent {
   }
 
   setDraft(patch: Partial<CashMovementFilters>): void {
-    this.draft.update((draft) => ({ ...draft, ...patch }));
+    this.filtersTouched = true;
+    // A date filter replaces the bank-day filter (and vice versa).
+    const dates = 'dateFrom' in patch || 'dateTo' in patch ? { bankDate: undefined } : {};
+    this.draft.update((draft) => ({ ...draft, ...dates, ...patch }));
   }
 
   /** "Fecha" shortcut: a single day = same from/to. */
