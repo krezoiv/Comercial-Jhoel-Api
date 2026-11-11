@@ -1749,3 +1749,30 @@ siempre del backend (ver el `CLAUDE.md` del API).
   cobro" (admin, motivo).
 - `cashMutationInterceptor` también avisa tras escribir en `account-receivable-payments` (excepto `/preview`).
 
+## Revisión de días operativos (`features/dashboard/financial-day-review/`)
+
+Ruta `/dashboard/revision-dias-operativos` (`adminGuard`), menú Sistema → Administración financiera. Calendario del mes
+(lunes primero; marcas: con datos / con diferencias / en revisión) + tabla de días (`GET /financial-day-reviews/days`),
+resumen del día seleccionado y `DayReviewPanelComponent` con pestañas (Diagnóstico, Agentes Bancarios, Efectivo y
+cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del backend; la UI no recalcula.
+
+- "ABRIR DÍA PARA REVISIÓN" solo con `permissions.canCorrect`, día < hoy (Guatemala) y sin sesión activa
+  (`OpenReviewModalComponent`: motivo obligatorio + casilla de confirmación).
+- Con sesión activa: banner fijo con la fecha en revisión. Solo el dueño (`isSessionOwner`) ve las acciones
+  "Corregir"; `CorrectionModalComponent` en dos pasos (valor/motivo → comparación original → corregido) con un
+  `requestId` por apertura (reintento = misma corrección). Modales sin cierre por clic fuera ni doble envío.
+- "Finalizar revisión" → `close-request` → `CloseReviewModalComponent` (resumen por módulo, diferencia antes/después;
+  con diferencias pendientes exige aceptarlas).
+- Specs: `financial-day-review-page.component.spec.ts`, `correction-modal.component.spec.ts`,
+  `close-review-modal.component.spec.ts`.
+
+## Transaccionar — Descripción / Beneficiario
+
+- Campo obligatorio debajo del monto (textarea, máx. 250, contador, error al intentar guardar sin ella). Vive en
+  `BankDepositDraftStore` (`description`, `normalizedDescription`, `descriptionError`, persiste en el borrador); la
+  normalización es la misma del API. Se muestra en el modal de confirmación y se envía en el mismo `POST /bank-deposits`.
+- Reporte de Transacciones: botones Diario / Mensual / Histórico, filtro "Beneficiario / descripción" (`search`, también
+  en resumen y PDF) y columna "Descripción / Beneficiario"; detalle de la operación y Gestión de Transacciones también
+  la muestran. Sin descripción → "Sin descripción registrada".
+- La app NO usa Prettier (sigue `.editorconfig`, líneas ~120): no formatear archivos existentes con Prettier.
+

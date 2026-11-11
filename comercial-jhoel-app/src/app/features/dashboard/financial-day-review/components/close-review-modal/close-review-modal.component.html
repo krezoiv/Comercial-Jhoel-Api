@@ -1,0 +1,136 @@
+@if (open && summary) {
+  <div class="modal-backdrop">
+    <div
+      class="modal modal--wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-review-title"
+    >
+      <div class="modal__header">
+        <div class="modal__icon"><app-icon name="lock" [size]="20" /></div>
+        <div>
+          <h2 class="modal__title" id="close-review-title">
+            Finalizar revisión
+          </h2>
+          <p class="modal__subtitle">
+            Día
+            {{ summary.session.reviewDate + "T00:00:00" | date: "dd/MM/yyyy" }}
+            · responsable
+            {{ summary.session.openedByUsername }}
+          </p>
+        </div>
+      </div>
+
+      @if (error) {
+        <p class="modal__error">{{ error }}</p>
+      }
+
+      <dl class="facts">
+        <div>
+          <dt>Total de correcciones</dt>
+          <dd>{{ summary.totalCorrections }}</dd>
+        </div>
+        <div>
+          <dt>Bancos / transacciones modificados</dt>
+          <dd>{{ summary.banksModified }}</dd>
+        </div>
+        <div>
+          <dt>Efectivo y cortes corregidos</dt>
+          <dd>{{ summary.cashCorrections }}</dd>
+        </div>
+        <div>
+          <dt>Cuentas por cobrar corregidas</dt>
+          <dd>{{ summary.receivableCorrections }}</dd>
+        </div>
+        <div>
+          <dt>Activos corregidos</dt>
+          <dd>{{ summary.assetCorrections }}</dd>
+        </div>
+        <div>
+          <dt>Diferencia antes</dt>
+          <dd>
+            {{
+              summary.differenceBefore !== null
+                ? formatCurrency(summary.differenceBefore)
+                : "—"
+            }}
+          </dd>
+        </div>
+        <div>
+          <dt>Diferencia después</dt>
+          <dd
+            [class.negative]="summary.hasPendingDifferences"
+            [class.positive]="!summary.hasPendingDifferences"
+          >
+            {{ formatCurrency(summary.differenceAfter) }}
+          </dd>
+        </div>
+      </dl>
+
+      @if (moduleEntries().length) {
+        <p class="modal__text">
+          Por módulo:
+          @for (entry of moduleEntries(); track entry[0]; let last = $last) {
+            <strong>{{ moduleLabel[entry[0]] }}</strong> {{ entry[1]
+            }}{{ last ? "" : " · " }}
+          }
+        </p>
+      }
+
+      @if (summary.hasPendingDifferences) {
+        <div class="modal__warning">
+          <app-icon name="alert-triangle" [size]="18" />
+          <div>
+            Quedan {{ summary.pendingDifferences.length }} diferencia(s) sin
+            resolver:
+            <ul>
+              @for (
+                item of summary.pendingDifferences.slice(0, 6);
+                track item.key
+              ) {
+                <li>
+                  {{ item.account }} — {{ typeLabel[item.type] ?? item.type }}:
+                  {{ formatCurrency(item.difference) }}
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+        <label class="field field--check">
+          <input
+            type="checkbox"
+            [ngModel]="acceptPending()"
+            (ngModelChange)="acceptPending.set($event)"
+          />
+          <span
+            >Cerrar la revisión con diferencias pendientes. El día no quedará
+            marcado como cuadrado.</span
+          >
+        </label>
+      }
+
+      <label class="field">
+        <span>Observaciones de cierre (opcional)</span>
+        <textarea
+          rows="2"
+          maxlength="500"
+          [ngModel]="observations()"
+          (ngModelChange)="observations.set($event)"
+        ></textarea>
+      </label>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()"
+          >Seguir revisando</app-button
+        >
+        <app-button
+          variant="primary"
+          [disabled]="!canConfirm"
+          (click)="onConfirm()"
+        >
+          {{ isSaving ? "Cerrando…" : "Confirmar cierre de la revisión" }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

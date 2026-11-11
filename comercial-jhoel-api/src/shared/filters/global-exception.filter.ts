@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { DomainError } from '../domain/domain-error';
+import { financialDayReviewErrorFromMessage } from '../../modules/financial-day-review/domain/errors/financial-day-review.errors';
 
 interface ErrorBody {
   status: number;
@@ -55,6 +56,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private resolve(exception: unknown): ErrorBody {
     if (exception instanceof DomainError) {
       return { status: exception.status, message: exception.message };
+    }
+
+    // A day under historical review rejects normal writes from ANY module
+    // (guard trigger `financial_review_day_guard`): surface it as a 409 with its
+    // message instead of a generic 500, whichever repository ran the query.
+    if (
+      exception instanceof Error &&
+      exception.message.startsWith('FINANCIAL_REVIEW_')
+    ) {
+      const mapped = financialDayReviewErrorFromMessage(exception.message);
+      if (mapped) {
+        return { status: mapped.status, message: mapped.message };
+      }
     }
 
     if (exception instanceof HttpException) {

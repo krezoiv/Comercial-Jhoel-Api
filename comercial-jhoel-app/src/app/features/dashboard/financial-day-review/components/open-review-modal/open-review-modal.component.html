@@ -1,0 +1,84 @@
+@if (open) {
+  <div class="modal-backdrop">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="open-review-title"
+    >
+      <div class="modal__header">
+        <div class="modal__icon"><app-icon name="search" [size]="22" /></div>
+        <div>
+          <h2 class="modal__title" id="open-review-title">
+            Abrir día para revisión
+          </h2>
+          <p class="modal__subtitle">
+            {{ date ? (date + "T00:00:00" | date: "EEEE dd/MM/yyyy") : "" }}
+          </p>
+        </div>
+      </div>
+
+      <div class="modal__warning">
+        <app-icon name="alert-triangle" [size]="18" />
+        <span>
+          Se creará una sesión de revisión histórica auditada. Abrirla
+          <strong>no modifica</strong> ningún saldo ni movimiento. Mientras esté
+          abierta, ese día no acepta cambios por su flujo normal, y las
+          correcciones solo afectarán a ese día: ningún día anterior ni
+          posterior cambia.
+        </span>
+      </div>
+
+      @if (error) {
+        <p class="modal__error">{{ error }}</p>
+      }
+
+      <dl class="facts">
+        <div>
+          <dt>Usuario responsable</dt>
+          <dd>{{ username }}</dd>
+        </div>
+        <div>
+          <dt>Día a revisar</dt>
+          <dd>{{ date ? (date + "T00:00:00" | date: "dd/MM/yyyy") : "—" }}</dd>
+        </div>
+      </dl>
+
+      <label class="field">
+        <span>Motivo de la revisión <em>(obligatorio)</em></span>
+        <textarea
+          rows="3"
+          maxlength="500"
+          placeholder="Ej: Diferencia de Q0.86 en Agentes Bancarios; revisar saldos de bancos."
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+      </label>
+
+      <label class="field field--check">
+        <input
+          type="checkbox"
+          [ngModel]="acknowledged()"
+          (ngModelChange)="acknowledged.set($event)"
+        />
+        <span
+          >Confirmo que abriré este día en modo de revisión y que cada
+          corrección quedará auditada a mi nombre.</span
+        >
+      </label>
+
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()"
+          >Cancelar</app-button
+        >
+        <app-button
+          variant="primary"
+          [disabled]="!canConfirm"
+          (click)="onConfirm()"
+        >
+          {{ isSaving ? "Abriendo…" : "Abrir día para revisión" }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

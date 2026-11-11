@@ -1,5 +1,9 @@
 import type { CashControlRepository } from '../../../cash-control/domain/repositories/cash-control.repository';
-import { RegisterBankDepositOperationUseCase } from './register-bank-deposit-operation.use-case';
+import {
+  RegisterBankDepositOperationUseCase,
+  normalizeBankDepositDescription,
+} from './register-bank-deposit-operation.use-case';
+import { InvalidBankDepositDescriptionError } from '../../domain/errors/invalid-bank-deposit-description.error';
 import { BankDepositDayNotOpenedError } from '../../domain/errors/bank-deposit-day-not-opened.error';
 import { BankDepositDayAlreadyClosedError } from '../../domain/errors/bank-deposit-day-already-closed.error';
 import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-deposit-client.error';
@@ -74,6 +78,7 @@ function buildOperation(
     changeGiven: 0,
     cashBreakdownEnabled: true,
     clientName: null,
+    description: null,
     clientId: overrides.clientId ?? null,
     userId: 'user-1',
     username: 'erick',
@@ -142,6 +147,7 @@ describe('RegisterBankDepositOperationUseCase', () => {
     transactionAmounts: [250, 250],
     userId: 'user-1',
     isAdmin: false,
+    description: 'Juan Pérez - Depósito de efectivo',
   };
 
   beforeEach(() => {
@@ -229,9 +235,61 @@ describe('RegisterBankDepositOperationUseCase', () => {
         operationDate: todayIsoDate(),
         clientName: null,
         clientId: null,
+        description: 'Juan Pérez - Depósito de efectivo',
       }),
     );
     expect(result.id).toBe('op-1');
+  });
+
+  describe('descripción / beneficiario', () => {
+    beforeEach(() => {
+      bankDepositRepository.registerOperation.mockResolvedValue(
+        buildOperation(),
+      );
+    });
+
+    it('is required for a new transaction (nothing is registered without it)', async () => {
+      await expect(
+        useCase.execute({ ...input, description: '   ' }),
+      ).rejects.toBeInstanceOf(InvalidBankDepositDescriptionError);
+      await expect(
+        useCase.execute({ ...input, description: undefined }),
+      ).rejects.toThrow(
+        'Ingrese la descripción o el beneficiario de la transacción.',
+      );
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+    });
+
+    it('rejects more than 250 characters and accepts exactly 250', async () => {
+      await expect(
+        useCase.execute({ ...input, description: 'a'.repeat(251) }),
+      ).rejects.toThrow('La descripción no puede superar 250 caracteres.');
+      expect(bankDepositRepository.registerOperation).not.toHaveBeenCalled();
+      await useCase.execute({ ...input, description: 'a'.repeat(250) });
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'a'.repeat(250) }),
+      );
+    });
+
+    it('trims, collapses spaces and removes control characters before persisting', async () => {
+      await useCase.execute({
+        ...input,
+        description: '  María López\t -  Retiro\n personal  ',
+      });
+      expect(bankDepositRepository.registerOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'María López - Retiro personal',
+        }),
+      );
+    });
+
+    it('keeps special characters a beneficiary may need', () => {
+      expect(
+        normalizeBankDepositDescription(
+          'Distribuidora ABC, S.A. — Pago #45 (servicios) 50% & más',
+        ),
+      ).toBe('Distribuidora ABC, S.A. — Pago #45 (servicios) 50% & más');
+    });
   });
 
   describe('desglose de efectivo opcional', () => {

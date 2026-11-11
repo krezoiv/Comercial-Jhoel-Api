@@ -23,11 +23,16 @@ export interface ExportBankDepositsReportPdfInput {
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
+  /** Same free-text search as the on-screen report (beneficiary/description, client, type, bank). */
+  search?: string;
   generatedByUsername: string;
 }
 
 /** Same cap and reasoning as every other export in this module — an unbounded date range shouldn't produce an unbounded PDF. */
 const EXPORT_ROW_LIMIT = 500;
+
+/** Shown for operations registered before "Descripción / Beneficiario" existed — never an invented description. */
+export const BANK_DEPOSIT_NO_DESCRIPTION_LABEL = 'Sin descripción registrada';
 
 /** `yyyy-MM-dd` → `dd/MM/yyyy` via plain string slicing, same as `formatRechargeDate` — `operationDate` is already an unambiguous calendar day, no `Date` round-trip needed. */
 function formatBankDepositDate(isoDate: string): string {
@@ -85,6 +90,7 @@ export class ExportBankDepositsReportPdfUseCase {
       transactionBankId: input.transactionBankId,
       transactionTypeId: input.transactionTypeId,
       userId: input.userId,
+      search: input.search?.trim() || undefined,
     };
 
     // Same filters drive the list and the summary here as every other export in this module.
@@ -102,6 +108,7 @@ export class ExportBankDepositsReportPdfUseCase {
       formatBankDepositDateTime(item.createdAt),
       item.transactionBankName,
       item.transactionTypeName,
+      item.description ?? BANK_DEPOSIT_NO_DESCRIPTION_LABEL,
       item.clientName ?? '—',
       formatReportCurrency(item.totalAmount),
       formatReportQuantity(item.transactionCount),
@@ -128,13 +135,16 @@ export class ExportBankDepositsReportPdfUseCase {
       ],
       columns: [
         { header: 'Fecha y Hora', width: 75 },
-        { header: 'Banco Agente', width: 85 },
-        { header: 'Tipo', width: 75 },
-        { header: 'Cliente', width: 75 },
+        { header: 'Banco Agente', width: 90, wrap: true },
+        { header: 'Tipo', width: 80, wrap: true },
+        { header: 'Descripción / Beneficiario', width: 205, wrap: true },
+        { header: 'Cliente', width: 85, wrap: true },
         { header: 'Monto Total', width: 75, align: 'right' },
         { header: 'Transacciones', width: 70, align: 'right' },
-        { header: 'Usuario', width: 65 },
+        { header: 'Usuario', width: 75 },
       ],
+      // The added description column needs the width of a landscape page.
+      layout: 'landscape',
       rows,
       generatedAt: new Date(),
       generatedByUsername: input.generatedByUsername,
@@ -163,6 +173,10 @@ export class ExportBankDepositsReportPdfUseCase {
         input.transactionTypeId,
       );
       lines.push({ label: 'Tipo de transacción', value: type?.name ?? '—' });
+    }
+
+    if (input.search?.trim()) {
+      lines.push({ label: 'Búsqueda', value: input.search.trim() });
     }
 
     if (input.userId) {

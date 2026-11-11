@@ -20,7 +20,7 @@ import {
 import { BankService } from '../../../core/services/bank.service';
 import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../core/utils/bank-balance.util';
 import { AuthService } from '../../../core/services/auth.service';
-import { BankDepositDraftStore } from '../../../core/services/bank-deposit-draft.store';
+import { BankDepositDraftStore, DESCRIPTION_MAX_LENGTH } from '../../../core/services/bank-deposit-draft.store';
 import { BankDepositService } from '../../../core/services/bank-deposit.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -577,8 +577,25 @@ export class TransaccionarPageComponent {
     this.isChangeConfirmOpen.set(false);
   }
 
+  /** Becomes true on the first save attempt (or when typing), so the description error is not shown on an untouched form. */
+  readonly descriptionTouched = signal(false);
+
+  readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
+
+  onDescriptionInput(value: string): void {
+    this.descriptionTouched.set(true);
+    this.draft.setDescription(value);
+  }
+
   requestSave(): void {
     if (!this.canSubmit() || this.isSaving()) {
+      return;
+    }
+    const descriptionError = this.draft.descriptionError();
+    if (descriptionError) {
+      this.descriptionTouched.set(true);
+      this.notificationService.warning(descriptionError);
+      document.getElementById('transaction-description')?.focus();
       return;
     }
     this.isConfirmOpen.set(true);
@@ -615,6 +632,7 @@ export class TransaccionarPageComponent {
           : [],
         transactionAmounts: this.draft.transactionAmounts(),
         clientName: this.draft.clientName().trim() || null,
+        description: this.draft.normalizedDescription(),
         clientId: this.draft.clientId(),
         sendToAccountsReceivable: this.draft.sendToAccountsReceivable(),
         sendToAssets: this.canSendToAssets() && this.draft.sendToAssets(),
@@ -625,6 +643,7 @@ export class TransaccionarPageComponent {
           this.isSaving.set(false);
           this.isConfirmOpen.set(false);
           this.draft.reset();
+          this.descriptionTouched.set(false);
           this.view.set('dashboard');
           const movement = operation.balanceMovement;
           const cash = operation.cashMovement;

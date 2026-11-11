@@ -27,6 +27,7 @@ export class BankDepositOperationResponseDto {
   netCashApplied: number;
   cashBreakdownEnabled: boolean;
   clientName: string | null;
+  description: string | null;
   clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
@@ -70,6 +71,7 @@ export class BankDepositOperationSummaryResponseDto {
   transactionCount: number;
   operationDate: string;
   clientName: string | null;
+  description: string | null;
   clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;

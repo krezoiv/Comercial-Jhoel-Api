@@ -1,0 +1,159 @@
+@if (open && request) {
+  <div class="modal-backdrop">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="correction-title"
+    >
+      <div class="modal__header">
+        <div class="modal__icon"><app-icon name="edit-2" [size]="20" /></div>
+        <div>
+          <h2 class="modal__title" id="correction-title">
+            {{
+              request.kind === "MOVEMENT"
+                ? "Corregir movimiento"
+                : "Corregir dato del día"
+            }}
+          </h2>
+          <p class="modal__subtitle">
+            {{ moduleLabel[request.module] }} ·
+            {{
+              reviewDate ? (reviewDate + "T00:00:00" | date: "dd/MM/yyyy") : ""
+            }}
+          </p>
+        </div>
+      </div>
+
+      @if (error) {
+        <p class="modal__error">{{ error }}</p>
+      }
+
+      @if (step() === "form") {
+        <p class="modal__text">
+          <strong>{{ request.label }}</strong>
+        </p>
+        @if (request.kind === "MOVEMENT") {
+          <div class="modal__warning">
+            <app-icon name="alert-circle" [size]="18" />
+            <span>
+              El movimiento original no se modifica: se registra un ajuste
+              vinculado que corrige solo el cálculo de este día. Los saldos de
+              otros días y el saldo actual no cambian.
+            </span>
+          </div>
+        }
+
+        <dl class="facts">
+          <div>
+            <dt>Valor original</dt>
+            <dd>{{ formatCurrency(request.originalValue) }}</dd>
+          </div>
+          <div>
+            <dt>Usuario responsable</dt>
+            <dd>{{ username }}</dd>
+          </div>
+        </dl>
+
+        <label class="field">
+          <span>Valor corregido <em>(obligatorio)</em></span>
+          <input
+            type="number"
+            step="0.01"
+            inputmode="decimal"
+            [min]="request.allowNegative ? null : 0"
+            [ngModel]="newValue()"
+            (ngModelChange)="onValueChange($event)"
+          />
+        </label>
+        <label class="field">
+          <span>Motivo de la corrección <em>(obligatorio)</em></span>
+          <textarea
+            rows="2"
+            maxlength="500"
+            [ngModel]="reason()"
+            (ngModelChange)="reason.set($event)"
+          ></textarea>
+        </label>
+        <label class="field">
+          <span>Observaciones (opcional)</span>
+          <textarea
+            rows="2"
+            maxlength="500"
+            [ngModel]="observations()"
+            (ngModelChange)="observations.set($event)"
+          ></textarea>
+        </label>
+
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="isSaving" (click)="onCancel()"
+            >Cancelar</app-button
+          >
+          <app-button
+            variant="primary"
+            [disabled]="!canContinue"
+            (click)="goToConfirm()"
+            >Revisar cambio</app-button
+          >
+        </div>
+      } @else {
+        <p class="modal__text">
+          Compare los valores antes de guardar. Esta corrección quedará en la
+          auditoría.
+        </p>
+        @let delta = difference() ?? 0;
+        <div class="compare">
+          <div class="compare__old">
+            <span>Valor original</span>
+            <strong>{{ formatCurrency(request.originalValue) }}</strong>
+          </div>
+          <app-icon name="arrow-right" [size]="20" />
+          <div>
+            <span>Valor corregido</span>
+            <strong>{{ formatCurrency(newValue() ?? 0) }}</strong>
+          </div>
+          <p class="compare__delta">
+            Diferencia:
+            <strong [class.positive]="delta > 0" [class.negative]="delta < 0">
+              {{ delta > 0 ? "+" : "" }}{{ formatCurrency(delta) }}
+            </strong>
+          </p>
+        </div>
+        <dl class="facts">
+          <div>
+            <dt>Motivo</dt>
+            <dd>{{ reason() }}</dd>
+          </div>
+          @if (observations()) {
+            <div>
+              <dt>Observaciones</dt>
+              <dd>{{ observations() }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Afecta solo a</dt>
+            <dd>
+              {{
+                reviewDate
+                  ? (reviewDate + "T00:00:00" | date: "dd/MM/yyyy")
+                  : ""
+              }}
+            </dd>
+          </div>
+        </dl>
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="isSaving" (click)="back()"
+            >Volver</app-button
+          >
+          <app-button
+            variant="primary"
+            [disabled]="isSaving"
+            (click)="confirm()"
+          >
+            {{ isSaving ? "Guardando…" : "Confirmar corrección" }}
+          </app-button>
+        </div>
+      }
+    </div>
+  </div>
+}

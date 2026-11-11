@@ -331,3 +331,16 @@
   font-style: italic;
   color: var(--color-text-on-light-muted);
 }
+
+// "Descripción / Beneficiario" wraps instead of widening the table.
+.detail-table__description {
+  min-width: 10rem;
+  max-width: 18rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.detail-table__description--empty {
+  color: var(--color-text-on-light-subtle);
+  font-style: italic;
+}

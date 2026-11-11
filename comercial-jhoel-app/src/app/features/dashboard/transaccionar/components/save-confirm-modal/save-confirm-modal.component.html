@@ -48,6 +48,10 @@
             <dd><app-bank-balance-amount [value]="genesisBalanceAfter" specialAccount="GENESIS" strong /></dd>
           </div>
         }
+        <div class="modal__summary-row">
+          <dt>Descripción / Beneficiario</dt>
+          <dd class="modal__description">{{ description }}</dd>
+        </div>
         @if (clientName) {
           <div class="modal__summary-row">
             <dt>Cliente</dt>

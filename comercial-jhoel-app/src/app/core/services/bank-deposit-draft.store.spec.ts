@@ -32,6 +32,31 @@ describe('BankDepositDraftStore — desglose opcional y distribución automátic
 
   afterEach(() => sessionStorage.removeItem(STORAGE_KEY));
 
+  describe('descripción / beneficiario', () => {
+    it('is required and limited to 250 characters (the input never goes beyond)', () => {
+      expect(store.descriptionError()).toBe('Ingrese la descripción o el beneficiario de la transacción.');
+      store.setDescription('    ');
+      expect(store.descriptionError()).not.toBeNull();
+      store.setDescription('x'.repeat(300));
+      expect(store.description().length).toBe(250);
+      expect(store.descriptionError()).toBeNull();
+    });
+
+    it('normalizes like the API (trim, single spaces, no control characters)', () => {
+      store.setDescription('  Carlos\nRamírez  -   Desembolso de crédito ');
+      expect(store.normalizedDescription()).toBe('Carlos Ramírez - Desembolso de crédito');
+    });
+
+    it('survives a reload of the draft and is cleared by reset', () => {
+      selectOperation(store);
+      store.setDescription('Pedro González - Reintegro');
+      const restored = createStore();
+      expect(restored.description()).toBe('Pedro González - Reintegro');
+      restored.reset();
+      expect(restored.description()).toBe('');
+    });
+  });
+
   describe('interruptor de desglose', () => {
     it('starts in NO', () => {
       expect(store.cashBreakdownEnabled()).toBeFalse();

@@ -217,3 +217,45 @@ app-report-summary {
   color: var(--color-text-on-light);
   margin-bottom: var(--space-4);
 }
+
+// Quick ranges: Diario / Mensual / Histórico (same date filters underneath).
+.range-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.range-presets__btn {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light-muted);
+  background: var(--color-surface-light);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary-600);
+    border-color: var(--color-primary-500);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+}
+
+// "Descripción / Beneficiario": wraps instead of stretching the table.
+.report-table__description {
+  min-width: 12rem;
+  max-width: 22rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.report-table__description--empty {
+  color: var(--color-text-on-light-subtle);
+  font-style: italic;
+}

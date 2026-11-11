@@ -13,6 +13,8 @@ export interface ListBankDepositOperationsInput {
   userId?: string;
   startDate?: string;
   endDate?: string;
+  /** Free text: description/beneficiary, client, transaction type or bank. */
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -55,6 +57,7 @@ export class ListBankDepositOperationsUseCase {
       userId: input.userId,
       startDate: input.startDate,
       endDate: input.endDate,
+      search: input.search?.trim() || undefined,
       page,
       limit,
     });

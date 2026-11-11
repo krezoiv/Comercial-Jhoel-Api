@@ -22,6 +22,8 @@ export interface ReportPdfColumn {
   header: string;
   width: number;
   align?: 'left' | 'right' | 'center';
+  /** Opt-in: wrap long text over several lines (the row grows) instead of cutting it with an ellipsis. */
+  wrap?: boolean;
 }
 
 export interface ReportPdfOptions {
@@ -36,6 +38,8 @@ export interface ReportPdfOptions {
   generatedByUsername: string;
   /** Shown under the table when `rows` was capped before reaching the full filtered result set. */
   truncationNotice?: string;
+  /** Opt-in page orientation for wide tables; every existing report keeps the default portrait. */
+  layout?: 'portrait' | 'landscape';
 }
 
 const PAGE_MARGIN = 40;
@@ -52,6 +56,7 @@ const HEADER_ROW_HEIGHT = 22;
 export function buildReportPdf(options: ReportPdfOptions): Promise<Buffer> {
   const doc = new PDFDocument({
     size: 'A4',
+    layout: options.layout ?? 'portrait',
     margin: PAGE_MARGIN,
     bufferPages: true,
   });
@@ -236,9 +241,9 @@ function drawTable(
     doc.fillColor('#0f172a');
   };
 
-  const ensureSpace = (): void => {
+  const ensureSpace = (height: number = ROW_HEIGHT): void => {
     const bottom = doc.page.height - doc.page.margins.bottom;
-    if (doc.y + ROW_HEIGHT > bottom) {
+    if (doc.y + height > bottom) {
       doc.addPage();
       drawTableHeader();
     }
@@ -259,7 +264,19 @@ function drawTable(
   }
 
   rows.forEach((row, rowIndex) => {
-    ensureSpace();
+    // Rows only grow when a `wrap` column needs more than one line.
+    doc.fontSize(8.5);
+    const rowHeight = Math.max(
+      ROW_HEIGHT,
+      ...row.map((cell, columnIndex) =>
+        columns[columnIndex]?.wrap
+          ? doc.heightOfString(cell, {
+              width: columns[columnIndex].width - 8,
+            }) + 10
+          : ROW_HEIGHT,
+      ),
+    );
+    ensureSpace(rowHeight);
     const y = doc.y;
     if (rowIndex % 2 === 1) {
       doc
@@ -267,7 +284,7 @@ function drawTable(
           startX,
           y,
           columns.reduce((sum, c) => sum + c.width, 0),
-          ROW_HEIGHT,
+          rowHeight,
         )
         .fill('#f1f5f9');
       doc.fillColor('#0f172a');
@@ -276,15 +293,22 @@ function drawTable(
     doc.fontSize(8.5).fillColor('#1e293b');
     row.forEach((cell, columnIndex) => {
       const column = columns[columnIndex];
-      doc.text(cell, x + 4, y + 5, {
-        width: column.width - 8,
-        align: column.align ?? 'left',
-        lineBreak: false,
-        ellipsis: true,
-      });
+      doc.text(
+        cell,
+        x + 4,
+        y + 5,
+        column.wrap
+          ? { width: column.width - 8, align: column.align ?? 'left' }
+          : {
+              width: column.width - 8,
+              align: column.align ?? 'left',
+              lineBreak: false,
+              ellipsis: true,
+            },
+      );
       x += column.width;
     });
-    doc.y = y + ROW_HEIGHT;
+    doc.y = y + rowHeight;
   });
 }
 

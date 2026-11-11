@@ -136,6 +136,33 @@
           />
         </div>
 
+        <div class="field field--description">
+          <label for="transaction-description">
+            Descripción / Beneficiario <span class="field__required">(obligatorio)</span>
+          </label>
+          <textarea
+            id="transaction-description"
+            rows="2"
+            [attr.maxlength]="descriptionMaxLength"
+            placeholder="Ej. Juan Pérez - Pago de préstamo"
+            aria-describedby="transaction-description-hint"
+            [attr.aria-invalid]="descriptionTouched() && !!draft.descriptionError()"
+            [class.field__control--invalid]="descriptionTouched() && !!draft.descriptionError()"
+            [ngModel]="draft.description()"
+            (ngModelChange)="onDescriptionInput($event)"
+          ></textarea>
+          <div class="field__meta" id="transaction-description-hint">
+            @if (descriptionTouched() && draft.descriptionError(); as error) {
+              <span class="field__error" role="alert">{{ error }}</span>
+            } @else {
+              <span class="field__hint">A quién se le realizó la operación o cuál fue su propósito.</span>
+            }
+            <span class="field__counter" [class.field__counter--limit]="draft.description().length >= descriptionMaxLength">
+              {{ draft.description().length }}/{{ descriptionMaxLength }}
+            </span>
+          </div>
+        </div>
+
         <div class="field">
           <span class="field__label" id="cash-breakdown-label">Desglose de efectivo</span>
           <button
@@ -340,6 +367,7 @@
     [transactionTypeName]="draft.transactionTypeName()"
     [transactionBankName]="draft.isGenesisType() ? '' : selectedBankName()"
     [clientName]="draft.clientName()"
+    [description]="draft.normalizedDescription()"
     [registeredClientName]="draft.clientId() ? draft.clientDisplayName() : null"
     [sendToAccountsReceivable]="draft.sendToAccountsReceivable()"
     [sendToAssets]="canSendToAssets() && draft.sendToAssets()"

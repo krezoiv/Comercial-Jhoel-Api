@@ -33,6 +33,7 @@ import { InvalidBankDepositClientError } from '../../domain/errors/invalid-bank-
 import { BankDepositOperationNotFoundError } from '../../domain/errors/bank-deposit-operation-not-found.error';
 import { BankDepositOperationAlreadyVoidedError } from '../../domain/errors/bank-deposit-operation-already-voided.error';
 import { InvalidBankAccountError } from '../../domain/errors/invalid-bank-account.error';
+import { InvalidBankDepositDescriptionError } from '../../domain/errors/invalid-bank-deposit-description.error';
 import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
 import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
 import { BankDepositOperationMapper } from './bank-deposit-operation.mapper';
@@ -62,7 +63,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       const rows = await manager.query<
         { register_bank_deposit_operation: string }[]
       >(
-        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12)',
+        'SELECT register_bank_deposit_operation($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13)',
         [
           data.transactionBankId,
           data.totalAmount,
@@ -76,6 +77,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
           data.clientId ?? null,
           data.bankAccountId ?? null,
           data.cashBreakdownEnabled ?? true,
+          data.description ?? null,
         ],
       );
       operationId = rows[0].register_bank_deposit_operation;
@@ -314,6 +316,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       userId?: string;
       startDate?: string;
       endDate?: string;
+      search?: string;
     },
   ): void {
     if (filters.transactionBankId) {
@@ -339,6 +342,24 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
         endDate: filters.endDate,
       });
     }
+    const search = filters.search?.trim();
+    if (search) {
+      // Combined (AND) with every other filter. Subqueries instead of joins so
+      // the aggregate queries (summary/by bank) keep their own join shape.
+      qb.andWhere(
+        `(
+          search_normalize(${qb.alias}.description) LIKE '%' || search_normalize(:search) || '%'
+          OR search_normalize(${qb.alias}.client_name) LIKE '%' || search_normalize(:search) || '%'
+          OR EXISTS (SELECT 1 FROM transaction_types st WHERE st.id = ${qb.alias}.transaction_type_id
+                     AND search_normalize(st.name) LIKE '%' || search_normalize(:search) || '%')
+          OR EXISTS (SELECT 1 FROM transaction_banks sb WHERE sb.id = ${qb.alias}.transaction_bank_id
+                     AND search_normalize(sb.name) LIKE '%' || search_normalize(:search) || '%')
+          OR EXISTS (SELECT 1 FROM banks sa WHERE sa.id = ${qb.alias}.bank_account_id
+                     AND search_normalize(sa.name) LIKE '%' || search_normalize(:search) || '%')
+        )`,
+        { search: search.replace(/[%_\\]/g, (c) => `\\${c}`) },
+      );
+    }
   }
 
   /** Same `RAISE EXCEPTION '<CODE>:<id>'` → domain-error translation as `TypeOrmPurchaseRepository.translatePurchaseError` — see that method's own doc comment for why this parsing exists. */
@@ -359,6 +380,8 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
     const [code, detail] = message.split(':');
 
     switch (code) {
+      case 'BANK_DEPOSIT_DESCRIPTION_TOO_LONG':
+        return new InvalidBankDepositDescriptionError();
       case 'TRANSACTION_BANK_NOT_FOUND':
       case 'TRANSACTION_BANK_INACTIVE':
         return new InvalidTransactionBankError();

@@ -192,3 +192,18 @@
 .align-right {
   text-align: right;
 }
+
+// "Descripción / Beneficiario" takes the whole row and wraps.
+.info-grid__item--wide {
+  grid-column: 1 / -1;
+}
+
+.info-grid__description {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.info-grid__description--empty {
+  color: var(--color-text-on-light-subtle);
+  font-style: italic;
+}

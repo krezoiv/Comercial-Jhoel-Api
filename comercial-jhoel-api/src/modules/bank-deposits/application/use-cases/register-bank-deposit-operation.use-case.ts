@@ -37,9 +37,32 @@ import {
 } from '../dtos/bank-deposit-output';
 import { todayIsoDate } from '../utils/today-iso-date';
 import {
+  BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH,
+  InvalidBankDepositDescriptionError,
+} from '../../domain/errors/invalid-bank-deposit-description.error';
+import {
   CashBreakdownNotExpectedError,
   CashBreakdownRequiredError,
 } from '../../domain/errors/cash-breakdown.error';
+
+/**
+ * Normalizes "Descripción / Beneficiario": control characters become spaces,
+ * runs of whitespace collapse to one, and the ends are trimmed. Returns `null`
+ * when nothing is left. Same rule the SQL function applies.
+ */
+export function normalizeBankDepositDescription(
+  value: string | null | undefined,
+): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const clean = value
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean.length ? clean : null;
+}
 
 /** Tipos cuyo monto puede enviarse a Activos: dinero que sale hacia el cliente. */
 const ASSET_ELIGIBLE_BALANCE_EFFECTS: readonly TransactionTypeBalanceEffect[] =
@@ -61,6 +84,13 @@ export interface RegisterBankDepositOperationInput {
   transactionAmounts: number[];
   userId: string;
   clientName?: string | null;
+  /**
+   * "Descripción / Beneficiario" — required for every operation registered by
+   * a user from Transaccionar; normalized (control chars → space, single
+   * spaces, trimmed) and limited to 250 characters. Persisted in the same
+   * INSERT as the operation (no separate record).
+   */
+  description?: string | null;
   /** A REGISTERED client — re-validated (exists + active) here regardless of what the frontend already checked; independent of `sendToAccountsReceivable` (a deposit can link a registered client without also generating a cargo). */
   clientId?: string | null;
   /** "Enviar a cuentas por cobrar" — any transaction type; requires `clientId` and `isAdmin` (same rule `POST /accounts-receivable/:clientId/charges` already enforces — see `BankDepositAccountsReceivableForbiddenError`). */
@@ -134,6 +164,14 @@ export class RegisterBankDepositOperationUseCase {
     }
 
     // Error claro antes de tocar la base — el SQL vuelve a validarlo igual.
+    const description = normalizeBankDepositDescription(input.description);
+    if (!description) {
+      throw new InvalidBankDepositDescriptionError('REQUIRED');
+    }
+    if (description.length > BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH) {
+      throw new InvalidBankDepositDescriptionError('TOO_LONG');
+    }
+
     const cashBreakdownEnabled = input.cashBreakdownEnabled ?? true;
     if (cashBreakdownEnabled && input.cashDetails.length === 0) {
       throw new CashBreakdownRequiredError();
@@ -195,6 +233,7 @@ export class RegisterBankDepositOperationUseCase {
       transactionAmounts: input.transactionAmounts,
       userId: input.userId,
       clientName,
+      description,
       clientId,
       changeGiven: input.changeGiven ?? 0,
       cashBreakdownEnabled,

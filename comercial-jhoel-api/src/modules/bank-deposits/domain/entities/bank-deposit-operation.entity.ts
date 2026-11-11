@@ -21,6 +21,8 @@ export interface BankDepositOperationProps {
   /** `false` = registrada sin desglose de efectivo (sin denominaciones, `totalCash` 0, sin vuelto). Toda operación previa a esa opción es `true`. */
   cashBreakdownEnabled: boolean;
   clientName: string | null;
+  /** "Descripción / Beneficiario": who the operation was for, or its purpose. `null` on historical operations (never backfilled). */
+  description: string | null;
   /** A REGISTERED client (the `clients` table also used by Cuentas por Cobrar/Activos) — `null` unless one was picked. Independent of `clientName`, which stays free-text for every other case. */
   clientId: string | null;
   transactionTypeId: string;
@@ -110,6 +112,11 @@ export class BankDepositOperation {
 
   get clientName(): string | null {
     return this.props.clientName;
+  }
+
+  /** "Descripción / Beneficiario" exactly as stored; `null` for historical operations. */
+  get description(): string | null {
+    return this.props.description;
   }
 
   get clientId(): string | null {

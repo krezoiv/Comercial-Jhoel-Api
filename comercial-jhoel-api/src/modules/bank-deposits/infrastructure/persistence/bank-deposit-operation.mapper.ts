@@ -22,6 +22,7 @@ export class BankDepositOperationMapper {
       changeGiven: orm.changeGiven,
       cashBreakdownEnabled: orm.cashBreakdownEnabled,
       clientName: orm.clientName,
+      description: orm.description ?? null,
       clientId: orm.clientId,
       transactionTypeId: orm.transactionTypeId,
       transactionTypeName: orm.transactionType.name,

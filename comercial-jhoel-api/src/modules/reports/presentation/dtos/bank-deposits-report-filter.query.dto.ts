@@ -3,8 +3,10 @@ import {
   IsDateString,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -29,6 +31,12 @@ export class BankDepositsReportFilterQueryDto {
   @IsOptional()
   @IsUUID()
   userId?: string;
+
+  /** Search by beneficiary/description, client, transaction type or bank (accent/case-insensitive). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
 
   @IsOptional()
   @Type(() => Number)

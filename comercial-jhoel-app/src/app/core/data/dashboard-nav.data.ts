@@ -144,6 +144,13 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
         ],
       },
       {
+        label: 'Administración financiera',
+        icon: 'shield-check',
+        path: 'grupo-sistema-admin-financiera',
+        roles: ADMIN_ONLY,
+        children: [{ label: 'Revisión de días operativos', icon: 'search', path: 'revision-dias-operativos' }],
+      },
+      {
         label: 'Administrar Facturas',
         icon: 'file-check',
         path: 'grupo-sistema-facturas',

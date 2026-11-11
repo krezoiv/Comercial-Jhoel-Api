@@ -1213,6 +1213,23 @@ function, never trusted from the client.
   concern under `/reports/bank-deposits` (see below) — `BankDepositsController` itself only exposes
   `POST /bank-deposits` and `GET /bank-deposits/:id` (fetch-one, e.g. for a receipt/confirmation view).
 
+### Descripción / Beneficiario en Transaccionar (migración `1760007200000`)
+
+- `bank_deposit_operations.description VARCHAR(250) NULL` (+ CHECK recortado/1–250, índice trigram sobre
+  `search_normalize(description)`). Históricas quedan `NULL` → la UI/PDF muestran "Sin descripción registrada".
+- `register_bank_deposit_operation` ganó `p_description` (13.º parámetro, DEFAULT NULL) y lo escribe en el MISMO INSERT;
+  sanitiza (control → espacio, espacios colapsados, trim) y rechaza > 250 (`BANK_DEPOSIT_DESCRIPTION_TOO_LONG` →
+  `InvalidBankDepositDescriptionError`). La migración parchea la definición viva con anclas verificadas (no copia el
+  cuerpo); `down` la restaura idéntica. Nada más de la función cambia (saldos, efectivo, comisiones).
+- Obligatoria para todo registro desde `POST /bank-deposits` (DTO + `RegisterBankDepositOperationUseCase`,
+  `normalizeBankDepositDescription`); llamadas internas sin beneficiario pueden omitirla (NULL).
+- Búsqueda `search` (descripción, cliente, tipo, banco agente o cuenta; sin acentos/mayúsculas, combinada con los demás
+  filtros) en `applyFilters` → lista, resumen y PDF de `/reports/bank-deposits`. El PDF va horizontal y las columnas
+  de texto usan `wrap` (opciones nuevas y opcionales de `buildReportPdf`; los demás reportes no cambian).
+- No hay edición de transacciones (solo anulación), así que la descripción no se modifica después de guardarla.
+- Pruebas: `sql/tests/bank-deposit-description.test.sql` (36 casos: todos los tipos con/sin descripción → mismos
+  movimientos, efectivo y comisiones), specs del caso de uso, `test/bank-deposit-description.e2e-spec.ts`.
+
 ### Reportería de Transacciones (extension to Reports)
 
 `GET /reports/bank-deposits`, `/summary`, `/export` — a fourth Reportería screen, admin-only
@@ -1493,6 +1510,48 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   `account-receivable-settlement.use-cases.spec.ts`, `test/ar-settlements.e2e-spec.ts`
   (`test/run-cash-control-e2e.sh test/ar-settlements.e2e-spec.ts`; correr separado del e2e de efectivo, ambos
   cargan saldo inicial).
+
+### Revisión de días operativos históricos (`modules/financial-day-review/`, migración `1760007100000`)
+
+Sistema → Administración financiera → Revisión de días operativos: abrir un día PASADO y cerrado en una sesión
+de revisión auditada, diagnosticar descuadres, corregir datos de ESE día y cerrar la revisión.
+
+- **Regla absoluta (en PostgreSQL)**: una corrección solo toca el día revisado. Dos mecanismos:
+  1. **Fotos del día** (`bank_balances`, `agent_reconciliations`, `cash_operational_days`, `cash_cut_periods`,
+     `cash_cut_counts`, `cash_cut_bank_reconciliations` de esa fecha) se corrigen EN SITIO con versión
+     (`financial_day_snapshot_versions`, valor anterior conservado) y auditoría. Se recalculan solo derivados de la
+     misma fila (`result` del cuadre, `difference` del arqueo/conciliación; el arqueo del corte final actualiza el cierre
+     del mismo día). Nunca la apertura del día siguiente ni el segundo corte.
+  2. **Movimientos** (Kardex, ledger bancario, Transaccionar, CxC, Activos) NUNCA se editan (llevan saldos corridos):
+     `financial_day_adjustments` vinculado al original + `financial_day_adjustment_effects` (CASH/BANK/AR/ASSET),
+     derivados de los vínculos existentes (`reference_type/id`). Solo cambian el recálculo del día; saldos vivos y
+     otros días intactos. Una segunda corrección del mismo registro marca la anterior `REEMPLAZADO` (una vigente).
+     Renglones generados por otra operación → `FINANCIAL_REVIEW_MOVEMENT_HAS_SOURCE` (corregir el origen).
+- **Aislamiento forzado por triggers** `trg_financial_review_guard` en todas las tablas de día/ledger (+ `day_openings`):
+  con `app.financial_review_day` (lo pone la función de corrección) rechaza filas de otra fecha
+  (`FINANCIAL_REVIEW_OUTSIDE_DAY`); sin él, bloquea escrituras normales a un día con sesión activa
+  (`FINANCIAL_REVIEW_DAY_LOCKED`, 409 vía `GlobalExceptionFilter` desde cualquier módulo). Hoy nunca se bloquea.
+- **Sesiones** `financial_day_review_sessions`: `OPEN → IN_REVIEW → PENDING_CONFIRMATION → CLOSED`, una activa por fecha
+  (índice único parcial + advisory lock; el error dice quién la tiene), solo fechas < hoy (Guatemala) con datos y ya
+  cerradas en Agentes y en Efectivo. Guarda `snapshot_before/after` (JSON del diagnóstico) y diferencia antes/después.
+  Cerrar exige `close-request` (resumen) y aceptar explícitamente diferencias pendientes. Reabrir = nueva sesión.
+- **Auditoría inmutable**: correcciones, versiones y efectos rechazan UPDATE/DELETE/TRUNCATE; ajustes solo
+  VIGENTE→REEMPLAZADO; sesiones congeladas al cerrar. `client_request_id` UNIQUE + lock = idempotencia.
+- **Diagnóstico** (`domain/services/financial-day-diagnostics.ts`, puro): bancos (saldo inicial + ledger del día =
+  final teórico vs registrado; días anteriores al ledger = no verificable), efectivo, cortes (totales vs rango del
+  Kardex, arqueos, conciliaciones, corte 1 → 2), CxC/Activos (inicial + cargos − abonos − cancelaciones `AR_PAYMENT`),
+  cuadre (resultado ≠ 0, fórmula, componentes vs recalculado; bancos acepta también la regla previa de BI Club).
+  "Relacionados" = solo coincidencias verificables (monto exacto, mitad, par, mismo monto día ±1, filas cambiadas
+  después del cierre).
+- **RBAC**: `financial_days.review` = SUPER_ADMIN/ADMIN (lectura), `financial_days.correct` = SUPER_ADMIN (abrir,
+  corregir, cerrar; solo el dueño corrige su sesión). Mapa en `domain/financial-day-permissions.ts` y el mismo en
+  `financial_review_assert_role` (SQL).
+- **Rutas** `/financial-day-reviews`: `GET days?from&to`, `GET days/:date`, `GET corrections?date|sessionId`,
+  `GET sessions/:id`, `POST sessions`, `POST sessions/:id/snapshot-corrections`, `POST sessions/:id/movement-adjustments`,
+  `POST sessions/:id/close-request`, `POST sessions/:id/close` (todos los POST con `confirm: true`).
+- Pruebas: `sql/tests/financial-day-review.test.sql` (ROLLBACK, 71 casos, incluye la prueba crítica A/B/C con huella
+  md5 de todo el día anterior/siguiente y de los saldos vivos), `financial-day-diagnostics.spec.ts`,
+  `financial-day-review.use-cases.spec.ts`, `test/financial-day-review.e2e-spec.ts` (sobre copia `_e2e`).
 
 ## Dashboard (`modules/dashboard/`) — Resumen's Ventas de Recargas / Ventas / Compras / Transacciones Bancarias
 

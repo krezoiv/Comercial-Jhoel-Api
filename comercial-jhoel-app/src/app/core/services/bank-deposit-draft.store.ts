@@ -21,6 +21,7 @@ interface PersistedBankDepositDraft {
   cashCounts: Record<string, number>;
   transactionAmounts: number[];
   clientName: string;
+  description?: string;
   clientId: string | null;
   clientDisplayName: string | null;
   sendToAccountsReceivable: boolean;
@@ -30,6 +31,15 @@ interface PersistedBankDepositDraft {
 }
 
 const STORAGE_PREFIX = 'cj_bank_deposit_draft:';
+
+/** Max length of "Descripción / Beneficiario" (same as the API and the database column). */
+export const DESCRIPTION_MAX_LENGTH = 250;
+
+/** Same normalization the API applies: control characters → space, collapse whitespace, trim. */
+export function normalizeDescription(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  return (value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
 /** Rounds to 2 decimals before comparing — plain float arithmetic on money (e.g. 0.1 + 0.2) can otherwise miss an exact match by a fraction of a centavo. */
 function round2(value: number): number {
@@ -79,6 +89,24 @@ export class BankDepositDraftStore {
   readonly transactionAmounts = signal<number[]>([0]);
   /** Free text, never required to save — see `RegisterBankDepositInput.clientName`'s own doc comment. Independent of `clientId` below: both can be set at once, though the backend resolves the display name from the real client whenever `clientId` is present. */
   readonly clientName = signal('');
+
+  /** "Descripción / Beneficiario" as typed (normalized only when sent). Required to save — see `descriptionError`. */
+  readonly description = signal('');
+
+  /** Normalized description: control characters → space, single spaces, trimmed (same rule as the API). */
+  readonly normalizedDescription = computed(() => normalizeDescription(this.description()));
+
+  /** `null` when valid; otherwise the message shown under the field. */
+  readonly descriptionError = computed<string | null>(() => {
+    const value = this.normalizedDescription();
+    if (!value) {
+      return 'Ingrese la descripción o el beneficiario de la transacción.';
+    }
+    if (value.length > DESCRIPTION_MAX_LENGTH) {
+      return `La descripción no puede superar ${DESCRIPTION_MAX_LENGTH} caracteres.`;
+    }
+    return null;
+  });
 
   /**
    * A REGISTERED client — only ever offered in the UI for a "Depósito"
@@ -186,6 +214,7 @@ export class BankDepositDraftStore {
       // One row is the automatic default (mirrors the total) — only a manual multi-row split is progress of its own.
       this.transactionAmounts().length > 1 ||
       this.clientName().trim() !== '' ||
+      this.description().trim() !== '' ||
       this.clientId() !== null,
   );
 
@@ -303,6 +332,12 @@ export class BankDepositDraftStore {
     this.persist();
   }
 
+  /** Sets "Descripción / Beneficiario" (never longer than the limit). */
+  setDescription(value: string): void {
+    this.description.set((value ?? '').slice(0, DESCRIPTION_MAX_LENGTH));
+    this.persist();
+  }
+
   /** `client: null` (cleared from `ClientSearchSelectComponent`) also clears `sendToAccountsReceivable` — the checkbox never makes sense without a registered client, so there's nothing stale left checked once the client it referred to is gone. */
   setRegisteredClient(client: { id: string; name: string } | null): void {
     this.clientId.set(client?.id ?? null);
@@ -342,6 +377,7 @@ export class BankDepositDraftStore {
     this.cashCounts.set(emptyCashCounts());
     this.transactionAmounts.set([0]);
     this.clientName.set('');
+    this.description.set('');
     this.clientId.set(null);
     this.clientDisplayName.set(null);
     this.sendToAccountsReceivable.set(false);
@@ -367,6 +403,7 @@ export class BankDepositDraftStore {
       cashCounts: this.cashCounts(),
       transactionAmounts: this.transactionAmounts(),
       clientName: this.clientName(),
+      description: this.description(),
       clientId: this.clientId(),
       clientDisplayName: this.clientDisplayName(),
       sendToAccountsReceivable: this.sendToAccountsReceivable(),
@@ -409,6 +446,7 @@ export class BankDepositDraftStore {
       const amounts = Array.isArray(parsed.transactionAmounts) ? parsed.transactionAmounts : [];
       this.transactionAmounts.set(amounts.length > 0 ? amounts : [round2(parsed.totalAmount ?? 0)]);
       this.clientName.set(parsed.clientName ?? '');
+      this.description.set((parsed.description ?? '').slice(0, DESCRIPTION_MAX_LENGTH));
       this.clientId.set(parsed.clientId ?? null);
       this.clientDisplayName.set(parsed.clientDisplayName ?? null);
       this.sendToAccountsReceivable.set(parsed.sendToAccountsReceivable ?? false);

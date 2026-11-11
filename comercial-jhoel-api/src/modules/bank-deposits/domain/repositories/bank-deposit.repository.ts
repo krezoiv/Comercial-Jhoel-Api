@@ -20,6 +20,8 @@ export interface RegisterBankDepositOperationData {
   userId: string;
   /** Free-text — never looked up against the `clients` table, see the entity's own doc comment. */
   clientName: string | null;
+  /** "Descripción / Beneficiario" — already trimmed/validated by the use case; sanitized again in SQL. `null` only for internal callers without a beneficiary. */
+  description?: string | null;
   /** A REGISTERED client, validated (exists + active) before this is ever called — `null`/omitted for every transaction type/deposit not linked to one. Independent of `clientName`: both are set together when a registered client is picked (the resolved client's name is what's persisted as `clientName` for display — see `RegisterBankDepositOperationUseCase`). */
   clientId?: string | null;
   transactionTypeId: string;
@@ -35,6 +37,8 @@ export interface FindBankDepositOperationsOptions {
   userId?: string;
   startDate?: string;
   endDate?: string;
+  /** Free-text search: description/beneficiary, client name, transaction type and bank names (accent/case-insensitive). */
+  search?: string;
   page: number;
   limit: number;
 }
@@ -52,6 +56,8 @@ export interface BankDepositReportFilters {
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
+  /** Same free-text search as `FindBankDepositOperationsOptions.search`. */
+  search?: string;
 }
 
 export interface BankDepositReportByBank {

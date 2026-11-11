@@ -62,3 +62,4 @@ export * from './catalog-bank.model';
 export * from './landing-background.model';
 export * from './guayacan-cash-box.model';
 export * from './cash-control.model';
+export * from './financial-day-review.model';

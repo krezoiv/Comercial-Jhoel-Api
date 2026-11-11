@@ -1,0 +1,1113 @@
+@let d = detail.diagnosis;
+<nav class="tabs" role="tablist" aria-label="Secciones del día">
+  @for (item of tabs; track item.id) {
+    <button
+      type="button"
+      role="tab"
+      class="tabs__tab"
+      [class.tabs__tab--active]="tab() === item.id"
+      [attr.aria-selected]="tab() === item.id"
+      (click)="selectTab(item.id)"
+    >
+      <app-icon [name]="item.icon" [size]="15" />
+      {{ item.label }}
+      @if (item.id === "diagnosis" && d.differences.length) {
+        <span class="tabs__count">{{ d.differences.length }}</span>
+      }
+      @if (item.id === "audit" && detail.corrections.length) {
+        <span class="tabs__count tabs__count--neutral">{{
+          detail.corrections.length
+        }}</span>
+      }
+    </button>
+  }
+</nav>
+
+@switch (tab()) {
+  <!-- ── Diagnóstico de diferencias ───────────────────────────────────────── -->
+  @case ("diagnosis") {
+    <section class="panel">
+      <header class="panel__head">
+        <h3>Diagnóstico de diferencias</h3>
+        <p>
+          Cada fila compara un valor recalculado con el valor registrado. Solo
+          se listan diferencias verificables; los movimientos relacionados son
+          los que coinciden en monto, no causas supuestas.
+        </p>
+      </header>
+      @if (d.differences.length === 0) {
+        <p class="ok-note">
+          <app-icon name="check-circle" [size]="18" /> No se encontraron
+          diferencias en este día.
+        </p>
+      } @else {
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Módulo</th>
+                <th>Cuenta</th>
+                <th>Tipo de diferencia</th>
+                <th class="num">Esperado</th>
+                <th class="num">Registrado</th>
+                <th class="num">Diferencia</th>
+                <th>Relacionados</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of d.differences; track item.key) {
+                <tr>
+                  <td>{{ moduleLabel[item.module] }}</td>
+                  <td>{{ item.account }}</td>
+                  <td>
+                    <strong>{{ typeLabel[item.type] ?? item.type }}</strong>
+                    <small class="muted block">{{ item.label }}</small>
+                  </td>
+                  <td class="num">{{ money(item.expected) }}</td>
+                  <td class="num">{{ money(item.registered) }}</td>
+                  <td class="num" [class]="'tone-' + tone(item.difference)">
+                    {{ money(item.difference) }}
+                  </td>
+                  <td>
+                    @if (item.related.length) {
+                      <button
+                        type="button"
+                        class="link"
+                        (click)="toggle(item.key)"
+                      >
+                        {{ item.related.length }} movimiento(s)
+                        <app-icon
+                          [name]="
+                            expanded() === item.key
+                              ? 'chevron-up'
+                              : 'chevron-down'
+                          "
+                          [size]="14"
+                        />
+                      </button>
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                  <td class="actions">
+                    @if (canEdit && item.target?.kind === "SNAPSHOT") {
+                      <button
+                        type="button"
+                        class="action-btn"
+                        title="Corregir el valor registrado"
+                        (click)="correctDifference(item)"
+                      >
+                        <app-icon name="edit-2" [size]="15" />
+                      </button>
+                    }
+                  </td>
+                </tr>
+                @if (expanded() === item.key) {
+                  <tr class="related-row">
+                    <td colspan="8">
+                      <p class="muted">Referencia: {{ item.reference }}</p>
+                      <ul class="related">
+                        @for (
+                          rel of item.related;
+                          track rel.id + rel.match + (rel.pairWithId ?? "")
+                        ) {
+                          <li>
+                            <span class="chip">{{
+                              matchLabel[rel.match]
+                            }}</span>
+                            {{ rel.label }} ·
+                            {{ rel.date + "T00:00:00" | date: "dd/MM/yyyy" }} ·
+                            <strong>{{ money(rel.amount) }}</strong>
+                          </li>
+                        }
+                      </ul>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ── Agentes Bancarios ───────────────────────────────────────────────── -->
+  @case ("banks") {
+    <section class="panel">
+      <header class="panel__head">
+        <h3>Agentes Bancarios</h3>
+        <p>
+          Saldo inicial + movimientos del ledger del día (+ ajustes de la
+          revisión) = saldo final teórico. Los días anteriores al ledger (sin
+          movimientos registrados) no se pueden verificar y se marcan como tal.
+        </p>
+      </header>
+      <div class="table-wrapper">
+        <table class="table table--dense">
+          <thead>
+            <tr>
+              <th>Banco</th>
+              <th class="num">Saldo inicial</th>
+              <th class="num">Depósitos</th>
+              <th class="num">Retiros</th>
+              <th class="num">Transf. recibidas</th>
+              <th class="num">Transf. enviadas</th>
+              <th class="num">Desembolsos</th>
+              <th class="num">Pagos</th>
+              <th class="num">Reintegros</th>
+              <th class="num">Ajustes</th>
+              <th class="num">Ajustes revisión</th>
+              <th class="num">Final teórico</th>
+              <th class="num">Final registrado</th>
+              <th class="num">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (bank of d.banks; track bank.bankId) {
+              <tr [class.muted-row]="bank.outsideReconciliation">
+                <td>
+                  <strong>{{ bank.name }}</strong>
+                  <small class="muted block">
+                    {{ bank.maskedAccount ?? "Sin número" }} ·
+                    {{ bank.accountTypeName }}
+                    @if (bank.outsideReconciliation) {
+                      · fuera del cuadre
+                    }
+                  </small>
+                  @if (!bank.ledgerAvailable) {
+                    <small class="warn block"
+                      >Sin ledger para este día: no verificable</small
+                    >
+                  }
+                </td>
+                <td class="num">
+                  {{ money(bank.openingRegistered) }}
+                  @if (bank.openingMismatch) {
+                    <small class="warn block"
+                      >Cierre ant.: {{ money(bank.previousDayFinal) }}</small
+                    >
+                  }
+                  @if (canEdit && bank.balanceRowId) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="correctBankBalance(bank, 'previous_balance')"
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+                <td class="num">{{ money(bank.totals.deposits) }}</td>
+                <td class="num">{{ money(bank.totals.withdrawals) }}</td>
+                <td class="num">{{ money(bank.totals.transfersIn) }}</td>
+                <td class="num">{{ money(bank.totals.transfersOut) }}</td>
+                <td class="num">{{ money(bank.totals.disbursements) }}</td>
+                <td class="num">{{ money(bank.totals.payments) }}</td>
+                <td class="num">{{ money(bank.totals.reimbursements) }}</td>
+                <td class="num">{{ money(bank.totals.adjustments) }}</td>
+                <td class="num">
+                  {{
+                    bank.reviewAdjustments ? money(bank.reviewAdjustments) : "—"
+                  }}
+                </td>
+                <td class="num">{{ money(bank.theoreticalClosing) }}</td>
+                <td class="num">
+                  {{ money(bank.registeredClosing) }}
+                  @if (canEdit && bank.balanceRowId) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="correctBankBalance(bank, 'final_balance')"
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+                <td class="num" [class]="'tone-' + tone(bank.difference)">
+                  {{ money(bank.difference) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total (sin cuentas fuera del cuadre)</td>
+              <td class="num">{{ money(d.bankTotals.opening) }}</td>
+              <td colspan="9" class="num">
+                Movimientos: {{ money(d.bankTotals.movements) }}
+              </td>
+              <td class="num">{{ money(d.bankTotals.theoretical) }}</td>
+              <td class="num">{{ money(d.bankTotals.registered) }}</td>
+              <td class="num" [class]="'tone-' + tone(d.bankTotals.difference)">
+                {{ money(d.bankTotals.difference) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- ── Efectivo físico y cortes ───────────────────────────────────────── -->
+  @case ("cash") {
+    <section class="panel">
+      <header class="panel__head">
+        <h3>Efectivo físico</h3>
+        @if (!d.cash.available) {
+          <p>
+            Este día no tiene día operativo en Control de Efectivo (el Kardex de
+            efectivo empezó después).
+          </p>
+        }
+      </header>
+      @if (d.cash.available) {
+        <dl class="kpis">
+          <div>
+            <dt>Efectivo inicial (físico)</dt>
+            <dd>
+              {{ money(d.cash.openingPhysical) }}
+              @if (canEdit) {
+                <button
+                  type="button"
+                  class="mini"
+                  (click)="
+                    correctSnapshot(
+                      'CASH_DAY',
+                      d.cash.dayId,
+                      'opening_physical_cash',
+                      'Efectivo inicial del día',
+                      d.cash.openingPhysical
+                    )
+                  "
+                >
+                  Corregir
+                </button>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Inicial de sistema</dt>
+            <dd>{{ money(d.cash.openingSystem) }}</dd>
+          </div>
+          <div>
+            <dt>Entradas</dt>
+            <dd class="tone-positive">{{ money(d.cash.totalIn) }}</dd>
+          </div>
+          <div>
+            <dt>Salidas</dt>
+            <dd class="tone-negative">{{ money(d.cash.totalOut) }}</dd>
+          </div>
+          <div>
+            <dt>Ajustes de la revisión</dt>
+            <dd>{{ money(d.cash.reviewAdjustments) }}</dd>
+          </div>
+          <div>
+            <dt>Efectivo teórico</dt>
+            <dd>{{ money(d.cash.theoretical) }}</dd>
+          </div>
+          <div>
+            <dt>Efectivo contado</dt>
+            <dd>
+              {{ money(d.cash.counted) }}
+              @if (canEdit) {
+                <button
+                  type="button"
+                  class="mini"
+                  (click)="
+                    correctSnapshot(
+                      'CASH_DAY',
+                      d.cash.dayId,
+                      'closing_physical_cash',
+                      'Efectivo contado al cierre del día',
+                      d.cash.counted
+                    )
+                  "
+                >
+                  Corregir
+                </button>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Diferencia</dt>
+            <dd [class]="'tone-' + tone(d.cash.physicalDifference)">
+              {{ money(d.cash.physicalDifference) }}
+            </dd>
+          </div>
+          <div>
+            <dt>Final de sistema registrado</dt>
+            <dd>{{ money(d.cash.registeredSystemClosing) }}</dd>
+          </div>
+          <div>
+            <dt>Movimientos del Kardex</dt>
+            <dd>{{ d.cash.movementCount }}</dd>
+          </div>
+        </dl>
+        @if (d.cash.openingMismatch) {
+          <p class="warn">
+            El efectivo inicial difiere en
+            {{ money(d.cash.openingMismatch) }} del contado al cierre del
+            {{ d.cash.previousDayDate + "T00:00:00" | date: "dd/MM/yyyy" }}. Ese
+            día no se modifica.
+          </p>
+        }
+      }
+
+      <header class="panel__head">
+        <h3>Cortes del día</h3>
+      </header>
+      @if (d.cuts.length === 0) {
+        <p class="muted">Sin cortes registrados.</p>
+      } @else {
+        <div class="cuts">
+          @for (cut of d.cuts; track cut.id) {
+            <article class="cut">
+              <h4>
+                Corte {{ cut.periodNumber }} ·
+                <span class="muted">{{ cut.status }}</span>
+              </h4>
+              <dl class="kpis kpis--compact">
+                <div>
+                  <dt>Programado</dt>
+                  <dd>
+                    {{ cut.scheduledStartAt | date: "HH:mm" }} –
+                    {{ cut.scheduledEndAt | date: "HH:mm" }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Real</dt>
+                  <dd>
+                    {{
+                      cut.actualStartedAt
+                        ? (cut.actualStartedAt | date: "HH:mm")
+                        : "—"
+                    }}
+                    –
+                    {{
+                      cut.actualFinishedAt
+                        ? (cut.actualFinishedAt | date: "HH:mm")
+                        : "—"
+                    }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Efectivo inicial</dt>
+                  <dd>
+                    {{ money(cut.openingPhysical) }}
+                    @if (canEdit && cut.openingPhysical !== null) {
+                      <button
+                        type="button"
+                        class="mini"
+                        (click)="
+                          correctSnapshot(
+                            'CASH_CUT_PERIOD',
+                            cut.id,
+                            'opening_physical_cash',
+                            'Efectivo inicial del corte ' + cut.periodNumber,
+                            cut.openingPhysical
+                          )
+                        "
+                      >
+                        Corregir
+                      </button>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Entradas (guardado / Kardex)</dt>
+                  <dd>
+                    {{ money(cut.registeredIn) }} /
+                    {{ money(cut.recomputedIn) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Salidas (guardado / Kardex)</dt>
+                  <dd>
+                    {{ money(cut.registeredOut) }} /
+                    {{ money(cut.recomputedOut) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Sistema al cierre</dt>
+                  <dd>{{ money(cut.closingSystem) }}</dd>
+                </div>
+                <div>
+                  <dt>Arqueo</dt>
+                  <dd>
+                    {{ money(cut.currentCount?.totalCounted) }}
+                    @if (canEdit && cut.currentCount) {
+                      <button
+                        type="button"
+                        class="mini"
+                        (click)="
+                          correctSnapshot(
+                            'CASH_CUT_COUNT',
+                            cut.currentCount.id,
+                            'total_counted',
+                            'Arqueo del corte ' + cut.periodNumber,
+                            cut.currentCount.totalCounted
+                          )
+                        "
+                      >
+                        Corregir
+                      </button>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Diferencia</dt>
+                  <dd [class]="'tone-' + tone(cut.cashDifference)">
+                    {{ money(cut.cashDifference) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Movimientos incluidos</dt>
+                  <dd>{{ cut.movementCount }}</dd>
+                </div>
+              </dl>
+              @if (cut.bankReconciliations.length) {
+                <table class="table table--dense">
+                  <thead>
+                    <tr>
+                      <th>Conciliación bancaria</th>
+                      <th class="num">Sistema</th>
+                      <th class="num">Verificado</th>
+                      <th class="num">Diferencia</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (rec of cut.bankReconciliations; track rec.id) {
+                      <tr>
+                        <td>{{ rec.bankName }}</td>
+                        <td class="num">{{ money(rec.systemBalance) }}</td>
+                        <td class="num">{{ money(rec.verifiedBalance) }}</td>
+                        <td
+                          class="num"
+                          [class]="'tone-' + tone(rec.difference)"
+                        >
+                          {{ money(rec.difference) }}
+                        </td>
+                        <td class="actions">
+                          @if (canEdit) {
+                            <button
+                              type="button"
+                              class="action-btn"
+                              title="Corregir saldo verificado"
+                              (click)="
+                                correctSnapshot(
+                                  'CASH_BANK_RECONCILIATION',
+                                  rec.id,
+                                  'verified_balance',
+                                  'Saldo verificado — ' +
+                                    rec.bankName +
+                                    ' (corte ' +
+                                    cut.periodNumber +
+                                    ')',
+                                  rec.verifiedBalance
+                                )
+                              "
+                            >
+                              <app-icon name="edit-2" [size]="14" />
+                            </button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ── Cuentas por cobrar / Activos ────────────────────────────────────── -->
+  @case ("receivables") {
+    <ng-container
+      *ngTemplateOutlet="
+        portfolio;
+        context: {
+          $implicit: d.receivables,
+          source: 'ACCOUNT_RECEIVABLE',
+          title: 'Cuentas por cobrar',
+        }
+      "
+    />
+  }
+  @case ("assets") {
+    <ng-container
+      *ngTemplateOutlet="
+        portfolio;
+        context: { $implicit: d.assets, source: 'ASSET', title: 'Activos' }
+      "
+    />
+  }
+
+  <!-- ── Movimientos financieros ─────────────────────────────────────────── -->
+  @case ("movements") {
+    <section class="panel">
+      <header class="panel__head panel__head--row">
+        <h3>
+          Movimientos financieros del día ({{ filteredMovements().length }})
+        </h3>
+        <select
+          class="select"
+          [value]="movementFilter()"
+          (change)="movementFilter.set($any($event.target).value)"
+        >
+          <option value="ALL">Todos</option>
+          <option value="TRANSACTION">Transacciones</option>
+          <option value="BANK_MOVEMENT">Bancos</option>
+          <option value="CASH_MOVEMENT">Efectivo</option>
+          <option value="ACCOUNT_RECEIVABLE">Cuentas por cobrar</option>
+          <option value="ASSET">Activos</option>
+        </select>
+      </header>
+      <div class="table-wrapper">
+        <table class="table table--dense">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Origen</th>
+              <th>Tipo</th>
+              <th>Detalle</th>
+              <th>Cuenta</th>
+              <th class="num">Monto</th>
+              <th class="num">Efecto efectivo</th>
+              <th class="num">Efecto bancos</th>
+              <th class="num">Saldo ant.</th>
+              <th class="num">Saldo post.</th>
+              <th>Referencia</th>
+              <th>Usuario</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of filteredMovements(); track m.source + m.id) {
+              <tr [class.muted-row]="m.status === 'ANULADO'">
+                <td>{{ m.at | date: "HH:mm" }}</td>
+                <td>{{ movementSourceLabel[m.source] }}</td>
+                <td>
+                  {{ m.type }}
+                  @if (m.status === "ANULADO") {
+                    <small class="warn block">Anulado</small>
+                  }
+                </td>
+                <td>{{ m.label }}</td>
+                <td>{{ m.account ?? "—" }}</td>
+                <td class="num">
+                  {{ money(m.amount) }}
+                  @if (m.adjustment) {
+                    <small class="warn block"
+                      >Corregido:
+                      {{ money(m.adjustment.correctedAmount) }}</small
+                    >
+                  }
+                </td>
+                <td class="num" [class]="'tone-' + tone(m.cashEffect)">
+                  {{ m.cashEffect ? money(m.cashEffect) : "—" }}
+                </td>
+                <td class="num" [class]="'tone-' + tone(m.bankEffect)">
+                  {{ m.bankEffect ? money(m.bankEffect) : "—" }}
+                </td>
+                <td class="num">{{ money(m.balanceBefore) }}</td>
+                <td class="num">{{ money(m.balanceAfter) }}</td>
+                <td>{{ m.reference ?? "—" }}</td>
+                <td>{{ m.username }}</td>
+                <td class="actions">
+                  @if (canEdit && m.adjustable) {
+                    <button
+                      type="button"
+                      class="action-btn"
+                      title="Corregir monto"
+                      (click)="correctMovement(m)"
+                    >
+                      <app-icon name="edit-2" [size]="14" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="13" class="muted">Sin movimientos.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- ── Cuadre de Agentes del día ───────────────────────────────────────── -->
+  @case ("reconciliation") {
+    <section class="panel">
+      <header class="panel__head">
+        <h3>Cuadre de Agentes guardado</h3>
+        <p>
+          Resultado = efectivo + bancos + cuentas por cobrar − activos. Cuadre
+          exacto = Q0.00.
+        </p>
+      </header>
+      @if (!d.reconciliation.available) {
+        <p class="muted">Este día no tiene un cuadre guardado.</p>
+      } @else {
+        @let r = d.reconciliation;
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th class="num">Registrado</th>
+                <th class="num">Recalculado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Efectivo</td>
+                <td class="num">{{ money(r.totalCash) }}</td>
+                <td class="num">{{ money(r.expectedCash) }}</td>
+                <td class="actions">
+                  @if (canEdit) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="
+                        correctSnapshot(
+                          'AGENT_RECONCILIATION',
+                          r.id,
+                          'total_cash',
+                          'Efectivo del cuadre',
+                          r.totalCash
+                        )
+                      "
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Bancos
+                  @if (r.missingBankSnapshots.length) {
+                    <small class="warn block"
+                      >Sin saldo del día:
+                      {{ r.missingBankSnapshots.join(", ") }}</small
+                    >
+                  }
+                </td>
+                <td class="num">{{ money(r.totalBanks) }}</td>
+                <td class="num">
+                  {{ money(r.expectedBanks) }}
+                  @if (
+                    r.expectedBanksPreviousRule !== null &&
+                    r.expectedBanksPreviousRule !== r.expectedBanks
+                  ) {
+                    <small class="muted block"
+                      >Regla anterior (BI Club resta):
+                      {{ money(r.expectedBanksPreviousRule) }}</small
+                    >
+                  }
+                </td>
+                <td class="actions">
+                  @if (canEdit) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="
+                        correctSnapshot(
+                          'AGENT_RECONCILIATION',
+                          r.id,
+                          'total_banks',
+                          'Bancos del cuadre',
+                          r.totalBanks
+                        )
+                      "
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+              </tr>
+              <tr>
+                <td>Cuentas por cobrar</td>
+                <td class="num">{{ money(r.totalAccountsReceivable) }}</td>
+                <td class="num">{{ money(r.expectedAccountsReceivable) }}</td>
+                <td class="actions">
+                  @if (canEdit) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="
+                        correctSnapshot(
+                          'AGENT_RECONCILIATION',
+                          r.id,
+                          'total_accounts_receivable',
+                          'Cuentas por cobrar del cuadre',
+                          r.totalAccountsReceivable
+                        )
+                      "
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+              </tr>
+              <tr>
+                <td>Activos</td>
+                <td class="num">{{ money(r.totalAssets) }}</td>
+                <td class="num">{{ money(r.expectedAssets) }}</td>
+                <td class="actions">
+                  @if (canEdit) {
+                    <button
+                      type="button"
+                      class="mini"
+                      (click)="
+                        correctSnapshot(
+                          'AGENT_RECONCILIATION',
+                          r.id,
+                          'total_assets',
+                          'Activos del cuadre',
+                          r.totalAssets
+                        )
+                      "
+                    >
+                      Corregir
+                    </button>
+                  }
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Resultado</td>
+                <td class="num" [class]="'tone-' + tone(r.result)">
+                  {{ money(r.result) }}
+                </td>
+                <td class="num">{{ money(r.recomputedResult) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="muted">
+          Guardado por {{ r.username }} el
+          {{ r.createdAt | date: "dd/MM/yyyy HH:mm" }}
+          @if (r.rowsForDate > 1) {
+            · {{ r.rowsForDate }} cuadres guardados ese día (se muestra el
+            último)
+          }
+        </p>
+      }
+    </section>
+  }
+
+  <!-- ── Auditoría de correcciones ───────────────────────────────────────── -->
+  @case ("audit") {
+    <section class="panel">
+      <header class="panel__head">
+        <h3>Correcciones registradas para este día</h3>
+        <p>La auditoría no se puede modificar ni eliminar.</p>
+      </header>
+      <div class="table-wrapper">
+        <table class="table table--dense">
+          <thead>
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Usuario</th>
+              <th>Módulo</th>
+              <th>Registro</th>
+              <th>Tipo</th>
+              <th class="num">Original</th>
+              <th class="num">Nuevo</th>
+              <th class="num">Diferencia</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of detail.corrections; track c.id) {
+              <tr>
+                <td>{{ c.createdAt | date: "dd/MM/yyyy HH:mm:ss" }}</td>
+                <td>{{ c.createdByUsername }}</td>
+                <td>{{ moduleLabel[c.module] }}</td>
+                <td>
+                  {{ c.originalReference ?? c.targetTable }}
+                  <small class="muted block"
+                    >{{ c.targetTable }}.{{ c.field }} ·
+                    {{ c.targetId.slice(0, 8) }}</small
+                  >
+                </td>
+                <td>
+                  {{
+                    c.correctionType === "SNAPSHOT_VERSION"
+                      ? "Versión de foto"
+                      : "Ajuste vinculado"
+                  }}
+                </td>
+                <td class="num">{{ money(c.originalValue) }}</td>
+                <td class="num">{{ money(c.newValue) }}</td>
+                <td class="num" [class]="'tone-' + tone(c.difference)">
+                  {{ money(c.difference) }}
+                </td>
+                <td>
+                  {{ c.reason }}
+                  @if (c.observations) {
+                    <small class="muted block">{{ c.observations }}</small>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="muted">Sin correcciones.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (detail.sessions.length) {
+        <header class="panel__head"><h3>Sesiones de revisión</h3></header>
+        <div class="table-wrapper">
+          <table class="table table--dense">
+            <thead>
+              <tr>
+                <th>Abierta</th>
+                <th>Por</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Cerrada</th>
+                <th class="num">Correcciones</th>
+                <th class="num">Dif. antes</th>
+                <th class="num">Dif. después</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of detail.sessions; track s.id) {
+                <tr>
+                  <td>{{ s.openedAt | date: "dd/MM/yyyy HH:mm" }}</td>
+                  <td>{{ s.openedByUsername }}</td>
+                  <td>{{ s.reason }}</td>
+                  <td>
+                    {{ s.status }}
+                    @if (s.status === "CLOSED" && s.hasPendingDifferences) {
+                      <small class="warn block"
+                        >Con diferencias pendientes</small
+                      >
+                    }
+                  </td>
+                  <td>
+                    {{
+                      s.closedAt
+                        ? (s.closedAt | date: "dd/MM/yyyy HH:mm") +
+                          " · " +
+                          s.closedByUsername
+                        : "—"
+                    }}
+                  </td>
+                  <td class="num">{{ s.correctionsCount }}</td>
+                  <td class="num">{{ money(s.differenceBefore) }}</td>
+                  <td class="num">{{ money(s.differenceAfter) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+}
+
+<ng-template #portfolio let-p let-source="source" let-title="title">
+  <section class="panel">
+    <header class="panel__head">
+      <h3>{{ title }}</h3>
+      <p>
+        Saldo inicial + cargos − abonos − cancelaciones (+ ajustes de la
+        revisión) = saldo al cierre del día. Las cancelaciones son los abonos de
+        "Cancelar cuenta(s)"; se cuentan una sola vez.
+      </p>
+    </header>
+    <dl class="kpis">
+      <div>
+        <dt>Saldo inicial</dt>
+        <dd>{{ money(p.totals.opening) }}</dd>
+      </div>
+      <div>
+        <dt>Cargos</dt>
+        <dd>{{ money(p.totals.charges) }}</dd>
+      </div>
+      <div>
+        <dt>Abonos</dt>
+        <dd>{{ money(p.totals.payments) }}</dd>
+      </div>
+      @if (source === "ACCOUNT_RECEIVABLE") {
+        <div>
+          <dt>Cancelaciones</dt>
+          <dd>{{ money(p.totals.settlements) }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Ajustes revisión</dt>
+        <dd>{{ money(p.totals.reviewAdjustments) }}</dd>
+      </div>
+      <div>
+        <dt>Saldo al cierre (recalculado)</dt>
+        <dd>{{ money(p.totals.closing) }}</dd>
+      </div>
+      <div>
+        <dt>Registrado en el cuadre</dt>
+        <dd>{{ money(p.registeredTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Diferencia</dt>
+        <dd [class]="'tone-' + tone(p.difference)">
+          {{ money(p.difference) }}
+        </dd>
+      </div>
+    </dl>
+
+    <h4 class="subhead">
+      Movimientos con fecha de este día ({{ p.rows.length }})
+    </h4>
+    <div class="table-wrapper">
+      <table class="table table--dense">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Descripción</th>
+            <th class="num">Monto</th>
+            <th>Estado</th>
+            <th>Registrado</th>
+            <th>Usuario</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of p.rows; track row.id) {
+            <tr [class.muted-row]="!row.isActive">
+              <td>{{ row.sequence }}</td>
+              <td>{{ row.clientName }}</td>
+              <td>
+                {{ row.movementType }}
+                @if (row.referenceType === "AR_PAYMENT") {
+                  <small class="muted block">Cancelación</small>
+                }
+              </td>
+              <td>{{ row.description ?? "—" }}</td>
+              <td class="num">
+                {{ money(row.amount) }}
+                @if (row.adjustment) {
+                  <small class="warn block"
+                    >Corregido:
+                    {{ money(row.adjustment.correctedAmount) }}</small
+                  >
+                }
+              </td>
+              <td>{{ row.isActive ? "Vigente" : "Desactivado" }}</td>
+              <td>{{ row.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
+              <td>{{ row.username }}</td>
+              <td class="actions">
+                @if (canEdit && row.isActive) {
+                  <button
+                    type="button"
+                    class="action-btn"
+                    title="Corregir monto"
+                    (click)="correctPortfolioRow(row, source)"
+                  >
+                    <app-icon name="edit-2" [size]="14" />
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="muted">Sin movimientos con esta fecha.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (p.lateRows.length) {
+      <h4 class="subhead">
+        Registros que cambiaron después del cierre del día ({{
+          p.lateRows.length
+        }})
+      </h4>
+      <p class="muted">
+        Pueden explicar la diferencia entre el total guardado en el cuadre y el
+        recalculado hoy.
+      </p>
+      <div class="table-wrapper">
+        <table class="table table--dense">
+          <thead>
+            <tr>
+              <th>Situación</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th class="num">Monto</th>
+              <th>Registrado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of p.lateRows; track row.id) {
+              <tr>
+                <td>{{ lateKindLabel[row.kind] }}</td>
+                <td>{{ row.date + "T00:00:00" | date: "dd/MM/yyyy" }}</td>
+                <td>{{ row.clientName }}</td>
+                <td>{{ row.movementType }}</td>
+                <td class="num">{{ money(row.amount) }}</td>
+                <td>{{ row.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h4 class="subhead">Saldo por cliente ({{ p.clients.length }})</h4>
+    <div class="table-wrapper">
+      <table class="table table--dense">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th class="num">Inicial</th>
+            <th class="num">Cargos</th>
+            <th class="num">Abonos</th>
+            @if (source === "ACCOUNT_RECEIVABLE") {
+              <th class="num">Cancelaciones</th>
+            }
+            <th class="num">Ajustes</th>
+            <th class="num">Al cierre</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of p.clients; track c.clientId) {
+            <tr>
+              <td>{{ c.clientName }}</td>
+              <td class="num">{{ money(c.opening) }}</td>
+              <td class="num">{{ money(c.charges) }}</td>
+              <td class="num">{{ money(c.payments) }}</td>
+              @if (source === "ACCOUNT_RECEIVABLE") {
+                <td class="num">{{ money(c.settlements) }}</td>
+              }
+              <td class="num">
+                {{ c.reviewAdjustments ? money(c.reviewAdjustments) : "—" }}
+              </td>
+              <td class="num">{{ money(c.closing) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</ng-template>

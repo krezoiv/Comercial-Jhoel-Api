@@ -11,6 +11,7 @@ import { BankDepositService } from '../../../core/services/bank-deposit.service'
 import { BankService } from '../../../core/services/bank.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { GuayacanCashSyncService } from '../../../core/services/guayacan-cash-sync.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { TransaccionarPageComponent } from './transaccionar-page.component';
 
 function recent(id: string, newBalance = 150000): CashMovement {
@@ -94,6 +95,49 @@ describe('TransaccionarPageComponent — payload del desglose opcional y última
   });
 
   afterEach(() => draft.reset());
+
+  describe('descripción / beneficiario', () => {
+    it('blocks saving without a description and tells the user why', () => {
+      const warning = spyOn(TestBed.inject(NotificationService), 'warning');
+      prepareRetiro(850);
+      expect(component.canSubmit()).toBeTrue();
+
+      component.requestSave();
+
+      expect(warning).toHaveBeenCalledWith('Ingrese la descripción o el beneficiario de la transacción.');
+      expect(component.isConfirmOpen()).toBeFalse();
+      expect(component.descriptionTouched()).toBeTrue();
+    });
+
+    it('opens the confirmation once the description is filled', () => {
+      prepareRetiro(850);
+      component.onDescriptionInput('Juan Pérez - Pago de préstamo');
+      component.requestSave();
+      expect(component.isConfirmOpen()).toBeTrue();
+    });
+
+    it('sends the normalized description in the same registration request (every type uses this form)', () => {
+      for (const [name, effect] of [
+        ['Depósitos', 'DEPOSITO'],
+        ['Retiros', 'RETIRO'],
+        ['Desembolso Génesis', 'DESEMBOLSO_GENESIS'],
+        ['Pago Génesis', 'PAGO_GENESIS'],
+        ['Reintegro', 'REINTEGRO'],
+        ['Pago varios', null],
+      ] as const) {
+        draft.reset();
+        draft.setTransactionType('type-' + name, name, effect);
+        draft.setTransactionBank('agent-1');
+        draft.setBankAccount('account-1');
+        draft.setTotalAmount(100);
+        component.onDescriptionInput('  Ana   Martínez -\tDepósito  ');
+        component.confirmSave();
+        component.isSaving.set(false);
+        expect(sentPayload().description).toBe('Ana Martínez - Depósito');
+      }
+      expect(registerSpy).toHaveBeenCalledTimes(6);
+    });
+  });
 
   it('sends no breakdown when the switch is NO (default)', () => {
     prepareRetiro(850);

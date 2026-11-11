@@ -10,6 +10,8 @@ export interface GetBankDepositsReportSummaryInput {
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
+  /** Same free-text search as the report list, so totals always match the listed rows. */
+  search?: string;
 }
 
 /** `operationDate` is a plain DATE column, so a lexicographic string comparison is already correct — same reasoning as `GetRechargesReportSummaryUseCase`. */
@@ -33,6 +35,7 @@ export class GetBankDepositsReportSummaryUseCase {
       transactionBankId: input.transactionBankId,
       transactionTypeId: input.transactionTypeId,
       userId: input.userId,
+      search: input.search?.trim() || undefined,
     });
   }
 }

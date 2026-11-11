@@ -77,6 +77,7 @@
                       <th>Hora</th>
                       <th>Banco Agente</th>
                       <th>Tipo</th>
+                      <th>Descripción / Beneficiario</th>
                       <th>Cliente</th>
                       <th class="align-right">Monto</th>
                       <th class="align-right">Transacciones</th>
@@ -91,6 +92,9 @@
                         <td>{{ operation.createdAt | date: 'HH:mm' }}</td>
                         <td>{{ operation.transactionBankName }}</td>
                         <td>{{ operation.transactionTypeName }}</td>
+                        <td class="detail-table__description" [class.detail-table__description--empty]="!operation.description">
+                          {{ operation.description || 'Sin descripción registrada' }}
+                        </td>
                         <td>{{ operation.clientName ?? '—' }}</td>
                         <td class="align-right">{{ formatCurrency(operation.totalAmount) }}</td>
                         <td class="align-right">{{ operation.transactionCount }}</td>

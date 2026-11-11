@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -7,11 +7,14 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsNotEmpty,
   IsUUID,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { normalizeBankDepositDescription } from '../../application/use-cases/register-bank-deposit-operation.use-case';
+import { BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH } from '../../domain/errors/invalid-bank-deposit-description.error';
 
 export class BankDepositCashDetailRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -54,6 +57,28 @@ export class CreateBankDepositRequestDto {
   @IsNumber({ maxDecimalPlaces: 2 }, { each: true })
   @Min(0.01, { each: true })
   transactionAmounts: number[];
+
+  /**
+   * "Descripción / Beneficiario" — who the operation was for, or its purpose.
+   * Required for every transaction type registered from Transaccionar. Control
+   * characters are removed, whitespace collapsed and the text trimmed before
+   * validation; the SQL function sanitizes it again.
+   */
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? (normalizeBankDepositDescription(value) ?? '')
+      : value,
+  )
+  @IsString({
+    message: 'Ingrese la descripción o el beneficiario de la transacción.',
+  })
+  @IsNotEmpty({
+    message: 'Ingrese la descripción o el beneficiario de la transacción.',
+  })
+  @MaxLength(BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH, {
+    message: `La descripción no puede superar ${BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH} caracteres.`,
+  })
+  description: string;
 
   /** Free-text — never looked up against the `clients` table, see the domain entity's own doc comment. */
   @IsOptional()

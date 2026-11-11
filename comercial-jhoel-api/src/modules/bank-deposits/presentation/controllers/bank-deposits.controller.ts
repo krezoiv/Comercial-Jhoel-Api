@@ -82,6 +82,7 @@ export class BankDepositsController {
       transactionAmounts: dto.transactionAmounts,
       userId: user.userId,
       clientName: dto.clientName ?? null,
+      description: dto.description,
       clientId: dto.clientId ?? null,
       sendToAccountsReceivable: dto.sendToAccountsReceivable ?? false,
       sendToAssets: dto.sendToAssets ?? false,

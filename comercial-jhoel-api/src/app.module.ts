@@ -51,6 +51,7 @@ import { SalesRegisterModule } from './modules/sales-register/sales-register.mod
 import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.module';
 import { GuayacanCashBoxModule } from './modules/guayacan-cash-box/guayacan-cash-box.module';
 import { CashControlModule } from './modules/cash-control/cash-control.module';
+import { FinancialDayReviewModule } from './modules/financial-day-review/financial-day-review.module';
 
 @Module({
   imports: [
@@ -121,6 +122,7 @@ import { CashControlModule } from './modules/cash-control/cash-control.module';
     SalesCashBoxModule,
     GuayacanCashBoxModule,
     CashControlModule,
+    FinancialDayReviewModule,
   ],
   providers: [
     // Registered globally here (not per-controller) — see each class's own

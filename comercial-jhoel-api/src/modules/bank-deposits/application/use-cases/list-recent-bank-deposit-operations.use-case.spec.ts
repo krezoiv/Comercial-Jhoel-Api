@@ -26,6 +26,7 @@ function buildOperation(
     changeGiven: 0,
     cashBreakdownEnabled: false,
     clientName: null,
+    description: null,
     clientId: null,
     userId: 'user-1',
     username: 'erick',

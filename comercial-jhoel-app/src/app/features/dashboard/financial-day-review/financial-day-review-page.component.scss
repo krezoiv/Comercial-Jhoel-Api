@@ -1,0 +1,340 @@
+@use "breakpoints" as bp;
+@use "mixins" as *;
+
+.fdr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.review-banner {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 5;
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  background: #fff7e6;
+  color: #7c4a03;
+  font-size: var(--fs-sm);
+
+  strong,
+  span {
+    display: block;
+  }
+}
+
+.fdr__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+
+  @include bp.respond(lg) {
+    grid-template-columns: minmax(16rem, 20rem) 1fr;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  color: var(--color-text-on-light);
+}
+
+.calendar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.calendar__title {
+  font-size: var(--fs-md);
+  color: var(--color-text-on-light);
+  text-transform: capitalize;
+}
+
+.icon-btn {
+  display: inline-flex;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  color: var(--color-text-on-light-muted);
+  @include focus-ring;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+
+  input {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    @include focus-ring;
+  }
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.calendar__weekday {
+  font-size: var(--fs-xs);
+  text-align: center;
+  color: var(--color-text-on-light-muted);
+}
+
+.calendar__day {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  @include focus-ring;
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    background: rgba(37, 99, 235, 0.08);
+  }
+}
+
+.calendar__day--data {
+  color: var(--color-text-on-light);
+  font-weight: var(--fw-semibold);
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.calendar__day--diff::after,
+.calendar__day--review::before {
+  content: "";
+  position: absolute;
+  bottom: 0.2rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: var(--radius-full);
+}
+
+.calendar__day--diff::after {
+  right: calc(50% - 0.45rem);
+  background: #dc2626;
+}
+
+.calendar__day--review::before {
+  left: calc(50% - 0.45rem);
+  background: #f59e0b;
+}
+
+.calendar__day--today {
+  outline: 1px dashed var(--color-primary-600);
+}
+
+.calendar__day--selected {
+  background: var(--color-primary-600);
+  color: #fff;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-full);
+  margin-right: var(--space-1);
+}
+
+.dot--data {
+  background: rgba(37, 99, 235, 0.35);
+}
+
+.dot--diff {
+  background: #dc2626;
+}
+
+.dot--review {
+  background: #f59e0b;
+}
+
+.days__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.search {
+  min-width: 0;
+  flex: 1 1 12rem;
+  max-width: 18rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface-light);
+  color: var(--color-text-on-light);
+  font-size: var(--fs-sm);
+  @include focus-ring;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light);
+
+  th,
+  td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--color-border-light);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .clickable {
+    cursor: pointer;
+
+    &:hover td {
+      background: rgba(37, 99, 235, 0.04);
+    }
+  }
+
+  .selected td {
+    background: rgba(37, 99, 235, 0.08);
+  }
+}
+
+.flag {
+  display: inline-flex;
+  padding: 0.15rem;
+  border-radius: var(--radius-full);
+}
+
+.flag--diff {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.flag--ok {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.1);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.summary__title {
+  font-size: var(--fs-lg);
+  color: var(--color-text-on-light);
+  text-transform: capitalize;
+}
+
+.summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  div {
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  dd {
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light);
+  }
+}
+
+.block {
+  display: block;
+}
+
+.muted {
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+}
+
+small.muted {
+  font-size: var(--fs-xs);
+}
+
+.review-text {
+  color: #b45309;
+  font-size: var(--fs-xs);
+}
+
+span.review-text {
+  font-size: var(--fs-sm);
+}
+
+.positive {
+  color: #15803d;
+}
+
+.negative {
+  color: #b91c1c;
+}

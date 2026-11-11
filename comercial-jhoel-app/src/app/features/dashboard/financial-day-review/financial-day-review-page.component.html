@@ -1,0 +1,342 @@
+<div class="fdr">
+  <app-page-header
+    icon="search"
+    title="Revisión de días operativos"
+    subtitle="Abre un día pasado en modo de revisión, encuentra el origen de los descuadres y corrige solo los datos de ese día."
+  />
+
+  @let s = session();
+  @if (s) {
+    <div class="review-banner" role="status">
+      <app-icon name="alert-triangle" [size]="20" />
+      <div>
+        <strong
+          >Revisión histórica en curso —
+          {{ s.reviewDate + "T00:00:00" | date: "EEEE dd/MM/yyyy" }}</strong
+        >
+        <span>
+          Abierta por {{ s.openedByUsername }} el
+          {{ s.openedAt | date: "dd/MM/yyyy HH:mm" }} ·
+          {{ statusLabel[s.status] }} · {{ s.correctionsCount }} corrección(es).
+          Solo se modifica este día; ningún otro día cambia.
+        </span>
+      </div>
+    </div>
+  }
+
+  <div class="fdr__grid">
+    <app-card [hoverable]="false" class="fdr__calendar">
+      <div class="calendar__head">
+        <button
+          type="button"
+          class="icon-btn"
+          title="Mes anterior"
+          (click)="shiftMonth(-1)"
+        >
+          <app-icon name="chevron-left" [size]="18" />
+        </button>
+        <h2 class="calendar__title">{{ monthLabel() }}</h2>
+        <button
+          type="button"
+          class="icon-btn"
+          title="Mes siguiente"
+          [disabled]="month() >= today.slice(0, 7)"
+          (click)="shiftMonth(1)"
+        >
+          <app-icon name="chevron-right" [size]="18" />
+        </button>
+      </div>
+
+      <label class="field">
+        <span>Buscar un día</span>
+        <input
+          type="date"
+          [max]="today"
+          (change)="goToDate($any($event.target).value)"
+        />
+      </label>
+
+      <div
+        class="calendar"
+        role="grid"
+        aria-label="Calendario de días operativos"
+      >
+        @for (w of weekdays; track w) {
+          <span class="calendar__weekday">{{ w }}</span>
+        }
+        @for (cell of calendar(); track $index) {
+          @if (cell.date) {
+            <button
+              type="button"
+              class="calendar__day"
+              [class.calendar__day--data]="!!cell.item"
+              [class.calendar__day--diff]="cell.item?.hasDifferences"
+              [class.calendar__day--review]="!!cell.item?.activeSessionId"
+              [class.calendar__day--selected]="cell.date === selectedDate()"
+              [class.calendar__day--today]="cell.isToday"
+              [disabled]="cell.isFuture"
+              [attr.aria-label]="cell.date"
+              (click)="selectDay(cell.date)"
+            >
+              {{ cell.day }}
+            </button>
+          } @else {
+            <span></span>
+          }
+        }
+      </div>
+      <ul class="legend">
+        <li><span class="dot dot--data"></span> Con datos</li>
+        <li><span class="dot dot--diff"></span> Con diferencias</li>
+        <li><span class="dot dot--review"></span> En revisión</li>
+      </ul>
+    </app-card>
+
+    <app-card [hoverable]="false" class="fdr__days">
+      <div class="days__head">
+        <h2 class="section-title">
+          <app-icon name="layers" [size]="18" /> Días operativos del mes
+        </h2>
+        <input
+          class="search"
+          type="search"
+          placeholder="Filtrar por fecha (aaaa-mm-dd)"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </div>
+      @if (loadingDays()) {
+        <p class="muted"><app-icon name="clock" [size]="16" /> Cargando…</p>
+      } @else if (filteredDays().length === 0) {
+        <app-empty-state
+          icon="layers"
+          title="Sin días operativos"
+          description="No hay días con datos en este mes."
+        />
+      } @else {
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th class="num">Efectivo inicial</th>
+                <th class="num">Efectivo final</th>
+                <th class="num">Bancos</th>
+                <th class="num">CxC</th>
+                <th class="num">Activos</th>
+                <th class="num">Resultado</th>
+                <th class="num">Movs.</th>
+                <th class="num">Cortes</th>
+                <th>Dif.</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of filteredDays(); track day.date) {
+                <tr
+                  class="clickable"
+                  [class.selected]="day.date === selectedDate()"
+                  (click)="selectDay(day.date)"
+                >
+                  <td>{{ day.date + "T00:00:00" | date: "dd/MM/yyyy" }}</td>
+                  <td>
+                    {{ day.agentDayStatus ?? "—" }}
+                    @if (day.activeSessionId) {
+                      <small class="block review-text"
+                        >En revisión · {{ day.activeSessionUsername }}</small
+                      >
+                    } @else if (day.reviewCount) {
+                      <small class="block muted"
+                        >{{ day.reviewCount }} revisión(es)</small
+                      >
+                    }
+                  </td>
+                  <td class="num">{{ money(day.cashOpening) }}</td>
+                  <td class="num">{{ money(day.cashClosing) }}</td>
+                  <td class="num">{{ money(day.totalBanks) }}</td>
+                  <td class="num">{{ money(day.totalAccountsReceivable) }}</td>
+                  <td class="num">{{ money(day.totalAssets) }}</td>
+                  <td
+                    class="num"
+                    [class.negative]="(day.reconciliationResult ?? 0) < 0"
+                    [class.positive]="(day.reconciliationResult ?? 0) > 0"
+                  >
+                    {{ money(day.reconciliationResult) }}
+                  </td>
+                  <td class="num">{{ day.movementCount }}</td>
+                  <td class="num">{{ day.cutCount }}</td>
+                  <td>
+                    @if (day.hasDifferences) {
+                      <span class="flag flag--diff" title="Tiene diferencias"
+                        ><app-icon name="alert-triangle" [size]="14"
+                      /></span>
+                    } @else {
+                      <span
+                        class="flag flag--ok"
+                        title="Sin diferencias detectadas"
+                        ><app-icon name="check" [size]="14"
+                      /></span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </app-card>
+  </div>
+
+  @if (selectedDate()) {
+    <app-card [hoverable]="false" class="fdr__detail">
+      @if (loadingDetail() && !detail()) {
+        <p class="muted">
+          <app-icon name="clock" [size]="16" /> Cargando el día…
+        </p>
+      } @else if (detail()) {
+        @let dd = detail()!;
+        <div class="summary">
+          <div>
+            <h2 class="summary__title">
+              {{ dd.date + "T00:00:00" | date: "EEEE dd/MM/yyyy" }}
+            </h2>
+            <p class="muted">
+              Agentes Bancarios:
+              {{ dd.diagnosis.agentDay?.status ?? "sin apertura" }}
+              @if (dd.diagnosis.agentDay?.closedAt) {
+                · cerrado
+                {{ dd.diagnosis.agentDay?.closedAt | date: "dd/MM HH:mm" }} por
+                {{ dd.diagnosis.agentDay?.closedByUsername }}
+              }
+              · Control de Efectivo:
+              {{
+                dd.diagnosis.cash.available
+                  ? dd.diagnosis.cash.status
+                  : "sin día operativo"
+              }}
+            </p>
+          </div>
+          <div class="summary__actions">
+            @if (canOpenReview()) {
+              <app-button variant="primary" (click)="openReviewModal()">
+                <app-icon name="search" [size]="16" /> ABRIR DÍA PARA REVISIÓN
+              </app-button>
+            }
+            @if (s && canEdit()) {
+              <app-button
+                variant="secondary"
+                [disabled]="saving()"
+                (click)="requestClose()"
+              >
+                <app-icon name="lock" [size]="16" /> Finalizar revisión
+              </app-button>
+            }
+            @if (s && !dd.permissions.isSessionOwner) {
+              <span class="review-text"
+                >En revisión por {{ s.openedByUsername }}: solo lectura.</span
+              >
+            }
+            @if (!dd.permissions.canCorrect) {
+              <span class="muted"
+                >Solo lectura: corregir requiere el permiso
+                financial_days.correct.</span
+              >
+            }
+          </div>
+        </div>
+
+        <dl class="kpis">
+          <div>
+            <dt>Efectivo inicial</dt>
+            <dd>{{ money(dd.diagnosis.cash.openingPhysical) }}</dd>
+          </div>
+          <div>
+            <dt>Efectivo final</dt>
+            <dd>
+              {{
+                money(
+                  dd.diagnosis.cash.counted ??
+                    dd.diagnosis.reconciliation.totalCash
+                )
+              }}
+            </dd>
+          </div>
+          <div>
+            <dt>Total bancos (cuadre)</dt>
+            <dd>{{ money(dd.diagnosis.reconciliation.totalBanks) }}</dd>
+          </div>
+          <div>
+            <dt>Cuentas por cobrar</dt>
+            <dd>{{ money(dd.diagnosis.receivables.totals.closing) }}</dd>
+          </div>
+          <div>
+            <dt>Activos</dt>
+            <dd>{{ money(dd.diagnosis.assets.totals.closing) }}</dd>
+          </div>
+          <div>
+            <dt>Resultado del cuadre</dt>
+            <dd
+              [class.negative]="(dd.diagnosis.reconciliation.result ?? 0) !== 0"
+            >
+              {{ money(dd.diagnosis.reconciliation.result) }}
+            </dd>
+          </div>
+          <div>
+            <dt>Movimientos</dt>
+            <dd>{{ dd.diagnosis.movements.length }}</dd>
+          </div>
+          <div>
+            <dt>Cortes</dt>
+            <dd>{{ dd.diagnosis.cuts.length }}</dd>
+          </div>
+          <div>
+            <dt>Diferencias</dt>
+            <dd
+              [class.negative]="dd.diagnosis.hasPendingDifferences"
+              [class.positive]="!dd.diagnosis.hasPendingDifferences"
+            >
+              {{ dd.diagnosis.differences.length }} ·
+              {{ money(dd.diagnosis.totalAbsoluteDifference) }}
+            </dd>
+          </div>
+        </dl>
+
+        <app-day-review-panel
+          [detail]="dd"
+          [canEdit]="canEdit()"
+          (correct)="onCorrect($event)"
+        />
+      }
+    </app-card>
+  }
+</div>
+
+<app-open-review-modal
+  [open]="isOpenModal()"
+  [date]="selectedDate()"
+  [username]="username()"
+  [isSaving]="saving()"
+  [error]="modalError()"
+  (confirmed)="confirmOpen($event)"
+  (cancelled)="cancelModal()"
+/>
+
+<app-correction-modal
+  [open]="!!correctionRequest()"
+  [request]="correctionRequest()"
+  [reviewDate]="selectedDate()"
+  [username]="username()"
+  [isSaving]="saving()"
+  [error]="modalError()"
+  (confirmed)="confirmCorrection($event)"
+  (cancelled)="cancelModal()"
+/>
+
+<app-close-review-modal
+  [open]="!!closeSummary()"
+  [summary]="closeSummary()"
+  [isSaving]="saving()"
+  [error]="modalError()"
+  (confirmed)="confirmClose($event)"
+  (cancelled)="cancelModal()"
+/>

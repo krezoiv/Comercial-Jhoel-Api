@@ -16,7 +16,26 @@
       Filtros
     </div>
 
+    <div class="range-presets" role="group" aria-label="Tipo de reporte">
+      <button type="button" class="range-presets__btn" (click)="applyPreset('day')">Diario (hoy)</button>
+      <button type="button" class="range-presets__btn" (click)="applyPreset('month')">Mensual</button>
+      <button type="button" class="range-presets__btn" (click)="applyPreset('history')">Histórico</button>
+    </div>
+
     <div class="filters-grid">
+      <div class="field field--search">
+        <label for="bdreport-search">Beneficiario / descripción</label>
+        <input
+          id="bdreport-search"
+          type="search"
+          maxlength="100"
+          placeholder="Nombre, concepto, tipo o banco"
+          [ngModel]="draftSearch()"
+          (ngModelChange)="draftSearch.set($event)"
+          (keyup.enter)="applyFilters()"
+        />
+      </div>
+
       <div class="field">
         <label for="bdreport-start-date">Desde</label>
         <input
@@ -94,6 +113,7 @@
           <th>Fecha y Hora</th>
           <th>Banco Agente</th>
           <th>Tipo</th>
+          <th>Descripción / Beneficiario</th>
           <th>Cliente</th>
           <th class="align-right">Monto Total</th>
           <th class="align-right">Transacciones</th>
@@ -109,6 +129,9 @@
               <td>{{ row.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
               <td>{{ row.transactionBankName }}</td>
               <td>{{ row.transactionTypeName }}</td>
+              <td class="report-table__description" [class.report-table__description--empty]="!row.description">
+                {{ row.description || noDescriptionLabel }}
+              </td>
               <td>{{ row.clientName || '—' }}</td>
               <td class="align-right report-table__total">{{ formatCurrency(row.totalAmount) }}</td>
               <td class="align-right">{{ formatQuantity(row.transactionCount) }}</td>

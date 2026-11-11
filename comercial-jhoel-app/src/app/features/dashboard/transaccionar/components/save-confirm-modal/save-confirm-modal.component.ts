@@ -23,6 +23,8 @@ export class SaveConfirmModalComponent {
   @Input() transactionTypeName = '';
   @Input() transactionBankName = '';
   @Input() clientName = '';
+  /** "Descripción / Beneficiario" (already normalized) shown so the user confirms it before saving. */
+  @Input() description = '';
   /** The registered client's own name (distinct from the free-text `clientName` above) — only ever set for a "Depósito" with a registered client picked. */
   @Input() registeredClientName: string | null = null;
   @Input() sendToAccountsReceivable = false;

@@ -140,6 +140,15 @@ export const routes: Routes = [
         title: 'Gestión de Días Cerrados — Sistema',
       },
       {
+        path: 'revision-dias-operativos',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/dashboard/financial-day-review/financial-day-review-page.component').then(
+            (m) => m.FinancialDayReviewPageComponent,
+          ),
+        title: 'Revisión de Días Operativos — Sistema',
+      },
+      {
         path: 'gestion-dias-recargas',
         canActivate: [adminGuard],
         loadComponent: () =>

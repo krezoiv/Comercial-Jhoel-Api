@@ -134,3 +134,9 @@
   text-align: right;
   overflow-wrap: anywhere;
 }
+
+// Long beneficiary/purpose text wraps instead of overflowing the summary.
+.modal__description {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}

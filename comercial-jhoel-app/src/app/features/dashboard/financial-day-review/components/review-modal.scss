@@ -1,0 +1,205 @@
+// Shared look of the review modals (same tokens as the other admin modals).
+@use "mixins" as *;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(5, 7, 12, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 34rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background: var(--color-surface-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal--wide {
+  max-width: 46rem;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.modal__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(245, 166, 35, 0.14);
+  color: var(--color-accent-gold);
+}
+
+.modal__title {
+  font-size: var(--fs-md);
+  color: var(--color-text-on-light);
+}
+
+.modal__subtitle {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.modal__text {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  margin-bottom: var(--space-4);
+
+  strong {
+    color: var(--color-text-on-light);
+  }
+}
+
+.modal__warning {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--color-text-on-light);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-4);
+}
+
+.modal__error {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light-muted);
+
+  em {
+    font-style: normal;
+    color: var(--color-accent-gold);
+    font-weight: var(--fw-regular);
+  }
+
+  input,
+  textarea {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    font-size: var(--fs-sm);
+    font-family: var(--font-body);
+    @include focus-ring;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 4rem;
+  }
+}
+
+.field--check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--color-text-on-light);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  div {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  dd {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-on-light);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: rgba(15, 23, 42, 0.04);
+  margin-bottom: var(--space-4);
+  text-align: center;
+
+  span {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  strong {
+    font-size: var(--fs-md);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light);
+  }
+
+  .compare__old strong {
+    text-decoration: line-through;
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.compare__delta {
+  grid-column: 1 / -1;
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light);
+}
+
+.positive {
+  color: #15803d;
+}
+
+.negative {
+  color: #b91c1c;
+}
+
+.modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}

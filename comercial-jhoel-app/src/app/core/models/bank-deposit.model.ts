@@ -37,6 +37,8 @@ export interface BankDepositOperation {
   cashBreakdownEnabled: boolean;
   /** Free text, typed by whoever registers the deposit — never looked up against the clients table. */
   clientName: string | null;
+  /** "Descripción / Beneficiario"; `null` on operations registered before it existed. */
+  description: string | null;
   /** A REGISTERED client (the same `clients` table Cuentas por Cobrar uses) — `null` unless one was linked. Independent of `clientName`; see "Enviar a cuentas por cobrar" on the Depósito form. */
   clientId: string | null;
   transactionTypeId: string;
@@ -88,6 +90,8 @@ export interface BankDepositOperationSummary {
   transactionCount: number;
   operationDate: string;
   clientName: string | null;
+  /** "Descripción / Beneficiario"; `null` on operations registered before it existed. */
+  description: string | null;
   clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
@@ -116,6 +120,8 @@ export interface RegisterBankDepositInput {
   cashDetails: BankDepositCashDetailInput[];
   transactionAmounts: number[];
   clientName?: string | null;
+  /** "Descripción / Beneficiario" — required (max 250, normalized). */
+  description: string;
   /** A REGISTERED client id — any tipo de transacción. The backend re-validates it exists+active regardless of what was already checked client-side. */
   clientId?: string | null;
   /** "Enviar a cuentas por cobrar" — requires `clientId` and an admin account. The backend re-validates both independently — see `RegisterBankDepositOperationUseCase`. */
@@ -205,6 +211,8 @@ export interface BankDepositsReportFilters {
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
+  /** Beneficiary/description, client, transaction type or bank (accent/case-insensitive, combined with the other filters). */
+  search?: string;
   page?: number;
   limit?: number;
 }

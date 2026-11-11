@@ -35,7 +35,14 @@ interface FilterFieldsState {
   transactionBankId: string;
   transactionTypeId: string;
   userId: string;
+  search: string;
 }
+
+/** Shown for operations registered before "Descripción / Beneficiario" existed — never invented. */
+export const NO_DESCRIPTION_LABEL = 'Sin descripción registrada';
+
+/** Quick ranges: daily (today), monthly (current month) or historical (no date limit). */
+export type ReportRangePreset = 'day' | 'month' | 'history';
 
 /** Local-time `yyyy-MM-dd`, no UTC-offset dance — same technique every other date-driven page in this app already uses. */
 function toIsoDate(date: Date): string {
@@ -62,6 +69,7 @@ function defaultFilterFields(): FilterFieldsState {
     transactionBankId: '',
     transactionTypeId: '',
     userId: '',
+    search: '',
   };
 }
 
@@ -112,12 +120,16 @@ export class BankDepositsReportPageComponent {
   readonly draftTransactionBankId = signal('');
   readonly draftTransactionTypeId = signal('');
   readonly draftUserId = signal('');
+  readonly draftSearch = signal('');
 
   readonly startDate = signal(firstDayOfMonthIsoDate());
   readonly endDate = signal(todayIsoDate());
   readonly transactionBankId = signal('');
   readonly transactionTypeId = signal('');
   readonly userId = signal('');
+  readonly search = signal('');
+
+  readonly noDescriptionLabel = NO_DESCRIPTION_LABEL;
 
   readonly page = signal(1);
 
@@ -140,6 +152,7 @@ export class BankDepositsReportPageComponent {
       this.transactionBankId() !== defaults.transactionBankId ||
       this.transactionTypeId() !== defaults.transactionTypeId ||
       this.userId() !== defaults.userId ||
+      this.search() !== defaults.search ||
       this.startDate() !== defaults.startDate ||
       this.endDate() !== defaults.endDate
     );
@@ -199,9 +212,18 @@ export class BankDepositsReportPageComponent {
     this.transactionBankId.set(this.draftTransactionBankId());
     this.transactionTypeId.set(this.draftTransactionTypeId());
     this.userId.set(this.draftUserId());
+    this.search.set(this.draftSearch().trim());
 
     this.page.set(1);
     this.fetchAll();
+  }
+
+  /** Daily / monthly / historical report: sets the date range and applies it with the other filters unchanged. */
+  applyPreset(preset: ReportRangePreset): void {
+    const today = todayIsoDate();
+    this.draftStartDate.set(preset === 'day' ? today : preset === 'month' ? firstDayOfMonthIsoDate() : '');
+    this.draftEndDate.set(preset === 'history' ? '' : today);
+    this.applyFilters();
   }
 
   clearFilters(): void {
@@ -212,12 +234,14 @@ export class BankDepositsReportPageComponent {
     this.draftTransactionBankId.set(defaults.transactionBankId);
     this.draftTransactionTypeId.set(defaults.transactionTypeId);
     this.draftUserId.set(defaults.userId);
+    this.draftSearch.set(defaults.search);
 
     this.startDate.set(defaults.startDate);
     this.endDate.set(defaults.endDate);
     this.transactionBankId.set(defaults.transactionBankId);
     this.transactionTypeId.set(defaults.transactionTypeId);
     this.userId.set(defaults.userId);
+    this.search.set(defaults.search);
 
     this.page.set(1);
     this.fetchAll();
@@ -294,6 +318,7 @@ export class BankDepositsReportPageComponent {
       transactionBankId: this.transactionBankId() || undefined,
       transactionTypeId: this.transactionTypeId() || undefined,
       userId: this.userId() || undefined,
+      search: this.search() || undefined,
       page: this.page(),
       limit: this.LIMIT,
     };

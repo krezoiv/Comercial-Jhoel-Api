@@ -51,6 +51,12 @@
                 <dt>Tipo de Transacción</dt>
                 <dd>{{ op.transactionTypeName }}</dd>
               </div>
+              <div class="info-grid__item info-grid__item--wide">
+                <dt>Descripción / Beneficiario</dt>
+                <dd class="info-grid__description" [class.info-grid__description--empty]="!op.description">
+                  {{ op.description || 'Sin descripción registrada' }}
+                </dd>
+              </div>
               <div class="info-grid__item">
                 <dt>Cliente</dt>
                 <dd>{{ op.clientName ?? '—' }}</dd>

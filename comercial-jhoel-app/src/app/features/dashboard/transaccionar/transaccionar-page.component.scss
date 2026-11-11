@@ -233,6 +233,58 @@ app-transaction-monthly-chart {
     font-size: var(--fs-xs);
     color: var(--color-text-on-light-subtle);
   }
+
+  // "Descripción / Beneficiario": same look as the inputs, plus counter and error.
+  textarea {
+    resize: vertical;
+    min-height: 3.25rem;
+    background: var(--color-surface-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-on-light);
+    font-size: var(--fs-sm);
+    font-family: var(--font-body);
+    box-shadow: var(--shadow-sm);
+    @include focus-ring;
+
+    &:focus {
+      border-color: var(--color-primary-500);
+    }
+  }
+
+  .field__control--invalid {
+    border-color: #dc2626;
+  }
+
+  .field__required {
+    font-weight: var(--fw-regular, 400);
+    color: var(--color-accent-gold, #b45309);
+  }
+
+  .field__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .field__error {
+    font-size: var(--fs-xs);
+    color: #b91c1c;
+  }
+
+  .field__counter {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light-subtle);
+  }
+
+  .field__counter--limit {
+    color: #b45309;
+    font-weight: var(--fw-semibold);
+  }
 }
 
 // ---- Interruptor "Desglose de efectivo" (NO / SÍ) ----

@@ -33,6 +33,8 @@ export interface BankDepositOperationOutput {
   /** `false` = registrada sin desglose de efectivo: `cashDetails` vacío y `totalCash` 0. */
   cashBreakdownEnabled: boolean;
   clientName: string | null;
+  /** "Descripción / Beneficiario"; `null` on historical operations (the UI shows "Sin descripción registrada"). */
+  description: string | null;
   clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
@@ -83,6 +85,8 @@ export interface BankDepositOperationSummaryOutput {
   transactionCount: number;
   operationDate: string;
   clientName: string | null;
+  /** "Descripción / Beneficiario"; `null` on historical operations (the UI shows "Sin descripción registrada"). */
+  description: string | null;
   clientId: string | null;
   transactionTypeId: string;
   transactionTypeName: string;
@@ -114,6 +118,7 @@ export function toBankDepositOperationOutput(
     netCashApplied: operation.netCashApplied,
     cashBreakdownEnabled: operation.cashBreakdownEnabled,
     clientName: operation.clientName,
+    description: operation.description,
     clientId: operation.clientId,
     transactionTypeId: operation.transactionTypeId,
     transactionTypeName: operation.transactionTypeName,
@@ -154,6 +159,7 @@ export function toBankDepositOperationSummaryOutput(
     transactionCount: operation.transactionCount,
     operationDate: operation.operationDate,
     clientName: operation.clientName,
+    description: operation.description,
     clientId: operation.clientId,
     transactionTypeId: operation.transactionTypeId,
     transactionTypeName: operation.transactionTypeName,
