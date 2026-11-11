@@ -7,6 +7,8 @@ export const AGENT_RECONCILIATION_REPOSITORY = Symbol(
 export interface CloseAgentDayData {
   date: string;
   totalCash: number;
+  /** Bodega cash at close time (consolidated cuadre); 0 on every historical row. */
+  totalWarehouseCash: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;

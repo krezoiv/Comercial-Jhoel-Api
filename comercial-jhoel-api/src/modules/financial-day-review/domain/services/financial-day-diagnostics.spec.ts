@@ -331,6 +331,7 @@ describe('financial-day-diagnostics', () => {
         reconciliation: {
           id: 'r1',
           totalCash: 5000,
+          totalWarehouseCash: 0,
           totalBanks: 120000,
           totalAssets: 0,
           totalAccountsReceivable: 1100,
@@ -373,6 +374,7 @@ describe('financial-day-diagnostics', () => {
     const reconciliation = {
       id: 'r1',
       totalCash: 0,
+      totalWarehouseCash: 0,
       totalAssets: 0,
       totalAccountsReceivable: 0,
       result: 0,
@@ -409,5 +411,28 @@ describe('financial-day-diagnostics', () => {
     expect(photo.totalDifference).toBe(2000);
     expect(photo.hasPendingDifferences).toBe(true);
     expect((photo.snapshot as { banks: unknown[] }).banks).toHaveLength(1);
+  });
+
+  it('cuadre: the recomputed result includes the cash under Bodega custody', () => {
+    const diagnosis = diagnoseFinancialDay(
+      baseDay({
+        reconciliation: {
+          id: 'r2',
+          totalCash: 85000,
+          totalWarehouseCash: 35000,
+          totalBanks: 0,
+          totalAssets: 120000,
+          totalAccountsReceivable: 0,
+          result: 0,
+          createdAt: at,
+          username: 'admin',
+          rowsForDate: 1,
+        },
+      }),
+    );
+    expect(diagnosis.reconciliation.recomputedResult).toBe(0);
+    expect(
+      diagnosis.differences.some((d) => d.type === 'RESULTADO_MAL_CALCULADO'),
+    ).toBe(false);
   });
 });

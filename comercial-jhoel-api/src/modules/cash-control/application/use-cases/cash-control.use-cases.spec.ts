@@ -125,6 +125,7 @@ function repositoryMock(): jest.Mocked<CashControlRepository> {
     hasInitialBalance: jest.fn().mockResolvedValue(true),
     // No anchored bank day by default: the calendar-date fallback (previous behaviour).
     getBankDaySummary: jest.fn().mockResolvedValue(null),
+    getWarehouseBalance: jest.fn().mockResolvedValue(20000),
     findBankDays: jest.fn().mockResolvedValue([]),
     findMovements: jest.fn(),
     findRecentMovements: jest.fn().mockResolvedValue([movement()]),

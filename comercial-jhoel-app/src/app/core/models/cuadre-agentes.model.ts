@@ -30,6 +30,8 @@ export interface CuadreAgentesSummary {
   totalCreditLines: number;
   totalAssets: number;
   totalAccountsReceivable: number;
+  /** Cash under Bodega custody — the cuadre is consolidated (caja count + Bodega). */
+  totalWarehouseCash: number;
 }
 
 /** Fixed bill/coin denominations for the cash count — in the order they should be displayed. */
@@ -68,6 +70,8 @@ export interface AgentReconciliation {
   id: string;
   date: string;
   totalCash: number;
+  /** Bodega cash included in the result (0 on cuadres saved before Bodega existed). */
+  totalWarehouseCash?: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;
@@ -96,13 +100,15 @@ export function getCuadreResultStatus(result: number): CuadreResultStatus {
 }
 
 /** `Cash + Banks + AccountsReceivable − Assets` — the same formula the backend recomputes and never trusts from the client on save. */
+/** Consolidated cuadre (same formula as the backend): caja count + Bodega + banks + CxC − assets. */
 export function calculateCuadreResult(
   totalCash: number,
   totalBanks: number,
   totalAccountsReceivable: number,
   totalAssets: number,
+  totalWarehouseCash = 0,
 ): number {
-  return totalCash + totalBanks + totalAccountsReceivable - totalAssets;
+  return totalCash + totalWarehouseCash + totalBanks + totalAccountsReceivable - totalAssets;
 }
 
 export interface MissingBankInfo {

@@ -7,6 +7,7 @@ export class AgentReconciliationMapper {
       id: orm.id,
       date: orm.date,
       totalCash: orm.totalCash,
+      totalWarehouseCash: orm.totalWarehouseCash ?? 0,
       totalBanks: orm.totalBanks,
       totalAssets: orm.totalAssets,
       totalAccountsReceivable: orm.totalAccountsReceivable,

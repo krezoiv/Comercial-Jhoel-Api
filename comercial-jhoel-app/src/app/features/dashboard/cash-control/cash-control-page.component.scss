@@ -91,7 +91,7 @@
 
   @include bp.respond(md) {
     // Only the bank day and the cut state remain here; daily totals have their own card.
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   dt {
@@ -545,5 +545,12 @@
   font-size: var(--fs-xs);
   font-weight: var(--fw-regular, 400);
   color: var(--color-text-on-light-subtle);
+}
+
+// ---- Arqueos / Bodega ----
+.custody-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
 }
 

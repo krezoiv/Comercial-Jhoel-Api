@@ -39,6 +39,7 @@ export const CASH_SUMMARY_CARDS: { key: CashMovementType; label: string; icon: s
   { key: 'ACTIVO', label: 'Activos', icon: 'package' },
   { key: 'RETIRO_BANCARIO', label: 'Retiros bancarios a caja', icon: 'bank' },
   { key: 'DEPOSITO_BANCARIO', label: 'Depósitos bancarios', icon: 'upload' },
+  { key: 'ENTREGA_BODEGA', label: 'Entregas a Bodega (internas)', icon: 'package' },
 ];
 
 export interface CashSummaryCard {
@@ -77,7 +78,9 @@ export function bucketAmount(buckets: CashMovementBucket[], type: CashMovementTy
 
 /** Movements registered in Control de Efectivo itself — the only ones voided from here (a bank deposit reverses both sides). */
 export function isManualMovement(movement: CashMovement): boolean {
-  return ['ENTRADA_MANUAL', 'SALIDA_MANUAL', 'AJUSTE', 'SALDO_INICIAL', 'DEPOSITO_BANCARIO'].includes(movement.movementType);
+  return ['ENTRADA_MANUAL', 'SALIDA_MANUAL', 'AJUSTE', 'SALDO_INICIAL', 'DEPOSITO_BANCARIO', 'ENTREGA_BODEGA'].includes(
+    movement.movementType,
+  );
 }
 
 /** Short reference to the source operation ("BANK_DEPOSIT · 1A2B3C4D"). */
@@ -88,6 +91,7 @@ export function referenceLabel(movement: CashMovement): string {
     ASSET: 'Activos',
     BANK_MOVEMENT: 'Transferencias',
     BANK_CASH_DEPOSIT: 'Depósito bancario',
+    WAREHOUSE_TRANSFER: 'Entrega a Bodega',
   };
   if (!movement.referenceType || !movement.referenceId) {
     return 'Control de Efectivo';

@@ -5,6 +5,8 @@ import { ASSET_REPOSITORY } from '../../../assets/domain/repositories/asset.repo
 import type { AssetRepository } from '../../../assets/domain/repositories/asset.repository';
 import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
 import type { AccountReceivableRepository } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
+import { WAREHOUSE_CASH_READER } from '../../domain/repositories/warehouse-cash.reader';
+import type { WarehouseCashReader } from '../../domain/repositories/warehouse-cash.reader';
 import { isOutsideAgentReconciliation } from '../../domain/entities/bank-account-movement.entity';
 import {
   BankBalanceCalculationType,
@@ -70,14 +72,18 @@ export class GetCuadreAgentesSummaryUseCase {
     private readonly assetRepository: AssetRepository,
     @Inject(ACCOUNT_RECEIVABLE_REPOSITORY)
     private readonly accountReceivableRepository: AccountReceivableRepository,
+    @Inject(WAREHOUSE_CASH_READER)
+    private readonly warehouseCashReader: WarehouseCashReader,
   ) {}
 
   async execute(): Promise<CuadreAgentesSummaryOutput> {
-    const [banks, assetsSummary, receivablesSummary] = await Promise.all([
-      this.bankRepository.findAll({ activeOnly: true }),
-      this.assetRepository.getReportSummary({ isActive: true }),
-      this.accountReceivableRepository.getReportSummary({ isActive: true }),
-    ]);
+    const [banks, assetsSummary, receivablesSummary, totalWarehouseCash] =
+      await Promise.all([
+        this.bankRepository.findAll({ activeOnly: true }),
+        this.assetRepository.getReportSummary({ isActive: true }),
+        this.accountReceivableRepository.getReportSummary({ isActive: true }),
+        this.warehouseCashReader.getBalance(),
+      ]);
 
     // BI Club Empresarial (migraciones `BiClubCreditLine` /
     // `BiClubCreditLineDirection`): su saldo ya ES la deuda con signo
@@ -123,6 +129,7 @@ export class GetCuadreAgentesSummaryUseCase {
       totalCreditLines,
       totalAssets: assetsSummary.totalAmount,
       totalAccountsReceivable: receivablesSummary.totalAmount,
+      totalWarehouseCash,
     };
   }
 }

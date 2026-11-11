@@ -15,6 +15,14 @@
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'historial'" [class.tabs__tab--on]="tab() === 'historial'" (click)="setTab('historial')">
       <app-icon name="file-check" [size]="16" /> Historial de cortes
     </button>
+    @if (canCustody()) {
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'arqueos'" [class.tabs__tab--on]="tab() === 'arqueos'" (click)="setTab('arqueos')">
+        <app-icon name="check-check" [size]="16" /> Arqueos de caja
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'bodega'" [class.tabs__tab--on]="tab() === 'bodega'" (click)="setTab('bodega')">
+        <app-icon name="package" [size]="16" /> Bodega
+      </button>
+    }
   </div>
 
   @if (positionFailed() && !position()) {
@@ -41,6 +49,14 @@
           </span>
         </div>
         <dl class="hero__facts">
+          <div>
+            <dt>Efectivo en Bodega</dt>
+            <dd>{{ formatCurrency(p.warehouseBalance) }}</dd>
+          </div>
+          <div>
+            <dt>Total bajo custodia (caja + Bodega)</dt>
+            <dd>{{ formatCurrency(p.custodyTotal) }}</dd>
+          </div>
           <div>
             <dt>Día operativo bancario</dt>
             <dd>
@@ -71,6 +87,10 @@
           <app-button variant="primary" (click)="formMode.set('ENTRADA_MANUAL')"><app-icon name="plus" [size]="16" /> Entrada de efectivo</app-button>
           <app-button variant="danger" (click)="formMode.set('SALIDA_MANUAL')"><app-icon name="minus" [size]="16" /> Salida de efectivo</app-button>
           <app-button variant="secondary" (click)="depositOpen.set(true)"><app-icon name="upload" [size]="16" /> Depósito bancario</app-button>
+        }
+        @if (canCustody()) {
+          <app-button variant="secondary" (click)="openCount()"><app-icon name="check-check" [size]="16" /> Arqueo de caja</app-button>
+          <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Entregar a Bodega</app-button>
         }
         @if (isAdmin()) {
           <app-button variant="ghost" (click)="formMode.set('AJUSTE')"><app-icon name="edit-2" [size]="16" /> Ajuste</app-button>
@@ -329,6 +349,24 @@
   @if (tab() === 'historial') {
     <app-cash-cut-history />
   }
+
+  @if (tab() === 'arqueos' && canCustody()) {
+    <div class="custody-actions">
+      <app-button variant="primary" (click)="openCount()"><app-icon name="check-check" [size]="16" /> Nuevo arqueo de caja</app-button>
+    </div>
+    <app-cash-counts-panel [refreshKey]="custodyRefresh()" [canCorrect]="isAdmin()" (correct)="openCount($event)" />
+  }
+
+  @if (tab() === 'bodega' && canCustody()) {
+    <app-warehouse-panel
+      [custody]="custody()"
+      [isAdmin]="isAdmin()"
+      [canOperate]="canCustody()"
+      [refreshKey]="custodyRefresh()"
+      (deliver)="openTransfer()"
+      (changed)="onCustodyChanged()"
+    />
+  }
 </div>
 
 <app-cash-movement-form-modal
@@ -348,6 +386,22 @@
   [danger]="true"
   (confirmed)="voidMovement($event)"
   (cancelled)="voidTarget.set(null)"
+/>
+
+<app-cash-count-modal
+  [open]="countOpen()"
+  [custody]="custody()"
+  [correctionOf]="countCorrection()"
+  (saved)="onCountSaved()"
+  (closed)="closeCount()"
+/>
+
+<app-warehouse-transfer-modal
+  [open]="transferOpen()"
+  [custody]="custody()"
+  [canSkipBreakdown]="isAdmin()"
+  (saved)="onTransferSaved($event)"
+  (closed)="transferOpen.set(false)"
 />
 
 <app-cash-bank-deposit-modal

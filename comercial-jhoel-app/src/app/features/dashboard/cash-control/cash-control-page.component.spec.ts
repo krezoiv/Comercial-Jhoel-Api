@@ -46,6 +46,8 @@ function position(): CashPosition {
     periods: [],
     openPeriod: null,
     summary: { openingBalance: 105000, totalIn: 0, totalOut: 0, movementCount: 0, buckets: [] },
+    warehouseBalance: 20000,
+    custodyTotal: 125000,
     bankDay: { ...day('2026-11-11'), isCurrent: true, endSequence: null, agentDayStatus: 'ABIERTO' },
     canCloseDay: false,
   };

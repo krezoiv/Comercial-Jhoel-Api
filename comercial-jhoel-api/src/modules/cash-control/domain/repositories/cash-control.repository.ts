@@ -29,6 +29,8 @@ export const CASH_MOVEMENT_TYPES = [
   'ANULACION',
   /** Cash deposited from the caja into a registered bank account (with breakdown). */
   'DEPOSITO_BANCARIO',
+  /** Internal transfer: cash handed from the caja to Bodega (never an expense). */
+  'ENTREGA_BODEGA',
 ] as const;
 export type CashMovementType = (typeof CASH_MOVEMENT_TYPES)[number];
 
@@ -359,6 +361,8 @@ export interface FinishCashCutData {
 
 export interface CashControlRepository {
   getBalance(): Promise<CashBalanceSnapshot>;
+  /** Official Bodega balance (its own Kardex), for the custody indicators. */
+  getWarehouseBalance(): Promise<number>;
   getDateSummary(date: string): Promise<CashDateSummary>;
   /** Indicators of one bank day; omit `date` for the current (latest opened) one. `null` if there is none. */
   getBankDaySummary(date?: string): Promise<CashBankDaySummary | null>;

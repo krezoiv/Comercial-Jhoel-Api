@@ -309,6 +309,8 @@ export interface PortfolioRaw {
 export interface ReconciliationRaw {
   id: string;
   totalCash: number;
+  /** Bodega cash included in the consolidated cuadre (0 before migration 1760007400000). */
+  totalWarehouseCash: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;

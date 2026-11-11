@@ -37,6 +37,10 @@ export interface CashPositionOutput {
    * the first anchored opening they fall back to the calendar date.
    */
   summary: CashDateSummary;
+  /** Official Bodega balance (its own Kardex). */
+  warehouseBalance: number;
+  /** caja + Bodega — internal transfers never change it. */
+  custodyTotal: number;
   /** The current bank operational day the indicators belong to (`null` = calendar-date fallback). */
   bankDay: Omit<
     CashBankDaySummary,
@@ -79,15 +83,23 @@ export class GetCashPositionUseCase {
   async execute(
     date: string = guatemalaIsoDate(),
   ): Promise<CashPositionOutput> {
-    const [balance, hasInitialBalance, day, summary, openRow, bankDay] =
-      await Promise.all([
-        this.repository.getBalance(),
-        this.repository.hasInitialBalance(),
-        this.repository.findDayByDate(date),
-        this.repository.getDateSummary(date),
-        this.repository.findOpenPeriod(),
-        this.repository.getBankDaySummary(),
-      ]);
+    const [
+      balance,
+      hasInitialBalance,
+      day,
+      summary,
+      openRow,
+      bankDay,
+      warehouseBalance,
+    ] = await Promise.all([
+      this.repository.getBalance(),
+      this.repository.hasInitialBalance(),
+      this.repository.findDayByDate(date),
+      this.repository.getDateSummary(date),
+      this.repository.findOpenPeriod(),
+      this.repository.getBankDaySummary(),
+      this.repository.getWarehouseBalance(),
+    ]);
     const periodRows = day
       ? await this.repository.findPeriodsByDay(day.id)
       : [];
@@ -121,6 +133,9 @@ export class GetCashPositionUseCase {
           ? { ...summary, openingBalance: day.openingSystemCash }
           : summary,
       bankDay: bankDay ? toBankDayHeader(bankDay) : null,
+      warehouseBalance,
+      custodyTotal:
+        Math.round((balance.balance + warehouseBalance) * 100) / 100,
       canCloseDay:
         !!day &&
         day.status === 'ABIERTO' &&

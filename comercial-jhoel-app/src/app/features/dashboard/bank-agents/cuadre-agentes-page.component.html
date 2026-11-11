@@ -232,8 +232,12 @@
 
         <dl class="result-summary">
           <div class="result-summary__row">
-            <dt>Total Efectivo</dt>
+            <dt>Total Efectivo (caja contada)</dt>
             <dd>{{ formatCurrency(totalCash()) }}</dd>
+          </div>
+          <div class="result-summary__row">
+            <dt>Efectivo en Bodega</dt>
+            <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalWarehouseCash ?? 0) }}</dd>
           </div>
           <div class="result-summary__row">
             <dt>Total Bancos</dt>

@@ -46,6 +46,7 @@ async function run(banks: Bank[]) {
     bankRepository,
     assetRepository,
     receivableRepository,
+    { getBalance: jest.fn().mockResolvedValue(0) },
   ).execute();
 }
 

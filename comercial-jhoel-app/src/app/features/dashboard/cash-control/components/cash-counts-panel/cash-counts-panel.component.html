@@ -1,0 +1,119 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="file-check" [size]="18" /> Historial de arqueos</h2>
+  </div>
+  <div class="filters">
+    <label>Desde <input type="date" [ngModel]="filters().dateFrom" (ngModelChange)="setFilter({ dateFrom: $event })" /></label>
+    <label>Hasta <input type="date" [ngModel]="filters().dateTo" (ngModelChange)="setFilter({ dateTo: $event })" /></label>
+    <label>Día operativo <input type="date" [ngModel]="filters().businessDate" (ngModelChange)="setFilter({ businessDate: $event })" /></label>
+    <label>Usuario
+      <select [ngModel]="filters().userId" (ngModelChange)="setFilter({ userId: $event })">
+        <option value="">Todos</option>
+        @for (user of users(); track user.id) {
+          <option [value]="user.id">{{ user.username }}</option>
+        }
+      </select>
+    </label>
+    <label>Resultado
+      <select [ngModel]="filters().result" (ngModelChange)="setFilter({ result: $event })">
+        <option value="">Todos</option>
+        @for (r of results; track r) {
+          <option [value]="r">{{ resultLabel[r] }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (failed()) {
+    <p class="state state--error">No se pudo cargar el historial. <button type="button" (click)="load()">Reintentar</button></p>
+  } @else if (loading() && counts().length === 0) {
+    <p class="state">Cargando arqueos…</p>
+  } @else if (counts().length === 0) {
+    <p class="state">No hay arqueos registrados con esos filtros.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha y hora</th>
+            <th>Día operativo</th>
+            <th>Usuario</th>
+            <th class="num">Teórico caja</th>
+            <th class="num">Contado</th>
+            <th class="num">Diferencia</th>
+            <th>Resultado</th>
+            <th class="num">Bodega</th>
+            <th class="num">Total custodia</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of counts(); track c.id) {
+            <tr [class.row--muted]="c.status === 'REEMPLAZADO'" class="row--click" (click)="toggle(c.id)">
+              <td>{{ c.number }}</td>
+              <td>{{ formatDateTime(c.countedAt) }}</td>
+              <td>{{ formatIsoDate(c.businessDate) }}</td>
+              <td>{{ c.createdByUsername }}</td>
+              <td class="num">{{ formatCurrency(c.systemCash) }}</td>
+              <td class="num">{{ formatCurrency(c.totalCounted) }}</td>
+              <td class="num" [class]="'num tone--' + c.result.toLowerCase()">{{ c.difference > 0 ? '+' : '' }}{{ formatCurrency(c.difference) }}</td>
+              <td>
+                <span class="badge" [class]="'badge badge--' + c.result.toLowerCase()">{{ resultLabel[c.result] }}</span>
+                @if (c.status === 'REEMPLAZADO') { <span class="badge badge--muted">Reemplazado</span> }
+                @if (c.replacesId) { <span class="badge badge--muted">Corrección</span> }
+              </td>
+              <td class="num">
+                {{ formatCurrency(c.warehouseCounted ?? c.warehouseBalance) }}
+                <small class="muted block">{{ c.warehouseCounted !== null ? 'contado' : 'teórico, no verificado' }}</small>
+              </td>
+              <td class="num">{{ formatCurrency(c.custodyCounted) }}</td>
+              <td class="actions">
+                <app-icon [name]="expanded() === c.id ? 'chevron-up' : 'chevron-down'" [size]="16" />
+              </td>
+            </tr>
+            @if (expanded() === c.id) {
+              <tr class="row--detail">
+                <td colspan="11">
+                  <div class="detail">
+                    <table class="table table--mini">
+                      <thead><tr><th class="num">Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr></thead>
+                      <tbody>
+                        @for (d of c.details; track d.denomination) {
+                          <tr><td class="num">{{ formatCurrency(d.denomination) }}</td><td class="num">{{ d.quantity }}</td><td class="num">{{ formatCurrency(d.subtotal) }}</td></tr>
+                        }
+                      </tbody>
+                      <tfoot><tr><td>Total contado</td><td></td><td class="num">{{ formatCurrency(c.totalCounted) }}</td></tr></tfoot>
+                    </table>
+                    <dl class="detail__facts">
+                      <div><dt>Caja teórica / contada</dt><dd>{{ formatCurrency(c.systemCash) }} / {{ formatCurrency(c.totalCounted) }}</dd></div>
+                      <div>
+                        <dt>Bodega</dt>
+                        <dd>
+                          Teórico {{ formatCurrency(c.warehouseBalance) }}
+                          @if (c.warehouseCounted !== null) { · contado {{ formatCurrency(c.warehouseCounted) }} (dif. {{ formatCurrency(c.warehouseDifference ?? 0) }}) } @else { · sin conteo físico }
+                        </dd>
+                      </div>
+                      <div><dt>Custodia teórica / contada</dt><dd>{{ formatCurrency(c.custodyTheoretical) }} / {{ formatCurrency(c.custodyCounted) }}</dd></div>
+                      @if (c.custodyDifference !== null) {
+                        <div><dt>Diferencia consolidada</dt><dd>{{ formatCurrency(c.custodyDifference) }}</dd></div>
+                      }
+                      @if (c.observations) { <div><dt>Observaciones</dt><dd>{{ c.observations }}</dd></div> }
+                      @if (c.correctionReason) { <div><dt>Motivo de corrección</dt><dd>{{ c.correctionReason }}</dd></div> }
+                    </dl>
+                    @if (canCorrect && c.status === 'VIGENTE') {
+                      <app-button variant="ghost" size="sm" (click)="correct.emit(c); $event.stopPropagation()">
+                        <app-icon name="edit-2" [size]="14" /> Corregir arqueo (auditado)
+                      </app-button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [page]="page()" [limit]="pageSize" [total]="total()" (pageChange)="onPageChange($event)" />
+  }
+</section>

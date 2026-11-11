@@ -262,6 +262,13 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
     };
   }
 
+  async getWarehouseBalance(): Promise<number> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `SELECT warehouse_cash_balance() AS balance`,
+    );
+    return num(row?.balance);
+  }
+
   async getDateSummary(date: string): Promise<CashDateSummary> {
     const [opening] = await this.dataSource.query<SqlRow[]>(
       `SELECT cash_balance_at(COALESCE((SELECT max(sequence) FROM cash_movements WHERE operational_date < $1::date), 0)) AS balance`,

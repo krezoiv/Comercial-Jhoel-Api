@@ -22,4 +22,10 @@ export interface CuadreAgentesSummaryOutput {
   totalCreditLines: number;
   totalAssets: number;
   totalAccountsReceivable: number;
+  /**
+   * Cash under Bodega custody (Control de Efectivo → Bodega). Cuadre de
+   * Agentes is the consolidated cash cuadre: result = caja count + Bodega +
+   * banks + CxC − assets. A caja → Bodega delivery therefore never changes it.
+   */
+  totalWarehouseCash: number;
 }

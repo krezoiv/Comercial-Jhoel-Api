@@ -319,6 +319,7 @@ export interface ReconciliationDiagnosis {
   available: boolean;
   id: string | null;
   totalCash: number | null;
+  totalWarehouseCash: number | null;
   totalBanks: number | null;
   totalAssets: number | null;
   totalAccountsReceivable: number | null;
@@ -855,6 +856,7 @@ function buildReconciliation(
     available: !!rec,
     id: rec?.id ?? null,
     totalCash: rec?.totalCash ?? null,
+    totalWarehouseCash: rec?.totalWarehouseCash ?? null,
     totalBanks: rec?.totalBanks ?? null,
     totalAssets: rec?.totalAssets ?? null,
     totalAccountsReceivable: rec?.totalAccountsReceivable ?? null,
@@ -862,6 +864,7 @@ function buildReconciliation(
     recomputedResult: rec
       ? cents(
           rec.totalCash +
+            rec.totalWarehouseCash +
             rec.totalBanks +
             rec.totalAccountsReceivable -
             rec.totalAssets,
@@ -1184,7 +1187,7 @@ function buildDifferences(
       module: 'CUADRE',
       account: 'Cuadre de Agentes',
       type: 'RESULTADO_MAL_CALCULADO',
-      label: 'Resultado guardado ≠ efectivo + bancos + CxC − activos',
+      label: 'Resultado guardado ≠ efectivo + Bodega + bancos + CxC − activos',
       expected: reconciliation.recomputedResult ?? 0,
       registered: reconciliation.result ?? 0,
       difference:

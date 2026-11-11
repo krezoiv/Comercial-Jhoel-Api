@@ -1,0 +1,174 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
+import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
+import {
+  GetCashCountUseCase,
+  GetCashCustodyUseCase,
+  GetWarehouseTransferUseCase,
+  ListCashCountsUseCase,
+  ListWarehouseMovementsUseCase,
+  ListWarehouseTransfersUseCase,
+  RegisterCashCountUseCase,
+  RegisterWarehouseInitialBalanceUseCase,
+  RegisterWarehouseTransferUseCase,
+  VoidWarehouseTransferUseCase,
+} from '../../application/use-cases/cash-custody.use-cases';
+import { ReasonRequestDto } from '../dtos/cash-control.request.dto';
+import {
+  CashCountsQueryDto,
+  CorrectCashCountRequestDto,
+  RegisterCashCountRequestDto,
+  RegisterWarehouseTransferRequestDto,
+  WarehouseInitialBalanceRequestDto,
+  WarehouseMovementsQueryDto,
+  WarehouseTransfersQueryDto,
+} from '../dtos/cash-custody.request.dto';
+
+/**
+ * Control de Efectivo → "Arqueo de Caja" and "Bodega". Every use case checks
+ * its permission (cash_custody.view / operate / authorize) and the SQL
+ * functions check operate/authorize again.
+ */
+@UseGuards(JwtAuthGuard)
+@Controller('cash-control')
+export class CashCustodyController {
+  constructor(
+    private readonly getCustody: GetCashCustodyUseCase,
+    private readonly registerCount: RegisterCashCountUseCase,
+    private readonly listCounts: ListCashCountsUseCase,
+    private readonly getCount: GetCashCountUseCase,
+    private readonly registerTransfer: RegisterWarehouseTransferUseCase,
+    private readonly voidTransfer: VoidWarehouseTransferUseCase,
+    private readonly listTransfers: ListWarehouseTransfersUseCase,
+    private readonly getTransfer: GetWarehouseTransferUseCase,
+    private readonly initialBalance: RegisterWarehouseInitialBalanceUseCase,
+    private readonly listWarehouseMovements: ListWarehouseMovementsUseCase,
+  ) {}
+
+  /** Caja, Bodega and total under custody. */
+  @Get('custody')
+  custody(@CurrentUser() user: RequestUser) {
+    return this.getCustody.execute({ role: user.role });
+  }
+
+  @Get('counts')
+  counts(@Query() query: CashCountsQueryDto, @CurrentUser() user: RequestUser) {
+    return this.listCounts.execute({ ...query, role: user.role });
+  }
+
+  @Get('counts/:id')
+  count(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.getCount.execute({ id, role: user.role });
+  }
+
+  @Post('counts')
+  @HttpCode(HttpStatus.CREATED)
+  createCount(
+    @Body() dto: RegisterCashCountRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerCount.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  /** Audited correction: new count with the original photograph; the original becomes REEMPLAZADO. */
+  @Post('counts/:id/corrections')
+  @HttpCode(HttpStatus.CREATED)
+  correctCount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CorrectCashCountRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const { reason, ...count } = dto;
+    return this.registerCount.execute({
+      ...count,
+      replacesId: id,
+      correctionReason: reason,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  @Get('warehouse/movements')
+  warehouseMovements(
+    @Query() query: WarehouseMovementsQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listWarehouseMovements.execute({ ...query, role: user.role });
+  }
+
+  @Post('warehouse/initial-balance')
+  @HttpCode(HttpStatus.CREATED)
+  warehouseInitialBalance(
+    @Body() dto: WarehouseInitialBalanceRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.initialBalance.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  @Get('warehouse/transfers')
+  transfers(
+    @Query() query: WarehouseTransfersQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listTransfers.execute({ ...query, role: user.role });
+  }
+
+  @Get('warehouse/transfers/:id')
+  transfer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.getTransfer.execute({ id, role: user.role });
+  }
+
+  @Post('warehouse/transfers')
+  @HttpCode(HttpStatus.CREATED)
+  createTransfer(
+    @Body() dto: RegisterWarehouseTransferRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerTransfer.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  @Post('warehouse/transfers/:id/void')
+  @HttpCode(HttpStatus.OK)
+  voidWarehouseTransfer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReasonRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.voidTransfer.execute({
+      id,
+      reason: dto.reason,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+}

@@ -1,3 +1,5 @@
+import { WAREHOUSE_CASH_READER } from './domain/repositories/warehouse-cash.reader';
+import { TypeOrmWarehouseCashReader } from './infrastructure/persistence/typeorm-warehouse-cash.reader';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BankOrmEntity } from './infrastructure/persistence/bank.orm-entity';
@@ -74,6 +76,8 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
   ],
   providers: [
     { provide: BANK_REPOSITORY, useClass: TypeOrmBankRepository },
+    // Bodega cash for the consolidated Cuadre de Agentes (read only).
+    { provide: WAREHOUSE_CASH_READER, useClass: TypeOrmWarehouseCashReader },
     {
       provide: BANK_BALANCE_REPOSITORY,
       useClass: TypeOrmBankBalanceRepository,

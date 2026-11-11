@@ -69,8 +69,10 @@ export class CloseAgentDayUseCase {
 
     const summary = await this.getCuadreAgentesSummaryUseCase.execute();
 
+    // Consolidated cuadre: the caja count + the cash under Bodega custody.
     const result =
       input.totalCash +
+      summary.totalWarehouseCash +
       summary.totalBanks +
       summary.totalAccountsReceivable -
       summary.totalAssets;
@@ -78,6 +80,7 @@ export class CloseAgentDayUseCase {
     const record = await this.repository.closeDayWithReconciliation({
       date: input.date,
       totalCash: input.totalCash,
+      totalWarehouseCash: summary.totalWarehouseCash,
       totalBanks: summary.totalBanks,
       totalAssets: summary.totalAssets,
       totalAccountsReceivable: summary.totalAccountsReceivable,

@@ -1497,6 +1497,33 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - Pruebas: `sql/tests/cash-daily-indicators.test.sql` (30 casos, escenario de aceptación Día 1 / Día 2),
   `cash-control.use-cases.spec.ts`, `test/cash-daily-indicators.e2e-spec.ts`.
 
+### Control de Efectivo — Arqueo de Caja y Entrega a Bodega (migración `1760007400000`)
+
+- **Custodia**: caja = Kardex `cash_movements`; **Bodega** = Kardex propio `warehouse_cash_movements`
+  (`warehouse_cash_balance()`, único escritor `apply_warehouse_cash_movement`, lock `warehouse_cash_main`, nunca negativo,
+  anulación por reverso). Total bajo custodia = caja + Bodega (`GET /cash-control/custody`, y en `position`).
+- **Entrega a Bodega** (`register_cash_warehouse_transfer`, `cash_warehouse_transfers`): UNA transacción escribe la salida
+  de caja `ENTREGA_BODEGA` (tipo nuevo, transferencia interna, nunca gasto) y la entrada `ENTREGA_DESDE_CAJA` de Bodega,
+  mismo monto y referencia `WAREHOUSE_TRANSFER`; número `ENT-000001`. Exige día bancario abierto (`cash_current_bank_day()`),
+  saldo de caja bajo su lock (orden caja → Bodega), personas que entregan/reciben. Desglose en `cash_movement_details`
+  (reutilizado); sin desglose solo admin (`has_breakdown = false`). Anular (admin, motivo) revierte ambos lados; anular el
+  renglón de caja desde el Kardex enruta a la misma anulación (`void_manual_cash_movement`).
+- **Arqueo de Caja** (`register_cash_count`, `cash_counts` + `cash_count_details`): foto histórica (teórico de caja y de
+  Bodega leídos bajo sus locks, contado, diferencia, CUADRADO/FALTANTE/SOBRANTE). Nunca escribe en el Kardex ni ajusta
+  saldos. Conteo físico de Bodega opcional (vista consolidada). Corrección (admin, motivo) = arqueo nuevo con la MISMA foto,
+  el original queda `REEMPLAZADO`. Arqueos, detalles y Kardex de Bodega inmutables (`cash_custody_status_only_guard`).
+- **Cuadre de Agentes = cuadre consolidado**: `agent_reconciliations.total_warehouse_cash` (DEFAULT 0 → históricos sin
+  cambio); resultado = caja contada + Bodega + bancos + CxC − activos (`close_agent_day` recibe el 8.º parámetro; también en
+  la revisión de días). Los cortes y arqueos de caja siguen usando solo caja.
+- **RBAC** (`CASH_CUSTODY_PERMISSION_ROLES` + `cash_custody_assert_role` en SQL): `cash_custody.view`/`operate` =
+  SUPER_ADMIN, ADMIN, SUPERVISOR_DE_TURNO; `cash_custody.authorize` (anular, corregir, saldo inicial de Bodega, entrega sin
+  desglose) = SUPER_ADMIN, ADMIN.
+- **Rutas** (`CashCustodyController`): `GET custody`, `GET/POST counts`, `GET counts/:id`, `POST counts/:id/corrections`,
+  `GET warehouse/movements`, `POST warehouse/initial-balance`, `GET/POST warehouse/transfers`, `GET warehouse/transfers/:id`,
+  `POST warehouse/transfers/:id/void`.
+- Pruebas: `sql/tests/cash-custody.test.sql` (41 casos, escenario de aceptación), caso Bodega en
+  `cash-control-concurrency.sh`, `cash-custody.use-cases.spec.ts`, `test/cash-custody.e2e-spec.ts`.
+
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 
 - **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`

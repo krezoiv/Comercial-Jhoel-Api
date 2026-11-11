@@ -1785,3 +1785,14 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   filtro de fechas manual reemplaza `bankDate`. Tarjeta nueva "Reintegros" en el resumen por tipo.
 - Spec: `cash-control-page.component.spec.ts`.
 
+## Control de Efectivo — Arqueo de Caja y Bodega
+
+- Tarjeta principal: efectivo en caja + "Efectivo en Bodega" + "Total bajo custodia" (de `position`). Botones "Arqueo de caja"
+  y "Entregar a Bodega" y pestañas "Arqueos de caja" / "Bodega" para `CASH_CUSTODY_OPERATOR_ROLES` (el backend re-valida).
+- `CashCountModalComponent` (reusa `CashBreakdownTableComponent`; diferencia en vivo solo como vista previa; resultado
+  oficial del backend; modo corrección con motivo), `WarehouseTransferModalComponent` (desglose por defecto; sin desglose
+  solo admin; bloqueado sin día bancario abierto), `CashCountsPanelComponent` (historial con filtros y detalle),
+  `WarehousePanelComponent` (entregas con ambas secuencias de Kardex, Kardex de Bodega, anulación y saldo inicial admin).
+  `CashCustodyService`; las escrituras a `/cash-control` ya disparan la sincronización (`cashMutationInterceptor`).
+- Cuadre de Agentes muestra "Efectivo en Bodega" y `calculateCuadreResult` lo suma (mismo criterio que el backend).
+

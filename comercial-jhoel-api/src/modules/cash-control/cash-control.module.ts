@@ -31,6 +31,21 @@ import {
   ListCashDaysUseCase,
 } from './application/use-cases/cash-cut-queries.use-cases';
 import { CashControlController } from './presentation/controllers/cash-control.controller';
+import { CashCustodyController } from './presentation/controllers/cash-custody.controller';
+import { CASH_CUSTODY_REPOSITORY } from './domain/repositories/cash-custody.repository';
+import { TypeOrmCashCustodyRepository } from './infrastructure/persistence/typeorm-cash-custody.repository';
+import {
+  GetCashCountUseCase,
+  GetCashCustodyUseCase,
+  GetWarehouseTransferUseCase,
+  ListCashCountsUseCase,
+  ListWarehouseMovementsUseCase,
+  ListWarehouseTransfersUseCase,
+  RegisterCashCountUseCase,
+  RegisterWarehouseInitialBalanceUseCase,
+  RegisterWarehouseTransferUseCase,
+  VoidWarehouseTransferUseCase,
+} from './application/use-cases/cash-custody.use-cases';
 
 /**
  * Finance → Control de Efectivo: the single official physical-cash Kardex
@@ -44,12 +59,27 @@ import { CashControlController } from './presentation/controllers/cash-control.c
 @Module({
   // DAY_OPENING_REPOSITORY: a bank deposit, like every balance-moving bank operation, needs the day open.
   imports: [BanksModule],
-  controllers: [CashControlController],
+  controllers: [CashControlController, CashCustodyController],
   providers: [
     {
       provide: CASH_CONTROL_REPOSITORY,
       useClass: TypeOrmCashControlRepository,
     },
+    // Arqueo de Caja + Bodega (caja → Bodega internal transfers).
+    {
+      provide: CASH_CUSTODY_REPOSITORY,
+      useClass: TypeOrmCashCustodyRepository,
+    },
+    GetCashCustodyUseCase,
+    RegisterCashCountUseCase,
+    ListCashCountsUseCase,
+    GetCashCountUseCase,
+    RegisterWarehouseTransferUseCase,
+    VoidWarehouseTransferUseCase,
+    ListWarehouseTransfersUseCase,
+    GetWarehouseTransferUseCase,
+    RegisterWarehouseInitialBalanceUseCase,
+    ListWarehouseMovementsUseCase,
     GetCashPositionUseCase,
     GetCashBalanceUseCase,
     ListCashMovementsUseCase,

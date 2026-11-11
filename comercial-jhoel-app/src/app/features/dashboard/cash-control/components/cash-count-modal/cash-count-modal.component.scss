@@ -1,0 +1,124 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+@use 'breakpoints' as bp;
+
+.modal--wide {
+  max-width: 54rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  @include bp.respond(md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.field__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light-muted);
+}
+
+.field__required {
+  color: #b45309;
+  font-weight: var(--fw-regular, 400);
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  strong {
+    font-size: var(--fs-md);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.comparison__diff--ok {
+  background: rgba(21, 128, 61, 0.08);
+  color: #15803d;
+}
+
+.comparison__diff--short {
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+}
+
+.comparison__diff--over {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+
+.outcome__label {
+  font-weight: var(--fw-semibold);
+}
+
+.outcome__value {
+  font-size: var(--fs-xl, 1.5rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.outcome__note {
+  font-size: var(--fs-xs);
+  opacity: 0.85;
+}
+
+.outcome--cuadrado {
+  background: rgba(21, 128, 61, 0.1);
+  color: #166534;
+}
+
+.outcome--faltante {
+  background: rgba(220, 38, 38, 0.1);
+  color: #991b1b;
+}
+
+.outcome--sobrante {
+  background: rgba(245, 158, 11, 0.14);
+  color: #92400e;
+}

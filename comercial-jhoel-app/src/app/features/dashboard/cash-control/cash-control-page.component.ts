@@ -7,7 +7,10 @@ import { catchError, of } from 'rxjs';
 import {
   CASH_DIRECTION_LABEL,
   CASH_MOVEMENT_TYPE_LABEL,
+  CASH_CUSTODY_OPERATOR_ROLES,
   CashBankDayHeader,
+  CashCountRecord,
+  CashCustody,
   CashBankDaySummary,
   CashDateSummary,
   CashMovement,
@@ -19,6 +22,7 @@ import {
 } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { CashControlService } from '../../../core/services/cash-control.service';
+import { CashCustodyService } from '../../../core/services/cash-custody.service';
 import { onCashChanged } from '../../../core/services/cash-control-sync.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
@@ -42,8 +46,12 @@ import { CashBankDepositModalComponent } from './components/cash-bank-deposit-mo
 import { CashCutControlPanelComponent } from './components/cut-control-panel/cut-control-panel.component';
 import { CashCutHistoryComponent } from './components/cut-history/cut-history.component';
 import { CashReasonModalComponent } from './components/reason-modal/reason-modal.component';
+import { CashCountModalComponent } from './components/cash-count-modal/cash-count-modal.component';
+import { WarehouseTransferModalComponent } from './components/warehouse-transfer-modal/warehouse-transfer-modal.component';
+import { CashCountsPanelComponent } from './components/cash-counts-panel/cash-counts-panel.component';
+import { WarehousePanelComponent } from './components/warehouse-panel/warehouse-panel.component';
 
-type CashTab = 'efectivo' | 'cortes' | 'historial';
+type CashTab = 'efectivo' | 'cortes' | 'historial' | 'arqueos' | 'bodega';
 
 const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '', userId: '' } as const;
 
@@ -69,6 +77,10 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     CashCutControlPanelComponent,
     CashCutHistoryComponent,
     CashReasonModalComponent,
+    CashCountModalComponent,
+    WarehouseTransferModalComponent,
+    CashCountsPanelComponent,
+    WarehousePanelComponent,
   ],
   templateUrl: './cash-control-page.component.html',
   styleUrl: './cash-control-page.component.scss',
@@ -76,6 +88,7 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
 })
 export class CashControlPageComponent {
   private readonly service = inject(CashControlService);
+  private readonly custodyService = inject(CashCustodyService);
   private readonly authService = inject(AuthService);
   private readonly notifications = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
@@ -96,6 +109,16 @@ export class CashControlPageComponent {
   readonly tab = signal<CashTab>(this.initialTab());
   readonly isAdmin = this.authService.isAdmin;
   readonly canManage = computed(() => canManageCuts(this.authService.currentUser()?.role));
+  /** Arqueos y Bodega (UX only — the backend re-checks every permission). */
+  readonly canCustody = computed(() => CASH_CUSTODY_OPERATOR_ROLES.includes(this.authService.currentUser()?.role ?? ''));
+
+  /** Caja / Bodega / total under custody (backend). */
+  readonly custody = signal<CashCustody | null>(null);
+  readonly countOpen = signal(false);
+  readonly countCorrection = signal<CashCountRecord | null>(null);
+  readonly transferOpen = signal(false);
+  /** Bumped after a count/transfer so the history panels reload. */
+  readonly custodyRefresh = signal(0);
 
   readonly position = signal<CashPosition | null>(null);
   readonly loadingPosition = signal(true);
@@ -163,6 +186,49 @@ export class CashControlPageComponent {
     this.loadPosition();
     this.loadMovements();
     this.loadBankDays();
+    this.loadCustody();
+  }
+
+  loadCustody(): void {
+    if (!this.canCustody()) {
+      return;
+    }
+    this.custodyService
+      .getCustody()
+      .pipe(catchError(() => of(null)))
+      .subscribe((custody) => custody && this.custody.set(custody));
+  }
+
+  openCount(correction: CashCountRecord | null = null): void {
+    this.countCorrection.set(correction);
+    this.countOpen.set(true);
+    this.loadCustody();
+  }
+
+  onCountSaved(): void {
+    this.custodyRefresh.update((value) => value + 1);
+  }
+
+  closeCount(): void {
+    this.countOpen.set(false);
+    this.countCorrection.set(null);
+  }
+
+  openTransfer(): void {
+    this.loadCustody();
+    this.transferOpen.set(true);
+  }
+
+  onTransferSaved(result: { custody: CashCustody }): void {
+    this.transferOpen.set(false);
+    this.custody.set(result.custody);
+    this.custodyRefresh.update((value) => value + 1);
+    this.refresh();
+  }
+
+  onCustodyChanged(): void {
+    this.custodyRefresh.update((value) => value + 1);
+    this.refresh();
   }
 
   loadBankDays(): void {
@@ -298,6 +364,9 @@ export class CashControlPageComponent {
   }
 
   voidMessage(): string {
+    if (this.voidTarget()?.movementType === 'ENTREGA_BODEGA') {
+      return 'Se devolverá el efectivo a la caja y se retirará de Bodega (anulación de la transferencia interna). Ambos movimientos quedan visibles como anulados.';
+    }
     return this.voidTarget()?.movementType === 'DEPOSITO_BANCARIO'
       ? 'Se devolverá el efectivo a la caja y se revertirá el depósito en la cuenta bancaria. Ambos movimientos quedan visibles como anulados.'
       : 'Se registrará el movimiento inverso; el original queda visible como anulado. No se elimina nada.';
@@ -330,6 +399,6 @@ export class CashControlPageComponent {
 
   private initialTab(): CashTab {
     const tab = this.route.snapshot.queryParamMap.get('tab') ?? (this.route.snapshot.data['tab'] as string | undefined);
-    return tab === 'cortes' || tab === 'historial' ? tab : 'efectivo';
+    return tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' ? tab : 'efectivo';
   }
 }

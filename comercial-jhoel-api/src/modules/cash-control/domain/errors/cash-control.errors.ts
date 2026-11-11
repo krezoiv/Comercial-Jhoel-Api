@@ -117,7 +117,7 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message: 'El desglose del efectivo no coincide con el monto del depósito.',
   },
   CASH_INSUFFICIENT_BALANCE: {
-    message: 'El efectivo disponible en caja no alcanza para este depósito.',
+    message: 'El efectivo disponible en caja no alcanza para esta operación.',
   },
   CASH_DEPOSIT_INVALID_BANK: {
     message: 'Seleccione una cuenta bancaria activa.',
@@ -125,6 +125,48 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED: {
     message:
       'La cuenta de Cooperativa Guayacán no recibe depósitos desde esta caja: su saldo es el de su propia caja.',
+  },
+  CASH_CUSTODY_FORBIDDEN: {
+    message: 'No tiene permiso para esta operación de arqueo o de Bodega.',
+    status: 403,
+  },
+  CASH_CUSTODY_DAY_NOT_OPEN: {
+    message:
+      'No hay un día operativo abierto en Agentes Bancarios. Apertura el día antes de continuar.',
+    status: 409,
+  },
+  CASH_WAREHOUSE_PEOPLE_REQUIRED: {
+    message:
+      'Indique quién entrega y quién recibe en Bodega (mínimo 3 caracteres cada uno).',
+  },
+  CASH_WAREHOUSE_TRANSFER_NOT_FOUND: {
+    message: 'No se encontró la entrega a Bodega.',
+    status: 404,
+  },
+  CASH_WAREHOUSE_TRANSFER_ALREADY_VOIDED: {
+    message: 'La entrega a Bodega ya está anulada.',
+    status: 409,
+  },
+  WAREHOUSE_INSUFFICIENT_BALANCE: {
+    message: 'Bodega no tiene efectivo suficiente para esta operación.',
+    status: 409,
+  },
+  WAREHOUSE_INITIAL_BALANCE_EXISTS: {
+    message: 'El saldo inicial de Bodega ya fue registrado.',
+    status: 409,
+  },
+  CASH_COUNT_NOT_FOUND: {
+    message: 'No se encontró el arqueo.',
+    status: 404,
+  },
+  CASH_COUNT_ALREADY_REPLACED: {
+    message: 'Ese arqueo ya fue corregido; corrija el arqueo vigente.',
+    status: 409,
+  },
+  CASH_CUSTODY_IMMUTABLE: {
+    message:
+      'Los arqueos y los movimientos de custodia no se modifican ni eliminan.',
+    status: 409,
   },
   CASH_BANK_DAY_NOT_FOUND: {
     message: 'Ese día no tiene apertura en Agentes Bancarios.',

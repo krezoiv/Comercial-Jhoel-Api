@@ -27,6 +27,16 @@ export class AgentReconciliationOrmEntity {
   totalCash: number;
 
   @Column({
+    name: 'total_warehouse_cash',
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    default: 0,
+    transformer: new DecimalColumnTransformer(),
+  })
+  totalWarehouseCash: number;
+
+  @Column({
     name: 'total_banks',
     type: 'numeric',
     precision: 14,

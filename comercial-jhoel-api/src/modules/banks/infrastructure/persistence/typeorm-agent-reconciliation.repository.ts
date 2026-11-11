@@ -34,7 +34,7 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
     try {
       const rows = await this.repository.manager.query<
         { close_agent_day: string }[]
-      >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7)', [
+      >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7, $8)', [
         data.date,
         data.totalCash,
         data.totalBanks,
@@ -42,6 +42,7 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
         data.totalAccountsReceivable,
         data.result,
         data.userId,
+        data.totalWarehouseCash,
       ]);
       reconciliationId = rows[0].close_agent_day;
     } catch (error) {

@@ -1,0 +1,108 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="cash-count-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="cash-count-title">
+          <app-icon name="file-check" [size]="20" />
+          {{ correctionOf ? 'Corregir arqueo #' + correctionOf.number : 'Arqueo de caja' }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (result(); as r) {
+        <!-- Resultado oficial guardado -->
+        <div class="outcome" [class]="'outcome outcome--' + r.result.toLowerCase()" role="status">
+          <span class="outcome__label">Arqueo #{{ r.number }} · {{ resultLabel[r.result] }}</span>
+          <strong class="outcome__value">{{ r.difference > 0 ? '+' : '' }}{{ formatCurrency(r.difference) }}</strong>
+          <span>Teórico {{ formatCurrency(r.systemCash) }} · contado {{ formatCurrency(r.totalCounted) }}</span>
+          <span class="outcome__note">Registrado. El efectivo y el Kardex no se modificaron; cualquier ajuste se hace por separado, autorizado.</span>
+        </div>
+        <div class="modal__actions">
+          <app-button variant="primary" (click)="closed.emit()">Cerrar</app-button>
+        </div>
+      } @else {
+        <dl class="facts">
+          <div><dt>Fecha y hora</dt><dd>{{ formatDateTime(openedAt()) }}</dd></div>
+          <div>
+            <dt>Día operativo</dt>
+            <dd>
+              @if (correctionOf) {
+                {{ formatIsoDate(correctionOf.businessDate) }}
+              } @else if (custody?.currentDay) {
+                {{ formatIsoDate(custody!.currentDay!.businessDate) }}{{ custody!.currentDay!.isOpen ? '' : ' (cerrado)' }}
+              } @else {
+                Sin apertura bancaria
+              }
+            </dd>
+          </div>
+          <div><dt>Usuario responsable</dt><dd>{{ username() }}</dd></div>
+          <div><dt>Efectivo teórico en caja</dt><dd>{{ formatCurrency(theoretical()) }}</dd></div>
+          <div><dt>Entregado a Bodega hoy</dt><dd>{{ formatCurrency(custody?.deliveredToday ?? 0) }}</dd></div>
+          <div><dt>Efectivo en Bodega (teórico)</dt><dd>{{ formatCurrency(warehouseTheoretical()) }}</dd></div>
+          <div><dt>Total bajo custodia</dt><dd>{{ formatCurrency(theoretical() + warehouseTheoretical()) }}</dd></div>
+        </dl>
+        @if (correctionOf) {
+          <p class="modal__hint">Se conserva la foto original (teórico del {{ formatDateTime(correctionOf.countedAt) }}); el arqueo #{{ correctionOf.number }} quedará como reemplazado.</p>
+        }
+
+        <div class="breakdown">
+          <span class="field__label">Desglose del efectivo contado en caja (solo caja, sin Bodega)</span>
+          <app-cash-breakdown-table
+            [cashCounts]="cashCounts()"
+            [totalCash]="totalCounted()"
+            [totalAmount]="theoretical()"
+            [status]="previewStatus()"
+            emptyAmountText="Sin saldo teórico"
+            (quantityChange)="onQuantityChange($event)"
+          />
+        </div>
+
+        <div class="comparison" aria-live="polite">
+          <div><span>Teórico en caja</span><strong>{{ formatCurrency(theoretical()) }}</strong></div>
+          <div><span>Contado físicamente</span><strong>{{ formatCurrency(totalCounted()) }}</strong></div>
+          <div class="comparison__diff" [class]="'comparison__diff comparison__diff--' + (previewDifference() === 0 ? 'ok' : previewDifference() < 0 ? 'short' : 'over')">
+            <span>{{ previewDifference() === 0 ? 'Cuadrado' : previewDifference() < 0 ? 'Faltante' : 'Sobrante' }} (vista previa)</span>
+            <strong>{{ previewDifference() > 0 ? '+' : '' }}{{ formatCurrency(previewDifference()) }}</strong>
+          </div>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" [ngModel]="countWarehouse()" (ngModelChange)="countWarehouse.set($event)" />
+          También conté físicamente el efectivo de Bodega (vista consolidada)
+        </label>
+        @if (countWarehouse()) {
+          <div class="field">
+            <label for="count-warehouse">Efectivo contado en Bodega</label>
+            <input id="count-warehouse" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+              [ngModel]="warehouseCounted()" (ngModelChange)="warehouseCounted.set($event)" />
+          </div>
+        } @else {
+          <p class="modal__hint">Bodega se mostrará con su saldo teórico ({{ formatCurrency(warehouseTheoretical()) }}), no como efectivo verificado.</p>
+        }
+
+        <div class="field">
+          <label for="count-observations">Observaciones <span class="field__optional">(opcional)</span></label>
+          <textarea id="count-observations" rows="2" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
+        </div>
+        @if (correctionOf) {
+          <div class="field">
+            <label for="count-reason">Motivo de la corrección <span class="field__required">(obligatorio)</span></label>
+            <textarea id="count-reason" rows="2" maxlength="255" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+        }
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+          <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+            {{ isSaving() ? 'Guardando…' : correctionOf ? 'Guardar corrección' : 'Guardar arqueo' }}
+          </app-button>
+        </div>
+      }
+    </div>
+  </div>
+}

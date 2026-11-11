@@ -1,0 +1,143 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="package" [size]="18" /> Efectivo en Bodega</h2>
+    @if (canOperate) {
+      <app-button variant="primary" size="sm" (click)="deliver.emit()"><app-icon name="package" [size]="14" /> Entregar efectivo a Bodega</app-button>
+    }
+  </div>
+  @if (custody; as c) {
+    <dl class="kpis">
+      <div><dt>Disponible en Bodega</dt><dd>{{ formatCurrency(c.warehouseBalance) }}</dd></div>
+      <div><dt>Recibido de caja en el día operativo</dt><dd>{{ formatCurrency(c.deliveredToday) }}</dd></div>
+      <div><dt>Efectivo en caja</dt><dd>{{ formatCurrency(c.cashBalance) }}</dd></div>
+      <div><dt>Total bajo custodia</dt><dd>{{ formatCurrency(c.custodyTotal) }}</dd></div>
+      <div><dt>Último movimiento de Bodega</dt><dd>{{ c.warehouseLastMovementAt ? formatDateTime(c.warehouseLastMovementAt) : 'sin movimientos' }}</dd></div>
+    </dl>
+    @if (isAdmin && !c.warehouseHasInitialBalance) {
+      <div class="initial">
+        <p class="muted">Bodega aún no tiene saldo inicial. Regístralo una sola vez si ya existe efectivo bajo su custodia (queda auditado).</p>
+        <label>Saldo inicial
+          <input type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00" [ngModel]="initialAmount()" (ngModelChange)="initialAmount.set($event)" />
+        </label>
+        <label>Motivo
+          <input type="text" maxlength="255" [ngModel]="initialReason()" (ngModelChange)="initialReason.set($event)" />
+        </label>
+        <app-button variant="secondary" size="sm" [disabled]="savingInitial() || !(initialAmount() ?? 0) || initialReason().trim().length < 5" (click)="saveInitialBalance()">
+          {{ savingInitial() ? 'Guardando…' : 'Registrar saldo inicial' }}
+        </app-button>
+      </div>
+    }
+  }
+  @if (failed()) {
+    <p class="state state--error">No se pudo cargar la información de Bodega.</p>
+  }
+
+  <h3 class="panel__subtitle">Historial de entregas a Bodega</h3>
+  @if (transfers().length === 0) {
+    <p class="state">Sin entregas registradas.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Fecha y hora</th>
+            <th class="num">Monto</th>
+            <th>Entrega</th>
+            <th>Recibe</th>
+            <th>Registró</th>
+            <th>Kardex caja / Bodega</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of transfers(); track t.id) {
+            <tr [class.row--muted]="t.status === 'ANULADA'">
+              <td>
+                {{ t.referenceNumber }}
+                @if (t.voucherReference) { <small class="muted block">{{ t.voucherReference }}</small> }
+              </td>
+              <td>{{ formatDateTime(t.createdAt) }}</td>
+              <td class="num">
+                {{ formatCurrency(t.amount) }}
+                @if (!t.hasBreakdown) { <small class="muted block">sin desglose</small> }
+              </td>
+              <td>{{ t.deliveredBy }}</td>
+              <td>{{ t.receivedBy }}</td>
+              <td>{{ t.createdByUsername }}</td>
+              <td>#{{ t.cashMovementSequence }} / #{{ t.warehouseMovementSequence }}</td>
+              <td>
+                <span class="badge" [class]="'badge badge--' + (t.status === 'APLICADA' ? 'cuadrado' : 'muted')">{{ t.status === 'APLICADA' ? 'Aplicada' : 'Anulada' }}</span>
+                @if (t.voidReason) { <small class="muted block">{{ t.voidReason }}</small> }
+              </td>
+              <td>{{ t.observations ?? '—' }}</td>
+              <td class="actions">
+                @if (isAdmin && t.status === 'APLICADA') {
+                  <button type="button" class="icon-btn" title="Anular entrega" (click)="voidTarget.set(t)"><app-icon name="x-circle" [size]="16" /></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="transfersTotal()" [page]="transfersPage()" [limit]="pageSize" (pageChange)="onTransfersPage($event)" />
+  }
+
+  <h3 class="panel__subtitle">Kardex de Bodega</h3>
+  @if (movements().length === 0) {
+    <p class="state">Sin movimientos.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha y hora</th>
+            <th>Tipo</th>
+            <th>Referencia</th>
+            <th class="num">Entrada</th>
+            <th class="num">Salida</th>
+            <th class="num">Saldo anterior</th>
+            <th class="num">Saldo</th>
+            <th>Persona</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of movements(); track m.id) {
+            <tr [class.row--muted]="m.status === 'ANULADO'">
+              <td>{{ m.sequence }}</td>
+              <td>{{ formatDateTime(m.createdAt) }}</td>
+              <td>
+                {{ m.movementType === 'SALDO_INICIAL' ? 'Saldo inicial' : m.movementType === 'ENTREGA_DESDE_CAJA' ? 'Entrega desde caja' : 'Anulación' }}
+                @if (m.status === 'ANULADO') { <small class="muted block">anulado</small> }
+              </td>
+              <td>{{ m.transferReference ?? '—' }}</td>
+              <td class="num tone--cuadrado">{{ m.direction === 'IN' ? formatCurrency(m.amount) : '' }}</td>
+              <td class="num tone--faltante">{{ m.direction === 'OUT' ? formatCurrency(m.amount) : '' }}</td>
+              <td class="num">{{ formatCurrency(m.previousBalance) }}</td>
+              <td class="num">{{ formatCurrency(m.newBalance) }}</td>
+              <td>{{ m.counterpart ?? '—' }}</td>
+              <td>{{ m.createdByUsername }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="movementsTotal()" [page]="movementsPage()" [limit]="pageSize" (pageChange)="onMovementsPage($event)" />
+  }
+</section>
+
+<app-cash-reason-modal
+  [open]="!!voidTarget()"
+  title="Anular entrega a Bodega"
+  [message]="'Se devolverán ' + formatCurrency(voidTarget()?.amount ?? 0) + ' a la caja y se retirarán de Bodega. Ambos movimientos quedan visibles como anulados.'"
+  confirmText="Anular entrega"
+  [danger]="true"
+  [busy]="voiding()"
+  (confirmed)="confirmVoid($event)"
+  (cancelled)="voidTarget.set(null)"
+/>

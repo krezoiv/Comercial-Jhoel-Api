@@ -24,7 +24,9 @@ export type CashMovementType =
   | 'SALDO_INICIAL'
   | 'ANULACION'
   /** Efectivo de caja depositado a una cuenta bancaria registrada (con desglose). */
-  | 'DEPOSITO_BANCARIO';
+  | 'DEPOSITO_BANCARIO'
+  /** Internal transfer caja → Bodega (never an expense). */
+  | 'ENTREGA_BODEGA';
 
 export type ManualCashMovementType = 'ENTRADA_MANUAL' | 'SALIDA_MANUAL' | 'AJUSTE' | 'SALDO_INICIAL';
 
@@ -46,6 +48,7 @@ export const CASH_MOVEMENT_TYPE_LABEL: Record<CashMovementType, string> = {
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
   DEPOSITO_BANCARIO: 'Depósito bancario',
+  ENTREGA_BODEGA: 'Entrega a Bodega (transferencia interna)',
 };
 
 export const CASH_DIRECTION_LABEL: Record<CashDirection, string> = {
@@ -243,6 +246,10 @@ export interface CashPosition {
   openPeriod: CashCutPeriod | null;
   /** Indicators of the current bank day (or of the calendar date when no bank day was anchored yet). */
   summary: CashDateSummary;
+  /** Official Bodega balance (its own Kardex). */
+  warehouseBalance: number;
+  /** caja + Bodega — an internal transfer never changes it. */
+  custodyTotal: number;
   /** The bank day the indicators belong to; `null` = calendar-date fallback. */
   bankDay: CashBankDayHeader | null;
   canCloseDay: boolean;
