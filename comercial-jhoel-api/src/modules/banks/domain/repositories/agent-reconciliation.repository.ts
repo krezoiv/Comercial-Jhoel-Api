@@ -4,6 +4,22 @@ export const AGENT_RECONCILIATION_REPOSITORY = Symbol(
   'AGENT_RECONCILIATION_REPOSITORY',
 );
 
+export const CUADRE_CASH_BREAKDOWN_SOURCES = ['MANUAL', 'ARQUEO_CAJA'] as const;
+export type CuadreCashBreakdownSource =
+  (typeof CUADRE_CASH_BREAKDOWN_SOURCES)[number];
+
+/**
+ * The cash breakdown a cuadre is saved with — stored as an independent
+ * photograph (`agent_reconciliation_cash_breakdowns`/`_details`). With
+ * ARQUEO_CAJA the SQL function snapshots the source count (date, user, total)
+ * and derives by itself whether the loaded quantities were modified.
+ */
+export interface CuadreCashBreakdownData {
+  source: CuadreCashBreakdownSource;
+  sourceCashCountId: string | null;
+  details: Array<{ denomination: number; quantity: number }>;
+}
+
 export interface CloseAgentDayData {
   date: string;
   totalCash: number;
@@ -14,6 +30,8 @@ export interface CloseAgentDayData {
   totalAccountsReceivable: number;
   result: number;
   userId: string;
+  /** Optional for backwards compatibility: callers that send only `totalCash` keep the original path. */
+  cashBreakdown?: CuadreCashBreakdownData | null;
 }
 
 export interface AgentReconciliationRepository {

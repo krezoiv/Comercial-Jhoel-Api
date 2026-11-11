@@ -9,6 +9,7 @@ import {
 import { DayNotOpenedError } from '../../domain/errors/day-not-opened.error';
 import { DayAlreadyClosedError } from '../../domain/errors/day-already-closed.error';
 import { BankBalancesNotRegisteredError } from '../../domain/errors/bank-balances-not-registered.error';
+import { CuadreCashBreakdownError } from '../../domain/errors/cuadre-cash-breakdown.error';
 import { AgentReconciliationOrmEntity } from './agent-reconciliation.orm-entity';
 import { AgentReconciliationMapper } from './agent-reconciliation.mapper';
 
@@ -32,9 +33,7 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
   ): Promise<AgentReconciliation> {
     let reconciliationId: string;
     try {
-      const rows = await this.repository.manager.query<
-        { close_agent_day: string }[]
-      >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7, $8)', [
+      const params: unknown[] = [
         data.date,
         data.totalCash,
         data.totalBanks,
@@ -43,8 +42,25 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
         data.result,
         data.userId,
         data.totalWarehouseCash,
-      ]);
-      reconciliationId = rows[0].close_agent_day;
+      ];
+      if (data.cashBreakdown) {
+        // Same close + the breakdown photograph, in one SQL transaction.
+        const rows = await this.repository.manager.query<{ id: string }[]>(
+          'SELECT close_agent_day_with_cash_breakdown($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11) AS id',
+          [
+            ...params,
+            JSON.stringify(data.cashBreakdown.details),
+            data.cashBreakdown.source,
+            data.cashBreakdown.sourceCashCountId,
+          ],
+        );
+        reconciliationId = rows[0].id;
+      } else {
+        const rows = await this.repository.manager.query<
+          { close_agent_day: string }[]
+        >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7, $8)', params);
+        reconciliationId = rows[0].close_agent_day;
+      }
     } catch (error) {
       throw this.translateCloseError(error);
     }
@@ -77,6 +93,11 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
     const message =
       (error.driverError as { message?: string } | undefined)?.message ??
       error.message;
+    const breakdownError = CuadreCashBreakdownError.fromMessage(message);
+    if (breakdownError) {
+      return breakdownError;
+    }
+
     const [code, extra] = message.split(':');
 
     switch (code) {

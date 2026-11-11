@@ -11,7 +11,7 @@ import {
 describe('guayacan-cash.util', () => {
   it('starts every one of the 11 denominations at zero', () => {
     const counts = emptyCashCounts();
-    expect(Object.keys(counts).length).toBe(11);
+    expect(Object.keys(counts).length).toBe(12);
     expect(cashCountsTotal(counts)).toBe(0);
   });
 
@@ -23,7 +23,7 @@ describe('guayacan-cash.util', () => {
   it('builds API details — only filled rows for a movement, every row for an arqueo', () => {
     const counts = { ...emptyCashCounts(), '100': 1 };
     expect(cashCountsToDetails(counts, { keepZero: false })).toEqual([{ denomination: 100, quantity: 1 }]);
-    expect(cashCountsToDetails(counts, { keepZero: true }).length).toBe(11);
+    expect(cashCountsToDetails(counts, { keepZero: true }).length).toBe(12);
   });
 
   it('status: green when it matches, red when over, yellow when short', () => {

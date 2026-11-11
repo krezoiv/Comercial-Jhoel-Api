@@ -187,13 +187,22 @@
           Conteo de Efectivo
         </h2>
 
+        <app-cuadre-cash-source
+          [origin]="cashOrigin()"
+          [hasQuantities]="hasQuantities()"
+          [loading]="isLoadingCount()"
+          [disabled]="isSaving()"
+          (loadLatest)="loadLatestCount()"
+          (clear)="clearCount()"
+        />
+
         <div class="cash-table-wrapper">
           <table class="cash-table">
             <thead>
               <tr>
                 <th>Denominación</th>
                 <th class="align-right">Cantidad</th>
-                <th class="align-right">Total</th>
+                <th class="align-right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -203,8 +212,8 @@
                   <td class="align-right">
                     <input
                       type="text"
-                      [attr.inputmode]="decimalPlacesFor(denomination) > 0 ? 'decimal' : 'numeric'"
-                      [appDecimalInput]="decimalPlacesFor(denomination)"
+                      inputmode="numeric"
+                      [appDecimalInput]="0"
                       [value]="cashCounts()[denomination]"
                       (input)="onQuantityInput(denomination, $any($event.target).value)"
                       [attr.aria-label]="'Cantidad de billetes o monedas de ' + formatCurrency(denomination)"

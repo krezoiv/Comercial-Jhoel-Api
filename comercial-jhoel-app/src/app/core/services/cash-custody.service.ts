@@ -8,6 +8,7 @@ import {
   CashCountRecord,
   CashCountFilters,
   CashCustody,
+  LatestCashCountResponse,
   PaginatedResult,
   RegisterCashCountInput,
   RegisterWarehouseTransferInput,
@@ -46,6 +47,18 @@ export class CashCustodyService {
   getCounts(filters: CashCountFilters): Observable<PaginatedResult<CashCountRecord>> {
     return this.http
       .get<ApiSuccessResponse<PaginatedResult<CashCountRecord>>>(`${BASE_URL}/counts`, { params: toParams(filters) })
+      .pipe(map((r) => r.data));
+  }
+
+  /**
+   * Latest valid Arqueo de Caja (all 12 denominations, missing ones as 0) for
+   * Cuadre de Agentes; a count of `businessDate` is preferred. Read-only.
+   */
+  getLatestCount(businessDate?: string): Observable<LatestCashCountResponse> {
+    return this.http
+      .get<ApiSuccessResponse<LatestCashCountResponse>>(`${BASE_URL}/counts/latest`, {
+        params: businessDate ? { businessDate } : {},
+      })
       .pipe(map((r) => r.data));
   }
 

@@ -15,7 +15,9 @@ import {
 } from '../../domain/policies/cash-control.policy';
 import type { CashMovementResult } from './cash-movement-commands.use-cases';
 
-const VALID_DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05];
+const VALID_DENOMINATIONS = [
+  200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01,
+];
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;

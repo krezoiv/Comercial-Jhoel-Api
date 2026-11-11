@@ -9,15 +9,19 @@ import {
   CashDenomination,
   CuadreAgentesSummary,
   CuadreResultStatus,
+  RegisterAgentReconciliationInput,
   calculateCuadreResult,
   calculateTotalCash,
-  decimalPlacesFor,
+  cashCountFromRows,
+  denominationSubtotal,
   formatCurrency,
   formatQuantity,
   getCuadreResultStatus,
 } from '../../../core/models';
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
 import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes-state.service';
+import { CashCustodyService } from '../../../core/services/cash-custody.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -26,6 +30,11 @@ import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { AgentReconciliationConfirmModalComponent } from './components/agent-reconciliation-confirm-modal/agent-reconciliation-confirm-modal.component';
+import { CuadreCashSourceComponent } from './components/cuadre-cash-source/cuadre-cash-source.component';
+
+/** Confirmation copy before an arqueo replaces quantities typed by hand. */
+export const REPLACE_WITH_COUNT_MESSAGE =
+  'Ya existen cantidades ingresadas manualmente. ¿Desea reemplazarlas con el desglose del último arqueo de Caja?';
 
 const STATUS_ICON: Record<CuadreResultStatus, string> = {
   negative: 'x-circle',
@@ -87,6 +96,7 @@ function todayIsoDate(): string {
     ButtonComponent,
     DecimalInputDirective,
     AgentReconciliationConfirmModalComponent,
+    CuadreCashSourceComponent,
     RouterLink,
   ],
   templateUrl: './cuadre-agentes-page.component.html',
@@ -99,6 +109,8 @@ export class CuadreAgentesPageComponent {
   protected readonly dayStatusService = inject(DayStatusService);
   protected readonly draft = inject(BankBalanceDraftStore);
   private readonly notificationService = inject(NotificationService);
+  private readonly cashCustodyService = inject(CashCustodyService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly maxSelectableDate = todayIsoDate();
   /** Whether the shared operation date (set from Bancos) is today — drives the "not working on today" warning banner. */
@@ -106,7 +118,10 @@ export class CuadreAgentesPageComponent {
 
   readonly denominations = CASH_DENOMINATIONS;
   readonly cashCounts = this.state.cashCounts;
-  readonly decimalPlacesFor = decimalPlacesFor;
+  /** Origin of the breakdown being edited (manual / loaded arqueo / modified after loading). */
+  readonly cashOrigin = this.state.origin;
+  readonly hasQuantities = this.state.hasQuantities;
+  readonly isLoadingCount = signal(false);
 
   readonly summary = signal<CuadreAgentesSummary | null>(null);
   readonly loading = signal(true);
@@ -238,15 +253,78 @@ export class CuadreAgentesPageComponent {
   }
 
   rowTotal(denomination: CashDenomination): number {
-    return denomination * (this.cashCounts()[denomination] || 0);
+    return denominationSubtotal(denomination, this.cashCounts()[denomination]);
   }
 
   /**
-   * The `appDecimalInput` directive already rejects at the keystroke
-   * level whatever doesn't match each row's allowed decimal places (0
-   * for Q200–Q5, 2 for Q1) — this only shapes the final string to that
-   * same decimal count before saving it, so a pasted value can't sneak
-   * in with more precision than allowed.
+   * "Cargar último arqueo de Caja": copies the latest valid Arqueo de Caja's
+   * breakdown into the form (Q0.01 completed with 0 on older arqueos) — the
+   * arqueo itself is only read. Quantities typed by hand are never replaced
+   * without confirmation; reloading an untouched arqueo needs none. An arqueo
+   * of an earlier bank day loads with a visible warning.
+   */
+  async loadLatestCount(): Promise<void> {
+    if (this.isLoadingCount()) {
+      return;
+    }
+    const origin = this.cashOrigin();
+    const handTyped = this.hasQuantities() && (!origin.loadedCount || origin.modifiedAfterLoad);
+    if (handTyped) {
+      const confirmed = await this.confirmDialog.confirm({
+        type: 'UPDATE',
+        title: 'Reemplazar conteo',
+        message: REPLACE_WITH_COUNT_MESSAGE,
+        confirmText: 'Reemplazar con último arqueo',
+        cancelText: 'Cancelar',
+        icon: 'download',
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+    this.isLoadingCount.set(true);
+    this.cashCustodyService.getLatestCount(this.draft.operationDate()).subscribe({
+      next: (latest) => {
+        this.isLoadingCount.set(false);
+        if (!latest.count) {
+          this.notificationService.info('No hay arqueos de Caja registrados. Puede ingresar el conteo manualmente.');
+          return;
+        }
+        this.state.loadFromCount(cashCountFromRows(latest.breakdown), {
+          id: latest.count.id,
+          number: latest.count.number,
+          countedAt: latest.count.countedAt,
+          businessDate: latest.count.businessDate,
+          createdByUsername: latest.count.createdByUsername,
+          totalCounted: latest.count.totalCounted,
+          isFromReferenceDay: latest.isFromReferenceDay,
+        });
+        if (latest.isFromReferenceDay) {
+          this.notificationService.success('Desglose cargado desde el último arqueo de Caja.');
+        } else {
+          this.notificationService.warning(
+            'Se cargó el último arqueo disponible, pero corresponde a una fecha anterior. Verifique las cantidades.',
+          );
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoadingCount.set(false);
+        this.notificationService.error(
+          extractErrorMessage(error, 'No se pudo cargar el último arqueo de Caja. Puede ingresar el conteo manualmente.'),
+        );
+      },
+    });
+  }
+
+  /** "Limpiar": empties every quantity and starts a new manual count. */
+  clearCount(): void {
+    this.state.clear();
+  }
+
+  /**
+   * Whole quantities only (the `appDecimalInput` directive already blocks
+   * decimals at the keystroke level); empty, negative or invalid → 0. After
+   * loading an arqueo, any change marks the breakdown as modified.
    */
   onQuantityInput(denomination: CashDenomination, value: string): void {
     const trimmed = value.trim();
@@ -259,9 +337,7 @@ export class CuadreAgentesPageComponent {
       this.state.setCount(denomination, 0);
       return;
     }
-    const decimals = decimalPlacesFor(denomination);
-    const rounded = decimals === 0 ? Math.trunc(parsed) : Math.round(parsed * 100) / 100;
-    this.state.setCount(denomination, rounded);
+    this.state.setCount(denomination, Math.trunc(parsed));
   }
 
   /** Never opens the confirmation modal if the backend's pre-check hasn't yet confirmed this date can be reconciled — see `canSaveCuadre`. */
@@ -321,6 +397,21 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
+   * The cuadre request: the total plus the exact breakdown used and its
+   * origin (the backend re-checks the sum and stores it as a photograph).
+   */
+  buildReconciliationInput(): RegisterAgentReconciliationInput {
+    const loaded = this.cashOrigin().loadedCount;
+    return {
+      totalCash: this.totalCash(),
+      date: this.draft.operationDate(),
+      cashDetails: this.state.details(),
+      cashBreakdownSource: loaded ? 'ARQUEO_CAJA' : 'MANUAL',
+      ...(loaded ? { sourceCashCountId: loaded.id } : {}),
+    };
+  }
+
+  /**
    * "Guardar Cuadre" now also closes the day — a single atomic call on
    * the backend (`CloseAgentDayUseCase`/`close_agent_day`).
    * `dayStatusService.refresh()` is what makes the Sidebar and this same
@@ -334,7 +425,7 @@ export class CuadreAgentesPageComponent {
     }
     this.isSaving.set(true);
     this.cuadreAgentesService
-      .registerReconciliation({ totalCash: this.totalCash(), date: this.draft.operationDate() })
+      .registerReconciliation(this.buildReconciliationInput())
       .subscribe({
         next: () => {
           this.isSaving.set(false);

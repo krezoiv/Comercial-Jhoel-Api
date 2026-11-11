@@ -86,7 +86,7 @@ describe('GuayacanCashCountsPageComponent (Cajas y Cierres → Arqueos — Guaya
     fixture.detectChanges();
 
     const rows = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.denominations tbody tr'));
-    expect(rows.length).toBe(11);
+    expect(rows.length).toBe(12);
     expect(rows[0].textContent).toContain('Q200');
     expect(rows[0].textContent).toContain('12');
     expect(rows[0].textContent).toContain('Q 2,400.00');

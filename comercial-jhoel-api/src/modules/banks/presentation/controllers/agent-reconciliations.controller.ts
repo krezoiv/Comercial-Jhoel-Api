@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
+import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import { CloseAgentDayUseCase } from '../../application/use-cases/close-agent-day.use-case';
 import { AgentReconciliationOutput } from '../../application/dtos/agent-reconciliation-output';
 import { CreateAgentReconciliationRequestDto } from '../dtos/create-agent-reconciliation.request.dto';
@@ -29,12 +30,24 @@ export class AgentReconciliationsController {
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateAgentReconciliationRequestDto,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser() user: RequestUser,
   ): Promise<AgentReconciliationOutput> {
     return this.closeAgentDayUseCase.execute({
       totalCash: dto.totalCash,
       date: dto.date ?? todayIsoDate(),
-      userId,
+      userId: user.userId,
+      role: user.role,
+      cashBreakdown:
+        dto.cashDetails && dto.cashBreakdownSource
+          ? {
+              source: dto.cashBreakdownSource,
+              sourceCashCountId: dto.sourceCashCountId ?? null,
+              details: dto.cashDetails.map((row) => ({
+                denomination: row.denomination,
+                quantity: row.quantity,
+              })),
+            }
+          : null,
     });
   }
 }

@@ -8,7 +8,7 @@ import { todayIsoDate } from './today-iso-date';
 
 /** Las mismas denominaciones de Transaccionar (y de `guayacan_valid_denomination` en SQL). */
 export const GUAYACAN_CASH_DENOMINATIONS = [
-  200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05,
+  200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01,
 ] as const;
 
 function round2(value: number): number {

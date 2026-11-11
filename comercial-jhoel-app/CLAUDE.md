@@ -1799,3 +1799,17 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   Guayacán, desglose por defecto, sin desglose solo admin). Botón en la tarjeta principal y en el panel de Bodega, que
   además muestra el historial de retiros (anulación admin) y lo devuelto/depositado en el día.
 
+## Q0.01 y Cuadre de Agentes ← último Arqueo de Caja
+
+- Q0.01 está en `BANK_DEPOSIT_CASH_DENOMINATIONS`, la lista de `CashBreakdownTableComponent`, que usan Transaccionar,
+  Arqueo de Caja, entregas/retiros de Bodega, depósito, cortes y Caja Guayacán (12 filas).
+- Cuadre de Agentes → Conteo de Efectivo: `CASH_DENOMINATIONS` (cuadre) = 12 denominaciones, todas enteras (Q1 ya no
+  acepta decimales); totales en centavos enteros (`calculateTotalCash`, `denominationSubtotal`).
+- `CuadreCashSourceComponent` (estilos propios para no exceder el presupuesto de la página): botones "Cargar último
+  arqueo de Caja" / "Limpiar" y el origen (Conteo manual / Último arqueo de Caja con número, fecha y hora, día operativo,
+  responsable, total, estado / "Modificado manualmente después de cargar arqueo"; aviso si es de fecha anterior).
+- `CuadreAgentesStateService.origin` guarda el arqueo cargado y `modifiedAfterLoad`; `loadLatestCount()` pide
+  confirmación (`ConfirmDialogService`, `REPLACE_WITH_COUNT_MESSAGE`) antes de reemplazar cantidades tecleadas;
+  "Guardar Cuadre" envía `cashDetails` + `cashBreakdownSource` (+ `sourceCashCountId`) — el backend re-valida y guarda
+  la foto. Sin permiso de arqueos (cajero) el botón muestra el 403 y el conteo manual sigue disponible.
+

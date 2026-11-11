@@ -33,7 +33,7 @@ const TIME_MESSAGE = 'La hora debe tener el formato HH:mm (24 h).';
 
 /** Same denominations as Transaccionar/Guayacán (and `cash_valid_denomination` in SQL). */
 export const CASH_DENOMINATIONS = [
-  200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05,
+  200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01,
 ] as const;
 
 export class CashMovementsQueryDto {
@@ -132,7 +132,7 @@ export class CashBankVerificationRequestDto {
 
 export class FinishCashCutRequestDto {
   @IsArray()
-  @ArrayMaxSize(11)
+  @ArrayMaxSize(CASH_DENOMINATIONS.length)
   @ValidateNested({ each: true })
   @Type(() => CashDenominationRequestDto)
   details: CashDenominationRequestDto[];
@@ -174,7 +174,7 @@ export class RegisterCashBankDepositRequestDto {
   amount: number;
 
   @IsArray()
-  @ArrayMaxSize(11)
+  @ArrayMaxSize(CASH_DENOMINATIONS.length)
   @ValidateNested({ each: true })
   @Type(() => CashDenominationRequestDto)
   details: CashDenominationRequestDto[];

@@ -1,0 +1,54 @@
+<div class="cash-source">
+  <div class="cash-source__actions">
+    <app-button variant="outline" size="sm" [disabled]="loading || disabled" (click)="loadLatest.emit()">
+      <app-icon [name]="loading ? 'clock' : 'download'" [size]="14" />
+      {{ loading ? 'Cargando arqueo…' : 'Cargar último arqueo de Caja' }}
+    </app-button>
+    <app-button
+      variant="ghost"
+      size="sm"
+      [disabled]="disabled || (!hasQuantities && !origin.loadedCount)"
+      (click)="clear.emit()"
+    >
+      <app-icon name="rotate-ccw" [size]="14" />
+      Limpiar
+    </app-button>
+  </div>
+
+  @if (origin.loadedCount; as count) {
+    <div
+      class="cash-source__panel"
+      [class.cash-source__panel--modified]="origin.modifiedAfterLoad"
+      [class.cash-source__panel--previous]="!count.isFromReferenceDay"
+      role="status"
+    >
+      <p class="cash-source__title">
+        <app-icon [name]="origin.modifiedAfterLoad ? 'alert-circle' : 'check-circle'" [size]="16" />
+        {{ origin.modifiedAfterLoad ? 'Modificado manualmente después de cargar arqueo' : 'Origen: Último arqueo de Caja' }}
+      </p>
+      <dl class="cash-source__grid">
+        <div><dt>Arqueo</dt><dd>#{{ count.number }}</dd></div>
+        <div><dt>Fecha y hora</dt><dd>{{ count.countedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>Día operativo</dt><dd>{{ formatDay(count.businessDate) }}</dd></div>
+        <div><dt>Responsable</dt><dd>{{ count.createdByUsername }}</dd></div>
+        <div><dt>Total contado</dt><dd>{{ formatCurrency(count.totalCounted) }}</dd></div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{ origin.modifiedAfterLoad ? 'Modificado después de cargar' : 'Cargado correctamente' }}</dd>
+        </div>
+      </dl>
+      @if (!count.isFromReferenceDay) {
+        <p class="cash-source__warning">
+          <app-icon name="alert-triangle" [size]="14" />
+          Este arqueo corresponde a una fecha anterior ({{ formatDay(count.businessDate) }}); no es un conteo de hoy.
+          Verifique las cantidades antes de guardar.
+        </p>
+      }
+    </div>
+  } @else {
+    <p class="cash-source__manual">
+      <app-icon name="keyboard" [size]="14" />
+      Origen: Conteo manual
+    </p>
+  }
+</div>

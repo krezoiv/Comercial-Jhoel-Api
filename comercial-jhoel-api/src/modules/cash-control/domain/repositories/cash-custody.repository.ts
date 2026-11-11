@@ -201,6 +201,13 @@ export interface RegisterCashCountData {
   correctionReason?: string | null;
 }
 
+/** Result of looking up the most recent valid (VIGENTE) Arqueo de Caja. */
+export interface LatestCashCountLookup {
+  count: CashCountRow | null;
+  /** Bank day the lookup preferred (the one requested, else the current bank day). */
+  referenceBusinessDate: string | null;
+}
+
 export interface CashCustodyRepository {
   getCustody(): Promise<CashCustodySnapshot>;
   registerTransfer(data: RegisterTransferData): Promise<string>;
@@ -228,4 +235,12 @@ export interface CashCustodyRepository {
   registerCount(data: RegisterCashCountData): Promise<string>;
   findCounts(options: FindCashCountsOptions): Promise<Paginated<CashCountRow>>;
   findCountById(id: string): Promise<CashCountRow | null>;
+  /**
+   * Latest VIGENTE Arqueo de Caja (never a replaced one; Bodega and Guayacán
+   * counts live in other tables): one of `preferredBusinessDate` (default:
+   * the current bank day) first, otherwise the most recent one available.
+   */
+  findLatestValidCount(
+    preferredBusinessDate: string | null,
+  ): Promise<LatestCashCountLookup>;
 }

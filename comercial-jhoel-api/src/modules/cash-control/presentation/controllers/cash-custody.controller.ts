@@ -16,6 +16,7 @@ import type { RequestUser } from '../../../../shared/decorators/current-user.dec
 import {
   GetCashCountUseCase,
   GetCashCustodyUseCase,
+  GetLatestCashCountUseCase,
   GetWarehouseTransferUseCase,
   ListCashCountsUseCase,
   ListWarehouseMovementsUseCase,
@@ -33,6 +34,7 @@ import { ReasonRequestDto } from '../dtos/cash-control.request.dto';
 import {
   CashCountsQueryDto,
   CorrectCashCountRequestDto,
+  LatestCashCountQueryDto,
   RegisterCashCountRequestDto,
   RegisterWarehouseTransferRequestDto,
   RegisterWarehouseWithdrawalRequestDto,
@@ -54,6 +56,7 @@ export class CashCustodyController {
     private readonly registerCount: RegisterCashCountUseCase,
     private readonly listCounts: ListCashCountsUseCase,
     private readonly getCount: GetCashCountUseCase,
+    private readonly getLatestCount: GetLatestCashCountUseCase,
     private readonly registerTransfer: RegisterWarehouseTransferUseCase,
     private readonly voidTransfer: VoidWarehouseTransferUseCase,
     private readonly listTransfers: ListWarehouseTransfersUseCase,
@@ -121,6 +124,21 @@ export class CashCustodyController {
   @Get('counts')
   counts(@Query() query: CashCountsQueryDto, @CurrentUser() user: RequestUser) {
     return this.listCounts.execute({ ...query, role: user.role });
+  }
+
+  /**
+   * Latest valid Arqueo de Caja (+ full 12-denomination breakdown) for
+   * Cuadre de Agentes. Declared before `counts/:id` so "latest" is not parsed as an id.
+   */
+  @Get('counts/latest')
+  latestCount(
+    @Query() query: LatestCashCountQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.getLatestCount.execute({
+      businessDate: query.businessDate,
+      role: user.role,
+    });
   }
 
   @Get('counts/:id')

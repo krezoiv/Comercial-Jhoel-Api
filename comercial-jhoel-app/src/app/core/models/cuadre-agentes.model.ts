@@ -34,30 +34,92 @@ export interface CuadreAgentesSummary {
   totalWarehouseCash: number;
 }
 
-/** Fixed bill/coin denominations for the cash count — in the order they should be displayed. */
-export const CASH_DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1] as const;
+/** Fixed bill/coin denominations for the cash count (Q200 … Q0.01) — in display order, same list as the backend. */
+export const CASH_DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01] as const;
 export type CashDenomination = (typeof CASH_DENOMINATIONS)[number];
 
 /**
- * Count of bills/coins per denomination — integer ≥ 0 for Q200–Q5; Q1 is
- * the one exception (second stage) and can carry up to 2 decimal places,
- * since it's usually counted in loose fractional coins. Never a monetary
- * value on its own — `calculateTotalCash` is what turns it into one.
+ * Count of bills/coins per denomination — always a whole number ≥ 0 (loose
+ * coins are counted in their own Q0.50 … Q0.01 rows, so Q1 no longer needs
+ * decimals). Never a monetary value on its own — `calculateTotalCash` is
+ * what turns it into one.
  */
 export type CashCount = Record<CashDenomination, number>;
 
-/** Q1 is the only denomination that accepts decimals — see `CashCount`'s own comment. */
-export function decimalPlacesFor(denomination: CashDenomination): number {
-  return denomination === 1 ? 2 : 0;
+/** Every denomination takes whole quantities (kept for the `appDecimalInput` binding). */
+export function decimalPlacesFor(_denomination: CashDenomination): number {
+  return 0;
 }
 
 export function createEmptyCashCount(): CashCount {
   return Object.fromEntries(CASH_DENOMINATIONS.map((denomination) => [denomination, 0])) as CashCount;
 }
 
-/** `denomination × count`, summed across every denomination — the "Total Efectivo". */
+/** Denomination in whole centavos — cash math is done in integers to avoid float drift. */
+function toCents(value: number): number {
+  return Math.round(value * 100);
+}
+
+/** `denomination × quantity` of one row, exact to the centavo. */
+export function denominationSubtotal(denomination: number, quantity: number): number {
+  return (toCents(denomination) * (quantity || 0)) / 100;
+}
+
+/** `denomination × count`, summed across every denomination — the "Total Efectivo" (integer centavo math). */
 export function calculateTotalCash(counts: CashCount): number {
-  return CASH_DENOMINATIONS.reduce((sum, denomination) => sum + denomination * (counts[denomination] || 0), 0);
+  const cents = CASH_DENOMINATIONS.reduce((sum, denomination) => sum + toCents(denomination) * (counts[denomination] || 0), 0);
+  return cents / 100;
+}
+
+/** Whether any denomination has a quantity entered. */
+export function hasAnyQuantity(counts: CashCount): boolean {
+  return CASH_DENOMINATIONS.some((denomination) => (counts[denomination] || 0) > 0);
+}
+
+/** Builds a full count from stored rows; a denomination missing in the rows (e.g. Q0.01 in old arqueos) becomes 0. */
+export function cashCountFromRows(rows: Array<{ denomination: number; quantity: number }>): CashCount {
+  const counts = createEmptyCashCount();
+  for (const denomination of CASH_DENOMINATIONS) {
+    const row = rows.find((r) => toCents(Number(r.denomination)) === toCents(denomination));
+    counts[denomination] = row ? Number(row.quantity) : 0;
+  }
+  return counts;
+}
+
+/** Where the cash breakdown being edited comes from — sent with the cuadre and stored with it. */
+export type CuadreCashBreakdownSource = 'MANUAL' | 'ARQUEO_CAJA';
+
+/** The Arqueo de Caja a breakdown was loaded from (reference only — the arqueo itself is never modified). */
+export interface LoadedCashCountInfo {
+  id: string;
+  number: number;
+  countedAt: string;
+  businessDate: string;
+  createdByUsername: string;
+  totalCounted: number;
+  /** False when the arqueo belongs to an earlier bank day than the cuadre's — the UI warns. */
+  isFromReferenceDay: boolean;
+}
+
+/** `null` source = manual count; otherwise the loaded arqueo and whether it was edited afterwards. */
+export interface CashBreakdownOrigin {
+  loadedCount: LoadedCashCountInfo | null;
+  modifiedAfterLoad: boolean;
+}
+
+/** `GET /cash-control/counts/latest` — the latest valid Arqueo de Caja, with all 12 denominations. */
+export interface LatestCashCountResponse {
+  count: {
+    id: string;
+    number: number;
+    businessDate: string;
+    countedAt: string;
+    totalCounted: number;
+    createdByUsername: string;
+  } | null;
+  breakdown: Array<{ denomination: number; quantity: number; subtotal: number }>;
+  referenceBusinessDate: string | null;
+  isFromReferenceDay: boolean;
 }
 
 /**
@@ -84,6 +146,11 @@ export interface AgentReconciliation {
 export interface RegisterAgentReconciliationInput {
   totalCash: number;
   date?: string;
+  /** The breakdown actually used (all denominations) — the backend checks it adds up to `totalCash` and stores it as a photograph. */
+  cashDetails?: Array<{ denomination: number; quantity: number }>;
+  cashBreakdownSource?: CuadreCashBreakdownSource;
+  /** Only with `ARQUEO_CAJA`: the arqueo the breakdown was loaded from. */
+  sourceCashCountId?: string;
 }
 
 /** Cuadre result = Cash + Banks + AccountsReceivable − Assets. Red if <0, green if =0, yellow if >0. */

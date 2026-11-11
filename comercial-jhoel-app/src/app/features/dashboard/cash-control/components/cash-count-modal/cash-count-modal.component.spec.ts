@@ -71,7 +71,7 @@ describe('CashCountModalComponent (arqueo de caja)', () => {
     modal.onQuantityChange({ denomination: 200, quantity: 425 });
     await modal.save();
     const input = registerSpy.calls.mostRecent().args[0];
-    expect(input.details.length).toBe(11);
+    expect(input.details.length).toBe(12);
     expect(input.clientRequestId).toBeTruthy();
     expect(input.warehouseCounted).toBeUndefined();
     expect(modal.result()?.result).toBe('FALTANTE');

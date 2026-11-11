@@ -1,6 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AGENT_RECONCILIATION_REPOSITORY } from '../../domain/repositories/agent-reconciliation.repository';
-import type { AgentReconciliationRepository } from '../../domain/repositories/agent-reconciliation.repository';
+import type {
+  AgentReconciliationRepository,
+  CuadreCashBreakdownData,
+} from '../../domain/repositories/agent-reconciliation.repository';
+import { CuadreCashBreakdownError } from '../../domain/errors/cuadre-cash-breakdown.error';
+import {
+  breakdownTotal,
+  isValidDenomination,
+  toCents,
+} from '../../../cash-control/domain/cash-denominations';
+import { assertCashCustodyPermission } from '../../../cash-control/domain/policies/cash-control.policy';
 import { DAY_OPENING_REPOSITORY } from '../../domain/repositories/day-opening.repository';
 import type { DayOpeningRepository } from '../../domain/repositories/day-opening.repository';
 import { GetCuadreAgentesSummaryUseCase } from './get-cuadre-agentes-summary.use-case';
@@ -17,6 +27,50 @@ export interface CloseAgentDayInput {
   totalCash: number;
   date: string;
   userId: string;
+  /** JWT role — needed only when the breakdown comes from an Arqueo de Caja. */
+  role?: string;
+  /** Denomination breakdown behind `totalCash` (optional; the UI always sends it). */
+  cashBreakdown?: CuadreCashBreakdownData | null;
+}
+
+/**
+ * Validates a cuadre's cash breakdown before any database round-trip:
+ * known denominations (Q200 … Q0.01), whole quantities ≥ 0, one row per
+ * denomination, exact total (integer centavos) equal to `totalCash`, and a
+ * consistent origin. The SQL function re-checks all of it, plus the source
+ * arqueo's validity, under the same transaction as the close.
+ */
+export function assertCuadreCashBreakdown(
+  totalCash: number,
+  breakdown: CuadreCashBreakdownData,
+  role: string | undefined,
+): void {
+  const seen = new Set<number>();
+  for (const row of breakdown.details) {
+    const cents = toCents(row.denomination);
+    if (
+      !isValidDenomination(row.denomination) ||
+      !Number.isInteger(row.quantity) ||
+      row.quantity < 0 ||
+      seen.has(cents)
+    ) {
+      throw new CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_INVALID');
+    }
+    seen.add(cents);
+  }
+  if ((breakdown.source === 'ARQUEO_CAJA') !== !!breakdown.sourceCashCountId) {
+    throw new CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_INVALID');
+  }
+  if (toCents(breakdownTotal(breakdown.details)) !== toCents(totalCash)) {
+    throw new CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_MISMATCH');
+  }
+  if (breakdown.source === 'ARQUEO_CAJA') {
+    try {
+      assertCashCustodyPermission(role, 'cash_custody.view');
+    } catch {
+      throw new CuadreCashBreakdownError('CUADRE_SOURCE_COUNT_FORBIDDEN');
+    }
+  }
 }
 
 /**
@@ -35,6 +89,10 @@ export interface CloseAgentDayInput {
  * case; the SQL function is the real guarantee against a race between two
  * near-simultaneous saves for the same date.
  *
+ * Optional cash breakdown (denominations + origin MANUAL/ARQUEO_CAJA): it
+ * must add up exactly to `totalCash` and is saved as an independent
+ * photograph; the source arqueo is only read, never modified.
+ *
  * `totalCash` remains the only value accepted from the client —
  * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` are always
  * recomputed here from `GetCuadreAgentesSummaryUseCase`, never taken from
@@ -52,6 +110,14 @@ export class CloseAgentDayUseCase {
   ) {}
 
   async execute(input: CloseAgentDayInput): Promise<AgentReconciliationOutput> {
+    if (input.cashBreakdown) {
+      assertCuadreCashBreakdown(
+        input.totalCash,
+        input.cashBreakdown,
+        input.role,
+      );
+    }
+
     const dayOpening = await this.dayOpeningRepository.findByDate(input.date);
     if (!dayOpening) {
       throw new DayNotOpenedError(input.date, 'reconciliation');
@@ -86,6 +152,7 @@ export class CloseAgentDayUseCase {
       totalAccountsReceivable: summary.totalAccountsReceivable,
       result,
       userId: input.userId,
+      cashBreakdown: input.cashBreakdown ?? null,
     });
 
     return toAgentReconciliationOutput(record);

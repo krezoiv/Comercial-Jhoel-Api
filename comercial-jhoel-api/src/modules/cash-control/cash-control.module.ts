@@ -36,6 +36,7 @@ import { CASH_CUSTODY_REPOSITORY } from './domain/repositories/cash-custody.repo
 import { TypeOrmCashCustodyRepository } from './infrastructure/persistence/typeorm-cash-custody.repository';
 import {
   GetCashCountUseCase,
+  GetLatestCashCountUseCase,
   GetCashCustodyUseCase,
   GetWarehouseTransferUseCase,
   ListCashCountsUseCase,
@@ -78,6 +79,7 @@ import {
     RegisterCashCountUseCase,
     ListCashCountsUseCase,
     GetCashCountUseCase,
+    GetLatestCashCountUseCase,
     RegisterWarehouseTransferUseCase,
     VoidWarehouseTransferUseCase,
     ListWarehouseTransfersUseCase,

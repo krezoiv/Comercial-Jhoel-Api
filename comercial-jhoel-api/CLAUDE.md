@@ -1540,6 +1540,30 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - Pruebas: `sql/tests/warehouse-withdrawals.test.sql` (27 casos), casos en `cash-custody.use-cases.spec.ts` y
   `test/cash-custody.e2e-spec.ts`.
 
+### Q0.01 y desglose del Cuadre de Agentes desde el último Arqueo de Caja (migración `1760007600000`)
+
+- **Q0.01** es denominación válida en todo conteo: `cash_valid_denomination` (arqueos, Bodega, depósitos, cortes),
+  `guayacan_valid_denomination`, y las listas de la API (`cash-control/domain/cash-denominations.ts` = fuente,
+  `GUAYACAN_CASH_DENOMINATIONS`, DTOs; los `@ArrayMaxSize` usan el largo de la lista, nunca un número fijo).
+  Transaccionar ya aceptaba cualquier denominación positiva. Arqueos anteriores sin fila Q0.01 no se tocan (= 0).
+- **`GET /cash-control/counts/latest?businessDate=`** (`GetLatestCashCountUseCase`, `cash_custody.view`, declarado antes
+  de `counts/:id`): último arqueo VIGENTE de Caja (nunca REEMPLAZADO; Bodega/Guayacán son otras tablas), primero el del día
+  pedido (default día bancario actual) y si no el más reciente; `breakdown` con las 12 denominaciones
+  (`completeBreakdown`, solo vista) e `isFromReferenceDay` para que la UI advierta un arqueo de fecha anterior.
+- **Foto del desglose del cuadre**: `agent_reconciliation_cash_breakdowns` (origen MANUAL/ARQUEO_CAJA, arqueo de origen:
+  id, número, fecha/hora, día operativo, usuario, total; `modified_after_load`) + `agent_reconciliation_cash_details`;
+  ambas inmutables (`cash_custody_status_only_guard`). `POST /agent-reconciliations` acepta opcionales `cashDetails`,
+  `cashBreakdownSource`, `sourceCashCountId`; `CloseAgentDayUseCase` (`assertCuadreCashBreakdown`) valida denominaciones,
+  enteros ≥ 0, sin duplicados, suma exacta en centavos = `totalCash`, y que ARQUEO_CAJA tenga rol de lectura de arqueos.
+  `close_agent_day_with_cash_breakdown` re-valida todo (arqueo VIGENTE, rol en SQL), **deriva** `modified_after_load`
+  comparando contra el arqueo (no confía en el cliente) y llama al `close_agent_day` sin cambios, en la misma transacción.
+  Sin desglose el camino original sigue igual. El arqueo original, el Kardex y los saldos bancarios nunca se escriben.
+- Errores: `CuadreCashBreakdownError` (`CUADRE_CASH_BREAKDOWN_INVALID`/`_MISMATCH` 400, `CUADRE_SOURCE_COUNT_INVALID` 409,
+  `CUADRE_SOURCE_COUNT_FORBIDDEN` 403).
+- Pruebas: `sql/tests/cuadre-cash-breakdown.test.sql` (32 casos, escenario de aceptación con huella md5),
+  `close-agent-day.use-case.spec.ts`, `cash-denominations.spec.ts`, casos en `cash-custody.use-cases.spec.ts`,
+  `test/cuadre-cash-breakdown.e2e-spec.ts`.
+
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 
 - **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`

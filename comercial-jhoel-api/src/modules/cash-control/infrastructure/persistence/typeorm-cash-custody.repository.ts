@@ -9,6 +9,7 @@ import {
   DenominationRow,
   FindCashCountsOptions,
   FindTransfersOptions,
+  LatestCashCountLookup,
   Paginated,
   RegisterCashCountData,
   RegisterTransferData,
@@ -441,6 +442,24 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       [id],
     );
     return row ? this.toCount(row) : null;
+  }
+
+  async findLatestValidCount(
+    preferredBusinessDate: string | null,
+  ): Promise<LatestCashCountLookup> {
+    const [day] = await this.dataSource.query<SqlRow[]>(
+      `SELECT to_char(COALESCE($1::date, (SELECT business_date FROM cash_current_bank_day())), 'YYYY-MM-DD') AS day`,
+      [preferredBusinessDate],
+    );
+    const referenceBusinessDate = textOrNull(day?.day);
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `${COUNT_SELECT}
+       WHERE c.status = 'VIGENTE'
+       ORDER BY (c.business_date = $1::date) DESC NULLS LAST, c.counted_at DESC, c.number DESC
+       LIMIT 1`,
+      [referenceBusinessDate],
+    );
+    return { count: row ? this.toCount(row) : null, referenceBusinessDate };
   }
 
   private toTransfer(row: SqlRow): WarehouseTransferRow {

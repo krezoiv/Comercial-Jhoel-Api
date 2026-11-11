@@ -25,7 +25,7 @@ import type {
 } from '../../domain/repositories/cash-custody.repository';
 
 const MAX_AMOUNT = 99_999_999.99;
-const DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05];
+const DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
 
 /** One denomination row (quantity: whole number ≥ 0). */
 export class DenominationRequestDto {
@@ -41,7 +41,7 @@ export class DenominationRequestDto {
 /** "Arqueo de Caja" (or its audited correction). */
 export class RegisterCashCountRequestDto {
   @IsArray()
-  @ArrayMaxSize(11)
+  @ArrayMaxSize(DENOMINATIONS.length)
   @ValidateNested({ each: true })
   @Type(() => DenominationRequestDto)
   details: DenominationRequestDto[];
@@ -86,7 +86,7 @@ export class RegisterWarehouseTransferRequestDto {
   /** Optional breakdown; without it the delivery needs an administrator. */
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(11)
+  @ArrayMaxSize(DENOMINATIONS.length)
   @ValidateNested({ each: true })
   @Type(() => DenominationRequestDto)
   details?: DenominationRequestDto[];
@@ -138,7 +138,7 @@ export class RegisterWarehouseWithdrawalRequestDto {
   /** Optional breakdown; without it the withdrawal needs an administrator. */
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(11)
+  @ArrayMaxSize(DENOMINATIONS.length)
   @ValidateNested({ each: true })
   @Type(() => DenominationRequestDto)
   details?: DenominationRequestDto[];
@@ -151,4 +151,11 @@ export class RegisterWarehouseWithdrawalRequestDto {
   @IsOptional() @IsString() @MaxLength(100) voucherReference?: string;
   @IsOptional() @IsString() @MaxLength(500) observations?: string;
   @IsUUID() clientRequestId: string;
+}
+
+/** `GET /cash-control/counts/latest?businessDate=yyyy-MM-dd` (optional: default current bank day). */
+export class LatestCashCountQueryDto {
+  @IsOptional()
+  @IsDateString({ strict: true })
+  businessDate?: string;
 }

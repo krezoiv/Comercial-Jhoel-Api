@@ -85,7 +85,7 @@ describe('GuayacanCashCountPanelComponent (arqueo)', () => {
     await component.save();
 
     expect(service.registerCount).toHaveBeenCalledTimes(1);
-    expect(service.registerCount.calls.mostRecent().args[0].details.length).toBe(11);
+    expect(service.registerCount.calls.mostRecent().args[0].details.length).toBe(12);
     expect(service.registerMovement).not.toHaveBeenCalled();
   });
 

@@ -6,6 +6,7 @@ import {
   RegisterWarehouseWithdrawalUseCase,
   VoidWarehouseWithdrawalUseCase,
   GetCashCustodyUseCase,
+  GetLatestCashCountUseCase,
   ListCashCountsUseCase,
   RegisterCashCountUseCase,
   RegisterWarehouseInitialBalanceUseCase,
@@ -55,6 +56,9 @@ function repository(): jest.Mocked<CashCustodyRepository> {
       difference: -500,
       result: 'FALTANTE',
     }),
+    findLatestValidCount: jest
+      .fn()
+      .mockResolvedValue({ count: null, referenceBusinessDate: '2026-11-11' }),
   };
 }
 
@@ -333,5 +337,85 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
       SUPER.userId,
       'Error de registro',
     );
+  });
+
+  describe('último arqueo de Caja (Cuadre de Agentes)', () => {
+    /** A count saved before Q0.01 existed: no row for it. */
+    const legacyCount = {
+      id: 'c9',
+      businessDate: '2026-11-10',
+      totalCounted: 4430,
+      details: [
+        { denomination: 200, quantity: 10, subtotal: 2000 },
+        { denomination: 100, quantity: 20, subtotal: 2000 },
+        { denomination: 50, quantity: 8, subtotal: 400 },
+        { denomination: 0.05, quantity: 600, subtotal: 30 },
+      ],
+    };
+
+    it('requires cash_custody.view', async () => {
+      await expectCode(
+        new GetLatestCashCountUseCase(repository()).execute({ role: 'USER' }),
+        'CASH_CUSTODY_FORBIDDEN',
+      );
+    });
+
+    it('no counts → null count, empty breakdown (manual entry stays possible)', async () => {
+      const result = await new GetLatestCashCountUseCase(repository()).execute({
+        role: 'SUPERVISOR_DE_TURNO',
+      });
+      expect(result).toEqual({
+        count: null,
+        breakdown: [],
+        referenceBusinessDate: '2026-11-11',
+        isFromReferenceDay: false,
+      });
+    });
+
+    it('an earlier-day count is flagged and its breakdown completed with Q0.01 = 0 without touching the stored rows', async () => {
+      const repo = repository();
+      repo.findLatestValidCount.mockResolvedValue({
+        count: legacyCount as never,
+        referenceBusinessDate: '2026-11-11',
+      });
+      const result = await new GetLatestCashCountUseCase(repo).execute({
+        businessDate: '2026-11-11',
+        role: 'ADMIN',
+      });
+      expect(repo.findLatestValidCount).toHaveBeenCalledWith('2026-11-11');
+      expect(result.isFromReferenceDay).toBe(false);
+      expect(result.breakdown.map((r) => r.denomination)).toEqual([
+        200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01,
+      ]);
+      expect(result.breakdown.at(-1)).toEqual({
+        denomination: 0.01,
+        quantity: 0,
+        subtotal: 0,
+      });
+      expect(result.breakdown.reduce((s, r) => s + r.subtotal, 0)).toBe(4430);
+      expect(legacyCount.details).toHaveLength(4);
+    });
+
+    it('a count of the reference day is flagged as such', async () => {
+      const repo = repository();
+      repo.findLatestValidCount.mockResolvedValue({
+        count: { ...legacyCount, businessDate: '2026-11-11' } as never,
+        referenceBusinessDate: '2026-11-11',
+      });
+      const result = await new GetLatestCashCountUseCase(repo).execute({
+        role: 'ADMIN',
+      });
+      expect(result.isFromReferenceDay).toBe(true);
+    });
+
+    it('rejects a malformed businessDate', async () => {
+      await expectCode(
+        new GetLatestCashCountUseCase(repository()).execute({
+          businessDate: '11/11/2026',
+          role: 'ADMIN',
+        }),
+        'CASH_INVALID_DATE_RANGE',
+      );
+    });
   });
 });

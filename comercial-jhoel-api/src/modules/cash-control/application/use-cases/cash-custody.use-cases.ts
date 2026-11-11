@@ -13,6 +13,10 @@ import type {
 } from '../../domain/repositories/cash-custody.repository';
 import { assertCashCustodyPermission } from '../../domain/policies/cash-control.policy';
 import { cashControlError } from '../../domain/errors/cash-control.errors';
+import {
+  completeBreakdown,
+  type DenominationLine,
+} from '../../domain/cash-denominations';
 
 /** The JWT identity every custody use case re-checks. */
 export interface CustodyActor {
@@ -339,6 +343,51 @@ export class GetCashCountUseCase {
       throw cashControlError('CASH_COUNT_NOT_FOUND');
     }
     return count;
+  }
+}
+
+/** What "Cargar último arqueo de Caja" receives. */
+export interface LatestCashCountOutput {
+  /** The count exactly as recorded (null when no valid count exists). */
+  count: CashCountRow | null;
+  /** All 12 denominations (Q0.01 = 0 on counts saved before it existed); empty when `count` is null. */
+  breakdown: DenominationLine[];
+  /** Bank day the caller works on (requested, else the current bank day). */
+  referenceBusinessDate: string | null;
+  /** False when the count belongs to an earlier day: the UI must warn, never present it as today's. */
+  isFromReferenceDay: boolean;
+}
+
+/**
+ * Latest valid Arqueo de Caja, for loading its breakdown into Cuadre de
+ * Agentes. Read-only: the count is returned as a reference and never
+ * modified. Only VIGENTE caja counts qualify (a replaced count is not valid;
+ * Bodega/Guayacán counts are other tables). The reference day comes first.
+ */
+@Injectable()
+export class GetLatestCashCountUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    businessDate?: string;
+    role: string;
+  }): Promise<LatestCashCountOutput> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    if (input.businessDate && !DATE.test(input.businessDate)) {
+      throw cashControlError('CASH_INVALID_DATE_RANGE');
+    }
+    const { count, referenceBusinessDate } =
+      await this.repository.findLatestValidCount(input.businessDate ?? null);
+    return {
+      count,
+      breakdown: count ? completeBreakdown(count.details) : [],
+      referenceBusinessDate,
+      isFromReferenceDay:
+        !!count && count.businessDate === referenceBusinessDate,
+    };
   }
 }
 
