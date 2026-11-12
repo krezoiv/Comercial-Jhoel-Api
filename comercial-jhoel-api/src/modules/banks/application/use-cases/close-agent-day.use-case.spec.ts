@@ -68,6 +68,28 @@ describe('assertCuadreCashBreakdown', () => {
     );
   });
 
+  it('CORTE_CAJA (one cut arqueo) needs its id and the same read role', () => {
+    const fromCut = breakdown({
+      source: 'CORTE_CAJA',
+      sourceCashCountId: 'cut-count-2',
+    });
+    expect(
+      code(() => assertCuadreCashBreakdown(4882.5, fromCut, 'ADMIN')),
+    ).toBeUndefined();
+    expect(code(() => assertCuadreCashBreakdown(4882.5, fromCut, 'USER'))).toBe(
+      'CUADRE_SOURCE_COUNT_FORBIDDEN',
+    );
+    expect(
+      code(() =>
+        assertCuadreCashBreakdown(
+          4882.5,
+          breakdown({ source: 'CORTE_CAJA' }),
+          'ADMIN',
+        ),
+      ),
+    ).toBe('CUADRE_CASH_BREAKDOWN_INVALID');
+  });
+
   it('ARQUEO_CAJA needs the source id and a role allowed to read arqueos; MANUAL must not carry one', () => {
     expect(
       code(() =>

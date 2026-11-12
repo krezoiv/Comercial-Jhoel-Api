@@ -1,0 +1,73 @@
+# Secuencia — Control de Efectivo: depósito de caja a cuenta bancaria
+
+Módulo: **Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)** · Fuente editable: [`control-de-efectivo-dep-sito-de-caja-a-cuenta-bancaria.mmd`](control-de-efectivo-dep-sito-de-caja-a-cuenta-bancaria.mmd) · [Índice de diagramas](../README.md)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as CashBankDepositModalComponent
+  participant S as CashControlService
+  participant G as API (guards y ValidationPipe)
+  participant CT as CashControlController
+  participant UC0 as RegisterCashBankDepositUseCase
+  participant R0 as TypeOrmCashControlRepository
+  participant DB as PostgreSQL
+  U->>C: save()
+  C->>S: registerBankDeposit(…)
+  S->>G: POST /api/cash-control/bank-deposits + Bearer JWT
+  alt falla JWT válido y usuario activo / rol 'SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO' / DTO RegisterCashBankDepositRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: registerBankDeposit(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !(CASH_CUT_MANAGER_ROLES as readonly string[]).includes(input.role)
+    UC0-->>G: cashControlError('CASH_FORBIDDEN')
+  end
+  opt !Number.isFinite(amount) #124;#124; amount #lt;= 0
+    UC0-->>G: cashControlError('CASH_INVALID_AMOUNT')
+  end
+  opt details.length === 0
+    UC0-->>G: cashControlError('CASH_BREAKDOWN_REQUIRED')
+  end
+  opt !VALID_DENOMINATIONS.includes(denomination) #124;#124; !Number.isInteger(row.quantity) #124;#124; seen.has(denomination)
+    UC0-->>G: cashControlError('CASH_INVALID_DENOMINATION')
+  end
+  opt total !== amount
+    UC0-->>G: cashControlError('CASH_BREAKDOWN_MISMATCH')
+  end
+  Note over UC0: … y 3 validaciones más
+  UC0->>R0: registerBankDeposit / findMovementById / getBalance()
+  R0->>DB: SQL / TypeORM sobre cash_movements
+  DB-->>R0: filas
+  R0->>DB: SQL / TypeORM sobre cash_movement_details
+  DB-->>R0: filas
+  R0->>DB: SELECT register_cash_bank_deposit(…)
+  Note over DB: valida 7 reglas (CASH_IDEMPOTENCY_KEY_REQUIRED, CASH_DEPOSIT_INVALID_BANK, CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED, …)
+  Note over DB: escribe cash_movement_details
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.errorMessage.set, this.notifications.success)
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/cash-control/bank-deposits, con las validaciones y la transacción
+2. **¿Dónde comienza?** CashControlService.registerBankDeposit
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts`](../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-bank-deposit-modal/cash-bank-deposit-modal.component.ts`](../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-bank-deposit-modal/cash-bank-deposit-modal.component.ts), [`comercial-jhoel-app/src/app/core/services/cash-control.service.ts`](../../../comercial-jhoel-app/src/app/core/services/cash-control.service.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/register-cash-bank-deposit.use-case.ts`](../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/register-cash-bank-deposit.use-case.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts`](../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Bloques alt/opt = validaciones reales; flujo completo en business-processes/cash-control/post-cash-control-bank-deposits.mmd
+6. **¿Dónde se almacenan los datos?** PostgreSQL (ver notas "escribe")
+7. **¿Cómo termina el proceso?** success true con data y actualización de la interfaz
+8. **¿Qué sucede cuando ocurre un error?** Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

@@ -1,0 +1,67 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Retiro de Bodega (a caja o a cuenta)
+%% @modulo: Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/cash-control/warehouse/withdrawals, con las validaciones y la transacción
+%% @inicio: CashCustodyService.registerWithdrawal
+%% @archivos: comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts ; comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts ; comercial-jhoel-app/src/app/core/services/cash-custody.service.ts ; comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts ; comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/cash-control/post-cash-control-warehouse-withdrawals.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as WarehouseWithdrawalModalComponent
+  participant S as CashCustodyService
+  participant G as API (guards y ValidationPipe)
+  participant CT as CashCustodyController
+  participant UC0 as RegisterWarehouseWithdrawalUseCase
+  participant R0 as TypeOrmCashCustodyRepository
+  participant DB as PostgreSQL
+  U->>C: save()
+  C->>S: registerWithdrawal(…)
+  S->>G: POST /api/cash-control/warehouse/withdrawals + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO RegisterWarehouseWithdrawalRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: createWithdrawal(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt input.destination === 'BANCO' #amp;#amp; !input.bankId
+    UC0-->>G: cashControlError('WAREHOUSE_WITHDRAWAL_BANK_REQUIRED')
+  end
+  opt !withdrawal
+    UC0-->>G: cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND')
+  end
+  opt !(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )
+    UC0-->>G: cashControlError('CASH_CUSTODY_FORBIDDEN')
+  end
+  UC0->>R0: registerWithdrawal / findWithdrawalById / getCustody()
+  R0->>DB: SELECT cash_balance(…)
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0->>DB: SELECT cash_current_bank_day(…)
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0->>DB: SELECT register_warehouse_withdrawal(…)
+  Note over DB: valida 9 reglas (CASH_IDEMPOTENCY_KEY_REQUIRED, CASH_INVALID_AMOUNT, CASH_WAREHOUSE_PEOPLE_REQUIRED, …)
+  Note over DB: escribe warehouse_cash_movement_details, warehouse_cash_withdrawals
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.errorMessage.set, this.notifications.success)

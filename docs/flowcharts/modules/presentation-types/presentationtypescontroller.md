@@ -1,0 +1,78 @@
+# Mapa de PresentationTypesController
+
+Módulo: **Tipos de presentación (presentation-types)** · Fuente editable: [`presentationtypescontroller.mmd`](presentationtypescontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["PresentationTypeService<br/><small>app/core/services/presentation-type.service.ts</small>"]
+  n3["PresentationTypesTabComponent<br/><small>app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts</small>"]
+  n4["PresentationFormModalComponent<br/><small>app/features/dashboard/inventory/components/presentation-form-modal/presentation-form-modal.component.ts</small>"]
+  n5["ProductFormModalComponent<br/><small>app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts</small>"]
+  end
+  subgraph s6["PresentationTypesController (api/presentation-types/presentation/controllers/presentation-types.controller.ts)"]
+  n7["POST /api/presentation-types<br/><small>create() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n8["GET /api/presentation-types<br/><small>findAll()</small>"]
+  n9["GET /api/presentation-types/:id<br/><small>findOne()</small>"]
+  n10["PATCH /api/presentation-types/:id<br/><small>update() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n11["DELETE /api/presentation-types/:id<br/><small>deactivate() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s12["Aplicación"]
+  n13["CreatePresentationTypeUseCase<br/><small>api/presentation-types/application/use-cases/create-presentation-type.use-case.ts</small>"]
+  n14["ListPresentationTypesUseCase<br/><small>api/presentation-types/application/use-cases/list-presentation-types.use-case.ts</small>"]
+  n15["GetPresentationTypeByIdUseCase<br/><small>api/presentation-types/application/use-cases/get-presentation-type-by-id.use-case.ts</small>"]
+  n16["UpdatePresentationTypeUseCase<br/><small>api/presentation-types/application/use-cases/update-presentation-type.use-case.ts</small>"]
+  n17["DeactivatePresentationTypeUseCase<br/><small>api/presentation-types/application/use-cases/deactivate-presentation-type.use-case.ts</small>"]
+  end
+  subgraph s18["Dominio · Infraestructura · PostgreSQL"]
+  n19["PresentationTypeRepository"]
+  n20["TypeOrmPresentationTypeRepository<br/><small>api/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts</small>"]
+  end
+  n3 -->|submit→createPresentationType, fetch→getPresentationTypes, submit→updatePresentationType …| n2
+  n4 -->|ngOnChanges→getPresentationTypes| n2
+  n5 -->|ngOnChanges→getPresentationTypes| n2
+  n2 -->|createPresentationType| n7
+  n2 -->|getPresentationTypes| n8
+  n2 -->|getPresentationTypeById| n9
+  n2 -->|updatePresentationType| n10
+  n2 -->|deletePresentationType| n11
+  n7 --> n13
+  n8 --> n14
+  n9 --> n15
+  n10 --> n16
+  n11 --> n17
+  n13 -->|findByName, findByActiveCode, create| n19
+  n19 -->|implementa| n20
+  n14 -->|findAll| n19
+  n15 -->|findById| n19
+  n16 -->|findById, findByName, findByActiveCode …| n19
+  n17 -->|findById, deactivate| n19
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5 fe
+  class n7,n8,n9,n10,n11 api
+  class n13,n14,n15,n16,n17 app
+  class n19 dom
+  class n20 infra
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a PresentationTypesController, sus 5 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/presentation-types/presentation/controllers/presentation-types.controller.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/presentation/controllers/presentation-types.controller.ts), [`comercial-jhoel-app/src/app/core/services/presentation-type.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/presentation-type.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/components/presentation-form-modal/presentation-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/components/presentation-form-modal/presentation-form-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/create-presentation-type.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/create-presentation-type.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/list-presentation-types.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/list-presentation-types.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/get-presentation-type-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/get-presentation-type-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/update-presentation-type.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/update-presentation-type.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/deactivate-presentation-type.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/deactivate-presentation-type.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/presentation-types/
+6. **¿Dónde se almacenan los datos?** sin tablas detectadas
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

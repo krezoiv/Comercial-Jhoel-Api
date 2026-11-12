@@ -4,18 +4,25 @@ export const AGENT_RECONCILIATION_REPOSITORY = Symbol(
   'AGENT_RECONCILIATION_REPOSITORY',
 );
 
-export const CUADRE_CASH_BREAKDOWN_SOURCES = ['MANUAL', 'ARQUEO_CAJA'] as const;
+/** MANUAL = typed by hand; ARQUEO_CAJA = a standalone Arqueo de Caja; CORTE_CAJA = the arqueo of one cut. */
+export const CUADRE_CASH_BREAKDOWN_SOURCES = [
+  'MANUAL',
+  'ARQUEO_CAJA',
+  'CORTE_CAJA',
+] as const;
 export type CuadreCashBreakdownSource =
   (typeof CUADRE_CASH_BREAKDOWN_SOURCES)[number];
 
 /**
  * The cash breakdown a cuadre is saved with — stored as an independent
  * photograph (`agent_reconciliation_cash_breakdowns`/`_details`). With
- * ARQUEO_CAJA the SQL function snapshots the source count (date, user, total)
- * and derives by itself whether the loaded quantities were modified.
+ * ARQUEO_CAJA / CORTE_CAJA the SQL function snapshots the source record
+ * (cut, date, user, total) and derives by itself whether the loaded
+ * quantities were modified.
  */
 export interface CuadreCashBreakdownData {
   source: CuadreCashBreakdownSource;
+  /** `cash_counts.id` (ARQUEO_CAJA) or `cash_cut_counts.id` (CORTE_CAJA); null for MANUAL. */
   sourceCashCountId: string | null;
   details: Array<{ denomination: number; quantity: number }>;
 }

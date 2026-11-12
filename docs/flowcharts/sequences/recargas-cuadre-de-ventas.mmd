@@ -1,0 +1,54 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Recargas: cuadre de ventas
+%% @modulo: Recargas electrónicas (recharges)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/recharges/sales-closure, con las validaciones y la transacción
+%% @inicio: RechargesService.registerSalesClosure
+%% @archivos: comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharges.controller.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges/components/sales-summary-card/sales-summary-card.component.ts ; comercial-jhoel-app/src/app/core/services/recharges.service.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-sales-closure.use-case.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-sales-closure.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/recharges/post-recharges-sales-closure.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as SalesSummaryCardComponent
+  participant S as RechargesService
+  participant G as API (guards y ValidationPipe)
+  participant CT as RechargesController
+  participant UC0 as RegisterRechargeSalesClosureUseCase
+  participant R0 as TypeOrmRechargeSalesClosureRepository
+  participant DB as PostgreSQL
+  U->>C: save()
+  C->>S: registerSalesClosure(…)
+  S->>G: POST /api/recharges/sales-closure + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO RegisterRechargeSalesClosureRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: registerSalesClosure(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt date #gt; maxAllowedOperationDate()
+    UC0-->>G: InvalidMovementDateError()
+  end
+  opt date === todayIsoDate() #amp;#amp; !dayOpening
+    UC0-->>G: RechargeDayNotOpenedError(date)
+  end
+  opt dayOpening?.isClosed
+    UC0-->>G: RechargeDayAlreadyClosedError(date)
+  end
+  UC0->>R0: registerClosure()
+  R0->>DB: SELECT register_recharge_sales_closure(…)
+  Note over DB: valida 3 reglas (RECHARGE_DAY_CLOSED, INVALID_TOTAL_COLLECTED, PENDING_TYPE_CLOSURE)
+  Note over DB: escribe recharge_daily_balances, recharge_sales_closures
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0->>UC0: GetRechargeSalesSummaryUseCase.execute
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.summary.set, this.summaryLoaded.emit)

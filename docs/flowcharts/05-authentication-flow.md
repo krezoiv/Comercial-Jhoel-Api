@@ -1,0 +1,74 @@
+# 05 · Autenticación y autorización
+
+Módulo: **Autenticación (auth) y Roles** · Fuente editable: [`05-authentication-flow.mmd`](05-authentication-flow.mmd) · [Índice de diagramas](README.md)
+
+```mermaid
+flowchart TD
+  A(["Usuario envía usuario/teléfono + contraseña"])
+  subgraph LOGIN["Inicio de sesión"]
+    L1["LoginPageComponent.submit"]
+    L2["AuthService.login → POST /api/auth/login"]
+    D0{"¿Dentro del límite?<br/>ThrottlerGuard · @Throttle limit 5 / 60 s"}
+    L3["AuthController.login → LoginUseCase.execute"]
+    D1{"¿userRepository.findByUsernameOrPhone(identifier) encontró usuario?"}
+    D2{"¿passwordHasher.compare(password, user.passwordHash)?<br/>BcryptPasswordHasher"}
+    D3{"¿user.isActive?"}
+    L4["tokenService.sign({ sub, username, role })<br/>NestJwtTokenService"]
+    L5["AuthService guarda token y sesión en localStorage<br/>router.navigateByUrl('/dashboard')"]
+  end
+  subgraph REQ["Cada petición posterior"]
+    R1["authInterceptor<br/>Authorization: Bearer token (solo URLs de environment.apiUrl)"]
+    D4{"¿Firma y expiración válidas?<br/>JwtAuthGuard · JWT_SECRET"}
+    D5{"JwtStrategy.validate:<br/>¿usuario existe y está activo?"}
+    R2["request.user = { userId, username, role }<br/>role leído de la base, no del token"]
+    D6{"¿La ruta tiene @Roles(...)<br/>y el rol no está?<br/>RolesGuard.canActivate"}
+    D7{"¿Permiso nombrado del caso de uso?<br/>ej. assertCashCustodyPermission(role, 'cash_custody.view')"}
+    R3["Caso de uso continúa;<br/>SQL vuelve a verificar con cash_custody_assert_role()"]
+  end
+  E401(["401 Credenciales inválidas"])
+  E429(["429 Demasiados intentos"])
+  E401b(["401 → authInterceptor: logout() y /login"])
+  E403(["403 No tienes permisos"])
+  A --> L1 --> L2 --> D0
+  D0 -->|"no"| E429
+  D0 -->|"sí"| L3 --> D1
+  D1 -->|"no"| E401
+  D1 -->|"sí"| D2
+  D2 -->|"no"| E401
+  D2 -->|"sí"| D3
+  D3 -->|"no"| E401
+  D3 -->|"sí"| L4 --> L5 --> R1 --> D4
+  D4 -->|"no"| E401b
+  D4 -->|"sí"| D5
+  D5 -->|"no"| E401b
+  D5 -->|"sí"| R2 --> D6
+  D6 -->|"sí"| E403
+  D6 -->|"no"| D7
+  D7 -->|"sin permiso: CASH_CUSTODY_FORBIDDEN"| E403
+  D7 -->|"permitido o sin permiso nombrado"| R3
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  class A start
+  class L1,L2,L5,R1 fe
+  class L3,R2 api
+  class L4,R3 app
+  class D0,D1,D2,D3,D4,D5,D6,D7 dec
+  class E401,E429,E401b,E403 err
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** El inicio de sesión (LoginUseCase) y la verificación de cada petición posterior: token en localStorage, authInterceptor, JwtAuthGuard/JwtStrategy.validate, RolesGuard y los permisos nombrados dentro de los casos de uso y de SQL.
+2. **¿Dónde comienza?** LoginPageComponent.submit (comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts`](../../comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts), [`comercial-jhoel-app/src/app/core/services/auth.service.ts`](../../comercial-jhoel-app/src/app/core/services/auth.service.ts), [`comercial-jhoel-app/src/app/core/interceptors/auth.interceptor.ts`](../../comercial-jhoel-app/src/app/core/interceptors/auth.interceptor.ts), [`comercial-jhoel-api/src/modules/auth/presentation/controllers/auth.controller.ts`](../../comercial-jhoel-api/src/modules/auth/presentation/controllers/auth.controller.ts), [`comercial-jhoel-api/src/modules/auth/application/use-cases/login.use-case.ts`](../../comercial-jhoel-api/src/modules/auth/application/use-cases/login.use-case.ts), [`comercial-jhoel-api/src/modules/auth/infrastructure/services/jwt-token.service.ts`](../../comercial-jhoel-api/src/modules/auth/infrastructure/services/jwt-token.service.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts`](../../comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts), [`comercial-jhoel-api/src/modules/auth/infrastructure/strategies/jwt.strategy.ts`](../../comercial-jhoel-api/src/modules/auth/infrastructure/strategies/jwt.strategy.ts), [`comercial-jhoel-api/src/modules/auth/infrastructure/guards/roles.guard.ts`](../../comercial-jhoel-api/src/modules/auth/infrastructure/guards/roles.guard.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts`](../../comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** ¿dentro del límite (5/min)? · ¿existe usuario por usuario o teléfono? · ¿contraseña correcta (bcrypt)? · ¿usuario activo? · en cada petición: ¿token válido? ¿usuario existe y activo? ¿rol en @Roles? ¿permiso nombrado (assertCashCustodyPermission / cash_custody_assert_role)?
+6. **¿Dónde se almacenan los datos?** users, roles (PostgreSQL); token en localStorage cj_auth_token (navegador)
+7. **¿Cómo termina el proceso?** Login: navega a /dashboard. Petición: el controlador recibe request.user = { userId, username, role }
+8. **¿Qué sucede cuando ocurre un error?** Login: InvalidCredentialsError (401, mismo mensaje en los tres casos). Petición: 401 (authInterceptor hace logout y va a /login) o 403 (No tienes permisos)
+
+> Diagrama escrito a mano a partir del código; ver la sección de archivos.

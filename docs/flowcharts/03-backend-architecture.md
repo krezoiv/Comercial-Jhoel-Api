@@ -1,0 +1,79 @@
+# 03 · Arquitectura del backend (NestJS, Clean Architecture por módulo)
+
+Módulo: **Backend** · Fuente editable: [`03-backend-architecture.mmd`](03-backend-architecture.mmd) · [Índice de diagramas](README.md)
+
+```mermaid
+flowchart TD
+  REQ(["Petición HTTP /api/..."])
+  subgraph BOOT["Arranque y pipeline global"]
+    MAIN["main.ts · bootstrap()<br/>helmet() · enableCors(compileCorsOrigins) · setGlobalPrefix('api')<br/>useGlobalPipes(ValidationPipe)"]
+    APPM["app.module.ts<br/>ConfigModule.forRoot · ThrottlerModule.forRoot · TypeOrmModule.forRootAsync<br/>APP_FILTER = GlobalExceptionFilter · APP_INTERCEPTOR = ResponseInterceptor"]
+  end
+  subgraph MOD["Un módulo de negocio: modules/<modulo>/"]
+    subgraph PRES["presentation/"]
+      CTRL["controllers/*.controller.ts<br/>@Controller · @Get/@Post · @UseGuards · @Roles · @CurrentUser"]
+      DTO["dtos/*.request.dto.ts<br/>class-validator"]
+    end
+    subgraph APPL["application/"]
+      UCS["use-cases/*.use-case.ts<br/>@Injectable · execute(input)"]
+      OUT["dtos/*-output.ts · to*Output()"]
+    end
+    subgraph DOMA["domain/"]
+      PORT["repositories/*.repository.ts<br/>interface + Symbol(TOKEN)"]
+      ENT["entities/*.entity.ts<br/>constructor privado + create()"]
+      ERR["errors/*.error(s).ts<br/>extends DomainError (status)"]
+      POL["policies/*.policy.ts<br/>reglas puras / permisos"]
+    end
+    subgraph INFR["infrastructure/"]
+      REPO["persistence/typeorm-*.repository.ts<br/>implements Port"]
+      ORM["persistence/*.orm-entity.ts · *.mapper.ts"]
+    end
+    MODF["<modulo>.module.ts<br/>{ provide: TOKEN, useClass: TypeOrm…Repository }"]
+  end
+  subgraph SHARED["src/shared (transversal)"]
+    DE["domain/domain-error.ts"]
+    TM["application/ports/transaction-manager.port.ts<br/>→ TypeOrmTransactionManager.runInTransaction"]
+    CU["decorators/current-user.decorator.ts · roles.decorator.ts"]
+  end
+  PG[("PostgreSQL")]
+  REQ --> MAIN --> APPM --> CTRL
+  DTO -->|"valida el body"| CTRL
+  CTRL -->|"this.useCase.execute()"| UCS
+  UCS -->|"@Inject(TOKEN)"| PORT
+  UCS --> POL
+  UCS -->|"throw"| ERR
+  UCS --> OUT
+  PORT -.->|"implementa"| REPO
+  MODF -.->|"registra"| REPO
+  REPO --> ORM
+  ORM --> ENT
+  REPO -->|"query() / Repository"| PG
+  ERR --> DE
+  UCS -.->|"transacciones entre módulos"| TM
+  CTRL --> CU
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  class REQ start
+  class MAIN,APPM,CTRL,DTO,CU api
+  class UCS,OUT,TM app
+  class PORT,ENT,ERR,POL,DE dom
+  class REPO,ORM,MODF infra
+  class PG db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** El pipeline de una petición en NestJS y las cuatro capas de cada módulo de negocio (presentación, aplicación, dominio, infraestructura), con las dependencias permitidas y el código transversal de src/shared.
+2. **¿Dónde comienza?** comercial-jhoel-api/src/main.ts (bootstrap → NestFactory.create(AppModule))
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/main.ts`](../../comercial-jhoel-api/src/main.ts), [`comercial-jhoel-api/src/app.module.ts`](../../comercial-jhoel-api/src/app.module.ts), [`comercial-jhoel-api/src/config/configuration.ts`](../../comercial-jhoel-api/src/config/configuration.ts), [`comercial-jhoel-api/src/shared/domain/domain-error.ts`](../../comercial-jhoel-api/src/shared/domain/domain-error.ts), [`comercial-jhoel-api/src/shared/filters/global-exception.filter.ts`](../../comercial-jhoel-api/src/shared/filters/global-exception.filter.ts), [`comercial-jhoel-api/src/shared/interceptors/response.interceptor.ts`](../../comercial-jhoel-api/src/shared/interceptors/response.interceptor.ts), [`comercial-jhoel-api/src/shared/application/ports/transaction-manager.port.ts`](../../comercial-jhoel-api/src/shared/application/ports/transaction-manager.port.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts`](../../comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts), [`comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts`](../../comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** helmet/CORS (origen permitido), ThrottlerGuard (solo login), JwtAuthGuard, RolesGuard, ValidationPipe (whitelist + forbidNonWhitelisted), reglas del caso de uso, reglas SQL
+6. **¿Dónde se almacenan los datos?** PostgreSQL vía TypeORM (DataSource.query para SQL crudo y funciones; Repository<OrmEntity> para CRUD)
+7. **¿Cómo termina el proceso?** El controlador retorna un objeto plano; ResponseInterceptor lo envuelve
+8. **¿Qué sucede cuando ocurre un error?** DomainError (con status) o HttpException → GlobalExceptionFilter; los mensajes RAISE 'CODIGO:…' se traducen en el repositorio
+
+> Diagrama escrito a mano a partir del código; ver la sección de archivos.

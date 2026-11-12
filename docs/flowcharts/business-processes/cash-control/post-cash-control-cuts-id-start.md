@@ -1,0 +1,131 @@
+# Control de Efectivo: iniciar corte
+
+Módulo: **Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)** · Fuente editable: [`post-cash-control-cuts-id-start.mmd`](post-cash-control-cuts-id-start.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: Control de Efectivo: iniciar corte"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["CashControlService.startCut<br/><small>app/core/services/cash-control.service.ts</small>"]
+  n6["CashCutControlPanelComponent.startCut<br/><small>app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/cash-control/cuts/:id/start<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14["CashControlController.startCut<br/><small>api/cash-control/presentation/controllers/cash-control.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["StartCashCutUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-cut-commands.use-cases.ts</small>"]
+  n17["assertCutManager()<br/><small>llamada en L166</small><br/><small>api/cash-control/application/use-cases/cash-cut-commands.use-cases.ts</small>"]
+  n18{"¿!(CASH_CUT_MANAGER_ROLES as readonly string[]).includes(role)?<br/><small>L25</small>"}
+  n19(["cashControlError('CASH_FORBIDDEN')"])
+  n20{"¿!period?<br/><small>L168</small>"}
+  n21(["cashControlError('CASH_CUT_NOT_FOUND')"])
+  end
+  n22["Caso de uso GetCashPositionUseCase<br/><small>execute</small>"]
+  subgraph s23["Dominio → Infraestructura"]
+  n24["Puerto CashControlRepository.findPeriodById / startPeriod<br/>@Inject(CASH_CONTROL_REPOSITORY)"]
+  n25["TypeOrmCashControlRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts</small>"]
+  n26[("findPeriodById: TypeORM Repository")]
+  subgraph s27["PostgreSQL — función start_cash_cut_period"]
+  n28[["SELECT start_cash_cut_period(…)<br/><small>startPeriod — una transacción</small>"]]
+  n29{"¿NOT FOUND?"}
+  n30(["RAISE CASH_CUT_NOT_FOUND<br/>(rollback)"])
+  n31{"¿v_period.status = 'ABIERTO'?"}
+  n32(["RAISE CASH_CUT_ALREADY_STARTED<br/>(rollback)"])
+  n33{"¿v_period.status = 'FINALIZADO'?"}
+  n34(["RAISE CASH_CUT_ALREADY_FINISHED<br/>(rollback)"])
+  n35{"¿v_day.status #lt;#gt; 'ABIERTO'?"}
+  n36(["RAISE CASH_DAY_ALREADY_CLOSED<br/>(rollback)"])
+  n37{"¿EXISTS (SELECT 1 FROM cash_cut_periods WHERE status = 'ABIERTO')?"}
+  n38(["RAISE CASH_CUT_ANOTHER_OPEN<br/>(rollback)"])
+  n39["Otros RAISE de start_cash_cut_period (condición no extraída):<br/>CASH_CUT_FIRST_NOT_FINISHED"]
+  n40[("Escribe:<br/>cash_cut_events<br/>cash_cut_periods")]
+  end
+  end
+  n41(["Fin: la interfaz se actualiza"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n16 -.->|consulta| n22
+  n20 -->|no| n24
+  n24 -->|implementa| n25
+  n25 --> n26
+  n26 --> n8
+  n25 -->|startPeriod| n28
+  n28 --> n29
+  n29 -->|sí| n30
+  n30 --> n2
+  n29 -->|no| n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n33 -->|no| n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n28 -.->|también puede lanzar| n39
+  n39 --> n2
+  n37 -->|no| n40
+  n40 -->|COMMIT| n8
+  n8 --> n41
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19,n21,n30,n32,n34,n36,n38,n39 err
+  class n5,n6,n7 fe
+  class n8,n41 ok
+  class n10,n12,n18,n20,n29,n31,n33,n35,n37 dec
+  class n14 api
+  class n16,n22 app
+  class n17,n24 dom
+  class n25 infra
+  class n26,n28,n40 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/cash-control/cuts/:id/start: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** CashCutControlPanelComponent.startCut (comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts), [`comercial-jhoel-app/src/app/core/services/cash-control.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cash-control.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-cut-commands.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-cut-commands.use-cases.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/get-cash-position.use-case.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/get-cash-position.use-case.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-control.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-control.repository.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO' | !(CASH_CUT_MANAGER_ROLES as readonly string[]).includes(role) | !period | SQL start_cash_cut_period: NOT FOUND | SQL start_cash_cut_period: v_period.status = 'ABIERTO' | SQL start_cash_cut_period: v_period.status = 'FINALIZADO' | SQL start_cash_cut_period: v_day.status <> 'ABIERTO' | SQL start_cash_cut_period: EXISTS (SELECT 1 FROM cash_cut_periods WHERE status = 'ABIERTO')
+6. **¿Dónde se almacenan los datos?** start_cash_cut_period(), cash_cut_events, cash_cut_periods
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

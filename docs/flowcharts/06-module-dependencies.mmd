@@ -1,0 +1,218 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: 06 · Dependencias entre módulos del backend
+%% @modulo: Arquitectura general
+%% @representa: Qué módulo del backend importa archivos de otro (cantidad de imports y capa importada: domain = puertos/entidades/errores, application = casos de uso, infrastructure, presentation). Calculado de los import reales, sin pruebas ni migraciones.
+%% @inicio: Imports de comercial-jhoel-api/src/modules/**
+%% @archivos: comercial-jhoel-api/src/modules (todos los *.ts sin pruebas)
+%% @decisiones: No aplica
+%% @datos: No aplica
+%% @fin: No aplica
+%% @errores: No aplica
+flowchart LR
+  n1["Tipos de cuenta<br/><small>account-types</small>"]
+  n2["Autenticación<br/><small>auth</small>"]
+  n3["Usuarios<br/><small>users</small>"]
+  n4["Cuentas por Cobrar<br/><small>accounts-receivable</small>"]
+  n5["Bancos y Agentes Bancarios (día, saldos, cuadre, transferencias)<br/><small>banks</small>"]
+  n6["Clientes<br/><small>clients</small>"]
+  n7["Configuración de alertas<br/><small>alert-settings</small>"]
+  n8["Alertas<br/><small>alerts</small>"]
+  n9["Catálogo de teléfonos<br/><small>catalog</small>"]
+  n10["Inventario<br/><small>inventory</small>"]
+  n11["Compras<br/><small>purchases</small>"]
+  n12["Caja de recargas<br/><small>recharge-cash-box</small>"]
+  n13["Recargas electrónicas<br/><small>recharges</small>"]
+  n14["Activos<br/><small>assets</small>"]
+  n15["Roles<br/><small>roles</small>"]
+  n16["Transaccionar (operaciones bancarias)<br/><small>bank-deposits</small>"]
+  n17["Control de Efectivo (Kardex, cortes, arqueos, Bodega)<br/><small>cash-control</small>"]
+  n18["Bancos agente<br/><small>transaction-banks</small>"]
+  n19["Tipos de transacción<br/><small>transaction-types</small>"]
+  n20["Negocios<br/><small>businesses</small>"]
+  n21["Catálogo de bancos<br/><small>catalog-banks</small>"]
+  n22["Datos de la empresa<br/><small>company-settings</small>"]
+  n23["Me gusta<br/><small>likes</small>"]
+  n24["Categorías<br/><small>categories</small>"]
+  n25["Resumen (dashboard)<br/><small>dashboard</small>"]
+  n26["Ventas<br/><small>sales</small>"]
+  n27["Revisión de días operativos<br/><small>financial-day-review</small>"]
+  n28["Caja Guayacán<br/><small>guayacan-cash-box</small>"]
+  n29["Heladería<br/><small>ice-creams</small>"]
+  n30["Proveedores<br/><small>suppliers</small>"]
+  n31["Tipos de presentación<br/><small>presentation-types</small>"]
+  n32["Productos<br/><small>products</small>"]
+  n33["Atajos de teclado<br/><small>keyboard-shortcuts</small>"]
+  n34["Fondos de la landing<br/><small>landing-backgrounds</small>"]
+  n35["Suscripciones a noticias (Web Push)<br/><small>news-subscriptions</small>"]
+  n36["Tipos de noticia<br/><small>news-types</small>"]
+  n37["Noticias<br/><small>news</small>"]
+  n38["Teléfonos<br/><small>phones</small>"]
+  n39["Catálogo de productos<br/><small>product-catalog</small>"]
+  n40["Reportería<br/><small>reports</small>"]
+  n41["Unidades de medida<br/><small>units-of-measure</small>"]
+  n42["Cotizaciones<br/><small>quotations</small>"]
+  n43["Caja de ventas<br/><small>sales-cash-box</small>"]
+  n44["Registro de ventas<br/><small>sales-register</small>"]
+  n45["Tickets<br/><small>tickets</small>"]
+  n1 -->|2 · infrastructure| n2
+  n1 -->|1 · infrastructure| n3
+  n4 -->|4 · infrastructure| n2
+  n4 -->|1 · domain| n5
+  n4 -->|14 · módulo/domain/infrastructure| n6
+  n4 -->|1 · infrastructure| n3
+  n7 -->|2 · infrastructure| n2
+  n7 -->|1 · infrastructure| n3
+  n8 -->|3 · módulo/domain| n7
+  n8 -->|1 · infrastructure| n2
+  n8 -->|3 · módulo/domain| n9
+  n8 -->|4 · módulo/domain| n10
+  n8 -->|4 · módulo/domain| n11
+  n8 -->|2 · módulo/application| n12
+  n8 -->|7 · módulo/domain| n13
+  n14 -->|2 · infrastructure| n2
+  n14 -->|14 · domain/módulo/infrastructure| n6
+  n14 -->|1 · infrastructure| n3
+  n2 -->|1 · domain| n15
+  n2 -->|8 · domain/módulo| n3
+  n16 -->|2 · application/módulo| n4
+  n16 -->|2 · application/módulo| n14
+  n16 -->|2 · infrastructure| n2
+  n16 -->|7 · domain/módulo/infrastructure| n5
+  n16 -->|3 · domain/módulo| n17
+  n16 -->|3 · domain/módulo| n6
+  n16 -->|2 · módulo/infrastructure| n18
+  n16 -->|5 · domain/módulo/infrastructure| n19
+  n16 -->|1 · infrastructure| n3
+  n5 -->|6 · domain/módulo/infrastructure| n1
+  n5 -->|3 · domain/módulo| n4
+  n5 -->|3 · domain/módulo| n14
+  n5 -->|7 · infrastructure| n2
+  n5 -->|3 · domain| n17
+  n5 -->|5 · infrastructure| n3
+  n20 -->|2 · infrastructure| n2
+  n17 -->|3 · infrastructure| n2
+  n17 -->|6 · domain/application/módulo| n5
+  n21 -->|2 · infrastructure| n2
+  n21 -->|1 · infrastructure| n3
+  n9 -->|4 · infrastructure| n2
+  n9 -->|15 · domain/módulo| n22
+  n9 -->|8 · domain/módulo/application| n23
+  n9 -->|2 · infrastructure| n3
+  n24 -->|2 · infrastructure| n2
+  n6 -->|2 · infrastructure| n2
+  n6 -->|1 · infrastructure| n3
+  n22 -->|2 · infrastructure| n2
+  n22 -->|1 · infrastructure| n3
+  n25 -->|2 · infrastructure| n2
+  n25 -->|2 · infrastructure| n16
+  n25 -->|2 · infrastructure| n11
+  n25 -->|2 · infrastructure| n13
+  n25 -->|2 · infrastructure| n26
+  n27 -->|2 · infrastructure| n2
+  n28 -->|2 · infrastructure| n2
+  n29 -->|4 · infrastructure| n2
+  n29 -->|1 · infrastructure| n30
+  n29 -->|3 · infrastructure| n3
+  n10 -->|2 · infrastructure| n2
+  n10 -->|6 · domain/infrastructure/módulo| n31
+  n10 -->|11 · domain/módulo| n32
+  n10 -->|1 · infrastructure| n3
+  n33 -->|2 · infrastructure| n2
+  n33 -->|1 · infrastructure| n3
+  n34 -->|2 · infrastructure| n2
+  n34 -->|1 · infrastructure| n3
+  n35 -->|2 · infrastructure| n2
+  n35 -->|12 · domain/módulo/application/presentation| n36
+  n35 -->|1 · infrastructure| n3
+  n36 -->|2 · infrastructure| n2
+  n36 -->|1 · infrastructure| n3
+  n37 -->|2 · infrastructure| n2
+  n37 -->|10 · domain/módulo/application| n23
+  n37 -->|2 · application/módulo| n35
+  n37 -->|8 · domain/infrastructure/módulo| n36
+  n37 -->|1 · infrastructure| n3
+  n38 -->|3 · infrastructure| n2
+  n38 -->|3 · domain/módulo| n6
+  n38 -->|1 · infrastructure| n3
+  n31 -->|2 · infrastructure| n2
+  n31 -->|1 · infrastructure| n3
+  n39 -->|4 · infrastructure| n2
+  n39 -->|8 · domain/application/módulo| n23
+  n39 -->|4 · domain/infrastructure/módulo| n32
+  n39 -->|2 · infrastructure| n3
+  n32 -->|2 · infrastructure| n2
+  n32 -->|10 · domain/infrastructure/módulo| n20
+  n32 -->|10 · domain/infrastructure/módulo| n24
+  n32 -->|19 · domain/application/módulo| n10
+  n32 -->|5 · domain/módulo| n31
+  n32 -->|1 · infrastructure| n40
+  n32 -->|8 · domain/infrastructure/módulo| n41
+  n11 -->|2 · infrastructure| n2
+  n11 -->|3 · domain/módulo| n22
+  n11 -->|8 · domain/application/infrastructure/módulo| n10
+  n11 -->|4 · domain/infrastructure/módulo| n32
+  n11 -->|6 · domain/infrastructure/módulo| n30
+  n11 -->|1 · infrastructure| n3
+  n42 -->|2 · infrastructure| n2
+  n42 -->|4 · domain/infrastructure/módulo| n6
+  n42 -->|3 · domain/módulo| n22
+  n42 -->|1 · infrastructure| n3
+  n12 -->|2 · infrastructure| n2
+  n12 -->|2 · infrastructure| n13
+  n12 -->|1 · infrastructure| n3
+  n13 -->|6 · infrastructure| n2
+  n13 -->|7 · infrastructure| n3
+  n40 -->|5 · application/domain/módulo| n4
+  n40 -->|5 · application/domain/módulo| n14
+  n40 -->|18 · infrastructure| n2
+  n40 -->|8 · domain/application/módulo| n16
+  n40 -->|15 · application/domain/infrastructure/módulo| n5
+  n40 -->|5 · domain/módulo| n20
+  n40 -->|5 · domain/módulo| n24
+  n40 -->|3 · domain/módulo| n6
+  n40 -->|7 · domain/infrastructure/módulo| n29
+  n40 -->|5 · domain/módulo| n32
+  n40 -->|8 · domain/infrastructure/módulo| n11
+  n40 -->|10 · domain/application/módulo| n13
+  n40 -->|8 · domain/infrastructure/módulo| n26
+  n40 -->|3 · domain/módulo| n30
+  n40 -->|3 · domain/módulo| n18
+  n40 -->|3 · domain/módulo| n19
+  n40 -->|13 · domain/módulo| n3
+  n15 -->|2 · infrastructure| n2
+  n43 -->|2 · infrastructure| n2
+  n43 -->|1 · infrastructure| n20
+  n43 -->|1 · infrastructure| n3
+  n44 -->|1 · infrastructure| n2
+  n44 -->|4 · infrastructure| n26
+  n26 -->|2 · infrastructure| n2
+  n26 -->|1 · infrastructure| n20
+  n26 -->|6 · domain/infrastructure/módulo| n6
+  n26 -->|3 · domain/módulo| n22
+  n26 -->|1 · infrastructure| n10
+  n26 -->|1 · infrastructure| n32
+  n26 -->|1 · infrastructure| n3
+  n30 -->|2 · infrastructure| n2
+  n45 -->|2 · infrastructure| n2
+  n45 -->|4 · domain/infrastructure/módulo| n6
+  n45 -->|3 · domain/módulo| n22
+  n45 -->|1 · infrastructure| n3
+  n18 -->|2 · infrastructure| n2
+  n18 -->|1 · infrastructure| n3
+  n19 -->|2 · infrastructure| n2
+  n19 -->|1 · infrastructure| n3
+  n41 -->|2 · infrastructure| n2
+  n41 -->|1 · infrastructure| n3
+  n3 -->|2 · infrastructure| n2
+  n3 -->|12 · domain/infrastructure/módulo| n15
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38,n39,n40,n41,n42,n43,n44,n45 app

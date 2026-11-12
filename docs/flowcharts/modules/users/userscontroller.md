@@ -1,0 +1,100 @@
+# Mapa de UsersController
+
+Módulo: **Usuarios (users)** · Fuente editable: [`userscontroller.mmd`](userscontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["UserService<br/><small>app/core/services/user.service.ts</small>"]
+  n3["UserFormModalComponent<br/><small>app/features/dashboard/users/components/user-form-modal/user-form-modal.component.ts</small>"]
+  n4["UsersPageComponent<br/><small>app/features/dashboard/users/users-page.component.ts</small>"]
+  end
+  subgraph s5["UsersController (api/users/presentation/controllers/users.controller.ts)"]
+  n6["POST /api/users/register<br/><small>register()</small>"]
+  n7["POST /api/users<br/><small>create() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n8["GET /api/users/me/preferences<br/><small>getMyPreferences()</small>"]
+  n9["PATCH /api/users/me/preferences/theme<br/><small>updateMyTheme()</small>"]
+  n10["GET /api/users<br/><small>findAll() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n11["GET /api/users/:id<br/><small>findOne() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n12["PATCH /api/users/:id<br/><small>update() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n13["DELETE /api/users/:id<br/><small>deactivate() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s14["Aplicación"]
+  n15["RegisterUserUseCase<br/><small>api/users/application/use-cases/register-user.use-case.ts</small>"]
+  n16["CreateUserUseCase<br/><small>api/users/application/use-cases/create-user.use-case.ts</small>"]
+  n17["GetUserPreferencesUseCase<br/><small>api/users/application/use-cases/get-user-preferences.use-case.ts</small>"]
+  n18["UpdateUserThemeUseCase<br/><small>api/users/application/use-cases/update-user-theme.use-case.ts</small>"]
+  n19["ListUsersUseCase<br/><small>api/users/application/use-cases/list-users.use-case.ts</small>"]
+  n20["GetUserByIdUseCase<br/><small>api/users/application/use-cases/get-user-by-id.use-case.ts</small>"]
+  n21["UpdateUserUseCase<br/><small>api/users/application/use-cases/update-user.use-case.ts</small>"]
+  n22["DeactivateUserUseCase<br/><small>api/users/application/use-cases/deactivate-user.use-case.ts</small>"]
+  end
+  subgraph s23["Dominio · Infraestructura · PostgreSQL"]
+  n24["UserRepository"]
+  n25["TypeOrmUserRepository<br/><small>api/users/infrastructure/persistence/typeorm-user.repository.ts</small>"]
+  n26["PasswordHasher"]
+  n27["BcryptPasswordHasher<br/><small>api/shared/infrastructure/services/bcrypt-password-hasher.service.ts</small>"]
+  n28["RoleRepository"]
+  n29["TypeOrmRoleRepository<br/><small>api/roles/infrastructure/persistence/typeorm-role.repository.ts</small>"]
+  end
+  n3 -->|submit→createUser, submit→updateUser| n2
+  n4 -->|fetchUsers→getUsers, confirmDelete→deleteUser| n2
+  n2 -->|createUser| n7
+  n2 -->|getUsers| n10
+  n2 -->|getUserById| n11
+  n2 -->|updateUser| n12
+  n2 -->|deleteUser| n13
+  n6 --> n15
+  n7 --> n16
+  n8 --> n17
+  n9 --> n18
+  n10 --> n19
+  n11 --> n20
+  n12 --> n21
+  n13 --> n22
+  n15 -->|findByUsername, findByPhone, create| n24
+  n24 -->|implementa| n25
+  n15 -->|hash| n26
+  n26 -->|implementa| n27
+  n15 -->|findByName| n28
+  n28 -->|implementa| n29
+  n16 -->|findByUsername, findByPhone, create| n24
+  n16 -->|hash| n26
+  n16 -->|findById| n28
+  n17 -->|findById| n24
+  n18 -->|findById, update| n24
+  n19 -->|findAll| n24
+  n20 -->|findById| n24
+  n21 -->|findById, findByUsername, findByPhone …| n24
+  n21 -->|hash| n26
+  n21 -->|findById| n28
+  n22 -->|findById, deactivate| n24
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4 fe
+  class n6,n7,n8,n9,n10,n11,n12,n13 api
+  class n15,n16,n17,n18,n19,n20,n21,n22 app
+  class n24,n26,n28 dom
+  class n25,n27,n29 infra
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a UsersController, sus 8 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/users/presentation/controllers/users.controller.ts`](../../../../comercial-jhoel-api/src/modules/users/presentation/controllers/users.controller.ts), [`comercial-jhoel-app/src/app/core/services/user.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/user.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/users/components/user-form-modal/user-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/users/components/user-form-modal/user-form-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/users/users-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/users/users-page.component.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/register-user.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/register-user.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/create-user.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/create-user.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/get-user-preferences.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/get-user-preferences.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/update-user-theme.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/update-user-theme.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/list-users.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/list-users.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/get-user-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/get-user-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/update-user.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/update-user.use-case.ts), [`comercial-jhoel-api/src/modules/users/application/use-cases/deactivate-user.use-case.ts`](../../../../comercial-jhoel-api/src/modules/users/application/use-cases/deactivate-user.use-case.ts), [`comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts`](../../../../comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts`](../../../../comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts), [`comercial-jhoel-api/src/modules/roles/infrastructure/persistence/typeorm-role.repository.ts`](../../../../comercial-jhoel-api/src/modules/roles/infrastructure/persistence/typeorm-role.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/users/
+6. **¿Dónde se almacenan los datos?** sin tablas detectadas
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

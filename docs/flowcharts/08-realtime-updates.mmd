@@ -1,0 +1,35 @@
+%% @titulo: 08 · Actualización "en tiempo real" de las pantallas de efectivo
+%% @modulo: Frontend — Control de Efectivo y pantallas financieras
+%% @representa: No hay WebSockets en el proyecto. La actualización entre pantallas y pestañas se hace con cashMutationInterceptor + CashControlSyncService (Subject local + BroadcastChannel) y, para cambios de otros usuarios, con sondeo periódico (setInterval) mientras la pestaña está visible.
+%% @inicio: Una escritura exitosa (no GET) a un recurso de dinero
+%% @archivos: comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts ; comercial-jhoel-app/src/app/core/services/cash-control-sync.service.ts ; comercial-jhoel-app/src/app/app.config.ts
+%% @decisiones: isCashMutation: ¿método distinto de GET/HEAD? ¿URL de environment.apiUrl? ¿recurso bank-deposits|accounts-receivable|account-receivable-payments|assets|bank-transfers|cash-control? ¿no es /account-receivable-payments/preview? · ¿respuesta ok?
+%% @datos: Ninguno (solo notificaciones en memoria y entre pestañas del mismo navegador)
+%% @fin: Las pantallas suscritas con onCashChanged(callback) vuelven a pedir sus datos
+%% @errores: Si la respuesta HTTP falla no se notifica nada; si BroadcastChannel no existe en el navegador solo se notifica la pestaña actual
+flowchart TD
+  W(["Escritura HTTP (POST/PATCH/PUT/DELETE)"])
+  D1{"isCashMutation(method, url)<br/>¿no GET/HEAD, URL del API, recurso de dinero<br/>y no /account-receivable-payments/preview?"}
+  PASS["next(req) sin cambios"]
+  D2{"¿HttpResponse ok?"}
+  N["CashControlSyncService.notifyChanged()<br/>this.local.next() · this.channel?.postMessage('changed')"]
+  subgraph TABS["Receptores"]
+    L["Misma pestaña: changed$"]
+    B["Otras pestañas: BroadcastChannel"]
+    P["Otros usuarios: setInterval (pollMs)<br/>mientras la pestaña está visible"]
+  end
+  CB["onCashChanged(callback)<br/>la pantalla vuelve a cargar sus datos"]
+  W --> D1
+  D1 -->|"no"| PASS
+  D1 -->|"sí"| D2
+  D2 -->|"no"| PASS
+  D2 -->|"sí"| N
+  N --> L --> CB
+  N --> B --> CB
+  P --> CB
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  class W start
+  class PASS,N,L,B,P,CB fe
+  class D1,D2 dec

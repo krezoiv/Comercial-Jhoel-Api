@@ -1,0 +1,102 @@
+# Mapa de ClosedDaysController
+
+Módulo: **Bancos y Agentes Bancarios (día, saldos, cuadre, transferencias) (banks)** · Fuente editable: [`closeddayscontroller.mmd`](closeddayscontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["ClosedDaysService<br/><small>app/core/services/closed-days.service.ts</small>"]
+  n3["ClosedDaysPageComponent<br/><small>app/features/dashboard/closed-days/closed-days-page.component.ts</small>"]
+  n4["TransactionDaysPageComponent<br/><small>app/features/dashboard/transaction-days/transaction-days-page.component.ts</small>"]
+  n5["DayDetailModalComponent<br/><small>app/features/dashboard/closed-days/components/day-detail-modal/day-detail-modal.component.ts</small>"]
+  n6["TransactionDayDetailModalComponent<br/><small>app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts</small>"]
+  end
+  subgraph s7["ClosedDaysController (api/banks/presentation/controllers/closed-days.controller.ts)"]
+  n8["GET /api/closed-days<br/><small>findAll() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n9["GET /api/closed-days/:date<br/><small>findOne() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n10["POST /api/closed-days/:date/reopen<br/><small>reopen() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n11["POST /api/closed-days/:date/cancel<br/><small>cancel() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s12["Aplicación"]
+  n13["ListClosedDaysUseCase<br/><small>api/banks/application/use-cases/list-closed-days.use-case.ts</small>"]
+  n14["GetDayDetailUseCase<br/><small>api/banks/application/use-cases/get-day-detail.use-case.ts</small>"]
+  n15["ReopenDayUseCase<br/><small>api/banks/application/use-cases/reopen-day.use-case.ts</small>"]
+  n16["CancelDayUseCase<br/><small>api/banks/application/use-cases/cancel-day.use-case.ts</small>"]
+  end
+  subgraph s17["Dominio · Infraestructura · PostgreSQL"]
+  n18["DayOpeningRepository"]
+  n19["TypeOrmDayOpeningRepository<br/><small>api/banks/infrastructure/persistence/typeorm-day-opening.repository.ts</small>"]
+  n20[("agent_reconciliations")]
+  n21["AgentReconciliationRepository"]
+  n22["TypeOrmAgentReconciliationRepository<br/><small>api/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts</small>"]
+  n23["BankBalanceRepository"]
+  n24["TypeOrmBankBalanceRepository<br/><small>api/banks/infrastructure/persistence/typeorm-bank-balance.repository.ts</small>"]
+  n25["DayAuditLogRepository"]
+  n26["TypeOrmDayAuditLogRepository<br/><small>api/banks/infrastructure/persistence/typeorm-day-audit-log.repository.ts</small>"]
+  n27[["reopen_agent_day()"]]
+  n28[("day_audit_logs")]
+  n29[("day_openings")]
+  n30[["cancel_agent_day()"]]
+  end
+  n3 -->|fetch→getClosedDays, confirmReopen→reopenDay, confirmCancel→cancelDay| n2
+  n4 -->|fetch→getClosedDays, confirmReopen→reopenDay, confirmCancel→cancelDay| n2
+  n5 -->|fetch→getDayDetail| n2
+  n6 -->|fetch→getDayDetail| n2
+  n2 -->|getClosedDays| n8
+  n2 -->|getDayDetail| n9
+  n2 -->|reopenDay| n10
+  n2 -->|cancelDay| n11
+  n8 --> n13
+  n9 --> n14
+  n10 --> n15
+  n11 --> n16
+  n13 -->|findClosedDays| n18
+  n18 -->|implementa| n19
+  n19 -->|findClosedDays| n20
+  n14 -->|findByDate| n18
+  n14 -->|findLatestByDate| n21
+  n21 -->|implementa| n22
+  n14 -->|findBalancesView| n23
+  n23 -->|implementa| n24
+  n14 -->|findByDate| n25
+  n25 -->|implementa| n26
+  n15 -->|reopen| n18
+  n19 -->|reopen| n27
+  n27 -->|escribe| n28
+  n27 -->|escribe| n29
+  n15 -->|execute| n14
+  n16 -->|cancel| n18
+  n19 -->|cancel| n30
+  n30 -->|escribe| n28
+  n30 -->|escribe| n29
+  n16 -->|execute| n14
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6 fe
+  class n8,n9,n10,n11 api
+  class n13,n14,n15,n16 app
+  class n18,n21,n23,n25 dom
+  class n19,n22,n24,n26 infra
+  class n20,n27,n28,n29,n30 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a ClosedDaysController, sus 4 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/banks/presentation/controllers/closed-days.controller.ts`](../../../../comercial-jhoel-api/src/modules/banks/presentation/controllers/closed-days.controller.ts), [`comercial-jhoel-app/src/app/core/services/closed-days.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/closed-days.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/closed-days/closed-days-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/closed-days/closed-days-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/transaction-days/transaction-days-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/transaction-days/transaction-days-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/closed-days/components/day-detail-modal/day-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/closed-days/components/day-detail-modal/day-detail-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/list-closed-days.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/list-closed-days.use-case.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/get-day-detail.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/get-day-detail.use-case.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/reopen-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/reopen-day.use-case.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/cancel-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/cancel-day.use-case.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-balance.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-balance.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-audit-log.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-audit-log.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/banks/
+6. **¿Dónde se almacenan los datos?** agent_reconciliations, day_audit_logs, day_openings
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

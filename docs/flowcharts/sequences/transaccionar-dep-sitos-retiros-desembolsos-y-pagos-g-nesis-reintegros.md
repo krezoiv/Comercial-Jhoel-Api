@@ -1,0 +1,91 @@
+# Secuencia — Transaccionar: depósitos, retiros, desembolsos y pagos Génesis, reintegros
+
+Módulo: **Transaccionar (operaciones bancarias) (bank-deposits)** · Fuente editable: [`transaccionar-dep-sitos-retiros-desembolsos-y-pagos-g-nesis-reintegros.mmd`](transaccionar-dep-sitos-retiros-desembolsos-y-pagos-g-nesis-reintegros.mmd) · [Índice de diagramas](../README.md)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as TransaccionarPageComponent
+  participant S as BankDepositService
+  participant G as API (guards y ValidationPipe)
+  participant CT as BankDepositsController
+  participant UC0 as RegisterBankDepositOperationUseCase
+  participant R0 as TypeOrmBankDepositRepository
+  participant R1 as TypeOrmDayOpeningRepository
+  participant R2 as TypeOrmClientRepository
+  participant R3 as TypeOrmTransactionManager
+  participant R4 as TypeOrmTransactionTypeRepository
+  participant R5 as TypeOrmBankMovementRepository
+  participant R6 as TypeOrmCashControlRepository
+  participant DB as PostgreSQL
+  U->>C: confirmSave()
+  C->>S: registerOperation(…)
+  S->>G: POST /api/bank-deposits + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO CreateBankDepositRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: create(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !dayOpening
+    UC0-->>G: BankDepositDayNotOpenedError(operationDate)
+  end
+  opt dayOpening.isClosed
+    UC0-->>G: BankDepositDayAlreadyClosedError(operationDate)
+  end
+  opt !description
+    UC0-->>G: InvalidBankDepositDescriptionError('REQUIRED')
+  end
+  opt description.length #gt; BANK_DEPOSIT_DESCRIPTION_MAX_LENGTH
+    UC0-->>G: InvalidBankDepositDescriptionError('TOO_LONG')
+  end
+  opt cashBreakdownEnabled #amp;#amp; input.cashDetails.length === 0
+    UC0-->>G: CashBreakdownRequiredError()
+  end
+  Note over UC0: … y 6 validaciones más
+  UC0->>R0: registerOperation()
+  R0->>DB: SELECT register_bank_deposit_operation(…)
+  Note over DB: valida 19 reglas (INVALID_DEPOSIT_AMOUNT, INVALID_DEPOSIT_AMOUNT, INVALID_CHANGE_GIVEN, …)
+  Note over DB: escribe bank_deposit_cash_details, bank_deposit_operations, bank_deposit_transactions
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0->>R1: findByDate()
+  R1-->>UC0: datos
+  UC0->>R2: findById()
+  R2-->>UC0: datos
+  UC0->>R3: runInTransaction()
+  R3-->>UC0: datos
+  UC0->>UC0: RegisterAccountReceivableChargeUseCase.execute
+  UC0->>UC0: RegisterAssetChargeUseCase.execute
+  UC0->>R4: findById()
+  R4-->>UC0: datos
+  UC0->>R5: findByReference()
+  R5-->>UC0: datos
+  UC0->>R6: findMovementsByReference / getBalance()
+  R6->>DB: SQL / TypeORM sobre cash_movements
+  DB-->>R6: filas
+  R6-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.isConfirmOpen.set, this.descriptionTouched.set)
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/bank-deposits, con las validaciones y la transacción
+2. **¿Dónde comienza?** BankDepositService.registerOperation
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/bank-deposits/presentation/controllers/bank-deposits.controller.ts`](../../../comercial-jhoel-api/src/modules/bank-deposits/presentation/controllers/bank-deposits.controller.ts), [`comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts`](../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts), [`comercial-jhoel-app/src/app/core/services/bank-deposit.service.ts`](../../../comercial-jhoel-app/src/app/core/services/bank-deposit.service.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts`](../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts`](../../../comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts`](../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts), [`comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts`](../../../comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts`](../../../comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts), [`comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts`](../../../comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-movement.repository.ts`](../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-movement.repository.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts`](../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Bloques alt/opt = validaciones reales; flujo completo en business-processes/bank-deposits/post-bank-deposits.mmd
+6. **¿Dónde se almacenan los datos?** PostgreSQL (ver notas "escribe")
+7. **¿Cómo termina el proceso?** success true con data y actualización de la interfaz
+8. **¿Qué sucede cuando ocurre un error?** Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { CashBreakdownOrigin, formatCurrency } from '../../../../../core/models';
+import { CASH_CUT_NAME, CashBreakdownOrigin, formatCurrency } from '../../../../../core/models';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 /**
@@ -31,6 +31,11 @@ export class CuadreCashSourceComponent {
   @Output() clear = new EventEmitter<void>();
 
   formatCurrency = formatCurrency;
+
+  /** "Primer corte · mediodía" / "Segundo corte · final del día" (same labels as Control de Efectivo). */
+  cutName(cutNumber: 1 | 2 | null): string {
+    return cutNumber ? CASH_CUT_NAME[cutNumber] : '—';
+  }
 
   /** `yyyy-MM-dd` → `dd/MM/yyyy` without a Date round-trip (a plain date must not shift by time zone). */
   formatDay(value: string): string {

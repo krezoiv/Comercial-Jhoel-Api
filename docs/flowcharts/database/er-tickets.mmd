@@ -1,0 +1,45 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Tickets
+%% @modulo: Tickets (tickets)
+%% @representa: Tablas del dominio tickets (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: ticket_details, tickets
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  ticket_details {
+    uuid id PK
+    uuid ticket_id FK
+    uuid product_id FK
+    character_varying product_name
+    character_varying presentation_name
+    integer quantity
+    numeric total
+  }
+  tickets {
+    uuid id PK
+    character_varying ticket_number
+    uuid client_id FK
+    uuid user_id FK
+    numeric subtotal
+    numeric total
+    uuid voided_by FK
+    timestamp_with_time_zone updated_at
+    character_varying client_name
+  }
+  products {
+    uuid id PK
+  }
+  clients {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  products ||--o{ ticket_details : "product_id"
+  tickets ||--o{ ticket_details : "ticket_id"
+  clients |o--o{ tickets : "client_id"
+  users ||--o{ tickets : "user_id"
+  users |o--o{ tickets : "voided_by"

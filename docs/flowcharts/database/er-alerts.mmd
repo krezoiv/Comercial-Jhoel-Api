@@ -1,0 +1,19 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Alertas
+%% @modulo: Alertas (alerts)
+%% @representa: Tablas del dominio alerts (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: alert_read_marks
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  alert_read_marks {
+    uuid user_id PK
+    character_varying alert_key PK
+  }
+  users {
+    uuid id PK
+  }
+  users ||--o{ alert_read_marks : "user_id"

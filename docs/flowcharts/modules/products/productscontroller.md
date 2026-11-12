@@ -1,0 +1,159 @@
+# Mapa de ProductsController
+
+Módulo: **Productos (products)** · Fuente editable: [`productscontroller.mmd`](productscontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["InventoryService<br/><small>app/core/services/inventory.service.ts</small>"]
+  n3["ProductFormModalComponent<br/><small>app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts</small>"]
+  n4["QuickTransferModalComponent<br/><small>app/features/dashboard/inventory/components/quick-transfer-modal/quick-transfer-modal.component.ts</small>"]
+  n5["TransferInventoryModalComponent<br/><small>app/features/dashboard/inventory/components/transfer-inventory-modal/transfer-inventory-modal.component.ts</small>"]
+  n6["InventoryPageComponent<br/><small>app/features/dashboard/inventory/inventory-page.component.ts</small>"]
+  n7["PurchaseProductSearchComponent<br/><small>app/features/dashboard/purchases/components/purchase-product-search/purchase-product-search.component.ts</small>"]
+  n8["QuotationProductSearchComponent<br/><small>app/features/dashboard/quotations/components/quotation-product-search/quotation-product-search.component.ts</small>"]
+  n9["ProductSearchComponent<br/><small>app/features/dashboard/sales/components/product-search/product-search.component.ts</small>"]
+  n10["TicketProductSearchComponent<br/><small>app/features/dashboard/tickets/components/ticket-product-search/ticket-product-search.component.ts</small>"]
+  end
+  subgraph s11["ProductsController (api/products/presentation/controllers/products.controller.ts)"]
+  n12["POST /api/products<br/><small>create() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n13["GET /api/products<br/><small>findAll()</small>"]
+  n14["GET /api/products/stats<br/><small>getStats()</small>"]
+  n15["GET /api/products/export/pdf<br/><small>exportPdf()</small>"]
+  n16["GET /api/products/export/excel<br/><small>exportExcel()</small>"]
+  n17["GET /api/products/import/template<br/><small>importTemplate() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n18["POST /api/products/import<br/><small>importExcel() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n19["GET /api/products/:id<br/><small>findOne()</small>"]
+  n20["PATCH /api/products/:id<br/><small>update() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n21["DELETE /api/products/:id<br/><small>deactivate() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s22["Aplicación"]
+  n23["CreateProductUseCase<br/><small>api/products/application/use-cases/create-product.use-case.ts</small>"]
+  n24["ListProductsUseCase<br/><small>api/products/application/use-cases/list-products.use-case.ts</small>"]
+  n25["GetInventoryStatsUseCase<br/><small>api/products/application/use-cases/get-inventory-stats.use-case.ts</small>"]
+  n26["ExportProductsPdfUseCase<br/><small>api/products/application/use-cases/export-products-pdf.use-case.ts</small>"]
+  n27["ExportProductsExcelUseCase<br/><small>api/products/application/use-cases/export-products-excel.use-case.ts</small>"]
+  n28["ImportProductsFromExcelUseCase<br/><small>api/products/application/use-cases/import-products-from-excel.use-case.ts</small>"]
+  n29["GetProductByIdUseCase<br/><small>api/products/application/use-cases/get-product-by-id.use-case.ts</small>"]
+  n30["UpdateProductUseCase<br/><small>api/products/application/use-cases/update-product.use-case.ts</small>"]
+  n31["DeactivateProductUseCase<br/><small>api/products/application/use-cases/deactivate-product.use-case.ts</small>"]
+  end
+  subgraph s32["Dominio · Infraestructura · PostgreSQL"]
+  n33["ProductRepository"]
+  n34["TypeOrmProductRepository<br/><small>api/products/infrastructure/persistence/typeorm-product.repository.ts</small>"]
+  n35["CategoryRepository"]
+  n36["TypeOrmCategoryRepository<br/><small>api/categories/infrastructure/persistence/typeorm-category.repository.ts</small>"]
+  n37["BusinessRepository"]
+  n38["TypeOrmBusinessRepository<br/><small>api/businesses/infrastructure/persistence/typeorm-business.repository.ts</small>"]
+  n39["ProductPresentationRepository"]
+  n40["TypeOrmProductPresentationRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-product-presentation.repository.ts</small>"]
+  n41["InventoryStockRepository"]
+  n42["TypeOrmInventoryStockRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-inventory-stock.repository.ts</small>"]
+  n43["InventoryLocationRepository"]
+  n44["TypeOrmInventoryLocationRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-inventory-location.repository.ts</small>"]
+  n45["UnitOfMeasureRepository"]
+  n46["TypeOrmUnitOfMeasureRepository<br/><small>api/units-of-measure/infrastructure/persistence/typeorm-unit-of-measure.repository.ts</small>"]
+  n47["PresentationTypeRepository"]
+  n48["TypeOrmPresentationTypeRepository<br/><small>api/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts</small>"]
+  n49[("product_presentations")]
+  n50[("products")]
+  n51["CreatePresentationUseCase"]
+  end
+  n3 -->|submit→createProduct, submit→updateProduct| n2
+  n4 -->|onQueryEnter→getProducts| n2
+  n5 -->|onBarcodeScanned→getProducts| n2
+  n6 -->|refetchProducts→getProducts, fetchStats→getInventoryStats, onExportPdf→exportProductsPdf …| n2
+  n7 -->|onBarcodeScanned→searchProducts| n2
+  n8 -->|onBarcodeScanned→searchProducts| n2
+  n9 -->|onBarcodeScanned→searchProducts| n2
+  n10 -->|onBarcodeScanned→searchProducts| n2
+  n2 -->|createProduct| n12
+  n2 -->|getProducts| n13
+  n2 -->|searchProducts| n13
+  n2 -->|getInventoryStats| n14
+  n2 -->|exportProductsPdf| n15
+  n2 -->|exportProductsExcel| n16
+  n2 -->|downloadImportTemplate| n17
+  n2 -->|importProductsExcel| n18
+  n2 -->|getProductById| n19
+  n2 -->|updateProduct| n20
+  n2 -->|deleteProduct| n21
+  n12 --> n23
+  n13 --> n24
+  n14 --> n25
+  n15 --> n26
+  n16 --> n27
+  n18 --> n28
+  n19 --> n29
+  n20 --> n30
+  n21 --> n31
+  n23 -->|findByActiveName, findByActiveSku, create| n33
+  n33 -->|implementa| n34
+  n23 -->|findById| n35
+  n35 -->|implementa| n36
+  n23 -->|findById| n37
+  n37 -->|implementa| n38
+  n23 -->|findActiveByBarcode, create| n39
+  n39 -->|implementa| n40
+  n23 -->|createInitial| n41
+  n41 -->|implementa| n42
+  n23 -->|findAll| n43
+  n43 -->|implementa| n44
+  n23 -->|findById| n45
+  n45 -->|implementa| n46
+  n23 -->|findByActiveName| n47
+  n47 -->|implementa| n48
+  n24 -->|findAll| n33
+  n34 -->|findAll| n49
+  n24 -->|findByProductIds| n41
+  n24 -->|findMatchingByBarcode| n39
+  n25 -->|getInventoryStats| n33
+  n34 -->|getInventoryStats| n50
+  n26 -->|findAll| n33
+  n26 -->|findById| n35
+  n26 -->|findById| n37
+  n27 -->|findAll| n33
+  n28 -->|execute| n23
+  n28 -->|execute| n51
+  n28 -->|findByActiveName| n35
+  n28 -->|findByActiveName| n37
+  n28 -->|findByActiveName| n45
+  n28 -->|findByActiveName| n47
+  n29 -->|findById| n33
+  n29 -->|findByProductId| n41
+  n30 -->|findById, findByActiveName, findByActiveSku …| n33
+  n30 -->|findById| n35
+  n30 -->|findById| n37
+  n30 -->|findById| n45
+  n31 -->|findById, deactivate| n33
+  n31 -->|deactivateAllForProduct| n39
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9,n10 fe
+  class n12,n13,n14,n15,n16,n17,n18,n19,n20,n21 api
+  class n23,n24,n25,n26,n27,n28,n29,n30,n31,n51 app
+  class n33,n35,n37,n39,n41,n43,n45,n47 dom
+  class n34,n36,n38,n40,n42,n44,n46,n48 infra
+  class n49,n50 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a ProductsController, sus 10 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/products/presentation/controllers/products.controller.ts`](../../../../comercial-jhoel-api/src/modules/products/presentation/controllers/products.controller.ts), [`comercial-jhoel-app/src/app/core/services/inventory.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/inventory.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/components/product-form-modal/product-form-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/components/quick-transfer-modal/quick-transfer-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/components/quick-transfer-modal/quick-transfer-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/components/transfer-inventory-modal/transfer-inventory-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/components/transfer-inventory-modal/transfer-inventory-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/inventory/inventory-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/inventory/inventory-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/purchases/components/purchase-product-search/purchase-product-search.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/components/purchase-product-search/purchase-product-search.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-product-search/quotation-product-search.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-product-search/quotation-product-search.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/sales/components/product-search/product-search.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/sales/components/product-search/product-search.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/tickets/components/ticket-product-search/ticket-product-search.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/tickets/components/ticket-product-search/ticket-product-search.component.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/create-product.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/create-product.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/list-products.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/list-products.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/get-inventory-stats.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/get-inventory-stats.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/export-products-pdf.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/export-products-pdf.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/export-products-excel.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/export-products-excel.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/import-products-from-excel.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/import-products-from-excel.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/get-product-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/get-product-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/update-product.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/update-product.use-case.ts), [`comercial-jhoel-api/src/modules/products/application/use-cases/deactivate-product.use-case.ts`](../../../../comercial-jhoel-api/src/modules/products/application/use-cases/deactivate-product.use-case.ts), [`comercial-jhoel-api/src/modules/products/infrastructure/persistence/typeorm-product.repository.ts`](../../../../comercial-jhoel-api/src/modules/products/infrastructure/persistence/typeorm-product.repository.ts), [`comercial-jhoel-api/src/modules/categories/infrastructure/persistence/typeorm-category.repository.ts`](../../../../comercial-jhoel-api/src/modules/categories/infrastructure/persistence/typeorm-category.repository.ts), [`comercial-jhoel-api/src/modules/businesses/infrastructure/persistence/typeorm-business.repository.ts`](../../../../comercial-jhoel-api/src/modules/businesses/infrastructure/persistence/typeorm-business.repository.ts), [`comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-product-presentation.repository.ts`](../../../../comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-product-presentation.repository.ts), [`comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-stock.repository.ts`](../../../../comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-stock.repository.ts), [`comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-location.repository.ts`](../../../../comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-location.repository.ts) y 2 más
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/products/
+6. **¿Dónde se almacenan los datos?** product_presentations, products
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

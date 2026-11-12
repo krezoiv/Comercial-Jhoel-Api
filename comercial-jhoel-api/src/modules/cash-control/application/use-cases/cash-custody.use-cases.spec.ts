@@ -340,9 +340,13 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
   });
 
   describe('último arqueo de Caja (Cuadre de Agentes)', () => {
-    /** A count saved before Q0.01 existed: no row for it. */
+    /** The arqueo of one cut, saved before Q0.01 existed: no row for it. */
     const legacyCount = {
-      id: 'c9',
+      source: 'CORTE_CAJA',
+      id: 'cut-count-2',
+      number: null,
+      cutPeriodId: 'cut-2',
+      cutNumber: 2,
       businessDate: '2026-11-10',
       totalCounted: 4430,
       details: [
@@ -394,6 +398,9 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
       });
       expect(result.breakdown.reduce((s, r) => s + r.subtotal, 0)).toBe(4430);
       expect(legacyCount.details).toHaveLength(4);
+      // The record used is returned as-is (the exact cut), never merged with another.
+      expect(result.count).toBe(legacyCount as never);
+      expect(result.count?.cutNumber).toBe(2);
     });
 
     it('a count of the reference day is flagged as such', async () => {

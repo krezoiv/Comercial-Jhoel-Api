@@ -1,0 +1,131 @@
+# POST /api/sales/:id/void
+
+Módulo: **Ventas (sales)** · Fuente editable: [`post-sales-id-void.mmd`](post-sales-id-void.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/sales/:id/void"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["SalesService.voidSale<br/><small>app/core/services/sales.service.ts</small>"]
+  n6["SalesAdminPageComponent.confirmVoid<br/><small>app/features/dashboard/sales-admin/sales-admin-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/sales/:id/void<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('ADMIN', 'SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14{"¿VoidSaleRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n15(["400 Datos inválidos"])
+  n16["SalesController.voidSale<br/><small>api/sales/presentation/controllers/sales.controller.ts</small>"]
+  end
+  subgraph s17["Aplicación — caso de uso"]
+  n18["VoidSaleUseCase.execute<br/><small>api/sales/application/use-cases/void-sale.use-case.ts</small>"]
+  n19{"¿!reason?<br/><small>L37</small>"}
+  n20(["SaleVoidReasonRequiredError()"])
+  n21{"¿!sale?<br/><small>L42</small>"}
+  n22(["SaleNotFoundError(input.id)"])
+  n23{"¿sale.isVoided?<br/><small>L45</small>"}
+  n24(["SaleAlreadyVoidedError(input.id)"])
+  end
+  subgraph s25["Dominio → Infraestructura"]
+  n26["Puerto SaleRepository.findById / voidSale<br/>@Inject(SALE_REPOSITORY)"]
+  n27["TypeOrmSaleRepository<br/><small>api/sales/infrastructure/persistence/typeorm-sale.repository.ts</small>"]
+  n28[("findById: TypeORM Repository")]
+  subgraph s29["PostgreSQL — función void_sale"]
+  n30[["SELECT void_sale(…)<br/><small>voidSale — una transacción</small>"]]
+  n31{"¿p_reason IS NULL OR length(trim(p_reason)) = 0?"}
+  n32(["RAISE VOID_REASON_REQUIRED<br/>(rollback)"])
+  n33{"¿NOT FOUND?"}
+  n34(["RAISE SALE_NOT_FOUND<br/>(rollback)"])
+  n35{"¿v_sale.status != 'CONFIRMED'?"}
+  n36(["RAISE SALE_NOT_CONFIRMED<br/>(rollback)"])
+  n37{"¿v_sale.is_voided?"}
+  n38(["RAISE SALE_ALREADY_VOIDED<br/>(rollback)"])
+  n39[["ensure_inventory_stock_row()"]]
+  n40[("Escribe:<br/>inventory_movements<br/>inventory_stock<br/>products<br/>sales")]
+  end
+  end
+  n41(["Fin: la interfaz se actualiza<br/>this.isVoiding.set<br/>this.voidTarget.set<br/>this.notificationService.success<br/>this.notificationService.error"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 --> n18
+  n18 --> n19
+  n19 -->|sí| n20
+  n20 --> n2
+  n19 -->|no| n21
+  n21 -->|sí| n22
+  n22 --> n2
+  n21 -->|no| n23
+  n23 -->|sí| n24
+  n24 --> n2
+  n23 -->|no| n26
+  n26 -->|implementa| n27
+  n27 --> n28
+  n28 --> n8
+  n27 -->|voidSale| n30
+  n30 --> n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n33 -->|no| n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n37 -->|no · llama| n39
+  n37 -->|no| n40
+  n40 -->|COMMIT| n8
+  n8 --> n41
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n15,n20,n22,n24,n32,n34,n36,n38 err
+  class n5,n6,n7 fe
+  class n8,n41 ok
+  class n10,n12,n14,n19,n21,n23,n31,n33,n35,n37 dec
+  class n16 api
+  class n18 app
+  class n26 dom
+  class n27 infra
+  class n28,n30,n39,n40 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/sales/:id/void: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** SalesAdminPageComponent.confirmVoid (comercial-jhoel-app/src/app/features/dashboard/sales-admin/sales-admin-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/sales/presentation/controllers/sales.controller.ts`](../../../../comercial-jhoel-api/src/modules/sales/presentation/controllers/sales.controller.ts), [`comercial-jhoel-app/src/app/core/services/sales.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/sales.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/sales-admin/sales-admin-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/sales-admin/sales-admin-page.component.ts), [`comercial-jhoel-api/src/modules/sales/application/use-cases/void-sale.use-case.ts`](../../../../comercial-jhoel-api/src/modules/sales/application/use-cases/void-sale.use-case.ts), [`comercial-jhoel-api/src/modules/sales/domain/repositories/sale.repository.ts`](../../../../comercial-jhoel-api/src/modules/sales/domain/repositories/sale.repository.ts), [`comercial-jhoel-api/src/modules/sales/infrastructure/persistence/typeorm-sale.repository.ts`](../../../../comercial-jhoel-api/src/modules/sales/infrastructure/persistence/typeorm-sale.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO VoidSaleRequestDto | !reason | !sale | sale.isVoided | SQL void_sale: p_reason IS NULL OR length(trim(p_reason)) = 0 | SQL void_sale: NOT FOUND | SQL void_sale: v_sale.status != 'CONFIRMED' | SQL void_sale: v_sale.is_voided
+6. **¿Dónde se almacenan los datos?** void_sale(), inventory_movements, inventory_stock, products, sales
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

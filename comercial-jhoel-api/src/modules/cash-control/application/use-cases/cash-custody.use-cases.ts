@@ -5,6 +5,7 @@ import type {
   CashCountRow,
   CashCustodyRepository,
   CashCustodySnapshot,
+  LatestCashCountCandidate,
   Paginated,
   WarehouseMovementRow,
   WarehouseTransferRow,
@@ -348,8 +349,8 @@ export class GetCashCountUseCase {
 
 /** What "Cargar último arqueo de Caja" receives. */
 export interface LatestCashCountOutput {
-  /** The count exactly as recorded (null when no valid count exists). */
-  count: CashCountRow | null;
+  /** The second cut's arqueo used (null when no finished second cut exists). */
+  count: LatestCashCountCandidate | null;
   /** All 12 denominations (Q0.01 = 0 on counts saved before it existed); empty when `count` is null. */
   breakdown: DenominationLine[];
   /** Bank day the caller works on (requested, else the current bank day). */
@@ -359,10 +360,10 @@ export interface LatestCashCountOutput {
 }
 
 /**
- * Latest valid Arqueo de Caja, for loading its breakdown into Cuadre de
- * Agentes. Read-only: the count is returned as a reference and never
- * modified. Only VIGENTE caja counts qualify (a replaced count is not valid;
- * Bodega/Guayacán counts are other tables). The reference day comes first.
+ * Breakdown for Cuadre de Agentes: the arqueo of the "Segundo corte · final
+ * del día" (reference day first, else the latest earlier one — flagged by
+ * `isFromReferenceDay`). Exactly that cut's quantities, Q0.01 completed with
+ * 0 on older cuts; the two cuts are never added up. Read-only.
  */
 @Injectable()
 export class GetLatestCashCountUseCase {

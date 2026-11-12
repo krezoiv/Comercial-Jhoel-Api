@@ -1,0 +1,41 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Catálogo de teléfonos
+%% @modulo: Catálogo de teléfonos (catalog)
+%% @representa: Tablas del dominio catalog (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: catalog_phone_images, catalog_phones, catalog_requests
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  catalog_phone_images {
+    uuid id PK
+    uuid catalog_phone_id FK
+    character_varying mime_type
+    uuid created_by FK
+  }
+  catalog_phones {
+    uuid id PK
+    uuid created_by FK
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
+  }
+  catalog_requests {
+    uuid id PK
+    uuid catalog_phone_id FK
+    character_varying request_type
+    character_varying customer_name
+    character_varying status
+    timestamp_with_time_zone updated_at
+    uuid updated_by FK
+  }
+  users {
+    uuid id PK
+  }
+  catalog_phones ||--o{ catalog_phone_images : "catalog_phone_id"
+  users ||--o{ catalog_phone_images : "created_by"
+  users ||--o{ catalog_phones : "created_by"
+  users |o--o{ catalog_phones : "updated_by"
+  catalog_phones |o--o{ catalog_requests : "catalog_phone_id"
+  users |o--o{ catalog_requests : "updated_by"

@@ -1,0 +1,137 @@
+# Modelo entidad-relación — Bancos y Agentes Bancarios (día, saldos, cuadre, transferencias)
+
+Módulo: **Bancos y Agentes Bancarios (día, saldos, cuadre, transferencias) (banks)** · Fuente editable: [`er-banks.mmd`](er-banks.mmd) · [Índice de diagramas](../README.md)
+
+```mermaid
+erDiagram
+  agent_reconciliation_cash_breakdowns {
+    uuid reconciliation_id PK
+    uuid source_cash_count_id FK
+    bigint source_count_number
+    date source_business_date
+    uuid source_counted_by FK
+    numeric source_total_counted
+    numeric total_cash
+    uuid created_by FK
+    uuid source_cut_count_id FK
+    uuid source_cut_period_id FK
+    smallint source_cut_number
+  }
+  agent_reconciliation_cash_details {
+    uuid id PK
+    uuid reconciliation_id FK
+    integer quantity
+    numeric subtotal
+  }
+  agent_reconciliations {
+    uuid id PK
+    date date
+    numeric total_cash
+    numeric total_banks
+    numeric total_assets
+    numeric total_accounts_receivable
+    uuid created_by FK
+    numeric total_warehouse_cash
+  }
+  bank_account_movements {
+    uuid id PK
+    uuid bank_id FK
+    character_varying movement_type
+    numeric amount
+    numeric balance_before
+    numeric balance_after
+    date business_date
+    uuid user_id FK
+    character_varying reference_type
+    uuid counterpart_bank_id FK
+    character_varying status
+    uuid reversal_of_id FK
+  }
+  bank_balances {
+    uuid id PK
+    uuid bank_id FK
+    date operation_date
+    numeric previous_balance
+    numeric final_balance
+    uuid user_id FK
+    timestamp_with_time_zone updated_at
+  }
+  banks {
+    uuid id PK
+    character_varying name
+    character_varying account_number
+    uuid account_type_id FK
+    numeric previous_balance
+    numeric final_balance
+    timestamp_with_time_zone updated_at
+    uuid created_by FK
+    uuid updated_by FK
+    numeric max_balance
+  }
+  day_audit_logs {
+    uuid id PK
+    date date
+    uuid performed_by FK
+    character_varying previous_status
+    character_varying new_status
+  }
+  day_openings {
+    uuid id PK
+    date date
+    uuid opened_by FK
+    uuid closed_by FK
+    uuid reopened_by FK
+    uuid cancelled_by FK
+  }
+  users {
+    uuid id PK
+  }
+  cash_counts {
+    uuid id PK
+  }
+  cash_cut_counts {
+    uuid id PK
+  }
+  cash_cut_periods {
+    uuid id PK
+  }
+  account_types {
+    uuid id PK
+  }
+  users ||--o{ agent_reconciliation_cash_breakdowns : "created_by"
+  agent_reconciliations ||--o| agent_reconciliation_cash_breakdowns : "reconciliation_id"
+  cash_counts |o--o{ agent_reconciliation_cash_breakdowns : "source_cash_count_id"
+  users |o--o{ agent_reconciliation_cash_breakdowns : "source_counted_by"
+  cash_cut_counts |o--o{ agent_reconciliation_cash_breakdowns : "source_cut_count_id"
+  cash_cut_periods |o--o{ agent_reconciliation_cash_breakdowns : "source_cut_period_id"
+  agent_reconciliation_cash_breakdowns ||--o{ agent_reconciliation_cash_details : "reconciliation_id"
+  users ||--o{ agent_reconciliations : "created_by"
+  banks ||--o{ bank_account_movements : "bank_id"
+  banks |o--o{ bank_account_movements : "counterpart_bank_id"
+  bank_account_movements |o--o{ bank_account_movements : "reversal_of_id"
+  users |o--o{ bank_account_movements : "reversed_by"
+  users ||--o{ bank_account_movements : "user_id"
+  banks ||--o{ bank_balances : "bank_id"
+  users ||--o{ bank_balances : "user_id"
+  account_types ||--o{ banks : "account_type_id"
+  users ||--o{ banks : "created_by"
+  users |o--o{ banks : "updated_by"
+  users ||--o{ day_audit_logs : "performed_by"
+  users |o--o{ day_openings : "cancelled_by"
+  users ||--o{ day_openings : "opened_by"
+  users |o--o{ day_openings : "reopened_by"
+  users |o--o{ day_openings : "closed_by"
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Tablas del dominio banks (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+2. **¿Dónde comienza?** Esquema real de PostgreSQL (pg_catalog)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/database/migrations`](../../../comercial-jhoel-api/src/database/migrations), [`docs/codebase-study/05_DATABASE_REFERENCE.md`](../../../docs/codebase-study/05_DATABASE_REFERENCE.md)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** No aplica (estructura)
+6. **¿Dónde se almacenan los datos?** agent_reconciliation_cash_breakdowns, agent_reconciliation_cash_details, agent_reconciliations, bank_account_movements, bank_balances, banks, day_audit_logs, day_openings
+7. **¿Cómo termina el proceso?** No aplica
+8. **¿Qué sucede cuando ocurre un error?** Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

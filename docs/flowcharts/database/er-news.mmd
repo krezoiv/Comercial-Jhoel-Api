@@ -1,0 +1,28 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Noticias
+%% @modulo: Noticias (news)
+%% @representa: Tablas del dominio news (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: news_articles
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  news_articles {
+    uuid id PK
+    character_varying image_mime_type
+    uuid created_by FK
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
+    uuid news_type_id FK
+  }
+  news_types {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  news_types ||--o{ news_articles : "news_type_id"
+  users ||--o{ news_articles : "created_by"
+  users |o--o{ news_articles : "updated_by"

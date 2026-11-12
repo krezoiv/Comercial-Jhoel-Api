@@ -1,0 +1,43 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Venta: confirmar ("Guardar venta")
+%% @modulo: Ventas (sales)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/sales/confirm, con las validaciones y la transacción
+%% @inicio: SalesService.confirmSale
+%% @archivos: comercial-jhoel-api/src/modules/sales/presentation/controllers/sales.controller.ts ; comercial-jhoel-app/src/app/core/services/sales-draft.store.ts ; comercial-jhoel-app/src/app/core/services/sales.service.ts ; comercial-jhoel-api/src/modules/sales/application/use-cases/confirm-open-sale.use-case.ts ; comercial-jhoel-api/src/modules/sales/infrastructure/persistence/typeorm-sale.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/sales/post-sales-confirm.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as SalesDraftStore
+  participant S as SalesService
+  participant G as API (guards y ValidationPipe)
+  participant CT as SalesController
+  participant UC0 as ConfirmOpenSaleUseCase
+  participant R0 as TypeOrmSaleRepository
+  participant DB as PostgreSQL
+  U->>C: confirmSale()
+  C->>S: confirmSale(…)
+  S->>G: POST /api/sales/confirm + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO ConfirmOpenSaleRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: confirm(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  UC0->>R0: confirmOpenSale()
+  R0->>DB: SELECT confirm_open_sale(…)
+  Note over DB: escribe inventory_movements, sales
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.notificationService.success, this.notificationService.error)

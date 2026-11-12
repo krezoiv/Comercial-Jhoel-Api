@@ -1,0 +1,183 @@
+# Cuadre de Agentes y cierre del día
+
+Módulo: **Bancos y Agentes Bancarios (día, saldos, cuadre, transferencias) (banks)** · Fuente editable: [`post-agent-reconciliations.mmd`](post-agent-reconciliations.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: Cuadre de Agentes y cierre del día"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["CuadreAgentesService.registerReconciliation<br/><small>app/core/services/cuadre-agentes.service.ts</small>"]
+  n6["CuadreAgentesPageComponent.confirmSaveCuadre<br/><small>app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/agent-reconciliations<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿CreateAgentReconciliationRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["AgentReconciliationsController.create<br/><small>api/banks/presentation/controllers/agent-reconciliations.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["CloseAgentDayUseCase.execute<br/><small>api/banks/application/use-cases/close-agent-day.use-case.ts</small>"]
+  n17["assertCuadreCashBreakdown()<br/><small>llamada en L114</small><br/><small>api/banks/application/use-cases/close-agent-day.use-case.ts</small>"]
+  n18{"¿!isValidDenomination(row.denomination) #124;#124; !Number.isInteger(row.quantity) #124;#124; row.quantity #lt; 0 #124;#124; seen.has(cents)?<br/><small>L51</small>"}
+  n19(["CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_INVALID')"])
+  n20{"¿(breakdown.source !== 'MANUAL') !== !!breakdown.sourceCashCountId?<br/><small>L61</small>"}
+  n21(["CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_INVALID')"])
+  n22{"¿toCents(breakdownTotal(breakdown.details)) !== toCents(totalCash)?<br/><small>L64</small>"}
+  n23(["CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_MISMATCH')"])
+  n24{"¿!dayOpening?<br/><small>L122</small>"}
+  n25(["DayNotOpenedError(input.date, 'reconciliation')"])
+  n26{"¿dayOpening.isClosed?<br/><small>L126</small>"}
+  n27(["DayAlreadyClosedError(input.date)"])
+  n28{"¿!balancesValidation.canReconcile?<br/><small>L132</small>"}
+  n29(["BankBalancesNotRegisteredError(input.date)"])
+  end
+  n30["Puerto DayOpeningRepository<br/><small>findByDate</small>"]
+  n31["Caso de uso GetCuadreAgentesSummaryUseCase<br/><small>execute</small>"]
+  n32["Caso de uso ValidateBankBalancesForDateUseCase<br/><small>execute</small>"]
+  subgraph s33["Dominio → Infraestructura"]
+  n34["Puerto AgentReconciliationRepository.closeDayWithReconciliation<br/>@Inject(AGENT_RECONCILIATION_REPOSITORY)"]
+  n35["TypeOrmAgentReconciliationRepository<br/><small>api/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts</small>"]
+  subgraph s36["PostgreSQL — función close_agent_day_with_cash_breakdown"]
+  n37[["SELECT close_agent_day_with_cash_breakdown(…)<br/><small>closeDayWithReconciliation — una transacción</small>"]]
+  n38{"¿p_source IS NULL OR p_source NOT IN ('MANUAL', 'ARQUEO_CAJA', 'CORTE_CAJA')?"}
+  n39(["RAISE CUADRE_CASH_BREAKDOWN_INVALID<br/>(rollback)"])
+  n40{"¿p_cash_details IS NULL OR jsonb_typeof(p_cash_details) #lt;#gt; 'array'?"}
+  n41(["RAISE CUADRE_CASH_BREAKDOWN_INVALID<br/>(rollback)"])
+  n42{"¿v_row.denomination IS NULL OR NOT cash_valid_denomination(v_row.denomination) OR v_row.quantity IS NULL OR v_row.quantity #lt; 0 OR v_row.quantity #lt;#gt; trunc(v_row.q?"}
+  n43(["RAISE CUADRE_CASH_BREAKDOWN_INVALID<br/>(rollback)"])
+  n44{"¿v_distinct #lt;#gt; v_rows?"}
+  n45(["RAISE CUADRE_CASH_BREAKDOWN_INVALID<br/>(rollback)"])
+  n46{"¿v_total #lt;#gt; p_total_cash?"}
+  n47(["RAISE CUADRE_CASH_BREAKDOWN_MISMATCH<br/>(rollback)"])
+  n48{"¿(p_source = 'MANUAL') y (p_source_cash_count_id IS NOT NULL)?"}
+  n49(["RAISE CUADRE_CASH_BREAKDOWN_INVALID<br/>(rollback)"])
+  n50["Otros RAISE de close_agent_day_with_cash_breakdown (condición no extraída):<br/>CUADRE_SOURCE_COUNT_INVALID"]
+  n51[["cash_custody_assert_role()"]]
+  n52[["close_agent_day()"]]
+  n53[("Escribe:<br/>agent_reconciliation_cash_breakdowns<br/>agent_reconciliation_cash_details")]
+  end
+  subgraph s54["PostgreSQL — función close_agent_day"]
+  n55[["SELECT close_agent_day(…)<br/><small>closeDayWithReconciliation — una transacción</small>"]]
+  n56{"¿NOT FOUND?"}
+  n57(["RAISE DAY_NOT_OPENED<br/>(rollback)"])
+  n58{"¿v_day_opening.closed_at IS NOT NULL?"}
+  n59(["RAISE DAY_ALREADY_CLOSED<br/>(rollback)"])
+  n60{"¿v_balances_count #lt; v_active_banks_count?"}
+  n61(["RAISE BANK_BALANCES_NOT_REGISTERED<br/>(rollback)"])
+  n62[("Escribe:<br/>agent_reconciliations<br/>day_audit_logs<br/>day_openings")]
+  end
+  end
+  n63(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.isConfirmModalOpen.set<br/>this.notificationService.success<br/>this.notificationService.error"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n24
+  n24 -->|sí| n25
+  n25 --> n2
+  n24 -->|no| n26
+  n26 -->|sí| n27
+  n27 --> n2
+  n26 -->|no| n28
+  n28 -->|sí| n29
+  n29 --> n2
+  n16 -.->|consulta| n30
+  n16 -.->|consulta| n31
+  n16 -.->|consulta| n32
+  n28 -->|no| n34
+  n34 -->|implementa| n35
+  n35 -->|closeDayWithReconciliation| n37
+  n37 --> n38
+  n38 -->|sí| n39
+  n39 --> n2
+  n38 -->|no| n40
+  n40 -->|sí| n41
+  n41 --> n2
+  n40 -->|no| n42
+  n42 -->|sí| n43
+  n43 --> n2
+  n42 -->|no| n44
+  n44 -->|sí| n45
+  n45 --> n2
+  n44 -->|no| n46
+  n46 -->|sí| n47
+  n47 --> n2
+  n46 -->|no| n48
+  n48 -->|sí| n49
+  n49 --> n2
+  n37 -.->|también puede lanzar| n50
+  n50 --> n2
+  n48 -->|no · llama| n51
+  n48 -->|no · llama| n52
+  n48 -->|no| n53
+  n53 -->|COMMIT| n8
+  n35 -->|closeDayWithReconciliation| n55
+  n55 --> n56
+  n56 -->|sí| n57
+  n57 --> n2
+  n56 -->|no| n58
+  n58 -->|sí| n59
+  n59 --> n2
+  n58 -->|no| n60
+  n60 -->|sí| n61
+  n61 --> n2
+  n60 -->|no| n62
+  n62 -->|COMMIT| n8
+  n8 --> n63
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19,n21,n23,n25,n27,n29,n39,n41,n43,n45,n47,n49,n50,n57,n59,n61 err
+  class n5,n6,n7 fe
+  class n8,n63 ok
+  class n10,n12,n18,n20,n22,n24,n26,n28,n38,n40,n42,n44,n46,n48,n56,n58,n60 dec
+  class n14 api
+  class n16,n31,n32 app
+  class n17,n30,n34 dom
+  class n35 infra
+  class n37,n51,n52,n53,n55,n62 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/agent-reconciliations: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** CuadreAgentesPageComponent.confirmSaveCuadre (comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/banks/presentation/controllers/agent-reconciliations.controller.ts`](../../../../comercial-jhoel-api/src/modules/banks/presentation/controllers/agent-reconciliations.controller.ts), [`comercial-jhoel-app/src/app/core/services/cuadre-agentes.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cuadre-agentes.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/close-agent-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/close-agent-day.use-case.ts), [`comercial-jhoel-api/src/modules/banks/domain/repositories/day-opening.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/domain/repositories/day-opening.repository.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/get-cuadre-agentes-summary.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/get-cuadre-agentes-summary.use-case.ts), [`comercial-jhoel-api/src/modules/banks/application/use-cases/validate-bank-balances-for-date.use-case.ts`](../../../../comercial-jhoel-api/src/modules/banks/application/use-cases/validate-bank-balances-for-date.use-case.ts), [`comercial-jhoel-api/src/modules/banks/domain/repositories/agent-reconciliation.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/domain/repositories/agent-reconciliation.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-agent-reconciliation.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO CreateAgentReconciliationRequestDto | !isValidDenomination(row.denomination) || !Number.isInteger(row.quantity) || row.quantity < 0 || seen.has(cents) | (breakdown.source !== 'MANUAL') !== !!breakdown.sourceCashCountId | toCents(breakdownTotal(breakdown.details)) !== toCents(totalCash) | !dayOpening | dayOpening.isClosed | !balancesValidation.canReconcile | SQL close_agent_day_with_cash_breakdown: p_source IS NULL OR p_source NOT IN ('MANUAL', 'ARQUEO_CAJA', 'CORTE_CAJA') | SQL close_agent_day_with_cash_breakdown: p_cash_details IS NULL OR jsonb_typeof(p_cash_details) <> 'array' | SQL close_agent_day_with_cash_breakdown: v_row.denomination IS NULL OR NOT cash_valid_denomination(v_row.denomination) OR v_row.quantity IS NULL OR v_row.quantity < 0 OR v_row.quantity <> trunc(v_row.q | SQL close_agent_day_with_cash_breakdown: v_distinct <> v_rows | SQL close_agent_day_with_cash_breakdown: v_total <> p_total_cash | SQL close_agent_day_with_cash_breakdown: (p_source = 'MANUAL') y (p_source_cash_count_id IS NOT NULL)
+6. **¿Dónde se almacenan los datos?** close_agent_day_with_cash_breakdown(), close_agent_day(), agent_reconciliation_cash_breakdowns, agent_reconciliation_cash_details, agent_reconciliations, day_audit_logs, day_openings
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

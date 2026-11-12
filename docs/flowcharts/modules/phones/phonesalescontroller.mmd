@@ -1,0 +1,88 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de PhoneSalesController
+%% @modulo: Teléfonos (phones)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a PhoneSalesController, sus 5 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/phones/presentation/controllers/phone-sales.controller.ts ; comercial-jhoel-app/src/app/core/services/phones.service.ts ; comercial-jhoel-app/src/app/features/dashboard/phones/sale/phones-sale-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/phones/inventory/phones-inventory-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/phones/components/phone-sale-detail-modal/phone-sale-detail-modal.component.ts ; comercial-jhoel-api/src/modules/phones/application/use-cases/register-phone-sale.use-case.ts ; comercial-jhoel-api/src/modules/phones/application/use-cases/list-phone-sales.use-case.ts ; comercial-jhoel-api/src/modules/phones/application/use-cases/get-phone-sale-by-id.use-case.ts ; comercial-jhoel-api/src/modules/phones/application/use-cases/get-phone-sale-dpi-image.use-case.ts ; comercial-jhoel-api/src/modules/phones/application/use-cases/void-phone-sale.use-case.ts ; comercial-jhoel-api/src/modules/phones/infrastructure/persistence/typeorm-phone-sale.repository.ts ; comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/phones/
+%% @datos: phone_sale_dpi_images, phone_sales, phones
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["PhonesService<br/><small>app/core/services/phones.service.ts</small>"]
+  n3["PhonesSalePageComponent<br/><small>app/features/dashboard/phones/sale/phones-sale-page.component.ts</small>"]
+  n4["PhonesInventoryPageComponent<br/><small>app/features/dashboard/phones/inventory/phones-inventory-page.component.ts</small>"]
+  n5["PhoneSaleDetailModalComponent<br/><small>app/features/dashboard/phones/components/phone-sale-detail-modal/phone-sale-detail-modal.component.ts</small>"]
+  end
+  subgraph s6["PhoneSalesController (api/phones/presentation/controllers/phone-sales.controller.ts)"]
+  n7["POST /api/phone-sales<br/><small>registerSale()</small>"]
+  n8["GET /api/phone-sales<br/><small>findAll()</small>"]
+  n9["GET /api/phone-sales/:id<br/><small>findOne()</small>"]
+  n10["GET /api/phone-sales/:id/dpi-image<br/><small>getDpiImage()</small>"]
+  n11["POST /api/phone-sales/:id/void<br/><small>voidSale() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s12["Aplicación"]
+  n13["RegisterPhoneSaleUseCase<br/><small>api/phones/application/use-cases/register-phone-sale.use-case.ts</small>"]
+  n14["ListPhoneSalesUseCase<br/><small>api/phones/application/use-cases/list-phone-sales.use-case.ts</small>"]
+  n15["GetPhoneSaleByIdUseCase<br/><small>api/phones/application/use-cases/get-phone-sale-by-id.use-case.ts</small>"]
+  n16["GetPhoneSaleDpiImageUseCase<br/><small>api/phones/application/use-cases/get-phone-sale-dpi-image.use-case.ts</small>"]
+  n17["VoidPhoneSaleUseCase<br/><small>api/phones/application/use-cases/void-phone-sale.use-case.ts</small>"]
+  end
+  subgraph s18["Dominio · Infraestructura · PostgreSQL"]
+  n19["PhoneSaleRepository"]
+  n20["TypeOrmPhoneSaleRepository<br/><small>api/phones/infrastructure/persistence/typeorm-phone-sale.repository.ts</small>"]
+  n21[["register_phone_sale()"]]
+  n22[("phone_sale_dpi_images")]
+  n23[("phone_sales")]
+  n24[("phones")]
+  n25["ClientRepository"]
+  n26["TypeOrmClientRepository<br/><small>api/clients/infrastructure/persistence/typeorm-client.repository.ts</small>"]
+  n27[["void_phone_sale()"]]
+  end
+  n3 -->|confirmSale→registerSale, fetchAll→getSales, confirmVoid→voidSale| n2
+  n4 -->|fetchAll→getSales| n2
+  n5 -->|ngOnChanges→getSaleById, loadImage→getSaleDpiImage| n2
+  n2 -->|registerSale| n7
+  n2 -->|getSales| n8
+  n2 -->|getSaleById| n9
+  n2 -->|getSaleDpiImage| n10
+  n2 -->|voidSale| n11
+  n7 --> n13
+  n8 --> n14
+  n9 --> n15
+  n10 --> n16
+  n11 --> n17
+  n13 -->|create| n19
+  n19 -->|implementa| n20
+  n20 -->|create| n21
+  n21 -->|escribe| n22
+  n21 -->|escribe| n23
+  n21 -->|escribe| n24
+  n13 -->|findById| n25
+  n25 -->|implementa| n26
+  n14 -->|findAll| n19
+  n15 -->|findById| n19
+  n16 -->|findById, getDpiImage| n19
+  n20 -->|getDpiImage| n23
+  n20 -->|getDpiImage| n22
+  n17 -->|voidSale| n19
+  n20 -->|voidSale| n27
+  n27 -->|escribe| n23
+  n27 -->|escribe| n24
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5 fe
+  class n7,n8,n9,n10,n11 api
+  class n13,n14,n15,n16,n17 app
+  class n19,n25 dom
+  class n20,n26 infra
+  class n21,n22,n23,n24,n27 db

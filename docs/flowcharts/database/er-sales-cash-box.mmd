@@ -1,0 +1,28 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Caja de ventas
+%% @modulo: Caja de ventas (sales-cash-box)
+%% @representa: Tablas del dominio sales-cash-box (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: sales_cash_box_movements
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  sales_cash_box_movements {
+    uuid id PK
+    uuid business_id FK
+    numeric amount
+    character_varying movement_type
+    uuid created_by FK
+    uuid voided_by FK
+  }
+  businesses {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  businesses ||--o{ sales_cash_box_movements : "business_id"
+  users ||--o{ sales_cash_box_movements : "created_by"
+  users |o--o{ sales_cash_box_movements : "voided_by"

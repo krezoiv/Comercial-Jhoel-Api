@@ -4,8 +4,10 @@ import { LoadedCashCountInfo, cashCountFromRows } from '../models';
 import { CuadreAgentesStateService } from './cuadre-agentes-state.service';
 
 const INFO: LoadedCashCountInfo = {
+  source: 'CORTE_CAJA',
   id: 'c1',
-  number: 7,
+  number: null,
+  cutNumber: 2,
   countedAt: '2026-11-11T15:00:00.000Z',
   businessDate: '2026-11-11',
   createdByUsername: 'supervisor',

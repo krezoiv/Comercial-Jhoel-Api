@@ -1,0 +1,70 @@
+# Mapa de AuthController
+
+Módulo: **Autenticación (auth)** · Fuente editable: [`authcontroller.mmd`](authcontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["AuthService<br/><small>app/core/services/auth.service.ts</small>"]
+  n3["LoginPageComponent<br/><small>app/features/auth/login/login-page.component.ts</small>"]
+  n4["ChangePasswordModalComponent<br/><small>app/features/dashboard/change-password-modal/change-password-modal.component.ts</small>"]
+  end
+  subgraph s5["AuthController (api/auth/presentation/controllers/auth.controller.ts)"]
+  n6["POST /api/auth/login<br/><small>login()</small>"]
+  n7["POST /api/auth/change-password<br/><small>changePassword()</small>"]
+  end
+  subgraph s8["Aplicación"]
+  n9["LoginUseCase<br/><small>api/auth/application/use-cases/login.use-case.ts</small>"]
+  n10["ChangePasswordUseCase<br/><small>api/auth/application/use-cases/change-password.use-case.ts</small>"]
+  end
+  subgraph s11["Dominio · Infraestructura · PostgreSQL"]
+  n12["UserRepository"]
+  n13["TypeOrmUserRepository<br/><small>api/users/infrastructure/persistence/typeorm-user.repository.ts</small>"]
+  n14["PasswordHasher"]
+  n15["BcryptPasswordHasher<br/><small>api/shared/infrastructure/services/bcrypt-password-hasher.service.ts</small>"]
+  n16["TokenService"]
+  n17["NestJwtTokenService<br/><small>api/auth/infrastructure/services/jwt-token.service.ts</small>"]
+  end
+  n3 -->|submit→login| n2
+  n4 -->|submit→changePassword| n2
+  n2 -->|login| n6
+  n2 -->|changePassword| n7
+  n6 --> n9
+  n7 --> n10
+  n9 -->|findByUsernameOrPhone| n12
+  n12 -->|implementa| n13
+  n9 -->|compare| n14
+  n14 -->|implementa| n15
+  n9 -->|sign| n16
+  n16 -->|implementa| n17
+  n10 -->|findById, updatePasswordHash| n12
+  n10 -->|compare, hash| n14
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4 fe
+  class n6,n7 api
+  class n9,n10 app
+  class n12,n14,n16 dom
+  class n13,n15,n17 infra
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a AuthController, sus 2 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/auth/presentation/controllers/auth.controller.ts`](../../../../comercial-jhoel-api/src/modules/auth/presentation/controllers/auth.controller.ts), [`comercial-jhoel-app/src/app/core/services/auth.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/auth.service.ts), [`comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/change-password-modal/change-password-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/change-password-modal/change-password-modal.component.ts), [`comercial-jhoel-api/src/modules/auth/application/use-cases/login.use-case.ts`](../../../../comercial-jhoel-api/src/modules/auth/application/use-cases/login.use-case.ts), [`comercial-jhoel-api/src/modules/auth/application/use-cases/change-password.use-case.ts`](../../../../comercial-jhoel-api/src/modules/auth/application/use-cases/change-password.use-case.ts), [`comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts`](../../../../comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts`](../../../../comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts), [`comercial-jhoel-api/src/modules/auth/infrastructure/services/jwt-token.service.ts`](../../../../comercial-jhoel-api/src/modules/auth/infrastructure/services/jwt-token.service.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/auth/
+6. **¿Dónde se almacenan los datos?** sin tablas detectadas
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

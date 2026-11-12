@@ -1,0 +1,44 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Qué módulos usan las tablas — Ventas
+%% @modulo: Ventas (sales)
+%% @representa: Módulos del backend que usan cada tabla y cómo: entidad TypeORM, consulta SQL, escritura SQL directa o escritura a través de una función PL/pgSQL
+%% @inicio: Código de comercial-jhoel-api/src/modules (sin migraciones ni pruebas)
+%% @archivos: comercial-jhoel-api/src/modules (repositorios en infrastructure/persistence de cada módulo)
+%% @decisiones: No aplica
+%% @datos: inventory_stock, products, sale_details, sales
+%% @fin: No aplica
+%% @errores: No aplica
+flowchart LR
+  n1[("inventory_stock")]
+  n2["Inventario<br/><small>api/inventory</small>"]
+  n3["Compras<br/><small>api/purchases</small>"]
+  n4["Ventas<br/><small>api/sales</small>"]
+  n5[("products")]
+  n6["Productos<br/><small>api/products</small>"]
+  n7["Unidades de medida<br/><small>api/units-of-measure</small>"]
+  n8[("sale_details")]
+  n9["Caja de ventas<br/><small>api/sales-cash-box</small>"]
+  n10[("sales")]
+  n2 -->|consulta · entidad ORM …| n1
+  n3 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n1
+  n4 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n1
+  n6 -->|consulta · entidad ORM| n5
+  n3 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n5
+  n4 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n5
+  n7 -->|consulta| n5
+  n4 -->|consulta · entidad ORM …| n8
+  n9 -->|consulta| n8
+  n4 -->|consulta · entidad ORM …| n10
+  n9 -->|consulta| n10
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1,n5,n8,n10 db
+  class n2,n3,n4,n6,n7,n9 app

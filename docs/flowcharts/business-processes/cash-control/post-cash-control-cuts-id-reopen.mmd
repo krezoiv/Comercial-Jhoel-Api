@@ -1,0 +1,127 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: POST /api/cash-control/cuts/:id/reopen
+%% @modulo: Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)
+%% @representa: Flujo de decisiones real de POST /api/cash-control/cuts/:id/reopen: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: CashCutControlPanelComponent.onReason (comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts ; comercial-jhoel-app/src/app/core/services/cash-control.service.ts ; comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts ; comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-cut-commands.use-cases.ts ; comercial-jhoel-api/src/modules/cash-control/application/use-cases/get-cash-position.use-case.ts ; comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-control.repository.ts ; comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts
+%% @decisiones: sesión JWT válida | rol 'SUPER_ADMIN', 'ADMIN' | DTO ReasonRequestDto | !isCashAdmin(input.role) | !period | SQL reopen_cash_cut_period: p_reason IS NULL OR length(trim(p_reason)) < 5 | SQL reopen_cash_cut_period: NOT FOUND | SQL reopen_cash_cut_period: v_period.status <> 'FINALIZADO' | SQL reopen_cash_cut_period: v_day.status = 'CERRADO' | SQL reopen_cash_cut_period: EXISTS (SELECT 1 FROM cash_cut_periods WHERE status = 'ABIERTO') | SQL reopen_cash_cut_period: EXISTS ( SELECT 1 FROM cash_cut_periods WHERE operational_day_id = v_period.operational_day_id AND period_number > v_period.period_number AND status <> 'PROGRAM
+%% @datos: reopen_cash_cut_period(), cash_cut_counts, cash_cut_events, cash_cut_periods
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/cash-control/cuts/:id/reopen"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["CashControlService.reopenCut<br/><small>app/core/services/cash-control.service.ts</small>"]
+  n6["CashCutControlPanelComponent.onReason<br/><small>app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/cash-control/cuts/:id/reopen<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('SUPER_ADMIN', 'ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14{"¿ReasonRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n15(["400 Datos inválidos"])
+  n16["CashControlController.reopenCut<br/><small>api/cash-control/presentation/controllers/cash-control.controller.ts</small>"]
+  end
+  subgraph s17["Aplicación — caso de uso"]
+  n18["ReopenCashCutUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-cut-commands.use-cases.ts</small>"]
+  n19{"¿!isCashAdmin(input.role)?<br/><small>L253</small>"}
+  n20(["cashControlError('CASH_FORBIDDEN')"])
+  n21{"¿!period?<br/><small>L257</small>"}
+  n22(["cashControlError('CASH_CUT_NOT_FOUND')"])
+  end
+  n23["Caso de uso GetCashPositionUseCase<br/><small>execute</small>"]
+  subgraph s24["Dominio → Infraestructura"]
+  n25["Puerto CashControlRepository.findPeriodById / reopenPeriod<br/>@Inject(CASH_CONTROL_REPOSITORY)"]
+  n26["TypeOrmCashControlRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts</small>"]
+  n27[("findPeriodById: TypeORM Repository")]
+  subgraph s28["PostgreSQL — función reopen_cash_cut_period"]
+  n29[["SELECT reopen_cash_cut_period(…)<br/><small>reopenPeriod — una transacción</small>"]]
+  n30{"¿p_reason IS NULL OR length(trim(p_reason)) #lt; 5?"}
+  n31(["RAISE CASH_REASON_REQUIRED<br/>(rollback)"])
+  n32{"¿NOT FOUND?"}
+  n33(["RAISE CASH_CUT_NOT_FOUND<br/>(rollback)"])
+  n34{"¿v_period.status #lt;#gt; 'FINALIZADO'?"}
+  n35(["RAISE CASH_CUT_NOT_FINISHED<br/>(rollback)"])
+  n36{"¿v_day.status = 'CERRADO'?"}
+  n37(["RAISE CASH_DAY_ALREADY_CLOSED<br/>(rollback)"])
+  n38{"¿EXISTS (SELECT 1 FROM cash_cut_periods WHERE status = 'ABIERTO')?"}
+  n39(["RAISE CASH_CUT_ANOTHER_OPEN<br/>(rollback)"])
+  n40{"¿EXISTS ( SELECT 1 FROM cash_cut_periods WHERE operational_day_id = v_period.operational_day_id AND period_number #gt; v_period.period_number AND status #lt;#gt; 'PROGRAM?"}
+  n41(["RAISE CASH_CUT_LATER_EXISTS<br/>(rollback)"])
+  n42[("Escribe:<br/>cash_cut_counts<br/>cash_cut_events<br/>cash_cut_periods")]
+  end
+  end
+  n43(["Fin: la interfaz se actualiza"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 --> n18
+  n18 --> n19
+  n19 -->|sí| n20
+  n20 --> n2
+  n19 -->|no| n21
+  n21 -->|sí| n22
+  n22 --> n2
+  n18 -.->|consulta| n23
+  n21 -->|no| n25
+  n25 -->|implementa| n26
+  n26 --> n27
+  n27 --> n8
+  n26 -->|reopenPeriod| n29
+  n29 --> n30
+  n30 -->|sí| n31
+  n31 --> n2
+  n30 -->|no| n32
+  n32 -->|sí| n33
+  n33 --> n2
+  n32 -->|no| n34
+  n34 -->|sí| n35
+  n35 --> n2
+  n34 -->|no| n36
+  n36 -->|sí| n37
+  n37 --> n2
+  n36 -->|no| n38
+  n38 -->|sí| n39
+  n39 --> n2
+  n38 -->|no| n40
+  n40 -->|sí| n41
+  n41 --> n2
+  n40 -->|no| n42
+  n42 -->|COMMIT| n8
+  n8 --> n43
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n15,n20,n22,n31,n33,n35,n37,n39,n41 err
+  class n5,n6,n7 fe
+  class n8,n43 ok
+  class n10,n12,n14,n19,n21,n30,n32,n34,n36,n38,n40 dec
+  class n16 api
+  class n18,n23 app
+  class n25 dom
+  class n26 infra
+  class n27,n29,n42 db

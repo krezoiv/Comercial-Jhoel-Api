@@ -24,10 +24,19 @@
     >
       <p class="cash-source__title">
         <app-icon [name]="origin.modifiedAfterLoad ? 'alert-circle' : 'check-circle'" [size]="16" />
-        {{ origin.modifiedAfterLoad ? 'Modificado manualmente después de cargar arqueo' : 'Origen: Último arqueo de Caja' }}
+        {{
+          origin.modifiedAfterLoad
+            ? 'Modificado manualmente después de cargar arqueo'
+            : count.source === 'CORTE_CAJA'
+              ? 'Origen: Segundo corte · final del día'
+              : 'Origen: Último arqueo de Caja'
+        }}
       </p>
       <dl class="cash-source__grid">
-        <div><dt>Arqueo</dt><dd>#{{ count.number }}</dd></div>
+        <div>
+          <dt>{{ count.source === 'CORTE_CAJA' ? 'Corte' : 'Arqueo' }}</dt>
+          <dd>{{ count.source === 'CORTE_CAJA' ? cutName(count.cutNumber) : '#' + count.number }}</dd>
+        </div>
         <div><dt>Fecha y hora</dt><dd>{{ count.countedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
         <div><dt>Día operativo</dt><dd>{{ formatDay(count.businessDate) }}</dd></div>
         <div><dt>Responsable</dt><dd>{{ count.createdByUsername }}</dd></div>

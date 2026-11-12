@@ -10,7 +10,11 @@ import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes
 import { DayStatusService } from '../../../core/services/day-status.service';
 import { BankBalanceDraftStore } from '../../../core/services/bank-balance-draft.store';
 import { NotificationService } from '../../../core/services/notification.service';
-import { CuadreAgentesPageComponent, REPLACE_WITH_COUNT_MESSAGE } from './cuadre-agentes-page.component';
+import {
+  CuadreAgentesPageComponent,
+  NO_SECOND_CUT_MESSAGE,
+  REPLACE_WITH_COUNT_MESSAGE,
+} from './cuadre-agentes-page.component';
 
 const ACCEPTANCE: Array<[number, number]> = [
   [200, 10], [100, 20], [50, 10], [20, 10], [10, 10], [5, 10],
@@ -20,8 +24,11 @@ const ACCEPTANCE: Array<[number, number]> = [
 function latest(isFromReferenceDay = true): LatestCashCountResponse {
   return {
     count: {
+      source: 'CORTE_CAJA',
       id: 'count-1',
-      number: 12,
+      number: null,
+      cutPeriodId: 'cut-2',
+      cutNumber: 2,
       businessDate: isFromReferenceDay ? '2026-11-11' : '2026-11-10',
       countedAt: '2026-11-11T15:30:00.000Z',
       totalCounted: 4882.5,
@@ -104,7 +111,7 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
     expect(state.origin().modifiedAfterLoad).toBeTrue();
     const input = component.buildReconciliationInput();
     expect(input.totalCash).toBe(4883);
-    expect(input.cashBreakdownSource).toBe('ARQUEO_CAJA');
+    expect(input.cashBreakdownSource).toBe('CORTE_CAJA');
     expect(input.sourceCashCountId).toBe('count-1');
     expect(input.cashDetails?.length).toBe(12);
     expect(input.cashDetails?.find((d) => d.denomination === 0.01)?.quantity).toBe(150);
@@ -122,9 +129,7 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
       of({ count: null, breakdown: [], referenceBusinessDate: '2026-11-11', isFromReferenceDay: false }),
     );
     await component.loadLatestCount();
-    expect(notifications.info).toHaveBeenCalledWith(
-      'No hay arqueos de Caja registrados. Puede ingresar el conteo manualmente.',
-    );
+    expect(notifications.info).toHaveBeenCalledWith(NO_SECOND_CUT_MESSAGE);
     expect(state.origin().loadedCount).toBeNull();
   });
 
@@ -144,5 +149,26 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
     component.clearCount();
     expect(state.origin().loadedCount).toBeNull();
     expect(component.totalCash()).toBe(0);
+  });
+
+  it('loads exactly the second cut (final del día) — never the sum of both cuts', async () => {
+    const corte2: Array<[number, number]> = [[200, 80], [100, 40], [50, 15], [20, 20], [10, 10]];
+    const response = latest();
+    response.breakdown = corte2.map(([denomination, quantity]) => ({ denomination, quantity, subtotal: denomination * quantity }));
+    response.count!.totalCounted = 21250;
+    custody.getLatestCount.and.returnValue(of(response));
+    await component.loadLatestCount();
+    expect(state.cashCounts()[200]).toBe(80);
+    expect(state.cashCounts()[100]).toBe(40);
+    expect(state.cashCounts()[50]).toBe(15);
+    expect(state.cashCounts()[20]).toBe(20);
+    expect(state.cashCounts()[10]).toBe(10);
+    expect(state.cashCounts()[0.01]).toBe(0);
+    expect(component.totalCash()).toBe(21250);
+    expect(state.origin().loadedCount?.cutNumber).toBe(2);
+    // Loading twice replaces (does not accumulate).
+    await component.loadLatestCount();
+    expect(state.cashCounts()[200]).toBe(80);
+    expect(component.totalCash()).toBe(21250);
   });
 });

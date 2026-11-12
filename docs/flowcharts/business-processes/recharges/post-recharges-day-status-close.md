@@ -1,0 +1,143 @@
+# POST /api/recharges/day-status/close
+
+Módulo: **Recargas electrónicas (recharges)** · Fuente editable: [`post-recharges-day-status-close.mmd`](post-recharges-day-status-close.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/recharges/day-status/close"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["RechargesService.closeDay<br/><small>app/core/services/recharges.service.ts</small>"]
+  n6["RechargeDayStatusService.closeDay<br/><small>app/core/services/recharge-day-status.service.ts</small>"]
+  n7["RechargesPageComponent.confirmCloseDayModal<br/><small>app/features/dashboard/recharges/recharges-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n8["HTTP POST /api/recharges/day-status/close<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n9["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s10["API NestJS — presentación"]
+  n11{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n12(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n13{"¿CloseRechargeDayRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n14(["400 Datos inválidos"])
+  n15["RechargesController.closeDay<br/><small>api/recharges/presentation/controllers/recharges.controller.ts</small>"]
+  end
+  subgraph s16["Aplicación — caso de uso"]
+  n17["CloseRechargeDayUseCase.execute<br/><small>api/recharges/application/use-cases/close-recharge-day.use-case.ts</small>"]
+  n18["assertValidOperationDate()<br/><small>llamada en L41</small><br/><small>api/recharge-cash-box/application/utils/assert-valid-operation-date.ts</small>"]
+  n19{"¿date #gt; maxAllowedOperationDate()?<br/><small>L13</small>"}
+  n20(["InvalidMovementDateError()"])
+  n21{"¿!dayOpening?<br/><small>L44</small>"}
+  n22(["RechargeDayNotOpenedError(input.date)"])
+  n23{"¿dayOpening.isCancelled?<br/><small>L47</small>"}
+  n24(["RechargeDayCancelledError(input.date)"])
+  n25{"¿dayOpening.isClosed?<br/><small>L50</small>"}
+  n26(["RechargeDayAlreadyClosedError(input.date)"])
+  n27{"¿!hasSavedCuadreToday?<br/><small>L57</small>"}
+  n28(["RechargeDayNotReadyToCloseError(input.date)"])
+  end
+  n29["Puerto RechargeSalesClosureRepository<br/><small>existsForDate</small>"]
+  n30["Caso de uso GetRechargeDayStatusUseCase<br/><small>execute</small>"]
+  subgraph s31["Dominio → Infraestructura"]
+  n32["Puerto RechargeDayOpeningRepository.findByDate / close<br/>@Inject(RECHARGE_DAY_OPENING_REPOSITORY)"]
+  n33["TypeOrmRechargeDayOpeningRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts</small>"]
+  n34[("findByDate: TypeORM Repository")]
+  subgraph s35["PostgreSQL — función close_recharge_day"]
+  n36[["SELECT close_recharge_day(…)<br/><small>close — una transacción</small>"]]
+  n37{"¿NOT FOUND?"}
+  n38(["RAISE RECHARGE_DAY_NOT_OPENED<br/>(rollback)"])
+  n39{"¿v_day.is_cancelled?"}
+  n40(["RAISE RECHARGE_DAY_CANCELLED<br/>(rollback)"])
+  n41{"¿v_day.closed_at IS NOT NULL?"}
+  n42(["RAISE RECHARGE_DAY_ALREADY_CLOSED<br/>(rollback)"])
+  n43{"¿v_closure_count = 0?"}
+  n44(["RAISE RECHARGE_DAY_NOT_READY_TO_CLOSE<br/>(rollback)"])
+  n45[("Escribe:<br/>recharge_day_audit_logs<br/>recharge_day_openings")]
+  end
+  end
+  n46(["Fin: la interfaz se actualiza<br/>this.status.set"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n1 -->|acción del usuario| n7
+  n7 --> n5
+  n5 --> n8
+  n8 --> n11
+  n11 -->|no| n12
+  n12 --> n3
+  n11 -->|sí| n13
+  n13 -->|no| n14
+  n14 --> n2
+  n13 -->|sí| n15
+  n15 --> n17
+  n17 --> n18
+  n18 --> n19
+  n19 -->|sí| n20
+  n20 --> n2
+  n19 -->|no| n21
+  n21 -->|sí| n22
+  n22 --> n2
+  n21 -->|no| n23
+  n23 -->|sí| n24
+  n24 --> n2
+  n23 -->|no| n25
+  n25 -->|sí| n26
+  n26 --> n2
+  n25 -->|no| n27
+  n27 -->|sí| n28
+  n28 --> n2
+  n17 -.->|consulta| n29
+  n17 -.->|consulta| n30
+  n27 -->|no| n32
+  n32 -->|implementa| n33
+  n33 --> n34
+  n34 --> n9
+  n33 -->|close| n36
+  n36 --> n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n37 -->|no| n39
+  n39 -->|sí| n40
+  n40 --> n2
+  n39 -->|no| n41
+  n41 -->|sí| n42
+  n42 --> n2
+  n41 -->|no| n43
+  n43 -->|sí| n44
+  n44 --> n2
+  n43 -->|no| n45
+  n45 -->|COMMIT| n9
+  n9 --> n46
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n12,n14,n20,n22,n24,n26,n28,n38,n40,n42,n44 err
+  class n5,n6,n7,n8 fe
+  class n9,n46 ok
+  class n11,n13,n19,n21,n23,n25,n27,n37,n39,n41,n43 dec
+  class n15 api
+  class n17,n30 app
+  class n18,n29,n32 dom
+  class n33 infra
+  class n34,n36,n45 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/recharges/day-status/close: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** RechargeDayStatusService.closeDay (comercial-jhoel-app/src/app/core/services/recharge-day-status.service.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharges.controller.ts`](../../../../comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharges.controller.ts), [`comercial-jhoel-app/src/app/core/services/recharges.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/recharges.service.ts), [`comercial-jhoel-app/src/app/core/services/recharge-day-status.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/recharge-day-status.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/recharges/recharges-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/recharges/recharges-page.component.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/close-recharge-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/close-recharge-day.use-case.ts), [`comercial-jhoel-api/src/modules/recharge-cash-box/application/utils/assert-valid-operation-date.ts`](../../../../comercial-jhoel-api/src/modules/recharge-cash-box/application/utils/assert-valid-operation-date.ts), [`comercial-jhoel-api/src/modules/recharges/domain/repositories/recharge-sales-closure.repository.ts`](../../../../comercial-jhoel-api/src/modules/recharges/domain/repositories/recharge-sales-closure.repository.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-day-status.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-day-status.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/domain/repositories/recharge-day-opening.repository.ts`](../../../../comercial-jhoel-api/src/modules/recharges/domain/repositories/recharge-day-opening.repository.ts), [`comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts`](../../../../comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO CloseRechargeDayRequestDto | date > maxAllowedOperationDate() | !dayOpening | dayOpening.isCancelled | dayOpening.isClosed | !hasSavedCuadreToday | SQL close_recharge_day: NOT FOUND | SQL close_recharge_day: v_day.is_cancelled | SQL close_recharge_day: v_day.closed_at IS NOT NULL | SQL close_recharge_day: v_closure_count = 0
+6. **¿Dónde se almacenan los datos?** close_recharge_day(), recharge_day_audit_logs, recharge_day_openings
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

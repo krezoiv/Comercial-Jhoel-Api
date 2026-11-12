@@ -1,0 +1,68 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: POST /api/alerts/:key/read
+%% @modulo: Alertas (alerts)
+%% @representa: Flujo de decisiones real de POST /api/alerts/:key/read: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: AlertBellComponent.selectAlert (comercial-jhoel-app/src/app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/alerts/presentation/controllers/alerts.controller.ts ; comercial-jhoel-app/src/app/core/services/alerts.service.ts ; comercial-jhoel-app/src/app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts ; comercial-jhoel-api/src/modules/alerts/application/use-cases/mark-alert-read.use-case.ts ; comercial-jhoel-api/src/modules/alerts/domain/repositories/alert-read-mark.repository.ts ; comercial-jhoel-api/src/modules/alerts/infrastructure/persistence/typeorm-alert-read-mark.repository.ts
+%% @decisiones: sesión JWT válida
+%% @datos: ver repositorio
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/alerts/:key/read"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["AlertsService.markAsRead<br/><small>app/core/services/alerts.service.ts</small>"]
+  n6["AlertBellComponent.selectAlert<br/><small>app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/alerts/:key/read<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12["AlertsController.markRead<br/><small>api/alerts/presentation/controllers/alerts.controller.ts</small>"]
+  end
+  subgraph s13["Aplicación — caso de uso"]
+  n14["MarkAlertReadUseCase.execute<br/><small>api/alerts/application/use-cases/mark-alert-read.use-case.ts</small>"]
+  end
+  subgraph s15["Dominio → Infraestructura"]
+  n16["Puerto AlertReadMarkRepository.markRead<br/>@Inject(ALERT_READ_MARK_REPOSITORY)"]
+  n17["TypeOrmAlertReadMarkRepository<br/><small>api/alerts/infrastructure/persistence/typeorm-alert-read-mark.repository.ts</small>"]
+  n18[("markRead: TypeORM Repository")]
+  end
+  n19(["Fin: la interfaz se actualiza<br/>this.router.navigateByUrl"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 --> n14
+  n14 --> n16
+  n16 -->|implementa| n17
+  n17 --> n18
+  n18 --> n8
+  n8 --> n19
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11 err
+  class n5,n6,n7 fe
+  class n8,n19 ok
+  class n10 dec
+  class n12 api
+  class n14 app
+  class n16 dom
+  class n17 infra
+  class n18 db

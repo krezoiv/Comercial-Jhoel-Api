@@ -1,0 +1,26 @@
+flowchart TD
+  subgraph Ventas
+    V1["SalesDraftStore.onProductSelected"] --> V2["POST /api/sales/items"] --> V3["AdjustSaleItemUseCase"] --> V4[("adjust_sale_item")]
+    V5["SalesDraftStore.confirmSale"] --> V6["POST /api/sales/confirm"] --> V7["ConfirmOpenSaleUseCase"] --> V8[("confirm_open_sale")]
+  end
+  subgraph Compras
+    C1["PurchasesPageComponent.confirmSave"] --> C2["POST /api/purchases"] --> C3["CreatePurchaseUseCase"] --> C4[("confirm_purchase")]
+  end
+  subgraph Transaccionar
+    T1["TransaccionarPageComponent.confirmSave"] --> T2["POST /api/bank-deposits"] --> T3["RegisterBankDepositOperationUseCase"] --> T4[("register_bank_deposit_operation")]
+    T4 --> T5[("apply_bank_account_movement")]
+    T4 -.trigger.-> T6[("cash_on_bank_deposit_insert")]
+  end
+  subgraph AgentesBancarios["Agentes Bancarios"]
+    A1["BankAgentsPageComponent.confirmEntryModal"] --> A2["POST /api/banks/day-status/open"] --> A3["OpenDayUseCase"]
+    A4["BankAgentsPageComponent.confirmSaveChanges"] --> A5["POST /api/banks/balances"] --> A6["SaveBankBalancesUseCase"] --> A7[("save_bank_balance")]
+    A8["CuadreAgentesPageComponent.confirmSaveCuadre"] --> A9["POST /api/agent-reconciliations"] --> A10["CloseAgentDayUseCase"] --> A11[("close_agent_day_with_cash_breakdown")] --> A12[("close_agent_day")]
+  end
+  subgraph Efectivo["Control de Efectivo"]
+    E1["CashCutFinishModalComponent.save"] --> E2["POST /api/cash-control/cuts/:id/finish"] --> E3["FinishCashCutUseCase"] --> E4[("finish_cash_cut_period")]
+    E5["CashCountModalComponent.save"] --> E6["POST /api/cash-control/counts"] --> E7["RegisterCashCountUseCase"] --> E8[("register_cash_count")]
+    E9["WarehouseTransferModalComponent.save"] --> E10["POST /api/cash-control/warehouse/transfers"] --> E11["RegisterWarehouseTransferUseCase"] --> E12[("register_cash_warehouse_transfer")]
+  end
+  subgraph CxC["Cuentas por Cobrar"]
+    X1["SettlementModalComponent.confirm"] --> X2["POST /api/account-receivable-payments"] --> X3["SettleAccountsReceivableUseCase"] --> X4[("settle_accounts_receivable")]
+  end

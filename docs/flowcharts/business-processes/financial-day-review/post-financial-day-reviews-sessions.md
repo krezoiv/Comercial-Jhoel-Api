@@ -1,0 +1,145 @@
+# POST /api/financial-day-reviews/sessions
+
+Módulo: **Revisión de días operativos (financial-day-review)** · Fuente editable: [`post-financial-day-reviews-sessions.mmd`](post-financial-day-reviews-sessions.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/financial-day-reviews/sessions"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["FinancialDayReviewService.openReview<br/><small>app/core/services/financial-day-review.service.ts</small>"]
+  n6["FinancialDayReviewPageComponent.confirmOpen<br/><small>app/features/dashboard/financial-day-review/financial-day-review-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/financial-day-reviews/sessions<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14{"¿OpenFinancialDayReviewRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n15(["400 Datos inválidos"])
+  n16["FinancialDayReviewController.open<br/><small>api/financial-day-review/presentation/controllers/financial-day-review.controller.ts</small>"]
+  end
+  subgraph s17["Aplicación — caso de uso"]
+  n18["OpenFinancialDayReviewUseCase.execute<br/><small>api/financial-day-review/application/use-cases/financial-day-review.use-cases.ts</small>"]
+  n19["assertPermission()<br/><small>llamada en L150</small><br/><small>api/financial-day-review/application/use-cases/financial-day-review.use-cases.ts</small>"]
+  n20{"¿!hasFinancialDayPermission(role, permission)?<br/><small>L33</small>"}
+  n21(["financialDayReviewError('FINANCIAL_REVIEW_FORBIDDEN')"])
+  n22["assertDate()<br/><small>llamada en L151</small><br/><small>api/financial-day-review/application/use-cases/financial-day-review.use-cases.ts</small>"]
+  n23{"¿!ISO_DATE.test(value) #124;#124; Number.isNaN(Date.parse('${value}T00:00:00Z'))?<br/><small>L39</small>"}
+  n24(["financialDayReviewError('FINANCIAL_REVIEW_INVALID_DATE')"])
+  n25{"¿!input.reason #124;#124; input.reason.trim().length #lt; 5?<br/><small>L152</small>"}
+  n26(["financialDayReviewError('FINANCIAL_REVIEW_REASON_REQUIRED')"])
+  n27{"¿!session?<br/><small>L162</small>"}
+  n28(["financialDayReviewError('FINANCIAL_REVIEW_SESSION_NOT_FOUND')"])
+  end
+  subgraph s29["Dominio → Infraestructura"]
+  n30["Puerto FinancialDayReviewRepository.openSession / findSessionById<br/>@Inject(FINANCIAL_DAY_REVIEW_REPOSITORY)"]
+  n31["TypeOrmFinancialDayReviewRepository<br/><small>api/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts</small>"]
+  subgraph s32["PostgreSQL — función open_financial_day_review"]
+  n33[["SELECT open_financial_day_review(…)<br/><small>openSession — una transacción</small>"]]
+  n34{"¿p_reason IS NULL OR length(btrim(p_reason)) #lt; 5?"}
+  n35(["RAISE FINANCIAL_REVIEW_REASON_REQUIRED<br/>(rollback)"])
+  n36{"¿p_date IS NULL OR p_date #gt;= v_today?"}
+  n37(["RAISE FINANCIAL_REVIEW_DATE_NOT_HISTORICAL<br/>(rollback)"])
+  n38{"¿NOT EXISTS (SELECT 1 FROM day_openings WHERE date = p_date) AND NOT EXISTS (SELECT 1 FROM cash_operational_days WHERE operational_date = p_date) AND NOT EXISTS ?"}
+  n39(["RAISE FINANCIAL_REVIEW_DAY_NOT_FOUND<br/>(rollback)"])
+  n40{"¿EXISTS (SELECT 1 FROM day_openings WHERE date = p_date AND closed_at IS NULL AND NOT is_cancelled) OR EXISTS (SELECT 1 FROM cash_operational_days WHERE operatio?"}
+  n41(["RAISE FINANCIAL_REVIEW_DAY_STILL_OPEN<br/>(rollback)"])
+  n42{"¿FOUND?"}
+  n43(["RAISE FINANCIAL_REVIEW_ALREADY_OPEN<br/>(rollback)"])
+  n44[["financial_review_assert_role()"]]
+  n45[("Escribe:<br/>financial_day_review_sessions")]
+  end
+  n46[("findSessionById: TypeORM Repository")]
+  end
+  n47(["Fin: la interfaz se actualiza<br/>this.saving.set<br/>this.modalError.set<br/>this.isOpenModal.set<br/>this.notifications.success"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 --> n18
+  n18 --> n19
+  n19 --> n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 --> n23
+  n23 -->|sí| n24
+  n24 --> n2
+  n23 -->|no| n25
+  n25 -->|sí| n26
+  n26 --> n2
+  n25 -->|no| n27
+  n27 -->|sí| n28
+  n28 --> n2
+  n27 -->|no| n30
+  n30 -->|implementa| n31
+  n31 -->|openSession| n33
+  n33 --> n34
+  n34 -->|sí| n35
+  n35 --> n2
+  n34 -->|no| n36
+  n36 -->|sí| n37
+  n37 --> n2
+  n36 -->|no| n38
+  n38 -->|sí| n39
+  n39 --> n2
+  n38 -->|no| n40
+  n40 -->|sí| n41
+  n41 --> n2
+  n40 -->|no| n42
+  n42 -->|sí| n43
+  n43 --> n2
+  n42 -->|no · llama| n44
+  n42 -->|no| n45
+  n45 -->|COMMIT| n8
+  n31 --> n46
+  n46 --> n8
+  n8 --> n47
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n15,n21,n24,n26,n28,n35,n37,n39,n41,n43 err
+  class n5,n6,n7 fe
+  class n8,n47 ok
+  class n10,n12,n14,n20,n23,n25,n27,n34,n36,n38,n40,n42 dec
+  class n16 api
+  class n18 app
+  class n19,n22,n30 dom
+  class n31 infra
+  class n33,n44,n45,n46 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/financial-day-reviews/sessions: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** FinancialDayReviewPageComponent.confirmOpen (comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/financial-day-review/presentation/controllers/financial-day-review.controller.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/presentation/controllers/financial-day-review.controller.ts), [`comercial-jhoel-app/src/app/core/services/financial-day-review.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/financial-day-review.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts), [`comercial-jhoel-api/src/modules/financial-day-review/application/use-cases/financial-day-review.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/application/use-cases/financial-day-review.use-cases.ts), [`comercial-jhoel-api/src/modules/financial-day-review/domain/repositories/financial-day-review.repository.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/domain/repositories/financial-day-review.repository.ts), [`comercial-jhoel-api/src/modules/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'SUPER_ADMIN' | DTO OpenFinancialDayReviewRequestDto | !hasFinancialDayPermission(role, permission) | !ISO_DATE.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`)) | !input.reason || input.reason.trim().length < 5 | !session | SQL open_financial_day_review: p_reason IS NULL OR length(btrim(p_reason)) < 5 | SQL open_financial_day_review: p_date IS NULL OR p_date >= v_today | SQL open_financial_day_review: NOT EXISTS (SELECT 1 FROM day_openings WHERE date = p_date) AND NOT EXISTS (SELECT 1 FROM cash_operational_days WHERE operational_date = p_date) AND NOT EXISTS  | SQL open_financial_day_review: EXISTS (SELECT 1 FROM day_openings WHERE date = p_date AND closed_at IS NULL AND NOT is_cancelled) OR EXISTS (SELECT 1 FROM cash_operational_days WHERE operatio | SQL open_financial_day_review: FOUND
+6. **¿Dónde se almacenan los datos?** open_financial_day_review(), financial_day_review_sessions
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

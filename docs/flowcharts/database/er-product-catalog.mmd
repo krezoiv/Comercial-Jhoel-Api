@@ -1,0 +1,39 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Catálogo de productos
+%% @modulo: Catálogo de productos (product-catalog)
+%% @representa: Tablas del dominio product-catalog (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: catalog_product_requests, catalog_products
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  catalog_product_requests {
+    uuid id PK
+    uuid catalog_product_id FK
+    character_varying product_name
+    character_varying customer_name
+    character_varying status
+    timestamp_with_time_zone updated_at
+    uuid updated_by FK
+  }
+  catalog_products {
+    uuid id PK
+    uuid product_id FK
+    character_varying image_mime_type
+    uuid created_by FK
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
+  }
+  users {
+    uuid id PK
+  }
+  products {
+    uuid id PK
+  }
+  catalog_products ||--o{ catalog_product_requests : "catalog_product_id"
+  users |o--o{ catalog_product_requests : "updated_by"
+  users ||--o{ catalog_products : "created_by"
+  products ||--o{ catalog_products : "product_id"
+  users |o--o{ catalog_products : "updated_by"

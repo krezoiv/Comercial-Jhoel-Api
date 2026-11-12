@@ -1,0 +1,145 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de GuayacanCashBoxController
+%% @modulo: Caja Guayacán (guayacan-cash-box)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a GuayacanCashBoxController, sus 12 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/guayacan-cash-box/presentation/controllers/guayacan-cash-box.controller.ts ; comercial-jhoel-app/src/app/core/services/guayacan-cash-box.service.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/guayacan-cash-box-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-counts/guayacan-cash-counts-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/movement-detail-modal/movement-detail-modal.component.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/cash-count-panel/cash-count-panel.component.ts ; comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/count-detail-modal/count-detail-modal.component.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/list-guayacan-commissions.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/list-guayacan-cash-counts.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/list-guayacan-cash-count-users.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/get-guayacan-cash-box-summary.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/list-guayacan-cash-movements.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/get-guayacan-cash-movement.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/register-guayacan-cash-movement.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/register-guayacan-cash-adjustment.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/void-guayacan-cash-movement.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/get-latest-guayacan-cash-count.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/get-guayacan-cash-count.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/register-guayacan-cash-count.use-case.ts ; comercial-jhoel-api/src/modules/guayacan-cash-box/infrastructure/persistence/typeorm-guayacan-cash-box.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/guayacan-cash-box/
+%% @datos: guayacan_commissions, bank_deposit_operations, transaction_types, users, guayacan_cash_counts, transaction_banks, guayacan_cash_movements, guayacan_cash_movement_details, bank_deposit_cash_details, guayacan_cash_count_details
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["GuayacanCashBoxService<br/><small>app/core/services/guayacan-cash-box.service.ts</small>"]
+  n3["GuayacanCashBoxPageComponent<br/><small>app/features/dashboard/guayacan-cash-box/guayacan-cash-box-page.component.ts</small>"]
+  n4["GuayacanCashCountsPageComponent<br/><small>app/features/dashboard/guayacan-cash-counts/guayacan-cash-counts-page.component.ts</small>"]
+  n5["GuayacanMovementDetailModalComponent<br/><small>app/features/dashboard/guayacan-cash-box/components/movement-detail-modal/movement-detail-modal.component.ts</small>"]
+  n6["GuayacanMovementFormModalComponent<br/><small>app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts</small>"]
+  n7["GuayacanCashCountPanelComponent<br/><small>app/features/dashboard/guayacan-cash-box/components/cash-count-panel/cash-count-panel.component.ts</small>"]
+  n8["GuayacanCountDetailModalComponent<br/><small>app/features/dashboard/guayacan-cash-box/components/count-detail-modal/count-detail-modal.component.ts</small>"]
+  end
+  subgraph s9["GuayacanCashBoxController (api/guayacan-cash-box/presentation/controllers/guayacan-cash-box.controller.ts)"]
+  n10["GET /api/guayacan-cash-box/commissions<br/><small>commissions()</small>"]
+  n11["GET /api/guayacan-cash-box/counts<br/><small>counts()</small>"]
+  n12["GET /api/guayacan-cash-box/counts/users<br/><small>countUsers()</small>"]
+  n13["GET /api/guayacan-cash-box/summary<br/><small>summary()</small>"]
+  n14["GET /api/guayacan-cash-box/movements<br/><small>movements()</small>"]
+  n15["GET /api/guayacan-cash-box/movements/:id<br/><small>movement()</small>"]
+  n16["POST /api/guayacan-cash-box/movements<br/><small>registerMovement()</small>"]
+  n17["POST /api/guayacan-cash-box/adjustments<br/><small>registerAdjustment() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n18["POST /api/guayacan-cash-box/movements/:id/void<br/><small>voidMovement() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n19["GET /api/guayacan-cash-box/counts/latest<br/><small>latestCount()</small>"]
+  n20["GET /api/guayacan-cash-box/counts/:id<br/><small>count()</small>"]
+  n21["POST /api/guayacan-cash-box/counts<br/><small>registerCount()</small>"]
+  end
+  subgraph s22["Aplicación"]
+  n23["ListGuayacanCommissionsUseCase<br/><small>api/guayacan-cash-box/application/use-cases/list-guayacan-commissions.use-case.ts</small>"]
+  n24["ListGuayacanCashCountsUseCase<br/><small>api/guayacan-cash-box/application/use-cases/list-guayacan-cash-counts.use-case.ts</small>"]
+  n25["ListGuayacanCashCountUsersUseCase<br/><small>api/guayacan-cash-box/application/use-cases/list-guayacan-cash-count-users.use-case.ts</small>"]
+  n26["GetGuayacanCashBoxSummaryUseCase<br/><small>api/guayacan-cash-box/application/use-cases/get-guayacan-cash-box-summary.use-case.ts</small>"]
+  n27["ListGuayacanCashMovementsUseCase<br/><small>api/guayacan-cash-box/application/use-cases/list-guayacan-cash-movements.use-case.ts</small>"]
+  n28["GetGuayacanCashMovementUseCase<br/><small>api/guayacan-cash-box/application/use-cases/get-guayacan-cash-movement.use-case.ts</small>"]
+  n29["RegisterGuayacanCashMovementUseCase<br/><small>api/guayacan-cash-box/application/use-cases/register-guayacan-cash-movement.use-case.ts</small>"]
+  n30["RegisterGuayacanCashAdjustmentUseCase<br/><small>api/guayacan-cash-box/application/use-cases/register-guayacan-cash-adjustment.use-case.ts</small>"]
+  n31["VoidGuayacanCashMovementUseCase<br/><small>api/guayacan-cash-box/application/use-cases/void-guayacan-cash-movement.use-case.ts</small>"]
+  n32["GetLatestGuayacanCashCountUseCase<br/><small>api/guayacan-cash-box/application/use-cases/get-latest-guayacan-cash-count.use-case.ts</small>"]
+  n33["GetGuayacanCashCountUseCase<br/><small>api/guayacan-cash-box/application/use-cases/get-guayacan-cash-count.use-case.ts</small>"]
+  n34["RegisterGuayacanCashCountUseCase<br/><small>api/guayacan-cash-box/application/use-cases/register-guayacan-cash-count.use-case.ts</small>"]
+  end
+  subgraph s35["Dominio · Infraestructura · PostgreSQL"]
+  n36["GuayacanCashBoxRepository"]
+  n37["TypeOrmGuayacanCashBoxRepository<br/><small>api/guayacan-cash-box/infrastructure/persistence/typeorm-guayacan-cash-box.repository.ts</small>"]
+  n38[("guayacan_commissions")]
+  n39[("bank_deposit_operations")]
+  n40[("transaction_types")]
+  n41[("users")]
+  n42[("guayacan_cash_counts")]
+  n43[("transaction_banks")]
+  n44[("guayacan_cash_movements")]
+  n45[("guayacan_cash_movement_details")]
+  n46[("bank_deposit_cash_details")]
+  n47[["register_guayacan_cash_movement()"]]
+  n48[["void_guayacan_cash_movement()"]]
+  n49[("guayacan_cash_count_details")]
+  end
+  n3 -->|loadCommissions→getCommissions, loadSummary→getSummary, loadMovements→getMovements| n2
+  n4 -->|load→getCounts| n2
+  n5 -->|load→getMovement, confirmVoid→voidMovement| n2
+  n6 -->|submit→registerMovement, submit→registerAdjustment| n2
+  n7 -->|loadLatest→getLatestCount, save→registerCount| n2
+  n8 -->|load→getCount| n2
+  n2 -->|getCommissions| n10
+  n2 -->|getCounts| n11
+  n2 -->|getCountUsers| n12
+  n2 -->|getSummary| n13
+  n2 -->|getMovements| n14
+  n2 -->|getMovement| n15
+  n2 -->|registerMovement| n16
+  n2 -->|registerAdjustment| n17
+  n2 -->|voidMovement| n18
+  n2 -->|getLatestCount| n19
+  n2 -->|getCount| n20
+  n2 -->|registerCount| n21
+  n10 --> n23
+  n11 --> n24
+  n12 --> n25
+  n13 --> n26
+  n14 --> n27
+  n15 --> n28
+  n16 --> n29
+  n17 --> n30
+  n18 --> n31
+  n19 --> n32
+  n20 --> n33
+  n21 --> n34
+  n23 -->|findCommissions| n36
+  n36 -->|implementa| n37
+  n37 -->|findCommissions| n38
+  n37 -->|findCommissions| n39
+  n37 -->|findCommissions| n40
+  n37 -->|findCommissions| n41
+  n24 -->|findCounts| n36
+  n37 -->|findCounts| n42
+  n25 -->|findCountUsers| n36
+  n37 -->|findCountUsers| n42
+  n37 -->|findCountUsers| n41
+  n26 -->|getSummary| n36
+  n37 -->|getSummary| n43
+  n37 -->|getSummary| n44
+  n27 -->|findMovements| n36
+  n37 -->|findMovements| n44
+  n28 -->|findMovementById| n36
+  n37 -->|findMovementById| n45
+  n37 -->|findMovementById| n39
+  n37 -->|findMovementById| n40
+  n37 -->|findMovementById| n43
+  n37 -->|findMovementById| n46
+  n29 -->|registerMovement, findMovementById| n36
+  n37 -->|registerMovement| n47
+  n30 -->|registerMovement, findMovementById| n36
+  n31 -->|voidMovement, findMovementById| n36
+  n37 -->|voidMovement| n48
+  n48 -->|escribe| n44
+  n32 -->|findLatestCount| n36
+  n37 -->|findLatestCount| n42
+  n33 -->|findCountById| n36
+  n37 -->|findCountById| n49
+  n34 -->|registerCount, findCountById| n36
+  n37 -->|registerCount| n42
+  n37 -->|registerCount| n44
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8 fe
+  class n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21 api
+  class n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34 app
+  class n36 dom
+  class n37 infra
+  class n38,n39,n40,n41,n42,n43,n44,n45,n46,n47,n48,n49 db

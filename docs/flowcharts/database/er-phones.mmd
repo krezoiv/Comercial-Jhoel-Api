@@ -1,0 +1,50 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Teléfonos
+%% @modulo: Teléfonos (phones)
+%% @representa: Tablas del dominio phones (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: phone_sale_dpi_images, phone_sales, phones
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  phone_sale_dpi_images {
+    uuid id PK
+    character_varying mime_type
+    uuid created_by FK
+  }
+  phone_sales {
+    uuid id PK
+    uuid phone_id FK
+    uuid client_id FK
+    date sale_date
+    uuid dpi_image_id FK
+    uuid voided_by FK
+    uuid created_by FK
+    character_varying phone_number
+  }
+  phones {
+    uuid id PK
+    character_varying phone_number
+    character_varying status
+    date purchase_date
+    uuid created_by FK
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
+    character_varying sim_number
+  }
+  users {
+    uuid id PK
+  }
+  clients {
+    uuid id PK
+  }
+  users ||--o{ phone_sale_dpi_images : "created_by"
+  clients |o--o{ phone_sales : "client_id"
+  users ||--o{ phone_sales : "created_by"
+  phone_sale_dpi_images |o--o{ phone_sales : "dpi_image_id"
+  phones ||--o{ phone_sales : "phone_id"
+  users |o--o{ phone_sales : "voided_by"
+  users ||--o{ phones : "created_by"
+  users |o--o{ phones : "updated_by"

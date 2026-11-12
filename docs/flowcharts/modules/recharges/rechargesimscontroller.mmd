@@ -1,0 +1,160 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de RechargeSimsController
+%% @modulo: Recargas electrónicas (recharges)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a RechargeSimsController, sus 11 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharge-sims.controller.ts ; comercial-jhoel-app/src/app/core/services/recharge-sims.service.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges/recharges-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges/components/register-sim-purchase-form/register-sim-purchase-form.component.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges/components/register-sim-sale-form/register-sim-sale-form.component.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges/components/register-sim-sale-registration-form/register-sim-sale-registration-form.component.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges-sim-sales-admin/recharges-sim-sales-admin-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/recharges-sim-sales-admin/components/sim-sale-registration-detail-modal/sim-sale-registration-detail-modal.component.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/list-recharge-sim-types.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-sim-daily-summary.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-sim-purchase.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-sim-sale.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/list-recharge-sim-sales.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/void-recharge-sim-sale.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-sim-sale-with-registration.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/list-recharge-sim-sale-registrations.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-sim-sale-registration-by-id.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-sim-sale-registration-dpi-image.use-case.ts ; comercial-jhoel-api/src/modules/recharges/application/use-cases/void-recharge-sim-sale-registration.use-case.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-sim-type.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-sim-daily-stock.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-sim-sale.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-sim-sale-registration.repository.ts ; comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/recharges/
+%% @datos: recharge_sim_daily_stock, recharge_sim_purchases, recharge_sim_sales, recharge_sim_sale_registrations, recharge_sim_dpi_images
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["RechargeSimsService<br/><small>app/core/services/recharge-sims.service.ts</small>"]
+  n3["RechargesPageComponent<br/><small>app/features/dashboard/recharges/recharges-page.component.ts</small>"]
+  n4["RegisterSimPurchaseFormComponent<br/><small>app/features/dashboard/recharges/components/register-sim-purchase-form/register-sim-purchase-form.component.ts</small>"]
+  n5["RegisterSimSaleFormComponent<br/><small>app/features/dashboard/recharges/components/register-sim-sale-form/register-sim-sale-form.component.ts</small>"]
+  n6["RegisterSimSaleRegistrationFormComponent<br/><small>app/features/dashboard/recharges/components/register-sim-sale-registration-form/register-sim-sale-registration-form.component.ts</small>"]
+  n7["RechargesSimSalesAdminPageComponent<br/><small>app/features/dashboard/recharges-sim-sales-admin/recharges-sim-sales-admin-page.component.ts</small>"]
+  n8["SimSaleRegistrationDetailModalComponent<br/><small>app/features/dashboard/recharges-sim-sales-admin/components/sim-sale-registration-detail-modal/sim-sale-registration-detail-modal.component.ts</small>"]
+  end
+  subgraph s9["RechargeSimsController (api/recharges/presentation/controllers/recharge-sims.controller.ts)"]
+  n10["GET /api/recharges/sims/types<br/><small>findTypes()</small>"]
+  n11["GET /api/recharges/sims/daily<br/><small>findDaily()</small>"]
+  n12["POST /api/recharges/sims/purchases<br/><small>registerPurchase()</small>"]
+  n13["POST /api/recharges/sims/sales<br/><small>registerSale()</small>"]
+  n14["GET /api/recharges/sims/sales<br/><small>findSales()</small>"]
+  n15["POST /api/recharges/sims/sales/:id/void<br/><small>voidSale() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n16["POST /api/recharges/sims/sale-registrations<br/><small>registerSaleRegistration()</small>"]
+  n17["GET /api/recharges/sims/sale-registrations<br/><small>findSaleRegistrations()</small>"]
+  n18["GET /api/recharges/sims/sale-registrations/:id<br/><small>findSaleRegistrationById()</small>"]
+  n19["GET /api/recharges/sims/sale-registrations/:id/dpi-image<br/><small>getSaleRegistrationDpiImage()</small>"]
+  n20["POST /api/recharges/sims/sale-registrations/:id/void<br/><small>voidSaleRegistration() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s21["Aplicación"]
+  n22["ListRechargeSimTypesUseCase<br/><small>api/recharges/application/use-cases/list-recharge-sim-types.use-case.ts</small>"]
+  n23["GetRechargeSimDailySummaryUseCase<br/><small>api/recharges/application/use-cases/get-recharge-sim-daily-summary.use-case.ts</small>"]
+  n24["RegisterRechargeSimPurchaseUseCase<br/><small>api/recharges/application/use-cases/register-recharge-sim-purchase.use-case.ts</small>"]
+  n25["RegisterRechargeSimSaleUseCase<br/><small>api/recharges/application/use-cases/register-recharge-sim-sale.use-case.ts</small>"]
+  n26["ListRechargeSimSalesUseCase<br/><small>api/recharges/application/use-cases/list-recharge-sim-sales.use-case.ts</small>"]
+  n27["VoidRechargeSimSaleUseCase<br/><small>api/recharges/application/use-cases/void-recharge-sim-sale.use-case.ts</small>"]
+  n28["RegisterRechargeSimSaleWithRegistrationUseCase<br/><small>api/recharges/application/use-cases/register-recharge-sim-sale-with-registration.use-case.ts</small>"]
+  n29["ListRechargeSimSaleRegistrationsUseCase<br/><small>api/recharges/application/use-cases/list-recharge-sim-sale-registrations.use-case.ts</small>"]
+  n30["GetRechargeSimSaleRegistrationByIdUseCase<br/><small>api/recharges/application/use-cases/get-recharge-sim-sale-registration-by-id.use-case.ts</small>"]
+  n31["GetRechargeSimSaleRegistrationDpiImageUseCase<br/><small>api/recharges/application/use-cases/get-recharge-sim-sale-registration-dpi-image.use-case.ts</small>"]
+  n32["VoidRechargeSimSaleRegistrationUseCase<br/><small>api/recharges/application/use-cases/void-recharge-sim-sale-registration.use-case.ts</small>"]
+  end
+  subgraph s33["Dominio · Infraestructura · PostgreSQL"]
+  n34["RechargeSimTypeRepository"]
+  n35["TypeOrmRechargeSimTypeRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sim-type.repository.ts</small>"]
+  n36["RechargeSimDailyStockRepository"]
+  n37["TypeOrmRechargeSimDailyStockRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sim-daily-stock.repository.ts</small>"]
+  n38[["ensure_recharge_sim_daily_stock()"]]
+  n39[("recharge_sim_daily_stock")]
+  n40[["register_recharge_sim_purchase()"]]
+  n41[("recharge_sim_purchases")]
+  n42[["register_recharge_sim_sale()"]]
+  n43[("recharge_sim_sales")]
+  n44["RechargeSimSaleRepository"]
+  n45["TypeOrmRechargeSimSaleRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sim-sale.repository.ts</small>"]
+  n46[("recharge_sim_sale_registrations")]
+  n47["RechargeDayOpeningRepository"]
+  n48["TypeOrmRechargeDayOpeningRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts</small>"]
+  n49[["void_recharge_sim_sale()"]]
+  n50[["register_recharge_sim_sale_unit()"]]
+  n51["RechargeSimSaleRegistrationRepository"]
+  n52["TypeOrmRechargeSimSaleRegistrationRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sim-sale-registration.repository.ts</small>"]
+  n53[["register_recharge_sim_sale_registration()"]]
+  n54["TransactionManager"]
+  n55["TypeOrmTransactionManager<br/><small>api/shared/infrastructure/services/typeorm-transaction-manager.service.ts</small>"]
+  n56[("recharge_sim_dpi_images")]
+  n57[["void_recharge_sim_sale_registration()"]]
+  end
+  n3 -->|fetchAll→getTypes, fetchAll→getDailyStock, fetchBalances→getDailyStock …| n2
+  n4 -->|submit→registerPurchase| n2
+  n5 -->|submit→registerSale| n2
+  n6 -->|submit→registerSaleRegistration| n2
+  n7 -->|fetch→getSaleRegistrations, confirmVoid→voidSaleRegistration| n2
+  n8 -->|ngOnChanges→getSaleRegistrationById, loadImage→getDpiImage| n2
+  n2 -->|getTypes| n10
+  n2 -->|getDailyStock| n11
+  n2 -->|registerPurchase| n12
+  n2 -->|registerSale| n13
+  n2 -->|getSales| n14
+  n2 -->|voidSale| n15
+  n2 -->|registerSaleRegistration| n16
+  n2 -->|getSaleRegistrations| n17
+  n2 -->|getSaleRegistrationById| n18
+  n2 -->|getDpiImage| n19
+  n2 -->|voidSaleRegistration| n20
+  n10 --> n22
+  n11 --> n23
+  n12 --> n24
+  n13 --> n25
+  n14 --> n26
+  n15 --> n27
+  n16 --> n28
+  n17 --> n29
+  n18 --> n30
+  n19 --> n31
+  n20 --> n32
+  n22 -->|findAll| n34
+  n34 -->|implementa| n35
+  n23 -->|findAll| n34
+  n23 -->|ensureDailyStock| n36
+  n36 -->|implementa| n37
+  n37 -->|ensureDailyStock| n38
+  n38 -->|escribe| n39
+  n24 -->|registerPurchase| n36
+  n37 -->|registerPurchase| n40
+  n40 -->|escribe| n39
+  n40 -->|escribe| n41
+  n25 -->|registerSale| n36
+  n37 -->|registerSale| n42
+  n42 -->|escribe| n39
+  n42 -->|escribe| n43
+  n26 -->|findAllByDate| n44
+  n44 -->|implementa| n45
+  n45 -->|findAllByDate| n46
+  n26 -->|findByDate| n47
+  n47 -->|implementa| n48
+  n27 -->|findById, voidSale| n44
+  n45 -->|voidSale| n49
+  n49 -->|escribe| n39
+  n49 -->|escribe| n43
+  n27 -->|findByDate| n47
+  n28 -->|registerSingleUnitSale| n36
+  n37 -->|registerSingleUnitSale| n50
+  n50 -->|escribe| n39
+  n50 -->|escribe| n43
+  n28 -->|saveDpiImage, create| n51
+  n51 -->|implementa| n52
+  n52 -->|create| n53
+  n53 -->|escribe| n46
+  n28 -->|runInTransaction| n54
+  n54 -->|implementa| n55
+  n29 -->|findAll| n51
+  n30 -->|findById| n51
+  n31 -->|findById, getDpiImage| n51
+  n52 -->|getDpiImage| n46
+  n52 -->|getDpiImage| n56
+  n32 -->|findById, voidRegistration| n51
+  n52 -->|voidRegistration| n57
+  n57 -->|escribe| n39
+  n57 -->|escribe| n46
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8 fe
+  class n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20 api
+  class n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32 app
+  class n34,n36,n44,n47,n51,n54 dom
+  class n35,n37,n45,n48,n52,n55 infra
+  class n38,n39,n40,n41,n42,n43,n46,n49,n50,n53,n56,n57 db

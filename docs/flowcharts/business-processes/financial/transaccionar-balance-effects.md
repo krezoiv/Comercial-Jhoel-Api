@@ -1,0 +1,89 @@
+# Transaccionar — cómo cada tipo mueve el saldo bancario y el efectivo (depósito, retiro, desembolso y pago Génesis, reintegro)
+
+Módulo: **Transaccionar (bank-deposits) · Bancos · Control de Efectivo** · Fuente editable: [`transaccionar-balance-effects.mmd`](transaccionar-balance-effects.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  S(["register_bank_deposit_operation(...)"])
+  T1{"¿Tipo de transacción existe y está activo?"}
+  G{"¿balance_effect es DESEMBOLSO_GENESIS o PAGO_GENESIS?"}
+  GA{"¿Existe cuenta banks.special_account = GENESIS activa?"}
+  B1{"¿Banco agente existe y está activo?"}
+  BE{"¿balance_effect no es NULL?"}
+  BA{"¿p_bank_account_id no es NULL y la cuenta tiene available_in_transaccionar?"}
+  RI{"¿balance_effect = REINTEGRO?"}
+  RG{"¿Génesis configurada y distinta de la cuenta origen?"}
+  INS["INSERT bank_deposit_operations + cash_details + transactions<br/>valida efectivo y reparto contra el monto"]
+  HAS{"¿Hay cuenta bancaria (v_bank_account_id)?"}
+  SIGN{"Signo del movimiento según balance_effect"}
+  PLUS["v_delta = + monto aplicado<br/>(RETIRO, PAGO_GENESIS)"]
+  MINUS["v_delta = − monto aplicado<br/>(DEPOSITO, DESEMBOLSO_GENESIS, REINTEGRO, otros)"]
+  GU{"¿Banco agente con cash_box_code = GUAYACAN?"}
+  ABM[["apply_bank_account_movement(cuenta, balance_effect, 'TRANSACCIONAR', v_delta)"]]
+  NOB["Sin movimiento bancario:<br/>el saldo de Guayacán es su caja (trigger)"]
+  RE2{"¿Reintegro (v_genesis_account_id)?"}
+  GEN[["apply_bank_account_movement(Génesis, 'REINTEGRO', −monto)<br/>abono a la línea de crédito"]]
+  TRG["AFTER INSERT trg_cash_bank_deposit_insert<br/>cash_on_bank_deposit_insert()"]
+  DIR{"Dirección del efectivo = transaction_types.cash_effect<br/>¿banco agente GUAYACAN?"}
+  NONE["NONE: renglón informativo, saldo de caja sin cambio"]
+  ACM[["apply_cash_movement(tipo, IN/OUT/NONE, total_amount)<br/>Kardex cash_movements"]]
+  OK(["RETURN v_operation_id · COMMIT"])
+  E(["RAISE EXCEPTION → rollback de todo"])
+  S --> T1
+  T1 -->|"no: TRANSACTION_TYPE_NOT_FOUND / _INACTIVE"| E
+  T1 -->|"sí"| G
+  G -->|"sí: transaction_bank_id = NULL"| GA
+  GA -->|"no: GENESIS_ACCOUNT_NOT_CONFIGURED"| E
+  GA -->|"sí: cuenta = Génesis"| INS
+  G -->|"no"| B1
+  B1 -->|"no: TRANSACTION_BANK_NOT_FOUND / _INACTIVE"| E
+  B1 -->|"sí"| BE
+  BE -->|"no: el tipo no mueve saldo"| RI
+  BE -->|"sí"| BA
+  BA -->|"no: BANK_ACCOUNT_REQUIRED / _NOT_AVAILABLE"| E
+  BA -->|"sí"| RI
+  RI -->|"sí"| RG
+  RG -->|"no: GENESIS_ACCOUNT_NOT_CONFIGURED / REINTEGRO_SOURCE_IS_GENESIS"| E
+  RG -->|"sí"| INS
+  RI -->|"no"| INS
+  INS -->|"CASH_TOTAL_MISMATCH / TRANSACTION_TOTAL_MISMATCH"| E
+  INS --> HAS
+  HAS -->|"no"| TRG
+  HAS -->|"sí"| SIGN
+  SIGN --> PLUS --> GU
+  SIGN --> MINUS --> GU
+  GU -->|"no"| ABM --> RE2
+  GU -->|"sí"| NOB --> RE2
+  ABM -->|"INSUFFICIENT_BALANCE / BALANCE_LIMIT_EXCEEDED / CREDIT_LINE_*"| E
+  RE2 -->|"sí"| GEN --> TRG
+  RE2 -->|"no"| TRG
+  TRG --> DIR
+  DIR -->|"cash_effect NULL o GUAYACAN"| NONE --> ACM
+  DIR -->|"IN (entrada) / OUT (salida)"| ACM
+  ACM --> OK
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  class S start
+  class T1,G,GA,B1,BE,BA,RI,RG,HAS,SIGN,GU,RE2,DIR dec
+  class INS,PLUS,MINUS,NOB,TRG,NONE infra
+  class ABM,GEN,ACM db
+  class E err
+  class OK ok
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Las decisiones de register_bank_deposit_operation según transaction_types.balance_effect (cuenta destino, signo del movimiento, Génesis, Guayacán) y el trigger cash_on_bank_deposit_insert que registra el efectivo físico según transaction_types.cash_effect. Diferencia entradas (+) y salidas (−) de cada saldo.
+2. **¿Dónde comienza?** TransaccionarPageComponent.confirmSave → POST /api/bank-deposits → RegisterBankDepositOperationUseCase.execute → TypeOrmBankDepositRepository.registerOperation
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts), [`comercial-jhoel-api/src/database/migrations/1760005100000-CreateBankAccountMovements.ts`](../../../../comercial-jhoel-api/src/database/migrations/1760005100000-CreateBankAccountMovements.ts), [`comercial-jhoel-api/src/database/migrations/1760005400000-ReintegroAlsoDebitsGenesis.ts`](../../../../comercial-jhoel-api/src/database/migrations/1760005400000-ReintegroAlsoDebitsGenesis.ts), [`comercial-jhoel-api/src/database/migrations/1760006700000-GuayacanSingleBalanceFromCashBox.ts`](../../../../comercial-jhoel-api/src/database/migrations/1760006700000-GuayacanSingleBalanceFromCashBox.ts), [`comercial-jhoel-api/src/database/migrations/1760006800000-CreateCashControlKardexAndCuts.ts`](../../../../comercial-jhoel-api/src/database/migrations/1760006800000-CreateCashControlKardexAndCuts.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** ¿tipo existe y activo? · ¿es DESEMBOLSO_GENESIS o PAGO_GENESIS? (cuenta = la línea Génesis activa) · ¿banco agente existe y activo? · ¿balance_effect no nulo? (exige cuenta habilitada en Transaccionar) · ¿REINTEGRO? (exige Génesis configurada y distinta de la cuenta origen) · signo: RETIRO y PAGO_GENESIS suman, el resto resta · ¿banco agente Guayacán? (no mueve saldo bancario) · dirección del efectivo = cash_effect (Guayacán = NONE)
+6. **¿Dónde se almacenan los datos?** bank_deposit_operations, bank_deposit_cash_details, bank_deposit_transactions; banks.final_balance + bank_account_movements (apply_bank_account_movement); cash_movements (apply_cash_movement vía trigger)
+7. **¿Cómo termina el proceso?** RETURN v_operation_id → COMMIT de toda la operación (operación + saldo bancario + Kardex de efectivo)
+8. **¿Qué sucede cuando ocurre un error?** TRANSACTION_TYPE_NOT_FOUND/INACTIVE, GENESIS_ACCOUNT_NOT_CONFIGURED, TRANSACTION_BANK_NOT_FOUND/INACTIVE, BANK_ACCOUNT_REQUIRED, BANK_ACCOUNT_NOT_AVAILABLE, REINTEGRO_SOURCE_IS_GENESIS, CASH_TOTAL_MISMATCH y las reglas de apply_bank_account_movement (INSUFFICIENT_BALANCE, BALANCE_LIMIT_EXCEEDED, CREDIT_LINE_*); cualquiera revierte todo
+
+> Diagrama escrito a mano a partir del código; ver la sección de archivos.

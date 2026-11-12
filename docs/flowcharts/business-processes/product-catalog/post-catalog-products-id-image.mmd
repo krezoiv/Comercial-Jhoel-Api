@@ -1,0 +1,98 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: POST /api/catalog/products/:id/image
+%% @modulo: Catálogo de productos (product-catalog)
+%% @representa: Flujo de decisiones real de POST /api/catalog/products/:id/image: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: CatalogProductImageModalComponent.onFileSelected (comercial-jhoel-app/src/app/features/dashboard/catalog-products/components/catalog-product-image-modal/catalog-product-image-modal.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/product-catalog/presentation/controllers/catalog-products.controller.ts ; comercial-jhoel-app/src/app/core/services/catalog-product.service.ts ; comercial-jhoel-app/src/app/features/dashboard/catalog-products/components/catalog-product-image-modal/catalog-product-image-modal.component.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/set-catalog-product-image.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/application/utils/assert-valid-catalog-product-image.ts ; comercial-jhoel-api/src/modules/product-catalog/domain/repositories/catalog-product.repository.ts ; comercial-jhoel-api/src/modules/product-catalog/infrastructure/persistence/typeorm-catalog-product.repository.ts
+%% @decisiones: sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | !ALLOWED_MIME_TYPES.has(file.mimetype) | file.size > MAX_CATALOG_PRODUCT_IMAGE_SIZE_BYTES | file.size === 0 | !product
+%% @datos: ver repositorio
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/catalog/products/:id/image"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["CatalogProductService.setImage<br/><small>app/core/services/catalog-product.service.ts</small>"]
+  n6["CatalogProductImageModalComponent.onFileSelected<br/><small>app/features/dashboard/catalog-products/components/catalog-product-image-modal/catalog-product-image-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/catalog/products/:id/image<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('ADMIN', 'SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14["CatalogProductsController.setImage<br/><small>api/product-catalog/presentation/controllers/catalog-products.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["SetCatalogProductImageUseCase.execute<br/><small>api/product-catalog/application/use-cases/set-catalog-product-image.use-case.ts</small>"]
+  n17["assertValidCatalogProductImage()<br/><small>llamada en L25</small><br/><small>api/product-catalog/application/utils/assert-valid-catalog-product-image.ts</small>"]
+  n18{"¿!ALLOWED_MIME_TYPES.has(file.mimetype)?<br/><small>L17</small>"}
+  n19(["InvalidCatalogProductImageError('La imagen debe ser JPG, PNG o WEBP.')"])
+  n20{"¿file.size #gt; MAX_CATALOG_PRODUCT_IMAGE_SIZE_BYTES?<br/><small>L20</small>"}
+  n21(["InvalidCatalogProductImageError('La imagen no puede superar los 5 MB.')"])
+  n22{"¿file.size === 0?<br/><small>L23</small>"}
+  n23(["InvalidCatalogProductImageError('La imagen está vacía.')"])
+  n24{"¿!product?<br/><small>L28</small>"}
+  n25(["CatalogProductNotFoundError(input.catalogProductId)"])
+  end
+  subgraph s26["Dominio → Infraestructura"]
+  n27["Puerto CatalogProductRepository.findById / setImage<br/>@Inject(CATALOG_PRODUCT_REPOSITORY)"]
+  n28["TypeOrmCatalogProductRepository<br/><small>api/product-catalog/infrastructure/persistence/typeorm-catalog-product.repository.ts</small>"]
+  n29[("findById: TypeORM Repository")]
+  n30[("setImage: TypeORM Repository")]
+  end
+  n31(["Fin: la interfaz se actualiza<br/>this.notificationService.error<br/>this.isUploading.set"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n24
+  n24 -->|sí| n25
+  n25 --> n2
+  n24 -->|no| n27
+  n27 -->|implementa| n28
+  n28 --> n29
+  n29 --> n8
+  n28 --> n30
+  n30 --> n8
+  n8 --> n31
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19,n21,n23,n25 err
+  class n5,n6,n7 fe
+  class n8,n31 ok
+  class n10,n12,n18,n20,n22,n24 dec
+  class n14 api
+  class n16 app
+  class n17,n27 dom
+  class n28 infra
+  class n29,n30 db

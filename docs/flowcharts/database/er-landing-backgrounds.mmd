@@ -1,0 +1,24 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Fondos de la landing
+%% @modulo: Fondos de la landing (landing-backgrounds)
+%% @representa: Tablas del dominio landing-backgrounds (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: landing_backgrounds
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  landing_backgrounds {
+    uuid id PK
+    character_varying name
+    character_varying image_mime_type
+    uuid created_by FK
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
+  }
+  users {
+    uuid id PK
+  }
+  users ||--o{ landing_backgrounds : "created_by"
+  users |o--o{ landing_backgrounds : "updated_by"

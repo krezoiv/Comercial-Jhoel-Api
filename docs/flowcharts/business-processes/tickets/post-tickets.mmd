@@ -1,0 +1,122 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: POST /api/tickets
+%% @modulo: Tickets (tickets)
+%% @representa: Flujo de decisiones real de POST /api/tickets: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: CreateTicketTabComponent.saveTicket (comercial-jhoel-app/src/app/features/dashboard/tickets/components/create-ticket-tab/create-ticket-tab.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/tickets/presentation/controllers/tickets.controller.ts ; comercial-jhoel-app/src/app/core/services/tickets.service.ts ; comercial-jhoel-app/src/app/features/dashboard/tickets/components/create-ticket-tab/create-ticket-tab.component.ts ; comercial-jhoel-api/src/modules/tickets/application/use-cases/create-ticket.use-case.ts ; comercial-jhoel-api/src/modules/clients/domain/repositories/client.repository.ts ; comercial-jhoel-api/src/modules/tickets/domain/repositories/ticket.repository.ts ; comercial-jhoel-api/src/modules/tickets/infrastructure/persistence/typeorm-ticket.repository.ts
+%% @decisiones: sesión JWT válida | DTO CreateTicketRequestDto | !input.items || input.items.length === 0 | !client || !client.isActive | !Number.isInteger(item.quantity) || item.quantity <= 0 | item.unitPrice != null && item.unitPrice < 0 | SQL create_ticket: p_items IS NULL OR jsonb_array_length(p_items) = 0 | SQL create_ticket: v_quantity IS NULL OR v_quantity <= 0 | SQL create_ticket: NOT FOUND | SQL create_ticket: NOT v_product.is_active
+%% @datos: create_ticket(), ticket_details, tickets
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/tickets"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["TicketsService.createTicket<br/><small>app/core/services/tickets.service.ts</small>"]
+  n6["CreateTicketTabComponent.saveTicket<br/><small>app/features/dashboard/tickets/components/create-ticket-tab/create-ticket-tab.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/tickets<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿CreateTicketRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["TicketsController.create<br/><small>api/tickets/presentation/controllers/tickets.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["CreateTicketUseCase.execute<br/><small>api/tickets/application/use-cases/create-ticket.use-case.ts</small>"]
+  n17{"¿!input.items #124;#124; input.items.length === 0?<br/><small>L44</small>"}
+  n18(["TicketEmptyError()"])
+  n19{"¿!client #124;#124; !client.isActive?<br/><small>L50</small>"}
+  n20(["InvalidClientError()"])
+  n21{"¿!Number.isInteger(item.quantity) #124;#124; item.quantity #lt;= 0?<br/><small>L56</small>"}
+  n22(["InvalidTicketQuantityError(item.productId)"])
+  n23{"¿item.unitPrice != null #amp;#amp; item.unitPrice #lt; 0?<br/><small>L59</small>"}
+  n24(["InvalidTicketPriceError(item.productId)"])
+  end
+  n25["Puerto ClientRepository<br/><small>findById</small>"]
+  subgraph s26["Dominio → Infraestructura"]
+  n27["Puerto TicketRepository.createTicket<br/>@Inject(TICKET_REPOSITORY)"]
+  n28["TypeOrmTicketRepository<br/><small>api/tickets/infrastructure/persistence/typeorm-ticket.repository.ts</small>"]
+  subgraph s29["PostgreSQL — función create_ticket"]
+  n30[["SELECT create_ticket(…)<br/><small>createTicket — una transacción</small>"]]
+  n31{"¿p_items IS NULL OR jsonb_array_length(p_items) = 0?"}
+  n32(["RAISE TICKET_EMPTY<br/>(rollback)"])
+  n33{"¿v_quantity IS NULL OR v_quantity #lt;= 0?"}
+  n34(["RAISE INVALID_QUANTITY<br/>(rollback)"])
+  n35{"¿NOT FOUND?"}
+  n36(["RAISE PRODUCT_NOT_FOUND<br/>(rollback)"])
+  n37{"¿NOT v_product.is_active?"}
+  n38(["RAISE PRODUCT_INACTIVE<br/>(rollback)"])
+  n39["Otros RAISE de create_ticket (condición no extraída):<br/>CLIENT_NOT_FOUND, INVALID_UNIT_PRICE"]
+  n40[("Escribe:<br/>ticket_details<br/>tickets")]
+  end
+  end
+  n41(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.notificationService.success<br/>this.items.set<br/>this.clientName.set<br/>this.notificationService.error"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 -->|sí| n18
+  n18 --> n2
+  n17 -->|no| n19
+  n19 -->|sí| n20
+  n20 --> n2
+  n19 -->|no| n21
+  n21 -->|sí| n22
+  n22 --> n2
+  n21 -->|no| n23
+  n23 -->|sí| n24
+  n24 --> n2
+  n16 -.->|consulta| n25
+  n23 -->|no| n27
+  n27 -->|implementa| n28
+  n28 -->|createTicket| n30
+  n30 --> n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n33 -->|no| n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n30 -.->|también puede lanzar| n39
+  n39 --> n2
+  n37 -->|no| n40
+  n40 -->|COMMIT| n8
+  n8 --> n41
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n18,n20,n22,n24,n32,n34,n36,n38,n39 err
+  class n5,n6,n7 fe
+  class n8,n41 ok
+  class n10,n12,n17,n19,n21,n23,n31,n33,n35,n37 dec
+  class n14 api
+  class n16 app
+  class n25,n27 dom
+  class n28 infra
+  class n30,n40 db

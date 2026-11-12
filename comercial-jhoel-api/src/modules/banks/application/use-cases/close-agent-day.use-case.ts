@@ -58,13 +58,13 @@ export function assertCuadreCashBreakdown(
     }
     seen.add(cents);
   }
-  if ((breakdown.source === 'ARQUEO_CAJA') !== !!breakdown.sourceCashCountId) {
+  if ((breakdown.source !== 'MANUAL') !== !!breakdown.sourceCashCountId) {
     throw new CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_INVALID');
   }
   if (toCents(breakdownTotal(breakdown.details)) !== toCents(totalCash)) {
     throw new CuadreCashBreakdownError('CUADRE_CASH_BREAKDOWN_MISMATCH');
   }
-  if (breakdown.source === 'ARQUEO_CAJA') {
+  if (breakdown.source !== 'MANUAL') {
     try {
       assertCashCustodyPermission(role, 'cash_custody.view');
     } catch {

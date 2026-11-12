@@ -201,9 +201,33 @@ export interface RegisterCashCountData {
   correctionReason?: string | null;
 }
 
-/** Result of looking up the most recent valid (VIGENTE) Arqueo de Caja. */
+/** Which kind of individual cash count a Cuadre de Agentes breakdown can be loaded from. */
+export type LatestCashCountSourceKind = 'CORTE_CAJA' | 'ARQUEO_CAJA';
+
+/**
+ * One individual cash count record — the arqueo of ONE cut
+ * (`cash_cut_counts`) or one standalone Arqueo de Caja (`cash_counts`).
+ * Never an aggregate of several counts.
+ */
+export interface LatestCashCountCandidate {
+  source: LatestCashCountSourceKind;
+  /** `cash_cut_counts.id` (CORTE_CAJA) or `cash_counts.id` (ARQUEO_CAJA). */
+  id: string;
+  /** Arqueo number (ARQUEO_CAJA) or null for a cut. */
+  number: number | null;
+  /** The cut the arqueo belongs to (CORTE_CAJA only). */
+  cutPeriodId: string | null;
+  cutNumber: 1 | 2 | null;
+  businessDate: string;
+  countedAt: Date;
+  totalCounted: number;
+  createdByUsername: string;
+  details: DenominationRow[];
+}
+
+/** Result of looking up the most recent valid individual count. */
 export interface LatestCashCountLookup {
-  count: CashCountRow | null;
+  count: LatestCashCountCandidate | null;
   /** Bank day the lookup preferred (the one requested, else the current bank day). */
   referenceBusinessDate: string | null;
 }
@@ -236,9 +260,10 @@ export interface CashCustodyRepository {
   findCounts(options: FindCashCountsOptions): Promise<Paginated<CashCountRow>>;
   findCountById(id: string): Promise<CashCountRow | null>;
   /**
-   * Latest VIGENTE Arqueo de Caja (never a replaced one; Bodega and Guayacán
-   * counts live in other tables): one of `preferredBusinessDate` (default:
-   * the current bank day) first, otherwise the most recent one available.
+   * The arqueo of the "Segundo corte · final del día" (current count of a
+   * FINALIZADO cut 2): the reference day's (default: current bank day)
+   * first, otherwise the most recent earlier one. Never the first cut, never
+   * a standalone Arqueo de Caja, never both cuts added up — its own details only.
    */
   findLatestValidCount(
     preferredBusinessDate: string | null,

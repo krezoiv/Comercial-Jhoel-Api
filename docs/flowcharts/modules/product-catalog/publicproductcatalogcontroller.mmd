@@ -1,0 +1,83 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de PublicProductCatalogController
+%% @modulo: Catálogo de productos (product-catalog)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a PublicProductCatalogController, sus 6 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/product-catalog/presentation/controllers/public-product-catalog.controller.ts ; comercial-jhoel-app/src/app/core/services/public-product-catalog.service.ts ; comercial-jhoel-app/src/app/features/landing/sections/varieties-catalog/components/product-interest-modal/product-interest-modal.component.ts ; comercial-jhoel-app/src/app/features/landing/sections/shared/catalog-product-card/catalog-product-card.component.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/list-published-catalog-products.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/get-published-catalog-product-by-id.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/get-catalog-product-image.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/create-catalog-product-request.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/application/use-cases/like-catalog-product.use-case.ts ; comercial-jhoel-api/src/modules/product-catalog/infrastructure/persistence/typeorm-catalog-product.repository.ts ; comercial-jhoel-api/src/modules/likes/infrastructure/persistence/typeorm-catalog-like.repository.ts ; comercial-jhoel-api/src/modules/product-catalog/infrastructure/persistence/typeorm-catalog-product-request.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/product-catalog/
+%% @datos: catalog_likes
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["PublicProductCatalogService<br/><small>app/core/services/public-product-catalog.service.ts</small>"]
+  n3["ProductInterestModalComponent<br/><small>app/features/landing/sections/varieties-catalog/components/product-interest-modal/product-interest-modal.component.ts</small>"]
+  n4["CatalogProductCardComponent<br/><small>app/features/landing/sections/shared/catalog-product-card/catalog-product-card.component.ts</small>"]
+  end
+  subgraph s5["PublicProductCatalogController (api/product-catalog/presentation/controllers/public-product-catalog.controller.ts)"]
+  n6["GET /api/public-catalog/products<br/><small>findAll()</small>"]
+  n7["GET /api/public-catalog/products/:id<br/><small>findOne()</small>"]
+  n8["GET /api/public-catalog/products/images/:id<br/><small>getImage()</small>"]
+  n9["POST /api/public-catalog/product-requests<br/><small>createRequest()</small>"]
+  n10["POST /api/public-catalog/products/:id/like<br/><small>like()</small>"]
+  n11["POST /api/public-catalog/products/:id/unlike<br/><small>unlike()</small>"]
+  end
+  subgraph s12["Aplicación"]
+  n13["ListPublishedCatalogProductsUseCase<br/><small>api/product-catalog/application/use-cases/list-published-catalog-products.use-case.ts</small>"]
+  n14["GetPublishedCatalogProductByIdUseCase<br/><small>api/product-catalog/application/use-cases/get-published-catalog-product-by-id.use-case.ts</small>"]
+  n15["GetCatalogProductImageUseCase<br/><small>api/product-catalog/application/use-cases/get-catalog-product-image.use-case.ts</small>"]
+  n16["CreateCatalogProductRequestUseCase<br/><small>api/product-catalog/application/use-cases/create-catalog-product-request.use-case.ts</small>"]
+  n17["LikeCatalogProductUseCase<br/><small>api/product-catalog/application/use-cases/like-catalog-product.use-case.ts</small>"]
+  end
+  subgraph s18["Dominio · Infraestructura · PostgreSQL"]
+  n19["CatalogProductRepository"]
+  n20["TypeOrmCatalogProductRepository<br/><small>api/product-catalog/infrastructure/persistence/typeorm-catalog-product.repository.ts</small>"]
+  n21["CatalogLikeRepository"]
+  n22["TypeOrmCatalogLikeRepository<br/><small>api/likes/infrastructure/persistence/typeorm-catalog-like.repository.ts</small>"]
+  n23[("catalog_likes")]
+  n24["CatalogProductRequestRepository"]
+  n25["TypeOrmCatalogProductRequestRepository<br/><small>api/product-catalog/infrastructure/persistence/typeorm-catalog-product-request.repository.ts</small>"]
+  end
+  n3 -->|submit→createRequest| n2
+  n4 -->|toggleLike→likeProduct, toggleLike→unlikeProduct| n2
+  n2 -->|getPublishedProducts| n6
+  n2 -->|getProductById| n7
+  n2 -->|createRequest| n9
+  n2 -->|likeProduct| n10
+  n2 -->|unlikeProduct| n11
+  n6 --> n13
+  n7 --> n14
+  n8 --> n15
+  n9 --> n16
+  n10 --> n17
+  n11 --> n17
+  n13 -->|findPublished| n19
+  n19 -->|implementa| n20
+  n13 -->|getCountsBatch, getLikedEntityIds| n21
+  n21 -->|implementa| n22
+  n22 -->|getCountsBatch| n23
+  n22 -->|getLikedEntityIds| n23
+  n14 -->|findById| n19
+  n14 -->|getCount, getLikedEntityIds| n21
+  n15 -->|findById, getImage| n19
+  n16 -->|findById| n19
+  n16 -->|create| n24
+  n24 -->|implementa| n25
+  n17 -->|findById| n19
+  n17 -->|like, unlike, getCount| n21
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4 fe
+  class n6,n7,n8,n9,n10,n11 api
+  class n13,n14,n15,n16,n17 app
+  class n19,n21,n24 dom
+  class n20,n22,n25 infra
+  class n23 db

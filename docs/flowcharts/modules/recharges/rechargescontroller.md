@@ -1,0 +1,256 @@
+# Mapa de RechargesController
+
+Módulo: **Recargas electrónicas (recharges)** · Fuente editable: [`rechargescontroller.mmd`](rechargescontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["RechargesService<br/><small>app/core/services/recharges.service.ts</small>"]
+  n3["RechargeDayStatusService<br/><small>app/core/services/recharge-day-status.service.ts</small>"]
+  n4["RechargesPageComponent<br/><small>app/features/dashboard/recharges/recharges-page.component.ts</small>"]
+  n5["AlertSettingsPageComponent<br/><small>app/features/dashboard/alert-settings/alert-settings-page.component.ts</small>"]
+  n6["RegisterPurchaseFormComponent<br/><small>app/features/dashboard/recharges/components/register-purchase-form/register-purchase-form.component.ts</small>"]
+  n7["SalesSummaryCardComponent<br/><small>app/features/dashboard/recharges/components/sales-summary-card/sales-summary-card.component.ts</small>"]
+  n8["RechargesDailyChartComponent<br/><small>app/features/dashboard/graphs/components/recharges-daily-chart/recharges-daily-chart.component.ts</small>"]
+  n9["RechargesWeeklyChartComponent<br/><small>app/features/dashboard/graphs/components/recharges-weekly-chart/recharges-weekly-chart.component.ts</small>"]
+  n10["RechargesYearlyChartComponent<br/><small>app/features/dashboard/graphs/components/recharges-yearly-chart/recharges-yearly-chart.component.ts</small>"]
+  n11["RechargeIndicatorsSectionComponent<br/><small>app/features/dashboard/home/components/recharge-indicators-section/recharge-indicators-section.component.ts</small>"]
+  n12["RechargeSaleFormModalComponent<br/><small>app/features/dashboard/recharges/components/recharge-sale-form-modal/recharge-sale-form-modal.component.ts</small>"]
+  end
+  subgraph s13["RechargesController (api/recharges/presentation/controllers/recharges.controller.ts)"]
+  n14["GET /api/recharges/day-status<br/><small>getDayStatus()</small>"]
+  n15["POST /api/recharges/day-status/open<br/><small>openDay()</small>"]
+  n16["POST /api/recharges/day-status/close<br/><small>closeDay()</small>"]
+  n17["GET /api/recharges/types<br/><small>findTypes()</small>"]
+  n18["PATCH /api/recharges/types/:id/min-balance<br/><small>updateMinBalance() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n19["GET /api/recharges/daily<br/><small>findDaily()</small>"]
+  n20["POST /api/recharges/purchases<br/><small>registerPurchase()</small>"]
+  n21["GET /api/recharges/purchases<br/><small>findPurchases()</small>"]
+  n22["POST /api/recharges/purchases/:id/void<br/><small>voidPurchase() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n23["PATCH /api/recharges/daily/:id/final-balance<br/><small>registerFinalBalance()</small>"]
+  n24["GET /api/recharges/history<br/><small>findHistory()</small>"]
+  n25["GET /api/recharges/sales-summary<br/><small>findSalesSummary()</small>"]
+  n26["GET /api/recharges/daily-stats<br/><small>dailyStats()</small>"]
+  n27["GET /api/recharges/weekly-stats<br/><small>weeklyStats()</small>"]
+  n28["GET /api/recharges/yearly-stats<br/><small>yearlyStats()</small>"]
+  n29["GET /api/recharges/operators-summary<br/><small>operatorsSummary()</small>"]
+  n30["PATCH /api/recharges/types/:id/balance-limit<br/><small>updateBalanceLimit() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n31["POST /api/recharges/sales-closure<br/><small>registerSalesClosure()</small>"]
+  n32["GET /api/recharges/sales<br/><small>findSales()</small>"]
+  n33["POST /api/recharges/sales<br/><small>createSale()</small>"]
+  n34["PATCH /api/recharges/sales/:id<br/><small>updateSale()</small>"]
+  n35["DELETE /api/recharges/sales/:id<br/><small>deleteSale()</small>"]
+  end
+  subgraph s36["Aplicación"]
+  n37["GetRechargeDayStatusUseCase<br/><small>api/recharges/application/use-cases/get-recharge-day-status.use-case.ts</small>"]
+  n38["OpenRechargeDayUseCase<br/><small>api/recharges/application/use-cases/open-recharge-day.use-case.ts</small>"]
+  n39["CloseRechargeDayUseCase<br/><small>api/recharges/application/use-cases/close-recharge-day.use-case.ts</small>"]
+  n40["ListRechargeTypesUseCase<br/><small>api/recharges/application/use-cases/list-recharge-types.use-case.ts</small>"]
+  n41["UpdateRechargeTypeMinBalanceUseCase<br/><small>api/recharges/application/use-cases/update-recharge-type-min-balance.use-case.ts</small>"]
+  n42["GetRechargeDailySummaryUseCase<br/><small>api/recharges/application/use-cases/get-recharge-daily-summary.use-case.ts</small>"]
+  n43["RegisterRechargePurchaseUseCase<br/><small>api/recharges/application/use-cases/register-recharge-purchase.use-case.ts</small>"]
+  n44["GetRechargePurchasesUseCase<br/><small>api/recharges/application/use-cases/get-recharge-purchases.use-case.ts</small>"]
+  n45["VoidRechargePurchaseUseCase<br/><small>api/recharges/application/use-cases/void-recharge-purchase.use-case.ts</small>"]
+  n46["RegisterRechargeFinalBalanceUseCase<br/><small>api/recharges/application/use-cases/register-recharge-final-balance.use-case.ts</small>"]
+  n47["GetRechargeHistoryUseCase<br/><small>api/recharges/application/use-cases/get-recharge-history.use-case.ts</small>"]
+  n48["GetRechargeSalesSummaryUseCase<br/><small>api/recharges/application/use-cases/get-recharge-sales-summary.use-case.ts</small>"]
+  n49["GetRechargesDailyStatsUseCase<br/><small>api/recharges/application/use-cases/get-recharges-daily-stats.use-case.ts</small>"]
+  n50["GetRechargesWeeklyStatsUseCase<br/><small>api/recharges/application/use-cases/get-recharges-weekly-stats.use-case.ts</small>"]
+  n51["GetRechargesYearlyStatsUseCase<br/><small>api/recharges/application/use-cases/get-recharges-yearly-stats.use-case.ts</small>"]
+  n52["GetRechargeOperatorsSummaryUseCase<br/><small>api/recharges/application/use-cases/get-recharge-operators-summary.use-case.ts</small>"]
+  n53["UpdateRechargeTypeBalanceLimitUseCase<br/><small>api/recharges/application/use-cases/update-recharge-type-balance-limit.use-case.ts</small>"]
+  n54["RegisterRechargeSalesClosureUseCase<br/><small>api/recharges/application/use-cases/register-recharge-sales-closure.use-case.ts</small>"]
+  n55["GetRechargeSalesUseCase<br/><small>api/recharges/application/use-cases/get-recharge-sales.use-case.ts</small>"]
+  n56["CreateRechargeSaleUseCase<br/><small>api/recharges/application/use-cases/create-recharge-sale.use-case.ts</small>"]
+  n57["UpdateRechargeSaleUseCase<br/><small>api/recharges/application/use-cases/update-recharge-sale.use-case.ts</small>"]
+  n58["DeleteRechargeSaleUseCase<br/><small>api/recharges/application/use-cases/delete-recharge-sale.use-case.ts</small>"]
+  end
+  subgraph s59["Dominio · Infraestructura · PostgreSQL"]
+  n60["RechargeDayOpeningRepository"]
+  n61["TypeOrmRechargeDayOpeningRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-day-opening.repository.ts</small>"]
+  n62["RechargeSalesClosureRepository"]
+  n63["TypeOrmRechargeSalesClosureRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sales-closure.repository.ts</small>"]
+  n64["RechargeDayAuditLogRepository"]
+  n65["TypeOrmRechargeDayAuditLogRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-day-audit-log.repository.ts</small>"]
+  n66[["close_recharge_day()"]]
+  n67[("recharge_day_audit_logs")]
+  n68[("recharge_day_openings")]
+  n69["RechargeTypeRepository"]
+  n70["TypeOrmRechargeTypeRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-type.repository.ts</small>"]
+  n71["RechargeDailyBalanceRepository"]
+  n72["TypeOrmRechargeDailyBalanceRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-daily-balance.repository.ts</small>"]
+  n73[["ensure_recharge_daily_balance()"]]
+  n74[("recharge_daily_balances")]
+  n75[["register_recharge_purchase()"]]
+  n76[("recharge_purchases")]
+  n77["RechargePurchaseRepository"]
+  n78["TypeOrmRechargePurchaseRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-purchase.repository.ts</small>"]
+  n79[["void_recharge_purchase()"]]
+  n80[["register_recharge_final_balance()"]]
+  n81["RechargeSaleRepository"]
+  n82["TypeOrmRechargeSaleRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sale.repository.ts</small>"]
+  n83[("recharge_types")]
+  n84[("recharge_sales")]
+  n85["RechargeSimSaleRegistrationRepository"]
+  n86["TypeOrmRechargeSimSaleRegistrationRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-sim-sale-registration.repository.ts</small>"]
+  n87[("recharge_sim_sales")]
+  n88[("recharge_sim_sale_registrations")]
+  n89[["register_recharge_sales_closure()"]]
+  n90[("recharge_sales_closures")]
+  n91[["register_recharge_sale()"]]
+  n92[["update_recharge_sale()"]]
+  n93[["delete_recharge_sale()"]]
+  end
+  n3 -->|refresh→getDayStatus, openDay→openDay, closeDay→closeDay| n2
+  n4 -->|fetchPastDateStatusIfNeeded→getDayStatus, confirmCloseDayModal→closeDay, fetchAll→getTypes …| n2
+  n5 -->|fetchAll→getTypes, saveMinBalance→updateTypeMinBalance, saveBalanceLimit→updateTypeBalanceLimit| n2
+  n6 -->|submit→registerPurchase| n2
+  n7 -->|fetchSummary→getSalesSummary, save→registerSalesClosure| n2
+  n8 -->|fetch→getDailyStats| n2
+  n9 -->|fetch→getWeeklyStats| n2
+  n10 -->|fetch→getYearlyStats| n2
+  n11 -->|fetch→getOperatorsSummary| n2
+  n12 -->|submit→registerSale, submit→updateSale| n2
+  n2 -->|getDayStatus| n14
+  n2 -->|openDay| n15
+  n2 -->|closeDay| n16
+  n2 -->|getTypes| n17
+  n2 -->|updateTypeMinBalance| n18
+  n2 -->|getDailySummary| n19
+  n2 -->|registerPurchase| n20
+  n2 -->|getPurchases| n21
+  n2 -->|voidPurchase| n22
+  n2 -->|registerFinalBalance| n23
+  n2 -->|getSalesSummary| n25
+  n2 -->|getDailyStats| n26
+  n2 -->|getWeeklyStats| n27
+  n2 -->|getYearlyStats| n28
+  n2 -->|getOperatorsSummary| n29
+  n2 -->|updateTypeBalanceLimit| n30
+  n2 -->|registerSalesClosure| n31
+  n2 -->|getSales| n32
+  n2 -->|registerSale| n33
+  n2 -->|updateSale| n34
+  n2 -->|deleteSale| n35
+  n14 --> n37
+  n15 --> n38
+  n16 --> n39
+  n17 --> n40
+  n18 --> n41
+  n19 --> n42
+  n20 --> n43
+  n21 --> n44
+  n22 --> n45
+  n23 --> n46
+  n24 --> n47
+  n25 --> n48
+  n26 --> n49
+  n27 --> n50
+  n28 --> n51
+  n29 --> n52
+  n30 --> n53
+  n31 --> n54
+  n32 --> n55
+  n33 --> n56
+  n34 --> n57
+  n35 --> n58
+  n37 -->|findByDate| n60
+  n60 -->|implementa| n61
+  n37 -->|existsForDate| n62
+  n62 -->|implementa| n63
+  n38 -->|findByDate, open| n60
+  n38 -->|record| n64
+  n64 -->|implementa| n65
+  n38 -->|execute| n37
+  n39 -->|findByDate, close| n60
+  n61 -->|close| n66
+  n66 -->|escribe| n67
+  n66 -->|escribe| n68
+  n39 -->|existsForDate| n62
+  n39 -->|execute| n37
+  n40 -->|findAll| n69
+  n69 -->|implementa| n70
+  n41 -->|updateMinBalance| n69
+  n42 -->|findAll| n69
+  n42 -->|ensureDailyBalance| n71
+  n71 -->|implementa| n72
+  n72 -->|ensureDailyBalance| n73
+  n73 -->|escribe| n74
+  n43 -->|registerPurchase| n71
+  n72 -->|registerPurchase| n75
+  n75 -->|escribe| n74
+  n75 -->|escribe| n76
+  n44 -->|findAllByDate| n77
+  n77 -->|implementa| n78
+  n45 -->|findById, voidPurchase| n77
+  n78 -->|voidPurchase| n79
+  n79 -->|escribe| n74
+  n79 -->|escribe| n76
+  n46 -->|findById, registerFinalBalance| n71
+  n72 -->|registerFinalBalance| n80
+  n80 -->|escribe| n74
+  n47 -->|findHistory| n71
+  n72 -->|findHistory| n68
+  n48 -->|findAllByDate| n71
+  n48 -->|findByDateAndSequence| n62
+  n48 -->|getCurrentCycleTotalsByDate| n81
+  n81 -->|implementa| n82
+  n82 -->|getCurrentCycleTotalsByDate| n74
+  n82 -->|getCurrentCycleTotalsByDate| n83
+  n82 -->|getCurrentCycleTotalsByDate| n84
+  n48 -->|getTotalByDate| n85
+  n85 -->|implementa| n86
+  n86 -->|getTotalByDate| n87
+  n86 -->|getTotalByDate| n88
+  n49 -->|getDailySalesTotals| n71
+  n50 -->|getDailySalesTotals| n71
+  n51 -->|getMonthlySalesTotals| n71
+  n52 -->|findAll| n69
+  n52 -->|getMonthlySalesTotalsByType, getMonthlyPurchaseTotalsByType, findLatestPerType| n71
+  n72 -->|findLatestPerType| n74
+  n53 -->|updateBalanceLimit| n69
+  n54 -->|registerClosure| n62
+  n63 -->|registerClosure| n89
+  n89 -->|escribe| n74
+  n89 -->|escribe| n90
+  n54 -->|execute| n48
+  n55 -->|findAllByDate| n81
+  n56 -->|create| n81
+  n82 -->|create| n91
+  n91 -->|escribe| n84
+  n57 -->|update| n81
+  n82 -->|update| n92
+  n92 -->|escribe| n84
+  n58 -->|delete| n81
+  n82 -->|delete| n93
+  n93 -->|escribe| n84
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12 fe
+  class n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34,n35 api
+  class n37,n38,n39,n40,n41,n42,n43,n44,n45,n46,n47,n48,n49,n50,n51,n52,n53,n54,n55,n56,n57,n58 app
+  class n60,n62,n64,n69,n71,n77,n81,n85 dom
+  class n61,n63,n65,n70,n72,n78,n82,n86 infra
+  class n66,n67,n68,n73,n74,n75,n76,n79,n80,n83,n84,n87,n88,n89,n90,n91,n92,n93 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a RechargesController, sus 22 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharges.controller.ts`](../../../../comercial-jhoel-api/src/modules/recharges/presentation/controllers/recharges.controller.ts), [`comercial-jhoel-app/src/app/core/services/recharges.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/recharges.service.ts), [`comercial-jhoel-app/src/app/core/services/recharge-day-status.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/recharge-day-status.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/recharges/recharges-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/recharges/recharges-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/alert-settings/alert-settings-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/alert-settings/alert-settings-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/recharges/components/register-purchase-form/register-purchase-form.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/recharges/components/register-purchase-form/register-purchase-form.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/recharges/components/sales-summary-card/sales-summary-card.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/recharges/components/sales-summary-card/sales-summary-card.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-daily-chart/recharges-daily-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-daily-chart/recharges-daily-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-weekly-chart/recharges-weekly-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-weekly-chart/recharges-weekly-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-yearly-chart/recharges-yearly-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/recharges-yearly-chart/recharges-yearly-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/home/components/recharge-indicators-section/recharge-indicators-section.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/home/components/recharge-indicators-section/recharge-indicators-section.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/recharges/components/recharge-sale-form-modal/recharge-sale-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/recharges/components/recharge-sale-form-modal/recharge-sale-form-modal.component.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-day-status.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-day-status.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/open-recharge-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/open-recharge-day.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/close-recharge-day.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/close-recharge-day.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/list-recharge-types.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/list-recharge-types.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/update-recharge-type-min-balance.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/update-recharge-type-min-balance.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-daily-summary.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-daily-summary.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-purchase.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-purchase.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-purchases.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-purchases.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/void-recharge-purchase.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/void-recharge-purchase.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-final-balance.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/register-recharge-final-balance.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-history.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-history.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-sales-summary.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharge-sales-summary.use-case.ts), [`comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharges-daily-stats.use-case.ts`](../../../../comercial-jhoel-api/src/modules/recharges/application/use-cases/get-recharges-daily-stats.use-case.ts) y 17 más
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/recharges/
+6. **¿Dónde se almacenan los datos?** recharge_day_audit_logs, recharge_day_openings, recharge_daily_balances, recharge_purchases, recharge_types, recharge_sales, recharge_sim_sales, recharge_sim_sale_registrations, recharge_sales_closures
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

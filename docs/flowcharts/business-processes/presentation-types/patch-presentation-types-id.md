@@ -1,0 +1,117 @@
+# PATCH /api/presentation-types/:id
+
+Módulo: **Tipos de presentación (presentation-types)** · Fuente editable: [`patch-presentation-types-id.mmd`](patch-presentation-types-id.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta PATCH /api/presentation-types/:id"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["PresentationTypeService.updatePresentationType<br/><small>app/core/services/presentation-type.service.ts</small>"]
+  n6["PresentationTypesTabComponent.submit<br/><small>app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["PresentationTypesTabComponent.reactivate<br/><small>app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts</small>"]
+  n8["PresentationTypesTabComponent.toggleActive<br/><small>app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n9["HTTP PATCH /api/presentation-types/:id<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n10["Respuesta 200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s11["API NestJS — presentación"]
+  n12{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n13(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n14{"¿Rol en @Roles('ADMIN', 'SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n15(["403 Sin permisos"])
+  n16{"¿UpdatePresentationTypeRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n17(["400 Datos inválidos"])
+  n18["PresentationTypesController.update<br/><small>api/presentation-types/presentation/controllers/presentation-types.controller.ts</small>"]
+  end
+  subgraph s19["Aplicación — caso de uso"]
+  n20["UpdatePresentationTypeUseCase.execute<br/><small>api/presentation-types/application/use-cases/update-presentation-type.use-case.ts</small>"]
+  n21{"¿!presentationType?<br/><small>L35</small>"}
+  n22(["PresentationTypeNotFoundError(id)"])
+  n23{"¿existing?<br/><small>L44</small>"}
+  n24(["PresentationTypeNameAlreadyExistsError( name, !existing.isActive, )"])
+  n25{"¿existing?<br/><small>L60</small>"}
+  n26(["PresentationTypeCodeAlreadyExistsError(code)"])
+  end
+  subgraph s27["Dominio → Infraestructura"]
+  n28["Puerto PresentationTypeRepository.findById / findByName / findByActiveCode / update<br/>@Inject(PRESENTATION_TYPE_REPOSITORY)"]
+  n29["TypeOrmPresentationTypeRepository<br/><small>api/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts</small>"]
+  n30[("findById: TypeORM Repository")]
+  n31[("findByName: TypeORM Repository")]
+  n32[("findByActiveCode: TypeORM Repository")]
+  n33[("update: TypeORM Repository")]
+  end
+  n34(["Fin: la interfaz se actualiza<br/>this.formError.set<br/>this.isSubmitting.set<br/>this.isFormOpen.set<br/>this.notificationService.success"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n1 -->|acción del usuario| n7
+  n7 --> n5
+  n1 -->|acción del usuario| n8
+  n8 --> n5
+  n5 --> n9
+  n9 --> n12
+  n12 -->|no| n13
+  n13 --> n3
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 -->|no| n17
+  n17 --> n2
+  n16 -->|sí| n18
+  n18 --> n20
+  n20 --> n21
+  n21 -->|sí| n22
+  n22 --> n2
+  n21 -->|no| n23
+  n23 -->|sí| n24
+  n24 --> n2
+  n23 -->|no| n25
+  n25 -->|sí| n26
+  n26 --> n2
+  n25 -->|no| n28
+  n28 -->|implementa| n29
+  n29 --> n30
+  n30 --> n10
+  n29 --> n31
+  n31 --> n10
+  n29 --> n32
+  n32 --> n10
+  n29 --> n33
+  n33 --> n10
+  n10 --> n34
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n13,n15,n17,n22,n24,n26 err
+  class n5,n6,n7,n8,n9 fe
+  class n10,n34 ok
+  class n12,n14,n16,n21,n23,n25 dec
+  class n18 api
+  class n20 app
+  class n28 dom
+  class n29 infra
+  class n30,n31,n32,n33 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de PATCH /api/presentation-types/:id: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** PresentationTypesTabComponent.submit (comercial-jhoel-app/src/app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/presentation-types/presentation/controllers/presentation-types.controller.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/presentation/controllers/presentation-types.controller.ts), [`comercial-jhoel-app/src/app/core/services/presentation-type.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/presentation-type.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/presentation-units/components/presentation-types-tab/presentation-types-tab.component.ts), [`comercial-jhoel-api/src/modules/presentation-types/application/use-cases/update-presentation-type.use-case.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/application/use-cases/update-presentation-type.use-case.ts), [`comercial-jhoel-api/src/modules/presentation-types/domain/repositories/presentation-type.repository.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/domain/repositories/presentation-type.repository.ts), [`comercial-jhoel-api/src/modules/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts`](../../../../comercial-jhoel-api/src/modules/presentation-types/infrastructure/persistence/typeorm-presentation-type.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO UpdatePresentationTypeRequestDto | !presentationType | existing | existing
+6. **¿Dónde se almacenan los datos?** ver repositorio
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

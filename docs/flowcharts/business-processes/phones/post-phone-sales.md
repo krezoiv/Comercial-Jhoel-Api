@@ -1,0 +1,133 @@
+# POST /api/phone-sales
+
+Módulo: **Teléfonos (phones)** · Fuente editable: [`post-phone-sales.mmd`](post-phone-sales.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/phone-sales"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["PhonesService.registerSale<br/><small>app/core/services/phones.service.ts</small>"]
+  n6["PhonesSalePageComponent.confirmSale<br/><small>app/features/dashboard/phones/sale/phones-sale-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/phone-sales<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿RegisterPhoneSaleRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["PhoneSalesController.registerSale<br/><small>api/phones/presentation/controllers/phone-sales.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["RegisterPhoneSaleUseCase.execute<br/><small>api/phones/application/use-cases/register-phone-sale.use-case.ts</small>"]
+  n17["assertValidDpiImage()<br/><small>llamada en L47</small><br/><small>api/phones/application/utils/assert-valid-dpi-image.ts</small>"]
+  n18{"¿!ALLOWED_MIME_TYPES.has(file.mimetype)?<br/><small>L16</small>"}
+  n19(["InvalidDpiImageError( 'La imagen del DPI debe ser JPG, PNG o WEBP.', )"])
+  n20{"¿file.size #gt; MAX_DPI_IMAGE_SIZE_BYTES?<br/><small>L21</small>"}
+  n21(["InvalidDpiImageError( 'La imagen del DPI no puede superar los 5 MB.', )"])
+  n22{"¿file.size === 0?<br/><small>L26</small>"}
+  n23(["InvalidDpiImageError('La imagen del DPI está vacía.')"])
+  n24{"¿!client #124;#124; !client.isActive?<br/><small>L52</small>"}
+  n25(["InvalidPhoneSaleClientError()"])
+  end
+  n26["Puerto ClientRepository<br/><small>findById</small>"]
+  subgraph s27["Dominio → Infraestructura"]
+  n28["Puerto PhoneSaleRepository.create<br/>@Inject(PHONE_SALE_REPOSITORY)"]
+  n29["TypeOrmPhoneSaleRepository<br/><small>api/phones/infrastructure/persistence/typeorm-phone-sale.repository.ts</small>"]
+  subgraph s30["PostgreSQL — función register_phone_sale"]
+  n31[["SELECT register_phone_sale(…)<br/><small>create — una transacción</small>"]]
+  n32{"¿p_client_dpi IS NULL OR length(trim(p_client_dpi)) = 0?"}
+  n33(["RAISE CLIENT_DPI_REQUIRED<br/>(rollback)"])
+  n34{"¿p_phone_number IS NULL OR length(trim(p_phone_number)) = 0?"}
+  n35(["RAISE PHONE_NUMBER_REQUIRED<br/>(rollback)"])
+  n36{"¿NOT FOUND?"}
+  n37(["RAISE PHONE_NOT_FOUND<br/>(rollback)"])
+  n38{"¿v_phone.status = 'VENDIDO'?"}
+  n39(["RAISE PHONE_ALREADY_SOLD<br/>(rollback)"])
+  n40["Otros RAISE de register_phone_sale (condición no extraída):<br/>PHONE_NUMBER_ALREADY_ASSIGNED, PHONE_SALE_CLIENT_INVALID"]
+  n41[("Escribe:<br/>phone_sale_dpi_images<br/>phone_sales<br/>phones")]
+  end
+  end
+  n42(["Fin: la interfaz se actualiza<br/>this.isSubmitting.set<br/>this.confirmOpen.set<br/>this.notificationService.success<br/>this.notificationService.error"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n24
+  n24 -->|sí| n25
+  n25 --> n2
+  n16 -.->|consulta| n26
+  n24 -->|no| n28
+  n28 -->|implementa| n29
+  n29 -->|create| n31
+  n31 --> n32
+  n32 -->|sí| n33
+  n33 --> n2
+  n32 -->|no| n34
+  n34 -->|sí| n35
+  n35 --> n2
+  n34 -->|no| n36
+  n36 -->|sí| n37
+  n37 --> n2
+  n36 -->|no| n38
+  n38 -->|sí| n39
+  n39 --> n2
+  n31 -.->|también puede lanzar| n40
+  n40 --> n2
+  n38 -->|no| n41
+  n41 -->|COMMIT| n8
+  n8 --> n42
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19,n21,n23,n25,n33,n35,n37,n39,n40 err
+  class n5,n6,n7 fe
+  class n8,n42 ok
+  class n10,n12,n18,n20,n22,n24,n32,n34,n36,n38 dec
+  class n14 api
+  class n16 app
+  class n17,n26,n28 dom
+  class n29 infra
+  class n31,n41 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/phone-sales: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** PhonesSalePageComponent.confirmSale (comercial-jhoel-app/src/app/features/dashboard/phones/sale/phones-sale-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/phones/presentation/controllers/phone-sales.controller.ts`](../../../../comercial-jhoel-api/src/modules/phones/presentation/controllers/phone-sales.controller.ts), [`comercial-jhoel-app/src/app/core/services/phones.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/phones.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/phones/sale/phones-sale-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/phones/sale/phones-sale-page.component.ts), [`comercial-jhoel-api/src/modules/phones/application/use-cases/register-phone-sale.use-case.ts`](../../../../comercial-jhoel-api/src/modules/phones/application/use-cases/register-phone-sale.use-case.ts), [`comercial-jhoel-api/src/modules/phones/application/utils/assert-valid-dpi-image.ts`](../../../../comercial-jhoel-api/src/modules/phones/application/utils/assert-valid-dpi-image.ts), [`comercial-jhoel-api/src/modules/clients/domain/repositories/client.repository.ts`](../../../../comercial-jhoel-api/src/modules/clients/domain/repositories/client.repository.ts), [`comercial-jhoel-api/src/modules/phones/domain/repositories/phone-sale.repository.ts`](../../../../comercial-jhoel-api/src/modules/phones/domain/repositories/phone-sale.repository.ts), [`comercial-jhoel-api/src/modules/phones/infrastructure/persistence/typeorm-phone-sale.repository.ts`](../../../../comercial-jhoel-api/src/modules/phones/infrastructure/persistence/typeorm-phone-sale.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO RegisterPhoneSaleRequestDto | !ALLOWED_MIME_TYPES.has(file.mimetype) | file.size > MAX_DPI_IMAGE_SIZE_BYTES | file.size === 0 | !client || !client.isActive | SQL register_phone_sale: p_client_dpi IS NULL OR length(trim(p_client_dpi)) = 0 | SQL register_phone_sale: p_phone_number IS NULL OR length(trim(p_phone_number)) = 0 | SQL register_phone_sale: NOT FOUND | SQL register_phone_sale: v_phone.status = 'VENDIDO'
+6. **¿Dónde se almacenan los datos?** register_phone_sale(), phone_sale_dpi_images, phone_sales, phones
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

@@ -1,0 +1,148 @@
+# Mapa de BankDepositsController
+
+Módulo: **Transaccionar (operaciones bancarias) (bank-deposits)** · Fuente editable: [`bankdepositscontroller.mmd`](bankdepositscontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["BankDepositService<br/><small>app/core/services/bank-deposit.service.ts</small>"]
+  n3["TransaccionarPageComponent<br/><small>app/features/dashboard/transaccionar/transaccionar-page.component.ts</small>"]
+  n4["DailyTransactionsChartComponent<br/><small>app/features/dashboard/graphs/components/daily-transactions-chart/daily-transactions-chart.component.ts</small>"]
+  n5["TransactionMonthlyChartComponent<br/><small>app/shared/ui/transaction-monthly-chart/transaction-monthly-chart.component.ts</small>"]
+  n6["WeeklyTransactionsChartComponent<br/><small>app/features/dashboard/graphs/components/weekly-transactions-chart/weekly-transactions-chart.component.ts</small>"]
+  n7["YearlyTransactionsChartComponent<br/><small>app/features/dashboard/graphs/components/yearly-transactions-chart/yearly-transactions-chart.component.ts</small>"]
+  n8["BankDepositDetailModalComponent<br/><small>app/features/dashboard/reports/bank-deposits/components/bank-deposit-detail-modal/bank-deposit-detail-modal.component.ts</small>"]
+  n9["BankDepositsReportPageComponent<br/><small>app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts</small>"]
+  end
+  subgraph s10["BankDepositsController (api/bank-deposits/presentation/controllers/bank-deposits.controller.ts)"]
+  n11["POST /api/bank-deposits<br/><small>create()</small>"]
+  n12["GET /api/bank-deposits/monthly-count<br/><small>monthlyCount()</small>"]
+  n13["GET /api/bank-deposits/summary<br/><small>transactionSummary()</small>"]
+  n14["GET /api/bank-deposits/daily-stats<br/><small>dailyStats()</small>"]
+  n15["GET /api/bank-deposits/weekly-stats<br/><small>weeklyStats()</small>"]
+  n16["GET /api/bank-deposits/yearly-stats<br/><small>yearlyStats()</small>"]
+  n17["GET /api/bank-deposits/recent<br/><small>recent()</small>"]
+  n18["GET /api/bank-deposits/:id<br/><small>findOne()</small>"]
+  n19["POST /api/bank-deposits/:id/void<br/><small>voidOperation() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s20["Aplicación"]
+  n21["RegisterBankDepositOperationUseCase<br/><small>api/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts</small>"]
+  n22["GetBankDepositMonthlyCountUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-monthly-count.use-case.ts</small>"]
+  n23["GetBankDepositTransactionSummaryUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-transaction-summary.use-case.ts</small>"]
+  n24["GetBankDepositDailyStatsUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-daily-stats.use-case.ts</small>"]
+  n25["GetBankDepositWeeklyStatsUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-weekly-stats.use-case.ts</small>"]
+  n26["GetBankDepositYearlyStatsUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-yearly-stats.use-case.ts</small>"]
+  n27["ListRecentBankDepositOperationsUseCase<br/><small>api/bank-deposits/application/use-cases/list-recent-bank-deposit-operations.use-case.ts</small>"]
+  n28["GetBankDepositOperationByIdUseCase<br/><small>api/bank-deposits/application/use-cases/get-bank-deposit-operation-by-id.use-case.ts</small>"]
+  n29["VoidBankDepositOperationUseCase<br/><small>api/bank-deposits/application/use-cases/void-bank-deposit-operation.use-case.ts</small>"]
+  end
+  subgraph s30["Dominio · Infraestructura · PostgreSQL"]
+  n31["BankDepositRepository"]
+  n32["TypeOrmBankDepositRepository<br/><small>api/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts</small>"]
+  n33[["register_bank_deposit_operation()"]]
+  n34[("bank_deposit_cash_details")]
+  n35[("bank_deposit_operations")]
+  n36[("bank_deposit_transactions")]
+  n37["DayOpeningRepository"]
+  n38["TypeOrmDayOpeningRepository<br/><small>api/banks/infrastructure/persistence/typeorm-day-opening.repository.ts</small>"]
+  n39["ClientRepository"]
+  n40["TypeOrmClientRepository<br/><small>api/clients/infrastructure/persistence/typeorm-client.repository.ts</small>"]
+  n41["TransactionManager"]
+  n42["TypeOrmTransactionManager<br/><small>api/shared/infrastructure/services/typeorm-transaction-manager.service.ts</small>"]
+  n43["RegisterAccountReceivableChargeUseCase"]
+  n44["RegisterAssetChargeUseCase"]
+  n45["TransactionTypeRepository"]
+  n46["TypeOrmTransactionTypeRepository<br/><small>api/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts</small>"]
+  n47["BankMovementRepository"]
+  n48["TypeOrmBankMovementRepository<br/><small>api/banks/infrastructure/persistence/typeorm-bank-movement.repository.ts</small>"]
+  n49["CashControlRepository"]
+  n50["TypeOrmCashControlRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts</small>"]
+  n51[("cash_movements")]
+  n52[["void_bank_deposit_operation()"]]
+  end
+  n3 -->|confirmSave→registerOperation, confirmSave→getTransactionSummary| n2
+  n4 -->|fetch→getDailyStats| n2
+  n5 -->|fetch→getDailyStats| n2
+  n6 -->|fetch→getWeeklyStats| n2
+  n7 -->|fetch→getYearlyStats| n2
+  n8 -->|fetch→getOperationById| n2
+  n9 -->|confirmVoid→voidOperation| n2
+  n2 -->|registerOperation| n11
+  n2 -->|getMonthlyCount| n12
+  n2 -->|getTransactionSummary| n13
+  n2 -->|getDailyStats| n14
+  n2 -->|getWeeklyStats| n15
+  n2 -->|getYearlyStats| n16
+  n2 -->|getRecentOperations| n17
+  n2 -->|getOperationById| n18
+  n2 -->|voidOperation| n19
+  n11 --> n21
+  n12 --> n22
+  n13 --> n23
+  n14 --> n24
+  n15 --> n25
+  n16 --> n26
+  n17 --> n27
+  n18 --> n28
+  n19 --> n29
+  n21 -->|registerOperation| n31
+  n31 -->|implementa| n32
+  n32 -->|registerOperation| n33
+  n33 -->|escribe| n34
+  n33 -->|escribe| n35
+  n33 -->|escribe| n36
+  n21 -->|findByDate| n37
+  n37 -->|implementa| n38
+  n21 -->|findById| n39
+  n39 -->|implementa| n40
+  n21 -->|runInTransaction| n41
+  n41 -->|implementa| n42
+  n21 -->|execute| n43
+  n21 -->|execute| n44
+  n21 -->|findById| n45
+  n45 -->|implementa| n46
+  n21 -->|findByReference| n47
+  n47 -->|implementa| n48
+  n21 -->|findMovementsByReference, getBalance| n49
+  n49 -->|implementa| n50
+  n50 -->|getBalance| n51
+  n22 -->|getReportSummary| n31
+  n23 -->|getReportSummary| n31
+  n24 -->|getDailyTransactionCounts| n31
+  n25 -->|getDailyTransactionCounts| n31
+  n26 -->|getMonthlyTransactionCounts| n31
+  n27 -->|findRecent| n31
+  n28 -->|findById| n31
+  n29 -->|findById, voidOperation| n31
+  n32 -->|voidOperation| n52
+  n52 -->|escribe| n35
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9 fe
+  class n11,n12,n13,n14,n15,n16,n17,n18,n19 api
+  class n21,n22,n23,n24,n25,n26,n27,n28,n29,n43,n44 app
+  class n31,n37,n39,n41,n45,n47,n49 dom
+  class n32,n38,n40,n42,n46,n48,n50 infra
+  class n33,n34,n35,n36,n51,n52 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a BankDepositsController, sus 9 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/bank-deposits/presentation/controllers/bank-deposits.controller.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/presentation/controllers/bank-deposits.controller.ts), [`comercial-jhoel-app/src/app/core/services/bank-deposit.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/bank-deposit.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/transaccionar-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/daily-transactions-chart/daily-transactions-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/daily-transactions-chart/daily-transactions-chart.component.ts), [`comercial-jhoel-app/src/app/shared/ui/transaction-monthly-chart/transaction-monthly-chart.component.ts`](../../../../comercial-jhoel-app/src/app/shared/ui/transaction-monthly-chart/transaction-monthly-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/weekly-transactions-chart/weekly-transactions-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/weekly-transactions-chart/weekly-transactions-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/graphs/components/yearly-transactions-chart/yearly-transactions-chart.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/graphs/components/yearly-transactions-chart/yearly-transactions-chart.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/components/bank-deposit-detail-modal/bank-deposit-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/components/bank-deposit-detail-modal/bank-deposit-detail-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/register-bank-deposit-operation.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-monthly-count.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-monthly-count.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-transaction-summary.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-transaction-summary.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-daily-stats.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-daily-stats.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-weekly-stats.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-weekly-stats.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-yearly-stats.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-yearly-stats.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/list-recent-bank-deposit-operations.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/list-recent-bank-deposit-operations.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-operation-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/get-bank-deposit-operation-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/void-bank-deposit-operation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/void-bank-deposit-operation.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-day-opening.repository.ts), [`comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts`](../../../../comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts), [`comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts`](../../../../comercial-jhoel-api/src/shared/infrastructure/services/typeorm-transaction-manager.service.ts), [`comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts`](../../../../comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts), [`comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-movement.repository.ts`](../../../../comercial-jhoel-api/src/modules/banks/infrastructure/persistence/typeorm-bank-movement.repository.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-control.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/bank-deposits/
+6. **¿Dónde se almacenan los datos?** bank_deposit_cash_details, bank_deposit_operations, bank_deposit_transactions, cash_movements
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

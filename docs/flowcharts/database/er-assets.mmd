@@ -1,0 +1,31 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Activos
+%% @modulo: Activos (assets)
+%% @representa: Tablas del dominio assets (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: assets
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  assets {
+    uuid id PK
+    uuid client_id FK
+    date date
+    numeric amount
+    timestamp_with_time_zone updated_at
+    uuid created_by FK
+    uuid updated_by FK
+    character_varying movement_type
+    character_varying reference_type
+  }
+  clients {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  clients ||--o{ assets : "client_id"
+  users ||--o{ assets : "created_by"
+  users |o--o{ assets : "updated_by"

@@ -1,0 +1,173 @@
+# POST /api/financial-day-reviews/sessions/:id/snapshot-corrections
+
+Módulo: **Revisión de días operativos (financial-day-review)** · Fuente editable: [`post-financial-day-reviews-sessions-id-snapshot-corrections.mmd`](post-financial-day-reviews-sessions-id-snapshot-corrections.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/financial-day-reviews/sessions/:id/snapshot-corrections"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["FinancialDayReviewService.correctSnapshot<br/><small>app/core/services/financial-day-review.service.ts</small>"]
+  n6["FinancialDayReviewPageComponent.confirmCorrection<br/><small>app/features/dashboard/financial-day-review/financial-day-review-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/financial-day-reviews/sessions/:id/snapshot-corrections<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14{"¿CorrectSnapshotRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n15(["400 Datos inválidos"])
+  n16["FinancialDayReviewController.snapshot<br/><small>api/financial-day-review/presentation/controllers/financial-day-review.controller.ts</small>"]
+  end
+  subgraph s17["Aplicación — caso de uso"]
+  n18["CorrectFinancialDaySnapshotUseCase.execute<br/><small>api/financial-day-review/application/use-cases/financial-day-review.use-cases.ts</small>"]
+  n19["assertPermission()<br/><small>llamada en L189</small><br/><small>api/financial-day-review/application/use-cases/financial-day-review.use-cases.ts</small>"]
+  n20{"¿!hasFinancialDayPermission(role, permission)?<br/><small>L33</small>"}
+  n21(["financialDayReviewError('FINANCIAL_REVIEW_FORBIDDEN')"])
+  n22{"¿!fields?<br/><small>L192</small>"}
+  n23(["financialDayReviewError('FINANCIAL_REVIEW_INVALID_TARGET')"])
+  n24{"¿!fields.includes(input.field)?<br/><small>L195</small>"}
+  n25(["financialDayReviewError('FINANCIAL_REVIEW_INVALID_FIELD')"])
+  end
+  subgraph s26["Dominio → Infraestructura"]
+  n27["Puerto FinancialDayReviewRepository.correctSnapshot<br/>@Inject(FINANCIAL_DAY_REVIEW_REPOSITORY)"]
+  n28["TypeOrmFinancialDayReviewRepository<br/><small>api/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts</small>"]
+  subgraph s29["PostgreSQL — función correct_financial_day_snapshot"]
+  n30[["SELECT correct_financial_day_snapshot(…)<br/><small>correctSnapshot — una transacción</small>"]]
+  n31{"¿(p_target = 'BANK_BALANCE') y (p_field NOT IN ('previous_balance', 'final_balance'))?"}
+  n32(["RAISE FINANCIAL_REVIEW_INVALID_FIELD<br/>(rollback)"])
+  n33{"¿NOT FOUND?"}
+  n34(["RAISE FINANCIAL_REVIEW_TARGET_NOT_FOUND<br/>(rollback)"])
+  n35{"¿p_new_value #lt; 0 AND COALESCE(v_row.special_account, '') NOT IN ('GENESIS', 'BI_CLUB')?"}
+  n36(["RAISE FINANCIAL_REVIEW_INVALID_VALUE<br/>(rollback)"])
+  n37{"¿abs(p_new_value) #gt;= 10000000000?"}
+  n38(["RAISE FINANCIAL_REVIEW_INVALID_VALUE<br/>(rollback)"])
+  n39{"¿(p_target = 'AGENT_RECONCILIATION') y (p_field NOT IN ('total_cash', 'total_banks', 'total_assets', 'total_accounts_receivable'))?"}
+  n40(["RAISE FINANCIAL_REVIEW_INVALID_FIELD<br/>(rollback)"])
+  n41{"¿NOT FOUND?"}
+  n42(["RAISE FINANCIAL_REVIEW_TARGET_NOT_FOUND<br/>(rollback)"])
+  n43{"¿(p_target = 'CASH_DAY') y (p_field NOT IN ('opening_physical_cash', 'closing_physical_cash'))?"}
+  n44(["RAISE FINANCIAL_REVIEW_INVALID_FIELD<br/>(rollback)"])
+  n45{"¿NOT FOUND?"}
+  n46(["RAISE FINANCIAL_REVIEW_TARGET_NOT_FOUND<br/>(rollback)"])
+  n47{"¿v_original IS NULL?"}
+  n48(["RAISE FINANCIAL_REVIEW_TARGET_NOT_CORRECTABLE<br/>(rollback)"])
+  n49{"¿(p_target = 'CASH_CUT_PERIOD') y (p_field NOT IN ('opening_physical_cash'))?"}
+  n50(["RAISE FINANCIAL_REVIEW_INVALID_FIELD<br/>(rollback)"])
+  n51["… y 10 validaciones más (ver correct_financial_day_snapshot)"]
+  n52["Otros RAISE de correct_financial_day_snapshot (condición no extraída):<br/>FINANCIAL_REVIEW_INVALID_TARGET"]
+  n53[["financial_review_assert_role()"]]
+  n54[["financial_review_existing_request()"]]
+  n55[["financial_review_lock_session()"]]
+  n56[["financial_review_record_version()"]]
+  n57[["financial_review_validate_request()"]]
+  n58[("Escribe:<br/>agent_reconciliations<br/>bank_balances<br/>cash_cut_bank_reconciliations<br/>cash_cut_counts<br/>cash_cut_periods<br/>cash_operational_days<br/>financial_day_corrections<br/>financial_day_review_sessions")]
+  end
+  end
+  n59(["Fin: la interfaz se actualiza<br/>this.saving.set<br/>this.modalError.set<br/>this.correctionRequest.set<br/>this.notifications.success"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 --> n18
+  n18 --> n19
+  n19 --> n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n24
+  n24 -->|sí| n25
+  n25 --> n2
+  n24 -->|no| n27
+  n27 -->|implementa| n28
+  n28 -->|correctSnapshot| n30
+  n30 --> n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n33 -->|no| n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n37 -->|no| n39
+  n39 -->|sí| n40
+  n40 --> n2
+  n39 -->|no| n41
+  n41 -->|sí| n42
+  n42 --> n2
+  n41 -->|no| n43
+  n43 -->|sí| n44
+  n44 --> n2
+  n43 -->|no| n45
+  n45 -->|sí| n46
+  n46 --> n2
+  n45 -->|no| n47
+  n47 -->|sí| n48
+  n48 --> n2
+  n47 -->|no| n49
+  n49 -->|sí| n50
+  n50 --> n2
+  n49 -->|no| n51
+  n30 -.->|también puede lanzar| n52
+  n52 --> n2
+  n51 -->|no · llama| n53
+  n51 -->|no · llama| n54
+  n51 -->|no · llama| n55
+  n51 -->|no · llama| n56
+  n51 -->|no · llama| n57
+  n51 -->|no| n58
+  n58 -->|COMMIT| n8
+  n8 --> n59
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n15,n21,n23,n25,n32,n34,n36,n38,n40,n42,n44,n46,n48,n50,n52 err
+  class n5,n6,n7 fe
+  class n8,n59 ok
+  class n10,n12,n14,n20,n22,n24,n31,n33,n35,n37,n39,n41,n43,n45,n47,n49,n51 dec
+  class n16 api
+  class n18 app
+  class n19,n27 dom
+  class n28 infra
+  class n30,n53,n54,n55,n56,n57,n58 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/financial-day-reviews/sessions/:id/snapshot-corrections: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** FinancialDayReviewPageComponent.confirmCorrection (comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/financial-day-review/presentation/controllers/financial-day-review.controller.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/presentation/controllers/financial-day-review.controller.ts), [`comercial-jhoel-app/src/app/core/services/financial-day-review.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/financial-day-review.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/financial-day-review/financial-day-review-page.component.ts), [`comercial-jhoel-api/src/modules/financial-day-review/application/use-cases/financial-day-review.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/application/use-cases/financial-day-review.use-cases.ts), [`comercial-jhoel-api/src/modules/financial-day-review/domain/repositories/financial-day-review.repository.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/domain/repositories/financial-day-review.repository.ts), [`comercial-jhoel-api/src/modules/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts`](../../../../comercial-jhoel-api/src/modules/financial-day-review/infrastructure/persistence/typeorm-financial-day-review.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'SUPER_ADMIN' | DTO CorrectSnapshotRequestDto | !hasFinancialDayPermission(role, permission) | !fields | !fields.includes(input.field) | SQL correct_financial_day_snapshot: (p_target = 'BANK_BALANCE') y (p_field NOT IN ('previous_balance', 'final_balance')) | SQL correct_financial_day_snapshot: NOT FOUND | SQL correct_financial_day_snapshot: p_new_value < 0 AND COALESCE(v_row.special_account, '') NOT IN ('GENESIS', 'BI_CLUB') | SQL correct_financial_day_snapshot: abs(p_new_value) >= 10000000000 | SQL correct_financial_day_snapshot: (p_target = 'AGENT_RECONCILIATION') y (p_field NOT IN ('total_cash', 'total_banks', 'total_assets', 'total_accounts_receivable')) | SQL correct_financial_day_snapshot: NOT FOUND | SQL correct_financial_day_snapshot: (p_target = 'CASH_DAY') y (p_field NOT IN ('opening_physical_cash', 'closing_physical_cash')) | SQL correct_financial_day_snapshot: NOT FOUND
+6. **¿Dónde se almacenan los datos?** correct_financial_day_snapshot(), agent_reconciliations, bank_balances, cash_cut_bank_reconciliations, cash_cut_counts, cash_cut_periods, cash_operational_days, financial_day_corrections, financial_day_review_sessions
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

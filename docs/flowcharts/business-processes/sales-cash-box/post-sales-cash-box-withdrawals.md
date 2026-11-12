@@ -1,0 +1,114 @@
+# POST /api/sales-cash-box/withdrawals
+
+Módulo: **Caja de ventas (sales-cash-box)** · Fuente editable: [`post-sales-cash-box-withdrawals.mmd`](post-sales-cash-box-withdrawals.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/sales-cash-box/withdrawals"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["SalesCashBoxService.registerWithdrawal<br/><small>app/core/services/sales-cash-box.service.ts</small>"]
+  n6["CashBoxMovementModalComponent.submit<br/><small>app/features/dashboard/sales-register/components/cash-box-movement-modal/cash-box-movement-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/sales-cash-box/withdrawals<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿Rol en @Roles('ADMIN', 'SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n13(["403 Sin permisos"])
+  n14{"¿RegisterSalesCashBoxMovementRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n15(["400 Datos inválidos"])
+  n16["SalesCashBoxController.registerWithdrawal<br/><small>api/sales-cash-box/presentation/controllers/sales-cash-box.controller.ts</small>"]
+  end
+  subgraph s17["Aplicación — caso de uso"]
+  n18["RegisterSalesCashBoxWithdrawalUseCase.execute<br/><small>api/sales-cash-box/application/use-cases/register-sales-cash-box-withdrawal.use-case.ts</small>"]
+  end
+  subgraph s19["Dominio → Infraestructura"]
+  n20["Puerto SalesCashBoxMovementRepository.registerMovement<br/>@Inject(SALES_CASH_BOX_MOVEMENT_REPOSITORY)"]
+  n21["TypeOrmSalesCashBoxRepository<br/><small>api/sales-cash-box/infrastructure/persistence/typeorm-sales-cash-box.repository.ts</small>"]
+  subgraph s22["PostgreSQL — función register_sales_cash_box_movement"]
+  n23[["SELECT register_sales_cash_box_movement(…)<br/><small>registerMovement — una transacción</small>"]]
+  n24{"¿p_movement_type NOT IN ('CONTRIBUTION', 'WITHDRAWAL')?"}
+  n25(["RAISE INVALID_CASH_BOX_MOVEMENT_TYPE<br/>(rollback)"])
+  n26{"¿p_amount IS NULL OR p_amount #lt;= 0?"}
+  n27(["RAISE INVALID_MOVEMENT_AMOUNT<br/>(rollback)"])
+  n28{"¿p_concept IS NULL OR length(trim(p_concept)) = 0?"}
+  n29(["RAISE INVALID_MOVEMENT_CONCEPT<br/>(rollback)"])
+  n30{"¿NOT FOUND?"}
+  n31(["RAISE BUSINESS_NOT_FOUND<br/>(rollback)"])
+  n32["Otros RAISE de register_sales_cash_box_movement (condición no extraída):<br/>WITHDRAWAL_EXCEEDS_BALANCE"]
+  n33[("Escribe:<br/>sales_cash_box_movements")]
+  end
+  end
+  n34(["Fin: la interfaz se actualiza<br/>this.errorMessage.set<br/>this.isSubmitting.set<br/>this.notificationService.success<br/>this.saved.emit"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 -->|no| n15
+  n15 --> n2
+  n14 -->|sí| n16
+  n16 --> n18
+  n18 --> n20
+  n20 -->|implementa| n21
+  n21 -->|registerMovement| n23
+  n23 --> n24
+  n24 -->|sí| n25
+  n25 --> n2
+  n24 -->|no| n26
+  n26 -->|sí| n27
+  n27 --> n2
+  n26 -->|no| n28
+  n28 -->|sí| n29
+  n29 --> n2
+  n28 -->|no| n30
+  n30 -->|sí| n31
+  n31 --> n2
+  n23 -.->|también puede lanzar| n32
+  n32 --> n2
+  n30 -->|no| n33
+  n33 -->|COMMIT| n8
+  n8 --> n34
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n15,n25,n27,n29,n31,n32 err
+  class n5,n6,n7 fe
+  class n8,n34 ok
+  class n10,n12,n14,n24,n26,n28,n30 dec
+  class n16 api
+  class n18 app
+  class n20 dom
+  class n21 infra
+  class n23,n33 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/sales-cash-box/withdrawals: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** CashBoxMovementModalComponent.submit (comercial-jhoel-app/src/app/features/dashboard/sales-register/components/cash-box-movement-modal/cash-box-movement-modal.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/sales-cash-box/presentation/controllers/sales-cash-box.controller.ts`](../../../../comercial-jhoel-api/src/modules/sales-cash-box/presentation/controllers/sales-cash-box.controller.ts), [`comercial-jhoel-app/src/app/core/services/sales-cash-box.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/sales-cash-box.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/sales-register/components/cash-box-movement-modal/cash-box-movement-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/sales-register/components/cash-box-movement-modal/cash-box-movement-modal.component.ts), [`comercial-jhoel-api/src/modules/sales-cash-box/application/use-cases/register-sales-cash-box-withdrawal.use-case.ts`](../../../../comercial-jhoel-api/src/modules/sales-cash-box/application/use-cases/register-sales-cash-box-withdrawal.use-case.ts), [`comercial-jhoel-api/src/modules/sales-cash-box/domain/repositories/sales-cash-box-movement.repository.ts`](../../../../comercial-jhoel-api/src/modules/sales-cash-box/domain/repositories/sales-cash-box-movement.repository.ts), [`comercial-jhoel-api/src/modules/sales-cash-box/infrastructure/persistence/typeorm-sales-cash-box.repository.ts`](../../../../comercial-jhoel-api/src/modules/sales-cash-box/infrastructure/persistence/typeorm-sales-cash-box.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO RegisterSalesCashBoxMovementRequestDto | SQL register_sales_cash_box_movement: p_movement_type NOT IN ('CONTRIBUTION', 'WITHDRAWAL') | SQL register_sales_cash_box_movement: p_amount IS NULL OR p_amount <= 0 | SQL register_sales_cash_box_movement: p_concept IS NULL OR length(trim(p_concept)) = 0 | SQL register_sales_cash_box_movement: NOT FOUND
+6. **¿Dónde se almacenan los datos?** register_sales_cash_box_movement(), sales_cash_box_movements
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

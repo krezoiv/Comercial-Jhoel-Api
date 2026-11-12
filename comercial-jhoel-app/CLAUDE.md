@@ -1812,4 +1812,6 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   confirmación (`ConfirmDialogService`, `REPLACE_WITH_COUNT_MESSAGE`) antes de reemplazar cantidades tecleadas;
   "Guardar Cuadre" envía `cashDetails` + `cashBreakdownSource` (+ `sourceCashCountId`) — el backend re-valida y guarda
   la foto. Sin permiso de arqueos (cajero) el botón muestra el 403 y el conteo manual sigue disponible.
+- El botón carga SOLO el "Segundo corte · final del día" (lo elige el backend; `CORTE_CAJA` + `cutNumber`); el aviso
+  usa `CASH_CUT_NAME` y, si no hay corte 2 finalizado, `NO_SECOND_CUT_MESSAGE` (conteo manual).
 

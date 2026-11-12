@@ -1,0 +1,87 @@
+# Mapa de PublicNewsController
+
+Módulo: **Noticias (news)** · Fuente editable: [`publicnewscontroller.mmd`](publicnewscontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["PublicNewsService<br/><small>app/core/services/public-news.service.ts</small>"]
+  n3["NewsCardComponent<br/><small>app/features/landing/sections/news/components/news-card/news-card.component.ts</small>"]
+  end
+  subgraph s4["PublicNewsController (api/news/presentation/controllers/public-news.controller.ts)"]
+  n5["GET /api/public-news<br/><small>findAll()</small>"]
+  n6["GET /api/public-news/by-slug/:slug<br/><small>findOneBySlug()</small>"]
+  n7["GET /api/public-news/:id<br/><small>findOne()</small>"]
+  n8["GET /api/public-news/images/:id<br/><small>getImage()</small>"]
+  n9["POST /api/public-news/:id/like<br/><small>like()</small>"]
+  n10["POST /api/public-news/:id/unlike<br/><small>unlike()</small>"]
+  end
+  subgraph s11["Aplicación"]
+  n12["ListPublishedNewsArticlesUseCase<br/><small>api/news/application/use-cases/list-published-news-articles.use-case.ts</small>"]
+  n13["GetPublishedNewsArticleBySlugUseCase<br/><small>api/news/application/use-cases/get-published-news-article-by-slug.use-case.ts</small>"]
+  n14["GetPublishedNewsArticleByIdUseCase<br/><small>api/news/application/use-cases/get-published-news-article-by-id.use-case.ts</small>"]
+  n15["GetNewsArticleImageUseCase<br/><small>api/news/application/use-cases/get-news-article-image.use-case.ts</small>"]
+  n16["LikeNewsArticleUseCase<br/><small>api/news/application/use-cases/like-news-article.use-case.ts</small>"]
+  end
+  subgraph s17["Dominio · Infraestructura · PostgreSQL"]
+  n18["NewsArticleRepository"]
+  n19["TypeOrmNewsArticleRepository<br/><small>api/news/infrastructure/persistence/typeorm-news-article.repository.ts</small>"]
+  n20["CatalogLikeRepository"]
+  n21["TypeOrmCatalogLikeRepository<br/><small>api/likes/infrastructure/persistence/typeorm-catalog-like.repository.ts</small>"]
+  n22[("catalog_likes")]
+  end
+  n3 -->|toggleLike→likeArticle, toggleLike→unlikeArticle| n2
+  n2 -->|getPublishedArticles| n5
+  n2 -->|getArticleBySlug| n6
+  n2 -->|getArticleById| n7
+  n2 -->|likeArticle| n9
+  n2 -->|unlikeArticle| n10
+  n5 --> n12
+  n6 --> n13
+  n7 --> n14
+  n8 --> n15
+  n9 --> n16
+  n10 --> n16
+  n12 -->|findPublished| n18
+  n18 -->|implementa| n19
+  n12 -->|getCountsBatch, getLikedEntityIds| n20
+  n20 -->|implementa| n21
+  n21 -->|getCountsBatch| n22
+  n21 -->|getLikedEntityIds| n22
+  n13 -->|findPublishedBySlug| n18
+  n13 -->|getCount, getLikedEntityIds| n20
+  n14 -->|findById| n18
+  n14 -->|getCount, getLikedEntityIds| n20
+  n15 -->|findById, getImage| n18
+  n16 -->|findById| n18
+  n16 -->|like, unlike, getCount| n20
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3 fe
+  class n5,n6,n7,n8,n9,n10 api
+  class n12,n13,n14,n15,n16 app
+  class n18,n20 dom
+  class n19,n21 infra
+  class n22 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a PublicNewsController, sus 6 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/news/presentation/controllers/public-news.controller.ts`](../../../../comercial-jhoel-api/src/modules/news/presentation/controllers/public-news.controller.ts), [`comercial-jhoel-app/src/app/core/services/public-news.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/public-news.service.ts), [`comercial-jhoel-app/src/app/features/landing/sections/news/components/news-card/news-card.component.ts`](../../../../comercial-jhoel-app/src/app/features/landing/sections/news/components/news-card/news-card.component.ts), [`comercial-jhoel-api/src/modules/news/application/use-cases/list-published-news-articles.use-case.ts`](../../../../comercial-jhoel-api/src/modules/news/application/use-cases/list-published-news-articles.use-case.ts), [`comercial-jhoel-api/src/modules/news/application/use-cases/get-published-news-article-by-slug.use-case.ts`](../../../../comercial-jhoel-api/src/modules/news/application/use-cases/get-published-news-article-by-slug.use-case.ts), [`comercial-jhoel-api/src/modules/news/application/use-cases/get-published-news-article-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/news/application/use-cases/get-published-news-article-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/news/application/use-cases/get-news-article-image.use-case.ts`](../../../../comercial-jhoel-api/src/modules/news/application/use-cases/get-news-article-image.use-case.ts), [`comercial-jhoel-api/src/modules/news/application/use-cases/like-news-article.use-case.ts`](../../../../comercial-jhoel-api/src/modules/news/application/use-cases/like-news-article.use-case.ts), [`comercial-jhoel-api/src/modules/news/infrastructure/persistence/typeorm-news-article.repository.ts`](../../../../comercial-jhoel-api/src/modules/news/infrastructure/persistence/typeorm-news-article.repository.ts), [`comercial-jhoel-api/src/modules/likes/infrastructure/persistence/typeorm-catalog-like.repository.ts`](../../../../comercial-jhoel-api/src/modules/likes/infrastructure/persistence/typeorm-catalog-like.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/news/
+6. **¿Dónde se almacenan los datos?** catalog_likes
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

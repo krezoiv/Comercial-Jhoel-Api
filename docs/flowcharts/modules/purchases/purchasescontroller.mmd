@@ -1,0 +1,148 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de PurchasesController
+%% @modulo: Compras (purchases)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a PurchasesController, sus 11 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/purchases/presentation/controllers/purchases.controller.ts ; comercial-jhoel-app/src/app/core/services/purchases.service.ts ; comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/inventory/inventory-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/purchases-admin/purchases-admin-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts ; comercial-jhoel-app/src/app/features/dashboard/graphs/components/purchases-daily-chart/purchases-daily-chart.component.ts ; comercial-jhoel-app/src/app/features/dashboard/graphs/components/purchases-weekly-chart/purchases-weekly-chart.component.ts ; comercial-jhoel-app/src/app/features/dashboard/graphs/components/purchases-yearly-chart/purchases-yearly-chart.component.ts ; comercial-jhoel-app/src/app/features/dashboard/purchases-admin/components/purchase-detail-modal/purchase-detail-modal.component.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/create-purchase.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/import-purchase-from-excel.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/void-purchase.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/mark-purchase-as-paid.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/list-purchases.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/get-purchases-daily-stats.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/get-purchases-weekly-stats.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/get-purchases-yearly-stats.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/get-purchase-pdf.use-case.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/get-purchase-by-id.use-case.ts ; comercial-jhoel-api/src/modules/purchases/infrastructure/persistence/typeorm-purchase.repository.ts ; comercial-jhoel-api/src/modules/products/infrastructure/persistence/typeorm-product.repository.ts ; comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-product-presentation.repository.ts ; comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-location.repository.ts ; comercial-jhoel-api/src/modules/suppliers/infrastructure/persistence/typeorm-supplier.repository.ts ; comercial-jhoel-api/src/modules/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/purchases/
+%% @datos: inventory_movements, inventory_stock, product_presentations, products, purchase_details, purchases
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["PurchasesService<br/><small>app/core/services/purchases.service.ts</small>"]
+  n3["PurchasesPageComponent<br/><small>app/features/dashboard/purchases/purchases-page.component.ts</small>"]
+  n4["InventoryPageComponent<br/><small>app/features/dashboard/inventory/inventory-page.component.ts</small>"]
+  n5["PurchasesAdminPageComponent<br/><small>app/features/dashboard/purchases-admin/purchases-admin-page.component.ts</small>"]
+  n6["AlertBellComponent<br/><small>app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts</small>"]
+  n7["PurchasesDailyChartComponent<br/><small>app/features/dashboard/graphs/components/purchases-daily-chart/purchases-daily-chart.component.ts</small>"]
+  n8["PurchasesWeeklyChartComponent<br/><small>app/features/dashboard/graphs/components/purchases-weekly-chart/purchases-weekly-chart.component.ts</small>"]
+  n9["PurchasesYearlyChartComponent<br/><small>app/features/dashboard/graphs/components/purchases-yearly-chart/purchases-yearly-chart.component.ts</small>"]
+  n10["PurchaseDetailModalComponent<br/><small>app/features/dashboard/purchases-admin/components/purchase-detail-modal/purchase-detail-modal.component.ts</small>"]
+  end
+  subgraph s11["PurchasesController (api/purchases/presentation/controllers/purchases.controller.ts)"]
+  n12["POST /api/purchases<br/><small>create()</small>"]
+  n13["POST /api/purchases/import<br/><small>importExcel() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n14["POST /api/purchases/:id/void<br/><small>voidPurchase() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n15["POST /api/purchases/:id/pay<br/><small>markAsPaid()</small>"]
+  n16["GET /api/purchases<br/><small>findAll()</small>"]
+  n17["GET /api/purchases/import/template<br/><small>importTemplate() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n18["GET /api/purchases/daily-stats<br/><small>dailyStats()</small>"]
+  n19["GET /api/purchases/weekly-stats<br/><small>weeklyStats()</small>"]
+  n20["GET /api/purchases/yearly-stats<br/><small>yearlyStats()</small>"]
+  n21["GET /api/purchases/:id/pdf<br/><small>getPdf()</small>"]
+  n22["GET /api/purchases/:id<br/><small>findOne()</small>"]
+  end
+  subgraph s23["Aplicación"]
+  n24["CreatePurchaseUseCase<br/><small>api/purchases/application/use-cases/create-purchase.use-case.ts</small>"]
+  n25["ImportPurchaseFromExcelUseCase<br/><small>api/purchases/application/use-cases/import-purchase-from-excel.use-case.ts</small>"]
+  n26["VoidPurchaseUseCase<br/><small>api/purchases/application/use-cases/void-purchase.use-case.ts</small>"]
+  n27["MarkPurchaseAsPaidUseCase<br/><small>api/purchases/application/use-cases/mark-purchase-as-paid.use-case.ts</small>"]
+  n28["ListPurchasesUseCase<br/><small>api/purchases/application/use-cases/list-purchases.use-case.ts</small>"]
+  n29["GetPurchasesDailyStatsUseCase<br/><small>api/purchases/application/use-cases/get-purchases-daily-stats.use-case.ts</small>"]
+  n30["GetPurchasesWeeklyStatsUseCase<br/><small>api/purchases/application/use-cases/get-purchases-weekly-stats.use-case.ts</small>"]
+  n31["GetPurchasesYearlyStatsUseCase<br/><small>api/purchases/application/use-cases/get-purchases-yearly-stats.use-case.ts</small>"]
+  n32["GetPurchasePdfUseCase<br/><small>api/purchases/application/use-cases/get-purchase-pdf.use-case.ts</small>"]
+  n33["GetPurchaseByIdUseCase<br/><small>api/purchases/application/use-cases/get-purchase-by-id.use-case.ts</small>"]
+  end
+  subgraph s34["Dominio · Infraestructura · PostgreSQL"]
+  n35["PurchaseRepository"]
+  n36["TypeOrmPurchaseRepository<br/><small>api/purchases/infrastructure/persistence/typeorm-purchase.repository.ts</small>"]
+  n37[["confirm_purchase()"]]
+  n38[("inventory_movements")]
+  n39[("inventory_stock")]
+  n40[("product_presentations")]
+  n41[("products")]
+  n42[("purchase_details")]
+  n43[("purchases")]
+  n44["ProductRepository"]
+  n45["TypeOrmProductRepository<br/><small>api/products/infrastructure/persistence/typeorm-product.repository.ts</small>"]
+  n46["ProductPresentationRepository"]
+  n47["TypeOrmProductPresentationRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-product-presentation.repository.ts</small>"]
+  n48["InventoryLocationRepository"]
+  n49["TypeOrmInventoryLocationRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-inventory-location.repository.ts</small>"]
+  n50["SupplierRepository"]
+  n51["TypeOrmSupplierRepository<br/><small>api/suppliers/infrastructure/persistence/typeorm-supplier.repository.ts</small>"]
+  n52[["void_purchase()"]]
+  n53["CompanySettingsRepository"]
+  n54["TypeOrmCompanySettingsRepository<br/><small>api/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts</small>"]
+  end
+  n3 -->|confirmSave→createPurchase, confirmSave→exportPurchasePdf| n2
+  n4 -->|onImportInitialStockFile→importInitialStockExcel, onDownloadInitialStockTemplate→downloadInitialStockTemplate| n2
+  n5 -->|confirmVoid→voidPurchase, fetch→getPurchases| n2
+  n6 -->|markPurchaseAsPaid→markAsPaid| n2
+  n7 -->|fetch→getDailyStats| n2
+  n8 -->|fetch→getWeeklyStats| n2
+  n9 -->|fetch→getYearlyStats| n2
+  n10 -->|ngOnChanges→getPurchaseById| n2
+  n2 -->|createPurchase| n12
+  n2 -->|importInitialStockExcel| n13
+  n2 -->|voidPurchase| n14
+  n2 -->|markAsPaid| n15
+  n2 -->|getPurchases| n16
+  n2 -->|downloadInitialStockTemplate| n17
+  n2 -->|getDailyStats| n18
+  n2 -->|getWeeklyStats| n19
+  n2 -->|getYearlyStats| n20
+  n2 -->|exportPurchasePdf| n21
+  n2 -->|getPurchaseById| n22
+  n12 --> n24
+  n13 --> n25
+  n14 --> n26
+  n15 --> n27
+  n16 --> n28
+  n18 --> n29
+  n19 --> n30
+  n20 --> n31
+  n21 --> n32
+  n22 --> n33
+  n24 -->|confirmPurchase| n35
+  n35 -->|implementa| n36
+  n36 -->|confirmPurchase| n37
+  n37 -->|escribe| n38
+  n37 -->|escribe| n39
+  n37 -->|escribe| n40
+  n37 -->|escribe| n41
+  n37 -->|escribe| n42
+  n37 -->|escribe| n43
+  n25 -->|execute| n24
+  n25 -->|findByActiveSku, findByActiveName| n44
+  n44 -->|implementa| n45
+  n25 -->|findByProductId| n46
+  n46 -->|implementa| n47
+  n25 -->|findAll| n48
+  n48 -->|implementa| n49
+  n25 -->|findAll| n50
+  n50 -->|implementa| n51
+  n26 -->|findById, voidPurchase| n35
+  n36 -->|voidPurchase| n52
+  n52 -->|escribe| n38
+  n52 -->|escribe| n39
+  n52 -->|escribe| n41
+  n52 -->|escribe| n43
+  n27 -->|findById, markAsPaid| n35
+  n28 -->|findAll| n35
+  n29 -->|getDailyPurchaseTotals| n35
+  n30 -->|getDailyPurchaseTotals| n35
+  n31 -->|getMonthlyPurchaseTotals| n35
+  n32 -->|findById| n35
+  n32 -->|findById| n50
+  n32 -->|get| n53
+  n53 -->|implementa| n54
+  n33 -->|findById| n35
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9,n10 fe
+  class n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22 api
+  class n24,n25,n26,n27,n28,n29,n30,n31,n32,n33 app
+  class n35,n44,n46,n48,n50,n53 dom
+  class n36,n45,n47,n49,n51,n54 infra
+  class n37,n38,n39,n40,n41,n42,n43,n52 db

@@ -13,7 +13,7 @@ const MESSAGES: Record<string, { message: string; status: number }> = {
   },
   CUADRE_SOURCE_COUNT_INVALID: {
     message:
-      'El arqueo de Caja cargado ya no es válido (fue reemplazado o no existe). Vuelva a cargar el último arqueo o ingrese el conteo manualmente.',
+      'El arqueo cargado ya no es válido (fue reemplazado, el corte se reabrió o no existe). Vuelva a cargar el último arqueo o ingrese el conteo manualmente.',
     status: 409,
   },
   CUADRE_SOURCE_COUNT_FORBIDDEN: {

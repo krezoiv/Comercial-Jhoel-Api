@@ -1,0 +1,132 @@
+# POST /api/guayacan-cash-box/movements
+
+Módulo: **Caja Guayacán (guayacan-cash-box)** · Fuente editable: [`post-guayacan-cash-box-movements.mmd`](post-guayacan-cash-box-movements.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/guayacan-cash-box/movements"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["GuayacanCashBoxService.registerMovement<br/><small>app/core/services/guayacan-cash-box.service.ts</small>"]
+  n6["GuayacanMovementFormModalComponent.submit<br/><small>app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/guayacan-cash-box/movements<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿RegisterGuayacanCashMovementRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["GuayacanCashBoxController.registerMovement<br/><small>api/guayacan-cash-box/presentation/controllers/guayacan-cash-box.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["RegisterGuayacanCashMovementUseCase.execute<br/><small>api/guayacan-cash-box/application/use-cases/register-guayacan-cash-movement.use-case.ts</small>"]
+  n17{"¿!(input.amount #gt; 0)?<br/><small>L48</small>"}
+  n18(["GuayacanInvalidAmountError()"])
+  n19["assertBreakdownMatches()<br/><small>llamada en L54</small><br/><small>api/guayacan-cash-box/application/utils/cash-denominations.ts</small>"]
+  n20{"¿rows.length #gt; 0 #amp;#amp; denominationsTotal(rows) !== round2(Math.abs(amount))?<br/><small>L56</small>"}
+  n21(["GuayacanCashBreakdownMismatchError()"])
+  n22{"¿!movement?<br/><small>L69</small>"}
+  n23(["GuayacanMovementNotFoundError(id)"])
+  end
+  subgraph s24["Dominio → Infraestructura"]
+  n25["Puerto GuayacanCashBoxRepository.registerMovement / findMovementById<br/>@Inject(GUAYACAN_CASH_BOX_REPOSITORY)"]
+  n26["TypeOrmGuayacanCashBoxRepository<br/><small>api/guayacan-cash-box/infrastructure/persistence/typeorm-guayacan-cash-box.repository.ts</small>"]
+  subgraph s27["PostgreSQL — función register_guayacan_cash_movement"]
+  n28[["SELECT register_guayacan_cash_movement(…)<br/><small>registerMovement — una transacción</small>"]]
+  n29{"¿p_amount IS NULL?"}
+  n30(["RAISE INVALID_CASH_MOVEMENT_AMOUNT<br/>(rollback)"])
+  n31{"¿p_amount #lt;= 0?"}
+  n32(["RAISE INVALID_CASH_MOVEMENT_AMOUNT<br/>(rollback)"])
+  n33{"¿p_amount #lt;= 0?"}
+  n34(["RAISE INVALID_CASH_MOVEMENT_AMOUNT<br/>(rollback)"])
+  n35{"¿p_amount = 0?"}
+  n36(["RAISE INVALID_CASH_MOVEMENT_AMOUNT<br/>(rollback)"])
+  n37{"¿p_reason IS NULL OR length(trim(p_reason)) #lt; 5?"}
+  n38(["RAISE CASH_MOVEMENT_REASON_REQUIRED<br/>(rollback)"])
+  n39["Otros RAISE de register_guayacan_cash_movement (condición no extraída):<br/>INVALID_CASH_MOVEMENT_TYPE"]
+  end
+  n40[("findMovementById: SQL / TypeORM sobre<br/>guayacan_cash_movement_details<br/>bank_deposit_operations<br/>transaction_types<br/>transaction_banks<br/>bank_deposit_cash_details")]
+  end
+  n41(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.saved.emit"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 -->|sí| n18
+  n18 --> n2
+  n17 -->|no| n19
+  n19 --> n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n25
+  n25 -->|implementa| n26
+  n26 -->|registerMovement| n28
+  n28 --> n29
+  n29 -->|sí| n30
+  n30 --> n2
+  n29 -->|no| n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n33 -->|no| n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n28 -.->|también puede lanzar| n39
+  n39 --> n2
+  n37 -->|no| n8
+  n26 --> n40
+  n40 --> n8
+  n8 --> n41
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n18,n21,n23,n30,n32,n34,n36,n38,n39 err
+  class n5,n6,n7 fe
+  class n8,n41 ok
+  class n10,n12,n17,n20,n22,n29,n31,n33,n35,n37 dec
+  class n14 api
+  class n16 app
+  class n19,n25 dom
+  class n26 infra
+  class n28,n40 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/guayacan-cash-box/movements: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** GuayacanMovementFormModalComponent.submit (comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/guayacan-cash-box/presentation/controllers/guayacan-cash-box.controller.ts`](../../../../comercial-jhoel-api/src/modules/guayacan-cash-box/presentation/controllers/guayacan-cash-box.controller.ts), [`comercial-jhoel-app/src/app/core/services/guayacan-cash-box.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/guayacan-cash-box.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/guayacan-cash-box/components/movement-form-modal/movement-form-modal.component.ts), [`comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/register-guayacan-cash-movement.use-case.ts`](../../../../comercial-jhoel-api/src/modules/guayacan-cash-box/application/use-cases/register-guayacan-cash-movement.use-case.ts), [`comercial-jhoel-api/src/modules/guayacan-cash-box/application/utils/cash-denominations.ts`](../../../../comercial-jhoel-api/src/modules/guayacan-cash-box/application/utils/cash-denominations.ts), [`comercial-jhoel-api/src/modules/guayacan-cash-box/domain/repositories/guayacan-cash-box.repository.ts`](../../../../comercial-jhoel-api/src/modules/guayacan-cash-box/domain/repositories/guayacan-cash-box.repository.ts), [`comercial-jhoel-api/src/modules/guayacan-cash-box/infrastructure/persistence/typeorm-guayacan-cash-box.repository.ts`](../../../../comercial-jhoel-api/src/modules/guayacan-cash-box/infrastructure/persistence/typeorm-guayacan-cash-box.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO RegisterGuayacanCashMovementRequestDto | !(input.amount > 0) | rows.length > 0 && denominationsTotal(rows) !== round2(Math.abs(amount)) | !movement | SQL register_guayacan_cash_movement: p_amount IS NULL | SQL register_guayacan_cash_movement: p_amount <= 0 | SQL register_guayacan_cash_movement: p_amount <= 0 | SQL register_guayacan_cash_movement: p_amount = 0 | SQL register_guayacan_cash_movement: p_reason IS NULL OR length(trim(p_reason)) < 5
+6. **¿Dónde se almacenan los datos?** register_guayacan_cash_movement(), guayacan_cash_movement_details, bank_deposit_operations, transaction_types, transaction_banks, bank_deposit_cash_details
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

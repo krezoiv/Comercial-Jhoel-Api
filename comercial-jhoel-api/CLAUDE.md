@@ -1560,6 +1560,14 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   Sin desglose el camino original sigue igual. El arqueo original, el Kardex y los saldos bancarios nunca se escriben.
 - Errores: `CuadreCashBreakdownError` (`CUADRE_CASH_BREAKDOWN_INVALID`/`_MISMATCH` 400, `CUADRE_SOURCE_COUNT_INVALID` 409,
   `CUADRE_SOURCE_COUNT_FORBIDDEN` 403).
+- **Segundo corte · final del día, nunca la suma** (migración `1760007700000-CuadreBreakdownFromLatestCut`, decisión
+  del usuario 2026-11-11): `cash_latest_count_candidate(fecha)` devuelve SOLO el arqueo del corte 2 (`cash_cut_counts`
+  con `is_current`, corte FINALIZADO, `period_number = 2`) con su propio detalle (sin GROUP BY ni SUM). Nunca el corte 1
+  ni un arqueo suelto. Orden: día de referencia, luego el día operativo más reciente, hora, id. Corte 2 reabierto = no hay
+  candidato ese día. La foto admite origen `CORTE_CAJA` (`source_cut_count_id`, `source_cut_period_id`,
+  `source_cut_number`) y `close_agent_day_with_cash_breakdown` exige que sea un corte 2 vigente; `ARQUEO_CAJA` se sigue
+  aceptando por compatibilidad del API. Antes el botón leía solo `cash_counts` (arqueos sueltos), nunca los cortes.
+  Pruebas: `sql/tests/cuadre-latest-cut.test.sql` (21 casos).
 - Pruebas: `sql/tests/cuadre-cash-breakdown.test.sql` (32 casos, escenario de aceptación con huella md5),
   `close-agent-day.use-case.spec.ts`, `cash-denominations.spec.ts`, casos en `cash-custody.use-cases.spec.ts`,
   `test/cuadre-cash-breakdown.e2e-spec.ts`.

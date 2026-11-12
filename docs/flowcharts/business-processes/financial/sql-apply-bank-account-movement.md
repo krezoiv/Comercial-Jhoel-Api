@@ -1,0 +1,79 @@
+# Función apply_bank_account_movement: validaciones y escritura
+
+Módulo: **Base de datos — escritores de saldos y transferencias** · Fuente editable: [`sql-apply-bank-account-movement.mmd`](sql-apply-bank-account-movement.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["apply_bank_account_movement(p_bank_id, p_movement_type, p_origin, p_delta, p_business_date, p_user_id, p_reference_type, p_reference_id, p_reference_text, p_concept, p_observation, p_count)"])
+  n2(["RAISE EXCEPTION → rollback de toda la transacción"])
+  n3{"¿p_delta IS NULL OR p_delta = 0?"}
+  n4["INVALID_MOVEMENT_AMOUNT"]
+  n5{"¿p_business_date IS NULL?"}
+  n6["INVALID_OPERATION_DATE"]
+  n7{"¿NOT FOUND?"}
+  n8["BANK_NOT_FOUND"]
+  n9{"¿NOT v_bank.is_active AND p_movement_type #lt;#gt; 'ANULACION'?"}
+  n10["BANK_INACTIVE"]
+  n11{"¿(v_delta #gt; 0 AND v_after #gt; 0) y (v_before #gt;= 0)?"}
+  n12["CREDIT_LINE_NO_DEBT"]
+  n13{"¿(v_delta #lt; 0 AND v_after #lt; 0) y (v_bank.special_account IS DISTINCT FROM 'GENESIS' OR p_movement_type IN ('TRANSFERENCIA_SALIDA', 'RETIRO_EFECTIVO'))?"}
+  n14["INSUFFICIENT_BALANCE"]
+  n15{"¿v_delta #gt; 0 AND v_bank.max_balance IS NOT NULL AND v_after #gt; v_bank.max_balance AND p_movement_type NOT IN ('AJUSTE_MANUAL', 'ANULACION')?"}
+  n16["BALANCE_LIMIT_EXCEEDED"]
+  n17["Otros RAISE (condición no extraída del código):<br/>CREDIT_LINE_LIMIT_EXCEEDED, CREDIT_LINE_OVERPAYMENT"]
+  n18[("Escribe: bank_account_movements, banks")]
+  n19(["RETURN uuid"])
+  n1 --> n3
+  n3 -->|sí| n4
+  n4 --> n2
+  n3 -->|no| n5
+  n5 -->|sí| n6
+  n6 --> n2
+  n5 -->|no| n7
+  n7 -->|sí| n8
+  n8 --> n2
+  n7 -->|no| n9
+  n9 -->|sí| n10
+  n10 --> n2
+  n9 -->|no| n11
+  n11 -->|sí| n12
+  n12 --> n2
+  n11 -->|no| n13
+  n13 -->|sí| n14
+  n14 --> n2
+  n13 -->|no| n15
+  n15 -->|sí| n16
+  n16 --> n2
+  n1 -.->|también puede lanzar| n17
+  n17 --> n2
+  n15 -->|no| n18
+  n18 --> n19
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n4,n6,n8,n10,n12,n14,n16,n17 err
+  class n3,n5,n7,n9,n11,n13,n15 dec
+  class n18 db
+  class n19 ok
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Las reglas IF … RAISE EXCEPTION de apply_bank_account_movement en el orden del código fuente de la función, y las tablas que escribe. Es la única forma en que el sistema modifica ese saldo.
+2. **¿Dónde comienza?** llamada desde register_bank_balance_credit(), register_bank_deposit_operation(), register_bank_transfer(), register_cash_bank_deposit(), register_warehouse_withdrawal(), reverse_bank_account_movements()
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/database/migrations`](../../../../comercial-jhoel-api/src/database/migrations)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** INVALID_MOVEMENT_AMOUNT, INVALID_OPERATION_DATE, BANK_NOT_FOUND, BANK_INACTIVE, CREDIT_LINE_NO_DEBT, INSUFFICIENT_BALANCE, BALANCE_LIMIT_EXCEEDED · además lanza (condición no extraída): CREDIT_LINE_LIMIT_EXCEEDED, CREDIT_LINE_OVERPAYMENT
+6. **¿Dónde se almacenan los datos?** bank_account_movements, banks
+7. **¿Cómo termina el proceso?** RETURN uuid dentro de la transacción de quien la llamó
+8. **¿Qué sucede cuando ocurre un error?** Cada RAISE revierte también lo que hizo la función que la llamó (register_bank_balance_credit(), register_bank_deposit_operation(), register_bank_transfer(), register_cash_bank_deposit(), register_warehouse_withdrawal(), reverse_bank_account_movements())
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

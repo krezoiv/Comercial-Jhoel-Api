@@ -9,6 +9,7 @@ import {
   DenominationRow,
   FindCashCountsOptions,
   FindTransfersOptions,
+  LatestCashCountCandidate,
   LatestCashCountLookup,
   Paginated,
   RegisterCashCountData,
@@ -452,14 +453,30 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       [preferredBusinessDate],
     );
     const referenceBusinessDate = textOrNull(day?.day);
+    // `cash_latest_count_candidate` returns ONE count record with its own
+    // details — the two cuts of a day are never grouped or added together.
     const [row] = await this.dataSource.query<SqlRow[]>(
-      `${COUNT_SELECT}
-       WHERE c.status = 'VIGENTE'
-       ORDER BY (c.business_date = $1::date) DESC NULLS LAST, c.counted_at DESC, c.number DESC
-       LIMIT 1`,
+      `SELECT *, to_char(business_date, 'YYYY-MM-DD') AS business_date_text
+       FROM cash_latest_count_candidate($1::date)`,
       [referenceBusinessDate],
     );
-    return { count: row ? this.toCount(row) : null, referenceBusinessDate };
+    return {
+      count: row
+        ? {
+            source: text(row.source) as LatestCashCountCandidate['source'],
+            id: text(row.id),
+            number: numOrNull(row.number),
+            cutPeriodId: textOrNull(row.cut_period_id),
+            cutNumber: numOrNull(row.cut_number) as 1 | 2 | null,
+            businessDate: text(row.business_date_text),
+            countedAt: row.counted_at as Date,
+            totalCounted: num(row.total_counted),
+            createdByUsername: text(row.username),
+            details: toDetails(row.details),
+          }
+        : null,
+      referenceBusinessDate,
+    };
   }
 
   private toTransfer(row: SqlRow): WarehouseTransferRow {

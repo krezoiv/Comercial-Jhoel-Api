@@ -1,0 +1,50 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Transaccionar: anular una operación
+%% @modulo: Transaccionar (operaciones bancarias) (bank-deposits)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/bank-deposits/:id/void, con las validaciones y la transacción
+%% @inicio: BankDepositService.voidOperation
+%% @archivos: comercial-jhoel-api/src/modules/bank-deposits/presentation/controllers/bank-deposits.controller.ts ; comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts ; comercial-jhoel-app/src/app/core/services/bank-deposit.service.ts ; comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/void-bank-deposit-operation.use-case.ts ; comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/bank-deposits/post-bank-deposits-id-void.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as BankDepositsReportPageComponent
+  participant S as BankDepositService
+  participant G as API (guards y ValidationPipe)
+  participant CT as BankDepositsController
+  participant UC0 as VoidBankDepositOperationUseCase
+  participant R0 as TypeOrmBankDepositRepository
+  participant DB as PostgreSQL
+  U->>C: confirmVoid()
+  C->>S: voidOperation(…)
+  S->>G: POST /api/bank-deposits/:id/void + Bearer JWT
+  alt falla JWT válido y usuario activo / rol 'ADMIN', 'SUPER_ADMIN' / DTO VoidBankDepositOperationRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: voidOperation(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !operation
+    UC0-->>G: BankDepositOperationNotFoundError(input.id)
+  end
+  opt operation.isVoided
+    UC0-->>G: BankDepositOperationAlreadyVoidedError(input.id)
+  end
+  UC0->>R0: findById / voidOperation()
+  R0->>DB: SELECT void_bank_deposit_operation(…)
+  Note over DB: valida 2 reglas (BANK_DEPOSIT_OPERATION_NOT_FOUND, BANK_DEPOSIT_OPERATION_ALREADY_VOIDED)
+  Note over DB: escribe bank_deposit_operations
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSavingVoid.set, this.isVoidModalOpen.set, this.notificationService.success)

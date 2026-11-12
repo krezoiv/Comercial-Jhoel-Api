@@ -1,0 +1,72 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de RolesController
+%% @modulo: Roles (roles)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a RolesController, sus 5 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/roles/presentation/controllers/roles.controller.ts ; comercial-jhoel-app/src/app/core/services/role.service.ts ; comercial-jhoel-app/src/app/features/dashboard/roles/components/role-form-modal/role-form-modal.component.ts ; comercial-jhoel-app/src/app/features/dashboard/roles/roles-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/users/users-page.component.ts ; comercial-jhoel-api/src/modules/roles/application/use-cases/create-role.use-case.ts ; comercial-jhoel-api/src/modules/roles/application/use-cases/list-roles.use-case.ts ; comercial-jhoel-api/src/modules/roles/application/use-cases/get-role-by-id.use-case.ts ; comercial-jhoel-api/src/modules/roles/application/use-cases/update-role.use-case.ts ; comercial-jhoel-api/src/modules/roles/application/use-cases/deactivate-role.use-case.ts ; comercial-jhoel-api/src/modules/roles/infrastructure/persistence/typeorm-role.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/roles/
+%% @datos: users
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["RoleService<br/><small>app/core/services/role.service.ts</small>"]
+  n3["RoleFormModalComponent<br/><small>app/features/dashboard/roles/components/role-form-modal/role-form-modal.component.ts</small>"]
+  n4["RolesPageComponent<br/><small>app/features/dashboard/roles/roles-page.component.ts</small>"]
+  n5["UsersPageComponent<br/><small>app/features/dashboard/users/users-page.component.ts</small>"]
+  end
+  subgraph s6["RolesController (api/roles/presentation/controllers/roles.controller.ts)"]
+  n7["POST /api/roles<br/><small>create() · 'SUPER_ADMIN', 'ADMIN'</small>"]
+  n8["GET /api/roles<br/><small>findAll() · 'SUPER_ADMIN', 'ADMIN'</small>"]
+  n9["GET /api/roles/:id<br/><small>findOne() · 'SUPER_ADMIN', 'ADMIN'</small>"]
+  n10["PATCH /api/roles/:id<br/><small>update() · 'SUPER_ADMIN', 'ADMIN'</small>"]
+  n11["DELETE /api/roles/:id<br/><small>deactivate() · 'SUPER_ADMIN', 'ADMIN'</small>"]
+  end
+  subgraph s12["Aplicación"]
+  n13["CreateRoleUseCase<br/><small>api/roles/application/use-cases/create-role.use-case.ts</small>"]
+  n14["ListRolesUseCase<br/><small>api/roles/application/use-cases/list-roles.use-case.ts</small>"]
+  n15["GetRoleByIdUseCase<br/><small>api/roles/application/use-cases/get-role-by-id.use-case.ts</small>"]
+  n16["UpdateRoleUseCase<br/><small>api/roles/application/use-cases/update-role.use-case.ts</small>"]
+  n17["DeactivateRoleUseCase<br/><small>api/roles/application/use-cases/deactivate-role.use-case.ts</small>"]
+  end
+  subgraph s18["Dominio · Infraestructura · PostgreSQL"]
+  n19["RoleRepository"]
+  n20["TypeOrmRoleRepository<br/><small>api/roles/infrastructure/persistence/typeorm-role.repository.ts</small>"]
+  n21[("users")]
+  end
+  n3 -->|submit→createRole, submit→updateRole| n2
+  n4 -->|fetchRoles→getRoles, confirmDelete→deleteRole| n2
+  n5 -->|fetchRoles→getRoles| n2
+  n2 -->|createRole| n7
+  n2 -->|getRoles| n8
+  n2 -->|getRoleById| n9
+  n2 -->|updateRole| n10
+  n2 -->|deleteRole| n11
+  n7 --> n13
+  n8 --> n14
+  n9 --> n15
+  n10 --> n16
+  n11 --> n17
+  n13 -->|findByName, create| n19
+  n19 -->|implementa| n20
+  n14 -->|findAll, countUsersByRoleId| n19
+  n20 -->|countUsersByRoleId| n21
+  n15 -->|findById, countUsersByRoleId| n19
+  n16 -->|findById, findByName, countUsersByRoleId …| n19
+  n17 -->|findById, countUsersByRoleId, deactivate| n19
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5 fe
+  class n7,n8,n9,n10,n11 api
+  class n13,n14,n15,n16,n17 app
+  class n19 dom
+  class n20 infra
+  class n21 db

@@ -87,12 +87,20 @@ export function cashCountFromRows(rows: Array<{ denomination: number; quantity: 
 }
 
 /** Where the cash breakdown being edited comes from — sent with the cuadre and stored with it. */
-export type CuadreCashBreakdownSource = 'MANUAL' | 'ARQUEO_CAJA';
+export type CuadreCashBreakdownSource = 'MANUAL' | 'ARQUEO_CAJA' | 'CORTE_CAJA';
 
-/** The Arqueo de Caja a breakdown was loaded from (reference only — the arqueo itself is never modified). */
+/** The kinds of individual count a breakdown can be loaded from: one cut's arqueo or a standalone Arqueo de Caja. */
+export type LoadedCashCountSource = Exclude<CuadreCashBreakdownSource, 'MANUAL'>;
+
+/** The single count record a breakdown was loaded from (reference only — never modified). */
 export interface LoadedCashCountInfo {
+  source: LoadedCashCountSource;
+  /** `cash_cut_counts.id` for a cut, `cash_counts.id` for a standalone arqueo. */
   id: string;
-  number: number;
+  /** Arqueo number (standalone) — null for a cut. */
+  number: number | null;
+  /** Cut 1 or 2 (CORTE_CAJA) — null for a standalone arqueo. */
+  cutNumber: 1 | 2 | null;
   countedAt: string;
   businessDate: string;
   createdByUsername: string;
@@ -107,11 +115,14 @@ export interface CashBreakdownOrigin {
   modifiedAfterLoad: boolean;
 }
 
-/** `GET /cash-control/counts/latest` — the latest valid Arqueo de Caja, with all 12 denominations. */
+/** `GET /cash-control/counts/latest` — ONE count record (the latest cut's arqueo or standalone arqueo), all 12 denominations. */
 export interface LatestCashCountResponse {
   count: {
+    source: LoadedCashCountSource;
     id: string;
-    number: number;
+    number: number | null;
+    cutPeriodId: string | null;
+    cutNumber: 1 | 2 | null;
     businessDate: string;
     countedAt: string;
     totalCounted: number;
@@ -149,7 +160,7 @@ export interface RegisterAgentReconciliationInput {
   /** The breakdown actually used (all denominations) — the backend checks it adds up to `totalCash` and stores it as a photograph. */
   cashDetails?: Array<{ denomination: number; quantity: number }>;
   cashBreakdownSource?: CuadreCashBreakdownSource;
-  /** Only with `ARQUEO_CAJA`: the arqueo the breakdown was loaded from. */
+  /** With `ARQUEO_CAJA` / `CORTE_CAJA`: the id of the exact count record the breakdown was loaded from. */
   sourceCashCountId?: string;
 }
 

@@ -1,0 +1,58 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Compras
+%% @modulo: Compras (purchases)
+%% @representa: Tablas del dominio purchases (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: purchase_details, purchases
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  purchase_details {
+    uuid id PK
+    uuid purchase_id FK
+    uuid product_id FK
+    integer quantity
+    numeric total
+    uuid presentation_id FK
+    uuid location_id FK
+    integer quantity_base_units
+  }
+  purchases {
+    uuid id PK
+    uuid supplier_id FK
+    uuid user_id FK
+    timestamp_with_time_zone purchase_date
+    numeric total
+    timestamp_with_time_zone updated_at
+    character_varying payment_type
+    date payment_due_date
+    character_varying payment_status
+    uuid paid_by FK
+    character_varying invoice_number
+    uuid voided_by FK
+  }
+  inventory_locations {
+    uuid id PK
+  }
+  product_presentations {
+    uuid id PK
+  }
+  products {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  suppliers {
+    uuid id PK
+  }
+  inventory_locations |o--o{ purchase_details : "location_id"
+  product_presentations |o--o{ purchase_details : "presentation_id"
+  products ||--o{ purchase_details : "product_id"
+  purchases ||--o{ purchase_details : "purchase_id"
+  users |o--o{ purchases : "paid_by"
+  suppliers ||--o{ purchases : "supplier_id"
+  users ||--o{ purchases : "user_id"
+  users |o--o{ purchases : "voided_by"

@@ -32,6 +32,10 @@ import { DecimalInputDirective } from '../../../shared/directives/decimal-input.
 import { AgentReconciliationConfirmModalComponent } from './components/agent-reconciliation-confirm-modal/agent-reconciliation-confirm-modal.component';
 import { CuadreCashSourceComponent } from './components/cuadre-cash-source/cuadre-cash-source.component';
 
+/** Shown when no "Segundo corte · final del día" has been finished yet. */
+export const NO_SECOND_CUT_MESSAGE =
+  'No hay un Segundo corte (final del día) finalizado en Control de Efectivo. Puede ingresar el conteo manualmente.';
+
 /** Confirmation copy before an arqueo replaces quantities typed by hand. */
 export const REPLACE_WITH_COUNT_MESSAGE =
   'Ya existen cantidades ingresadas manualmente. ¿Desea reemplazarlas con el desglose del último arqueo de Caja?';
@@ -257,8 +261,9 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * "Cargar último arqueo de Caja": copies the latest valid Arqueo de Caja's
-   * breakdown into the form (Q0.01 completed with 0 on older arqueos) — the
+   * "Cargar último arqueo de Caja": copies the breakdown of the "Segundo
+   * corte · final del día" (chosen by the backend; both cuts are never added
+   * up) into the form (Q0.01 completed with 0 on older arqueos) — the
    * arqueo itself is only read. Quantities typed by hand are never replaced
    * without confirmation; reloading an untouched arqueo needs none. An arqueo
    * of an earlier bank day loads with a visible warning.
@@ -287,12 +292,14 @@ export class CuadreAgentesPageComponent {
       next: (latest) => {
         this.isLoadingCount.set(false);
         if (!latest.count) {
-          this.notificationService.info('No hay arqueos de Caja registrados. Puede ingresar el conteo manualmente.');
+          this.notificationService.info(NO_SECOND_CUT_MESSAGE);
           return;
         }
         this.state.loadFromCount(cashCountFromRows(latest.breakdown), {
+          source: latest.count.source,
           id: latest.count.id,
           number: latest.count.number,
+          cutNumber: latest.count.cutNumber,
           countedAt: latest.count.countedAt,
           businessDate: latest.count.businessDate,
           createdByUsername: latest.count.createdByUsername,
@@ -300,10 +307,10 @@ export class CuadreAgentesPageComponent {
           isFromReferenceDay: latest.isFromReferenceDay,
         });
         if (latest.isFromReferenceDay) {
-          this.notificationService.success('Desglose cargado desde el último arqueo de Caja.');
+          this.notificationService.success('Desglose cargado desde el Segundo corte · final del día.');
         } else {
           this.notificationService.warning(
-            'Se cargó el último arqueo disponible, pero corresponde a una fecha anterior. Verifique las cantidades.',
+            'Se cargó el último Segundo corte disponible, pero corresponde a una fecha anterior. Verifique las cantidades.',
           );
         }
       },
@@ -406,7 +413,7 @@ export class CuadreAgentesPageComponent {
       totalCash: this.totalCash(),
       date: this.draft.operationDate(),
       cashDetails: this.state.details(),
-      cashBreakdownSource: loaded ? 'ARQUEO_CAJA' : 'MANUAL',
+      cashBreakdownSource: loaded ? loaded.source : 'MANUAL',
       ...(loaded ? { sourceCashCountId: loaded.id } : {}),
     };
   }

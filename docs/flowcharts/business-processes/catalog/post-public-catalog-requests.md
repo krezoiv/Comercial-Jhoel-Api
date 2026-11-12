@@ -1,0 +1,91 @@
+# POST /api/public-catalog/requests
+
+Módulo: **Catálogo de teléfonos (catalog)** · Fuente editable: [`post-public-catalog-requests.mmd`](post-public-catalog-requests.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/public-catalog/requests"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["PublicCatalogService.createRequest<br/><small>app/core/services/public-catalog.service.ts</small>"]
+  n6["PhoneInterestModalComponent.submit<br/><small>app/features/landing/sections/phones/components/phone-interest-modal/phone-interest-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/public-catalog/requests<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿CreateCatalogRequestRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n11(["400 Datos inválidos"])
+  n12["PublicCatalogController.createRequest<br/><small>api/catalog/presentation/controllers/public-catalog.controller.ts</small>"]
+  end
+  subgraph s13["Aplicación — caso de uso"]
+  n14["CreateCatalogRequestUseCase.execute<br/><small>api/catalog/application/use-cases/create-catalog-request.use-case.ts</small>"]
+  n15{"¿!phone #124;#124; !phone.isPublished #124;#124; !phone.isActive?<br/><small>L55</small>"}
+  n16(["CatalogPhoneNotPublishedError()"])
+  n17{"¿input.requestType === 'INTERES_CREDITO' #amp;#amp; !creditAvailable?<br/><small>L64</small>"}
+  n18(["CatalogRequestCreditNotAvailableError()"])
+  end
+  n19["Puerto CatalogPhoneRepository<br/><small>findById</small>"]
+  n20["Puerto CompanySettingsRepository<br/><small>get</small>"]
+  subgraph s21["Dominio → Infraestructura"]
+  n22["Puerto CatalogRequestRepository.create<br/>@Inject(CATALOG_REQUEST_REPOSITORY)"]
+  n23["TypeOrmCatalogRequestRepository<br/><small>api/catalog/infrastructure/persistence/typeorm-catalog-request.repository.ts</small>"]
+  n24[("create: TypeORM Repository")]
+  end
+  n25(["Fin: la interfaz se actualiza<br/>this.errorMessage.set<br/>this.isSubmitting.set<br/>this.isSubmitted.set<br/>this.whatsappHref.set"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 -->|sí| n10
+  n10 -->|no| n11
+  n11 --> n2
+  n10 -->|sí| n12
+  n12 --> n14
+  n14 --> n15
+  n15 -->|sí| n16
+  n16 --> n2
+  n15 -->|no| n17
+  n17 -->|sí| n18
+  n18 --> n2
+  n14 -.->|consulta| n19
+  n14 -.->|consulta| n20
+  n17 -->|no| n22
+  n22 -->|implementa| n23
+  n23 --> n24
+  n24 --> n8
+  n8 --> n25
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n16,n18 err
+  class n5,n6,n7 fe
+  class n8,n25 ok
+  class n10,n15,n17 dec
+  class n12 api
+  class n14 app
+  class n19,n20,n22 dom
+  class n23 infra
+  class n24 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/public-catalog/requests: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** PhoneInterestModalComponent.submit (comercial-jhoel-app/src/app/features/landing/sections/phones/components/phone-interest-modal/phone-interest-modal.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/catalog/presentation/controllers/public-catalog.controller.ts`](../../../../comercial-jhoel-api/src/modules/catalog/presentation/controllers/public-catalog.controller.ts), [`comercial-jhoel-app/src/app/core/services/public-catalog.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/public-catalog.service.ts), [`comercial-jhoel-app/src/app/features/landing/sections/phones/components/phone-interest-modal/phone-interest-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/landing/sections/phones/components/phone-interest-modal/phone-interest-modal.component.ts), [`comercial-jhoel-api/src/modules/catalog/application/use-cases/create-catalog-request.use-case.ts`](../../../../comercial-jhoel-api/src/modules/catalog/application/use-cases/create-catalog-request.use-case.ts), [`comercial-jhoel-api/src/modules/catalog/domain/repositories/catalog-phone.repository.ts`](../../../../comercial-jhoel-api/src/modules/catalog/domain/repositories/catalog-phone.repository.ts), [`comercial-jhoel-api/src/modules/company-settings/domain/repositories/company-settings.repository.ts`](../../../../comercial-jhoel-api/src/modules/company-settings/domain/repositories/company-settings.repository.ts), [`comercial-jhoel-api/src/modules/catalog/domain/repositories/catalog-request.repository.ts`](../../../../comercial-jhoel-api/src/modules/catalog/domain/repositories/catalog-request.repository.ts), [`comercial-jhoel-api/src/modules/catalog/infrastructure/persistence/typeorm-catalog-request.repository.ts`](../../../../comercial-jhoel-api/src/modules/catalog/infrastructure/persistence/typeorm-catalog-request.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** DTO CreateCatalogRequestRequestDto | !phone || !phone.isPublished || !phone.isActive | input.requestType === 'INTERES_CREDITO' && !creditAvailable
+6. **¿Dónde se almacenan los datos?** ver repositorio
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

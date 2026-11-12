@@ -1,0 +1,16 @@
+flowchart LR
+  subgraph Navegador["Navegador (Angular 19)"]
+    C["Componentes de pantalla features/**"] --> S["Servicios HTTP y stores core/services/**"]
+    S --> I["Interceptores authInterceptor y cashMutationInterceptor"]
+  end
+  I -->|"HTTPS JSON con JWT"| P
+  subgraph API["API (NestJS 11)"]
+    P["Pipeline global helmet, CORS, ValidationPipe"] --> G["Guards JwtAuthGuard, RolesGuard, ThrottlerGuard"]
+    G --> CT["Controladores presentation/controllers"]
+    CT --> UC["Casos de uso application/use-cases"]
+    UC --> PORT["Puertos domain/repositories"]
+    PORT -.->|implementa| REPO["Repositorios TypeORM infrastructure/persistence"]
+    CT --> RI["ResponseInterceptor"]
+    UC -.->|DomainError| EF["GlobalExceptionFilter"]
+  end
+  REPO --> DB[("PostgreSQL tablas, funciones PL/pgSQL, triggers")]

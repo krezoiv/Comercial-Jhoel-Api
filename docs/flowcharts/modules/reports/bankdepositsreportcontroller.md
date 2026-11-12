@@ -1,0 +1,78 @@
+# Mapa de BankDepositsReportController
+
+Módulo: **Reportería (reports)** · Fuente editable: [`bankdepositsreportcontroller.mmd`](bankdepositsreportcontroller.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["ReportsService<br/><small>app/core/services/reports.service.ts</small>"]
+  n3["BankDepositsReportPageComponent<br/><small>app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts</small>"]
+  n4["TransactionDayDetailModalComponent<br/><small>app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts</small>"]
+  end
+  subgraph s5["BankDepositsReportController (api/reports/presentation/controllers/bank-deposits-report.controller.ts)"]
+  n6["GET /api/reports/bank-deposits<br/><small>findAll() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n7["GET /api/reports/bank-deposits/summary<br/><small>getSummary() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n8["GET /api/reports/bank-deposits/export<br/><small>export() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  end
+  subgraph s9["Aplicación"]
+  n10["ListBankDepositOperationsUseCase<br/><small>api/bank-deposits/application/use-cases/list-bank-deposit-operations.use-case.ts</small>"]
+  n11["GetBankDepositsReportSummaryUseCase<br/><small>api/reports/application/use-cases/get-bank-deposits-report-summary.use-case.ts</small>"]
+  n12["ExportBankDepositsReportPdfUseCase<br/><small>api/reports/application/use-cases/export-bank-deposits-report-pdf.use-case.ts</small>"]
+  end
+  subgraph s13["Dominio · Infraestructura · PostgreSQL"]
+  n14["BankDepositRepository"]
+  n15["TypeOrmBankDepositRepository<br/><small>api/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts</small>"]
+  n16["TransactionBankRepository"]
+  n17["TypeOrmTransactionBankRepository<br/><small>api/transaction-banks/infrastructure/persistence/typeorm-transaction-bank.repository.ts</small>"]
+  n18["TransactionTypeRepository"]
+  n19["TypeOrmTransactionTypeRepository<br/><small>api/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts</small>"]
+  n20["UserRepository"]
+  n21["TypeOrmUserRepository<br/><small>api/users/infrastructure/persistence/typeorm-user.repository.ts</small>"]
+  end
+  n3 -->|fetchTable→getBankDepositsReport, fetchAll→getBankDepositsReportSummary, exportPdf→exportBankDepositsReportPdf| n2
+  n4 -->|fetch→getBankDepositsReport| n2
+  n2 -->|getBankDepositsReport| n6
+  n2 -->|getBankDepositsReportSummary| n7
+  n2 -->|exportBankDepositsReportPdf| n8
+  n6 --> n10
+  n7 --> n11
+  n8 --> n12
+  n10 -->|findAll| n14
+  n14 -->|implementa| n15
+  n11 -->|getReportSummary| n14
+  n12 -->|findAll, getReportSummary| n14
+  n12 -->|findById| n16
+  n16 -->|implementa| n17
+  n12 -->|findById| n18
+  n18 -->|implementa| n19
+  n12 -->|findById| n20
+  n20 -->|implementa| n21
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4 fe
+  class n6,n7,n8 api
+  class n10,n11,n12 app
+  class n14,n16,n18,n20 dom
+  class n15,n17,n19,n21 infra
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a BankDepositsReportController, sus 3 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/reports/presentation/controllers/bank-deposits-report.controller.ts`](../../../../comercial-jhoel-api/src/modules/reports/presentation/controllers/bank-deposits-report.controller.ts), [`comercial-jhoel-app/src/app/core/services/reports.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/reports.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/reports/bank-deposits/bank-deposits-report-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/transaction-days/components/transaction-day-detail-modal/transaction-day-detail-modal.component.ts), [`comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/list-bank-deposit-operations.use-case.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/application/use-cases/list-bank-deposit-operations.use-case.ts), [`comercial-jhoel-api/src/modules/reports/application/use-cases/get-bank-deposits-report-summary.use-case.ts`](../../../../comercial-jhoel-api/src/modules/reports/application/use-cases/get-bank-deposits-report-summary.use-case.ts), [`comercial-jhoel-api/src/modules/reports/application/use-cases/export-bank-deposits-report-pdf.use-case.ts`](../../../../comercial-jhoel-api/src/modules/reports/application/use-cases/export-bank-deposits-report-pdf.use-case.ts), [`comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts`](../../../../comercial-jhoel-api/src/modules/bank-deposits/infrastructure/persistence/typeorm-bank-deposit.repository.ts), [`comercial-jhoel-api/src/modules/transaction-banks/infrastructure/persistence/typeorm-transaction-bank.repository.ts`](../../../../comercial-jhoel-api/src/modules/transaction-banks/infrastructure/persistence/typeorm-transaction-bank.repository.ts), [`comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts`](../../../../comercial-jhoel-api/src/modules/transaction-types/infrastructure/persistence/typeorm-transaction-type.repository.ts), [`comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts`](../../../../comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/reports/
+6. **¿Dónde se almacenan los datos?** sin tablas detectadas
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

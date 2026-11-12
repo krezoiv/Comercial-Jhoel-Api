@@ -151,7 +151,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
     );
     expect(Number(count.totalCounted)).toBe(4882.5);
 
-    // Latest valid count of the reference day, 12 denominations.
+    // A standalone arqueo is never what the button loads (only the second cut is).
     const latest = data(
       await as(adminToken)(
         api()
@@ -159,12 +159,8 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
           .query({ businessDate: '2099-09-01' }),
       ).expect(200),
     );
-    expect(latest.count.id).toBe(count.id);
-    expect(latest.isFromReferenceDay).toBe(true);
-    expect(latest.breakdown).toHaveLength(12);
-    expect(
-      latest.breakdown.find((r: Body) => r.denomination === 0.01).quantity,
-    ).toBe(100);
+    expect(latest.count).toBeNull();
+    expect(latest.breakdown).toEqual([]);
 
     const before = await fingerprint();
 
@@ -239,7 +235,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
     expect(Number(original.totalCounted)).toBe(4882.5);
   });
 
-  it('un cuadre manual al día siguiente: el arqueo previo se marca como de fecha anterior', async () => {
+  it('sin Segundo corte finalizado no hay nada que cargar; el cuadre manual sigue funcionando', async () => {
     await openDay('2099-09-02');
     const latest = data(
       await as(adminToken)(
@@ -248,8 +244,8 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
           .query({ businessDate: '2099-09-02' }),
       ).expect(200),
     );
-    expect(latest.count).not.toBeNull();
-    expect(latest.isFromReferenceDay).toBe(false);
+    // No second cut finished yet: nothing to load, the count stays manual.
+    expect(latest.count).toBeNull();
 
     const saved = data(
       await as(adminToken)(
@@ -276,5 +272,106 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
       source_cash_count_id: null,
       total_cash: '0.33',
     });
+  });
+
+  it('con dos cortes finalizados carga solo el Segundo corte (aunque el primero sea posterior) y guarda su referencia exacta', async () => {
+    await openDay('2099-09-03');
+    const run = (sql: string, params: unknown[]) =>
+      dataSource.query(sql, params) as Promise<Body[]>;
+    const banks = `(SELECT COALESCE(jsonb_agg(jsonb_build_object('bankId', b.id, 'verifiedBalance',
+        CASE WHEN b.special_account = 'GUAYACAN' THEN guayacan_cash_balance() ELSE b.final_balance END)), '[]')
+      FROM banks b WHERE b.is_active)`;
+    const [{ id: dayId }] = await run(
+      `SELECT open_cash_operational_day($1::date, $2, NULL, NULL, '07:00', '13:00', '13:00', '19:00') AS id`,
+      ['2099-09-03', adminId],
+    );
+    const periods = await run(
+      `SELECT id, period_number FROM cash_cut_periods WHERE operational_day_id = $1 ORDER BY period_number`,
+      [dayId],
+    );
+    const cut = async (periodId: string, rows: Array<[number, number]>) => {
+      await run(`SELECT start_cash_cut_period($1, $2)`, [periodId, adminId]);
+      await run(
+        `SELECT finish_cash_cut_period($1, $2, $3::jsonb, ${banks}, NULL, NULL)`,
+        [
+          periodId,
+          adminId,
+          JSON.stringify(
+            rows.map(([denomination, quantity]) => ({
+              denomination,
+              quantity,
+            })),
+          ),
+        ],
+      );
+    };
+    await cut(periods[0].id, [
+      [200, 100],
+      [100, 50],
+      [50, 20],
+      [20, 30],
+      [10, 20],
+    ]);
+    await cut(periods[1].id, [
+      [200, 80],
+      [100, 40],
+      [50, 15],
+      [20, 20],
+      [10, 10],
+    ]);
+    // Cut 1 registered AFTER cut 2 on purpose: the second cut must still be the one loaded.
+    await run(
+      `UPDATE cash_cut_counts SET created_at = now() + CASE WHEN cut_period_id = $1 THEN interval '3 hours' ELSE interval '2 hours' END
+       WHERE cut_period_id IN ($1, $2)`,
+      [periods[0].id, periods[1].id],
+    );
+
+    const latest = data(
+      await as(adminToken)(
+        api()
+          .get('/api/cash-control/counts/latest')
+          .query({ businessDate: '2099-09-03' }),
+      ).expect(200),
+    );
+    expect(latest.count.source).toBe('CORTE_CAJA');
+    expect(latest.count.cutNumber).toBe(2);
+    expect(latest.count.cutPeriodId).toBe(periods[1].id);
+    const qty = (d: number) =>
+      latest.breakdown.find((r: Body) => r.denomination === d).quantity;
+    expect([qty(200), qty(100), qty(50), qty(20), qty(10), qty(0.01)]).toEqual([
+      80, 40, 15, 20, 10, 0,
+    ]);
+    expect(Number(latest.count.totalCounted)).toBe(21250);
+
+    const before = await fingerprint();
+    const saved = data(
+      await as(adminToken)(
+        api()
+          .post('/api/agent-reconciliations')
+          .send({
+            totalCash: 21250,
+            date: '2099-09-03',
+            cashDetails: latest.breakdown.map((r: Body) => ({
+              denomination: r.denomination,
+              quantity: r.quantity,
+            })),
+            cashBreakdownSource: 'CORTE_CAJA',
+            sourceCashCountId: latest.count.id,
+          }),
+      ).expect(201),
+    );
+    const [photo] = await run(
+      `SELECT source, source_cut_count_id, source_cut_period_id, source_cut_number, modified_after_load
+       FROM agent_reconciliation_cash_breakdowns WHERE reconciliation_id = $1`,
+      [saved.id],
+    );
+    expect(photo).toEqual({
+      source: 'CORTE_CAJA',
+      source_cut_count_id: latest.count.id,
+      source_cut_period_id: periods[1].id,
+      source_cut_number: 2,
+      modified_after_load: false,
+    });
+    expect(await fingerprint()).toBe(before);
   });
 });

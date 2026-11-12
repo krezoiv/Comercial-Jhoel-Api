@@ -1,0 +1,50 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Inicio de sesión
+%% @modulo: Autenticación (auth)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/auth/login, con las validaciones y la transacción
+%% @inicio: AuthService.login
+%% @archivos: comercial-jhoel-api/src/modules/auth/presentation/controllers/auth.controller.ts ; comercial-jhoel-app/src/app/features/auth/login/login-page.component.ts ; comercial-jhoel-app/src/app/core/services/auth.service.ts ; comercial-jhoel-api/src/modules/auth/application/use-cases/login.use-case.ts ; comercial-jhoel-api/src/modules/users/infrastructure/persistence/typeorm-user.repository.ts ; comercial-jhoel-api/src/shared/infrastructure/services/bcrypt-password-hasher.service.ts ; comercial-jhoel-api/src/modules/auth/infrastructure/services/jwt-token.service.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/auth/post-auth-login.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as LoginPageComponent
+  participant S as AuthService
+  participant G as API (guards y ValidationPipe)
+  participant CT as AuthController
+  participant UC0 as LoginUseCase
+  participant R0 as TypeOrmUserRepository
+  participant R1 as BcryptPasswordHasher
+  participant R2 as NestJwtTokenService
+  participant DB as PostgreSQL
+  U->>C: submit()
+  C->>S: login(…)
+  S->>G: POST /api/auth/login + Bearer JWT
+  alt falla límite de intentos / DTO LoginRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: login(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !user
+    UC0-->>G: InvalidCredentialsError()
+  end
+  opt !isPasswordValid
+    UC0-->>G: InvalidCredentialsError()
+  end
+  opt !user.isActive
+    UC0-->>G: InvalidCredentialsError()
+  end
+  UC0->>R0: findByUsernameOrPhone()
+  R0-->>UC0: datos
+  UC0->>R1: compare()
+  R1-->>UC0: datos
+  UC0->>R2: sign()
+  R2-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.errorMessage.set, this.isSubmitting.set, this.router.navigateByUrl)

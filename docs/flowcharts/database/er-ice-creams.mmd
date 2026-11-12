@@ -1,0 +1,61 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Modelo entidad-relación — Heladería
+%% @modulo: Heladería (ice-creams)
+%% @representa: Tablas del dominio ice-creams (asignadas al módulo que más las usa), columnas importantes (PK, FK, montos, estados, fechas), llaves foráneas reales y su cardinalidad (|o = FK opcional, o| = relación 1 a 1 por UNIQUE)
+%% @inicio: Esquema real de PostgreSQL (pg_catalog)
+%% @archivos: comercial-jhoel-api/src/database/migrations (definición) ; docs/codebase-study/05_DATABASE_REFERENCE.md (todas las columnas por tabla)
+%% @decisiones: No aplica (estructura)
+%% @datos: ice_cream_purchase_details, ice_cream_purchases, ice_cream_sale_details, ice_cream_sales, ice_creams
+%% @fin: No aplica
+%% @errores: Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
+erDiagram
+  ice_cream_purchase_details {
+    uuid id PK
+    uuid purchase_id FK
+    uuid ice_cream_id FK
+    integer quantity
+    numeric subtotal
+  }
+  ice_cream_purchases {
+    uuid id PK
+    uuid supplier_id FK
+    uuid user_id FK
+    timestamp_with_time_zone purchase_date
+    numeric total
+    timestamp_with_time_zone updated_at
+  }
+  ice_cream_sale_details {
+    uuid id PK
+    uuid sale_id FK
+    uuid ice_cream_id FK
+    integer quantity
+    numeric total
+  }
+  ice_cream_sales {
+    uuid id PK
+    uuid user_id FK
+    timestamp_with_time_zone sale_date
+    numeric total
+    timestamp_with_time_zone updated_at
+  }
+  ice_creams {
+    uuid id PK
+    timestamp_with_time_zone updated_at
+    uuid created_by FK
+    uuid updated_by FK
+  }
+  suppliers {
+    uuid id PK
+  }
+  users {
+    uuid id PK
+  }
+  ice_creams ||--o{ ice_cream_purchase_details : "ice_cream_id"
+  ice_cream_purchases ||--o{ ice_cream_purchase_details : "purchase_id"
+  suppliers ||--o{ ice_cream_purchases : "supplier_id"
+  users ||--o{ ice_cream_purchases : "user_id"
+  ice_creams ||--o{ ice_cream_sale_details : "ice_cream_id"
+  ice_cream_sales ||--o{ ice_cream_sale_details : "sale_id"
+  users ||--o{ ice_cream_sales : "user_id"
+  users ||--o{ ice_creams : "created_by"
+  users |o--o{ ice_creams : "updated_by"

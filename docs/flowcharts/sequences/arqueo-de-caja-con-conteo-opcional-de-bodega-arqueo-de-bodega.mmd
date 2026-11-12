@@ -1,0 +1,56 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Arqueo de Caja (con conteo opcional de Bodega = arqueo de Bodega)
+%% @modulo: Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/cash-control/counts, con las validaciones y la transacción
+%% @inicio: CashCustodyService.registerCount
+%% @archivos: comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts ; comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts ; comercial-jhoel-app/src/app/core/services/cash-custody.service.ts ; comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts ; comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/cash-control/post-cash-control-counts.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as CashCountModalComponent
+  participant S as CashCustodyService
+  participant G as API (guards y ValidationPipe)
+  participant CT as CashCustodyController
+  participant UC0 as RegisterCashCountUseCase
+  participant R0 as TypeOrmCashCustodyRepository
+  participant DB as PostgreSQL
+  U->>C: save()
+  C->>S: registerCount(…)
+  S->>G: POST /api/cash-control/counts + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO RegisterCashCountRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: createCount(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !input.correctionReason #124;#124; input.correctionReason.trim().length #lt; 5
+    UC0-->>G: cashControlError('CASH_REASON_REQUIRED')
+  end
+  opt !input.details?.length
+    UC0-->>G: cashControlError('CASH_BREAKDOWN_REQUIRED')
+  end
+  opt !count
+    UC0-->>G: cashControlError('CASH_COUNT_NOT_FOUND')
+  end
+  opt !(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )
+    UC0-->>G: cashControlError('CASH_CUSTODY_FORBIDDEN')
+  end
+  UC0->>R0: registerCount / findCountById()
+  R0->>DB: SELECT register_cash_count(…)
+  Note over DB: valida 6 reglas (CASH_IDEMPOTENCY_KEY_REQUIRED, CASH_INVALID_DENOMINATION, CASH_INVALID_AMOUNT, …)
+  Note over DB: escribe cash_count_details, cash_counts
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.errorMessage.set, this.result.set)

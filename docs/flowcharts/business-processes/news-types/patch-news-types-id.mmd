@@ -1,0 +1,97 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: PATCH /api/news-types/:id
+%% @modulo: Tipos de noticia (news-types)
+%% @representa: Flujo de decisiones real de PATCH /api/news-types/:id: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: NewsTypeFormModalComponent.submit (comercial-jhoel-app/src/app/features/dashboard/news-types/components/news-type-form-modal/news-type-form-modal.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/news-types/presentation/controllers/news-types.controller.ts ; comercial-jhoel-app/src/app/core/services/news-type.service.ts ; comercial-jhoel-app/src/app/features/dashboard/news-types/components/news-type-form-modal/news-type-form-modal.component.ts ; comercial-jhoel-app/src/app/features/dashboard/news-types/news-types-page.component.ts ; comercial-jhoel-api/src/modules/news-types/application/use-cases/update-news-type.use-case.ts ; comercial-jhoel-api/src/modules/news-types/domain/repositories/news-type.repository.ts ; comercial-jhoel-api/src/modules/news-types/infrastructure/persistence/typeorm-news-type.repository.ts
+%% @decisiones: sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO UpdateNewsTypeRequestDto | !newsType | existing
+%% @datos: ver repositorio
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta PATCH /api/news-types/:id"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["NewsTypeService.updateType<br/><small>app/core/services/news-type.service.ts</small>"]
+  n6["NewsTypeFormModalComponent.submit<br/><small>app/features/dashboard/news-types/components/news-type-form-modal/news-type-form-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["NewsTypesPageComponent.toggleActive<br/><small>app/features/dashboard/news-types/news-types-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n8["HTTP PATCH /api/news-types/:id<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n9["Respuesta 200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s10["API NestJS — presentación"]
+  n11{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n12(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n13{"¿Rol en @Roles('ADMIN', 'SUPER_ADMIN')?<br/>(RolesGuard)"}
+  n14(["403 Sin permisos"])
+  n15{"¿UpdateNewsTypeRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n16(["400 Datos inválidos"])
+  n17["NewsTypesController.update<br/><small>api/news-types/presentation/controllers/news-types.controller.ts</small>"]
+  end
+  subgraph s18["Aplicación — caso de uso"]
+  n19["UpdateNewsTypeUseCase.execute<br/><small>api/news-types/application/use-cases/update-news-type.use-case.ts</small>"]
+  n20{"¿!newsType?<br/><small>L25</small>"}
+  n21(["NewsTypeNotFoundError(id)"])
+  n22{"¿existing?<br/><small>L32</small>"}
+  n23(["NewsTypeNameAlreadyExistsError(name, !existing.isActive)"])
+  end
+  subgraph s24["Dominio → Infraestructura"]
+  n25["Puerto NewsTypeRepository.findById / findByName / update<br/>@Inject(NEWS_TYPE_REPOSITORY)"]
+  n26["TypeOrmNewsTypeRepository<br/><small>api/news-types/infrastructure/persistence/typeorm-news-type.repository.ts</small>"]
+  n27[("findById: TypeORM Repository")]
+  n28[("findByName: TypeORM Repository")]
+  n29[("update: TypeORM Repository")]
+  end
+  n30(["Fin: la interfaz se actualiza<br/>this.errorMessage.set<br/>this.isSubmitting.set<br/>this.saved.emit"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n1 -->|acción del usuario| n7
+  n7 --> n5
+  n5 --> n8
+  n8 --> n11
+  n11 -->|no| n12
+  n12 --> n3
+  n11 -->|sí| n13
+  n13 -->|no| n14
+  n14 --> n2
+  n13 -->|sí| n15
+  n15 -->|no| n16
+  n16 --> n2
+  n15 -->|sí| n17
+  n17 --> n19
+  n19 --> n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n25
+  n25 -->|implementa| n26
+  n26 --> n27
+  n27 --> n9
+  n26 --> n28
+  n28 --> n9
+  n26 --> n29
+  n29 --> n9
+  n9 --> n30
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n12,n14,n16,n21,n23 err
+  class n5,n6,n7,n8 fe
+  class n9,n30 ok
+  class n11,n13,n15,n20,n22 dec
+  class n17 api
+  class n19 app
+  class n25 dom
+  class n26 infra
+  class n27,n28,n29 db

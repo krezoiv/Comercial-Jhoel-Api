@@ -1,0 +1,59 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Secuencia — Registro de compras
+%% @modulo: Compras (purchases)
+%% @representa: Interacción Usuario → Angular → API → caso de uso → repositorio → PostgreSQL para POST /api/purchases, con las validaciones y la transacción
+%% @inicio: PurchasesService.createPurchase
+%% @archivos: comercial-jhoel-api/src/modules/purchases/presentation/controllers/purchases.controller.ts ; comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts ; comercial-jhoel-app/src/app/core/services/purchases.service.ts ; comercial-jhoel-api/src/modules/purchases/application/use-cases/create-purchase.use-case.ts ; comercial-jhoel-api/src/modules/purchases/infrastructure/persistence/typeorm-purchase.repository.ts
+%% @decisiones: Bloques alt/opt = validaciones reales; flujo completo en business-processes/purchases/post-purchases.mmd
+%% @datos: PostgreSQL (ver notas "escribe")
+%% @fin: success true con data y actualización de la interfaz
+%% @errores: Ramas alt/opt: el error vuelve a la pantalla como { success: false, message }
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant C as PurchasesPageComponent
+  participant S as PurchasesService
+  participant G as API (guards y ValidationPipe)
+  participant CT as PurchasesController
+  participant UC0 as CreatePurchaseUseCase
+  participant R0 as TypeOrmPurchaseRepository
+  participant DB as PostgreSQL
+  U->>C: confirmSave()
+  C->>S: createPurchase(…)
+  S->>G: POST /api/purchases + Bearer JWT
+  alt falla JWT válido y usuario activo / DTO CreatePurchaseRequestDto
+    G-->>C: 400 / 401 / 403 / 429 con success false
+  else permitido
+  G->>CT: create(dto, usuario del JWT)
+  CT->>UC0: execute(input)
+  opt !input.items #124;#124; input.items.length === 0
+    UC0-->>G: PurchaseEmptyError()
+  end
+  opt Number.isNaN(input.purchaseDate.getTime()) #124;#124; input.purchaseDate.getTime() #gt; Date.now() + FUTURE_DATE_GRACE_MS
+    UC0-->>G: InvalidPurchaseDateError()
+  end
+  opt input.paymentType === 'CREDITO' #amp;#amp; !input.paymentDueDate
+    UC0-->>G: InvalidPaymentDataError( 'Debe indicar la fecha de pago para una compra a crédito.', )
+  end
+  opt !Number.isInteger(item.quantity) #124;#124; item.quantity #lt;= 0
+    UC0-->>G: InvalidPurchaseQuantityError(item.productId)
+  end
+  opt item.costPrice #lt; 0 #124;#124; item.publicPrice #lt; 0
+    UC0-->>G: InvalidPurchasePriceError(item.productId)
+  end
+  UC0->>R0: confirmPurchase()
+  R0->>DB: SELECT confirm_purchase(…)
+  Note over DB: valida 9 reglas (PURCHASE_EMPTY, INVALID_PAYMENT_TYPE, PAYMENT_DUE_DATE_REQUIRED, …)
+  Note over DB: escribe inventory_movements, inventory_stock, product_presentations, products, purchase_details, purchases
+  alt RAISE EXCEPTION
+    DB-->>R0: error con código
+    R0-->>G: DomainError (traducido)
+  else COMMIT
+    DB-->>R0: resultado
+  end
+  R0-->>UC0: datos
+  UC0-->>CT: salida
+  CT-->>G: objeto
+  G-->>C: success true con data
+  end
+  C-->>U: actualiza la interfaz (this.isSaving.set, this.isSaveConfirmOpen.set, this.notificationService.success)

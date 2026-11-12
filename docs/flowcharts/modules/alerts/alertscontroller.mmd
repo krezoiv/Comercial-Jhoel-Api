@@ -1,0 +1,85 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de AlertsController
+%% @modulo: Alertas (alerts)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a AlertsController, sus 3 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/alerts/presentation/controllers/alerts.controller.ts ; comercial-jhoel-app/src/app/core/services/alerts.service.ts ; comercial-jhoel-app/src/app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts ; comercial-jhoel-api/src/modules/alerts/application/use-cases/get-alerts.use-case.ts ; comercial-jhoel-api/src/modules/alerts/application/use-cases/mark-alert-read.use-case.ts ; comercial-jhoel-api/src/modules/alerts/application/use-cases/mark-all-alerts-read.use-case.ts ; comercial-jhoel-api/src/modules/purchases/infrastructure/persistence/typeorm-purchase.repository.ts ; comercial-jhoel-api/src/modules/inventory/infrastructure/persistence/typeorm-inventory-stock.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-type.repository.ts ; comercial-jhoel-api/src/modules/recharges/infrastructure/persistence/typeorm-recharge-daily-balance.repository.ts ; comercial-jhoel-api/src/modules/alert-settings/infrastructure/persistence/typeorm-alert-settings.repository.ts ; comercial-jhoel-api/src/modules/alerts/infrastructure/persistence/typeorm-alert-read-mark.repository.ts ; comercial-jhoel-api/src/modules/catalog/infrastructure/persistence/typeorm-catalog-request.repository.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/alerts/
+%% @datos: recharge_daily_balances
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["AlertsService<br/><small>app/core/services/alerts.service.ts</small>"]
+  n3["AlertBellComponent<br/><small>app/features/dashboard/topbar/components/alert-bell/alert-bell.component.ts</small>"]
+  end
+  subgraph s4["AlertsController (api/alerts/presentation/controllers/alerts.controller.ts)"]
+  n5["GET /api/alerts<br/><small>findAll()</small>"]
+  n6["POST /api/alerts/:key/read<br/><small>markRead()</small>"]
+  n7["POST /api/alerts/read-all<br/><small>markAllRead()</small>"]
+  end
+  subgraph s8["Aplicación"]
+  n9["GetAlertsUseCase<br/><small>api/alerts/application/use-cases/get-alerts.use-case.ts</small>"]
+  n10["MarkAlertReadUseCase<br/><small>api/alerts/application/use-cases/mark-alert-read.use-case.ts</small>"]
+  n11["MarkAllAlertsReadUseCase<br/><small>api/alerts/application/use-cases/mark-all-alerts-read.use-case.ts</small>"]
+  end
+  subgraph s12["Dominio · Infraestructura · PostgreSQL"]
+  n13["PurchaseRepository"]
+  n14["TypeOrmPurchaseRepository<br/><small>api/purchases/infrastructure/persistence/typeorm-purchase.repository.ts</small>"]
+  n15["InventoryStockRepository"]
+  n16["TypeOrmInventoryStockRepository<br/><small>api/inventory/infrastructure/persistence/typeorm-inventory-stock.repository.ts</small>"]
+  n17["RechargeTypeRepository"]
+  n18["TypeOrmRechargeTypeRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-type.repository.ts</small>"]
+  n19["RechargeDailyBalanceRepository"]
+  n20["TypeOrmRechargeDailyBalanceRepository<br/><small>api/recharges/infrastructure/persistence/typeorm-recharge-daily-balance.repository.ts</small>"]
+  n21[("recharge_daily_balances")]
+  n22["AlertSettingsRepository"]
+  n23["TypeOrmAlertSettingsRepository<br/><small>api/alert-settings/infrastructure/persistence/typeorm-alert-settings.repository.ts</small>"]
+  n24["AlertReadMarkRepository"]
+  n25["TypeOrmAlertReadMarkRepository<br/><small>api/alerts/infrastructure/persistence/typeorm-alert-read-mark.repository.ts</small>"]
+  n26["CatalogRequestRepository"]
+  n27["TypeOrmCatalogRequestRepository<br/><small>api/catalog/infrastructure/persistence/typeorm-catalog-request.repository.ts</small>"]
+  n28["GetCashBoxBalanceUseCase"]
+  end
+  n3 -->|fetchAlerts→getAlerts, selectAlert→markAsRead, markAllAsRead→markAllAsRead| n2
+  n2 -->|getAlerts| n5
+  n2 -->|markAsRead| n6
+  n2 -->|markAllAsRead| n7
+  n5 --> n9
+  n6 --> n10
+  n7 --> n11
+  n9 -->|findPendingCreditPurchases| n13
+  n13 -->|implementa| n14
+  n9 -->|findLowStock| n15
+  n15 -->|implementa| n16
+  n9 -->|findAll| n17
+  n17 -->|implementa| n18
+  n9 -->|findLatestPerType| n19
+  n19 -->|implementa| n20
+  n20 -->|findLatestPerType| n21
+  n9 -->|get| n22
+  n22 -->|implementa| n23
+  n9 -->|findReadKeys| n24
+  n24 -->|implementa| n25
+  n9 -->|countByStatus| n26
+  n26 -->|implementa| n27
+  n9 -->|execute| n28
+  n10 -->|markRead| n24
+  n11 -->|markAllRead| n24
+  n11 -->|execute| n9
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3 fe
+  class n5,n6,n7 api
+  class n9,n10,n11,n28 app
+  class n13,n15,n17,n19,n22,n24,n26 dom
+  class n14,n16,n18,n20,n23,n25,n27 infra
+  class n21 db
