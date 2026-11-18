@@ -8,6 +8,7 @@ const ALL_OPERATORS = [
 ] as const;
 const MANAGERS = ['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO'] as const;
 const ADMINS = ['SUPER_ADMIN', 'ADMIN'] as const;
+const SUPER_ADMINS = ['SUPER_ADMIN'] as const;
 
 /**
  * Permissions of "Listas Escolares" (role-based RBAC, same model as the rest
@@ -33,6 +34,8 @@ export const SCHOOL_LIST_PERMISSION_ROLES = {
   'school_lists.statements.view': ALL_OPERATORS,
   /** Asignar a mano unidades a listas, ejecutar FIFO y asignar compras. */
   'school_lists.supply.manage': MANAGERS,
+  /** Borrar definitivamente TODAS las cotizaciones (devuelve a Bodega lo descontado). */
+  'school_lists.quotations.purge': SUPER_ADMINS,
   /** Cancelar cotizaciones (con devolución de lo pagado). */
   'school_lists.quotations.cancel': MANAGERS,
   /** Generar el PDF de la cotización y los comprobantes de pago. */

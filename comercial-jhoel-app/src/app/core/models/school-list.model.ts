@@ -42,7 +42,8 @@ export type SchoolListPermission =
   | 'school_lists.statements.view'
   | 'school_lists.quotations.cancel'
   | 'school_lists.supply.manage'
-  | 'school_lists.documents.generate';
+  | 'school_lists.documents.generate'
+  | 'school_lists.quotations.purge';
 
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'Borrador',
@@ -609,6 +610,20 @@ export interface SchoolDashboard {
   byStatus: { status: SchoolQuotationStatus; count: number }[];
   incomeByDay: { date: string; amount: number }[];
 }
+
+/** What "Borrar todas las cotizaciones" removes (preview) or removed (result). */
+export interface SchoolPurgeSummary {
+  quotations: number;
+  payments: number;
+  movements: number;
+  allocations: number;
+  dispatches: number;
+  returnedUnits: number;
+  returned: { productId: string; product: string; units: number }[];
+}
+
+/** Phrase the user types to confirm the purge (the backend checks it again). */
+export const SCHOOL_PURGE_CONFIRMATION = 'BORRAR TODO';
 
 export const SCHOOL_HISTORY_LABEL: Record<string, string> = {
   CREADA: 'Cotización creada',

@@ -1,0 +1,50 @@
+@if (open) {
+  <!-- No (click) on the backdrop: it only closes from its buttons. -->
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="school-purge-title">
+      <div class="modal__header">
+        <h2 class="modal__title modal__title--out" id="school-purge-title"><app-icon name="alert-triangle" [size]="20" /> Borrar todas las cotizaciones</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="busy()" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+      </div>
+
+      <p class="purge__warning" role="alert">
+        Se borrarán <strong>definitivamente</strong> todas las cotizaciones de listas escolares con sus pagos, recibos, historial,
+        asignaciones y movimientos de inventario. <strong>No se puede deshacer.</strong> Las plantillas y la numeración se conservan.
+      </p>
+
+      @if (preview(); as p) {
+        @if (p.quotations === 0) {
+          <p class="modal__hint">No hay cotizaciones de listas escolares para borrar.</p>
+        } @else {
+          <dl class="purge__facts">
+            <div><dt>Cotizaciones</dt><dd>{{ p.quotations }}</dd></div>
+            <div><dt>Pagos y recibos</dt><dd>{{ p.payments }}</dd></div>
+            <div><dt>Movimientos de inventario</dt><dd>{{ p.movements }}</dd></div>
+            <div><dt>Unidades que regresan a Bodega</dt><dd>{{ p.returnedUnits }}</dd></div>
+          </dl>
+          @if (p.returned.length) {
+            <ul class="purge__list" aria-label="Productos que regresan a Bodega">
+              @for (r of p.returned; track r.productId) {
+                <li><span>{{ r.product }}</span><strong>{{ r.units > 0 ? '+' : '' }}{{ r.units }}</strong></li>
+              }
+            </ul>
+          }
+          <div class="field">
+            <label for="school-purge-phrase">Para confirmar escriba <strong>{{ phrase }}</strong></label>
+            <input id="school-purge-phrase" type="text" autocomplete="off" [placeholder]="phrase" [disabled]="busy()" [ngModel]="typed()" (ngModelChange)="typed.set($event)" />
+          </div>
+        }
+      } @else if (!error()) {
+        <p class="modal__hint">Calculando qué se borrará…</p>
+      }
+
+      @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="busy()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="danger" [disabled]="!canPurge()" (click)="purge()">
+          <app-icon name="trash-2" [size]="16" /> {{ busy() ? 'Borrando…' : 'Borrar definitivamente' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

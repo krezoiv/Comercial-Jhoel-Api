@@ -7,6 +7,7 @@ import {
   Paginated,
   PaymentInput,
   PreparationAssignmentInput,
+  PurgeSummary,
   QuotationDetailRow,
   QuotationInput,
   QuotationSummaryRow,
@@ -387,6 +388,36 @@ export class GetSchoolBodegaStockUseCase extends SchoolListUseCase {
   ): Promise<{ productId: string; quantity: number }[]> {
     this.can(actor, 'school_lists.view');
     return this.repository.bodegaStock([...new Set(productIds)].slice(0, 300));
+  }
+}
+
+// ── Purge ─────────────────────────────────────────────────────────────────
+/** Phrase the user must type to confirm "Borrar todas las cotizaciones". */
+export const PURGE_CONFIRMATION = 'BORRAR TODO';
+
+@Injectable()
+export class PreviewSchoolQuotationPurgeUseCase extends SchoolListUseCase {
+  /** What the purge would delete and return to Bodega (super administrators only). */
+  async execute(actor: Actor): Promise<PurgeSummary> {
+    this.can(actor, 'school_lists.quotations.purge');
+    return this.repository.purgePreview();
+  }
+}
+
+@Injectable()
+export class PurgeSchoolQuotationsUseCase extends SchoolListUseCase {
+  /**
+   * "Borrar todas las cotizaciones": HARD delete of every school-list
+   * quotation with its payments, history, assignments, supply and inventory
+   * movements; the units still discounted go back to Bodega. Templates and
+   * numbering stay. The SQL function checks the role and the phrase again.
+   */
+  async execute(actor: Actor, confirmation: string): Promise<PurgeSummary> {
+    this.can(actor, 'school_lists.quotations.purge');
+    if (confirmation !== PURGE_CONFIRMATION) {
+      throw schoolListError('SCHOOL_PURGE_CONFIRMATION');
+    }
+    return this.repository.purgeQuotations(actor.userId, confirmation);
   }
 }
 

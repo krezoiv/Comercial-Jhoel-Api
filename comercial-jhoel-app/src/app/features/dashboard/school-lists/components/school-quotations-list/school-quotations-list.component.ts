@@ -14,6 +14,7 @@ import {
   SCHOOL_SUPPLY_LABEL,
   SCHOOL_SUPPLY_TONE,
   SchoolDashboard,
+  SchoolPurgeSummary,
   SchoolQuotationSortField,
   SchoolSupplyStatus,
   SchoolQuotationStatus,
@@ -31,6 +32,7 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 import { SchoolDocumentsService } from '../../school-documents.service';
 import { SchoolPaymentModalComponent } from '../school-payment-modal/school-payment-modal.component';
+import { SchoolPurgeModalComponent } from '../school-purge-modal/school-purge-modal.component';
 
 /** One summary card above the list (values always come from the backend dashboard). */
 interface SummaryCard {
@@ -51,7 +53,7 @@ interface SummaryCard {
 @Component({
   selector: 'app-school-quotations-list',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, IconComponent, ReportPaginationComponent, SchoolPaymentModalComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent, ReportPaginationComponent, SchoolPaymentModalComponent, SchoolPurgeModalComponent],
   templateUrl: './school-quotations-list.component.html',
   styleUrl: './school-quotations-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -277,6 +279,20 @@ export class SchoolQuotationsListComponent {
         this.notifications.error(extractErrorMessage(error, 'No se pudo marcar como terminada.'));
       },
     });
+  }
+
+  /** "Borrar todas las cotizaciones" open (super administrators only). */
+  readonly purging = signal(false);
+
+  onPurged(result: SchoolPurgeSummary): void {
+    this.purging.set(false);
+    this.notifications.success(
+      `Se borraron ${result.quotations} cotización(es) y ${result.payments} pago(s); ` +
+        `regresaron ${result.returnedUnits} unidad(es) a Bodega.`,
+    );
+    this.page.set(1);
+    this.load();
+    this.loadSummary();
   }
 
   onPaid(): void {

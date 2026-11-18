@@ -16,6 +16,7 @@ import {
   SchoolListPermission,
   SchoolPaymentInput,
   SchoolPreparationAssignmentInput,
+  SchoolPurgeSummary,
   SchoolQuotation,
   SchoolQuotationFilters,
   SchoolQuotationInput,
@@ -157,6 +158,20 @@ export class SchoolListService {
   ): Observable<SchoolQuotation> {
     return this.http
       .put<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/preparation`, { assignments, version })
+      .pipe(map((r) => r.data));
+  }
+
+  /** What "Borrar todas las cotizaciones" would delete and return to Bodega (super administrators). */
+  purgePreview(): Observable<SchoolPurgeSummary> {
+    return this.http
+      .get<ApiSuccessResponse<SchoolPurgeSummary>>(`${BASE_URL}/quotations/purge-preview`)
+      .pipe(map((r) => r.data));
+  }
+
+  /** HARD delete of every school-list quotation (payments, history, inventory movements included). */
+  purgeQuotations(confirmation: string): Observable<SchoolPurgeSummary> {
+    return this.http
+      .post<ApiSuccessResponse<SchoolPurgeSummary>>(`${BASE_URL}/quotations/purge`, { confirmation })
       .pipe(map((r) => r.data));
   }
 

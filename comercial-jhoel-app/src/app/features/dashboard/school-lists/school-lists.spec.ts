@@ -37,6 +37,7 @@ import { CategoryService } from '../../../core/services/category.service';
 import { consolidateLines, findDuplicateLine, swapLineProduct } from './school-line-rules';
 import { requirementTotal } from './components/school-templates/school-templates.component';
 import { SchoolQuotationPreparationPageComponent } from './school-quotation-preparation-page.component';
+import { SchoolPurgeModalComponent } from './components/school-purge-modal/school-purge-modal.component';
 import {
   RequirementDraft,
   assignProduct,
@@ -1046,5 +1047,60 @@ describe('SchoolQuotationPreparationPageComponent', () => {
     expect(change).toHaveBeenCalledOnceWith('q1', 'TERMINAR', 4);
     expect(component.finished()).toBeTrue();
     expect(component.editable()).toBeFalse();
+  });
+});
+
+describe('Borrar todas las cotizaciones', () => {
+  const summaryOf = (quotations: number) => ({
+    quotations,
+    payments: 2,
+    movements: 4,
+    allocations: 0,
+    dispatches: 0,
+    returnedUnits: 7,
+    returned: [{ productId: 'p1', product: 'Cuaderno grande', units: 7 }],
+  });
+
+  it('only a super administrator sees the button', () => {
+    const service = setup(CASHIER);
+    spyOn(service, 'getQuotations').and.returnValue(of({ items: [], total: 0, page: 1, limit: 20 }));
+    const fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Borrar todas las cotizaciones');
+  });
+
+  it('shows what goes away, requires the exact phrase and sends the purge once', () => {
+    const service = setup([...CASHIER, 'school_lists.quotations.purge']);
+    spyOn(service, 'purgePreview').and.returnValue(of(summaryOf(3)));
+    const purge = spyOn(service, 'purgeQuotations').and.returnValue(of(summaryOf(3)));
+    const fixture = TestBed.createComponent(SchoolPurgeModalComponent);
+    const modal = fixture.componentInstance;
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('Cuaderno grande');
+    expect(html.textContent).toContain('No se puede deshacer');
+    modal.typed.set('borrar todo');
+    expect(modal.canPurge()).toBeFalse();
+    modal.purge();
+    expect(purge).not.toHaveBeenCalled();
+    modal.typed.set('BORRAR TODO');
+    expect(modal.canPurge()).toBeTrue();
+    const done: unknown[] = [];
+    modal.purged.subscribe((r) => done.push(r));
+    modal.purge();
+    expect(purge).toHaveBeenCalledOnceWith('BORRAR TODO');
+    expect(done.length).toBe(1);
+  });
+
+  it('nothing to delete keeps the button disabled', () => {
+    const service = setup([...CASHIER, 'school_lists.quotations.purge']);
+    spyOn(service, 'purgePreview').and.returnValue(of(summaryOf(0)));
+    const fixture = TestBed.createComponent(SchoolPurgeModalComponent);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    fixture.componentInstance.typed.set('BORRAR TODO');
+    expect(fixture.componentInstance.canPurge()).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No hay cotizaciones');
   });
 });

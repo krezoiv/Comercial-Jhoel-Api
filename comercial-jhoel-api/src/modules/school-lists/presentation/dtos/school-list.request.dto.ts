@@ -160,6 +160,10 @@ export class SavePreparationRequestDto {
   assignments: PreparationAssignmentRequestDto[];
 }
 
+export class PurgeQuotationsRequestDto {
+  @IsString() @MaxLength(20) confirmation: string;
+}
+
 export class ObservationsRequestDto {
   @IsOptional() @IsString() @MaxLength(1000) observations?: string | null;
   @IsInt() @Min(1) version: number;

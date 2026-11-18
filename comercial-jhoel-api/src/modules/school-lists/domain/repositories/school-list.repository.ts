@@ -469,6 +469,20 @@ export interface DashboardRow {
   byStatus: { status: SchoolQuotationStatus; count: number }[];
 }
 
+/**
+ * What "Borrar todas las cotizaciones" removes (preview) or removed (result):
+ * counts, and the units each product gets back in Bodega.
+ */
+export interface PurgeSummary {
+  quotations: number;
+  payments: number;
+  movements: number;
+  allocations: number;
+  dispatches: number;
+  returnedUnits: number;
+  returned: { productId: string; product: string; units: number }[];
+}
+
 export interface CancelInput {
   reason: string;
   refundMethod?: SchoolPaymentMethod | null;
@@ -558,6 +572,11 @@ export interface SchoolListRepository {
   findPayment(paymentId: string): Promise<PaymentRow | null>;
 
   dashboard(dateFrom: string, dateTo: string): Promise<DashboardRow>;
+
+  /** Counts of what a purge would delete and return to Bodega (read only). */
+  purgePreview(): Promise<PurgeSummary>;
+  /** HARD delete of every quotation (`purge_school_quotations`); returns what was removed. */
+  purgeQuotations(userId: string, confirmation: string): Promise<PurgeSummary>;
 
   // ── Supply ──
   supplyProducts(

@@ -235,6 +235,9 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message:
       'Se asignaron más unidades de las solicitadas en un requerimiento.',
   },
+  SCHOOL_PURGE_CONFIRMATION: {
+    message: 'Escriba exactamente "BORRAR TODO" para confirmar el borrado.',
+  },
   SCHOOL_REFUND_METHOD_REQUIRED: {
     message: 'Indique cómo se devuelve al cliente el dinero recibido.',
   },

@@ -1613,6 +1613,16 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Permiso** `school_lists.supply.manage` (supervisor/admin).
 - **Pruebas**: `sql/tests/school-supply.test.sql`, `test/school-supply.e2e-spec.ts`. Documento: `docs/school-lists/abastecimiento-y-despacho.md`.
 
+### Listas Escolares — borrar todas las cotizaciones (migración `1760008500000`)
+
+- `purge_school_quotations(user, 'BORRAR TODO')`: solo SUPER_ADMIN (`school_lists.quotations.purge`). Es un borrado físico, no lógico.
+  - Bloquea `school_quotations` (EXCLUSIVE) y devuelve a Bodega lo que los movimientos SCHOOL_LIST tenían descontado.
+  - Borra cotizaciones, líneas, asignaciones, pagos, historial de cotización, reservas, despachos y movimientos SCHOOL_LIST.
+  - Conserva plantillas y numeración, y deja una fila de auditoría `school_list_history.entity_type = 'PURGA'`.
+- Las guardas de solo-inserción dejan pasar un DELETE únicamente con la bandera de transacción `cj.school_purge = 'on'`, que solo esta función activa. No la uses en otro lado.
+- Rutas: `GET /school-lists/quotations/purge-preview`, `POST /school-lists/quotations/purge` `{ confirmation }`, declaradas antes de `quotations/:id`.
+- Pruebas: `test/school-lists-purge.e2e-spec.ts`.
+
 ### Listas Escolares — requerimientos y preparación (migración `1760008400000`)
 
 - **Dos flujos** por `school_quotations.fulfillment_mode`:

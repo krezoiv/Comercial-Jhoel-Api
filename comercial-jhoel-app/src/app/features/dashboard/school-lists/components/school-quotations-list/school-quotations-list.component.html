@@ -22,6 +22,9 @@
   <div class="panel__head">
     <h2 class="panel__title"><app-icon name="file-check" [size]="18" /> Cotizaciones registradas</h2>
     <span class="panel__hint">{{ total() }} resultado(s)</span>
+    @if (service.can('school_lists.quotations.purge')) {
+      <app-button variant="danger" size="sm" (click)="purging.set(true)"><app-icon name="trash-2" [size]="14" /> Borrar todas las cotizaciones</app-button>
+    }
   </div>
 
   <form class="filters" (ngSubmit)="applyFilters()">
@@ -136,3 +139,4 @@
 </section>
 
 <app-school-payment-modal [quotation]="paying()" (closed)="paying.set(null)" (paid)="onPaid()" />
+<app-school-purge-modal [open]="purging()" (closed)="purging.set(false)" (purged)="onPurged($event)" />

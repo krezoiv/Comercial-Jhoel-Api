@@ -1888,3 +1888,11 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   - `isSchoolQuotationEditable(status, mode)` congela TERMINADA en el flujo nuevo.
   - La entrega en el flujo nuevo exige TERMINADA y saldo cero. ACEPTADA usa la pastilla azul.
 - **Documento**: `docs/school-lists/requerimientos-y-preparacion.md`.
+
+### Listas Escolares — borrar todas las cotizaciones (migración `1760008500000`)
+
+- El botón "Borrar todas las cotizaciones" del listado solo se muestra con `school_lists.quotations.purge` (SUPER_ADMIN).
+- Abre `SchoolPurgeModalComponent`:
+  - Muestra una vista previa con conteos y las unidades que regresan a Bodega.
+  - Exige escribir `SCHOOL_PURGE_CONFIRMATION` ("BORRAR TODO").
+  - No se cierra al hacer clic fuera y deshabilita el botón mientras borra.

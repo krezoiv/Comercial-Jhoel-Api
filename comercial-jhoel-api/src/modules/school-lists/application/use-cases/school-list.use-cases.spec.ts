@@ -20,6 +20,8 @@ import {
   ChangeSchoolQuotationStatusUseCase,
   GetSchoolBodegaStockUseCase,
   SaveSchoolPreparationUseCase,
+  PreviewSchoolQuotationPurgeUseCase,
+  PurgeSchoolQuotationsUseCase,
 } from './school-list.use-cases';
 import {
   AllocateSupplyManualUseCase,
@@ -131,6 +133,16 @@ const detail: QuotationDetailRow = {
   },
 };
 
+const purgeSummary = {
+  quotations: 3,
+  payments: 2,
+  movements: 4,
+  allocations: 0,
+  dispatches: 0,
+  returnedUnits: 7,
+  returned: [{ productId: 'p1', product: 'Cuaderno', units: 7 }],
+};
+
 function repository(): jest.Mocked<SchoolListRepository> {
   return {
     listTemplates: jest.fn().mockResolvedValue([]),
@@ -145,6 +157,8 @@ function repository(): jest.Mocked<SchoolListRepository> {
     setObservations: jest.fn().mockResolvedValue('q1'),
     changeStatus: jest.fn().mockResolvedValue('q1'),
     savePreparation: jest.fn().mockResolvedValue('q1'),
+    purgePreview: jest.fn().mockResolvedValue(purgeSummary),
+    purgeQuotations: jest.fn().mockResolvedValue(purgeSummary),
     cancelQuotation: jest.fn().mockResolvedValue('q1'),
     registerPayment: jest.fn().mockResolvedValue('p2'),
     voidPayment: jest.fn().mockResolvedValue('p3'),
@@ -401,6 +415,30 @@ describe('Listas Escolares — use cases', () => {
       useCase.execute({ userId: 'x', role: 'GUEST' }, 'q1', assignments, 4),
     ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
     expect(repo.savePreparation).toHaveBeenCalledTimes(1);
+  });
+
+  it('only a super administrator previews or purges every quotation, with the typed phrase', async () => {
+    const repo = repository();
+    const superAdmin = { userId: 'u-root', role: 'SUPER_ADMIN' };
+    const preview = new PreviewSchoolQuotationPurgeUseCase(repo);
+    const purge = new PurgeSchoolQuotationsUseCase(repo);
+    await expect(preview.execute(superAdmin)).resolves.toEqual(purgeSummary);
+    for (const role of ['ADMIN', 'SUPERVISOR_DE_TURNO', 'USER']) {
+      await expect(
+        purge.execute({ userId: 'x', role }, 'BORRAR TODO'),
+      ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+      await expect(
+        preview.execute({ userId: 'x', role }),
+      ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    }
+    await expect(
+      purge.execute(superAdmin, 'borrar todo'),
+    ).rejects.toMatchObject({ code: 'SCHOOL_PURGE_CONFIRMATION' });
+    expect(repo.purgeQuotations).not.toHaveBeenCalled();
+    await expect(purge.execute(superAdmin, 'BORRAR TODO')).resolves.toEqual(
+      purgeSummary,
+    );
+    expect(repo.purgeQuotations).toHaveBeenCalledWith('u-root', 'BORRAR TODO');
   });
 
   it('reads Bodega stock for the editor (deduplicated) with the view permission', async () => {

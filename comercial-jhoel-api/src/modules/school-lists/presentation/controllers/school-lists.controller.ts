@@ -32,6 +32,8 @@ import {
   GetSchoolTemplateUseCase,
   ListSchoolQuotationsUseCase,
   ListSchoolTemplatesUseCase,
+  PreviewSchoolQuotationPurgeUseCase,
+  PurgeSchoolQuotationsUseCase,
   RegisterSchoolPaymentUseCase,
   SaveSchoolPreparationUseCase,
   SaveSchoolTemplateUseCase,
@@ -63,6 +65,7 @@ import {
   DashboardQueryDto,
   DuplicateTemplateRequestDto,
   ObservationsRequestDto,
+  PurgeQuotationsRequestDto,
   QuotationsQueryDto,
   RegisterPaymentRequestDto,
   SavePreparationRequestDto,
@@ -112,6 +115,8 @@ export class SchoolListsController {
     private readonly updateObservations: UpdateSchoolQuotationObservationsUseCase,
     private readonly changeStatus: ChangeSchoolQuotationStatusUseCase,
     private readonly savePreparation: SaveSchoolPreparationUseCase,
+    private readonly purgePreviewUseCase: PreviewSchoolQuotationPurgeUseCase,
+    private readonly purgeUseCase: PurgeSchoolQuotationsUseCase,
     private readonly cancelQuotation: CancelSchoolQuotationUseCase,
     private readonly registerPayment: RegisterSchoolPaymentUseCase,
     private readonly voidPayment: VoidSchoolPaymentUseCase,
@@ -305,6 +310,22 @@ export class SchoolListsController {
       query.dateFrom,
       query.dateTo,
     );
+  }
+
+  /** What "Borrar todas las cotizaciones" would remove (super administrators). */
+  @Get('quotations/purge-preview')
+  purgePreview(@CurrentUser() user: RequestUser) {
+    return this.purgePreviewUseCase.execute(actor(user));
+  }
+
+  /** HARD delete of every school-list quotation; requires `confirmation: "BORRAR TODO"`. */
+  @Post('quotations/purge')
+  @HttpCode(HttpStatus.OK)
+  purge(
+    @Body() dto: PurgeQuotationsRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.purgeUseCase.execute(actor(user), dto.confirmation);
   }
 
   @Post('quotations')

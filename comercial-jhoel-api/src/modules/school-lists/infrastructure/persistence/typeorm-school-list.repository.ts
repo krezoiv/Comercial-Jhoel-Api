@@ -23,6 +23,7 @@ import {
   Paginated,
   PaymentInput,
   PaymentRow,
+  PurgeSummary,
   QuotationDetailRow,
   QuotationInput,
   QuotationItemRow,
@@ -244,6 +245,23 @@ const TEMPLATE_SELECT = `
          (SELECT COALESCE(SUM(i.subtotal), 0) FROM school_list_template_items i WHERE i.template_id = t.id) AS total
     FROM school_list_templates t
     LEFT JOIN users uu ON uu.id = COALESCE(t.updated_by, t.created_by)`;
+
+function toPurgeSummary(value: unknown): PurgeSummary {
+  const row = (value ?? {}) as Record<string, unknown>;
+  return {
+    quotations: num(row.quotations),
+    payments: num(row.payments),
+    movements: num(row.movements),
+    allocations: num(row.allocations),
+    dispatches: num(row.dispatches),
+    returnedUnits: num(row.returnedUnits),
+    returned: ((row.returned as SqlRow[] | undefined) ?? []).map((r) => ({
+      productId: text(r.productId),
+      product: text(r.product),
+      units: num(r.units),
+    })),
+  };
+}
 
 @Injectable()
 export class TypeOrmSchoolListRepository implements SchoolListRepository {
@@ -1096,6 +1114,43 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
         amount: num(r.amount),
       })),
     };
+  }
+
+  // ── Purge ────────────────────────────────────────────────────────────────
+  async purgePreview(): Promise<PurgeSummary> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `WITH b AS (SELECT id FROM inventory_locations WHERE name = 'Bodega'),
+            r AS (
+              SELECT m.product_id,
+                     SUM(CASE WHEN m.location_from_id = b.id THEN m.quantity_base_units
+                              WHEN m.location_to_id = b.id THEN -m.quantity_base_units ELSE 0 END)::int AS units
+                FROM inventory_movements m CROSS JOIN b
+               WHERE m.reference_type = 'SCHOOL_LIST'
+               GROUP BY m.product_id)
+       SELECT jsonb_build_object(
+                'quotations', (SELECT count(*) FROM school_quotations),
+                'payments', (SELECT count(*) FROM school_quotation_payments),
+                'movements', (SELECT count(*) FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST'),
+                'allocations', (SELECT count(*) FROM school_supply_allocations),
+                'dispatches', (SELECT count(*) FROM school_dispatches),
+                'returnedUnits', COALESCE((SELECT SUM(units) FROM r WHERE units <> 0), 0),
+                'returned', COALESCE((SELECT jsonb_agg(jsonb_build_object('productId', r.product_id, 'product', p.name,
+                                                                          'units', r.units) ORDER BY p.name)
+                                        FROM r JOIN products p ON p.id = r.product_id WHERE r.units <> 0), '[]'::jsonb)
+              ) AS summary`,
+    );
+    return toPurgeSummary(row.summary);
+  }
+
+  async purgeQuotations(
+    userId: string,
+    confirmation: string,
+  ): Promise<PurgeSummary> {
+    const summary = await this.scalar(
+      `SELECT purge_school_quotations($1, $2)::text AS id`,
+      [userId, confirmation],
+    );
+    return toPurgeSummary(JSON.parse(summary));
   }
 
   /** Runs a writer function and returns its single `id` column, mapping its RAISE codes. */
