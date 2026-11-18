@@ -9,6 +9,11 @@ import { ListQuotationsUseCase } from './application/use-cases/list-quotations.u
 import { GetQuotationByIdUseCase } from './application/use-cases/get-quotation-by-id.use-case';
 import { VoidQuotationUseCase } from './application/use-cases/void-quotation.use-case';
 import { GetQuotationPdfUseCase } from './application/use-cases/get-quotation-pdf.use-case';
+import {
+  ChangeQuotationStatusUseCase,
+  ConvertQuotationToSaleUseCase,
+  GetQuotationSalePreviewUseCase,
+} from './application/use-cases/quotation-sale.use-cases';
 import { QuotationsController } from './presentation/controllers/quotations.controller';
 import { ClientsModule } from '../clients/clients.module';
 import { CompanySettingsModule } from '../company-settings/company-settings.module';
@@ -27,6 +32,9 @@ import { CompanySettingsModule } from '../company-settings/company-settings.modu
     GetQuotationByIdUseCase,
     VoidQuotationUseCase,
     GetQuotationPdfUseCase,
+    ChangeQuotationStatusUseCase,
+    GetQuotationSalePreviewUseCase,
+    ConvertQuotationToSaleUseCase,
   ],
 })
 export class QuotationsModule {}

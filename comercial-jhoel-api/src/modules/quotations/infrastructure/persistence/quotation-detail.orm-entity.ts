@@ -1,4 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import { QuotationOrmEntity } from './quotation.orm-entity';
 
@@ -24,7 +30,12 @@ export class QuotationDetailOrmEntity {
   @Column({ name: 'product_name', type: 'varchar', length: 150 })
   productName: string;
 
-  @Column({ name: 'presentation_name', type: 'varchar', length: 50, nullable: true })
+  @Column({
+    name: 'presentation_name',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   presentationName: string | null;
 
   @Column({ type: 'int' })

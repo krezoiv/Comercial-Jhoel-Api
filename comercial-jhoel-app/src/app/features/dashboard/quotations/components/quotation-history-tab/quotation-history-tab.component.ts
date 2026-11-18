@@ -3,9 +3,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 
 import {
+  QUOTATION_STATUSES,
   QUOTATION_STATUS_LABEL,
   QUOTATION_STATUS_TONE,
   QuotationStatus,
+  QuotationStatusAction,
+  isQuotationSellable,
   QuotationSummary,
   formatCurrency,
 } from '../../../../../core/models';
@@ -18,6 +21,8 @@ import { BadgeComponent, ButtonComponent, EmptyStateComponent, IconComponent } f
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 import { QuotationDetailModalComponent } from '../quotation-detail-modal/quotation-detail-modal.component';
 import { QuotationVoidReasonModalComponent } from '../quotation-void-reason-modal/quotation-void-reason-modal.component';
+import { QuotationSaleModalComponent } from '../quotation-sale-modal/quotation-sale-modal.component';
+import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 
 const PAGE_LIMIT = 20;
 
@@ -43,6 +48,7 @@ const DEFAULT_FILTERS: { search: string; startDate: string; endDate: string; sta
     ReportPaginationComponent,
     QuotationDetailModalComponent,
     QuotationVoidReasonModalComponent,
+    QuotationSaleModalComponent,
   ],
   templateUrl: './quotation-history-tab.component.html',
   styleUrl: './quotation-history-tab.component.scss',
@@ -52,6 +58,7 @@ export class QuotationHistoryTabComponent {
   private readonly quotationsService = inject(QuotationsService);
   private readonly notificationService = inject(NotificationService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly isAdmin = this.authService.isAdmin;
 
@@ -82,6 +89,11 @@ export class QuotationHistoryTabComponent {
   readonly detailQuotationId = signal<string | null>(null);
   readonly voidTarget = signal<QuotationSummary | null>(null);
   readonly generatingPdfId = signal<string | null>(null);
+  readonly rejectTarget = signal<QuotationSummary | null>(null);
+  readonly saleQuotationId = signal<string | null>(null);
+  readonly busyId = signal<string | null>(null);
+  readonly statuses = QUOTATION_STATUSES;
+  readonly isSellable = isQuotationSellable;
 
   formatCurrency = formatCurrency;
   statusLabel = QUOTATION_STATUS_LABEL;
@@ -168,6 +180,56 @@ export class QuotationHistoryTabComponent {
     });
   }
 
+  /** Confirmar borrador / Aceptar (no inventory effect). */
+  async runAction(quotation: QuotationSummary, action: Exclude<QuotationStatusAction, 'RECHAZAR'>): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      type: 'UPDATE',
+      title: action === 'ACEPTAR' ? 'Marcar como aceptada' : 'Confirmar cotización',
+      message:
+        action === 'ACEPTAR'
+          ? `El cliente aceptó ${quotation.quotationNumber}. No se descuenta inventario hasta "Confirmar venta".`
+          : `El borrador ${quotation.quotationNumber} pasará a "Cotizada".`,
+    });
+    if (!ok) {
+      return;
+    }
+    this.busyId.set(quotation.id);
+    this.quotationsService.changeStatus(quotation.id, action).subscribe({
+      next: (updated) => {
+        this.busyId.set(null);
+        this.notificationService.success(`Cotización ${updated.quotationNumber}: ${this.statusLabel[updated.status]}.`);
+        this.fetch();
+      },
+      error: (error) => {
+        this.busyId.set(null);
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo cambiar el estado.'));
+      },
+    });
+  }
+
+  confirmReject(reason: string): void {
+    const target = this.rejectTarget();
+    if (!target) {
+      return;
+    }
+    this.quotationsService.changeStatus(target.id, 'RECHAZAR', reason).subscribe({
+      next: () => {
+        this.notificationService.success(`Cotización ${target.quotationNumber} marcada como rechazada.`);
+        this.rejectTarget.set(null);
+        this.fetch();
+      },
+      error: (error) => {
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo rechazar la cotización.'));
+        this.rejectTarget.set(null);
+      },
+    });
+  }
+
+  onSold(): void {
+    this.saleQuotationId.set(null);
+    this.fetch();
+  }
+
   requestVoid(quotation: QuotationSummary): void {
     this.voidTarget.set(quotation);
   }
@@ -183,7 +245,7 @@ export class QuotationHistoryTabComponent {
     }
     this.quotationsService.voidQuotation(target.id, reason).subscribe({
       next: () => {
-        this.notificationService.success(`Cotización ${target.quotationNumber} anulada correctamente.`);
+        this.notificationService.success(`Cotización ${target.quotationNumber} cancelada correctamente.`);
         this.voidTarget.set(null);
         this.fetch();
       },

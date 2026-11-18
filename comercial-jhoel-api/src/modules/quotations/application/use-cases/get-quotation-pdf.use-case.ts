@@ -53,6 +53,9 @@ export class GetQuotationPdfUseCase {
       quotationDate: quotation.quotationDate,
       expirationDate: quotation.expirationDate,
       clientName: quotation.clientName,
+      customerPhone: quotation.customerPhone,
+      studentName: quotation.studentName,
+      grade: quotation.grade,
       items: quotation.items.map((item) => ({
         productName: item.productName,
         presentationName: item.presentationName ?? 'Unidad',

@@ -31,6 +31,8 @@ export const SCHOOL_LIST_PERMISSION_ROLES = {
   'school_lists.payments.void': ADMINS,
   /** Consultar el estado de cuenta de una cotización. */
   'school_lists.statements.view': ALL_OPERATORS,
+  /** Asignar a mano unidades a listas, ejecutar FIFO y asignar compras. */
+  'school_lists.supply.manage': MANAGERS,
   /** Cancelar cotizaciones (con devolución de lo pagado). */
   'school_lists.quotations.cancel': MANAGERS,
   /** Generar el PDF de la cotización y los comprobantes de pago. */

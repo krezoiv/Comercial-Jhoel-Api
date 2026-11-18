@@ -8,8 +8,10 @@ import {
   Output,
   SimpleChanges,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -29,6 +31,7 @@ import {
   formatCurrency,
   guatemalaToday,
   roundMoney,
+  schoolListHoldsStock,
 } from '../../../../../core/models';
 import { BankService } from '../../../../../core/services/bank.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
@@ -37,46 +40,14 @@ import { SchoolListService } from '../../../../../core/services/school-list.serv
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { BadgeComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { QuotationProductSearchComponent } from '../../../quotations/components/quotation-product-search/quotation-product-search.component';
+import { EditorLine, consolidateLines, lineError, lineSubtotal, swapLineProduct } from '../../school-line-rules';
+import { ProductSwapResult, SchoolProductSwapModalComponent } from '../school-product-swap-modal/school-product-swap-modal.component';
 
-/** One editable line of the quotation being built. */
-export interface EditorLine {
-  key: string;
-  itemId: string | null;
-  templateItemId: string | null;
-  productId: string | null;
-  productName: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-  observations: string;
-  source: SchoolLineSource;
-  /** Price the line came with (template, product or saved line); null for free-text lines. */
-  referencePrice: number | null;
-}
+// Line rules live in school-line-rules.ts (shared with the change-product modal and the tests).
+export type { EditorLine } from '../../school-line-rules';
+export { lineError, lineSubtotal } from '../../school-line-rules';
 
 const PHONE = /^[+0-9 ()-]{8,20}$/;
-
-export function lineSubtotal(line: Pick<EditorLine, 'quantity' | 'unitPrice' | 'discount'>): number {
-  return roundMoney((line.quantity || 0) * (line.unitPrice || 0) - (line.discount || 0));
-}
-
-/** Client-side echo of the backend rules (the backend validates again). */
-export function lineError(line: EditorLine): string | null {
-  if (line.productName.trim().length < 2) {
-    return 'Escriba el nombre del producto.';
-  }
-  if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 9999) {
-    return 'La cantidad debe ser un entero entre 1 y 9,999.';
-  }
-  if (!(line.unitPrice >= 0) || roundMoney(line.unitPrice) !== line.unitPrice) {
-    return 'Precio no válido.';
-  }
-  if (!(line.discount >= 0) || line.discount > line.quantity * line.unitPrice) {
-    return 'El descuento no puede superar el subtotal.';
-  }
-  return null;
-}
 
 /**
  * "Nueva cotización" / "Editar cotización": 1) customer, 2) grade + list
@@ -87,7 +58,7 @@ export function lineError(line: EditorLine): string | null {
 @Component({
   selector: 'app-school-quotation-editor',
   standalone: true,
-  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, QuotationProductSearchComponent],
+  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, QuotationProductSearchComponent, SchoolProductSwapModalComponent],
   templateUrl: './school-quotation-editor.component.html',
   styleUrl: './school-quotation-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +72,8 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     return this.current();
   }
   private readonly current = signal<SchoolQuotation | null>(null);
+  /** Saved line (item id) whose "Cambiar producto" modal opens as soon as the lines load. */
+  @Input() swapItemId: string | null = null;
   @Output() saved = new EventEmitter<SchoolQuotation>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -130,7 +103,11 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly template = signal<SchoolTemplate | null>(null);
   readonly loadingTemplate = signal(false);
   readonly lines = signal<EditorLine[]>([]);
+  /** Line open in the "Cambiar producto" modal. */
   readonly replacingKey = signal<string | null>(null);
+  readonly replacing = computed(() => this.lines().find((l) => l.key === this.replacingKey()) ?? null);
+  /** Lines whose observation field was opened with the note action. */
+  readonly openNotes = signal<ReadonlySet<string>>(new Set());
 
   // Anticipo.
   readonly withAdvance = signal(false);
@@ -140,6 +117,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly advanceReference = signal('');
   readonly asDraft = signal(false);
   readonly bankList = signal<Bank[]>([]);
+
+  /** Bodega stock per product id (lists discount from Bodega). */
+  readonly bodega = signal<Record<string, number>>({});
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -160,6 +140,38 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly advance = computed(() => (this.withAdvance() && !this.asDraft() ? (this.advanceAmount() ?? 0) : 0));
   readonly balance = computed(() => roundMoney(this.total() - this.paid()));
   readonly usesBank = computed(() => SCHOOL_BANK_METHODS.includes(this.advanceMethod()));
+
+  /** Whether saving will (re)discount inventory: not for a draft. */
+  readonly movesStock = computed(() =>
+    this.quotation ? schoolListHoldsStock(this.quotation.status) : !this.asDraft(),
+  );
+  /** Units per inventory product requested by the list. */
+  readonly needs = computed(() => {
+    const needs: Record<string, number> = {};
+    for (const line of this.lines()) {
+      if (line.productId) needs[line.productId] = (needs[line.productId] ?? 0) + (line.quantity || 0);
+    }
+    return needs;
+  });
+  /** Units this saved list already took from Bodega (they come back if the line shrinks). */
+  readonly alreadyDiscounted = computed(() => {
+    const taken: Record<string, number> = {};
+    const q = this.quotation;
+    if (q && schoolListHoldsStock(q.status)) {
+      for (const item of q.items) {
+        if (item.productId) taken[item.productId] = (taken[item.productId] ?? 0) + item.quantity;
+      }
+    }
+    return taken;
+  });
+  readonly inventoryUnits = computed(() => Object.values(this.needs()).reduce((sum, qty) => sum + qty, 0));
+  readonly shortProducts = computed(() => {
+    const stock = this.bodega();
+    return this.lines()
+      .filter((l, i, all) => l.productId && all.findIndex((o) => o.productId === l.productId) === i)
+      .filter((l) => this.isShort(l.productId!, stock))
+      .map((l) => l.productName);
+  });
 
   readonly problems = computed(() => {
     const issues: string[] = [];
@@ -192,6 +204,31 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       next: (templates) => this.templates.set(templates),
       error: () => this.templatesFailed.set(true),
     });
+    // Fetch Bodega stock for every inventory product that appears in the list.
+    effect(() => {
+      const ids = Object.keys(this.needs());
+      const missing = ids.filter((id) => !(id in untracked(this.bodega)));
+      if (missing.length) {
+        this.service.bodegaStock(missing).subscribe({
+          next: (rows) =>
+            this.bodega.update((map) => ({
+              ...map,
+              ...Object.fromEntries(rows.map((r) => [r.productId, r.quantity])),
+            })),
+          error: () => undefined,
+        });
+      }
+    });
+  }
+
+  /** Bodega stock available to this list for a product (current stock + what it already holds). */
+  available(productId: string, stock = this.bodega()): number | null {
+    return productId in stock ? stock[productId] + (this.alreadyDiscounted()[productId] ?? 0) : null;
+  }
+
+  isShort(productId: string, stock = this.bodega()): boolean {
+    const available = this.available(productId, stock);
+    return available !== null && (this.needs()[productId] ?? 0) > available;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -210,6 +247,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
           templateItemId: item.templateItemId,
           productId: item.productId,
           productName: item.productName,
+          sku: item.productSku,
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
           description: item.description ?? '',
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -219,6 +259,10 @@ export class SchoolQuotationEditorComponent implements OnChanges {
           referencePrice: item.unitPrice,
         })),
       );
+      const target = this.swapItemId ? this.lines().find((l) => l.itemId === this.swapItemId) : undefined;
+      if (target) {
+        this.replacingKey.set(target.key);
+      }
     }
   }
 
@@ -250,6 +294,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
             templateItemId: item.id,
             productId: item.productId,
             productName: item.productName,
+            sku: item.productSku,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName,
             description: item.description ?? '',
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -298,6 +345,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
         templateItemId: null,
         productId: null,
         productName: '',
+        sku: null,
+        categoryId: null,
+        categoryName: null,
         description: '',
         quantity: 1,
         unitPrice: 0,
@@ -319,17 +369,51 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     this.lines.update((lines) => [...lines, this.fromProduct(product)]);
   }
 
-  /** "Cambiar producto": the line becomes the chosen inventory product; the template is untouched. */
-  replaceWith(key: string, product: Product): void {
-    this.lines.update((lines) =>
-      lines.map((line) => (line.key === key ? { ...this.fromProduct(product), key, quantity: line.quantity, observations: line.observations } : line)),
-    );
+  /**
+   * Applies the "Cambiar producto" modal result: a plain swap of the line, or —
+   * when the product was already in the list — consolidation into that line so
+   * the product is never duplicated. Only this quotation's copy changes (the
+   * template is untouched) and no inventory moves until the list is saved.
+   */
+  onSwapped(key: string, result: ProductSwapResult): void {
+    const before = this.lines().find((l) => l.key === key);
+    if (result.consolidateWith) {
+      const target = this.lines().find((l) => l.key === result.consolidateWith);
+      this.lines.update((lines) => consolidateLines(lines, key, result.consolidateWith!, result.request.quantity));
+      this.notifications.success(`${target?.productName ?? 'El producto'} ya estaba en la lista: se sumaron ${result.request.quantity} unidad(es) a esa línea.`);
+    } else {
+      this.lines.update((lines) => swapLineProduct(lines, key, result.request));
+      this.notifications.success(`${before?.productName || 'Producto'} → ${result.request.product.name}.`);
+    }
     this.replacingKey.set(null);
+  }
+
+  /** Shows/hides the observation field of a line (always shown when it has text). */
+  toggleNote(key: string): void {
+    this.openNotes.update((open) => {
+      const next = new Set(open);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   }
 
   /** Turns a line into a free-text product (e.g. "cuaderno grande" instead of the requested one). */
   makeManual(key: string): void {
-    this.update(key, { itemId: null, templateItemId: null, productId: null, source: 'MANUAL', referencePrice: null, discount: 0 });
+    this.update(key, {
+      itemId: null,
+      templateItemId: null,
+      productId: null,
+      sku: null,
+      categoryId: null,
+      categoryName: null,
+      source: 'MANUAL',
+      referencePrice: null,
+      discount: 0,
+    });
     this.replacingKey.set(null);
   }
 
@@ -340,6 +424,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       templateItemId: null,
       productId: product.id,
       productName: product.name,
+      sku: product.sku,
+      categoryId: product.categoryId,
+      categoryName: product.category,
       description: '',
       quantity: 1,
       unitPrice: product.publicPrice,
@@ -383,12 +470,37 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     if (this.problems().length || this.saving()) {
       return;
     }
-    const summary = `${this.lines().length} producto(s), total ${formatCurrency(this.total())}` +
-      (this.advance() > 0 ? `, anticipo ${formatCurrency(this.advance())}, saldo ${formatCurrency(this.balance())}` : '');
+    const number = this.quotation?.quotationNumber ?? 'número nuevo (se asigna al guardar)';
+    const summary =
+      `Lista ${number} · ${this.customerName().trim()} · ${this.gradeLabel()}: ` +
+      `${this.lines().length} producto(s), ${this.itemCount()} artículo(s), total ${formatCurrency(this.total())}` +
+      (this.advance() > 0 ? `, anticipo ${formatCurrency(this.advance())}, saldo ${formatCurrency(this.balance())}` : '') +
+      '. ';
+    const inventory = !this.movesStock()
+      ? 'El borrador no descuenta inventario hasta que se confirme.'
+      : this.isEdit()
+        ? 'Se ajustará el inventario de Bodega solo por la diferencia con lo ya descontado.'
+        : this.inventoryUnits() > 0
+          ? `ATENCIÓN: se descontarán ${this.inventoryUnits()} unidad(es) de Bodega de los productos del inventario; los escritos a mano no mueven inventario.`
+          : 'Ningún producto viene del inventario: no se descuenta Bodega.';
+    // Informative only (migration 1760008300000): a list is never blocked by missing stock.
+    const shortage =
+      this.movesStock() && this.shortProducts().length
+        ? ` Esta lista contiene productos con existencias insuficientes (${this.shortProducts().join(', ')}). ` +
+          'Al confirmar, las cantidades solicitadas serán descontadas del inventario y podrán generar existencias negativas. ' +
+          'Los productos quedarán identificados como pendientes de abastecimiento.'
+        : '';
     const ok = await this.confirm.confirm({
       type: this.isEdit() ? 'UPDATE' : 'SAVE',
-      title: this.isEdit() ? 'Guardar cambios de la cotización' : this.asDraft() ? 'Guardar borrador' : 'Guardar cotización',
-      message: `${this.customerName().trim()} · ${this.gradeLabel()} — ${summary}.`,
+      title: this.isEdit() ? 'Guardar cambios de la lista' : this.asDraft() ? 'Guardar borrador' : 'Guardar lista escolar',
+      message: summary + inventory + shortage,
+      confirmText: this.isEdit()
+        ? 'Guardar cambios'
+        : !this.movesStock()
+          ? 'Guardar borrador'
+          : this.inventoryUnits() > 0
+            ? 'Guardar y descontar inventario'
+            : 'Guardar lista',
     });
     if (!ok) {
       return;
@@ -426,7 +538,12 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       next: (quotation) => {
         this.saving.set(false);
         this.requestId = crypto.randomUUID();
-        this.notifications.success(this.isEdit() ? 'Cotización actualizada.' : `Cotización ${quotation.quotationNumber} guardada.`);
+        const moved = quotation.inventory.filter((m) => m.movementType === 'SALIDA_LISTA_ESCOLAR').reduce((s, m) => s + m.quantity, 0);
+        this.notifications.success(
+          this.isEdit()
+            ? `Lista ${quotation.quotationNumber} actualizada.`
+            : `Lista ${quotation.quotationNumber} guardada${moved ? `; se descontaron ${moved} unidad(es) de Bodega` : ''}.`,
+        );
         this.saved.emit(quotation);
       },
       error: (error: HttpErrorResponse) => {

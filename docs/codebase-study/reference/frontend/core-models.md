@@ -41,7 +41,7 @@
 | [ice-cream-purchase.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-purchase-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `calculateIceCreamPurchaseItemTotal`, `calculateIceCreamPurchaseTotal`, `IceCreamPurchaseItem`, `IceCreamPurchase`, `IceCreamPurchaseDraftItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [ice-cream-sale.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-sale-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `calculateIceCreamSaleItemTotal`, `calculateIceCreamSaleTotal`, `IceCreamSaleItem`, `IceCreamSale`, `IceCreamSaleDraftItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [ice-cream.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `getIceCreamStockStatus`, `IceCream`, `IceCreamInput`, `IceCreamStockStatus`, `ICE_CREAM_LOW_STOCK_THRESHOLD` (sin comentario de documentación en el código). | 1 internas | 1 | Baja (1 consumidores) |
-| [index.ts](#f-comercial-jhoel-app-src-app-core-models-index-ts) | .ts | Barrel (re-exportación) | Core (servicios, modelos, guards) | Barrel (re-exportación) (sin comentario de documentación en el código). | 67 internas | 431 | Alta (431 consumidores) |
+| [index.ts](#f-comercial-jhoel-app-src-app-core-models-index-ts) | .ts | Barrel (re-exportación) | Core (servicios, modelos, guards) | Barrel (re-exportación) (sin comentario de documentación en el código). | 67 internas | 435 | Alta (435 consumidores) |
 | [inventory.model.ts](#f-comercial-jhoel-app-src-app-core-models-inventory-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | An extensible stock location (Bodega, Vitrina, ...) — adding a new one is a backend admin action, never a frontend code change. | 0 internas | 1 | Baja (1 consumidores) |
 | [kardex.model.ts](#f-comercial-jhoel-app-src-app-core-models-kardex-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `KardexMovement`, `KardexStatement`, `RegisterKardexMovementInput`, `KardexStatementFilters`, `ActiveBalanceSummary` (sin comentario de documentación en el código). | 0 internas; ext.: rxjs | 3 | Media (3 consumidores) |
 | [keyboard-shortcut.model.ts](#f-comercial-jhoel-app-src-app-core-models-keyboard-shortcut-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | A global keyboard shortcut → dashboard route mapping, backed by `GET/POST/PATCH/DELETE /keyboard-shortcuts` — configurable from "Sistema → Atajos de Teclado". | 0 internas | 1 | Baja (1 consumidores) |
@@ -55,7 +55,7 @@
 | [product.model.ts](#f-comercial-jhoel-app-src-app-core-models-product-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Looks up one location's quantity from a product's breakdown — 0 (not undefined) when the location has no row yet, since "no row" and "zero stock" mean the same thing to a caller. | 1 internas | 1 | Baja (1 consumidores) |
 | [purchase.model.ts](#f-comercial-jhoel-app-src-app-core-models-purchase-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Single source of truth for invoice math — the table row, the summary, and the save confirmation dialog all call these instead of computing inline. | 0 internas | 1 | Baja (1 consumidores) |
 | [push-notification.model.ts](#f-comercial-jhoel-app-src-app-core-models-push-notification-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Estados reales que `PushNotificationService` puede distinguir — no los 6 nombrados en el pedido original tal cual, por una limitación genuina de la plataforma: la API `Notification.permission` del navegador solo expone `'default' \| 'granted' \| 'denied'`, y NUNCA distingue "el usuario lo negó una vez" de "el navegador lo bloqueó permanentemente" — ambos casos llegan como `'denied'`. | 0 internas | 1 | Baja (1 consumidores) |
-| [quotation.model.ts](#f-comercial-jhoel-app-src-app-core-models-quotation-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Mirrors `create_quotation()`'s own math exactly, so the live cart preview always matches what gets saved. | 0 internas | 1 | Baja (1 consumidores) |
+| [quotation.model.ts](#f-comercial-jhoel-app-src-app-core-models-quotation-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Commercial life cycle (migration 1760008200000). | 0 internas | 1 | Baja (1 consumidores) |
 | [recharge-day.model.ts](#f-comercial-jhoel-app-src-app-core-models-recharge-day-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | "Apertura del Día"/"Cerrar Día" for Recargas Electrónicas — fully independent from Bancos/Cuadre Agentes' own `DayWorkStatus`/`DayStatus` (see `cuadre-agentes.model.ts`): separate table, separate lifecycle on the backend, so a separate type here too, never a shared one. | 0 internas | 1 | Baja (1 consumidores) |
 | [recharge-sim.model.ts](#f-comercial-jhoel-app-src-app-core-models-recharge-sim-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | SIM Claro / SIM Tigo — physical, stock-tracked products administered exclusively from Recargas Electrónicas. | 0 internas | 1 | Baja (1 consumidores) |
 | [recharge.model.ts](#f-comercial-jhoel-app-src-app-core-models-recharge-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | `currentBalance / balanceLimit * 100` — nunca `Math.min(pct, 100)`, el saldo puede superar el límite configurado (p. | 0 internas | 1 | Baja (1 consumidores) |
@@ -978,7 +978,7 @@
 - **Tipo:** Barrel (re-exportación) · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
 - **Responsabilidad:** Barrel (re-exportación) (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [nav-link.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-nav-link-model-ts), [service-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-service-item-model-ts), [stat-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-stat-item-model-ts), [catalog-category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-catalog-category-model-ts), [bank-operation.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-bank-operation-model-ts), [contact-channel.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-contact-channel-model-ts), [dashboard-nav-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-nav-item-model-ts), [keyboard-shortcut.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-keyboard-shortcut-model-ts), [dashboard-summary-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-summary-item-model-ts), [product.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-product-model-ts), [inventory.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-inventory-model-ts), [category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-category-model-ts), [business.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-business-model-ts), [sale.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sale-model-ts), [sales-register.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sales-register-model-ts) y 52 más
-- **Consumidores:** [bank-operations.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-bank-operations-data-ts), [catalog-categories.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-catalog-categories-data-ts), [dashboard-nav.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-nav-data-ts), [dashboard-summary.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-summary-data-ts), [nav-links.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-nav-links-data-ts), [services.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-services-data-ts), [stats.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-stats-data-ts), [account-receivable-payment.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-payment-service-ts), [account-receivable.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-service-ts), [account-type.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-type-service-ts), [alert-settings.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alert-settings-service-ts), [alerts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alerts-service-ts), [asset.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-asset-service-ts), [assets-receivables-report-state.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-assets-receivables-report-state-service-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) y 416 más
+- **Consumidores:** [bank-operations.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-bank-operations-data-ts), [catalog-categories.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-catalog-categories-data-ts), [dashboard-nav.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-nav-data-ts), [dashboard-summary.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-summary-data-ts), [nav-links.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-nav-links-data-ts), [services.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-services-data-ts), [stats.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-stats-data-ts), [account-receivable-payment.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-payment-service-ts), [account-receivable.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-service-ts), [account-type.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-type-service-ts), [alert-settings.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alert-settings-service-ts), [alerts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alerts-service-ts), [asset.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-asset-service-ts), [assets-receivables-report-state.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-assets-receivables-report-state-service-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) y 420 más
 <a id="f-comercial-jhoel-app-src-app-core-models-inventory-model-ts"></a>
 
 ### inventory.model.ts
@@ -1283,67 +1283,80 @@
 
 ### quotation.model.ts
 
-- **Ruta:** [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts) (`comercial-jhoel-app/src/app/core/models/quotation.model.ts`, 138 líneas)
+- **Ruta:** [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts) (`comercial-jhoel-app/src/app/core/models/quotation.model.ts`, 197 líneas)
 - **Tipo:** Modelo / tipos · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
-- **Responsabilidad:** Mirrors `create_quotation()`'s own math exactly, so the live cart preview always matches what gets saved.
+- **Responsabilidad:** Commercial life cycle (migration 1760008200000).
+- **Descripción del autor (comentario del archivo):** Commercial life cycle (migration 1760008200000). VENCIDA is derived by the backend for a COTIZADA past its expiration date. Saving a quotation never touches inventory; only "Confirmar venta" creates a real sale (VENDIDA).
 - **Consumidores:** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 
 **Interfaces, tipos y enums:**
 
-- `interface QuotationItem` (L3): sin documentación — miembros: `id`, `productId`, `productName`, `presentationName`, `quantity`, `unitPrice`, `discount`, `subtotal`, `total`
-- `interface Quotation` (L25): A Cotización is explicitly NOT a sale — it never affects inventory, reports, or the dashboard. — miembros: `id`, `quotationNumber`, `clientId`, `clientName`, `userId`, `username`, `quotationDate`, `expirationDate`, `subtotal`, `discount`, `total`, `observations`, `commercialTerms`, `status`, `voidedAt`, `voidedBy`, `voidedByUsername`, `voidReason`, `convertedToSaleId`, `items`, `createdAt`, `updatedAt`
-- `interface QuotationSummary` (L52): `GET /quotations` list rows — no line items, mirrors `TicketSummary`'s own shape. — miembros: `id`, `quotationNumber`, `clientId`, `clientName`, `userId`, `username`, `expirationDate`, `total`, `status`, `createdAt`
-- `interface CreateQuotationItemInput` (L65): sin documentación — miembros: `productId`, `quantity`, `discount`
-- `interface CreateQuotationInput` (L71): sin documentación — miembros: `clientId`, `expirationDate`, `observations`, `commercialTerms`, `items`
-- `interface ListQuotationsQuery` (L79): sin documentación — miembros: `status`, `startDate`, `endDate`, `search`, `page`, `limit`
-- `interface QuotationDraftItem` (L95): A cart line while a quotation is still being built on-screen — never sent to the backend as-is, only `{productId, quantity, discount}` is. — miembros: `productId`, `name`, `sku`, `unitPrice`, `quantity`, `discount`
-- `type QuotationStatus` (L1) = `'PENDIENTE' \| 'ACEPTADA' \| 'ANULADA' \| 'VENCIDA'`
+- `interface QuotationSalePreviewLine` (L12): "Confirmar venta" summary line with the current Vitrina stock. — miembros: `productId`, `productName`, `quantity`, `unitPrice`, `total`, `available`, `isActive`, `sufficient`
+- `interface QuotationSalePreview` (L23): sin documentación — miembros: `quotation`, `lines`, `canConfirm`
+- `interface QuotationItem` (L29): sin documentación — miembros: `id`, `productId`, `productName`, `presentationName`, `quantity`, `unitPrice`, `discount`, `subtotal`, `total`
+- `interface Quotation` (L51): A Cotización is explicitly NOT a sale — it never affects inventory, reports, or the dashboard. — miembros: `id`, `quotationNumber`, `clientId`, `clientName`, `customerPhone`, `studentName`, `grade`, `userId`, `username`, `quotationDate`, `expirationDate`, `subtotal`, `discount`, `total`, `observations`, `commercialTerms`, `status`, `voidedAt`, `voidedBy`, `voidedByUsername`, `voidReason`, `convertedToSaleId`, `acceptedAt`, `rejectedAt`, `rejectReason`…
+- `interface QuotationSummary` (L87): `GET /quotations` list rows — no line items, mirrors `TicketSummary`'s own shape. — miembros: `id`, `quotationNumber`, `clientId`, `clientName`, `customerPhone`, `studentName`, `grade`, `userId`, `username`, `expirationDate`, `total`, `status`, `createdAt`
+- `interface CreateQuotationItemInput` (L103): sin documentación — miembros: `productId`, `quantity`, `discount`
+- `interface CreateQuotationInput` (L110): The customer is typed in by hand; no `clients` row is created. — miembros: `customerName`, `customerPhone`, `studentName`, `grade`, `asDraft`, `expirationDate`, `observations`, `commercialTerms`, `items`
+- `interface ListQuotationsQuery` (L122): sin documentación — miembros: `status`, `startDate`, `endDate`, `search`, `page`, `limit`
+- `interface QuotationDraftItem` (L138): A cart line while a quotation is still being built on-screen — never sent to the backend as-is, only `{productId, quantity, discount}` is. — miembros: `productId`, `name`, `sku`, `unitPrice`, `quantity`, `discount`
+- `type QuotationStatus` (L6) = `'BORRADOR' \| 'COTIZADA' \| 'ACEPTADA' \| 'VENDIDA' \| 'RECHAZADA' \| 'CANCELADA' \| 'VENCIDA'` — Commercial life cycle (migration 1760008200000).
+- `type QuotationStatusAction` (L9) = `'CONFIRMAR' \| 'ACEPTAR' \| 'RECHAZAR'` — Actions any operator may run on their quotations (CANCELAR = "Anular", admin only, has its own route).
 
 **Constantes exportadas:**
 
-- `QUOTATION_STATUS_TONE` (L125) = `{ PENDIENTE: 'gold', ACEPTADA: 'success', VENCIDA: 'danger', ANULADA: 'neutral-dark', }`
-- `QUOTATION_STATUS_LABEL` (L132) = `{ PENDIENTE: 'Pendiente', ACEPTADA: 'Aceptada', VENCIDA: 'Vencida', ANULADA: 'Anulada', }`
-#### Función `calculateQuotationDraftItemSubtotal` (L105–107)
+- `QUOTATION_STATUS_TONE` (L168) = `{ BORRADOR: 'neutral-light', COTIZADA: 'gold', ACEPTADA: 'brand', VENDIDA: 'success', RECHAZADA: 'danger', CAN`
+- `QUOTATION_STATUS_LABEL` (L186) = `{ BORRADOR: 'Borrador', COTIZADA: 'Cotizada', ACEPTADA: 'Aceptada', VENDIDA: 'Vendida', RECHAZADA: 'Rechazada'`
+- `QUOTATION_STATUSES` (L196) = `Object.keys(QUOTATION_STATUS_LABEL) as QuotationStatus[]`
+#### Función `calculateQuotationDraftItemSubtotal` (L148–150)
 
 - **Tipo:** función exportada
-- **Firma:** `calculateQuotationDraftItemSubtotal(item: QuotationDraftItem): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L105)
+- **Firma:** `calculateQuotationDraftItemSubtotal(item: QuotationDraftItem): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L148)
 - **Propósito / descripción:** Mirrors `create_quotation()`'s own math exactly, so the live cart preview always matches what gets saved.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `calculateQuotationDraftItemTotal` (L109–111)
+#### Función `calculateQuotationDraftItemTotal` (L152–154)
 
 - **Tipo:** función exportada
-- **Firma:** `calculateQuotationDraftItemTotal(item: QuotationDraftItem): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L109)
+- **Firma:** `calculateQuotationDraftItemTotal(item: QuotationDraftItem): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L152)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `calculateQuotationDraftItemSubtotal`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `calculateQuotationDraftSubtotal` (L113–115)
+#### Función `calculateQuotationDraftSubtotal` (L156–158)
 
 - **Tipo:** función exportada
-- **Firma:** `calculateQuotationDraftSubtotal(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L113)
+- **Firma:** `calculateQuotationDraftSubtotal(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L156)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `items.reduce`, `calculateQuotationDraftItemSubtotal`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `calculateQuotationDraftDiscount` (L117–119)
+#### Función `calculateQuotationDraftDiscount` (L160–162)
 
 - **Tipo:** función exportada
-- **Firma:** `calculateQuotationDraftDiscount(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L117)
+- **Firma:** `calculateQuotationDraftDiscount(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L160)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `items.reduce`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `calculateQuotationDraftTotal` (L121–123)
+#### Función `calculateQuotationDraftTotal` (L164–166)
 
 - **Tipo:** función exportada
-- **Firma:** `calculateQuotationDraftTotal(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L121)
+- **Firma:** `calculateQuotationDraftTotal(items: QuotationDraftItem[]): number` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L164)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `calculateQuotationDraftSubtotal`, `calculateQuotationDraftDiscount`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `isQuotationSellable` (L182–184)
+
+- **Tipo:** función exportada
+- **Firma:** `isQuotationSellable(status: QuotationStatus): boolean` — [quotation.model.ts](../../../../comercial-jhoel-app/src/app/core/models/quotation.model.ts#L182)
+- **Propósito / descripción:** A quotation that can still become a sale.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
@@ -1556,7 +1569,7 @@
 
 ### school-list.model.ts
 
-- **Ruta:** [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts) (`comercial-jhoel-app/src/app/core/models/school-list.model.ts`, 385 líneas)
+- **Ruta:** [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts) (`comercial-jhoel-app/src/app/core/models/school-list.model.ts`, 580 líneas)
 - **Tipo:** Modelo / tipos · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
 - **Responsabilidad:** Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000).
 - **Descripción del autor (comentario del archivo):** Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000). The backend computes and validates every amount; these types only mirror its responses.
@@ -1564,93 +1577,122 @@
 
 **Interfaces, tipos y enums:**
 
-- `interface SchoolTemplateItem` (L114): sin documentación — miembros: `id`, `lineNo`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `subtotal`, `observations`, `inventoryPrice`
-- `interface SchoolTemplateSummary` (L127): sin documentación — miembros: `id`, `name`, `grade`, `description`, `isActive`, `sortOrder`, `version`, `itemCount`, `total`, `updatedAt`, `updatedByUsername`
-- `interface SchoolTemplate` (L141) extends SchoolTemplateSummary: sin documentación — miembros: `items`
-- `interface SchoolTemplateItemInput` (L145): sin documentación — miembros: `productId`, `productName`, `description`, `quantity`, `unitPrice`, `observations`
-- `interface SaveSchoolTemplateInput` (L154): sin documentación — miembros: `name`, `grade`, `description`, `isActive`, `items`, `version`
-- `interface SchoolQuotationItem` (L164): sin documentación — miembros: `id`, `lineNo`, `source`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `subtotal`, `observations`
-- `interface SchoolPayment` (L179): sin documentación — miembros: `id`, `quotationId`, `receiptNumber`, `kind`, `amount`, `effect`, `runningBalance`, `paymentMethod`, `bankId`, `bankName`, `reference`, `observations`, `status`, `reversalOfId`, `receivedAt`, `receivedByUsername`, `voidedAt`, `voidedByUsername`, `voidReason`
-- `interface SchoolHistoryEntry` (L201): sin documentación — miembros: `id`, `action`, `fromStatus`, `toStatus`, `details`, `createdAt`, `createdByUsername`
-- `interface SchoolAccount` (L211): sin documentación — miembros: `total`, `advances`, `installments`, `refunds`, `paid`, `balance`
-- `interface SchoolQuotationSummary` (L220): sin documentación — miembros: `id`, `quotationNumber`, `quotationDate`, `deliveryDate`, `customerName`, `customerPhone`, `studentName`, `grade`, `templateId`, `templateName`, `total`, `paid`, `balance`, `status`, `accountStatus`, `version`, `createdAt`, `createdByUsername`
-- `interface SchoolQuotation` (L241) extends SchoolQuotationSummary: sin documentación — miembros: `subtotal`, `discount`, `observations`, `updatedAt`, `deliveredAt`, `deliveredByUsername`, `cancelledAt`, `cancelledByUsername`, `cancelReason`, `items`, `payments`, `history`, `account`
-- `interface SchoolQuotationItemInput` (L257): sin documentación — miembros: `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`
-- `interface SchoolPaymentInput` (L269): sin documentación — miembros: `amount`, `paymentMethod`, `bankId`, `reference`, `observations`
-- `interface SchoolQuotationInput` (L277): sin documentación — miembros: `customerName`, `customerPhone`, `studentName`, `quotationDate`, `deliveryDate`, `observations`, `items`
-- `interface CreateSchoolQuotationInput` (L287) extends SchoolQuotationInput: sin documentación — miembros: `templateId`, `grade`, `asDraft`, `advance`, `clientRequestId`
-- `interface SchoolCancelInput` (L295): sin documentación — miembros: `reason`, `refundMethod`, `bankId`, `reference`, `clientRequestId`
-- `interface SchoolQuotationFilters` (L303): sin documentación — miembros: `search`, `phone`, `number`, `grade`, `status`, `dateFrom`, `dateTo`, `page`, `limit`
-- `interface SchoolQuotationPage` (L315): sin documentación — miembros: `items`, `total`, `page`, `limit`
-- `interface SchoolDashboard` (L322): sin documentación — miembros: `dateFrom`, `dateTo`, `totalQuotations`, `pendingQuotations`, `paidQuotations`, `totalQuoted`, `totalReceived`, `pendingBalance`, `byGrade`, `byStatus`, `incomeByDay`
-- `type SchoolQuotationStatus` (L8) = `\| 'BORRADOR' \| 'COTIZADA' \| 'ANTICIPO_RECIBIDO' \| 'PAGO_PARCIAL' \| 'PAGADA' \| 'EN_PREPARACION' \| 'ENTREGADA' \| 'CANCELADA'` — Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000).
-- `type SchoolAccountStatus` (L18) = `'PENDIENTE' \| 'PARCIAL' \| 'PAGADA' \| 'CERRADA'`
-- `type SchoolPaymentMethod` (L19) = `'EFECTIVO' \| 'TRANSFERENCIA' \| 'DEPOSITO' \| 'TARJETA' \| 'OTRO'`
-- `type SchoolPaymentKind` (L20) = `'ANTICIPO' \| 'ABONO' \| 'DEVOLUCION' \| 'ANULACION'`
-- `type SchoolStatusAction` (L21) = `'CONFIRMAR' \| 'PREPARAR' \| 'ENTREGAR'`
-- `type SchoolLineSource` (L22) = `'PLANTILLA' \| 'INVENTARIO' \| 'MANUAL'`
-- `type SchoolListPermission` (L24) = `\| 'school_lists.view' \| 'school_lists.templates.manage' \| 'school_lists.quotations.create' \| 'school_lists.quotations.edit' \| 'school_lists.prices.override' \| 'school_lists.payments.register' \| 'schoo`
+- `interface SupplyLine` (L108): sin documentación — miembros: `productId`, `productName`, `requested`, `allocated`, `pending`, `delivered`
+- `interface SupplyAllocation` (L117): sin documentación — miembros: `id`, `productId`, `productName`, `quantity`, `sourceType`, `mode`, `status`, `purchaseId`, `purchaseInvoice`, `purchaseDate`, `createdAt`, `username`, `releasedAt`, `releaseReason`
+- `interface SchoolDispatch` (L134): sin documentación — miembros: `id`, `dispatchedAt`, `username`, `observations`, `items`
+- `interface QuotationSupply` (L149): sin documentación — miembros: `status`, `confirmedAt`, `lines`, `uncontrolledLines`, `allocations`, `dispatch`
+- `interface SupplyProduct` (L158): sin documentación — miembros: `productId`, `productName`, `sku`, `category`, `bodega`, `committed`, `allocated`, `pending`, `freeUnits`, `lists`, `firstOrderAt`, `lastOrderAt`, `status`
+- `interface SupplySummary` (L174): sin documentación — miembros: `pendingProducts`, `pendingUnits`, `affectedLists`, `suppliedProducts`, `partialProducts`
+- `interface SupplyProductPage` (L182): sin documentación — miembros: `items`, `total`, `page`, `limit`, `summary`
+- `interface SupplyProductFilters` (L190): sin documentación — miembros: `search`, `categoryId`, `dateFrom`, `dateTo`, `quotationNumber`, `status`, `page`, `limit`
+- `interface SupplyProductList` (L201): sin documentación — miembros: `quotationId`, `quotationNumber`, `customerName`, `grade`, `confirmedAt`, `committed`, `allocated`, `pending`, `supplyStatus`
+- `interface SupplyPurchase` (L213): sin documentación — miembros: `purchaseId`, `invoiceNumber`, `purchaseDate`, `productId`, `productName`, `purchased`, `allocated`, `lists`
+- `interface SchoolTemplateItem` (L277): sin documentación — miembros: `id`, `lineNo`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `subtotal`, `observations`, `inventoryPrice`
+- `interface SchoolTemplateSummary` (L290): sin documentación — miembros: `id`, `name`, `grade`, `description`, `isActive`, `sortOrder`, `version`, `itemCount`, `total`, `updatedAt`, `updatedByUsername`
+- `interface SchoolTemplate` (L304) extends SchoolTemplateSummary: sin documentación — miembros: `items`
+- `interface SchoolTemplateItemInput` (L308): sin documentación — miembros: `productId`, `productName`, `description`, `quantity`, `unitPrice`, `observations`
+- `interface SaveSchoolTemplateInput` (L317): sin documentación — miembros: `name`, `grade`, `description`, `isActive`, `items`, `version`
+- `interface SchoolQuotationItem` (L327): sin documentación — miembros: `id`, `lineNo`, `source`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `subtotal`, `observations`
+- `interface SchoolPayment` (L342): sin documentación — miembros: `id`, `quotationId`, `receiptNumber`, `kind`, `amount`, `effect`, `runningBalance`, `paymentMethod`, `bankId`, `bankName`, `reference`, `observations`, `status`, `reversalOfId`, `receivedAt`, `receivedByUsername`, `voidedAt`, `voidedByUsername`, `voidReason`
+- `interface SchoolHistoryEntry` (L364): sin documentación — miembros: `id`, `action`, `fromStatus`, `toStatus`, `details`, `createdAt`, `createdByUsername`
+- `interface SchoolListInventoryMovement` (L375): Inventory movement caused by the list in Bodega (discount, adjustment or return). — miembros: `id`, `productId`, `productName`, `movementType`, `quantity`, `reason`, `createdAt`, `username`
+- `interface SchoolAccount` (L397): sin documentación — miembros: `total`, `advances`, `installments`, `refunds`, `paid`, `balance`
+- `interface SchoolQuotationSummary` (L406): sin documentación — miembros: `id`, `quotationNumber`, `quotationDate`, `deliveryDate`, `customerName`, `customerPhone`, `studentName`, `grade`, `templateId`, `templateName`, `total`, `paid`, `balance`, `status`, `accountStatus`, `supplyStatus`, `version`, `createdAt`, `createdByUsername`
+- `interface SchoolQuotation` (L428) extends SchoolQuotationSummary: sin documentación — miembros: `subtotal`, `discount`, `observations`, `updatedAt`, `finishedAt`, `finishedByUsername`, `deliveredAt`, `deliveredByUsername`, `cancelledAt`, `cancelledByUsername`, `cancelReason`, `items`, `payments`, `history`, `inventory`, `supply`, `account`
+- `interface SchoolQuotationItemInput` (L448): sin documentación — miembros: `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`
+- `interface SchoolPaymentInput` (L460): sin documentación — miembros: `amount`, `paymentMethod`, `bankId`, `reference`, `observations`
+- `interface SchoolQuotationInput` (L468): sin documentación — miembros: `customerName`, `customerPhone`, `studentName`, `quotationDate`, `deliveryDate`, `observations`, `items`
+- `interface CreateSchoolQuotationInput` (L478) extends SchoolQuotationInput: sin documentación — miembros: `templateId`, `grade`, `asDraft`, `advance`, `clientRequestId`
+- `interface SchoolCancelInput` (L486): sin documentación — miembros: `reason`, `refundMethod`, `bankId`, `reference`, `clientRequestId`
+- `interface SchoolQuotationFilters` (L494): sin documentación — miembros: `search`, `phone`, `number`, `grade`, `status`, `supplyStatus`, `dateFrom`, `dateTo`, `page`, `limit`
+- `interface SchoolQuotationPage` (L507): sin documentación — miembros: `items`, `total`, `page`, `limit`
+- `interface SchoolDashboard` (L514): sin documentación — miembros: `dateFrom`, `dateTo`, `totalQuotations`, `pendingQuotations`, `paidQuotations`, `totalQuoted`, `totalReceived`, `pendingBalance`, `byGrade`, `byStatus`, `incomeByDay`
+- `type SchoolQuotationStatus` (L8) = `\| 'BORRADOR' \| 'COTIZADA' \| 'ANTICIPO_RECIBIDO' \| 'PAGO_PARCIAL' \| 'PAGADA' \| 'EN_PREPARACION' \| 'TERMINADA' \| 'ENTREGADA' \| 'CANCELADA'` — Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000).
+- `type SchoolAccountStatus` (L19) = `'PENDIENTE' \| 'PARCIAL' \| 'PAGADA' \| 'CERRADA'`
+- `type SchoolPaymentMethod` (L20) = `'EFECTIVO' \| 'TRANSFERENCIA' \| 'DEPOSITO' \| 'TARJETA' \| 'OTRO'`
+- `type SchoolPaymentKind` (L21) = `'ANTICIPO' \| 'ABONO' \| 'DEVOLUCION' \| 'ANULACION'`
+- `type SchoolStatusAction` (L23) = `'CONFIRMAR' \| 'PREPARAR' \| 'TERMINAR' \| 'ENTREGAR'` — TERMINAR = the list is packed and dispatched, ready to hand over.
+- `type SchoolLineSource` (L24) = `'PLANTILLA' \| 'INVENTARIO' \| 'MANUAL'`
+- `type SchoolListPermission` (L26) = `\| 'school_lists.view' \| 'school_lists.templates.manage' \| 'school_lists.quotations.create' \| 'school_lists.quotations.edit' \| 'school_lists.prices.override' \| 'school_lists.payments.register' \| 'schoo`
+- `type SchoolSupplyStatus` (L69) = `'PENDIENTE' \| 'PARCIAL' \| 'DISPONIBLE' \| 'DESPACHADA' \| 'NO_APLICA'` — Supply state of a list (migration 1760008300000), independent of the commercial status.
+- `type SupplyProductStatus` (L89) = `'PENDIENTE' \| 'PARCIAL' \| 'ABASTECIDO'`
+- `type SupplyAllocationMode` (L224) = `'FIFO_AUTO' \| 'MANUAL'`
 
 **Constantes exportadas:**
 
-- `SCHOOL_STATUS_LABEL` (L36) = `{ BORRADOR: 'Borrador', COTIZADA: 'Cotizada', ANTICIPO_RECIBIDO: 'Anticipo recibido', PAGO_PARCIAL: 'Pago parc`
-- `SCHOOL_STATUS_TONE` (L47) = `{ BORRADOR: 'neutral-light', COTIZADA: 'danger', ANTICIPO_RECIBIDO: 'gold', PAGO_PARCIAL: 'gold', PAGADA: 'suc`
-- `SCHOOL_STATUSES` (L61) = `Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[]`
-- `SCHOOL_PAYMENT_METHOD_LABEL` (L63) = `{ EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', DEPOSITO: 'Depósito bancario', TARJETA: 'Tarjeta', OTR`
-- `SCHOOL_PAYMENT_METHODS` (L71) = `Object.keys(SCHOOL_PAYMENT_METHOD_LABEL) as SchoolPaymentMethod[]`
-- `SCHOOL_PAYMENT_KIND_LABEL` (L73) = `{ ANTICIPO: 'Anticipo', ABONO: 'Abono', DEVOLUCION: 'Devolución', ANULACION: 'Anulación', }`
-- `SCHOOL_LINE_SOURCE_LABEL` (L80) = `{ PLANTILLA: 'Plantilla', INVENTARIO: 'Inventario', MANUAL: 'Agregado', }`
-- `SCHOOL_ACCOUNT_TONE` (L87): Green = paid, yellow = partial, red = pending; cancelled is neutral. = `{ PAGADA: 'success', PARCIAL: 'gold', PENDIENTE: 'danger', CERRADA: 'neutral-light', }`
-- `SCHOOL_ACCOUNT_LABEL` (L94) = `{ PAGADA: 'Pagada', PARCIAL: 'Pago parcial', PENDIENTE: 'Saldo pendiente', CERRADA: 'Cerrada', }`
-- `SCHOOL_BANK_METHODS` (L102): Methods that may name the bank account the money arrived to. = `['TRANSFERENCIA', 'DEPOSITO']`
-- `SCHOOL_HISTORY_LABEL` (L336) = `{ CREADA: 'Cotización creada', EDITADA: 'Cotización modificada', OBSERVACIONES: 'Observaciones actualizadas', `
-#### Función `isSchoolQuotationEditable` (L105–107)
+- `SCHOOL_STATUS_LABEL` (L39) = `{ BORRADOR: 'Borrador', COTIZADA: 'Cotizada', ANTICIPO_RECIBIDO: 'Anticipo recibido', PAGO_PARCIAL: 'Pago parc`
+- `SCHOOL_STATUS_TONE` (L51) = `{ BORRADOR: 'neutral-light', COTIZADA: 'danger', ANTICIPO_RECIBIDO: 'gold', PAGO_PARCIAL: 'gold', PAGADA: 'suc`
+- `SCHOOL_STATUSES` (L66) = `Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[]`
+- `SCHOOL_SUPPLY_LABEL` (L71) = `{ PENDIENTE: 'Pendiente de abastecimiento', PARCIAL: 'Parcialmente abastecida', DISPONIBLE: 'Disponible para d`
+- `SCHOOL_SUPPLY_TONE` (L79) = `{ PENDIENTE: 'danger', PARCIAL: 'gold', DISPONIBLE: 'success', DESPACHADA: 'brand', NO_APLICA: 'neutral-light'`
+- `SCHOOL_SUPPLY_FILTERS` (L87) = `['PENDIENTE', 'PARCIAL', 'DISPONIBLE', 'DESPACHADA']`
+- `SUPPLY_PRODUCT_LABEL` (L90) = `{ PENDIENTE: 'Pendiente', PARCIAL: 'Parcialmente abastecido', ABASTECIDO: 'Abastecido', }`
+- `SUPPLY_PRODUCT_TONE` (L95) = `{ PENDIENTE: 'danger', PARCIAL: 'gold', ABASTECIDO: 'success', }`
+- `SUPPLY_SOURCE_LABEL` (L101) = `{ EXISTENCIA: 'Existencia en Bodega', COMPRA: 'Compra', TRASLADO: 'Traslado', DEVOLUCION: 'Devolución', }`
+- `SCHOOL_PAYMENT_METHOD_LABEL` (L226) = `{ EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', DEPOSITO: 'Depósito bancario', TARJETA: 'Tarjeta', OTR`
+- `SCHOOL_PAYMENT_METHODS` (L234) = `Object.keys(SCHOOL_PAYMENT_METHOD_LABEL) as SchoolPaymentMethod[]`
+- `SCHOOL_PAYMENT_KIND_LABEL` (L236) = `{ ANTICIPO: 'Anticipo', ABONO: 'Abono', DEVOLUCION: 'Devolución', ANULACION: 'Anulación', }`
+- `SCHOOL_LINE_SOURCE_LABEL` (L243) = `{ PLANTILLA: 'Plantilla', INVENTARIO: 'Inventario', MANUAL: 'Agregado', }`
+- `SCHOOL_ACCOUNT_TONE` (L250): Green = paid, yellow = partial, red = pending; cancelled is neutral. = `{ PAGADA: 'success', PARCIAL: 'gold', PENDIENTE: 'danger', CERRADA: 'neutral-light', }`
+- `SCHOOL_ACCOUNT_LABEL` (L257) = `{ PAGADA: 'Pagada', PARCIAL: 'Pago parcial', PENDIENTE: 'Saldo pendiente', CERRADA: 'Cerrada', }`
+- `SCHOOL_BANK_METHODS` (L265): Methods that may name the bank account the money arrived to. = `['TRANSFERENCIA', 'DEPOSITO']`
+- `SCHOOL_INVENTORY_MOVEMENT_LABEL` (L386) = `{ SALIDA_LISTA_ESCOLAR: 'Salida por lista', ENTRADA_AJUSTE_LISTA: 'Devolución por ajuste', ENTRADA_ANULACION_L`
+- `SCHOOL_HISTORY_LABEL` (L528) = `{ CREADA: 'Cotización creada', EDITADA: 'Cotización modificada', OBSERVACIONES: 'Observaciones actualizadas', `
+#### Función `isSchoolQuotationEditable` (L268–270)
 
 - **Tipo:** función exportada
-- **Firma:** `isSchoolQuotationEditable(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L105)
+- **Firma:** `isSchoolQuotationEditable(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L268)
 - **Propósito / descripción:** States in which lines, customer data and observations may still change.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `canReceiveSchoolPayment` (L109–111)
+#### Función `canReceiveSchoolPayment` (L272–274)
 
 - **Tipo:** función exportada
-- **Firma:** `canReceiveSchoolPayment(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L109)
+- **Firma:** `canReceiveSchoolPayment(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L272)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `roundMoney` (L349–351)
+#### Función `schoolListHoldsStock` (L393–395)
 
 - **Tipo:** función exportada
-- **Firma:** `roundMoney(value: number): number` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L349)
+- **Firma:** `schoolListHoldsStock(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L393)
+- **Propósito / descripción:** Statuses in which the list keeps its inventory lines discounted from Bodega.
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `roundMoney` (L544–546)
+
+- **Tipo:** función exportada
+- **Firma:** `roundMoney(value: number): number` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L544)
 - **Propósito / descripción:** Rounds to cents the same way the backend does (display/live totals only).
 - **Dependencias:** `Math.round`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `formatSchoolDate` (L354–360)
+#### Función `formatSchoolDate` (L549–555)
 
 - **Tipo:** función exportada
-- **Firma:** `formatSchoolDate(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L354)
+- **Firma:** `formatSchoolDate(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L549)
 - **Propósito / descripción:** `yyyy-MM-dd` → `dd/mm/yyyy` without a `Date` round-trip.
 - **Dependencias:** `iso.slice(0, 10).split`, `iso.slice`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `formatSchoolDateTime` (L362–374)
+#### Función `formatSchoolDateTime` (L557–569)
 
 - **Tipo:** función exportada
-- **Firma:** `formatSchoolDateTime(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L362)
+- **Firma:** `formatSchoolDateTime(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L557)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `new Date(iso).toLocaleString`, `new Date`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `guatemalaToday` (L377–384)
+#### Función `guatemalaToday` (L572–579)
 
 - **Tipo:** función exportada
-- **Firma:** `guatemalaToday(now?): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L377)
+- **Firma:** `guatemalaToday(now?): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L572)
 - **Propósito / descripción:** Today in Guatemala as `yyyy-MM-dd`.
 - **Dependencias:** `new Intl.DateTimeFormat`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).

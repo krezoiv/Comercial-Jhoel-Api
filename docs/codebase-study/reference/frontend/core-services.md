@@ -33,11 +33,11 @@
 | [catalog-product.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-product-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Catálogo → Librería"/"Variedades y Accesorios" — un solo servicio compartido, parametrizado por `section`. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [catalog-request.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-request-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Catálogo → Solicitudes" — leads de interés/crédito capturados desde la landing pública. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
 | [catalog.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Product catalog categories shown on the landing preview and the full catalog page. | 2 internas; ext.: @angular/core, rxjs | 2 | Baja (2 consumidores) |
-| [category.service.ts](#f-comercial-jhoel-app-src-app-core-services-category-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `CategoryService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 5 | Media (5 consumidores) |
+| [category.service.ts](#f-comercial-jhoel-app-src-app-core-services-category-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `CategoryService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
 | [client.service.ts](#f-comercial-jhoel-app-src-app-core-services-client-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `ClientService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
 | [closed-days.service.ts](#f-comercial-jhoel-app-src-app-core-services-closed-days-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "Sistema → Gestión de Días Cerrados" — every backend route (`ClosedDaysController`) already requires ADMIN/SUPER_ADMIN via a class-level `@Roles`; this service doesn't repeat that check, it's just the HTTP client. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 4 | Media (4 consumidores) |
 | [company-settings.service.ts](#f-comercial-jhoel-app-src-app-core-services-company-settings-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `CompanySettingsService`, `BASE_URL`, `PUBLIC_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
-| [confirm-dialog.service.ts](#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`). | 0 internas; ext.: @angular/core | 81 | Alta (81 consumidores) |
+| [confirm-dialog.service.ts](#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`). | 0 internas; ext.: @angular/core | 84 | Alta (84 consumidores) |
 | [contact.service.ts](#f-comercial-jhoel-app-src-app-core-services-contact-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Digits only — `tel:`/`wa.me` links need a clean numeric string, whatever formatting the admin typed (spaces, dashes, +) is stripped. | 3 internas; ext.: @angular/core, rxjs | 8 | Media (8 consumidores) |
 | [cuadre-agentes-state.service.spec.ts](#f-comercial-jhoel-app-src-app-core-services-cuadre-agentes-state-service-spec-ts) | .ts | Prueba unitaria | Core (servicios, modelos, guards) | Prueba unitaria: declara `INFO` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/core | 0 | Soporte (pruebas) |
 | [cuadre-agentes-state.service.ts](#f-comercial-jhoel-app-src-app-core-services-cuadre-agentes-state-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Holds the Cuadre Agentes page's cash-count quantities in a root-provided singleton — the same `providedIn: 'root'` + signals technique the draft stores use for surviving component destruction on route navigation. | 1 internas; ext.: @angular/core | 3 | Media (3 consumidores) |
@@ -66,7 +66,7 @@
 | [news-subscriber.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-subscriber-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Suscriptores de Noticias" — todo el controller es admin-only en el backend, incluidos los `GET` (expone WhatsApp/consentimiento de clientes). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [news-type.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-type-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Tipos de Noticias" — CRUD + orden. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [news.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Noticias" — CRUD + orden + imagen. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
-| [notification.service.ts](#f-comercial-jhoel-app-src-app-core-services-notification-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent. | 1 internas; ext.: @angular/core | 119 | Alta (119 consumidores) |
+| [notification.service.ts](#f-comercial-jhoel-app-src-app-core-services-notification-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent. | 1 internas; ext.: @angular/core | 122 | Alta (122 consumidores) |
 | [notifications-modal.service.ts](#f-comercial-jhoel-app-src-app-core-services-notifications-modal-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Único estado "abierto/cerrado" del `NotificationsModalComponent` (el modal de Web Push que monta el Navbar una sola vez). | 0 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [offers.service.ts](#f-comercial-jhoel-app-src-app-core-services-offers-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Provides the list of services Comercial Jhoel offers (útiles escolares, fotocopias, agente bancario, etc). | 2 internas; ext.: @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [parallax.service.ts](#f-comercial-jhoel-app-src-app-core-services-parallax-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Single shared scroll-linked parallax engine for the whole app — ONE `window.scroll`/`resize` listener total, no matter how many decorative layers register with it (`ParallaxLayerDirective` is the consumer-facing side of this). | 0 internas; ext.: @angular/core | 1 | Baja (1 consumidores) |
@@ -82,7 +82,7 @@
 | [purchase-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-purchase-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Compras" invoice(s), lifted out of `PurchasesPageComponent` into a root-provided singleton so it survives route navigation — Angular never destroys a `providedIn: 'root'` service just because its consuming component unmounts, only a full page reload does that. | 2 internas; ext.: @angular/core | 4 | Media (4 consumidores) |
 | [purchases.service.ts](#f-comercial-jhoel-app-src-app-core-services-purchases-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `PurchasesService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 8 | Media (8 consumidores) |
 | [push-notification.service.ts](#f-comercial-jhoel-app-src-app-core-services-push-notification-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Envuelve `SwPush` (el mismo Service Worker de PWA registrado en `app.config.ts` — nunca uno segundo) para el flujo público de notificaciones push de Noticias. | 2 internas; ext.: @angular/core, @angular/service-worker, rxjs | 1 | Baja (1 consumidores) |
-| [quotations.service.ts](#f-comercial-jhoel-app-src-app-core-services-quotations-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | A Cotización is explicitly NOT a sale — this service only ever calls `/quotations`, never `/sales` or `/inventory`. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
+| [quotations.service.ts](#f-comercial-jhoel-app-src-app-core-services-quotations-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | A Cotización is explicitly NOT a sale — this service only ever calls `/quotations`, never `/sales` or `/inventory`. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 5 | Media (5 consumidores) |
 | [recharge-cash-box.service.ts](#f-comercial-jhoel-app-src-app-core-services-recharge-cash-box-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "Gestión Caja Recargas" — fully independent from `RechargesService` (moved out of it per an explicit follow-up: this used to be a section embedded inside the Recargas Electrónicas page; it's now its own Sistema-level module with its own route, sidebar entry, and backend module). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 4 | Media (4 consumidores) |
 | [recharge-day-status.service.ts](#f-comercial-jhoel-app-src-app-core-services-recharge-day-status-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Shared "is today's Recargas day open?" state — a `providedIn: 'root'` singleton, same pattern as `DayStatusService` (Bancos/Cuadre Agentes), fully independent from it: separate backend table, separate lifecycle, never shares state with Bancos' own day-opening. | 2 internas; ext.: @angular/core, rxjs | 2 | Baja (2 consumidores) |
 | [recharge-days.service.ts](#f-comercial-jhoel-app-src-app-core-services-recharge-days-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "Sistema → Gestión de Días de Recargas" — the Recargas-specific counterpart to `ClosedDaysService` (Bancos), fully independent from it. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
@@ -94,7 +94,7 @@
 | [sales-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Ventas" receipt(s), lifted out of `SalesPageComponent` into a root-provided singleton — same reasoning `PurchaseDraftStore` documents for Compras (sidebar indicator without a round-trip, no refetch needed on revisiting the page). | 5 internas; ext.: @angular/common, @angular/core | 4 | Media (4 consumidores) |
 | [sales-register.service.ts](#f-comercial-jhoel-app-src-app-core-services-sales-register-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Talks to `${environment.apiUrl}/sales-register` — "Gestión de Caja de Ventas", read-only. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [sales.service.ts](#f-comercial-jhoel-app-src-app-core-services-sales-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `SalesService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
-| [school-list.service.ts](#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | API client of Listas Escolares. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 10 | Alta (10 consumidores) |
+| [school-list.service.ts](#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | API client of Listas Escolares. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 13 | Alta (13 consumidores) |
 | [site-visits.service.ts](#f-comercial-jhoel-app-src-app-core-services-site-visits-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Contador anónimo y agregado de visitas a la landing pública — el backend es la única fuente de verdad (nunca `localStorage`/`sessionStorage`/ cookies). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
 | [stats.service.ts](#f-comercial-jhoel-app-src-app-core-services-stats-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Credibility metrics shown right under the hero. | 2 internas; ext.: @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [supplier.service.ts](#f-comercial-jhoel-app-src-app-core-services-supplier-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `SupplierService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
@@ -2466,7 +2466,7 @@
 - **Responsabilidad:** Servicio: declara `CategoryService`, `BASE_URL` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [categories-page.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-categories-page-component-ts), [category-form-modal.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-components-category-form-modal-category-form-modal-component-ts), [inventory-page.component.ts](dashboard-inventory.md#f-comercial-jhoel-app-src-app-features-dashboard-inventory-inventory-page-component-ts), [purchases-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-purchases-purchases-report-page-component-ts), [sales-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-sales-sales-report-page-component-ts)
+- **Consumidores:** [categories-page.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-categories-page-component-ts), [category-form-modal.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-components-category-form-modal-category-form-modal-component-ts), [inventory-page.component.ts](dashboard-inventory.md#f-comercial-jhoel-app-src-app-features-dashboard-inventory-inventory-page-component-ts), [purchases-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-purchases-purchases-report-page-component-ts), [sales-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-sales-sales-report-page-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
 
 #### Clase `CategoryService` (L10–39)
 
@@ -2488,7 +2488,7 @@
 - **Propósito / descripción:** Active-only by default — what the product form's dropdown should offer.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `BASE_URL`
-- **Consumidores:** [categories-page.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-categories-page-component-ts)
+- **Consumidores:** [categories-page.component.ts](dashboard-categories.md#f-comercial-jhoel-app-src-app-features-dashboard-categories-categories-page-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
 
 ##### `CategoryService.getCategoryById`
 
@@ -2698,7 +2698,7 @@
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`).
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [keyboard-shortcuts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-keyboard-shortcuts-service-ts), [account-type-form-modal.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-components-account-type-form-modal-account-type-form-modal-component-ts), [account-receivable-form-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-account-receivable-form-modal-account-receivable-form-modal-component-ts), [asset-form-modal.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-components-asset-form-modal-asset-form-modal-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [business-form-modal.component.ts](dashboard-businesses.md#f-comercial-jhoel-app-src-app-features-dashboard-businesses-components-business-form-modal-business-form-modal-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts) y 66 más
+- **Consumidores:** [keyboard-shortcuts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-keyboard-shortcuts-service-ts), [account-type-form-modal.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-components-account-type-form-modal-account-type-form-modal-component-ts), [account-receivable-form-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-account-receivable-form-modal-account-receivable-form-modal-component-ts), [asset-form-modal.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-components-asset-form-modal-asset-form-modal-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [business-form-modal.component.ts](dashboard-businesses.md#f-comercial-jhoel-app-src-app-features-dashboard-businesses-components-business-form-modal-business-form-modal-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts) y 69 más
 
 **Interfaces, tipos y enums:**
 
@@ -4546,7 +4546,7 @@
 - **Responsabilidad:** Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [theme.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-theme-service-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-spec-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [payment-history-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-payment-history-modal-payment-history-modal-component-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [alert-settings-page.component.ts](dashboard-alert-settings.md#f-comercial-jhoel-app-src-app-features-dashboard-alert-settings-alert-settings-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts) y 104 más
+- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [theme.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-theme-service-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-spec-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [payment-history-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-payment-history-modal-payment-history-modal-component-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [alert-settings-page.component.ts](dashboard-alert-settings.md#f-comercial-jhoel-app-src-app-features-dashboard-alert-settings-alert-settings-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts) y 107 más
 
 #### Clase `NotificationService` (L9–39)
 
@@ -4593,7 +4593,7 @@
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.push`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
-- **Consumidores:** [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [inventory-page.component.ts](dashboard-inventory.md#f-comercial-jhoel-app-src-app-features-dashboard-inventory-inventory-page-component-ts), [dashboard-sidebar.component.ts](dashboard-sidebar.md#f-comercial-jhoel-app-src-app-features-dashboard-sidebar-dashboard-sidebar-component-ts)
+- **Consumidores:** [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [inventory-page.component.ts](dashboard-inventory.md#f-comercial-jhoel-app-src-app-features-dashboard-inventory-inventory-page-component-ts), [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts), [dashboard-sidebar.component.ts](dashboard-sidebar.md#f-comercial-jhoel-app-src-app-features-dashboard-sidebar-dashboard-sidebar-component-ts)
 
 ##### `NotificationService.dismiss`
 
@@ -5772,14 +5772,14 @@
 
 ### quotations.service.ts
 
-- **Ruta:** [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts) (`comercial-jhoel-app/src/app/core/services/quotations.service.ts`, 68 líneas)
+- **Ruta:** [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts) (`comercial-jhoel-app/src/app/core/services/quotations.service.ts`, 91 líneas)
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** A Cotización is explicitly NOT a sale — this service only ever calls `/quotations`, never `/sales` or `/inventory`.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [create-quotation-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-create-quotation-tab-create-quotation-tab-component-ts), [quotation-detail-modal.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-detail-modal-quotation-detail-modal-component-ts), [quotation-history-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-history-tab-quotation-history-tab-component-ts)
+- **Consumidores:** [create-quotation-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-create-quotation-tab-create-quotation-tab-component-ts), [quotation-detail-modal.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-detail-modal-quotation-detail-modal-component-ts), [quotation-history-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-history-tab-quotation-history-tab-component-ts), [quotation-sale-modal.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-sale-modal-quotation-sale-modal-component-ts), [quotations.spec.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-quotations-spec-ts)
 
-#### Clase `QuotationsService` (L18–67)
+#### Clase `QuotationsService` (L20–90)
 
 - **Decoradores:** `@Injectable({ providedIn: 'root' })`
 - **Propósito:** A Cotización is explicitly NOT a sale — this service only ever calls `/quotations`, never `/sales` or `/inventory`.
@@ -5787,15 +5787,18 @@
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `createQuotation` | método public | 22–24 | `input: CreateQuotationInput` | `Observable<Quotation>` |
-| `getQuotations` | método public | 26–52 | `query?: ListQuotationsQuery` | `Observable<PaginatedResponse<QuotationSummary>>` |
-| `getQuotationById` | método public | 54–56 | `id: string` | `Observable<Quotation>` |
-| `exportQuotationPdf` | método public | 58–60 | `id: string` | `Observable<Blob>` |
-| `voidQuotation` | método public | 62–66 | `id: string`, `reason: string` | `Observable<Quotation>` |
+| `createQuotation` | método public | 24–26 | `input: CreateQuotationInput` | `Observable<Quotation>` |
+| `getQuotations` | método public | 28–54 | `query?: ListQuotationsQuery` | `Observable<PaginatedResponse<QuotationSummary>>` |
+| `getQuotationById` | método public | 56–58 | `id: string` | `Observable<Quotation>` |
+| `exportQuotationPdf` | método public | 60–62 | `id: string` | `Observable<Blob>` |
+| `changeStatus` | método public | 65–69 | `id: string`, `action: QuotationStatusAction`, `reason?: string` | `Observable<Quotation>` |
+| `getSalePreview` | método public | 72–76 | `id: string` | `Observable<QuotationSalePreview>` |
+| `confirmSale` | método public | 79–83 | `id: string` | `Observable<{ saleId: string; quotation: Quotation }>` |
+| `voidQuotation` | método public | 85–89 | `id: string`, `reason: string` | `Observable<Quotation>` |
 
 ##### `QuotationsService.createQuotation`
 
-- **Firma:** `createQuotation(input: CreateQuotationInput): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L22) (L22–24)
+- **Firma:** `createQuotation(input: CreateQuotationInput): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L24) (L24–26)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post<ApiSuccessResponse<Quotation>>(BASE_URL, input).pipe`, `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `BASE_URL`
@@ -5803,7 +5806,7 @@
 
 ##### `QuotationsService.getQuotations`
 
-- **Firma:** `getQuotations(query?: ListQuotationsQuery): Observable<PaginatedResponse<QuotationSummary>>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L26) (L26–52)
+- **Firma:** `getQuotations(query?: ListQuotationsQuery): Observable<PaginatedResponse<QuotationSummary>>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L28) (L28–54)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `BASE_URL`
@@ -5811,7 +5814,7 @@
 
 ##### `QuotationsService.getQuotationById`
 
-- **Firma:** `getQuotationById(id: string): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L54) (L54–56)
+- **Firma:** `getQuotationById(id: string): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L56) (L56–58)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<Quotation>>('${BASE_URL}/${id}').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/${id}'`
@@ -5819,15 +5822,39 @@
 
 ##### `QuotationsService.exportQuotationPdf`
 
-- **Firma:** `exportQuotationPdf(id: string): Observable<Blob>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L58) (L58–60)
+- **Firma:** `exportQuotationPdf(id: string): Observable<Blob>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L60) (L60–62)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/${id}/pdf'`
 - **Consumidores:** [create-quotation-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-create-quotation-tab-create-quotation-tab-component-ts), [quotation-history-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-history-tab-quotation-history-tab-component-ts)
 
+##### `QuotationsService.changeStatus`
+
+- **Firma:** `changeStatus(id: string, action: QuotationStatusAction, reason?: string): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L65) (L65–69)
+- **Propósito / descripción:** Confirmar borrador / Aceptar / Rechazar (reason required to reject).
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/${id}/status'`
+- **Consumidores:** [quotation-history-tab.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-history-tab-quotation-history-tab-component-ts)
+
+##### `QuotationsService.getSalePreview`
+
+- **Firma:** `getSalePreview(id: string): Observable<QuotationSalePreview>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L72) (L72–76)
+- **Propósito / descripción:** Lines with the current Vitrina stock, shown before "Confirmar venta".
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/${id}/sale-preview'`
+- **Consumidores:** [quotation-sale-modal.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-sale-modal-quotation-sale-modal-component-ts)
+
+##### `QuotationsService.confirmSale`
+
+- **Firma:** `confirmSale(id: string): Observable<{ saleId: string; quotation: Quotation }>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L79) (L79–83)
+- **Propósito / descripción:** Creates the sale once through Ventas; a retry returns the same sale.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/${id}/confirm-sale'`
+- **Consumidores:** [quotation-sale-modal.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-sale-modal-quotation-sale-modal-component-ts)
+
 ##### `QuotationsService.voidQuotation`
 
-- **Firma:** `voidQuotation(id: string, reason: string): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L62) (L62–66)
+- **Firma:** `voidQuotation(id: string, reason: string): Observable<Quotation>` — [quotations.service.ts](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts#L85) (L85–89)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post<ApiSuccessResponse<Quotation>>('${BASE_URL}/${id}/void', { reason }).pipe`, `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/${id}/void'`
@@ -7116,14 +7143,14 @@
 
 ### school-list.service.ts
 
-- **Ruta:** [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts) (`comercial-jhoel-app/src/app/core/services/school-list.service.ts`, 179 líneas)
+- **Ruta:** [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts) (`comercial-jhoel-app/src/app/core/services/school-list.service.ts`, 259 líneas)
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** API client of Listas Escolares.
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-lists-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-edit-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-edit-page-component-ts)
+- **Consumidores:** [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotation-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-lists-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-edit-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-edit-page-component-ts)
 
-#### Clase `SchoolListService` (L40–178)
+#### Clase `SchoolListService` (L45–258)
 
 - **Decoradores:** `@Injectable({ providedIn: 'root' })`
 - **Propósito:** API client of Listas Escolares. Permissions come from the backend (`GET /school-lists/permissions`) so the UI shows exactly the actions the role may run — the backend and SQL still enforce them.
@@ -7132,29 +7159,39 @@
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `can` | método public | 48–50 | `permission: SchoolListPermission` | `boolean` |
-| `loadPermissions` | método public | 52–60 | — | `Observable<SchoolListPermission[]>` |
-| `getTemplates` | método public | 63–69 | `includeInactive?` | `Observable<SchoolTemplateSummary[]>` |
-| `getTemplate` | método public | 71–73 | `id: string` | `Observable<SchoolTemplate>` |
-| `saveTemplate` | método public | 75–80 | `id: string \| null`, `input: SaveSchoolTemplateInput` | `Observable<SchoolTemplate>` |
-| `setTemplateActive` | método public | 82–86 | `id: string`, `isActive: boolean` | `Observable<SchoolTemplate>` |
-| `duplicateTemplate` | método public | 88–92 | `id: string`, `name: string`, `grade?: string` | `Observable<SchoolTemplate>` |
-| `getQuotations` | método public | 95–99 | `filters: SchoolQuotationFilters` | `Observable<SchoolQuotationPage>` |
-| `getDashboard` | método public | 101–107 | `dateFrom?: string`, `dateTo?: string` | `Observable<SchoolDashboard>` |
-| `getQuotation` | método public | 109–111 | `id: string` | `Observable<SchoolQuotation>` |
-| `createQuotation` | método public | 113–115 | `input: CreateSchoolQuotationInput` | `Observable<SchoolQuotation>` |
-| `updateQuotation` | método public | 117–121 | `id: string`, `input: SchoolQuotationInput`, `version: number` | `Observable<SchoolQuotation>` |
-| `updateObservations` | método public | 123–130 | `id: string`, `observations: string`, `version: number` | `Observable<SchoolQuotation>` |
-| `changeStatus` | método public | 132–136 | `id: string`, `action: SchoolStatusAction`, `version: number` | `Observable<SchoolQuotation>` |
-| `cancelQuotation` | método public | 138–142 | `id: string`, `input: SchoolCancelInput` | `Observable<SchoolQuotation>` |
-| `registerPayment` | método public | 144–155 | `quotationId: string`, `input: SchoolPaymentInput`, `clientRequestId: string` | `Observable<{ paymentId: string; quotation: SchoolQuotation }>` |
-| `voidPayment` | método public | 157–168 | `paymentId: string`, `reason: string`, `clientRequestId: string` | `Observable<{ reversalId: string; quotation: SchoolQuotation }>` |
-| `quotationPdf` | método public | 171–173 | `id: string` | `Observable<Blob>` |
-| `receiptPdf` | método public | 175–177 | `paymentId: string` | `Observable<Blob>` |
+| `can` | método public | 53–55 | `permission: SchoolListPermission` | `boolean` |
+| `loadPermissions` | método public | 57–65 | — | `Observable<SchoolListPermission[]>` |
+| `getTemplates` | método public | 68–74 | `includeInactive?` | `Observable<SchoolTemplateSummary[]>` |
+| `getTemplate` | método public | 76–78 | `id: string` | `Observable<SchoolTemplate>` |
+| `saveTemplate` | método public | 80–85 | `id: string \| null`, `input: SaveSchoolTemplateInput` | `Observable<SchoolTemplate>` |
+| `setTemplateActive` | método public | 87–91 | `id: string`, `isActive: boolean` | `Observable<SchoolTemplate>` |
+| `duplicateTemplate` | método public | 93–97 | `id: string`, `name: string`, `grade?: string` | `Observable<SchoolTemplate>` |
+| `getQuotations` | método public | 100–104 | `filters: SchoolQuotationFilters` | `Observable<SchoolQuotationPage>` |
+| `getDashboard` | método public | 106–112 | `dateFrom?: string`, `dateTo?: string` | `Observable<SchoolDashboard>` |
+| `getQuotation` | método public | 114–116 | `id: string` | `Observable<SchoolQuotation>` |
+| `createQuotation` | método public | 118–120 | `input: CreateSchoolQuotationInput` | `Observable<SchoolQuotation>` |
+| `updateQuotation` | método public | 122–126 | `id: string`, `input: SchoolQuotationInput`, `version: number` | `Observable<SchoolQuotation>` |
+| `updateObservations` | método public | 128–135 | `id: string`, `observations: string`, `version: number` | `Observable<SchoolQuotation>` |
+| `changeStatus` | método public | 137–141 | `id: string`, `action: SchoolStatusAction`, `version: number` | `Observable<SchoolQuotation>` |
+| `cancelQuotation` | método public | 143–147 | `id: string`, `input: SchoolCancelInput` | `Observable<SchoolQuotation>` |
+| `registerPayment` | método public | 149–160 | `quotationId: string`, `input: SchoolPaymentInput`, `clientRequestId: string` | `Observable<{ paymentId: string; quotation: SchoolQuotation }>` |
+| `voidPayment` | método public | 162–173 | `paymentId: string`, `reason: string`, `clientRequestId: string` | `Observable<{ reversalId: string; quotation: SchoolQuotation }>` |
+| `supplyProducts` | método public | 176–180 | `filters: SupplyProductFilters` | `Observable<SupplyProductPage>` |
+| `supplyProductLists` | método public | 182–186 | `productId: string` | `Observable<SupplyProductList[]>` |
+| `supplyPurchases` | método public | 188–194 | `purchaseId?: string`, `page?`, `limit?` | `Observable<{ items: SupplyPurchase[]; total: number; page: number; limit: number }>` |
+| `supplySettings` | método public | 196–200 | — | `Observable<{ allocationMode: SupplyAllocationMode }>` |
+| `setSupplyMode` | método public | 202–206 | `allocationMode: SupplyAllocationMode` | `Observable<{ allocationMode: SupplyAllocationMode }>` |
+| `runFifo` | método public | 209–213 | `productId?: string` | `Observable<{ allocated: number }>` |
+| `allocatePurchase` | método public | 215–219 | `purchaseId: string` | `Observable<{ allocated: number }>` |
+| `allocateManual` | método public | 221–229 | `input: { quotationId: string; productId: string; quantity: number; purchaseId?: string; clientRequestId: string; }` | `Observable<SchoolQuotation>` |
+| `dispatch` | método public | 232–239 | `id: string`, `observations: string \| null`, `clientRequestId: string` | `Observable<SchoolQuotation>` |
+| `bodegaStock` | método public | 242–248 | `productIds: string[]` | `Observable<{ productId: string; quantity: number }[]>` |
+| `quotationPdf` | método public | 251–253 | `id: string` | `Observable<Blob>` |
+| `receiptPdf` | método public | 255–257 | `paymentId: string` | `Observable<Blob>` |
 
 ##### `SchoolListService.can`
 
-- **Firma:** `can(permission: SchoolListPermission): boolean` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L48) (L48–50)
+- **Firma:** `can(permission: SchoolListPermission): boolean` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L53) (L53–55)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.permissionSet().has`, `this.permissionSet`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -7162,7 +7199,7 @@
 
 ##### `SchoolListService.loadPermissions`
 
-- **Firma:** `loadPermissions(): Observable<SchoolListPermission[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L52) (L52–60)
+- **Firma:** `loadPermissions(): Observable<SchoolListPermission[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L57) (L57–65)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`, `tap`, `this.permissionSet.set`, `new Set`, `this.permissionsLoaded.set`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/permissions'`; Actualiza estado (signals): `this.permissionSet.set`, `this.permissionsLoaded.set`
@@ -7170,7 +7207,7 @@
 
 ##### `SchoolListService.getTemplates`
 
-- **Firma:** `getTemplates(includeInactive?): Observable<SchoolTemplateSummary[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L63) (L63–69)
+- **Firma:** `getTemplates(includeInactive?): Observable<SchoolTemplateSummary[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L68) (L68–74)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/templates'`
@@ -7178,7 +7215,7 @@
 
 ##### `SchoolListService.getTemplate`
 
-- **Firma:** `getTemplate(id: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L71) (L71–73)
+- **Firma:** `getTemplate(id: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L76) (L76–78)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<SchoolTemplate>>('${BASE_URL}/templates/${id}').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/templates/${id}'`
@@ -7186,7 +7223,7 @@
 
 ##### `SchoolListService.saveTemplate`
 
-- **Firma:** `saveTemplate(id: string \| null, input: SaveSchoolTemplateInput): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L75) (L75–80)
+- **Firma:** `saveTemplate(id: string \| null, input: SaveSchoolTemplateInput): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L80) (L80–85)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.put`, `this.http.post`, `request.pipe`, `map`
 - **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/templates/${id}'`, POST `'${BASE_URL}/templates'`
@@ -7194,7 +7231,7 @@
 
 ##### `SchoolListService.setTemplateActive`
 
-- **Firma:** `setTemplateActive(id: string, isActive: boolean): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L82) (L82–86)
+- **Firma:** `setTemplateActive(id: string, isActive: boolean): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L87) (L87–91)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.patch`, `map`
 - **Efectos secundarios:** HTTP: PATCH `'${BASE_URL}/templates/${id}/status'`
@@ -7202,7 +7239,7 @@
 
 ##### `SchoolListService.duplicateTemplate`
 
-- **Firma:** `duplicateTemplate(id: string, name: string, grade?: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L88) (L88–92)
+- **Firma:** `duplicateTemplate(id: string, name: string, grade?: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L93) (L93–97)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/templates/${id}/duplicate'`
@@ -7210,7 +7247,7 @@
 
 ##### `SchoolListService.getQuotations`
 
-- **Firma:** `getQuotations(filters: SchoolQuotationFilters): Observable<SchoolQuotationPage>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L95) (L95–99)
+- **Firma:** `getQuotations(filters: SchoolQuotationFilters): Observable<SchoolQuotationPage>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L100) (L100–104)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations'`
@@ -7218,7 +7255,7 @@
 
 ##### `SchoolListService.getDashboard`
 
-- **Firma:** `getDashboard(dateFrom?: string, dateTo?: string): Observable<SchoolDashboard>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L101) (L101–107)
+- **Firma:** `getDashboard(dateFrom?: string, dateTo?: string): Observable<SchoolDashboard>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L106) (L106–112)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/dashboard'`
@@ -7226,7 +7263,7 @@
 
 ##### `SchoolListService.getQuotation`
 
-- **Firma:** `getQuotation(id: string): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L109) (L109–111)
+- **Firma:** `getQuotation(id: string): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L114) (L114–116)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<SchoolQuotation>>('${BASE_URL}/quotations/${id}').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/${id}'`
@@ -7234,7 +7271,7 @@
 
 ##### `SchoolListService.createQuotation`
 
-- **Firma:** `createQuotation(input: CreateSchoolQuotationInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L113) (L113–115)
+- **Firma:** `createQuotation(input: CreateSchoolQuotationInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L118) (L118–120)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post<ApiSuccessResponse<SchoolQuotation>>('${BASE_URL}/quotations', input).pipe`, `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations'`
@@ -7242,7 +7279,7 @@
 
 ##### `SchoolListService.updateQuotation`
 
-- **Firma:** `updateQuotation(id: string, input: SchoolQuotationInput, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L117) (L117–121)
+- **Firma:** `updateQuotation(id: string, input: SchoolQuotationInput, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L122) (L122–126)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.put`, `map`
 - **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/quotations/${id}'`
@@ -7250,7 +7287,7 @@
 
 ##### `SchoolListService.updateObservations`
 
-- **Firma:** `updateObservations(id: string, observations: string, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L123) (L123–130)
+- **Firma:** `updateObservations(id: string, observations: string, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L128) (L128–135)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.patch`, `map`
 - **Efectos secundarios:** HTTP: PATCH `'${BASE_URL}/quotations/${id}/observations'`
@@ -7258,7 +7295,7 @@
 
 ##### `SchoolListService.changeStatus`
 
-- **Firma:** `changeStatus(id: string, action: SchoolStatusAction, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L132) (L132–136)
+- **Firma:** `changeStatus(id: string, action: SchoolStatusAction, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L137) (L137–141)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${id}/status'`
@@ -7266,7 +7303,7 @@
 
 ##### `SchoolListService.cancelQuotation`
 
-- **Firma:** `cancelQuotation(id: string, input: SchoolCancelInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L138) (L138–142)
+- **Firma:** `cancelQuotation(id: string, input: SchoolCancelInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L143) (L143–147)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${id}/cancel'`
@@ -7274,7 +7311,7 @@
 
 ##### `SchoolListService.registerPayment`
 
-- **Firma:** `registerPayment(quotationId: string, input: SchoolPaymentInput, clientRequestId: string): Observable<{ paymentId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L144) (L144–155)
+- **Firma:** `registerPayment(quotationId: string, input: SchoolPaymentInput, clientRequestId: string): Observable<{ paymentId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L149) (L149–160)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${quotationId}/payments'`
@@ -7282,15 +7319,95 @@
 
 ##### `SchoolListService.voidPayment`
 
-- **Firma:** `voidPayment(paymentId: string, reason: string, clientRequestId: string): Observable<{ reversalId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L157) (L157–168)
+- **Firma:** `voidPayment(paymentId: string, reason: string, clientRequestId: string): Observable<{ reversalId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L162) (L162–173)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/payments/${paymentId}/void'`
 - **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
 
+##### `SchoolListService.supplyProducts`
+
+- **Firma:** `supplyProducts(filters: SupplyProductFilters): Observable<SupplyProductPage>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L176) (L176–180)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/supply/products'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.supplyProductLists`
+
+- **Firma:** `supplyProductLists(productId: string): Observable<SupplyProductList[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L182) (L182–186)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/supply/products/${productId}/lists'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.supplyPurchases`
+
+- **Firma:** `supplyPurchases(purchaseId?: string, page?, limit?): Observable<{ items: SupplyPurchase[]; total: number; page: number; limit: number }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L188) (L188–194)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/supply/purchases'`
+- **Consumidores:** [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.supplySettings`
+
+- **Firma:** `supplySettings(): Observable<{ allocationMode: SupplyAllocationMode }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L196) (L196–200)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/supply/settings'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.setSupplyMode`
+
+- **Firma:** `setSupplyMode(allocationMode: SupplyAllocationMode): Observable<{ allocationMode: SupplyAllocationMode }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L202) (L202–206)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.put`, `map`
+- **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/supply/settings'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.runFifo`
+
+- **Firma:** `runFifo(productId?: string): Observable<{ allocated: number }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L209) (L209–213)
+- **Propósito / descripción:** FIFO with free Bodega units (one product, or all with pending lists).
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/supply/fifo'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.allocatePurchase`
+
+- **Firma:** `allocatePurchase(purchaseId: string): Observable<{ allocated: number }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L215) (L215–219)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/supply/purchases/${purchaseId}/allocate'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.allocateManual`
+
+- **Firma:** `allocateManual(input: { quotationId: string; productId: string; quantity: number; purchaseId?: string; clientRequestId: string; }): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L221) (L221–229)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/supply/allocations'`
+- **Consumidores:** [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
+
+##### `SchoolListService.dispatch`
+
+- **Firma:** `dispatch(id: string, observations: string \| null, clientRequestId: string): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L232) (L232–239)
+- **Propósito / descripción:** "Preparar y despachar lista" (= entrega).
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${id}/dispatch'`
+- **Consumidores:** [school-quotation-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts)
+
+##### `SchoolListService.bodegaStock`
+
+- **Firma:** `bodegaStock(productIds: string[]): Observable<{ productId: string; quantity: number }[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L242) (L242–248)
+- **Propósito / descripción:** Bodega stock of the given products (lists take their stock from Bodega).
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `productIds.join`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/stock'`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
 ##### `SchoolListService.quotationPdf`
 
-- **Firma:** `quotationPdf(id: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L171) (L171–173)
+- **Firma:** `quotationPdf(id: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L251) (L251–253)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/${id}/pdf'`
@@ -7298,16 +7415,16 @@
 
 ##### `SchoolListService.receiptPdf`
 
-- **Firma:** `receiptPdf(paymentId: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L175) (L175–177)
+- **Firma:** `receiptPdf(paymentId: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L255) (L255–257)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/payments/${paymentId}/receipt'`
 - **Consumidores:** [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
 
-#### Función `toParams` (L25–33)
+#### Función `toParams` (L30–38)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toParams(filters: object): HttpParams` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L25)
+- **Firma:** `toParams(filters: object): HttpParams` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L30)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `new HttpParams`, `Object.entries`, `params.set`, `String`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).

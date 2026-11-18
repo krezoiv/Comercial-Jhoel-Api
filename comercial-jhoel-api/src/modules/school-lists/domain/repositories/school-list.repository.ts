@@ -34,6 +34,18 @@ export type SchoolPaymentKind =
   'ANTICIPO' | 'ABONO' | 'DEVOLUCION' | 'ANULACION';
 export type SchoolLineSource = 'PLANTILLA' | 'INVENTARIO' | 'MANUAL';
 
+/** Supply state of a list (independent of its commercial status). */
+export const SCHOOL_SUPPLY_STATUSES = [
+  'PENDIENTE',
+  'PARCIAL',
+  'DISPONIBLE',
+  'DESPACHADA',
+  'NO_APLICA',
+] as const;
+export type SchoolSupplyStatus = (typeof SCHOOL_SUPPLY_STATUSES)[number];
+export type SupplyProductStatus = 'PENDIENTE' | 'PARCIAL' | 'ABASTECIDO';
+export type SupplyAllocationMode = 'FIFO_AUTO' | 'MANUAL';
+
 /** Red / yellow / green account status shown next to every quotation. */
 export type SchoolAccountStatus =
   'PENDIENTE' | 'PARCIAL' | 'PAGADA' | 'CERRADA';
@@ -75,6 +87,11 @@ export interface TemplateItemRow {
   observations: string | null;
   /** Current public price of the linked inventory product (null for free-text lines). */
   inventoryPrice: number | null;
+  /** SKU of the linked inventory product (null for free-text lines or a product without one). */
+  productSku: string | null;
+  /** Category of the linked inventory product, read from `products.category_id` (null for free-text lines). */
+  categoryId: string | null;
+  categoryName: string | null;
 }
 
 export interface TemplateSummaryRow {
@@ -143,10 +160,13 @@ export interface QuotationSummaryRow {
   templateId: string | null;
   templateName: string | null;
   total: number;
+  /** Applied anticipos (ANTICIPO payments that were not voided). */
+  advance: number;
   paid: number;
   balance: number;
   status: SchoolQuotationStatus;
   accountStatus: SchoolAccountStatus;
+  supplyStatus: SchoolSupplyStatus;
   version: number;
   createdAt: string;
   createdByUsername: string;
@@ -165,6 +185,11 @@ export interface QuotationItemRow {
   discount: number;
   subtotal: number;
   observations: string | null;
+  /** SKU of the linked inventory product (null for free-text lines or a product without one). */
+  productSku: string | null;
+  /** Category of the linked inventory product, read from `products.category_id` (null for free-text lines). */
+  categoryId: string | null;
+  categoryName: string | null;
 }
 
 export interface PaymentRow {
@@ -201,6 +226,136 @@ export interface HistoryRow {
   createdByUsername: string;
 }
 
+/** Inventory movement caused by the list (discount, adjustment or return in Bodega). */
+export interface ListInventoryMovementRow {
+  id: string;
+  productId: string;
+  productName: string;
+  movementType:
+    'SALIDA_LISTA_ESCOLAR' | 'ENTRADA_AJUSTE_LISTA' | 'ENTRADA_ANULACION_LISTA';
+  quantity: number;
+  reason: string | null;
+  createdAt: string;
+  username: string;
+}
+
+/** One inventory product of a list: committed, reserved (allocated), pending, delivered. */
+export interface SupplyLineRow {
+  productId: string;
+  productName: string;
+  requested: number;
+  allocated: number;
+  pending: number;
+  delivered: number;
+}
+
+export interface SupplyAllocationRow {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  sourceType: 'EXISTENCIA' | 'COMPRA' | 'TRASLADO' | 'DEVOLUCION';
+  mode: 'AUTO' | 'FIFO_MANUAL' | 'MANUAL';
+  status: 'ASIGNADA' | 'LIBERADA' | 'ENTREGADA';
+  purchaseId: string | null;
+  purchaseInvoice: string | null;
+  purchaseDate: string | null;
+  createdAt: string;
+  username: string;
+  releasedAt: string | null;
+  releaseReason: string | null;
+}
+
+export interface DispatchRow {
+  id: string;
+  dispatchedAt: string;
+  username: string;
+  observations: string | null;
+  items: {
+    productId: string | null;
+    productName: string;
+    requested: number;
+    supplied: number;
+    delivered: number;
+    inventoryControlled: boolean;
+  }[];
+}
+
+export interface QuotationSupplyRow {
+  status: SchoolSupplyStatus;
+  confirmedAt: string | null;
+  lines: SupplyLineRow[];
+  /** Free-text lines: outside inventory control, never block dispatch. */
+  uncontrolledLines: number;
+  allocations: SupplyAllocationRow[];
+  dispatch: DispatchRow | null;
+}
+
+export interface SupplyProductRow {
+  productId: string;
+  productName: string;
+  sku: string | null;
+  category: string;
+  bodega: number;
+  committed: number;
+  allocated: number;
+  pending: number;
+  freeUnits: number;
+  lists: number;
+  firstOrderAt: string | null;
+  lastOrderAt: string | null;
+  status: SupplyProductStatus;
+}
+
+export interface SupplySummary {
+  pendingProducts: number;
+  pendingUnits: number;
+  affectedLists: number;
+  suppliedProducts: number;
+  partialProducts: number;
+}
+
+export interface FindSupplyProductsOptions {
+  search?: string;
+  categoryId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  quotationNumber?: string;
+  status?: SupplyProductStatus;
+  page: number;
+  limit: number;
+}
+
+export interface SupplyProductListRow {
+  quotationId: string;
+  quotationNumber: string;
+  customerName: string;
+  grade: string;
+  confirmedAt: string | null;
+  committed: number;
+  allocated: number;
+  pending: number;
+  supplyStatus: SchoolSupplyStatus;
+}
+
+/** Units of a purchase handed to school lists. */
+export interface SupplyPurchaseRow {
+  purchaseId: string;
+  invoiceNumber: string | null;
+  purchaseDate: string;
+  productId: string;
+  productName: string;
+  purchased: number;
+  allocated: number;
+  lists: {
+    quotationId: string;
+    quotationNumber: string;
+    customerName: string;
+    quantity: number;
+    status: string;
+  }[];
+}
+
 export interface AccountSummary {
   total: number;
   advances: number;
@@ -226,10 +381,13 @@ export interface QuotationDetailRow extends QuotationSummaryRow {
   items: QuotationItemRow[];
   payments: PaymentRow[];
   history: HistoryRow[];
+  inventory: ListInventoryMovementRow[];
+  supply: QuotationSupplyRow;
   account: AccountSummary;
 }
 
 export interface FindQuotationsOptions {
+  supplyStatus?: SchoolSupplyStatus;
   search?: string;
   phone?: string;
   number?: string;
@@ -237,12 +395,29 @@ export interface FindQuotationsOptions {
   status?: SchoolQuotationStatus;
   dateFrom?: string;
   dateTo?: string;
+  /** Column to order by (whitelisted in the DTO); default: newest first. */
+  sortBy?: QuotationSortField;
+  sortDirection?: 'asc' | 'desc';
   page: number;
   limit: number;
 }
 
+/** Sortable columns of the quotation list. */
+export const QUOTATION_SORT_FIELDS = [
+  'number',
+  'customer',
+  'grade',
+  'date',
+  'total',
+  'balance',
+  'status',
+] as const;
+export type QuotationSortField = (typeof QUOTATION_SORT_FIELDS)[number];
+
 export interface DashboardRow {
   totalQuotations: number;
+  /** BORRADOR or COTIZADA: still waiting for the customer (no anticipo yet). */
+  awaitingQuotations: number;
   pendingQuotations: number;
   paidQuotations: number;
   totalQuoted: number;
@@ -335,4 +510,43 @@ export interface SchoolListRepository {
   findPayment(paymentId: string): Promise<PaymentRow | null>;
 
   dashboard(dateFrom: string, dateTo: string): Promise<DashboardRow>;
+
+  // ── Supply ──
+  supplyProducts(
+    options: FindSupplyProductsOptions,
+  ): Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }>;
+  supplyProductLists(productId: string): Promise<SupplyProductListRow[]>;
+  supplyPurchases(options: {
+    purchaseId?: string;
+    page: number;
+    limit: number;
+  }): Promise<Paginated<SupplyPurchaseRow>>;
+  supplyMode(): Promise<SupplyAllocationMode>;
+  setSupplyMode(
+    mode: SupplyAllocationMode,
+    userId: string,
+  ): Promise<SupplyAllocationMode>;
+  runFifo(productId: string | null, userId: string): Promise<number>;
+  allocatePurchase(purchaseId: string, userId: string): Promise<number>;
+  allocateManual(
+    input: {
+      quotationId: string;
+      productId: string;
+      quantity: number;
+      purchaseId: string | null;
+    },
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<string>;
+  dispatch(
+    quotationId: string,
+    observations: string | null,
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<string>;
+
+  /** Current Bodega stock of the given products (where lists take their stock from). */
+  bodegaStock(
+    productIds: string[],
+  ): Promise<{ productId: string; quantity: number }[]>;
 }

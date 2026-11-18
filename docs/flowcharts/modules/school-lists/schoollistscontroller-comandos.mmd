@@ -1,0 +1,110 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: Mapa de SchoolListsController (comandos)
+%% @modulo: school-lists (school-lists)
+%% @representa: Relación real entre archivos: componentes y servicios Angular que llaman a SchoolListsController, sus 16 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+%% @inicio: Componentes Angular (izquierda) o cualquier cliente HTTP
+%% @archivos: comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts ; comercial-jhoel-app/src/app/core/services/school-list.service.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-templates/school-templates.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-payment-modal/school-payment-modal.component.ts ; comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts ; comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts
+%% @decisiones: Ver los flujos de decisiones de cada comando en business-processes/school-lists/
+%% @datos: sin tablas detectadas
+%% @fin: Las flechas terminan en las tablas de PostgreSQL
+%% @errores: Los errores siguen el patrón de 07-error-handling.mmd
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["SchoolListService<br/><small>app/core/services/school-list.service.ts</small>"]
+  n3["SchoolSupplyComponent<br/><small>app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts</small>"]
+  n4["SchoolTemplatesComponent<br/><small>app/features/dashboard/school-lists/components/school-templates/school-templates.component.ts</small>"]
+  n5["SchoolQuotationEditorComponent<br/><small>app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts</small>"]
+  n6["SchoolQuotationDetailPageComponent<br/><small>app/features/dashboard/school-lists/school-quotation-detail-page.component.ts</small>"]
+  n7["SchoolQuotationsListComponent<br/><small>app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts</small>"]
+  n8["SchoolQuotationSupplyComponent<br/><small>app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts</small>"]
+  n9["SchoolPaymentModalComponent<br/><small>app/features/dashboard/school-lists/components/school-payment-modal/school-payment-modal.component.ts</small>"]
+  end
+  subgraph s10["SchoolListsController (api/school-lists/presentation/controllers/school-lists.controller.ts)"]
+  n11["POST /api/school-lists/supply/purchases/:purchaseId/allocate<br/><small>allocatePurchaseUnits()</small>"]
+  n12["PUT /api/school-lists/supply/settings<br/><small>supplySettingsPut()</small>"]
+  n13["POST /api/school-lists/supply/fifo<br/><small>fifo()</small>"]
+  n14["POST /api/school-lists/supply/allocations<br/><small>allocate()</small>"]
+  n15["POST /api/school-lists/templates<br/><small>createTemplate()</small>"]
+  n16["PUT /api/school-lists/templates/:id<br/><small>replaceTemplate()</small>"]
+  n17["PATCH /api/school-lists/templates/:id/status<br/><small>templateStatus()</small>"]
+  n18["POST /api/school-lists/templates/:id/duplicate<br/><small>duplicate()</small>"]
+  n19["POST /api/school-lists/quotations<br/><small>create()</small>"]
+  n20["PUT /api/school-lists/quotations/:id<br/><small>update()</small>"]
+  n21["PATCH /api/school-lists/quotations/:id/observations<br/><small>observations()</small>"]
+  n22["POST /api/school-lists/quotations/:id/status<br/><small>status()</small>"]
+  n23["POST /api/school-lists/quotations/:id/dispatch<br/><small>dispatch()</small>"]
+  n24["POST /api/school-lists/quotations/:id/cancel<br/><small>cancel()</small>"]
+  n25["POST /api/school-lists/quotations/:id/payments<br/><small>pay()</small>"]
+  n26["POST /api/school-lists/payments/:paymentId/void<br/><small>void()</small>"]
+  end
+  subgraph s27["Aplicación"]
+  n28["AllocateSupplyPurchaseUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n29["SetSupplySettingsUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n30["RunSupplyFifoUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n31["AllocateSupplyManualUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n32["SaveSchoolTemplateUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n33["SetSchoolTemplateActiveUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n34["DuplicateSchoolTemplateUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n35["CreateSchoolQuotationUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n36["UpdateSchoolQuotationUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n37["UpdateSchoolQuotationObservationsUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n38["ChangeSchoolQuotationStatusUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n39["DispatchSchoolQuotationUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n40["CancelSchoolQuotationUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n41["RegisterSchoolPaymentUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n42["VoidSchoolPaymentUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  end
+  subgraph s43["Dominio · Infraestructura · PostgreSQL"]
+  end
+  n3 -->|allocatePurchase→allocatePurchase, toggleMode→setSupplyMode, fifo→runFifo …| n2
+  n4 -->|saveDraft→saveTemplate, toggleActive→setTemplateActive, duplicate→duplicateTemplate| n2
+  n5 -->|save→createQuotation, save→updateQuotation| n2
+  n6 -->|saveNotes→updateObservations, runAction→changeStatus, onReason→cancelQuotation …| n2
+  n7 -->|finish→changeStatus| n2
+  n8 -->|confirm→dispatch| n2
+  n9 -->|save→registerPayment| n2
+  n2 -->|allocatePurchase| n11
+  n2 -->|setSupplyMode| n12
+  n2 -->|runFifo| n13
+  n2 -->|allocateManual| n14
+  n2 -->|saveTemplate| n15
+  n2 -->|saveTemplate| n16
+  n2 -->|setTemplateActive| n17
+  n2 -->|duplicateTemplate| n18
+  n2 -->|createQuotation| n19
+  n2 -->|updateQuotation| n20
+  n2 -->|updateObservations| n21
+  n2 -->|changeStatus| n22
+  n2 -->|dispatch| n23
+  n2 -->|cancelQuotation| n24
+  n2 -->|registerPayment| n25
+  n2 -->|voidPayment| n26
+  n11 --> n28
+  n12 --> n29
+  n13 --> n30
+  n14 --> n31
+  n15 --> n32
+  n16 --> n32
+  n17 --> n33
+  n18 --> n34
+  n19 --> n35
+  n20 --> n36
+  n21 --> n37
+  n22 --> n38
+  n23 --> n39
+  n24 --> n40
+  n25 --> n41
+  n26 --> n42
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9 fe
+  class n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26 api
+  class n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38,n39,n40,n41,n42 app

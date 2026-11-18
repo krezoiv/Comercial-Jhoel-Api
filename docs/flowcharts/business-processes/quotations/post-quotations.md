@@ -22,41 +22,50 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["CreateQuotationUseCase.execute<br/><small>api/quotations/application/use-cases/create-quotation.use-case.ts</small>"]
-  n17{"¿!input.items #124;#124; input.items.length === 0?<br/><small>L47</small>"}
+  n17{"¿!input.items #124;#124; input.items.length === 0?<br/><small>L54</small>"}
   n18(["QuotationEmptyError()"])
-  n19{"¿!client #124;#124; !client.isActive?<br/><small>L52</small>"}
+  n19{"¿!client #124;#124; !client.isActive?<br/><small>L61</small>"}
   n20(["InvalidClientError()"])
-  n21{"¿input.expirationDate #lt; todayIsoDate()?<br/><small>L56</small>"}
-  n22(["InvalidExpirationDateError()"])
-  n23{"¿!Number.isInteger(item.quantity) #124;#124; item.quantity #lt;= 0?<br/><small>L61</small>"}
-  n24(["InvalidQuotationQuantityError(item.productId)"])
-  n25{"¿item.discount != null #amp;#amp; item.discount #lt; 0?<br/><small>L64</small>"}
-  n26(["InvalidQuotationDiscountError(item.productId)"])
+  n21{"¿name.length #lt; 3 #124;#124; name.length #gt; 150?<br/><small>L67</small>"}
+  n22(["quotationRuleError('QUOTATION_INVALID_CUSTOMER_NAME')"])
+  n23{"¿!PHONE.test(phone) #124;#124; phone.replace(/\D/g, '').length #lt; 8?<br/><small>L70</small>"}
+  n24(["quotationRuleError('QUOTATION_INVALID_PHONE')"])
+  n25{"¿input.expirationDate #lt; todayIsoDate()?<br/><small>L75</small>"}
+  n26(["InvalidExpirationDateError()"])
+  n27{"¿!Number.isInteger(item.quantity) #124;#124; item.quantity #lt;= 0?<br/><small>L80</small>"}
+  n28(["InvalidQuotationQuantityError(item.productId)"])
+  n29{"¿item.discount != null #amp;#amp; item.discount #lt; 0?<br/><small>L83</small>"}
+  n30(["InvalidQuotationDiscountError(item.productId)"])
   end
-  n27["Puerto ClientRepository<br/><small>findById</small>"]
-  subgraph s28["Dominio → Infraestructura"]
-  n29["Puerto QuotationRepository.createQuotation<br/>@Inject(QUOTATION_REPOSITORY)"]
-  n30["TypeOrmQuotationRepository<br/><small>api/quotations/infrastructure/persistence/typeorm-quotation.repository.ts</small>"]
-  subgraph s31["PostgreSQL — función create_quotation"]
-  n32[["SELECT create_quotation(…)<br/><small>createQuotation — una transacción</small>"]]
-  n33{"¿p_items IS NULL OR jsonb_array_length(p_items) = 0?"}
-  n34(["RAISE QUOTATION_EMPTY<br/>(rollback)"])
-  n35{"¿NOT FOUND?"}
-  n36(["RAISE CLIENT_NOT_FOUND<br/>(rollback)"])
-  n37{"¿p_expiration_date #lt; CURRENT_DATE?"}
-  n38(["RAISE INVALID_EXPIRATION_DATE<br/>(rollback)"])
-  n39{"¿v_quantity IS NULL OR v_quantity #lt;= 0?"}
-  n40(["RAISE INVALID_QUANTITY<br/>(rollback)"])
-  n41{"¿v_discount #lt; 0?"}
-  n42(["RAISE INVALID_DISCOUNT<br/>(rollback)"])
-  n43{"¿NOT FOUND?"}
-  n44(["RAISE PRODUCT_NOT_FOUND<br/>(rollback)"])
-  n45{"¿NOT v_product.is_active?"}
-  n46(["RAISE PRODUCT_INACTIVE<br/>(rollback)"])
-  n47[("Escribe:<br/>quotation_details<br/>quotations")]
+  n31["Puerto ClientRepository<br/><small>findById</small>"]
+  subgraph s32["Dominio → Infraestructura"]
+  n33["Puerto QuotationRepository.createQuotation<br/>@Inject(QUOTATION_REPOSITORY)"]
+  n34["TypeOrmQuotationRepository<br/><small>api/quotations/infrastructure/persistence/typeorm-quotation.repository.ts</small>"]
+  subgraph s35["PostgreSQL — función create_quotation"]
+  n36[["SELECT create_quotation(…)<br/><small>createQuotation — una transacción</small>"]]
+  n37{"¿p_items IS NULL OR jsonb_array_length(p_items) = 0?"}
+  n38(["RAISE QUOTATION_EMPTY<br/>(rollback)"])
+  n39{"¿v_name IS NULL OR length(v_name) #lt; 3 OR length(v_name) #gt; 150?"}
+  n40(["RAISE QUOTATION_INVALID_CUSTOMER_NAME<br/>(rollback)"])
+  n41{"¿v_phone IS NULL OR v_phone !~ '^[+0-9 ()-]{8,20}$' OR length(regexp_replace(v_phone, '[^0-9]', '', 'g')) #lt; 8?"}
+  n42(["RAISE QUOTATION_INVALID_PHONE<br/>(rollback)"])
+  n43{"¿p_expiration_date #lt; (now() AT TIME ZONE 'America/Guatemala')::DATE?"}
+  n44(["RAISE INVALID_EXPIRATION_DATE<br/>(rollback)"])
+  n45{"¿v_quantity IS NULL OR v_quantity #lt;= 0?"}
+  n46(["RAISE INVALID_QUANTITY<br/>(rollback)"])
+  n47{"¿v_discount #lt; 0?"}
+  n48(["RAISE INVALID_DISCOUNT<br/>(rollback)"])
+  n49{"¿NOT FOUND?"}
+  n50(["RAISE PRODUCT_NOT_FOUND<br/>(rollback)"])
+  n51{"¿NOT v_product.is_active?"}
+  n52(["RAISE PRODUCT_INACTIVE<br/>(rollback)"])
+  n53{"¿v_discount #gt; v_line_subtotal?"}
+  n54(["RAISE INVALID_DISCOUNT<br/>(rollback)"])
+  n55["Otros RAISE de create_quotation (condición no extraída):<br/>CLIENT_NOT_FOUND"]
+  n56[("Escribe:<br/>quotation_details<br/>quotations")]
   end
   end
-  n48(["Fin: la interfaz se actualiza<br/>this.clientError.set<br/>this.notificationService.error<br/>this.dateError.set<br/>this.isSaving.set<br/>this.notificationService.success"])
+  n57(["Fin: la interfaz se actualiza<br/>this.clientError.set<br/>this.notificationService.error<br/>this.dateError.set<br/>this.isSaving.set<br/>this.notificationService.success"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5
@@ -84,17 +93,17 @@ flowchart TD
   n23 -->|no| n25
   n25 -->|sí| n26
   n26 --> n2
-  n16 -.->|consulta| n27
-  n25 -->|no| n29
-  n29 -->|implementa| n30
-  n30 -->|createQuotation| n32
-  n32 --> n33
-  n33 -->|sí| n34
-  n34 --> n2
-  n33 -->|no| n35
-  n35 -->|sí| n36
-  n36 --> n2
-  n35 -->|no| n37
+  n25 -->|no| n27
+  n27 -->|sí| n28
+  n28 --> n2
+  n27 -->|no| n29
+  n29 -->|sí| n30
+  n30 --> n2
+  n16 -.->|consulta| n31
+  n29 -->|no| n33
+  n33 -->|implementa| n34
+  n34 -->|createQuotation| n36
+  n36 --> n37
   n37 -->|sí| n38
   n38 --> n2
   n37 -->|no| n39
@@ -110,8 +119,22 @@ flowchart TD
   n45 -->|sí| n46
   n46 --> n2
   n45 -->|no| n47
-  n47 -->|COMMIT| n8
-  n8 --> n48
+  n47 -->|sí| n48
+  n48 --> n2
+  n47 -->|no| n49
+  n49 -->|sí| n50
+  n50 --> n2
+  n49 -->|no| n51
+  n51 -->|sí| n52
+  n52 --> n2
+  n51 -->|no| n53
+  n53 -->|sí| n54
+  n54 --> n2
+  n36 -.->|también puede lanzar| n55
+  n55 --> n2
+  n53 -->|no| n56
+  n56 -->|COMMIT| n8
+  n8 --> n57
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -123,15 +146,15 @@ flowchart TD
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
   class n1 start
-  class n2,n3,n11,n13,n18,n20,n22,n24,n26,n34,n36,n38,n40,n42,n44,n46 err
+  class n2,n3,n11,n13,n18,n20,n22,n24,n26,n28,n30,n38,n40,n42,n44,n46,n48,n50,n52,n54,n55 err
   class n5,n6,n7 fe
-  class n8,n48 ok
-  class n10,n12,n17,n19,n21,n23,n25,n33,n35,n37,n39,n41,n43,n45 dec
+  class n8,n57 ok
+  class n10,n12,n17,n19,n21,n23,n25,n27,n29,n37,n39,n41,n43,n45,n47,n49,n51,n53 dec
   class n14 api
   class n16 app
-  class n27,n29 dom
-  class n30 infra
-  class n32,n47 db
+  class n31,n33 dom
+  class n34 infra
+  class n36,n56 db
 ```
 
 ## Explicación
@@ -140,7 +163,7 @@ flowchart TD
 2. **¿Dónde comienza?** CreateQuotationTabComponent.saveQuotation (comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts)
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts`](../../../../comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts), [`comercial-jhoel-app/src/app/core/services/quotations.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/clients/domain/repositories/client.repository.ts`](../../../../comercial-jhoel-api/src/modules/clients/domain/repositories/client.repository.ts), [`comercial-jhoel-api/src/modules/quotations/domain/repositories/quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/domain/repositories/quotation.repository.ts), [`comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
-5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO CreateQuotationRequestDto | !input.items || input.items.length === 0 | !client || !client.isActive | input.expirationDate < todayIsoDate() | !Number.isInteger(item.quantity) || item.quantity <= 0 | item.discount != null && item.discount < 0 | SQL create_quotation: p_items IS NULL OR jsonb_array_length(p_items) = 0 | SQL create_quotation: NOT FOUND | SQL create_quotation: p_expiration_date < CURRENT_DATE | SQL create_quotation: v_quantity IS NULL OR v_quantity <= 0 | SQL create_quotation: v_discount < 0 | SQL create_quotation: NOT FOUND | SQL create_quotation: NOT v_product.is_active
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO CreateQuotationRequestDto | !input.items || input.items.length === 0 | !client || !client.isActive | name.length < 3 || name.length > 150 | !PHONE.test(phone) || phone.replace(/\D/g, '').length < 8 | input.expirationDate < todayIsoDate() | !Number.isInteger(item.quantity) || item.quantity <= 0 | item.discount != null && item.discount < 0 | SQL create_quotation: p_items IS NULL OR jsonb_array_length(p_items) = 0 | SQL create_quotation: v_name IS NULL OR length(v_name) < 3 OR length(v_name) > 150 | SQL create_quotation: v_phone IS NULL OR v_phone !~ '^[+0-9 ()-]{8,20}$' OR length(regexp_replace(v_phone, '[^0-9]', '', 'g')) < 8 | SQL create_quotation: p_expiration_date < (now() AT TIME ZONE 'America/Guatemala')::DATE | SQL create_quotation: v_quantity IS NULL OR v_quantity <= 0
 6. **¿Dónde se almacenan los datos?** create_quotation(), quotation_details, quotations
 7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
 8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción

@@ -26,7 +26,7 @@ flowchart TD
   n18{"¿!Number.isFinite(amount) #124;#124; amount #lt;= 0 #124;#124; Math.round(amount * 100) !== Number((amount * 100).toFixed(6))?<br/><small>L58</small>"}
   n19(["schoolListError('SCHOOL_INVALID_AMOUNT')"])
   end
-  n20(["Fin: la interfaz se actualiza<br/>this.touched.set<br/>this.saving.set<br/>this.error.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n20(["Fin: la interfaz se actualiza<br/>this.touched.set<br/>this.saving.set<br/>this.error.set"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5

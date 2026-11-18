@@ -7,7 +7,7 @@
         <p class="hero__eyebrow">Cotización de lista escolar</p>
         <h1>{{ q.quotationNumber }}</h1>
         <div class="hero__badges">
-          <app-badge [tone]="statusTone[q.status]">{{ statusLabel[q.status] }}</app-badge>
+          <span [class]="'status-pill status-pill--' + statusColor[q.status]">{{ statusLabel[q.status] }}</span>
           @if (accountLabel[q.accountStatus] !== statusLabel[q.status] && q.status !== 'CANCELADA') {
             <app-badge [tone]="accountTone[q.accountStatus]">{{ accountLabel[q.accountStatus] }}</app-badge>
           }
@@ -31,7 +31,7 @@
           <app-button variant="ghost" size="sm" [disabled]="documents.busy() === q.id" (click)="pdf('print')"><app-icon name="printer" [size]="15" /> Imprimir</app-button>
         }
         @if (canCancel()) {
-          <app-button variant="danger" size="sm" (click)="startCancel()"><app-icon name="x-circle" [size]="15" /> Cancelar</app-button>
+          <app-button variant="danger" size="sm" (click)="startCancel()"><app-icon name="x-circle" [size]="15" /> Anular lista</app-button>
         }
       </div>
     </header>
@@ -46,6 +46,7 @@
 
     <div class="tabs" role="tablist">
       <button type="button" role="tab" [class.tabs__on]="view() === 'detalle'" [attr.aria-selected]="view() === 'detalle'" (click)="setView('detalle')"><app-icon name="layers" [size]="15" /> Detalle</button>
+      <button type="button" role="tab" [class.tabs__on]="view() === 'abastecimiento'" [attr.aria-selected]="view() === 'abastecimiento'" (click)="setView('abastecimiento')"><app-icon name="package" [size]="15" /> Abastecimiento</button>
       <button type="button" role="tab" [class.tabs__on]="view() === 'cuenta'" [attr.aria-selected]="view() === 'cuenta'" (click)="setView('cuenta')"><app-icon name="receipt" [size]="15" /> Estado de cuenta ({{ q.payments.length }})</button>
       <button type="button" role="tab" [class.tabs__on]="view() === 'historial'" [attr.aria-selected]="view() === 'historial'" (click)="setView('historial')"><app-icon name="clock" [size]="15" /> Historial</button>
     </div>
@@ -92,9 +93,18 @@
 
         <section class="panel">
           <h2 class="panel__title"><app-icon name="book-open" [size]="18" /> Productos de la lista</h2>
+          <p class="panel__hint">
+            @if (heldUnits() > 0) {
+              Esta lista tiene descontadas {{ heldUnits() }} unidad(es) de Bodega.
+            } @else if (q.status === 'BORRADOR') {
+              Borrador: aún no descuenta inventario.
+            } @else {
+              No tiene inventario descontado en este momento.
+            }
+          </p>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Producto</th><th>Origen</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Descuento</th><th class="num">Subtotal</th></tr></thead>
+              <thead><tr><th>Producto</th><th>SKU</th><th>Categoría</th><th>Origen</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Descuento</th><th class="num">Subtotal</th>@if (editable()) { <th aria-label="Acciones"></th> }</tr></thead>
               <tbody>
                 @for (i of q.items; track i.id) {
                   <tr>
@@ -102,26 +112,67 @@
                       {{ i.productName }}
                       @if (i.description || i.observations) { <div class="muted">{{ i.description }}{{ i.description && i.observations ? ' · ' : '' }}{{ i.observations }}</div> }
                     </td>
+                    <td><span class="muted">{{ i.productSku || '—' }}</span></td>
+                    <td>
+                      @if (i.categoryName) {
+                        <span class="cat-badge" [title]="i.categoryName"><app-icon name="tag" [size]="12" /> {{ i.categoryName }}</span>
+                      } @else {
+                        <span class="cat-badge cat-badge--none">Sin categoría</span>
+                      }
+                    </td>
                     <td><span class="muted">{{ sourceLabel[i.source] }}</span></td>
                     <td class="num">{{ i.quantity }}</td>
                     <td class="num">{{ formatCurrency(i.unitPrice) }}</td>
                     <td class="num">{{ i.discount ? formatCurrency(i.discount) : '—' }}</td>
                     <td class="num">{{ formatCurrency(i.subtotal) }}</td>
+                    @if (editable()) {
+                      <td>
+                        <div class="row-actions">
+                          <button type="button" class="icon-btn" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="swapItem(i.id)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                          <button type="button" class="icon-btn" title="Modificar cantidad, precio u observación" aria-label="Modificar línea" (click)="edit()"><app-icon name="edit-2" [size]="15" /></button>
+                        </div>
+                      </td>
+                    }
                   </tr>
                 }
               </tbody>
               <tfoot>
                 @if (q.discount > 0) {
-                  <tr><td colspan="5">Subtotal</td><td class="num">{{ formatCurrency(q.subtotal) }}</td></tr>
-                  <tr><td colspan="5">Descuentos</td><td class="num">−{{ formatCurrency(q.discount) }}</td></tr>
+                  <tr><td colspan="7">Subtotal</td><td class="num">{{ formatCurrency(q.subtotal) }}</td>@if (editable()) { <td></td> }</tr>
+                  <tr><td colspan="7">Descuentos</td><td class="num">−{{ formatCurrency(q.discount) }}</td>@if (editable()) { <td></td> }</tr>
                 }
-                <tr><td colspan="5">Total</td><td class="num">{{ formatCurrency(q.total) }}</td></tr>
+                <tr><td colspan="7">Total</td><td class="num">{{ formatCurrency(q.total) }}</td>@if (editable()) { <td></td> }</tr>
               </tfoot>
             </table>
           </div>
         </section>
-      }
 
+        <section class="panel">
+          <h2 class="panel__title"><app-icon name="package" [size]="18" /> Movimientos de inventario (Bodega)</h2>
+          @if (q.inventory.length) {
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>Fecha</th><th>Producto</th><th>Movimiento</th><th class="num">Salida</th><th class="num">Entrada</th><th>Usuario</th><th>Motivo</th></tr></thead>
+                <tbody>
+                  @for (m of q.inventory; track m.id) {
+                    <tr>
+                      <td>{{ formatDateTime(m.createdAt) }}</td>
+                      <td>{{ m.productName }}</td>
+                      <td>{{ movementLabel[m.movementType] }}</td>
+                      <td class="num money-out">{{ m.movementType === 'SALIDA_LISTA_ESCOLAR' ? m.quantity : '' }}</td>
+                      <td class="num money-in">{{ m.movementType !== 'SALIDA_LISTA_ESCOLAR' ? m.quantity : '' }}</td>
+                      <td>{{ m.username }}</td>
+                      <td>{{ m.reason || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="state">Sin movimientos de inventario: la lista no tiene productos del inventario{{ q.status === 'BORRADOR' ? ' o sigue en borrador' : '' }}.</p>
+          }
+        </section>
+      }
       @case ('cuenta') {
         <section class="panel">
           <div class="panel__head">
@@ -169,6 +220,10 @@
         </section>
       }
 
+      @case ('abastecimiento') {
+        <app-school-quotation-supply [quotation]="q" [openDispatch]="openDispatch()" (dispatched)="apply($event); openDispatch.set(false)" />
+      }
+
       @case ('historial') {
         <section class="panel">
           <h2 class="panel__title"><app-icon name="clock" [size]="18" /> Historial de modificaciones</h2>
@@ -194,11 +249,11 @@
     <app-school-payment-modal [quotation]="paying() ? q : null" (closed)="paying.set(false)" (paid)="onPaid($event)" />
     <app-school-reason-modal
       [open]="!!voiding() || cancelling()"
-      [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : 'Cancelar cotización ' + q.quotationNumber"
+      [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : 'Anular lista ' + q.quotationNumber"
       [message]="voiding()
         ? 'Se registrará una anulación por ' + formatCurrency(voiding()!.amount) + '; el pago original se conserva como anulado y el saldo vuelve a quedar pendiente.'
-        : 'La cotización quedará cancelada y conservará todo su historial.' + (q.account.paid > 0 ? ' Se registrará la devolución de lo pagado.' : '')"
-      [confirmText]="voiding() ? 'Anular pago' : 'Cancelar cotización'"
+        : 'La lista quedará anulada y conservará todo su historial.' + (q.account.paid > 0 ? ' Se registrará la devolución de lo pagado.' : '') + (heldUnits() > 0 ? ' Se devolverán a Bodega ' + heldUnits() + ' unidad(es) descontadas por esta lista.' : '') + (reservedUnits() > 0 ? ' Se liberarán ' + reservedUnits() + ' unidad(es) reservadas, que quedan disponibles para otras listas.' : '')"
+      [confirmText]="voiding() ? 'Anular pago' : 'Anular lista'"
       [refundAmount]="voiding() ? 0 : q.account.paid"
       [busy]="reasonBusy()"
       [error]="reasonError()"

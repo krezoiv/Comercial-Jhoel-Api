@@ -37,8 +37,8 @@ erDiagram
 
 - **Entidad TypeORM:** [ProductOrmEntity](../reference/backend/products.md#f-comercial-jhoel-api-src-modules-products-infrastructure-persistence-product-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [product.orm-entity.ts](../reference/backend/products.md#f-comercial-jhoel-api-src-modules-products-infrastructure-persistence-product-orm-entity-ts), [typeorm-product.repository.ts](../reference/backend/products.md#f-comercial-jhoel-api-src-modules-products-infrastructure-persistence-typeorm-product-repository-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [typeorm-unit-of-measure.repository.ts](../reference/backend/units-of-measure.md#f-comercial-jhoel-api-src-modules-units-of-measure-infrastructure-persistence-typeorm-unit-of-measure-repository-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts)
-- **Funciones SQL que la escriben:** `adjust_sale_item`, `cancel_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `void_purchase`, `void_sale`
+- **Archivos TypeScript que la usan:** [product.orm-entity.ts](../reference/backend/products.md#f-comercial-jhoel-api-src-modules-products-infrastructure-persistence-product-orm-entity-ts), [typeorm-product.repository.ts](../reference/backend/products.md#f-comercial-jhoel-api-src-modules-products-infrastructure-persistence-typeorm-product-repository-ts), [typeorm-quotation.repository.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-typeorm-quotation-repository-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [typeorm-unit-of-measure.repository.ts](../reference/backend/units-of-measure.md#f-comercial-jhoel-api-src-modules-units-of-measure-infrastructure-persistence-typeorm-unit-of-measure-repository-ts), [quotations-sale.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
+- **Funciones SQL que la escriben:** `adjust_sale_item`, `cancel_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `school_quotation_sync_inventory`, `void_purchase`, `void_sale`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -58,7 +58,6 @@ erDiagram
 
 | Restricción | Tipo | Definición |
 |---|---|---|
-| `CHK_products_stock_non_negative` | CHECK | CHECK ((stock &gt;= 0)) |
 | `FK_products_business` | FK | FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE RESTRICT |
 | `FK_products_category` | FK | FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT |
 | `FK_products_unit_of_measure` | FK | FOREIGN KEY (unit_of_measure_id) REFERENCES units_of_measure(id) ON DELETE RESTRICT |
@@ -75,4 +74,8 @@ erDiagram
 - `PK_0806c755e0aca124e67c0cf6d7d`: CREATE UNIQUE INDEX "PK_0806c755e0aca124e67c0cf6d7d" ON public.products USING btree (id)
 - `UQ_products_name_active`: CREATE UNIQUE INDEX "UQ_products_name_active" ON public.products USING btree (name) WHERE (is_active = true)
 - `UQ_products_sku_active`: CREATE UNIQUE INDEX "UQ_products_sku_active" ON public.products USING btree (sku) WHERE (is_active = true)
+
+**Triggers:**
+
+- `trg_products_stock_non_negative`: CREATE TRIGGER trg_products_stock_non_negative BEFORE INSERT OR UPDATE OF stock ON public.products FOR EACH ROW EXECUTE FUNCTION products_stock_non_negative_guard()
 

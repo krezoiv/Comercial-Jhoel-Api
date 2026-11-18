@@ -1,17 +1,27 @@
 <div class="create-quotation">
   <div class="create-quotation__fields">
     <div class="field">
-      <span class="field__label">Cliente <span class="field__required">*</span></span>
-      <app-client-search-select
-        [selectedClientId]="selectedClientId()"
-        [selectedClientName]="selectedClientName()"
-        placeholder="Buscar cliente…"
-        (selectionChange)="onClientSelectionChange($event)"
-      />
-      @if (clientError()) {
-        <span class="field__error">Debe seleccionar un cliente.</span>
-      }
+      <label class="field__label" for="q-customer-name">Nombre completo del cliente <span class="field__required">*</span></label>
+      <input id="q-customer-name" type="text" class="field__input" maxlength="150" autocomplete="name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" />
     </div>
+
+    <div class="field">
+      <label class="field__label" for="q-customer-phone">Teléfono <span class="field__required">*</span></label>
+      <input id="q-customer-phone" type="tel" class="field__input" maxlength="20" placeholder="5555-1234" [ngModel]="customerPhone()" (ngModelChange)="customerPhone.set($event)" />
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="q-student">Nombre del estudiante (opcional)</label>
+      <input id="q-student" type="text" class="field__input" maxlength="150" [ngModel]="studentName()" (ngModelChange)="studentName.set($event)" />
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="q-grade">Grado escolar (cuando corresponda)</label>
+      <input id="q-grade" type="text" class="field__input" maxlength="60" placeholder="Primero Básico" [ngModel]="grade()" (ngModelChange)="grade.set($event)" />
+    </div>
+    @if (clientError() && customerProblem()) {
+      <span class="field__error">{{ customerProblem() }}</span>
+    }
 
     <div class="field">
       <label class="field__label" for="expiration-date">Válida hasta <span class="field__required">*</span></label>
@@ -130,8 +140,17 @@
         <strong>{{ formatCurrency(total) }}</strong>
       </div>
     </div>
-    <app-button [disabled]="items().length === 0 || isSaving()" (click)="saveQuotation()">
-      {{ isSaving() ? 'Guardando…' : 'Guardar Cotización' }}
-    </app-button>
+    <div class="create-quotation__save">
+      <p class="create-quotation__notice">
+        <app-icon name="alert-circle" [size]="14" />
+        Guardar una cotización no afecta el inventario. Las existencias solo se descuentan al usar "Confirmar venta".
+      </p>
+      <label class="create-quotation__draft">
+        <input type="checkbox" [ngModel]="asDraft()" (ngModelChange)="asDraft.set($event)" /> Guardar como borrador
+      </label>
+      <app-button [disabled]="items().length === 0 || isSaving()" (click)="saveQuotation()">
+        {{ isSaving() ? 'Guardando…' : asDraft() ? 'Guardar borrador' : 'Guardar Cotización' }}
+      </app-button>
+    </div>
   </div>
 </div>

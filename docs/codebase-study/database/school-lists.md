@@ -4,6 +4,24 @@ Volver a [05_DATABASE_REFERENCE.md](../05_DATABASE_REFERENCE.md). Diagrama ER: l
 
 ```mermaid
 erDiagram
+  school_dispatch_items {
+    uuid id PK
+    uuid dispatch_id FK
+    uuid product_id FK
+    character_varying product_name
+    integer requested
+    integer supplied
+    integer delivered
+    boolean inventory_controlled
+  }
+  school_dispatches {
+    uuid id PK
+    uuid quotation_id FK
+    timestamp_with_time_zone dispatched_at
+    uuid dispatched_by FK
+    character_varying observations
+    character_varying idempotency_key
+  }
   school_list_history {
     bigint id PK
     character_varying entity_type
@@ -87,15 +105,47 @@ erDiagram
     numeric discount
     numeric total
   }
-  users {
+  school_supply_allocations {
     uuid id PK
+    uuid quotation_id FK
+    uuid product_id FK
+    integer quantity
+    character_varying source_type
+    uuid source_movement_id FK
+    uuid purchase_id FK
+    character_varying mode
+    character_varying status
+    character_varying idempotency_key
+    uuid created_by FK
+    timestamp_with_time_zone created_at
+    timestamp_with_time_zone released_at
+    uuid released_by FK
+  }
+  school_supply_settings {
+    smallint id PK
+    character_varying allocation_mode
+    uuid updated_by FK
+    timestamp_with_time_zone updated_at
   }
   products {
+    uuid id PK
+  }
+  users {
     uuid id PK
   }
   banks {
     uuid id PK
   }
+  purchases {
+    uuid id PK
+  }
+  inventory_movements {
+    uuid id PK
+  }
+  school_dispatches ||--o{ school_dispatch_items : "dispatch_id"
+  products ||--o{ school_dispatch_items : "product_id"
+  users ||--o{ school_dispatches : "dispatched_by"
+  school_quotations ||--o{ school_dispatches : "quotation_id"
   users ||--o{ school_list_history : "created_by"
   products ||--o{ school_list_template_items : "product_id"
   school_list_templates ||--o{ school_list_template_items : "template_id"
@@ -112,16 +162,94 @@ erDiagram
   users ||--o{ school_quotations : "cancelled_by"
   users ||--o{ school_quotations : "created_by"
   users ||--o{ school_quotations : "delivered_by"
+  users ||--o{ school_quotations : "finished_by"
   school_list_templates ||--o{ school_quotations : "template_id"
   users ||--o{ school_quotations : "updated_by"
+  users ||--o{ school_supply_allocations : "created_by"
+  school_dispatches ||--o{ school_supply_allocations : "dispatch_id"
+  products ||--o{ school_supply_allocations : "product_id"
+  purchases ||--o{ school_supply_allocations : "purchase_id"
+  school_quotations ||--o{ school_supply_allocations : "quotation_id"
+  users ||--o{ school_supply_allocations : "released_by"
+  inventory_movements ||--o{ school_supply_allocations : "source_movement_id"
+  users ||--o{ school_supply_settings : "updated_by"
 ```
+
+## `school_dispatch_items`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760008300000-SchoolListSupply.ts`
+- **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
+- **Funciones SQL que la escriben:** `dispatch_school_quotation`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `dispatch_id` | uuid | NOT NULL |  |
+| `product_id` | uuid | sí |  |
+| `product_name` | character varying(150) | NOT NULL |  |
+| `requested` | integer | NOT NULL |  |
+| `supplied` | integer | NOT NULL |  |
+| `delivered` | integer | NOT NULL |  |
+| `inventory_controlled` | boolean | NOT NULL |  |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `school_dispatch_items_delivered_check` | CHECK | CHECK ((delivered &gt;= 0)) |
+| `school_dispatch_items_requested_check` | CHECK | CHECK ((requested &gt; 0)) |
+| `school_dispatch_items_supplied_check` | CHECK | CHECK ((supplied &gt;= 0)) |
+| `school_dispatch_items_dispatch_id_fkey` | FK | FOREIGN KEY (dispatch_id) REFERENCES school_dispatches(id) ON DELETE RESTRICT |
+| `school_dispatch_items_product_id_fkey` | FK | FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT |
+| `school_dispatch_items_pkey` | PK | PRIMARY KEY (id) |
+
+**Índices:**
+
+- `school_dispatch_items_pkey`: CREATE UNIQUE INDEX school_dispatch_items_pkey ON public.school_dispatch_items USING btree (id)
+
+**Triggers:**
+
+- `trg_school_dispatch_items_guard`: CREATE TRIGGER trg_school_dispatch_items_guard BEFORE DELETE OR UPDATE ON public.school_dispatch_items FOR EACH ROW EXECUTE FUNCTION school_list_append_only_guard()
+
+## `school_dispatches`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760008300000-SchoolListSupply.ts`
+- **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
+- **Funciones SQL que la escriben:** `dispatch_school_quotation`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `quotation_id` | uuid | NOT NULL |  |
+| `dispatched_at` | timestamp with time zone | NOT NULL | now() |
+| `dispatched_by` | uuid | NOT NULL |  |
+| `observations` | character varying(500) | sí |  |
+| `idempotency_key` | character varying(100) | NOT NULL |  |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `school_dispatches_dispatched_by_fkey` | FK | FOREIGN KEY (dispatched_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `school_dispatches_quotation_id_fkey` | FK | FOREIGN KEY (quotation_id) REFERENCES school_quotations(id) ON DELETE RESTRICT |
+| `school_dispatches_pkey` | PK | PRIMARY KEY (id) |
+| `school_dispatches_idempotency_key_key` | UNIQUE | UNIQUE (idempotency_key) |
+| `school_dispatches_quotation_id_key` | UNIQUE | UNIQUE (quotation_id) |
+
+**Índices:**
+
+- `school_dispatches_idempotency_key_key`: CREATE UNIQUE INDEX school_dispatches_idempotency_key_key ON public.school_dispatches USING btree (idempotency_key)
+- `school_dispatches_pkey`: CREATE UNIQUE INDEX school_dispatches_pkey ON public.school_dispatches USING btree (id)
+- `school_dispatches_quotation_id_key`: CREATE UNIQUE INDEX school_dispatches_quotation_id_key ON public.school_dispatches USING btree (quotation_id)
+
+**Triggers:**
+
+- `trg_school_dispatches_guard`: CREATE TRIGGER trg_school_dispatches_guard BEFORE DELETE OR UPDATE ON public.school_dispatches FOR EACH ROW EXECUTE FUNCTION school_list_append_only_guard()
 
 ## `school_list_history`
 
 - **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
 - **Creada en:** `1760007900000-SchoolLists.ts`
 - **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
-- **Funciones SQL que la escriben:** `cancel_school_quotation`, `change_school_quotation_status`, `create_school_quotation`, `duplicate_school_list_template`, `save_school_list_template`, `school_quotation_insert_payment`, `set_school_list_template_active`, `set_school_quotation_observations`, `update_school_quotation`, `void_school_quotation_payment`
+- **Funciones SQL que la escriben:** `allocate_school_supply_manual`, `cancel_school_quotation`, `change_school_quotation_status`, `create_school_quotation`, `dispatch_school_quotation`, `duplicate_school_list_template`, `save_school_list_template`, `school_quotation_insert_payment`, `school_supply_allocate_fifo`, `set_school_list_template_active`, `set_school_quotation_observations`, `update_school_quotation`, `void_school_quotation_payment`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -321,7 +449,7 @@ erDiagram
 - **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
 - **Creada en:** `1760007900000-SchoolLists.ts`
 - **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
-- **Funciones SQL que la escriben:** `cancel_school_quotation`, `change_school_quotation_status`, `create_school_quotation`, `school_quotation_refresh_status`, `set_school_quotation_observations`, `update_school_quotation`, `void_school_quotation_payment`
+- **Funciones SQL que la escriben:** `cancel_school_quotation`, `change_school_quotation_status`, `create_school_quotation`, `dispatch_school_quotation`, `school_quotation_refresh_status`, `school_quotation_sync_inventory`, `set_school_quotation_observations`, `update_school_quotation`, `void_school_quotation_payment`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -352,18 +480,22 @@ erDiagram
 | `cancelled_by` | uuid | sí |  |
 | `cancel_reason` | character varying(500) | sí |  |
 | `cancel_idempotency_key` | character varying(100) | sí |  |
+| `finished_at` | timestamp with time zone | sí |  |
+| `finished_by` | uuid | sí |  |
+| `confirmed_at` | timestamp with time zone | sí |  |
 
 | Restricción | Tipo | Definición |
 |---|---|---|
 | `CHK_school_quotations_delivery` | CHECK | CHECK (((delivery_date IS NULL) OR (delivery_date &gt;= quotation_date))) |
 | `CHK_school_quotations_total` | CHECK | CHECK ((total = (subtotal - discount))) |
 | `school_quotations_discount_check` | CHECK | CHECK ((discount &gt;= (0)::numeric)) |
-| `school_quotations_status_check` | CHECK | CHECK (((status)::text = ANY ((ARRAY['BORRADOR'::character varying, 'COTIZADA'::character varying, 'ANTICIPO_RECIBIDO'::character varying, 'PAGO_PARCIAL'::character varying, 'PAGADA'::character varying, 'EN_PREPARACION'::character varying, 'ENTREGADA'::character varying, 'CANCELADA'::character varying])::text[]))) |
+| `school_quotations_status_check` | CHECK | CHECK (((status)::text = ANY ((ARRAY['BORRADOR'::character varying, 'COTIZADA'::character varying, 'ANTICIPO_RECIBIDO'::character varying, 'PAGO_PARCIAL'::character varying, 'PAGADA'::character varying, 'EN_PREPARACION'::character varying, 'ENTREGADA'::character varying, 'CANCELADA'::character varying, 'TERMINADA'::character varying])::text[]))) |
 | `school_quotations_subtotal_check` | CHECK | CHECK ((subtotal &gt;= (0)::numeric)) |
 | `school_quotations_total_check` | CHECK | CHECK ((total &gt; (0)::numeric)) |
 | `school_quotations_cancelled_by_fkey` | FK | FOREIGN KEY (cancelled_by) REFERENCES users(id) ON DELETE RESTRICT |
 | `school_quotations_created_by_fkey` | FK | FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT |
 | `school_quotations_delivered_by_fkey` | FK | FOREIGN KEY (delivered_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `school_quotations_finished_by_fkey` | FK | FOREIGN KEY (finished_by) REFERENCES users(id) ON DELETE RESTRICT |
 | `school_quotations_template_id_fkey` | FK | FOREIGN KEY (template_id) REFERENCES school_list_templates(id) ON DELETE RESTRICT |
 | `school_quotations_updated_by_fkey` | FK | FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE RESTRICT |
 | `school_quotations_pkey` | PK | PRIMARY KEY (id) |
@@ -384,4 +516,85 @@ erDiagram
 **Triggers:**
 
 - `trg_school_quotations_no_delete`: CREATE TRIGGER trg_school_quotations_no_delete BEFORE DELETE ON public.school_quotations FOR EACH ROW EXECUTE FUNCTION school_list_append_only_guard()
+
+## `school_supply_allocations`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760008300000-SchoolListSupply.ts`
+- **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
+- **Funciones SQL que la escriben:** `allocate_school_supply_manual`, `dispatch_school_quotation`, `school_quotation_sync_inventory`, `school_supply_allocate_fifo`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `quotation_id` | uuid | NOT NULL |  |
+| `product_id` | uuid | NOT NULL |  |
+| `quantity` | integer | NOT NULL |  |
+| `source_type` | character varying(12) | NOT NULL |  |
+| `source_movement_id` | uuid | sí |  |
+| `purchase_id` | uuid | sí |  |
+| `mode` | character varying(12) | NOT NULL |  |
+| `status` | character varying(10) | NOT NULL | 'ASIGNADA'::character varying |
+| `idempotency_key` | character varying(100) | sí |  |
+| `created_by` | uuid | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `released_at` | timestamp with time zone | sí |  |
+| `released_by` | uuid | sí |  |
+| `release_reason` | character varying(500) | sí |  |
+| `dispatch_id` | uuid | sí |  |
+| `delivered_at` | timestamp with time zone | sí |  |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `school_supply_allocations_mode_check` | CHECK | CHECK (((mode)::text = ANY ((ARRAY['AUTO'::character varying, 'FIFO_MANUAL'::character varying, 'MANUAL'::character varying])::text[]))) |
+| `school_supply_allocations_quantity_check` | CHECK | CHECK ((quantity &gt; 0)) |
+| `school_supply_allocations_source_type_check` | CHECK | CHECK (((source_type)::text = ANY ((ARRAY['EXISTENCIA'::character varying, 'COMPRA'::character varying, 'TRASLADO'::character varying, 'DEVOLUCION'::character varying])::text[]))) |
+| `school_supply_allocations_status_check` | CHECK | CHECK (((status)::text = ANY ((ARRAY['ASIGNADA'::character varying, 'LIBERADA'::character varying, 'ENTREGADA'::character varying])::text[]))) |
+| `school_supply_allocations_created_by_fkey` | FK | FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `school_supply_allocations_dispatch_id_fkey` | FK | FOREIGN KEY (dispatch_id) REFERENCES school_dispatches(id) ON DELETE RESTRICT |
+| `school_supply_allocations_product_id_fkey` | FK | FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT |
+| `school_supply_allocations_purchase_id_fkey` | FK | FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE RESTRICT |
+| `school_supply_allocations_quotation_id_fkey` | FK | FOREIGN KEY (quotation_id) REFERENCES school_quotations(id) ON DELETE RESTRICT |
+| `school_supply_allocations_released_by_fkey` | FK | FOREIGN KEY (released_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `school_supply_allocations_source_movement_id_fkey` | FK | FOREIGN KEY (source_movement_id) REFERENCES inventory_movements(id) ON DELETE RESTRICT |
+| `school_supply_allocations_pkey` | PK | PRIMARY KEY (id) |
+| `school_supply_allocations_idempotency_key_key` | UNIQUE | UNIQUE (idempotency_key) |
+
+**Índices:**
+
+- `IDX_school_supply_allocations_line`: CREATE INDEX "IDX_school_supply_allocations_line" ON public.school_supply_allocations USING btree (quotation_id, product_id, status)
+- `IDX_school_supply_allocations_movement`: CREATE INDEX "IDX_school_supply_allocations_movement" ON public.school_supply_allocations USING btree (source_movement_id) WHERE (source_movement_id IS NOT NULL)
+- `IDX_school_supply_allocations_product`: CREATE INDEX "IDX_school_supply_allocations_product" ON public.school_supply_allocations USING btree (product_id, status)
+- `IDX_school_supply_allocations_purchase`: CREATE INDEX "IDX_school_supply_allocations_purchase" ON public.school_supply_allocations USING btree (purchase_id) WHERE (purchase_id IS NOT NULL)
+- `school_supply_allocations_idempotency_key_key`: CREATE UNIQUE INDEX school_supply_allocations_idempotency_key_key ON public.school_supply_allocations USING btree (idempotency_key)
+- `school_supply_allocations_pkey`: CREATE UNIQUE INDEX school_supply_allocations_pkey ON public.school_supply_allocations USING btree (id)
+
+**Triggers:**
+
+- `trg_school_supply_allocations_guard`: CREATE TRIGGER trg_school_supply_allocations_guard BEFORE DELETE OR UPDATE ON public.school_supply_allocations FOR EACH ROW EXECUTE FUNCTION school_supply_allocation_guard()
+
+## `school_supply_settings`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760008300000-SchoolListSupply.ts`
+- **Archivos TypeScript que la usan:** [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
+- **Funciones SQL que la escriben:** `set_school_supply_mode`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | smallint | NOT NULL |  |
+| `allocation_mode` | character varying(12) | NOT NULL | 'FIFO_AUTO'::character varying |
+| `updated_by` | uuid | sí |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `school_supply_settings_allocation_mode_check` | CHECK | CHECK (((allocation_mode)::text = ANY ((ARRAY['FIFO_AUTO'::character varying, 'MANUAL'::character varying])::text[]))) |
+| `school_supply_settings_id_check` | CHECK | CHECK ((id = 1)) |
+| `school_supply_settings_updated_by_fkey` | FK | FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `school_supply_settings_pkey` | PK | PRIMARY KEY (id) |
+
+**Índices:**
+
+- `school_supply_settings_pkey`: CREATE UNIQUE INDEX school_supply_settings_pkey ON public.school_supply_settings USING btree (id)
 

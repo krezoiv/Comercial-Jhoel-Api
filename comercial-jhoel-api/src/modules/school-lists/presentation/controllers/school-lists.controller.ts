@@ -28,6 +28,7 @@ import {
   GetSchoolQuotationPdfUseCase,
   GetSchoolQuotationUseCase,
   GetSchoolReceiptPdfUseCase,
+  GetSchoolBodegaStockUseCase,
   GetSchoolTemplateUseCase,
   ListSchoolQuotationsUseCase,
   ListSchoolTemplatesUseCase,
@@ -39,7 +40,24 @@ import {
   VoidSchoolPaymentUseCase,
 } from '../../application/use-cases/school-list.use-cases';
 import {
+  ListSupplyProductsUseCase,
+  ListSupplyProductListsUseCase,
+  ListSupplyPurchasesUseCase,
+  GetSupplySettingsUseCase,
+  SetSupplySettingsUseCase,
+  RunSupplyFifoUseCase,
+  AllocateSupplyPurchaseUseCase,
+  AllocateSupplyManualUseCase,
+  DispatchSchoolQuotationUseCase,
+} from '../../application/use-cases/school-supply.use-cases';
+import {
   CancelQuotationRequestDto,
+  DispatchRequestDto,
+  ManualAllocationRequestDto,
+  SupplyFifoRequestDto,
+  SupplyProductsQueryDto,
+  SupplyPurchasesQueryDto,
+  SupplySettingsRequestDto,
   CreateQuotationRequestDto,
   DashboardQueryDto,
   DuplicateTemplateRequestDto,
@@ -47,6 +65,7 @@ import {
   QuotationsQueryDto,
   RegisterPaymentRequestDto,
   SaveTemplateRequestDto,
+  StockQueryDto,
   StatusActionRequestDto,
   TemplateStatusRequestDto,
   TemplatesQueryDto,
@@ -96,12 +115,103 @@ export class SchoolListsController {
     private readonly dashboardUseCase: GetSchoolListDashboardUseCase,
     private readonly quotationPdf: GetSchoolQuotationPdfUseCase,
     private readonly receiptPdf: GetSchoolReceiptPdfUseCase,
+    private readonly bodegaStock: GetSchoolBodegaStockUseCase,
+    private readonly supplyProducts: ListSupplyProductsUseCase,
+    private readonly supplyProductLists: ListSupplyProductListsUseCase,
+    private readonly supplyPurchases: ListSupplyPurchasesUseCase,
+    private readonly supplySettings: GetSupplySettingsUseCase,
+    private readonly setSupplySettings: SetSupplySettingsUseCase,
+    private readonly supplyFifo: RunSupplyFifoUseCase,
+    private readonly allocatePurchase: AllocateSupplyPurchaseUseCase,
+    private readonly allocateManual: AllocateSupplyManualUseCase,
+    private readonly dispatchQuotation: DispatchSchoolQuotationUseCase,
   ) {}
 
   /** Permissions of the caller's role — the frontend shows only these actions. */
   @Get('permissions')
   myPermissions(@CurrentUser() user: RequestUser) {
     return this.permissions.execute(actor(user));
+  }
+
+  /** Bodega stock of the given products (`?productIds=a,b`), for the list editor. */
+  @Get('stock')
+  stock(@Query() query: StockQueryDto, @CurrentUser() user: RequestUser) {
+    return this.bodegaStock.execute(actor(user), query.productIds);
+  }
+
+  // ── Supply (abastecimiento) ──────────────────────────────────────────
+  /** "Productos pendientes de abastecimiento" with summary cards. */
+  @Get('supply/products')
+  supplyProductsList(
+    @Query() query: SupplyProductsQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const { page, limit, ...filters } = query;
+    return this.supplyProducts.execute(actor(user), {
+      ...filters,
+      page: page ?? 1,
+      limit: limit ?? 20,
+    });
+  }
+
+  /** Lists that need a product, in FIFO order. */
+  @Get('supply/products/:productId/lists')
+  supplyProductListsOf(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.supplyProductLists.execute(actor(user), productId);
+  }
+
+  /** Purchases and the lists their units went to (`?purchaseId=` for one purchase). */
+  @Get('supply/purchases')
+  supplyPurchasesList(
+    @Query() query: SupplyPurchasesQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.supplyPurchases.execute(actor(user), {
+      purchaseId: query.purchaseId,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+    });
+  }
+
+  @Post('supply/purchases/:purchaseId/allocate')
+  @HttpCode(HttpStatus.OK)
+  allocatePurchaseUnits(
+    @Param('purchaseId', ParseUUIDPipe) purchaseId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.allocatePurchase.execute(actor(user), purchaseId);
+  }
+
+  @Get('supply/settings')
+  supplySettingsGet(@CurrentUser() user: RequestUser) {
+    return this.supplySettings.execute(actor(user));
+  }
+
+  @Put('supply/settings')
+  supplySettingsPut(
+    @Body() dto: SupplySettingsRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.setSupplySettings.execute(actor(user), dto.allocationMode);
+  }
+
+  @Post('supply/fifo')
+  @HttpCode(HttpStatus.OK)
+  fifo(@Body() dto: SupplyFifoRequestDto, @CurrentUser() user: RequestUser) {
+    return this.supplyFifo.execute(actor(user), dto.productId ?? null);
+  }
+
+  @Post('supply/allocations')
+  @HttpCode(HttpStatus.CREATED)
+  allocate(
+    @Body() dto: ManualAllocationRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const { clientRequestId, ...input } = dto;
+    return this.allocateManual.execute(actor(user), input, clientRequestId);
   }
 
   // ── Templates ──────────────────────────────────────────────────────────
@@ -257,6 +367,22 @@ export class SchoolListsController {
       id,
       dto.action,
       dto.version ?? null,
+    );
+  }
+
+  /** "Preparar y despachar lista" (= entrega): no second inventory discount. */
+  @Post('quotations/:id/dispatch')
+  @HttpCode(HttpStatus.OK)
+  dispatch(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: DispatchRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.dispatchQuotation.execute(
+      actor(user),
+      id,
+      dto.observations ?? null,
+      dto.clientRequestId,
     );
   }
 

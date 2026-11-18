@@ -1840,4 +1840,37 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - **Gotcha corregido**: `@Input() quotation` del editor y del modal de abono se leen dentro de `computed()`, así que son setters respaldados por un signal. Un `@Input()` simple nunca invalida un `computed()`.
 - Modales: `SchoolPaymentModalComponent` (abono) y `SchoolReasonModalComponent` (anular pago o cancelar con devolución). Reutilizan `_guayacan-modal.scss`; los estilos de la sección están en `_school-lists.scss`.
 - Documentos (`school-documents.service.ts`): descargar o imprimir (`core/utils/print-blob.ts`) la cotización y los comprobantes. Ícono nuevo: `printer`.
+- **Inventario (migración `1760008100000`)**:
+  - El editor carga `GET /school-lists/stock` y muestra "Bodega: N" por línea. Bloquea si no alcanza, salvo en borrador. Ahí, lo ya descontado por la lista cuenta como disponible.
+  - La confirmación avisa del descuento ("Guardar y descontar inventario").
+  - El detalle muestra "Movimientos de inventario (Bodega)", y "Anular lista" avisa cuántas unidades vuelven.
 
+## Cotizaciones — cliente a mano y "Confirmar venta" (`features/dashboard/quotations/`)
+
+- **Crear:** sin selector de clientes. Se captura nombre, teléfono, estudiante, grado y observaciones, y hay opción de borrador. El aviso dice que guardar NO afecta el inventario.
+- **Historial:**
+  - Estados Borrador, Cotizada, Aceptada, Vendida, Rechazada, Cancelada y Vencida (`QUOTATION_STATUSES`).
+  - Acciones Confirmar, Aceptar, Rechazar (con motivo, reutiliza `QuotationVoidReasonModalComponent` con textos configurables) y Confirmar venta.
+  - Anular solo para admin, y no aplica a una vendida.
+- **`QuotationSaleModalComponent`:**
+  - Muestra `GET /quotations/:id/sale-preview` (cantidades y existencias de Vitrina) y solo habilita "Confirmar venta" si alcanza.
+  - El backend es idempotente: un doble clic da una sola venta.
+
+## Listas Escolares — abastecimiento y despacho (migración `1760008300000`)
+
+- **Pestaña "Abastecimiento"** (`SchoolSupplyComponent`):
+  - Productos pendientes con tarjetas, filtros (producto/SKU, categoría, lista, estado, fechas) y paginación.
+  - Listas que necesitan cada producto, con asignación manual. "Asignar FIFO" para `school_lists.supply.manage`.
+  - Cambio de modo automático/manual (solo admin) y compras asignadas a listas (`?compra=<id>`).
+- **Detalle de la lista**: pestaña "Abastecimiento" (`SchoolQuotationSupplyComponent`) con solicitado/reservado/pendiente/entregado, reservas con su origen y "Preparar y despachar lista" (modal, exige abastecida y pagada; `?despachar=1` lo abre). La anulación muestra unidades devueltas y reservas liberadas.
+- **Listado**: columna y filtro de abastecimiento. La acción de entrega navega al despacho.
+- **Editor**: las existencias insuficientes ya no bloquean; se muestra el aviso informativo pedido por el dueño.
+- **Compras**: tras guardar, `reportSchoolSupply` avisa cuántas unidades se asignaron a listas. El flujo de compra no cambia.
+
+
+### Listas Escolares — "Cambiar producto" por categoría y rediseño
+
+- Reglas de líneas puras en `school-lists/school-line-rules.ts` (`swapLineProduct`, `consolidateLines`, `findDuplicateLine`, `lineError`, `lineSubtotal`); el editor re-exporta `EditorLine`/`lineError`/`lineSubtotal`.
+- `SchoolProductSwapModalComponent`: abre en la categoría de la línea, catálogo paginado `SchoolListService.catalogProducts()` (`GET /products`), búsqueda con `timer(250)` dentro de `switchMap` (no `debounceTime` sobre `of()`: emite al completar). Un producto ya listado se consolida. `?cambiar=<itemId>` en la página de edición abre el modal en esa línea.
+- `_school-ui.scss` son mixins (`cat-badge`, `status-pills`, `kpis`): incluye solo lo que el componente usa. El editor está en 11.89 kB de 12 kB: no agregar estilos ahí sin quitar otros.
+- Colores de estado: `SCHOOL_STATUS_COLOR` → `.status-pill--<color>`. Documento: `docs/school-lists/categorias-y-cambio-de-producto.md`.

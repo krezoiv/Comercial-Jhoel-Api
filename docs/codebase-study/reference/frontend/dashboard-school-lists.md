@@ -9,13 +9,15 @@
 | [school-dashboard.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Tablero" of Listas Escolares — figures come straight from the backend. | 3 internas; ext.: @angular/core, @angular/forms | 3 | Media (3 consumidores) |
 | [school-payment-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Registrar abono": amount, method, optional bank/reference and notes, with a live "saldo actual → saldo después" preview. | 7 internas; ext.: @angular/common, @angular/core, @angular/forms | 5 | Media (5 consumidores) |
 | [school-quotation-editor.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Nueva cotización" / "Editar cotización": 1) customer, 2) grade + list customization, 3) financial summary and anticipo. | 8 internas; ext.: @angular/common, @angular/core, @angular/forms | 4 | Media (4 consumidores) |
+| [school-quotation-supply.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Estado de abastecimiento" of one list: per product what was requested, reserved for the list, still pending and delivered; the reservation history (which purchase supplied what) and "Preparar y despachar lista". | 5 internas; ext.: @angular/common, @angular/core, @angular/forms | 3 | Media (3 consumidores) |
 | [school-quotations-list.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Listado general de cotizaciones": filters (customer, phone, number, grade, status, dates) applied on demand, server-side pagination and the actions the role may run on each row. | 9 internas; ext.: @angular/common, @angular/core, @angular/forms, @angular/router | 3 | Media (3 consumidores) |
 | [school-reason-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Mandatory reason (≥ 5 characters) for an audited correction: voiding a payment or cancelling a quotation. | 2 internas; ext.: @angular/core, @angular/forms | 2 | Baja (2 consumidores) |
+| [school-supply.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Productos pendientes de abastecimiento": what the school lists committed, what is already reserved for them and what is still to buy — computed from the lists' commitments and allocations, never from the negative stock alone. | 8 internas; ext.: @angular/common, @angular/core, @angular/forms, @angular/router | 3 | Media (3 consumidores) |
 | [school-templates.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Plantillas de Listas Escolares": the official list of each grade. | 7 internas; ext.: @angular/common, @angular/core, @angular/forms | 3 | Media (3 consumidores) |
 | [school-documents.service.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts) | .ts | Servicio | Feature (pantalla) | Downloads or prints the documents of Listas Escolares (quotation PDF and payment receipts). | 5 internas; ext.: @angular/common, @angular/core | 2 | Baja (2 consumidores) |
-| [school-lists-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Listas Escolares": dashboard, quotation list, new quotation and the official templates per grade. | 7 internas; ext.: @angular/core, @angular/router | 1 | Baja (1 consumidores) |
-| [school-lists.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `quotation`, `setup`, `summary`, `template`, `product` (sin comentario de documentación en el código). | 10 internas; ext.: @angular/common, @angular/core, @angular/router, rxjs | 0 | Soporte (pruebas) |
-| [school-quotation-detail-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | Detail of a school quotation: customer, grade, lines, financial cards, account statement (with receipts and audited reversals), observations and the change history. | 10 internas; ext.: @angular/common, @angular/core, @angular/forms, @angular/router | 1 | Baja (1 consumidores) |
+| [school-lists-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Listas Escolares": dashboard, quotation list, new quotation and the official templates per grade. | 8 internas; ext.: @angular/core, @angular/router | 1 | Baja (1 consumidores) |
+| [school-lists.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `quotation`, `setup`, `summary`, `template`, `product` (sin comentario de documentación en el código). | 12 internas; ext.: @angular/common, @angular/core, @angular/router, rxjs | 0 | Soporte (pruebas) |
+| [school-quotation-detail-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | Detail of a school quotation: customer, grade, lines, financial cards, account statement (with receipts and audited reversals), observations and the change history. | 11 internas; ext.: @angular/common, @angular/core, @angular/forms, @angular/router | 1 | Baja (1 consumidores) |
 | [school-quotation-edit-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-edit-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Editar cotización": the same editor as "Nueva cotización", loaded with the quotation's own lines and its `version` (a concurrent edit is rejected by the backend with a clear message). | 5 internas; ext.: @angular/common, @angular/core, @angular/router | 1 | Baja (1 consumidores) |
 | [_school-lists.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/_school-lists.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [school-dashboard.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-dashboard/school-dashboard.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-dashboard.component.ts`; usa 4 componentes hijos: `app-button`, `app-summary-tile`, `app-donut-chart`, `app-line-chart`. | — | — | Media |
@@ -24,15 +26,19 @@
 | [school-payment-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-payment-modal/school-payment-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [school-quotation-editor.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-quotation-editor.component.ts`; usa 4 componentes hijos: `app-icon`, `app-badge`, `app-quotation-product-search`, `app-button`. | — | — | Media |
 | [school-quotation-editor.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
+| [school-quotation-supply.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-quotation-supply.component.ts`; usa 3 componentes hijos: `app-icon`, `app-badge`, `app-button`. | — | — | Media |
+| [school-quotation-supply.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [school-quotations-list.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-quotations-list.component.ts`; usa 5 componentes hijos: `app-icon`, `app-button`, `app-badge`, `app-report-pagination`, `app-school-payment-modal`. | — | — | Media |
 | [school-quotations-list.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [school-reason-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-reason-modal/school-reason-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-reason-modal.component.ts`; usa 2 componentes hijos: `app-icon`, `app-button`. | — | — | Media |
 | [school-reason-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-reason-modal/school-reason-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
+| [school-supply.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-supply.component.ts`; usa 5 componentes hijos: `app-summary-tile`, `app-icon`, `app-button`, `app-badge`, `app-report-pagination`. | — | — | Media |
+| [school-supply.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [school-templates.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-templates/school-templates.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-templates.component.ts`; usa 4 componentes hijos: `app-icon`, `app-button`, `app-badge`, `app-quotation-product-search`. | — | — | Media |
 | [school-templates.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-templates/school-templates.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
-| [school-lists-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-lists-page.component.ts`; usa 6 componentes hijos: `app-page-header`, `app-icon`, `app-school-dashboard`, `app-school-quotations-list`, `app-school-quotation-editor`, `app-school-templates`. | — | — | Media |
+| [school-lists-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-lists-page.component.ts`; usa 7 componentes hijos: `app-page-header`, `app-icon`, `app-school-dashboard`, `app-school-quotations-list`, `app-school-quotation-editor`, `app-school-supply`. | — | — | Media |
 | [school-lists-page.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
-| [school-quotation-detail-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-quotation-detail-page.component.ts`; usa 6 componentes hijos: `app-icon`, `app-badge`, `app-button`, `app-summary-tile`, `app-school-payment-modal`, `app-school-reason-modal`. | — | — | Media |
+| [school-quotation-detail-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `school-quotation-detail-page.component.ts`; usa 7 componentes hijos: `app-icon`, `app-badge`, `app-button`, `app-summary-tile`, `app-school-quotation-supply`, `app-school-payment-modal`. | — | — | Media |
 | [school-quotation-detail-page.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 
 ## Detalle por archivo
@@ -179,7 +185,7 @@
 
 ### school-quotation-editor.component.ts
 
-- **Ruta:** [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts`, 439 líneas)
+- **Ruta:** [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts`, 532 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
 - **Responsabilidad:** "Nueva cotización" / "Editar cotización": 1) customer, 2) grade + list customization, 3) financial summary and anticipo.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [quotation-product-search.component.ts](dashboard-quotations.md#f-comercial-jhoel-app-src-app-features-dashboard-quotations-components-quotation-product-search-quotation-product-search-component-ts)
@@ -190,40 +196,42 @@
 
 **Interfaces, tipos y enums:**
 
-- `interface EditorLine` (L42): One editable line of the quotation being built. — miembros: `key`, `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`, `source`, `referencePrice`
+- `interface EditorLine` (L45): One editable line of the quotation being built. — miembros: `key`, `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`, `source`, `referencePrice`
 
-#### Clase `SchoolQuotationEditorComponent` (L87–438)
+#### Clase `SchoolQuotationEditorComponent` (L90–531)
 
 - **Decoradores:** `@Component({ selector: 'app-school-quotation-editor', standalone: true, imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, QuotationProductSe`
 - **Herencia / contratos:** implements OnChanges
 - **Propósito:** "Nueva cotización" / "Editar cotización": 1) customer, 2) grade + list customization, 3) financial summary and anticipo. The template is only read: every change lives in the quotation's own copy of the lines. Live totals are a preview; the backend recomputes and validates them when saving.
 - **Servicios inyectados con `inject()`:** `service = inject(SchoolListService)`, `banks = inject(BankService)`, `confirm = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`
-- **Datos / estado que administra:** `current = signal<SchoolQuotation \| null>(null)`, `@Output saved = new EventEmitter<SchoolQuotation>()`, `@Output cancelled = new EventEmitter<void>()`, `customerName = signal('')`, `customerPhone = signal('')`, `studentName = signal('')`, `quotationDate = signal(guatemalaToday())`, `deliveryDate = signal('')`, `observations = signal('')`, `templates = signal<SchoolTemplateSummary[]>([])`, `templatesFailed = signal(false)`, `template = signal<SchoolTemplate \| null>(null)`, `loadingTemplate = signal(false)`, `lines = signal<EditorLine[]>([])`, `replacingKey = signal<string \| null>(null)`, `withAdvance = signal(false)`, `advanceAmount = signal<number \| null>(null)`, `advanceMethod = signal<SchoolPaymentMethod>('EFECTIVO')`, `advanceBankId = signal('')`, `advanceReference = signal('')`, `asDraft = signal(false)`, `bankList = signal<Bank[]>([])`, `saving = signal(false)`, `error = signal<string \| null>(null)`, `touched = signal(false)`, `isEdit = computed(() => this.quotation !== null)`, `canOverride = computed(() => this.service.can('school_lists.pric`, `canAdvance = computed(() => !this.isEdit() && this.service.can(`, `gradeLabel = computed(() => this.quotation?.grade ?? this.templ`, `itemCount = computed(() => this.lines().reduce((sum, l) => sum`…
+- **Datos / estado que administra:** `current = signal<SchoolQuotation \| null>(null)`, `@Output saved = new EventEmitter<SchoolQuotation>()`, `@Output cancelled = new EventEmitter<void>()`, `customerName = signal('')`, `customerPhone = signal('')`, `studentName = signal('')`, `quotationDate = signal(guatemalaToday())`, `deliveryDate = signal('')`, `observations = signal('')`, `templates = signal<SchoolTemplateSummary[]>([])`, `templatesFailed = signal(false)`, `template = signal<SchoolTemplate \| null>(null)`, `loadingTemplate = signal(false)`, `lines = signal<EditorLine[]>([])`, `replacingKey = signal<string \| null>(null)`, `withAdvance = signal(false)`, `advanceAmount = signal<number \| null>(null)`, `advanceMethod = signal<SchoolPaymentMethod>('EFECTIVO')`, `advanceBankId = signal('')`, `advanceReference = signal('')`, `asDraft = signal(false)`, `bankList = signal<Bank[]>([])`, `bodega = signal<Record<string, number>>({})`, `saving = signal(false)`, `error = signal<string \| null>(null)`, `touched = signal(false)`, `isEdit = computed(() => this.quotation !== null)`, `canOverride = computed(() => this.service.can('school_lists.pric`, `canAdvance = computed(() => !this.isEdit() && this.service.can(`, `gradeLabel = computed(() => this.quotation?.grade ?? this.templ`…
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `quotation` | setter public | 97–99 | `value: SchoolQuotation \| null` | (inferido) |
-| `quotation` | getter public | 100–102 | — | `SchoolQuotation \| null` |
-| `ngOnChanges` | método public | 197–223 | `changes: SimpleChanges` | `void` |
-| `selectTemplate` | método public async | 226–268 | `summary: SchoolTemplateSummary` | `Promise<void>` |
-| `priceEditable` | método public | 271–273 | `line: EditorLine` | `boolean` |
-| `update` | método public | 275–277 | `key: string`, `patch: Partial<EditorLine>` | `void` |
-| `setNumber` | método public | 279–282 | `key: string`, `field: 'quantity' \| 'unitPrice' \| 'discount'`, `value: unknown` | `void` |
-| `step` | método public | 284–286 | `line: EditorLine`, `delta: number` | `void` |
-| `remove` | método public | 288–290 | `key: string` | `void` |
-| `addManual` | método public | 292–310 | — | `void` |
-| `addProduct` | método public | 313–320 | `product: Product` | `void` |
-| `replaceWith` | método public | 323–328 | `key: string`, `product: Product` | `void` |
-| `makeManual` | método public | 331–334 | `key: string` | `void` |
-| `fromProduct` | método private | 336–351 | `product: Product` | `EditorLine` |
-| `nextKey` | método private | 353–356 | — | `string` |
-| `toggleAdvance` | método public | 359–364 | `on: boolean` | `void` |
-| `items` | método private | 367–379 | — | `SchoolQuotationItemInput[]` |
-| `save` | método public async | 381–437 | — | `Promise<void>` |
+| `quotation` | setter public | 100–102 | `value: SchoolQuotation \| null` | (inferido) |
+| `quotation` | getter public | 103–105 | — | `SchoolQuotation \| null` |
+| `available` | método public | 251–253 | `productId: string`, `stock?` | `number \| null` |
+| `isShort` | método public | 255–258 | `productId: string`, `stock?` | `boolean` |
+| `ngOnChanges` | método public | 260–286 | `changes: SimpleChanges` | `void` |
+| `selectTemplate` | método public async | 289–331 | `summary: SchoolTemplateSummary` | `Promise<void>` |
+| `priceEditable` | método public | 334–336 | `line: EditorLine` | `boolean` |
+| `update` | método public | 338–340 | `key: string`, `patch: Partial<EditorLine>` | `void` |
+| `setNumber` | método public | 342–345 | `key: string`, `field: 'quantity' \| 'unitPrice' \| 'discount'`, `value: unknown` | `void` |
+| `step` | método public | 347–349 | `line: EditorLine`, `delta: number` | `void` |
+| `remove` | método public | 351–353 | `key: string` | `void` |
+| `addManual` | método public | 355–373 | — | `void` |
+| `addProduct` | método public | 376–383 | `product: Product` | `void` |
+| `replaceWith` | método public | 386–391 | `key: string`, `product: Product` | `void` |
+| `makeManual` | método public | 394–397 | `key: string` | `void` |
+| `fromProduct` | método private | 399–414 | `product: Product` | `EditorLine` |
+| `nextKey` | método private | 416–419 | — | `string` |
+| `toggleAdvance` | método public | 422–427 | `on: boolean` | `void` |
+| `items` | método private | 430–442 | — | `SchoolQuotationItemInput[]` |
+| `save` | método public async | 444–530 | — | `Promise<void>` |
 
 ##### `SchoolQuotationEditorComponent.quotation`
 
-- **Firma:** `quotation(value: SchoolQuotation \| null)` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L97) (L97–99)
+- **Firma:** `quotation(value: SchoolQuotation \| null)` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L100) (L100–102)
 - **Decoradores:** `@Input()`
 - **Propósito / descripción:** Quotation to edit; null builds a new one (signal-backed so computeds react).
 - **Dependencias (llamadas en su cuerpo):** `this.current.set`
@@ -232,15 +240,31 @@
 
 ##### `SchoolQuotationEditorComponent.quotation`
 
-- **Firma:** `quotation(): SchoolQuotation \| null` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L100) (L100–102)
+- **Firma:** `quotation(): SchoolQuotation \| null` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L103) (L103–105)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.current`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
+##### `SchoolQuotationEditorComponent.available`
+
+- **Firma:** `available(productId: string, stock?): number \| null` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L251) (L251–253)
+- **Propósito / descripción:** Bodega stock available to this list for a product (current stock + what it already holds).
+- **Dependencias (llamadas en su cuerpo):** `this.alreadyDiscounted`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `school-quotation-editor.component.html` (plantilla), (mismo archivo)
+
+##### `SchoolQuotationEditorComponent.isShort`
+
+- **Firma:** `isShort(productId: string, stock?): boolean` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L255) (L255–258)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.available`, `this.needs`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `school-quotation-editor.component.html` (plantilla)
+
 ##### `SchoolQuotationEditorComponent.ngOnChanges`
 
-- **Firma:** `ngOnChanges(changes: SimpleChanges): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L197) (L197–223)
+- **Firma:** `ngOnChanges(changes: SimpleChanges): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L260) (L260–286)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.customerName.set`, `this.customerPhone.set`, `this.studentName.set`, `this.quotationDate.set`, `this.deliveryDate.set`, `this.observations.set`, `this.lines.set`, `q.items.map`, `this.nextKey`
 - **Efectos secundarios:** Actualiza estado (signals): `this.customerName.set`, `this.customerPhone.set`, `this.studentName.set`, `this.quotationDate.set`, `this.deliveryDate.set`, `this.observations.set`
@@ -248,7 +272,7 @@
 
 ##### `SchoolQuotationEditorComponent.selectTemplate`
 
-- **Firma:** `selectTemplate(summary: SchoolTemplateSummary): Promise<void>` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L226) (L226–268)
+- **Firma:** `selectTemplate(summary: SchoolTemplateSummary): Promise<void>` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L289) (L289–331)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.template`, `this.lines`, `this.confirm.confirm`, `this.loadingTemplate.set`, `this.service.getTemplate(summary.id).subscribe`, `this.service.getTemplate`, `this.template.set`, `this.lines.set`, `template.items.map`, `this.nextKey`, `this.notifications.error`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.loadingTemplate.set`, `this.template.set`, `this.lines.set`
@@ -256,7 +280,7 @@
 
 ##### `SchoolQuotationEditorComponent.priceEditable`
 
-- **Firma:** `priceEditable(line: EditorLine): boolean` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L271) (L271–273)
+- **Firma:** `priceEditable(line: EditorLine): boolean` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L334) (L334–336)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.canOverride`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -264,7 +288,7 @@
 
 ##### `SchoolQuotationEditorComponent.update`
 
-- **Firma:** `update(key: string, patch: Partial<EditorLine>): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L275) (L275–277)
+- **Firma:** `update(key: string, patch: Partial<EditorLine>): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L338) (L338–340)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.lines.update`, `lines.map`
 - **Efectos secundarios:** Actualiza estado (signals): `this.lines.update`
@@ -272,7 +296,7 @@
 
 ##### `SchoolQuotationEditorComponent.setNumber`
 
-- **Firma:** `setNumber(key: string, field: 'quantity' \| 'unitPrice' \| 'discount', value: unknown): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L279) (L279–282)
+- **Firma:** `setNumber(key: string, field: 'quantity' \| 'unitPrice' \| 'discount', value: unknown): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L342) (L342–345)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `Number`, `this.update`, `Number.isFinite`
 - **Efectos secundarios:** Actualiza estado (signals): `this.update`
@@ -280,7 +304,7 @@
 
 ##### `SchoolQuotationEditorComponent.step`
 
-- **Firma:** `step(line: EditorLine, delta: number): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L284) (L284–286)
+- **Firma:** `step(line: EditorLine, delta: number): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L347) (L347–349)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.update`, `Math.min`, `Math.max`
 - **Efectos secundarios:** Actualiza estado (signals): `this.update`
@@ -288,7 +312,7 @@
 
 ##### `SchoolQuotationEditorComponent.remove`
 
-- **Firma:** `remove(key: string): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L288) (L288–290)
+- **Firma:** `remove(key: string): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L351) (L351–353)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.lines.update`, `lines.filter`
 - **Efectos secundarios:** Actualiza estado (signals): `this.lines.update`
@@ -296,7 +320,7 @@
 
 ##### `SchoolQuotationEditorComponent.addManual`
 
-- **Firma:** `addManual(): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L292) (L292–310)
+- **Firma:** `addManual(): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L355) (L355–373)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.lines.update`, `this.nextKey`
 - **Efectos secundarios:** Actualiza estado (signals): `this.lines.update`
@@ -304,7 +328,7 @@
 
 ##### `SchoolQuotationEditorComponent.addProduct`
 
-- **Firma:** `addProduct(product: Product): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L313) (L313–320)
+- **Firma:** `addProduct(product: Product): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L376) (L376–383)
 - **Propósito / descripción:** Adds an inventory product (or one more unit if it is already a plain inventory line).
 - **Dependencias (llamadas en su cuerpo):** `this.lines().find`, `this.lines`, `this.step`, `this.lines.update`, `this.fromProduct`
 - **Efectos secundarios:** Actualiza estado (signals): `this.lines.update`
@@ -312,7 +336,7 @@
 
 ##### `SchoolQuotationEditorComponent.replaceWith`
 
-- **Firma:** `replaceWith(key: string, product: Product): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L323) (L323–328)
+- **Firma:** `replaceWith(key: string, product: Product): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L386) (L386–391)
 - **Propósito / descripción:** "Cambiar producto": the line becomes the chosen inventory product; the template is untouched.
 - **Dependencias (llamadas en su cuerpo):** `this.lines.update`, `lines.map`, `this.fromProduct`, `this.replacingKey.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.lines.update`, `this.replacingKey.set`
@@ -320,7 +344,7 @@
 
 ##### `SchoolQuotationEditorComponent.makeManual`
 
-- **Firma:** `makeManual(key: string): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L331) (L331–334)
+- **Firma:** `makeManual(key: string): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L394) (L394–397)
 - **Propósito / descripción:** Turns a line into a free-text product (e.g. "cuaderno grande" instead of the requested one).
 - **Dependencias (llamadas en su cuerpo):** `this.update`, `this.replacingKey.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.update`, `this.replacingKey.set`
@@ -328,7 +352,7 @@
 
 ##### `SchoolQuotationEditorComponent.fromProduct`
 
-- **Firma:** `fromProduct(product: Product): EditorLine` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L336) (L336–351)
+- **Firma:** `fromProduct(product: Product): EditorLine` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L399) (L399–414)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.nextKey`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -336,14 +360,14 @@
 
 ##### `SchoolQuotationEditorComponent.nextKey`
 
-- **Firma:** `nextKey(): string` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L353) (L353–356)
+- **Firma:** `nextKey(): string` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L416) (L416–419)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** (mismo archivo)
 
 ##### `SchoolQuotationEditorComponent.toggleAdvance`
 
-- **Firma:** `toggleAdvance(on: boolean): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L359) (L359–364)
+- **Firma:** `toggleAdvance(on: boolean): void` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L422) (L422–427)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.withAdvance.set`, `this.bankList`, `this.banks.getBanks().subscribe`, `this.banks.getBanks`, `this.bankList.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.withAdvance.set`, `this.bankList.set`
@@ -351,7 +375,7 @@
 
 ##### `SchoolQuotationEditorComponent.items`
 
-- **Firma:** `items(): SchoolQuotationItemInput[]` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L367) (L367–379)
+- **Firma:** `items(): SchoolQuotationItemInput[]` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L430) (L430–442)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.lines().map`, `this.lines`, `line.productName.trim`, `line.description.trim`, `line.observations.trim`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -359,65 +383,137 @@
 
 ##### `SchoolQuotationEditorComponent.save`
 
-- **Firma:** `save(): Promise<void>` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L381) (L381–437)
+- **Firma:** `save(): Promise<void>` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L444) (L444–530)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.touched.set`, `this.problems`, `this.saving`, `this.lines`, `formatCurrency`, `this.total`, `this.advance`, `this.balance`, `this.confirm.confirm`, `this.isEdit`, `this.asDraft`, `this.customerName().trim`, `this.customerName`, `this.gradeLabel`, `this.customerPhone().trim`, `this.customerPhone`, `this.studentName().trim`, `this.studentName`…
-- **Efectos secundarios:** Actualiza estado (signals): `this.touched.set`, `this.saving.set`, `this.error.set`; Emite eventos: `this.saved.emit`
+- **Dependencias (llamadas en su cuerpo):** `this.touched.set`, `this.problems`, `this.saving`, `this.customerName().trim`, `this.customerName`, `this.gradeLabel`, `this.lines`, `this.itemCount`, `formatCurrency`, `this.total`, `this.advance`, `this.balance`, `this.movesStock`, `this.isEdit`, `this.inventoryUnits`, `this.shortProducts`, `this.shortProducts().join`, `this.confirm.confirm`…
+- **Efectos secundarios:** Actualiza estado (signals): `this.touched.set`, `this.saving.set`, `this.error.set`
 - **Consumidores:** `school-quotation-editor.component.html` (plantilla)
 
-#### Función `lineSubtotal` (L60–62)
+#### Función `lineSubtotal` (L63–65)
 
 - **Tipo:** función exportada
-- **Firma:** `lineSubtotal(line: Pick<EditorLine, 'quantity' \| 'unitPrice' \| 'discount'>): number` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L60)
+- **Firma:** `lineSubtotal(line: Pick<EditorLine, 'quantity' \| 'unitPrice' \| 'discount'>): number` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L63)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `roundMoney`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `lineError` (L65–79)
+#### Función `lineError` (L68–82)
 
 - **Tipo:** función exportada
-- **Firma:** `lineError(line: EditorLine): string \| null` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L65)
+- **Firma:** `lineError(line: EditorLine): string \| null` — [school-quotation-editor.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts#L68)
 - **Propósito / descripción:** Client-side echo of the backend rules (the backend validates again).
 - **Dependencias:** `line.productName.trim`, `Number.isInteger`, `roundMoney`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts"></a>
+
+### school-quotation-supply.component.ts
+
+- **Ruta:** [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts`, 135 líneas)
+- **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
+- **Responsabilidad:** "Estado de abastecimiento" of one list: per product what was requested, reserved for the list, still pending and delivered; the reservation history (which purchase supplied what) and "Preparar y despachar lista".
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts)
+- **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/forms`
+- **Consumidores:** [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-detail-page.component.ts (plantilla)](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts) (plantilla)
+- **Plantilla:** [school-quotation-supply.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [badge.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-badge-badge-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts)
+- **Eventos enlazados en la plantilla:** `(click)="open()"`, `(click)="dialog.set(false)"`, `(ngModelChange)="observations.set($event)"`, `(click)="confirm()"`
+
+#### Clase `SchoolQuotationSupplyComponent` (L39–134)
+
+- **Decoradores:** `@Component({ selector: 'app-school-quotation-supply', standalone: true, imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent], templateUrl: './s`
+- **Herencia / contratos:** implements OnChanges
+- **Propósito:** "Estado de abastecimiento" of one list: per product what was requested, reserved for the list, still pending and delivered; the reservation history (which purchase supplied what) and "Preparar y despachar lista". Dispatching never discounts inventory again — the units were discounted when the list was confirmed; the backend re-checks supply and payment under lock.
+- **Servicios inyectados con `inject()`:** `service = inject(SchoolListService)`, `notifications = inject(NotificationService)`
+- **Datos / estado que administra:** `@Input openDispatch = false`, `@Output dispatched = new EventEmitter<SchoolQuotation>()`, `current = signal<SchoolQuotation \| null>(null)`, `dialog = signal(false)`, `observations = signal('')`, `saving = signal(false)`, `error = signal<string \| null>(null)`, `supply = computed(() => this.current()?.supply)`, `totals = computed(() => (this.supply()?.lines ?? []).reduce`, `blocker = computed(() => { const q = this.current(); if (!q)`, `canDispatch = computed(() => this.blocker() === null && this.ser`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `quotation` | setter public | 48–50 | `value: SchoolQuotation` | (inferido) |
+| `quotation` | getter public | 51–53 | — | `SchoolQuotation` |
+| `ngOnChanges` | método public | 103–107 | `changes: SimpleChanges` | `void` |
+| `open` | método public | 109–114 | — | `void` |
+| `confirm` | método public | 116–133 | — | `void` |
+
+##### `SchoolQuotationSupplyComponent.quotation`
+
+- **Firma:** `quotation(value: SchoolQuotation)` — [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts#L48) (L48–50)
+- **Decoradores:** `@Input({ required: true })`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.current.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.current.set`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolQuotationSupplyComponent.quotation`
+
+- **Firma:** `quotation(): SchoolQuotation` — [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts#L51) (L51–53)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.current`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolQuotationSupplyComponent.ngOnChanges`
+
+- **Firma:** `ngOnChanges(changes: SimpleChanges): void` — [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts#L103) (L103–107)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.canDispatch`, `this.open`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolQuotationSupplyComponent.open`
+
+- **Firma:** `open(): void` — [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts#L109) (L109–114)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.observations.set`, `this.error.set`, `crypto.randomUUID`, `this.dialog.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.observations.set`, `this.error.set`, `this.dialog.set`
+- **Consumidores:** `school-quotation-supply.component.html` (plantilla), (mismo archivo)
+
+##### `SchoolQuotationSupplyComponent.confirm`
+
+- **Firma:** `confirm(): void` — [school-quotation-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-supply/school-quotation-supply.component.ts#L116) (L116–133)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.current`, `this.canDispatch`, `this.saving`, `this.saving.set`, `this.error.set`, `this.service.dispatch(q.id, this.observations().trim() \|\| null, this.requestId).subscribe`, `this.service.dispatch`, `this.observations().trim`, `this.observations`, `this.dialog.set`, `this.notifications.success`, `this.dispatched.emit`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.saving.set`, `this.error.set`, `this.dialog.set`; Emite eventos: `this.dispatched.emit`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), `school-quotation-supply.component.html` (plantilla)
+
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts"></a>
 
 ### school-quotations-list.component.ts
 
-- **Ruta:** [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts`, 177 líneas)
+- **Ruta:** [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts`, 201 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
 - **Responsabilidad:** "Listado general de cotizaciones": filters (customer, phone, number, grade, status, dates) applied on demand, server-side pagination and the actions the role may run on each row.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/forms`, `@angular/router`
 - **Consumidores:** [school-lists-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-lists-page.component.ts (plantilla)](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts) (plantilla)
 - **Plantilla:** [school-quotations-list.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [badge.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-badge-badge-component-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts)
-- **Eventos enlazados en la plantilla:** `(click)="createNew.emit()"`, `(ngSubmit)="applyFilters()"`, `(ngModelChange)="search.set($event)"`, `(ngModelChange)="phone.set($event)"`, `(ngModelChange)="number.set($event)"`, `(ngModelChange)="grade.set($event)"`, `(ngModelChange)="status.set($event)"`, `(ngModelChange)="dateFrom.set($event)"`, `(ngModelChange)="dateTo.set($event)"`, `(click)="clearFilters()"`, `(click)="open(q)"`, `(click)="edit(q)"`, `(click)="paying.set(q)"`, `(click)="open(q, 'cuenta')"`, `(click)="documents.quotation(q.id, q.quotationNumber, 'download')"`
+- **Eventos enlazados en la plantilla:** `(click)="createNew.emit()"`, `(ngSubmit)="applyFilters()"`, `(ngModelChange)="search.set($event)"`, `(ngModelChange)="phone.set($event)"`, `(ngModelChange)="number.set($event)"`, `(ngModelChange)="grade.set($event)"`, `(ngModelChange)="status.set($event)"`, `(ngModelChange)="supplyStatus.set($event)"`, `(ngModelChange)="dateFrom.set($event)"`, `(ngModelChange)="dateTo.set($event)"`, `(click)="clearFilters()"`, `(click)="open(q)"`, `(click)="open(q, 'abastecimiento')"`, `(click)="edit(q)"`, `(click)="paying.set(q)"`
 
-#### Clase `SchoolQuotationsListComponent` (L33–176)
+#### Clase `SchoolQuotationsListComponent` (L37–200)
 
 - **Decoradores:** `@Component({ selector: 'app-school-quotations-list', standalone: true, imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, ReportPaginationCom`
 - **Propósito:** "Listado general de cotizaciones": filters (customer, phone, number, grade, status, dates) applied on demand, server-side pagination and the actions the role may run on each row.
 - **Servicios inyectados con `inject()`:** `service = inject(SchoolListService)`, `documents = inject(SchoolDocumentsService)`, `router = inject(Router)`, `confirm = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`
-- **Datos / estado que administra:** `@Output createNew = new EventEmitter<void>()`, `search = signal('')`, `phone = signal('')`, `number = signal('')`, `grade = signal('')`, `status = signal<SchoolQuotationStatus \| ''>('')`, `dateFrom = signal('')`, `dateTo = signal('')`, `page = signal(1)`, `grades = signal<string[]>([])`, `items = signal<SchoolQuotationSummary[]>([])`, `total = signal(0)`, `loading = signal(false)`, `failed = signal(false)`, `paying = signal<SchoolQuotationSummary \| null>(null)`, `delivering = signal<string \| null>(null)`
+- **Datos / estado que administra:** `@Output createNew = new EventEmitter<void>()`, `search = signal('')`, `phone = signal('')`, `number = signal('')`, `grade = signal('')`, `status = signal<SchoolQuotationStatus \| ''>('')`, `supplyStatus = signal<SchoolSupplyStatus \| ''>('')`, `dateFrom = signal('')`, `dateTo = signal('')`, `page = signal(1)`, `grades = signal<string[]>([])`, `items = signal<SchoolQuotationSummary[]>([])`, `total = signal(0)`, `loading = signal(false)`, `failed = signal(false)`, `paying = signal<SchoolQuotationSummary \| null>(null)`, `delivering = signal<string \| null>(null)`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `applyFilters` | método public | 85–88 | — | `void` |
-| `clearFilters` | método public | 90–99 | — | `void` |
-| `onPageChange` | método public | 101–104 | `page: number` | `void` |
-| `load` | método public | 106–132 | — | `void` |
-| `open` | método public | 134–138 | `q: SchoolQuotationSummary`, `tab?: 'cuenta' \| 'historial'` | `void` |
-| `edit` | método public | 140–142 | `q: SchoolQuotationSummary` | `void` |
-| `canDeliver` | método public | 144–146 | `q: SchoolQuotationSummary` | `boolean` |
-| `onPaid` | método public | 148–151 | — | `void` |
-| `deliver` | método public async | 153–175 | `q: SchoolQuotationSummary` | `Promise<void>` |
+| `applyFilters` | método public | 93–96 | — | `void` |
+| `clearFilters` | método public | 98–108 | — | `void` |
+| `onPageChange` | método public | 110–113 | `page: number` | `void` |
+| `load` | método public | 115–142 | — | `void` |
+| `open` | método public | 144–148 | `q: SchoolQuotationSummary`, `tab?: 'cuenta' \| 'historial' \| 'abastecimiento'` | `void` |
+| `edit` | método public | 150–152 | `q: SchoolQuotationSummary` | `void` |
+| `canDeliver` | método public | 155–157 | `q: SchoolQuotationSummary` | `boolean` |
+| `canFinish` | método public | 160–162 | `q: SchoolQuotationSummary` | `boolean` |
+| `finish` | método public async | 164–187 | `q: SchoolQuotationSummary` | `Promise<void>` |
+| `onPaid` | método public | 189–192 | — | `void` |
+| `deliver` | método public | 195–199 | `q: SchoolQuotationSummary` | `void` |
 
 ##### `SchoolQuotationsListComponent.applyFilters`
 
-- **Firma:** `applyFilters(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L85) (L85–88)
+- **Firma:** `applyFilters(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L93) (L93–96)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
 - **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
@@ -425,15 +521,15 @@
 
 ##### `SchoolQuotationsListComponent.clearFilters`
 
-- **Firma:** `clearFilters(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L90) (L90–99)
+- **Firma:** `clearFilters(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L98) (L98–108)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.search.set`, `this.phone.set`, `this.number.set`, `this.grade.set`, `this.status.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.applyFilters`
-- **Efectos secundarios:** Actualiza estado (signals): `this.search.set`, `this.phone.set`, `this.number.set`, `this.grade.set`, `this.status.set`, `this.dateFrom.set`
+- **Dependencias (llamadas en su cuerpo):** `this.search.set`, `this.phone.set`, `this.number.set`, `this.grade.set`, `this.status.set`, `this.supplyStatus.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.applyFilters`
+- **Efectos secundarios:** Actualiza estado (signals): `this.search.set`, `this.phone.set`, `this.number.set`, `this.grade.set`, `this.status.set`, `this.supplyStatus.set`
 - **Consumidores:** `school-quotations-list.component.html` (plantilla)
 
 ##### `SchoolQuotationsListComponent.onPageChange`
 
-- **Firma:** `onPageChange(page: number): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L101) (L101–104)
+- **Firma:** `onPageChange(page: number): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L110) (L110–113)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
 - **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
@@ -441,15 +537,15 @@
 
 ##### `SchoolQuotationsListComponent.load`
 
-- **Firma:** `load(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L106) (L106–132)
+- **Firma:** `load(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L115) (L115–142)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.loading.set`, `this.service.getQuotations`, `this.search().trim`, `this.search`, `this.phone().trim`, `this.phone`, `this.number().trim`, `this.number`, `this.grade`, `this.status`, `this.dateFrom`, `this.dateTo`, `this.page`, `this.items.set`, `this.total.set`, `this.failed.set`
+- **Dependencias (llamadas en su cuerpo):** `this.loading.set`, `this.service.getQuotations`, `this.search().trim`, `this.search`, `this.phone().trim`, `this.phone`, `this.number().trim`, `this.number`, `this.grade`, `this.status`, `this.supplyStatus`, `this.dateFrom`, `this.dateTo`, `this.page`, `this.items.set`, `this.total.set`, `this.failed.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.loading.set`, `this.items.set`, `this.total.set`, `this.failed.set`
 - **Consumidores:** (mismo archivo)
 
 ##### `SchoolQuotationsListComponent.open`
 
-- **Firma:** `open(q: SchoolQuotationSummary, tab?: 'cuenta' \| 'historial'): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L134) (L134–138)
+- **Firma:** `open(q: SchoolQuotationSummary, tab?: 'cuenta' \| 'historial' \| 'abastecimiento'): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L144) (L144–148)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -457,7 +553,7 @@
 
 ##### `SchoolQuotationsListComponent.edit`
 
-- **Firma:** `edit(q: SchoolQuotationSummary): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L140) (L140–142)
+- **Firma:** `edit(q: SchoolQuotationSummary): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L150) (L150–152)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -465,14 +561,31 @@
 
 ##### `SchoolQuotationsListComponent.canDeliver`
 
-- **Firma:** `canDeliver(q: SchoolQuotationSummary): boolean` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L144) (L144–146)
-- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Firma:** `canDeliver(q: SchoolQuotationSummary): boolean` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L155) (L155–157)
+- **Propósito / descripción:** "Preparar y despachar" (= entrega): fully paid and fully supplied.
+- **Dependencias (llamadas en su cuerpo):** `['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `school-quotations-list.component.html` (plantilla)
+
+##### `SchoolQuotationsListComponent.canFinish`
+
+- **Firma:** `canFinish(q: SchoolQuotationSummary): boolean` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L160) (L160–162)
+- **Propósito / descripción:** The list can be marked as packed/dispatched until it is finished, delivered or cancelled.
+- **Dependencias (llamadas en su cuerpo):** `['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `school-quotations-list.component.html` (plantilla)
+
+##### `SchoolQuotationsListComponent.finish`
+
+- **Firma:** `finish(q: SchoolQuotationSummary): Promise<void>` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L164) (L164–187)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.confirm.confirm`, `formatCurrency`, `this.delivering.set`, `this.service.changeStatus(q.id, 'TERMINAR', q.version).subscribe`, `this.service.changeStatus`, `this.notifications.success`, `this.load`, `this.notifications.error`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.delivering.set`
 - **Consumidores:** `school-quotations-list.component.html` (plantilla)
 
 ##### `SchoolQuotationsListComponent.onPaid`
 
-- **Firma:** `onPaid(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L148) (L148–151)
+- **Firma:** `onPaid(): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L189) (L189–192)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.paying.set`, `this.load`
 - **Efectos secundarios:** Actualiza estado (signals): `this.paying.set`
@@ -480,10 +593,10 @@
 
 ##### `SchoolQuotationsListComponent.deliver`
 
-- **Firma:** `deliver(q: SchoolQuotationSummary): Promise<void>` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L153) (L153–175)
-- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.confirm.confirm`, `this.delivering.set`, `this.service.changeStatus(q.id, 'ENTREGAR', q.version).subscribe`, `this.service.changeStatus`, `this.notifications.success`, `this.load`, `this.notifications.error`, `extractErrorMessage`
-- **Efectos secundarios:** Actualiza estado (signals): `this.delivering.set`
+- **Firma:** `deliver(q: SchoolQuotationSummary): void` — [school-quotations-list.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts#L195) (L195–199)
+- **Propósito / descripción:** Opens the dispatch (detail → Abastecimiento), where the products are reviewed before delivery.
+- **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** `school-quotations-list.component.html` (plantilla)
 
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts"></a>
@@ -530,6 +643,183 @@
 - **Dependencias (llamadas en su cuerpo):** `this.valid`, `this.confirmed.emit`, `this.reason().trim`, `this.reason`, `this.refundMethod`, `this.reference().trim`, `this.reference`
 - **Efectos secundarios:** Emite eventos: `this.confirmed.emit`
 - **Consumidores:** `school-reason-modal.component.html` (plantilla)
+
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts"></a>
+
+### school-supply.component.ts
+
+- **Ruta:** [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts`, 278 líneas)
+- **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
+- **Responsabilidad:** "Productos pendientes de abastecimiento": what the school lists committed, what is already reserved for them and what is still to buy — computed from the lists' commitments and allocations, never from the negative stock alone.
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [category.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-category-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts)
+- **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/forms`, `@angular/router`
+- **Consumidores:** [school-lists-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-lists-page.component.ts (plantilla)](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts) (plantilla)
+- **Plantilla:** [school-supply.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.html) · **Usa componentes:** [summary-tile.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-summary-tile-summary-tile-component-ts), [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [badge.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-badge-badge-component-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts)
+- **Eventos enlazados en la plantilla:** `(click)="toggleMode()"`, `(click)="fifo()"`, `(ngSubmit)="applyFilters()"`, `(ngModelChange)="search.set($event)"`, `(ngModelChange)="categoryId.set($event)"`, `(ngModelChange)="quotationNumber.set($event)"`, `(ngModelChange)="status.set($event)"`, `(ngModelChange)="dateFrom.set($event)"`, `(ngModelChange)="dateTo.set($event)"`, `(click)="clearFilters()"`, `(click)="openLists(p)"`, `(click)="fifo(p)"`, `(pageChange)="onPage($event)"`, `(click)="clearPurchaseFilter()"`, `(click)="openList(l.quotationId)"`
+
+#### Clase `SchoolSupplyComponent` (L36–277)
+
+- **Decoradores:** `@Component({ selector: 'app-school-supply', standalone: true, imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, SummaryTileComponent, Report`
+- **Herencia / contratos:** implements OnInit
+- **Propósito:** "Productos pendientes de abastecimiento": what the school lists committed, what is already reserved for them and what is still to buy — computed from the lists' commitments and allocations, never from the negative stock alone. Also shows which lists each purchase supplied. Allocation rules (FIFO, caps, no double assignment) live in PostgreSQL.
+- **Servicios inyectados con `inject()`:** `service = inject(SchoolListService)`, `categoriesService = inject(CategoryService)`, `confirm = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`, `router = inject(Router)`
+- **Datos / estado que administra:** `@Input purchaseId = null`, `search = signal('')`, `categoryId = signal('')`, `dateFrom = signal('')`, `dateTo = signal('')`, `quotationNumber = signal('')`, `status = signal<SupplyProductStatus \| ''>('')`, `page = signal(1)`, `categories = signal<Category[]>([])`, `items = signal<SupplyProduct[]>([])`, `total = signal(0)`, `summary = signal<SupplySummary \| null>(null)`, `failed = signal(false)`, `mode = signal<SupplyAllocationMode>('FIFO_AUTO')`, `busy = signal(false)`, `selected = signal<SupplyProduct \| null>(null)`, `productLists = signal<SupplyProductList[]>([])`, `manualQty = signal<Record<string, number>>({})`, `purchases = signal<SupplyPurchase[]>([])`, `purchasesTotal = signal(0)`, `purchasesPage = signal(1)`, `purchaseFilter = signal<string \| null>(null)`, `canManage = computed(() => this.service.can('school_lists.supp`, `isAdmin = computed(() => this.service.can('school_lists.temp`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `ngOnInit` | método public | 94–100 | — | `void` |
+| `load` | método public | 102–123 | — | `void` |
+| `applyFilters` | método public | 125–128 | — | `void` |
+| `clearFilters` | método public | 130–138 | — | `void` |
+| `onPage` | método public | 140–143 | `page: number` | `void` |
+| `loadPurchases` | método public | 145–153 | — | `void` |
+| `onPurchasesPage` | método public | 155–158 | `page: number` | `void` |
+| `clearPurchaseFilter` | método public | 160–164 | — | `void` |
+| `openLists` | método public | 166–170 | `product: SupplyProduct` | `void` |
+| `openList` | método public | 172–174 | `quotationId: string` | `void` |
+| `refresh` | método private | 176–186 | — | `void` |
+| `report` | método private | 188–204 | `action: string` | (inferido) |
+| `fifo` | método public async | 206–218 | `product?: SupplyProduct` | `Promise<void>` |
+| `allocatePurchase` | método public async | 220–230 | `purchase: SupplyPurchase` | `Promise<void>` |
+| `setManual` | método public | 232–234 | `quotationId: string`, `value: unknown` | `void` |
+| `allocateManual` | método public | 236–255 | `row: SupplyProductList` | `void` |
+| `toggleMode` | método public async | 257–276 | — | `Promise<void>` |
+
+##### `SchoolSupplyComponent.ngOnInit`
+
+- **Firma:** `ngOnInit(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L94) (L94–100)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.purchaseFilter.set`, `this.categoriesService.getCategories().subscribe`, `this.categoriesService.getCategories`, `this.categories.set`, `this.service.supplySettings().subscribe`, `this.service.supplySettings`, `this.mode.set`, `this.load`, `this.loadPurchases`
+- **Efectos secundarios:** Actualiza estado (signals): `this.purchaseFilter.set`, `this.categories.set`, `this.mode.set`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolSupplyComponent.load`
+
+- **Firma:** `load(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L102) (L102–123)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.service.supplyProducts`, `this.search().trim`, `this.search`, `this.categoryId`, `this.dateFrom`, `this.dateTo`, `this.quotationNumber().trim`, `this.quotationNumber`, `this.status`, `this.page`, `this.items.set`, `this.total.set`, `this.summary.set`, `this.failed.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.items.set`, `this.total.set`, `this.summary.set`, `this.failed.set`
+- **Consumidores:** (mismo archivo)
+
+##### `SchoolSupplyComponent.applyFilters`
+
+- **Firma:** `applyFilters(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L125) (L125–128)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
+- **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
+- **Consumidores:** `school-supply.component.html` (plantilla), (mismo archivo)
+
+##### `SchoolSupplyComponent.clearFilters`
+
+- **Firma:** `clearFilters(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L130) (L130–138)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.search.set`, `this.categoryId.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.quotationNumber.set`, `this.status.set`, `this.applyFilters`
+- **Efectos secundarios:** Actualiza estado (signals): `this.search.set`, `this.categoryId.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.quotationNumber.set`, `this.status.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.onPage`
+
+- **Firma:** `onPage(page: number): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L140) (L140–143)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
+- **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.loadPurchases`
+
+- **Firma:** `loadPurchases(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L145) (L145–153)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.service.supplyPurchases`, `this.purchaseFilter`, `this.purchasesPage`, `this.purchases.set`, `this.purchasesTotal.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.purchases.set`, `this.purchasesTotal.set`
+- **Consumidores:** (mismo archivo)
+
+##### `SchoolSupplyComponent.onPurchasesPage`
+
+- **Firma:** `onPurchasesPage(page: number): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L155) (L155–158)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.purchasesPage.set`, `this.loadPurchases`
+- **Efectos secundarios:** Actualiza estado (signals): `this.purchasesPage.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.clearPurchaseFilter`
+
+- **Firma:** `clearPurchaseFilter(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L160) (L160–164)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.purchaseFilter.set`, `this.purchasesPage.set`, `this.loadPurchases`
+- **Efectos secundarios:** Actualiza estado (signals): `this.purchaseFilter.set`, `this.purchasesPage.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.openLists`
+
+- **Firma:** `openLists(product: SupplyProduct): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L166) (L166–170)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.selected.set`, `this.productLists.set`, `this.service.supplyProductLists(product.productId).subscribe`, `this.service.supplyProductLists`
+- **Efectos secundarios:** Actualiza estado (signals): `this.selected.set`, `this.productLists.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.openList`
+
+- **Firma:** `openList(quotationId: string): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L172) (L172–174)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.refresh`
+
+- **Firma:** `refresh(): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L176) (L176–186)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.load`, `this.loadPurchases`, `this.selected`, `this.service.supplyProductLists(selected.productId).subscribe`, `this.service.supplyProductLists`, `this.productLists.set`, `this.service.supplyProducts`, `this.selected.set`, `r.items.find`
+- **Efectos secundarios:** Actualiza estado (signals): `this.productLists.set`, `this.selected.set`
+- **Consumidores:** (mismo archivo)
+
+##### `SchoolSupplyComponent.report`
+
+- **Firma:** `report(action: string)` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L188) (L188–204)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.busy.set`, `this.notifications.success`, `this.notifications.info`, `this.refresh`, `this.notifications.error`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`
+- **Consumidores:** (mismo archivo)
+
+##### `SchoolSupplyComponent.fifo`
+
+- **Firma:** `fifo(product?: SupplyProduct): Promise<void>` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L206) (L206–218)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.confirm.confirm`, `this.busy.set`, `this.service.runFifo(product?.productId).subscribe`, `this.service.runFifo`, `this.report`
+- **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.allocatePurchase`
+
+- **Firma:** `allocatePurchase(purchase: SupplyPurchase): Promise<void>` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L220) (L220–230)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.confirm.confirm`, `this.busy.set`, `this.service.allocatePurchase(purchase.purchaseId).subscribe`, `this.service.allocatePurchase`, `this.report`
+- **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.setManual`
+
+- **Firma:** `setManual(quotationId: string, value: unknown): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L232) (L232–234)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.manualQty.update`, `Math.max`, `Math.floor`, `Number`
+- **Efectos secundarios:** Actualiza estado (signals): `this.manualQty.update`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.allocateManual`
+
+- **Firma:** `allocateManual(row: SupplyProductList): void` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L236) (L236–255)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.selected`, `this.manualQty`, `this.busy`, `this.busy.set`, `this.service.allocateManual`, `crypto.randomUUID`, `this.manualQty.update`, `this.notifications.success`, `this.refresh`, `this.notifications.error`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`, `this.manualQty.update`
+- **Consumidores:** `school-supply.component.html` (plantilla)
+
+##### `SchoolSupplyComponent.toggleMode`
+
+- **Firma:** `toggleMode(): Promise<void>` — [school-supply.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts#L257) (L257–276)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.mode`, `this.confirm.confirm`, `this.service.setSupplyMode(next).subscribe`, `this.service.setSupplyMode`, `this.mode.set`, `this.notifications.success`, `this.notifications.error`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.mode.set`
+- **Consumidores:** `school-supply.component.html` (plantilla)
 
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts"></a>
 
@@ -737,20 +1027,20 @@
 
 ### school-lists-page.component.ts
 
-- **Ruta:** [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts`, 70 líneas)
+- **Ruta:** [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts`, 75 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
 - **Responsabilidad:** "Listas Escolares": dashboard, quotation list, new quotation and the official templates per grade.
-- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
 - **Paquetes externos:** `@angular/core`, `@angular/router`
 - **Consumidores:** [app.routes.ts](root.md#f-comercial-jhoel-app-src-app-app-routes-ts)
-- **Plantilla:** [school-lists-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.html) · **Usa componentes:** [page-header.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-page-header-page-header-component-ts), [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+- **Plantilla:** [school-lists-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.html) · **Usa componentes:** [page-header.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-page-header-page-header-component-ts), [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
 - **Eventos enlazados en la plantilla:** `(click)="selectTab(tab.id)"`, `(openList)="selectTab('cotizaciones')"`, `(createNew)="selectTab('nueva')"`, `(saved)="onCreated($event)"`
 
 **Interfaces, tipos y enums:**
 
-- `type SchoolListsTab` (L12) = `'tablero' \| 'cotizaciones' \| 'nueva' \| 'plantillas'`
+- `type SchoolListsTab` (L13) = `'tablero' \| 'cotizaciones' \| 'nueva' \| 'abastecimiento' \| 'plantillas'`
 
-#### Clase `SchoolListsPageComponent` (L27–69)
+#### Clase `SchoolListsPageComponent` (L29–74)
 
 - **Decoradores:** `@Component({ selector: 'app-school-lists-page', standalone: true, imports: [ PageHeaderComponent, IconComponent, SchoolDashboardComponent, SchoolQuotationsListCo`
 - **Propósito:** "Listas Escolares": dashboard, quotation list, new quotation and the official templates per grade. The active tab lives in `?tab=` so a reload or a shared link opens the same view. Actions are shown according to the permissions the backend reports for the user's role.
@@ -759,12 +1049,12 @@
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `selectTab` | método public | 61–64 | `tab: SchoolListsTab` | `void` |
-| `onCreated` | método public | 66–68 | `quotation: SchoolQuotation` | `void` |
+| `selectTab` | método public | 66–69 | `tab: SchoolListsTab` | `void` |
+| `onCreated` | método public | 71–73 | `quotation: SchoolQuotation` | `void` |
 
 ##### `SchoolListsPageComponent.selectTab`
 
-- **Firma:** `selectTab(tab: SchoolListsTab): void` — [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts#L61) (L61–64)
+- **Firma:** `selectTab(tab: SchoolListsTab): void` — [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts#L66) (L66–69)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.activeTab.set`, `this.router.navigate`
 - **Efectos secundarios:** Actualiza estado (signals): `this.activeTab.set`
@@ -772,7 +1062,7 @@
 
 ##### `SchoolListsPageComponent.onCreated`
 
-- **Firma:** `onCreated(quotation: SchoolQuotation): void` — [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts#L66) (L66–68)
+- **Firma:** `onCreated(quotation: SchoolQuotation): void` — [school-lists-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists-page.component.ts#L71) (L71–73)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -782,26 +1072,26 @@
 
 ### school-lists.spec.ts
 
-- **Ruta:** [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts`, 352 líneas)
+- **Ruta:** [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts`, 492 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
 - **Responsabilidad:** Prueba unitaria: declara `quotation`, `setup`, `summary`, `template`, `product` (sin comentario de documentación en el código).
-- **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+- **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts), [school-quotation-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts), [school-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-supply-school-supply-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/router`, `rxjs`
 - **Consumidores:** —
-#### Función `quotation` (L55–88)
+#### Función `quotation` (L57–95)
 
 - **Tipo:** función local del archivo
-- **Firma:** `quotation(over?: Partial<SchoolQuotation>): SchoolQuotation` — [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts#L55)
+- **Firma:** `quotation(over?: Partial<SchoolQuotation>): SchoolQuotation` — [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts#L57)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `setup` (L92–108)
+#### Función `setup` (L99–116)
 
 - **Tipo:** función local del archivo
-- **Firma:** `setup(permissions: SchoolListPermission[]): SchoolListService` — [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts#L92)
+- **Firma:** `setup(permissions: SchoolListPermission[]): SchoolListService` — [school-lists.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-lists.spec.ts#L99)
 - **Propósito / descripción:** Sin JSDoc en el código.
-- **Dependencias:** `TestBed.configureTestingModule`, `provideHttpClient`, `provideHttpClientTesting`, `provideRouter`, `Promise.resolve`, `of`, `TestBed.inject`, `new Set`, `spyOn(service, 'can').and.callFake`, `spyOn`, `granted.has`, `spyOn(service, 'getTemplates').and.returnValue`, `spyOn(service, 'getTemplate').and.returnValue`
+- **Dependencias:** `TestBed.configureTestingModule`, `provideHttpClient`, `provideHttpClientTesting`, `provideRouter`, `Promise.resolve`, `of`, `TestBed.inject`, `new Set`, `spyOn(service, 'can').and.callFake`, `spyOn`, `granted.has`, `spyOn(service, 'getTemplates').and.returnValue`, `spyOn(service, 'getTemplate').and.returnValue`, `spyOn(service, 'bodegaStock').and.returnValue`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
@@ -809,48 +1099,48 @@
 
 ### school-quotation-detail-page.component.ts
 
-- **Ruta:** [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts`, 308 líneas)
+- **Ruta:** [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts`, 355 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-school-lists`
 - **Responsabilidad:** Detail of a school quotation: customer, grade, lines, financial cards, account statement (with receipts and audited reversals), observations and the change history.
-- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [pdf-prompt-modal.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-reason-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts)
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [pdf-prompt-modal.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts), [school-reason-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/forms`, `@angular/router`, `rxjs`
 - **Consumidores:** [app.routes.ts](root.md#f-comercial-jhoel-app-src-app-app-routes-ts)
-- **Plantilla:** [school-quotation-detail-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [badge.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-badge-badge-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [summary-tile.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-summary-tile-summary-tile-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-reason-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts)
-- **Eventos enlazados en la plantilla:** `(click)="paying.set(true)"`, `(click)="runAction(a)"`, `(click)="edit()"`, `(click)="pdf('download')"`, `(click)="pdf('print')"`, `(click)="startCancel()"`, `(click)="setView('detalle')"`, `(click)="setView('cuenta')"`, `(click)="setView('historial')"`, `(click)="editingNotes.set(true)"`, `(ngModelChange)="notes.set($event)"`, `(click)="editingNotes.set(false); notes.set(q.observations ?? '')"`, `(click)="saveNotes()"`, `(click)="receipt(p)"`, `(click)="startVoid(p)"`
+- **Plantilla:** [school-quotation-detail-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [badge.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-badge-badge-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [summary-tile.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-summary-tile-summary-tile-component-ts), [school-quotation-supply.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-supply-school-quotation-supply-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-reason-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-reason-modal-school-reason-modal-component-ts)
+- **Eventos enlazados en la plantilla:** `(click)="paying.set(true)"`, `(click)="runAction(a)"`, `(click)="edit()"`, `(click)="pdf('download')"`, `(click)="pdf('print')"`, `(click)="startCancel()"`, `(click)="setView('detalle')"`, `(click)="setView('abastecimiento')"`, `(click)="setView('cuenta')"`, `(click)="setView('historial')"`, `(click)="editingNotes.set(true)"`, `(ngModelChange)="notes.set($event)"`, `(click)="editingNotes.set(false); notes.set(q.observations ?? '')"`, `(click)="saveNotes()"`, `(click)="receipt(p)"`
 
 **Interfaces, tipos y enums:**
 
-- `type DetailView` (L36) = `'detalle' \| 'cuenta' \| 'historial'`
+- `type DetailView` (L38) = `'detalle' \| 'abastecimiento' \| 'cuenta' \| 'historial'`
 
-#### Clase `SchoolQuotationDetailPageComponent` (L61–307)
+#### Clase `SchoolQuotationDetailPageComponent` (L69–354)
 
 - **Decoradores:** `@Component({ selector: 'app-school-quotation-detail-page', standalone: true, imports: [ FormsModule, RouterLink, BadgeComponent, ButtonComponent, IconComponent, `
 - **Propósito:** Detail of a school quotation: customer, grade, lines, financial cards, account statement (with receipts and audited reversals), observations and the change history. Every figure comes from the backend.
 - **Servicios inyectados con `inject()`:** `route = inject(ActivatedRoute)`, `router = inject(Router)`, `service = inject(SchoolListService)`, `documents = inject(SchoolDocumentsService)`, `confirm = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`, `pdfPrompt = inject(PdfPromptModalService)`
-- **Datos / estado que administra:** `quotation = signal<SchoolQuotation \| null>(null)`, `failed = signal<string \| null>(null)`, `view = signal<DetailView>('detalle')`, `busy = signal(false)`, `paying = signal(false)`, `notes = signal('')`, `editingNotes = signal(false)`, `voiding = signal<SchoolPayment \| null>(null)`, `cancelling = signal(false)`, `reasonBusy = signal(false)`, `reasonError = signal<string \| null>(null)`, `editable = computed(() => { const q = this.quotation(); retur`, `canPay = computed(() => { const q = this.quotation(); retur`, `canCancel = computed(() => { const q = this.quotation(); retur`, `nextActions = computed<SchoolStatusAction[]>(() => { const q = t`
+- **Datos / estado que administra:** `openDispatch = signal(false)`, `reservedUnits = computed(() => (this.quotation()?.supply.allocatio`, `heldUnits = computed(() => (this.quotation()?.inventory ?? [])`, `quotation = signal<SchoolQuotation \| null>(null)`, `failed = signal<string \| null>(null)`, `view = signal<DetailView>('detalle')`, `busy = signal(false)`, `paying = signal(false)`, `notes = signal('')`, `editingNotes = signal(false)`, `voiding = signal<SchoolPayment \| null>(null)`, `cancelling = signal(false)`, `reasonBusy = signal(false)`, `reasonError = signal<string \| null>(null)`, `editable = computed(() => { const q = this.quotation(); retur`, `canPay = computed(() => { const q = this.quotation(); retur`, `canCancel = computed(() => { const q = this.quotation(); retur`, `nextActions = computed<SchoolStatusAction[]>(() => { const q = t`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `id` | getter private | 146–148 | — | `string` |
-| `load` | método public | 150–155 | — | `void` |
-| `apply` | método private | 157–163 | `q: SchoolQuotation` | `void` |
-| `setView` | método public | 165–168 | `view: DetailView` | `void` |
-| `edit` | método public | 170–172 | — | `void` |
-| `pdf` | método public | 174–177 | `mode: 'download' \| 'print'` | `void` |
-| `receipt` | método public | 179–181 | `p: SchoolPayment` | `void` |
-| `onPaid` | método public | 183–195 | `result: { paymentId: string; quotation: SchoolQuotation }` | `void` |
-| `runAction` | método public async | 197–216 | `action: SchoolStatusAction` | `Promise<void>` |
-| `saveNotes` | método public | 218–234 | — | `void` |
-| `startVoid` | método public | 236–240 | `p: SchoolPayment` | `void` |
-| `startCancel` | método public | 242–246 | — | `void` |
-| `closeReason` | método public | 248–251 | — | `void` |
-| `onReason` | método public | 253–274 | `result: SchoolReasonResult` | `void` |
-| `canVoid` | método public | 276–285 | `p: SchoolPayment` | `boolean` |
-| `historyDetail` | método public | 287–306 | `entry: SchoolHistoryEntry` | `string` |
+| `id` | getter private | 183–185 | — | `string` |
+| `load` | método public | 187–192 | — | `void` |
+| `apply` | método public | 194–200 | `q: SchoolQuotation` | `void` |
+| `setView` | método public | 202–205 | `view: DetailView` | `void` |
+| `edit` | método public | 207–209 | — | `void` |
+| `pdf` | método public | 211–214 | `mode: 'download' \| 'print'` | `void` |
+| `receipt` | método public | 216–218 | `p: SchoolPayment` | `void` |
+| `onPaid` | método public | 220–232 | `result: { paymentId: string; quotation: SchoolQuotation }` | `void` |
+| `runAction` | método public async | 234–259 | `action: SchoolStatusAction` | `Promise<void>` |
+| `saveNotes` | método public | 261–277 | — | `void` |
+| `startVoid` | método public | 279–283 | `p: SchoolPayment` | `void` |
+| `startCancel` | método public | 285–289 | — | `void` |
+| `closeReason` | método public | 291–294 | — | `void` |
+| `onReason` | método public | 296–317 | `result: SchoolReasonResult` | `void` |
+| `canVoid` | método public | 319–328 | `p: SchoolPayment` | `boolean` |
+| `historyDetail` | método public | 330–353 | `entry: SchoolHistoryEntry` | `string` |
 
 ##### `SchoolQuotationDetailPageComponent.id`
 
-- **Firma:** `id(): string` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L146) (L146–148)
+- **Firma:** `id(): string` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L183) (L183–185)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.route.snapshot.paramMap.get`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -858,7 +1148,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.load`
 
-- **Firma:** `load(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L150) (L150–155)
+- **Firma:** `load(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L187) (L187–192)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.service.getQuotation(this.id).subscribe`, `this.service.getQuotation`, `this.apply`, `this.failed.set`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.failed.set`
@@ -866,15 +1156,15 @@
 
 ##### `SchoolQuotationDetailPageComponent.apply`
 
-- **Firma:** `apply(q: SchoolQuotation): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L157) (L157–163)
+- **Firma:** `apply(q: SchoolQuotation): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L194) (L194–200)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.quotation.set`, `this.failed.set`, `this.editingNotes`, `this.notes.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.quotation.set`, `this.failed.set`, `this.notes.set`
-- **Consumidores:** (mismo archivo)
+- **Consumidores:** `school-quotation-detail-page.component.html` (plantilla), (mismo archivo)
 
 ##### `SchoolQuotationDetailPageComponent.setView`
 
-- **Firma:** `setView(view: DetailView): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L165) (L165–168)
+- **Firma:** `setView(view: DetailView): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L202) (L202–205)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.view.set`, `this.router.navigate`
 - **Efectos secundarios:** Actualiza estado (signals): `this.view.set`
@@ -882,7 +1172,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.edit`
 
-- **Firma:** `edit(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L170) (L170–172)
+- **Firma:** `edit(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L207) (L207–209)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.router.navigate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -890,7 +1180,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.pdf`
 
-- **Firma:** `pdf(mode: 'download' \| 'print'): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L174) (L174–177)
+- **Firma:** `pdf(mode: 'download' \| 'print'): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L211) (L211–214)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.quotation`, `this.documents.quotation`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -898,7 +1188,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.receipt`
 
-- **Firma:** `receipt(p: SchoolPayment): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L179) (L179–181)
+- **Firma:** `receipt(p: SchoolPayment): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L216) (L216–218)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.documents.receipt`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -906,7 +1196,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.onPaid`
 
-- **Firma:** `onPaid(result: { paymentId: string; quotation: SchoolQuotation }): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L183) (L183–195)
+- **Firma:** `onPaid(result: { paymentId: string; quotation: SchoolQuotation }): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L220) (L220–232)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.paying.set`, `this.apply`, `result.quotation.payments.find`, `this.service.can`, `this.pdfPrompt.prompt`, `this.service.receiptPdf`
 - **Efectos secundarios:** Actualiza estado (signals): `this.paying.set`
@@ -914,15 +1204,15 @@
 
 ##### `SchoolQuotationDetailPageComponent.runAction`
 
-- **Firma:** `runAction(action: SchoolStatusAction): Promise<void>` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L197) (L197–216)
+- **Firma:** `runAction(action: SchoolStatusAction): Promise<void>` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L234) (L234–259)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.quotation`, `this.busy`, `this.confirm.confirm`, `this.busy.set`, `this.service.changeStatus(q.id, action, q.version).subscribe`, `this.service.changeStatus`, `this.apply`, `this.notifications.success`, `this.notifications.error`, `extractErrorMessage`, `this.load`
-- **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`
+- **Dependencias (llamadas en su cuerpo):** `this.quotation`, `this.busy`, `this.view.set`, `this.openDispatch.set`, `queueMicrotask`, `this.confirm.confirm`, `this.busy.set`, `this.service.changeStatus(q.id, action, q.version).subscribe`, `this.service.changeStatus`, `this.apply`, `this.notifications.success`, `this.notifications.error`, `extractErrorMessage`, `this.load`
+- **Efectos secundarios:** Actualiza estado (signals): `this.view.set`, `this.openDispatch.set`, `this.busy.set`
 - **Consumidores:** `school-quotation-detail-page.component.html` (plantilla)
 
 ##### `SchoolQuotationDetailPageComponent.saveNotes`
 
-- **Firma:** `saveNotes(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L218) (L218–234)
+- **Firma:** `saveNotes(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L261) (L261–277)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.quotation`, `this.busy`, `this.busy.set`, `this.service.updateObservations(q.id, this.notes().trim(), q.version).subscribe`, `this.service.updateObservations`, `this.notes().trim`, `this.notes`, `this.editingNotes.set`, `this.apply`, `this.notifications.success`, `this.notifications.error`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.busy.set`, `this.editingNotes.set`
@@ -930,7 +1220,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.startVoid`
 
-- **Firma:** `startVoid(p: SchoolPayment): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L236) (L236–240)
+- **Firma:** `startVoid(p: SchoolPayment): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L279) (L279–283)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.reasonError.set`, `crypto.randomUUID`, `this.voiding.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.reasonError.set`, `this.voiding.set`
@@ -938,7 +1228,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.startCancel`
 
-- **Firma:** `startCancel(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L242) (L242–246)
+- **Firma:** `startCancel(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L285) (L285–289)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.reasonError.set`, `crypto.randomUUID`, `this.cancelling.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.reasonError.set`, `this.cancelling.set`
@@ -946,7 +1236,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.closeReason`
 
-- **Firma:** `closeReason(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L248) (L248–251)
+- **Firma:** `closeReason(): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L291) (L291–294)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.voiding.set`, `this.cancelling.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.voiding.set`, `this.cancelling.set`
@@ -954,7 +1244,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.onReason`
 
-- **Firma:** `onReason(result: SchoolReasonResult): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L253) (L253–274)
+- **Firma:** `onReason(result: SchoolReasonResult): void` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L296) (L296–317)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.quotation`, `this.voiding`, `this.reasonBusy.set`, `this.reasonError.set`, `this.service.voidPayment(payment.id, result.reason, this.reasonRequestId).pipe`, `this.service.voidPayment`, `map`, `this.service.cancelQuotation`, `request.subscribe`, `this.apply`, `this.closeReason`, `this.notifications.success`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.reasonBusy.set`, `this.reasonError.set`
@@ -962,7 +1252,7 @@
 
 ##### `SchoolQuotationDetailPageComponent.canVoid`
 
-- **Firma:** `canVoid(p: SchoolPayment): boolean` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L276) (L276–285)
+- **Firma:** `canVoid(p: SchoolPayment): boolean` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L319) (L319–328)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.quotation`, `isSchoolQuotationEditable`, `this.service.can`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -970,9 +1260,9 @@
 
 ##### `SchoolQuotationDetailPageComponent.historyDetail`
 
-- **Firma:** `historyDetail(entry: SchoolHistoryEntry): string` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L287) (L287–306)
+- **Firma:** `historyDetail(entry: SchoolHistoryEntry): string` — [school-quotation-detail-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts#L330) (L330–353)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `formatCurrency`, `Number`, `money`, `String`
+- **Dependencias (llamadas en su cuerpo):** `formatCurrency`, `Number`, `money`, `String`, `String(d['source'] ?? '').toLowerCase`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** `school-quotation-detail-page.component.html` (plantilla)
 

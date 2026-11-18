@@ -1,9 +1,21 @@
 <div class="school">
-  <app-page-header
-    icon="book-open"
-    title="Listas Escolares"
-    subtitle="Listas oficiales por grado, cotizaciones personalizadas y control de anticipos, abonos y saldos de cada cliente."
-  />
+  <header class="hero">
+    <span class="hero__icon" aria-hidden="true"><app-icon name="graduation-cap" [size]="28" /></span>
+    <div class="hero__text">
+      <p class="hero__eyebrow">Listas Escolares</p>
+      <h1 class="hero__title">Cotizaciones de Listas Escolares</h1>
+      <p class="hero__subtitle">Listas oficiales por grado, cotizaciones personalizadas por cliente y control de anticipos, abonos, saldos y abastecimiento.</p>
+    </div>
+    @if (service.permissionsLoaded() && service.can('school_lists.view')) {
+      <div class="hero__actions">
+        <button type="button" class="hero__secondary" (click)="selectTab('abastecimiento')"><app-icon name="package" [size]="16" /> Abastecimiento</button>
+        <button type="button" class="hero__secondary" (click)="selectTab('plantillas')"><app-icon name="book-open" [size]="16" /> Plantillas</button>
+        @if (service.can('school_lists.quotations.create')) {
+          <button type="button" class="hero__primary" (click)="selectTab('nueva')"><app-icon name="plus" [size]="18" /> Nueva cotización</button>
+        }
+      </div>
+    }
+  </header>
 
   @if (loadError()) {
     <p class="school__error" role="alert">No se pudieron cargar sus permisos de Listas Escolares. Recargue la página.</p>
@@ -34,6 +46,9 @@
         }
         @case ('nueva') {
           <app-school-quotation-editor (saved)="onCreated($event)" />
+        }
+        @case ('abastecimiento') {
+          <app-school-supply [purchaseId]="purchaseId" />
         }
         @case ('plantillas') {
           <app-school-templates />

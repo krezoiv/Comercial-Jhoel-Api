@@ -7,7 +7,7 @@
 
     <div class="filters-grid">
       <div class="field field--wide">
-        <label for="qh-search">Buscar por número o cliente</label>
+        <label for="qh-search">Buscar por número, cliente, teléfono o estudiante</label>
         <input
           id="qh-search"
           type="text"
@@ -31,10 +31,9 @@
         <label for="qh-status">Estado</label>
         <select id="qh-status" [ngModel]="draftStatus()" (ngModelChange)="draftStatus.set($event)">
           <option value="ALL">Todas</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="ACEPTADA">Aceptada</option>
-          <option value="VENCIDA">Vencida</option>
-          <option value="ANULADA">Anulada</option>
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ statusLabel[s] }}</option>
+          }
         </select>
       </div>
     </div>
@@ -68,9 +67,14 @@
         </thead>
         <tbody>
           @for (quotation of quotations(); track quotation.id) {
-            <tr [class.history-table__row--voided]="quotation.status === 'ANULADA'">
+            <tr [class.history-table__row--voided]="quotation.status === 'CANCELADA'">
               <td class="history-table__number">{{ quotation.quotationNumber }}</td>
-              <td>{{ quotation.clientName }}</td>
+              <td>
+                {{ quotation.clientName }}
+                @if (quotation.customerPhone || quotation.studentName) {
+                  <div class="history-table__sub">{{ quotation.customerPhone }}{{ quotation.studentName ? ' · ' + quotation.studentName : '' }}</div>
+                }
+              </td>
               <td>{{ quotation.createdAt | date: 'dd/MM/yyyy' }}</td>
               <td>{{ quotation.expirationDate | date: 'dd/MM/yyyy' }}</td>
               <td class="align-right">{{ formatCurrency(quotation.total) }}</td>
@@ -92,11 +96,29 @@
                   >
                     <app-icon name="file-check" [size]="16" />
                   </button>
+                  @if (quotation.status === 'BORRADOR') {
+                    <button type="button" class="action-btn" title="Confirmar cotización" aria-label="Confirmar cotización" [disabled]="busyId() === quotation.id" (click)="runAction(quotation, 'CONFIRMAR')">
+                      <app-icon name="check" [size]="16" />
+                    </button>
+                  }
+                  @if (quotation.status === 'COTIZADA') {
+                    <button type="button" class="action-btn" title="Marcar como aceptada" aria-label="Marcar como aceptada" [disabled]="busyId() === quotation.id" (click)="runAction(quotation, 'ACEPTAR')">
+                      <app-icon name="check-circle" [size]="16" />
+                    </button>
+                  }
+                  @if (isSellable(quotation.status)) {
+                    <button type="button" class="action-btn action-btn--sale" title="Confirmar venta" aria-label="Confirmar venta" (click)="saleQuotationId.set(quotation.id)">
+                      <app-icon name="shopping-bag" [size]="16" />
+                    </button>
+                    <button type="button" class="action-btn" title="Rechazada por el cliente" aria-label="Rechazar cotización" (click)="rejectTarget.set(quotation)">
+                      <app-icon name="rotate-ccw" [size]="16" />
+                    </button>
+                  }
                   @if (isAdmin()) {
                     <button
                       type="button"
                       class="action-btn action-btn--danger"
-                      [disabled]="quotation.status === 'ANULADA'"
+                      [disabled]="quotation.status === 'CANCELADA' || quotation.status === 'VENDIDA'"
                       (click)="requestVoid(quotation)"
                       title="Anular"
                     >
@@ -116,6 +138,18 @@
 </div>
 
 <app-quotation-detail-modal [quotationId]="detailQuotationId()" (closed)="closeDetail()" />
+
+<app-quotation-sale-modal [quotationId]="saleQuotationId()" (closed)="saleQuotationId.set(null)" (sold)="onSold()" />
+
+<app-quotation-void-reason-modal
+  [open]="rejectTarget() !== null"
+  [quotationNumber]="rejectTarget()?.quotationNumber || ''"
+  title="Rechazar cotización"
+  description="La cotización quedará como rechazada por el cliente y se conserva en el historial. No afecta el inventario."
+  confirmText="Marcar como rechazada"
+  (confirmed)="confirmReject($event)"
+  (cancelled)="rejectTarget.set(null)"
+/>
 
 <app-quotation-void-reason-modal
   [open]="voidTarget() !== null"

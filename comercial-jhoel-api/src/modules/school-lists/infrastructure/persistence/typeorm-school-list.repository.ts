@@ -7,12 +7,24 @@ import {
   DashboardRow,
   FindQuotationsOptions,
   HistoryRow,
+  ListInventoryMovementRow,
+  DispatchRow,
+  FindSupplyProductsOptions,
+  QuotationSupplyRow,
+  SupplyAllocationMode,
+  SupplyAllocationRow,
+  SupplyLineRow,
+  SupplyProductListRow,
+  SupplyProductRow,
+  SupplyPurchaseRow,
+  SupplySummary,
   Paginated,
   PaymentInput,
   PaymentRow,
   QuotationDetailRow,
   QuotationInput,
   QuotationItemRow,
+  QuotationSortField,
   QuotationSummaryRow,
   SchoolAccountStatus,
   SchoolListRepository,
@@ -83,13 +95,56 @@ const PAID_SQL = `COALESCE((
                   WHEN p.kind = 'DEVOLUCION' THEN -p.amount ELSE 0 END)
     FROM school_quotation_payments p WHERE p.quotation_id = q.id), 0)`;
 
+/** Applied anticipos of a quotation (an annulled anticipo is ANULADO and does not count). */
+const ADVANCE_SQL = `COALESCE((
+  SELECT SUM(p.amount) FROM school_quotation_payments p
+   WHERE p.quotation_id = q.id AND p.kind = 'ANTICIPO' AND p.status = 'APLICADO'), 0)`;
+
+/**
+ * ORDER BY expression per sortable column. Only these fixed strings reach the
+ * SQL (the DTO whitelists the field), so the column is never user text.
+ */
+const QUOTATION_SORT_SQL: Record<QuotationSortField, string> = {
+  number: 'q.quotation_number',
+  customer: 'lower(q.customer_name)',
+  grade: 'q.grade',
+  date: 'q.quotation_date',
+  total: 'q.total',
+  balance: `(CASE WHEN q.status = 'CANCELADA' THEN 0 ELSE q.total - ${PAID_SQL} END)`,
+  status: 'q.status',
+};
+
+/**
+ * Product, SKU and category of a line, read from the live relation
+ * products.category_id -> categories (LEFT JOIN: free-text lines have none).
+ */
+const LINE_PRODUCT_JOIN = `
+  LEFT JOIN products lp ON lp.id = i.product_id
+  LEFT JOIN categories lc ON lc.id = lp.category_id`;
+const LINE_PRODUCT_COLUMNS = `lp.sku AS product_sku, lc.id AS category_id, lc.name AS category_name`;
+
+/** Maps the LINE_PRODUCT_COLUMNS of a template or quotation line row. */
+function lineProduct(row: SqlRow): {
+  productSku: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
+} {
+  return {
+    productSku: textOrNull(row.product_sku),
+    categoryId: textOrNull(row.category_id),
+    categoryName: textOrNull(row.category_name),
+  };
+}
+
 const QUOTATION_SELECT = `
   SELECT q.id, q.quotation_number, q.quotation_date::text AS quotation_date,
          q.delivery_date::text AS delivery_date, q.customer_name, q.customer_phone, q.student_name,
          q.grade, q.template_id, q.template_name, q.subtotal, q.discount, q.total, q.status,
          q.version, q.observations, q.created_at, q.updated_at, q.finished_at, q.delivered_at, q.cancelled_at,
          q.cancel_reason, cu.username AS created_by_username, du.username AS delivered_by_username,
-         xu.username AS cancelled_by_username, tu.username AS finished_by_username, ${PAID_SQL} AS paid
+         xu.username AS cancelled_by_username, tu.username AS finished_by_username,
+         q.confirmed_at, school_quotation_supply_status(q.id) AS supply_status, ${PAID_SQL} AS paid,
+         ${ADVANCE_SQL} AS advance
     FROM school_quotations q
     JOIN users cu ON cu.id = q.created_by
     LEFT JOIN users du ON du.id = q.delivered_by
@@ -124,10 +179,14 @@ function toSummary(row: SqlRow): QuotationSummaryRow {
     templateId: textOrNull(row.template_id),
     templateName: textOrNull(row.template_name),
     total,
+    advance: num(row.advance),
     paid,
     balance,
     status,
     accountStatus: accountStatus(status, paid, balance),
+    supplyStatus: text(
+      row.supply_status,
+    ) as QuotationSummaryRow['supplyStatus'],
     version: num(row.version),
     createdAt: text(row.created_at),
     createdByUsername: text(row.created_by_username),
@@ -203,9 +262,8 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       return null;
     }
     const items = await this.dataSource.query<SqlRow[]>(
-      `SELECT i.*, CASE WHEN pr.is_active THEN pr.public_price END AS inventory_price
-         FROM school_list_template_items i
-         LEFT JOIN products pr ON pr.id = i.product_id
+      `SELECT i.*, CASE WHEN lp.is_active THEN lp.public_price END AS inventory_price, ${LINE_PRODUCT_COLUMNS}
+         FROM school_list_template_items i ${LINE_PRODUCT_JOIN}
         WHERE i.template_id = $1 ORDER BY i.line_no`,
       [id],
     );
@@ -222,6 +280,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
         subtotal: num(item.subtotal),
         observations: textOrNull(item.observations),
         inventoryPrice: numOrNull(item.inventory_price),
+        ...lineProduct(item),
       })),
     };
   }
@@ -272,8 +331,9 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       where.push(clause.replace('?', `$${params.length}`));
     };
     if (options.search) {
+      // Customer, student or quotation number (one search box in the list).
       add(
-        `(q.customer_name ILIKE ? OR q.student_name ILIKE $${params.length + 1})`,
+        `(q.customer_name ILIKE ? OR q.student_name ILIKE $${params.length + 1} OR q.quotation_number ILIKE $${params.length + 1})`,
         `%${options.search}%`,
       );
     }
@@ -292,6 +352,9 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     if (options.status) {
       add(`q.status = ?`, options.status);
     }
+    if (options.supplyStatus) {
+      add(`school_quotation_supply_status(q.id) = ?`, options.supplyStatus);
+    }
     if (options.dateFrom) {
       add(`q.quotation_date >= ?::date`, options.dateFrom);
     }
@@ -303,9 +366,12 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       `SELECT count(*)::int AS count FROM school_quotations q ${filter}`,
       params,
     );
+    const order = options.sortBy
+      ? `${QUOTATION_SORT_SQL[options.sortBy]} ${options.sortDirection === 'asc' ? 'ASC' : 'DESC'},`
+      : '';
     const rows = await this.dataSource.query<SqlRow[]>(
       `${QUOTATION_SELECT} ${filter}
-        ORDER BY q.quotation_date DESC, q.created_at DESC
+        ORDER BY ${order} q.quotation_date DESC, q.created_at DESC
         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, options.limit, (options.page - 1) * options.limit],
     );
@@ -325,9 +391,11 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     if (!row) {
       return null;
     }
-    const [items, payments, history] = await Promise.all([
+    const [items, payments, history, inventory, supply] = await Promise.all([
       this.dataSource.query<SqlRow[]>(
-        `SELECT * FROM school_quotation_items WHERE quotation_id = $1 ORDER BY line_no`,
+        `SELECT i.*, ${LINE_PRODUCT_COLUMNS}
+           FROM school_quotation_items i ${LINE_PRODUCT_JOIN}
+          WHERE i.quotation_id = $1 ORDER BY i.line_no`,
         [id],
       ),
       this.dataSource.query<SqlRow[]>(
@@ -340,6 +408,17 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
           WHERE h.entity_type = 'QUOTATION' AND h.entity_id = $1 ORDER BY h.id DESC`,
         [id],
       ),
+      this.dataSource.query<SqlRow[]>(
+        `SELECT m.id, m.product_id, p.name AS product_name, m.movement_type,
+                m.quantity_base_units, m.reason, m.created_at, u.username
+           FROM inventory_movements m
+           JOIN products p ON p.id = m.product_id
+           JOIN users u ON u.id = m.user_id
+          WHERE m.reference_type = 'SCHOOL_LIST' AND m.reference_id = $1
+          ORDER BY m.created_at, m.id`,
+        [id],
+      ),
+      this.supplyOf(id, text(row.supply_status), textOrNull(row.confirmed_at)),
     ]);
 
     const summary = toSummary(row);
@@ -394,6 +473,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
         discount: num(item.discount),
         subtotal: num(item.subtotal),
         observations: textOrNull(item.observations),
+        ...lineProduct(item),
       })),
       payments: paymentRows,
       history: history.map((entry): HistoryRow => ({
@@ -405,8 +485,382 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
         createdAt: text(entry.created_at),
         createdByUsername: text(entry.created_by_username),
       })),
+      inventory: inventory.map((m) => ({
+        id: text(m.id),
+        productId: text(m.product_id),
+        productName: text(m.product_name),
+        movementType: text(
+          m.movement_type,
+        ) as ListInventoryMovementRow['movementType'],
+        quantity: num(m.quantity_base_units),
+        reason: textOrNull(m.reason),
+        createdAt: text(m.created_at),
+        username: text(m.username),
+      })),
+      supply,
       account,
     };
+  }
+
+  /** Supply section of a list: per-product commitment, reservations, deliveries and the dispatch. */
+  private async supplyOf(
+    id: string,
+    status: string,
+    confirmedAt: string | null,
+  ): Promise<QuotationSupplyRow> {
+    const [lines, uncontrolled, allocations, dispatches] = await Promise.all([
+      this.dataSource.query<SqlRow[]>(
+        `SELECT i.product_id, max(i.product_name) AS product_name, SUM(i.quantity)::int AS requested,
+                COALESCE((SELECT SUM(a.quantity) FROM school_supply_allocations a
+                           WHERE a.quotation_id = $1 AND a.product_id = i.product_id AND a.status = 'ASIGNADA'), 0)::int AS allocated,
+                COALESCE((SELECT SUM(di.delivered) FROM school_dispatch_items di
+                            JOIN school_dispatches d ON d.id = di.dispatch_id
+                           WHERE d.quotation_id = $1 AND di.product_id = i.product_id), 0)::int AS delivered
+           FROM school_quotation_items i
+          WHERE i.quotation_id = $1 AND i.product_id IS NOT NULL
+          GROUP BY i.product_id ORDER BY 2`,
+        [id],
+      ),
+      this.dataSource.query<SqlRow[]>(
+        `SELECT count(*)::int AS n FROM school_quotation_items WHERE quotation_id = $1 AND product_id IS NULL`,
+        [id],
+      ),
+      this.dataSource.query<SqlRow[]>(
+        `SELECT a.*, p.name AS product_name, u.username, pu.invoice_number, pu.purchase_date
+           FROM school_supply_allocations a
+           JOIN products p ON p.id = a.product_id
+           JOIN users u ON u.id = a.created_by
+           LEFT JOIN purchases pu ON pu.id = a.purchase_id
+          WHERE a.quotation_id = $1
+          ORDER BY a.created_at, a.id`,
+        [id],
+      ),
+      this.dataSource.query<SqlRow[]>(
+        `SELECT d.*, u.username,
+                (SELECT jsonb_agg(jsonb_build_object('productId', di.product_id, 'productName', di.product_name,
+                        'requested', di.requested, 'supplied', di.supplied, 'delivered', di.delivered,
+                        'inventoryControlled', di.inventory_controlled) ORDER BY di.product_name)
+                   FROM school_dispatch_items di WHERE di.dispatch_id = d.id) AS items
+           FROM school_dispatches d JOIN users u ON u.id = d.dispatched_by
+          WHERE d.quotation_id = $1`,
+        [id],
+      ),
+    ]);
+    const dispatch = dispatches[0];
+    return {
+      status: status as QuotationSupplyRow['status'],
+      confirmedAt,
+      lines: lines.map((l): SupplyLineRow => {
+        const requested = num(l.requested);
+        const allocated = num(l.allocated);
+        const delivered = num(l.delivered);
+        return {
+          productId: text(l.product_id),
+          productName: text(l.product_name),
+          requested,
+          allocated,
+          delivered,
+          pending: Math.max(requested - allocated - delivered, 0),
+        };
+      }),
+      uncontrolledLines: num(uncontrolled[0]?.n),
+      allocations: allocations.map((a): SupplyAllocationRow => ({
+        id: text(a.id),
+        productId: text(a.product_id),
+        productName: text(a.product_name),
+        quantity: num(a.quantity),
+        sourceType: text(a.source_type) as SupplyAllocationRow['sourceType'],
+        mode: text(a.mode) as SupplyAllocationRow['mode'],
+        status: text(a.status) as SupplyAllocationRow['status'],
+        purchaseId: textOrNull(a.purchase_id),
+        purchaseInvoice: textOrNull(a.invoice_number),
+        purchaseDate: textOrNull(a.purchase_date),
+        createdAt: text(a.created_at),
+        username: text(a.username),
+        releasedAt: textOrNull(a.released_at),
+        releaseReason: textOrNull(a.release_reason),
+      })),
+      dispatch: dispatch
+        ? {
+            id: text(dispatch.id),
+            dispatchedAt: text(dispatch.dispatched_at),
+            username: text(dispatch.username),
+            observations: textOrNull(dispatch.observations),
+            items: (dispatch.items as DispatchRow['items']) ?? [],
+          }
+        : null,
+    };
+  }
+
+  // ── Supply ─────────────────────────────────────────────────────────────
+  async supplyProducts(
+    options: FindSupplyProductsOptions,
+  ): Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }> {
+    const params: unknown[] = [];
+    const listFilter: string[] = [];
+    const productFilter: string[] = [];
+    const bind = (value: unknown) => {
+      params.push(value);
+      return `$${params.length}`;
+    };
+    if (options.quotationNumber) {
+      listFilter.push(
+        `c.quotation_number ILIKE ${bind(`%${options.quotationNumber}%`)}`,
+      );
+    }
+    if (options.dateFrom) {
+      listFilter.push(
+        `(c.confirmed_at AT TIME ZONE 'America/Guatemala')::date >= ${bind(options.dateFrom)}::date`,
+      );
+    }
+    if (options.dateTo) {
+      listFilter.push(
+        `(c.confirmed_at AT TIME ZONE 'America/Guatemala')::date <= ${bind(options.dateTo)}::date`,
+      );
+    }
+    if (options.search) {
+      const term = bind(`%${options.search}%`);
+      productFilter.push(`(p.name ILIKE ${term} OR p.sku ILIKE ${term})`);
+    }
+    if (options.categoryId) {
+      productFilter.push(`p.category_id = ${bind(options.categoryId)}`);
+    }
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `WITH c AS (
+         SELECT * FROM school_supply_commitments c ${listFilter.length ? `WHERE ${listFilter.join(' AND ')}` : ''}
+       ), agg AS (
+         SELECT product_id, SUM(committed)::int AS committed, SUM(allocated)::int AS allocated,
+                SUM(pending)::int AS pending, COUNT(DISTINCT quotation_id)::int AS lists,
+                MIN(confirmed_at) AS first_order_at, MAX(confirmed_at) AS last_order_at,
+                array_agg(DISTINCT quotation_id) FILTER (WHERE pending > 0) AS pending_lists
+           FROM c GROUP BY product_id
+       )
+       SELECT agg.*, p.name AS product_name, p.sku, cat.name AS category,
+              COALESCE((SELECT s.quantity FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id
+                         WHERE s.product_id = p.id AND l.name = 'Bodega'), 0) AS bodega,
+              school_supply_free_units(p.id) AS free_units
+         FROM agg
+         JOIN products p ON p.id = agg.product_id
+         JOIN categories cat ON cat.id = p.category_id
+        ${productFilter.length ? `WHERE ${productFilter.join(' AND ')}` : ''}
+        ORDER BY agg.pending DESC, p.name`,
+      params,
+    );
+    const all = rows
+      .map((r): SupplyProductRow => {
+        const pending = num(r.pending);
+        const allocated = num(r.allocated);
+        return {
+          productId: text(r.product_id),
+          productName: text(r.product_name),
+          sku: textOrNull(r.sku),
+          category: text(r.category),
+          bodega: num(r.bodega),
+          committed: num(r.committed),
+          allocated,
+          pending,
+          freeUnits: num(r.free_units),
+          lists: num(r.lists),
+          firstOrderAt: textOrNull(r.first_order_at),
+          lastOrderAt: textOrNull(r.last_order_at),
+          status:
+            pending === 0
+              ? 'ABASTECIDO'
+              : allocated > 0
+                ? 'PARCIAL'
+                : 'PENDIENTE',
+        };
+      })
+      .filter((r) => !options.status || r.status === options.status);
+    // Lists with something still pending, per product (for "listas afectadas").
+    const pendingLists = new Map(
+      rows.map((r) => [
+        text(r.product_id),
+        ((r.pending_lists as string[] | null) ?? []).map(String),
+      ]),
+    );
+    const summary: SupplySummary = {
+      pendingProducts: all.filter((r) => r.pending > 0).length,
+      pendingUnits: all.reduce((sum, r) => sum + r.pending, 0),
+      affectedLists: new Set(
+        all.flatMap((r) => pendingLists.get(r.productId) ?? []),
+      ).size,
+      suppliedProducts: all.filter((r) => r.status === 'ABASTECIDO').length,
+      partialProducts: all.filter((r) => r.status === 'PARCIAL').length,
+    };
+    const start = (options.page - 1) * options.limit;
+    return {
+      items: all.slice(start, start + options.limit),
+      total: all.length,
+      page: options.page,
+      limit: options.limit,
+      summary,
+    };
+  }
+
+  async supplyProductLists(productId: string): Promise<SupplyProductListRow[]> {
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `SELECT c.quotation_id, c.quotation_number, q.customer_name, q.grade, c.confirmed_at,
+              c.committed, c.allocated, c.pending, school_quotation_supply_status(q.id) AS supply_status
+         FROM school_supply_commitments c JOIN school_quotations q ON q.id = c.quotation_id
+        WHERE c.product_id = $1
+        ORDER BY c.confirmed_at NULLS LAST, c.quotation_number`,
+      [productId],
+    );
+    return rows.map((r) => ({
+      quotationId: text(r.quotation_id),
+      quotationNumber: text(r.quotation_number),
+      customerName: text(r.customer_name),
+      grade: text(r.grade),
+      confirmedAt: textOrNull(r.confirmed_at),
+      committed: num(r.committed),
+      allocated: num(r.allocated),
+      pending: num(r.pending),
+      supplyStatus: text(
+        r.supply_status,
+      ) as SupplyProductListRow['supplyStatus'],
+    }));
+  }
+
+  async supplyPurchases(options: {
+    purchaseId?: string;
+    page: number;
+    limit: number;
+  }): Promise<Paginated<SupplyPurchaseRow>> {
+    const where = options.purchaseId
+      ? `pu.id = $1`
+      : `EXISTS (SELECT 1 FROM school_supply_allocations x WHERE x.purchase_id = pu.id)`;
+    const params: unknown[] = options.purchaseId ? [options.purchaseId] : [];
+    const base = `
+      FROM purchases pu
+      JOIN inventory_movements m ON m.reference_type = 'PURCHASE' AND m.reference_id = pu.id
+                                AND m.movement_type = 'ENTRADA_COMPRA'
+      JOIN products pr ON pr.id = m.product_id
+     WHERE ${where}`;
+    const [{ count }] = await this.dataSource.query<SqlRow[]>(
+      `SELECT count(*)::int AS count ${base}`,
+      params,
+    );
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `SELECT pu.id AS purchase_id, pu.invoice_number, pu.purchase_date, m.product_id, pr.name AS product_name,
+              m.quantity_base_units AS purchased,
+              COALESCE((SELECT SUM(a.quantity) FROM school_supply_allocations a
+                         WHERE a.source_movement_id = m.id AND a.status <> 'LIBERADA'), 0)::int AS allocated,
+              COALESCE((SELECT jsonb_agg(jsonb_build_object('quotationId', q.id, 'quotationNumber', q.quotation_number,
+                                'customerName', q.customer_name, 'quantity', a.quantity, 'status', a.status)
+                                ORDER BY q.confirmed_at, q.quotation_number)
+                          FROM school_supply_allocations a JOIN school_quotations q ON q.id = a.quotation_id
+                         WHERE a.source_movement_id = m.id), '[]'::jsonb) AS lists
+       ${base}
+       ORDER BY pu.purchase_date DESC, pu.id, pr.name
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, options.limit, (options.page - 1) * options.limit],
+    );
+    return {
+      items: rows.map((r) => ({
+        purchaseId: text(r.purchase_id),
+        invoiceNumber: textOrNull(r.invoice_number),
+        purchaseDate: text(r.purchase_date),
+        productId: text(r.product_id),
+        productName: text(r.product_name),
+        purchased: num(r.purchased),
+        allocated: num(r.allocated),
+        lists: (r.lists as SupplyPurchaseRow['lists']) ?? [],
+      })),
+      total: num(count),
+      page: options.page,
+      limit: options.limit,
+    };
+  }
+
+  async supplyMode(): Promise<SupplyAllocationMode> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `SELECT allocation_mode FROM school_supply_settings WHERE id = 1`,
+    );
+    return text(row?.allocation_mode ?? 'FIFO_AUTO') as SupplyAllocationMode;
+  }
+
+  async setSupplyMode(
+    mode: SupplyAllocationMode,
+    userId: string,
+  ): Promise<SupplyAllocationMode> {
+    return (await this.scalar(`SELECT set_school_supply_mode($1, $2) AS id`, [
+      mode,
+      userId,
+    ])) as SupplyAllocationMode;
+  }
+
+  async runFifo(productId: string | null, userId: string): Promise<number> {
+    return Number(
+      await this.scalar(`SELECT run_school_supply_fifo($1, $2) AS id`, [
+        productId,
+        userId,
+      ]),
+    );
+  }
+
+  async allocatePurchase(purchaseId: string, userId: string): Promise<number> {
+    return Number(
+      await this.scalar(
+        `SELECT allocate_school_supply_purchase($1, $2) AS id`,
+        [purchaseId, userId],
+      ),
+    );
+  }
+
+  async allocateManual(
+    input: {
+      quotationId: string;
+      productId: string;
+      quantity: number;
+      purchaseId: string | null;
+    },
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<string> {
+    return this.scalar(
+      `SELECT allocate_school_supply_manual($1, $2, $3, $4, $5, $6) AS id`,
+      [
+        input.quotationId,
+        input.productId,
+        input.quantity,
+        input.purchaseId,
+        userId,
+        idempotencyKey,
+      ],
+    );
+  }
+
+  async dispatch(
+    quotationId: string,
+    observations: string | null,
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<string> {
+    return this.scalar(
+      `SELECT dispatch_school_quotation($1, $2, $3, $4) AS id`,
+      [quotationId, userId, observations, idempotencyKey],
+    );
+  }
+
+  async bodegaStock(
+    productIds: string[],
+  ): Promise<{ productId: string; quantity: number }[]> {
+    if (!productIds.length) {
+      return [];
+    }
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `SELECT p.id AS product_id, COALESCE(s.quantity, 0) AS quantity
+         FROM products p
+         LEFT JOIN inventory_locations l ON l.name = 'Bodega'
+         LEFT JOIN inventory_stock s ON s.product_id = p.id AND s.location_id = l.id
+        WHERE p.id = ANY($1::uuid[])`,
+      [productIds],
+    );
+    return rows.map((r) => ({
+      productId: text(r.product_id),
+      quantity: num(r.quantity),
+    }));
   }
 
   async createQuotation(
@@ -526,6 +980,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
           WHERE q.quotation_date BETWEEN $1::date AND $2::date
        )
        SELECT count(*) AS total_quotations,
+              count(*) FILTER (WHERE status IN ('BORRADOR','COTIZADA')) AS awaiting_quotations,
               count(*) FILTER (WHERE status IN ('COTIZADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION','TERMINADA')
                                  AND total > paid) AS pending_quotations,
               count(*) FILTER (WHERE status IN ('PAGADA','ENTREGADA')
@@ -562,6 +1017,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     ]);
     return {
       totalQuotations: num(totals.total_quotations),
+      awaitingQuotations: num(totals.awaiting_quotations),
       pendingQuotations: num(totals.pending_quotations),
       paidQuotations: num(totals.paid_quotations),
       totalQuoted: num(totals.total_quoted),

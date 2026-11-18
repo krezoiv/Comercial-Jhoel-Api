@@ -7,26 +7,30 @@ flowchart LR
   n1[("inventory_stock")]
   n2["Inventario<br/><small>api/inventory</small>"]
   n3["Compras<br/><small>api/purchases</small>"]
-  n4["Ventas<br/><small>api/sales</small>"]
-  n5[("products")]
-  n6["Productos<br/><small>api/products</small>"]
-  n7["school-lists<br/><small>api/school-lists</small>"]
-  n8["Unidades de medida<br/><small>api/units-of-measure</small>"]
-  n9[("sale_details")]
-  n10["Caja de ventas<br/><small>api/sales-cash-box</small>"]
-  n11[("sales")]
+  n4["Cotizaciones<br/><small>api/quotations</small>"]
+  n5["Ventas<br/><small>api/sales</small>"]
+  n6["school-lists<br/><small>api/school-lists</small>"]
+  n7[("products")]
+  n8["Productos<br/><small>api/products</small>"]
+  n9["Unidades de medida<br/><small>api/units-of-measure</small>"]
+  n10[("sale_details")]
+  n11["Caja de ventas<br/><small>api/sales-cash-box</small>"]
+  n12[("sales")]
   n2 -->|consulta · entidad ORM …| n1
   n3 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n1
-  n4 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n1
-  n6 -->|consulta · entidad ORM| n5
-  n3 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n5
-  n4 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n5
-  n7 -->|consulta| n5
-  n8 -->|consulta| n5
-  n4 -->|consulta · entidad ORM …| n9
-  n10 -->|consulta| n9
-  n4 -->|consulta · entidad ORM …| n11
-  n10 -->|consulta| n11
+  n4 -->|consulta| n1
+  n5 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n1
+  n6 -->|consulta| n1
+  n8 -->|consulta · entidad ORM| n7
+  n3 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n7
+  n4 -->|consulta| n7
+  n5 -->|escribe vía adjust_sale_item() · escribe vía cancel_open_sale() …| n7
+  n6 -->|consulta| n7
+  n9 -->|consulta| n7
+  n5 -->|consulta · entidad ORM …| n10
+  n11 -->|consulta| n10
+  n5 -->|consulta · entidad ORM …| n12
+  n11 -->|consulta| n12
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -37,8 +41,8 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n1,n5,n9,n11 db
-  class n2,n3,n4,n6,n7,n8,n10 app
+  class n1,n7,n10,n12 db
+  class n2,n3,n4,n5,n6,n8,n9,n11 app
 ```
 
 ## Explicación

@@ -63,6 +63,9 @@ DECLARE
   v_q2 UUID;
   v_q3 UUID;
   v_q4 UUID;
+  v_q5 UUID;
+  v_bodega UUID;
+  v_vitrina_before BIGINT;
   v_p1 UUID;
   v_p2 UUID;
   v_p3 UUID;
@@ -76,6 +79,12 @@ BEGIN
     RAISE EXCEPTION 'Se necesita un usuario con rol USER para estas pruebas';
   END IF;
   SELECT id, public_price INTO v_product, v_product_price FROM products WHERE is_active ORDER BY created_at LIMIT 1;
+  -- Deterministic Bodega stock for the test product (rolled back at the end).
+  SELECT id INTO v_bodega FROM inventory_locations WHERE name = 'Bodega';
+  PERFORM ensure_inventory_stock_row(v_product, v_bodega);
+  UPDATE products SET stock = stock - (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega) + 10 WHERE id = v_product;
+  UPDATE inventory_stock SET quantity = 10 WHERE product_id = v_product AND location_id = v_bodega;
+  SELECT COALESCE(SUM(quantity), 0) INTO v_vitrina_before FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id WHERE l.name = 'Vitrina';
   SELECT COALESCE(SUM(stock), 0) INTO v_stock_before FROM products;
   SELECT count(*) INTO v_sales_before FROM sales;
 
@@ -257,15 +266,17 @@ BEGIN
 
   -- ── Entrega ─────────────────────────────────────────────────────────────
   PERFORM pg_temp.expect('T11 no se entrega con saldo pendiente',
-    pg_temp.err(format($f$SELECT change_school_quotation_status(%L, 'ENTREGAR', %L, NULL)$f$, v_q, v_user)),
-    'SCHOOL_QUOTE_INVALID_TRANSITION');
+    pg_temp.err(format($f$SELECT dispatch_school_quotation(%L, %L, NULL, 'K-DISP-T11-A')$f$, v_q, v_user)),
+    'SCHOOL_QUOTE_NOT_PAID');
   PERFORM change_school_quotation_status(v_q, 'PREPARAR', v_user, NULL);
   PERFORM pg_temp.expect('T11 en preparación con saldo: no se entrega',
-    pg_temp.errfull(format($f$SELECT change_school_quotation_status(%L, 'ENTREGAR', %L, NULL)$f$, v_q, v_user)),
+    pg_temp.errfull(format($f$SELECT dispatch_school_quotation(%L, %L, NULL, 'K-DISP-T11-B')$f$, v_q, v_user)),
     'SCHOOL_QUOTE_NOT_PAID:29.00');
   v_p3 := register_school_quotation_payment(v_q, 29, 'EFECTIVO', NULL, NULL, 'Cancela el saldo', v_user, 'K-ABONO-0003');
   PERFORM pg_temp.expect('T11 en preparación sigue en preparación al pagar todo', pg_temp.state(v_q), 'EN_PREPARACION 59.00 0.00');
-  PERFORM change_school_quotation_status(v_q, 'ENTREGAR', v_user, NULL);
+  PERFORM pg_temp.expect('T11 entregar por la vía vieja se redirige al despacho',
+    pg_temp.err(format($f$SELECT change_school_quotation_status(%L, 'ENTREGAR', %L, NULL)$f$, v_q, v_user)), 'SCHOOL_USE_DISPATCH');
+  PERFORM dispatch_school_quotation(v_q, v_user, 'Entregada en mostrador', 'K-DISP-T11-C');
   PERFORM pg_temp.expect('T11 entregada', (SELECT status || ' ' || (delivered_by = v_user) FROM school_quotations WHERE id = v_q), 'ENTREGADA true');
   PERFORM pg_temp.expect('T11 una entregada no recibe pagos',
     pg_temp.err(format($f$SELECT register_school_quotation_payment(%L, 1, 'EFECTIVO', NULL, NULL, NULL, %L, 'K-AFTER-001')$f$, v_q, v_user)),
@@ -328,23 +339,75 @@ BEGIN
   PERFORM pg_temp.expect('T16 terminar dos veces', pg_temp.err(format($f$SELECT change_school_quotation_status(%L, 'TERMINAR', %L, NULL)$f$, v_q4, v_user)),
     'SCHOOL_QUOTE_INVALID_TRANSITION');
   PERFORM pg_temp.expect('T16 terminada con saldo no se entrega',
-    pg_temp.errfull(format($f$SELECT change_school_quotation_status(%L, 'ENTREGAR', %L, NULL)$f$, v_q4, v_user)),
+    pg_temp.errfull(format($f$SELECT dispatch_school_quotation(%L, %L, NULL, 'K-DISP-T16-A')$f$, v_q4, v_user)),
     'SCHOOL_QUOTE_NOT_PAID:60.00');
   PERFORM register_school_quotation_payment(v_q4, 60, 'EFECTIVO', NULL, NULL, NULL, v_user, 'K-FIN-PAY-002');
   PERFORM pg_temp.expect('T16 al pagar todo sigue terminada', pg_temp.state(v_q4), 'TERMINADA 100.00 0.00');
-  PERFORM change_school_quotation_status(v_q4, 'ENTREGAR', v_user, NULL);
+  PERFORM dispatch_school_quotation(v_q4, v_user, NULL, 'K-DISP-T16-B');
   PERFORM pg_temp.expect('T16 terminada → entregada, historial completo',
     pg_temp.state(v_q4) || ' ' || (SELECT string_agg(action, ',' ORDER BY id) FROM school_list_history WHERE entity_id = v_q4),
-    'ENTREGADA 100.00 0.00 CREADA,PAGO,TERMINAR,PAGO,ENTREGAR');
+    'ENTREGADA 100.00 0.00 CREADA,PAGO,TERMINAR,PAGO,DESPACHO');
   PERFORM pg_temp.expect('T16 una pagada también puede pasar a terminada',
     change_school_quotation_status(v_q2, 'TERMINAR', v_admin, NULL), 'TERMINADA');
 
-  -- ── Sin impacto en inventario ni ventas ─────────────────────────────────
-  PERFORM pg_temp.expect('T15 inventario y ventas intactos',
-    ((SELECT COALESCE(SUM(stock), 0) FROM products) = v_stock_before AND (SELECT count(*) FROM sales) = v_sales_before)::TEXT, 'true');
+  -- ── Inventario de las listas (migración 1760008100000, Bodega) ──────────
+  PERFORM pg_temp.expect('T17 la lista guardada descontó sus productos de Bodega (texto libre no mueve nada)',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)
+      || ' ' || (SELECT string_agg(movement_type || '=' || quantity_base_units, ',') FROM inventory_movements
+                  WHERE reference_type = 'SCHOOL_LIST' AND reference_id = v_q2)
+      || ' ' || (SELECT count(*) FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST' AND reference_id = v_q),
+    '8 SALIDA_LISTA_ESCOLAR=2 0');
+  -- Migration 1760008300000: a list is saved even without stock; Bodega may go negative.
+  PERFORM create_school_quotation(
+    pg_temp.quote(NULL, jsonb_build_array(jsonb_build_object('productId', v_product, 'productName', 'Producto inventario', 'quantity', 9, 'unitPrice', v_product_price)), '{"grade":"Primero Básico"}'),
+    v_admin, 'K-STOCK-NO-01');
+  PERFORM pg_temp.expect('T17 existencias insuficientes: la lista se guarda y Bodega queda negativa',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)::TEXT, '-1');
+  PERFORM cancel_school_quotation((SELECT id FROM school_quotations WHERE idempotency_key = 'K-STOCK-NO-01'),
+    'Prueba de existencias negativas', NULL, NULL, NULL, v_admin, 'K-STOCK-NO-CANCEL');
+  PERFORM pg_temp.expect('T17 anularla devuelve Bodega a 8',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)::TEXT, '8');
+  v_q5 := create_school_quotation(pg_temp.quote(NULL, jsonb_build_array(
+            jsonb_build_object('productId', v_product, 'productName', 'Producto inventario', 'quantity', 3, 'unitPrice', v_product_price),
+            jsonb_build_object('productName', 'Forro plástico', 'quantity', 4, 'unitPrice', 2)), '{"grade":"Segundo Básico","asDraft":true}'),
+          v_user, 'K-INV-DRAFT-01');
+  PERFORM pg_temp.expect('T17 un borrador no descuenta',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)::TEXT, '8');
+  PERFORM change_school_quotation_status(v_q5, 'CONFIRMAR', v_user, NULL);
+  PERFORM pg_temp.expect('T17 confirmar el borrador descuenta',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)::TEXT, '5');
+  v_items := (SELECT jsonb_agg(jsonb_build_object('itemId', id, 'productId', product_id, 'productName', product_name,
+                     'quantity', CASE WHEN product_id IS NULL THEN quantity ELSE 1 END, 'unitPrice', unit_price) ORDER BY line_no)
+                FROM school_quotation_items WHERE quotation_id = v_q5);
+  PERFORM update_school_quotation(v_q5, pg_temp.quote(NULL, v_items), v_user, (SELECT version FROM school_quotations WHERE id = v_q5));
+  PERFORM pg_temp.expect('T17 editar mueve solo la diferencia (3 → 1 devuelve 2)',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)
+      || ' ' || (SELECT movement_type || '=' || quantity_base_units FROM inventory_movements
+                  WHERE reference_type = 'SCHOOL_LIST' AND reference_id = v_q5 ORDER BY created_at DESC, movement_type LIMIT 1),
+    '7 ENTRADA_AJUSTE_LISTA=2');
+  PERFORM cancel_school_quotation(v_q5, 'Lista anulada por el cliente', NULL, NULL, NULL, v_admin, 'K-INV-CANCEL-1');
+  PERFORM cancel_school_quotation(v_q5, 'Lista anulada por el cliente', NULL, NULL, NULL, v_admin, 'K-INV-CANCEL-1');
+  PERFORM pg_temp.expect('T17 anular devuelve exactamente lo descontado, una sola vez, con usuario y motivo',
+    (SELECT quantity FROM inventory_stock WHERE product_id = v_product AND location_id = v_bodega)
+      || ' ' || (SELECT count(*) || ':' || SUM(CASE WHEN location_from_id IS NOT NULL THEN quantity_base_units ELSE -quantity_base_units END)
+                  FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST' AND reference_id = v_q5)
+      || ' ' || (SELECT user_id = v_admin AND reason = 'Lista anulada por el cliente' FROM inventory_movements
+                  WHERE reference_type = 'SCHOOL_LIST' AND reference_id = v_q5 AND movement_type = 'ENTRADA_ANULACION_LISTA'),
+    '8 3:0 true');
+  PERFORM pg_temp.expect('T17 volver a sincronizar no mueve nada', school_quotation_sync_inventory(v_q5, v_admin, NULL)::TEXT, '0');
+  PERFORM pg_temp.expect('T17 una lista entregada no se anula',
+    pg_temp.err(format($f$SELECT cancel_school_quotation(%L, 'Intento de anular', 'EFECTIVO', NULL, NULL, %L, 'K-INV-CANCEL-2')$f$, v_q4, v_admin)),
+    'SCHOOL_QUOTE_CLOSED');
+
+  -- ── Ventas y Vitrina intactos; el total de existencias baja solo por la lista vigente ──
+  PERFORM pg_temp.expect('T15 sin ventas, Vitrina intacta, existencias = antes − 2 (lista vigente)',
+    ((SELECT COALESCE(SUM(stock), 0) FROM products) = v_stock_before - 2
+      AND (SELECT count(*) FROM sales) = v_sales_before
+      AND (SELECT COALESCE(SUM(quantity), 0) FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id WHERE l.name = 'Vitrina') = v_vitrina_before)::TEXT,
+    'true');
   PERFORM pg_temp.expect('T15 historial de la cotización completo',
     (SELECT string_agg(action, ',' ORDER BY id) FROM school_list_history WHERE entity_id = v_q),
-    'CREADA,PAGO,PAGO,PAGO,PAGO_ANULADO,EDITADA,PREPARAR,PAGO,ENTREGAR');
+    'CREADA,PAGO,PAGO,PAGO,PAGO_ANULADO,EDITADA,PREPARAR,PAGO,DESPACHO');
 
   RAISE NOTICE 'TODAS LAS PRUEBAS DE LISTAS ESCOLARES PASARON';
 END $$;

@@ -3,8 +3,11 @@ import {
   ArrayMinSize,
   IsArray,
   IsDateString,
+  IsBoolean,
   IsInt,
   IsOptional,
+  Matches,
+  MinLength,
   IsString,
   IsUUID,
   Min,
@@ -26,9 +29,39 @@ export class CreateQuotationItemRequestDto {
 }
 
 export class CreateQuotationRequestDto {
-  /** A quotation's client is always required — unlike a Ticket's optional one. */
+  /** Optional, legacy: a registered client. The form sends the typed-in customer below. */
+  @IsOptional()
   @IsUUID()
-  clientId: string;
+  clientId?: string;
+
+  /** Customer typed in on the quotation (no `clients` row is created). */
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(150)
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[+0-9 ()-]{8,20}$/, {
+    message: 'customerPhone no es un teléfono válido',
+  })
+  customerPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  studentName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  grade?: string;
+
+  /** Save as BORRADOR. */
+  @IsOptional()
+  @IsBoolean()
+  asDraft?: boolean;
 
   /** `yyyy-MM-dd` — validated against today both here (fast pre-check, `InvalidExpirationDateError`) and inside `create_quotation()` itself. */
   @IsDateString({ strict: true })

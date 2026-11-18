@@ -23,6 +23,10 @@ export interface QuotationPdfOptions {
   /** `yyyy-MM-dd` — a calendar date, formatted directly, never round-tripped through a JS `Date`. */
   expirationDate: string;
   clientName: string;
+  /** Typed-in customer details (migration 1760008200000); omitted lines are skipped. */
+  customerPhone?: string | null;
+  studentName?: string | null;
+  grade?: string | null;
   items: QuotationPdfItem[];
   subtotal: number;
   discount: number;
@@ -105,12 +109,9 @@ function drawDocumentInfo(
   doc.text(`Número: ${options.quotationNumber}`, startX, doc.y, {
     width: usableWidth,
   });
-  doc.text(
-    `Fecha: ${formatDateTime(options.quotationDate)}`,
-    startX,
-    doc.y,
-    { width: usableWidth },
-  );
+  doc.text(`Fecha: ${formatDateTime(options.quotationDate)}`, startX, doc.y, {
+    width: usableWidth,
+  });
   doc.text(
     `Válida hasta: ${formatIsoDate(options.expirationDate)}`,
     startX,
@@ -127,6 +128,15 @@ function drawDocumentInfo(
     .fontSize(9)
     .fillColor('#334155')
     .text(options.clientName, startX, doc.y, { width: usableWidth });
+  for (const line of [
+    options.customerPhone ? `Teléfono: ${options.customerPhone}` : null,
+    options.studentName ? `Estudiante: ${options.studentName}` : null,
+    options.grade ? `Grado: ${options.grade}` : null,
+  ]) {
+    if (line) {
+      doc.text(line, startX, doc.y, { width: usableWidth });
+    }
+  }
 
   doc.moveDown(0.6);
   drawDivider(doc);

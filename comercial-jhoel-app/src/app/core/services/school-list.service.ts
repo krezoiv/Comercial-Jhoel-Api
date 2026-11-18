@@ -6,7 +6,11 @@ import { environment } from '../../../environments/environment';
 import {
   ApiSuccessResponse,
   CreateSchoolQuotationInput,
+  PaginatedResponse,
   SaveSchoolTemplateInput,
+  SchoolCatalogFilters,
+  SchoolCatalogPage,
+  SchoolCatalogProduct,
   SchoolCancelInput,
   SchoolDashboard,
   SchoolListPermission,
@@ -18,6 +22,11 @@ import {
   SchoolStatusAction,
   SchoolTemplate,
   SchoolTemplateSummary,
+  SupplyAllocationMode,
+  SupplyProductFilters,
+  SupplyProductList,
+  SupplyProductPage,
+  SupplyPurchase,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/school-lists`;
@@ -165,6 +174,112 @@ export class SchoolListService {
         { reason, clientRequestId },
       )
       .pipe(map((r) => r.data));
+  }
+
+  // ── Supply (abastecimiento) ──────────────────────────────────────────────
+  supplyProducts(filters: SupplyProductFilters): Observable<SupplyProductPage> {
+    return this.http
+      .get<ApiSuccessResponse<SupplyProductPage>>(`${BASE_URL}/supply/products`, { params: toParams(filters) })
+      .pipe(map((r) => r.data));
+  }
+
+  supplyProductLists(productId: string): Observable<SupplyProductList[]> {
+    return this.http
+      .get<ApiSuccessResponse<SupplyProductList[]>>(`${BASE_URL}/supply/products/${productId}/lists`)
+      .pipe(map((r) => r.data));
+  }
+
+  supplyPurchases(purchaseId?: string, page = 1, limit = 10): Observable<{ items: SupplyPurchase[]; total: number; page: number; limit: number }> {
+    return this.http
+      .get<ApiSuccessResponse<{ items: SupplyPurchase[]; total: number; page: number; limit: number }>>(`${BASE_URL}/supply/purchases`, {
+        params: toParams({ purchaseId, page, limit }),
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  supplySettings(): Observable<{ allocationMode: SupplyAllocationMode }> {
+    return this.http
+      .get<ApiSuccessResponse<{ allocationMode: SupplyAllocationMode }>>(`${BASE_URL}/supply/settings`)
+      .pipe(map((r) => r.data));
+  }
+
+  setSupplyMode(allocationMode: SupplyAllocationMode): Observable<{ allocationMode: SupplyAllocationMode }> {
+    return this.http
+      .put<ApiSuccessResponse<{ allocationMode: SupplyAllocationMode }>>(`${BASE_URL}/supply/settings`, { allocationMode })
+      .pipe(map((r) => r.data));
+  }
+
+  /** FIFO with free Bodega units (one product, or all with pending lists). */
+  runFifo(productId?: string): Observable<{ allocated: number }> {
+    return this.http
+      .post<ApiSuccessResponse<{ allocated: number }>>(`${BASE_URL}/supply/fifo`, { productId })
+      .pipe(map((r) => r.data));
+  }
+
+  allocatePurchase(purchaseId: string): Observable<{ allocated: number }> {
+    return this.http
+      .post<ApiSuccessResponse<{ allocated: number }>>(`${BASE_URL}/supply/purchases/${purchaseId}/allocate`, {})
+      .pipe(map((r) => r.data));
+  }
+
+  allocateManual(input: {
+    quotationId: string;
+    productId: string;
+    quantity: number;
+    purchaseId?: string;
+    clientRequestId: string;
+  }): Observable<SchoolQuotation> {
+    return this.http.post<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/supply/allocations`, input).pipe(map((r) => r.data));
+  }
+
+  /** "Preparar y despachar lista" (= entrega). */
+  dispatch(id: string, observations: string | null, clientRequestId: string): Observable<SchoolQuotation> {
+    return this.http
+      .post<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/dispatch`, {
+        observations: observations || undefined,
+        clientRequestId,
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Bodega stock of the given products (lists take their stock from Bodega). */
+  bodegaStock(productIds: string[]): Observable<{ productId: string; quantity: number }[]> {
+    return this.http
+      .get<ApiSuccessResponse<{ productId: string; quantity: number }[]>>(`${BASE_URL}/stock`, {
+        params: toParams({ productIds: productIds.join(',') }),
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  // ── Product catalog ("Cambiar producto") ─────────────────────────────────
+  /**
+   * One page of active inventory products, optionally restricted to a
+   * category and to a name/SKU search. Reuses the existing `GET /products`
+   * (server-side `categoryId`, `search`, `page`, `limit`, active only), so the
+   * modal never loads the whole inventory.
+   *
+   * @param filters category id, search text, page (1-based) and page size
+   * @returns the page with each product's real category from the database
+   */
+  catalogProducts(filters: SchoolCatalogFilters): Observable<SchoolCatalogPage> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResponse<SchoolCatalogProduct & Record<string, unknown>>>>(
+        `${environment.apiUrl}/products`,
+        { params: toParams({ ...filters, sortBy: 'name', sortDirection: 'asc' }) },
+      )
+      .pipe(
+        map((r) => ({
+          ...r.data,
+          items: r.data.items.map((p) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            categoryId: p.categoryId,
+            categoryName: p.categoryName,
+            publicPrice: Number(p.publicPrice),
+          })),
+        })),
+      );
   }
 
   // ── Documents ────────────────────────────────────────────────────────────

@@ -12,9 +12,12 @@ import {
 import type { QuotationStatusFilter } from '../../domain/repositories/quotation.repository';
 
 const STATUS_VALUES: QuotationStatusFilter[] = [
-  'PENDIENTE',
+  'BORRADOR',
+  'COTIZADA',
   'ACEPTADA',
-  'ANULADA',
+  'VENDIDA',
+  'RECHAZADA',
+  'CANCELADA',
   'VENCIDA',
 ];
 

@@ -97,7 +97,7 @@ erDiagram
 
 - **Entidad TypeORM:** [PurchaseOrmEntity](../reference/backend/purchases.md#f-comercial-jhoel-api-src-modules-purchases-infrastructure-persistence-purchase-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [purchase.orm-entity.ts](../reference/backend/purchases.md#f-comercial-jhoel-api-src-modules-purchases-infrastructure-persistence-purchase-orm-entity-ts)
+- **Archivos TypeScript que la usan:** [purchase.orm-entity.ts](../reference/backend/purchases.md#f-comercial-jhoel-api-src-modules-purchases-infrastructure-persistence-purchase-orm-entity-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
 - **Funciones SQL que la escriben:** `confirm_purchase`, `void_purchase`
 
 | Columna | Tipo | Nulo | Default |

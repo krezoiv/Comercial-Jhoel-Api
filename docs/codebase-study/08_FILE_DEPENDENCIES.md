@@ -372,7 +372,7 @@ graph LR
 | dashboard-news-types | `confirm-dialog.service`, `news-type.service`, `notification.service` |
 | dashboard-phones | `auth.service`, `notification.service`, `phones.service` |
 | dashboard-presentation-units | `auth.service`, `confirm-dialog.service`, `notification.service`, `presentation-type.service`, `unit-of-measure.service` |
-| dashboard-purchases | `inventory-locations.service`, `inventory.service`, `notification.service`, `pdf-prompt-modal.service`, `purchase-draft.store`, `purchases.service`, `supplier.service` |
+| dashboard-purchases | `inventory-locations.service`, `inventory.service`, `notification.service`, `pdf-prompt-modal.service`, `purchase-draft.store`, `purchases.service`, `school-list.service`, `supplier.service` |
 | dashboard-purchases-admin | `notification.service`, `purchases.service`, `supplier.service` |
 | dashboard-quotations | `auth.service`, `confirm-dialog.service`, `inventory.service`, `notification.service`, `quotations.service` |
 | dashboard-recharge-cash-box | `auth.service`, `confirm-dialog.service`, `notification.service`, `recharge-cash-box.service` |
@@ -384,7 +384,7 @@ graph LR
 | dashboard-sales | `inventory.service`, `sales-draft.store` |
 | dashboard-sales-admin | `client.service`, `notification.service`, `sales.service` |
 | dashboard-sales-register | `auth.service`, `business.service`, `confirm-dialog.service`, `notification.service`, `sales-cash-box.service`, `sales-register.service` |
-| dashboard-school-lists | `bank.service`, `confirm-dialog.service`, `notification.service`, `pdf-prompt-modal.service`, `school-list.service` |
+| dashboard-school-lists | `bank.service`, `category.service`, `confirm-dialog.service`, `notification.service`, `pdf-prompt-modal.service`, `school-list.service` |
 | dashboard-sidebar | `auth.service`, `bank-balance-draft.store`, `day-status.service`, `ice-cream-purchase-draft.store`, `ice-cream-sale-draft.store`, `notification.service`, `purchase-draft.store`, `sales-draft.store` |
 | dashboard-suppliers | `auth.service`, `confirm-dialog.service`, `notification.service`, `supplier.service` |
 | dashboard-tickets | `auth.service`, `confirm-dialog.service`, `inventory.service`, `notification.service`, `tickets.service` |

@@ -1,37 +1,58 @@
+<!-- Summary cards: real figures of the filtered period (backend dashboard). -->
+<section class="kpis" aria-label="Resumen de cotizaciones">
+  @for (card of cards(); track card.label) {
+    <article [class]="'kpi kpi--' + card.color">
+      <span class="kpi__icon"><app-icon [name]="card.icon" [size]="20" /></span>
+      <div class="kpi__body">
+        <span class="kpi__label">{{ card.label }}</span>
+        <strong class="kpi__value">{{ card.value }}</strong>
+        <span class="kpi__hint">{{ card.hint }}</span>
+      </div>
+    </article>
+  } @empty {
+    @if (summaryFailed()) {
+      <p class="state state--error" role="alert">No se pudo cargar el resumen.</p>
+    } @else {
+      @for (n of [1, 2, 3, 4, 5]; track n) { <div class="kpi kpi--skeleton" aria-hidden="true"></div> }
+    }
+  }
+</section>
+
 <section class="panel">
   <div class="panel__head">
-    <h2 class="panel__title"><app-icon name="file-check" [size]="18" /> Cotizaciones de listas escolares</h2>
-    @if (service.can('school_lists.quotations.create')) {
-      <app-button variant="primary" size="sm" (click)="createNew.emit()"><app-icon name="plus" [size]="16" /> Nueva cotización</app-button>
-    }
+    <h2 class="panel__title"><app-icon name="file-check" [size]="18" /> Cotizaciones registradas</h2>
+    <span class="panel__hint">{{ total() }} resultado(s)</span>
   </div>
 
   <form class="filters" (ngSubmit)="applyFilters()">
-    <label class="field"><span class="field__label">Cliente o estudiante</span>
-      <input name="search" type="search" placeholder="Nombre…" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    <label class="field field--search"><span class="field__label"><app-icon name="search" [size]="13" /> Cliente, estudiante o No.</span>
+      <input name="search" type="search" placeholder="Nombre o LE-000001" [ngModel]="search()" (ngModelChange)="search.set($event)" />
     </label>
-    <label class="field"><span class="field__label">Teléfono</span>
+    <label class="field"><span class="field__label"><app-icon name="phone" [size]="13" /> Teléfono</span>
       <input name="phone" type="search" inputmode="tel" placeholder="5555-1234" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
     </label>
-    <label class="field"><span class="field__label">No. de cotización</span>
-      <input name="number" type="search" placeholder="LE-000001" [ngModel]="number()" (ngModelChange)="number.set($event)" />
-    </label>
-    <label class="field"><span class="field__label">Grado</span>
+    <label class="field"><span class="field__label"><app-icon name="graduation-cap" [size]="13" /> Grado</span>
       <select name="grade" [ngModel]="grade()" (ngModelChange)="grade.set($event)">
         <option value="">Todos</option>
         @for (g of grades(); track g) { <option [value]="g">{{ g }}</option> }
       </select>
     </label>
-    <label class="field"><span class="field__label">Estado</span>
+    <label class="field"><span class="field__label"><app-icon name="check-circle" [size]="13" /> Estado</span>
       <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event)">
         <option value="">Todos</option>
         @for (s of statuses; track s) { <option [value]="s">{{ statusLabel[s] }}</option> }
       </select>
     </label>
-    <label class="field"><span class="field__label">Desde</span>
+    <label class="field"><span class="field__label"><app-icon name="package" [size]="13" /> Abastecimiento</span>
+      <select name="supplyStatus" [ngModel]="supplyStatus()" (ngModelChange)="supplyStatus.set($event)">
+        <option value="">Todos</option>
+        @for (s of supplyStatuses; track s) { <option [value]="s">{{ supplyLabel[s] }}</option> }
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><app-icon name="calendar" [size]="13" /> Desde</span>
       <input name="dateFrom" type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
     </label>
-    <label class="field"><span class="field__label">Hasta</span>
+    <label class="field"><span class="field__label"><app-icon name="calendar" [size]="13" /> Hasta</span>
       <input name="dateTo" type="date" [min]="dateFrom()" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" />
     </label>
     <div class="filters__actions">
@@ -45,40 +66,46 @@
   } @else if (!loading() && items().length === 0) {
     <p class="state">No hay cotizaciones para los filtros seleccionados.</p>
   } @else {
-    <div class="table-wrap">
-      <table class="table">
+    <div class="table-wrap list-wrap" [class.list-wrap--busy]="loading()">
+      <table class="table list">
         <thead>
           <tr>
-            <th>No.</th>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Teléfono</th>
-            <th>Estudiante</th>
-            <th>Grado</th>
-            <th class="num">Total</th>
-            <th class="num">Pagado</th>
-            <th class="num">Saldo</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+            <th [attr.aria-sort]="ariaSort('number')"><button type="button" class="sort" (click)="sort('number')">No. <app-icon [name]="sortBy() === 'number' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'number'" /></button></th>
+            <th [attr.aria-sort]="ariaSort('customer')"><button type="button" class="sort" (click)="sort('customer')">Cliente <app-icon [name]="sortBy() === 'customer' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'customer'" /></button></th>
+            <th [attr.aria-sort]="ariaSort('grade')"><button type="button" class="sort" (click)="sort('grade')">Grado <app-icon [name]="sortBy() === 'grade' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'grade'" /></button></th>
+            <th [attr.aria-sort]="ariaSort('date')"><button type="button" class="sort" (click)="sort('date')">Fecha <app-icon [name]="sortBy() === 'date' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'date'" /></button></th>
+            <th class="num" [attr.aria-sort]="ariaSort('total')"><button type="button" class="sort" (click)="sort('total')">Total <app-icon [name]="sortBy() === 'total' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'total'" /></button></th>
+            <th class="num">Anticipo</th>
+            <th class="num" [attr.aria-sort]="ariaSort('balance')"><button type="button" class="sort" (click)="sort('balance')">Saldo <app-icon [name]="sortBy() === 'balance' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'balance'" /></button></th>
+            <th [attr.aria-sort]="ariaSort('status')"><button type="button" class="sort" (click)="sort('status')">Estado <app-icon [name]="sortBy() === 'status' && sortDirection() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="12" [class.sort__on]="sortBy() === 'status'" /></button></th>
+            <th>Abastecimiento</th>
+            <th aria-label="Acciones"></th>
           </tr>
         </thead>
         <tbody>
           @for (q of items(); track q.id) {
             <tr>
-              <td><button type="button" class="link" (click)="open(q)">{{ q.quotationNumber }}</button></td>
-              <td>{{ formatDate(q.quotationDate) }}</td>
-              <td>{{ q.customerName }}</td>
-              <td>{{ q.customerPhone }}</td>
-              <td>{{ q.studentName || '—' }}</td>
-              <td>{{ q.grade }}</td>
-              <td class="num">{{ formatCurrency(q.total) }}</td>
-              <td class="num">{{ formatCurrency(q.paid) }}</td>
-              <td class="num">
+              <td class="list__number" data-label="No."><button type="button" class="link" (click)="open(q)">{{ q.quotationNumber }}</button></td>
+              <td class="list__customer" data-label="Cliente">
+                <span class="list__name">{{ q.customerName }}</span>
+                <span class="muted">{{ q.customerPhone }}</span>
+                @if (q.studentName) { <span class="muted">Estudiante: {{ q.studentName }}</span> }
+              </td>
+              <td data-label="Grado">{{ q.grade }}</td>
+              <td data-label="Fecha">{{ formatDate(q.quotationDate) }}</td>
+              <td class="num" data-label="Total"><strong>{{ formatCurrency(q.total) }}</strong></td>
+              <td class="num" data-label="Anticipo">{{ q.advance > 0 ? formatCurrency(q.advance) : '—' }}</td>
+              <td class="num" data-label="Saldo">
                 <span [class]="'dot dot--' + accountTone[q.accountStatus]" [attr.title]="accountLabel[q.accountStatus]"></span>
                 {{ formatCurrency(q.balance) }}
               </td>
-              <td><app-badge [tone]="statusTone[q.status]">{{ statusLabel[q.status] }}</app-badge></td>
-              <td>
+              <td data-label="Estado"><span [class]="'status-pill status-pill--' + statusColor[q.status]">{{ statusLabel[q.status] }}</span></td>
+              <td data-label="Abastecimiento">
+                @if (q.supplyStatus !== 'NO_APLICA') {
+                  <button type="button" class="supply-pill" [class]="'supply-pill supply-pill--' + supplyTone[q.supplyStatus]" (click)="open(q, 'abastecimiento')">{{ supplyLabel[q.supplyStatus] }}</button>
+                } @else { <span class="muted">—</span> }
+              </td>
+              <td class="list__actions">
                 <div class="actions">
                   <button type="button" class="icon-btn" title="Ver detalle" aria-label="Ver detalle" (click)="open(q)"><app-icon name="eye" [size]="16" /></button>
                   @if (service.can('school_lists.quotations.edit')) {
@@ -94,7 +121,7 @@
                   }
                   @if (service.can('school_lists.quotations.edit')) {
                     <button type="button" class="icon-btn" title="Marcar como terminada (lista para entregar)" aria-label="Marcar como terminada" [disabled]="!canFinish(q) || delivering() === q.id" (click)="finish(q)"><app-icon name="check-check" [size]="16" /></button>
-                    <button type="button" class="icon-btn" title="Registrar entrega" aria-label="Registrar entrega" [disabled]="!canDeliver(q) || delivering() === q.id" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
+                    <button type="button" class="icon-btn" title="Preparar y despachar lista" aria-label="Preparar y despachar lista" [disabled]="!canDeliver(q)" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
                   }
                   <button type="button" class="icon-btn" title="Historial" aria-label="Historial" (click)="open(q, 'historial')"><app-icon name="clock" [size]="16" /></button>
                 </div>

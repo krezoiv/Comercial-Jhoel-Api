@@ -1,6 +1,9 @@
 @use 'breakpoints' as bp;
 @use '../../../guayacan-cash-box/guayacan-modal';
 @use '../../school-lists';
+@use '../../school-ui' as ui;
+
+@include ui.cat-badge;
 
 .editor {
   display: grid;
@@ -93,13 +96,27 @@
   }
 
   .money {
-    width: 6.5rem;
+    width: 5rem;
     text-align: right;
   }
 }
 
 .lines__product {
-  min-width: 22rem;
+  width: 40%;
+  min-width: 13rem;
+}
+
+.lines th,
+.lines td {
+  padding: var(--space-3) var(--space-2);
+}
+
+.lines__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .lines__name {
@@ -109,20 +126,18 @@
 
   input {
     flex: 1;
-    min-width: 12rem;
+    min-width: 0;
   }
+}
+
+.lines__sku {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
 }
 
 .lines__note {
   margin-top: var(--space-1);
   font-size: var(--fs-xs) !important;
-}
-
-.lines__replace {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-top: var(--space-2);
 }
 
 .lines__bad td {
@@ -156,13 +171,76 @@
 
 .row-actions {
   display: flex;
+  justify-content: flex-end;
 }
 
-.link {
-  align-self: flex-start;
-  font-size: var(--fs-xs);
-  color: var(--color-primary-600);
-  text-decoration: underline;
+.icon-btn--brand {
+  color: #2563eb;
+}
+
+.lines .cat-badge {
+  max-width: 10rem;
+}
+
+// Phones and small tablets: every line becomes a card (no horizontal scroll).
+@media (max-width: 767px) {
+  .lines-wrap {
+    overflow: visible;
+    border: 0;
+  }
+
+  .lines {
+    thead {
+      display: none;
+    }
+
+    tbody,
+    tr,
+    td {
+      display: block;
+    }
+
+    tr {
+      margin-bottom: var(--space-3);
+      padding: var(--space-3);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-light);
+    }
+
+    td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: var(--space-2) 0;
+      border-top: 0;
+
+      &[data-label]::before {
+        content: attr(data-label);
+        font-size: var(--fs-xs);
+        color: var(--color-text-on-light-muted);
+      }
+    }
+
+    .lines__product {
+      display: block;
+      min-width: 0;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    .lines__name input {
+      min-width: 0;
+    }
+
+    .lines__actions {
+      justify-content: flex-end;
+      border-top: 1px dashed var(--color-border-light);
+    }
+  }
 }
 
 .add {
@@ -257,4 +335,26 @@
   padding-left: var(--space-4);
   font-size: var(--fs-xs);
   color: var(--color-danger);
+}
+
+.stock {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.stock--short {
+  color: var(--color-danger);
+  font-weight: var(--fw-medium);
+}
+
+.summary__info {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-gold-soft);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light);
 }

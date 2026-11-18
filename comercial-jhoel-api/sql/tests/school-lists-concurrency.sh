@@ -71,3 +71,57 @@ else
   echo "FALLÓ concurrencia Listas Escolares: resultado '$RESULT', rechazos $REJECTED (se esperaba '1 1 70.00 100.00' y 1)"
   exit 1
 fi
+
+# ── Abastecimiento (migración 1760008300000): dos listas piden 8 unidades de un
+# producto con 0 en Bodega (−16 y 16 pendientes). Dos compras de 10 llegan a la
+# vez: la asignación FIFO automática debe dar exactamente 16 (nunca más de lo
+# pendiente), sin asignar las mismas unidades dos veces, y dejar 4 libres.
+PRODUCT_ID=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT id FROM products WHERE is_active ORDER BY created_at LIMIT 1")
+SUPPLIER_ID=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT id FROM suppliers WHERE is_active ORDER BY created_at LIMIT 1")
+"${PSQL[@]}" -d "$TEST_DB" >/dev/null <<SQL
+SELECT ensure_inventory_stock_row('$PRODUCT_ID', (SELECT id FROM inventory_locations WHERE name = 'Bodega'));
+UPDATE inventory_stock SET quantity = 0
+ WHERE product_id = '$PRODUCT_ID' AND location_id = (SELECT id FROM inventory_locations WHERE name = 'Bodega');
+UPDATE products SET stock = (SELECT SUM(quantity) FROM inventory_stock WHERE product_id = '$PRODUCT_ID') WHERE id = '$PRODUCT_ID';
+UPDATE school_supply_settings SET allocation_mode = 'FIFO_AUTO' WHERE id = 1;
+SELECT create_school_quotation(
+  '{"grade":"Primero Básico","customerName":"Prueba Abastecimiento","customerPhone":"5555-0000",
+    "items":[{"productId":"$PRODUCT_ID","productName":"Producto","quantity":8,"unitPrice":1}]}'::jsonb,
+  '$USER_ID', 'CONC-SUP-LIST-1');
+SELECT create_school_quotation(
+  '{"grade":"Primero Básico","customerName":"Prueba Abastecimiento","customerPhone":"5555-0000",
+    "items":[{"productId":"$PRODUCT_ID","productName":"Producto","quantity":8,"unitPrice":1}]}'::jsonb,
+  '$USER_ID', 'CONC-SUP-LIST-2');
+SQL
+
+purchase_sql() {
+  local hold="$1"
+  cat <<SQL
+BEGIN;
+SELECT confirm_purchase('$SUPPLIER_ID', '$USER_ID', now(),
+  '[{"productId":"$PRODUCT_ID","quantity":10,"costPrice":1,"publicPrice":1}]'::jsonb);
+SELECT pg_sleep($hold);
+COMMIT;
+SQL
+}
+(purchase_sql 2 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+sleep 0.5
+(purchase_sql 0 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+wait
+SUPPLY=$("${PSQL[@]}" -d "$TEST_DB" -c "
+  SELECT (SELECT s.quantity FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id
+           WHERE s.product_id = '$PRODUCT_ID' AND l.name = 'Bodega') || ' ' ||
+         (SELECT COALESCE(SUM(quantity), 0) FROM school_supply_allocations a JOIN school_quotations q ON q.id = a.quotation_id
+           WHERE q.idempotency_key LIKE 'CONC-SUP-LIST-%' AND a.status = 'ASIGNADA') || ' ' ||
+         (SELECT COALESCE(SUM(pending), 0) FROM school_supply_commitments c JOIN school_quotations q ON q.id = c.quotation_id
+           WHERE q.idempotency_key LIKE 'CONC-SUP-LIST-%') || ' ' ||
+         school_supply_free_units('$PRODUCT_ID') || ' ' ||
+         (SELECT count(*) FROM (SELECT source_movement_id, SUM(quantity) s FROM school_supply_allocations
+                                 WHERE source_movement_id IS NOT NULL GROUP BY 1
+                                HAVING SUM(quantity) > 10) x)")
+if [ "$SUPPLY" = "4 16 0 4 0" ]; then
+  echo "OK  concurrencia abastecimiento: dos compras simultáneas, 16 asignadas sin duplicar, 4 libres"
+else
+  echo "FALLÓ concurrencia abastecimiento: '$SUPPLY' (se esperaba '4 16 0 4 0': Bodega, asignadas, pendientes, libres, compras sobreasignadas)"
+  exit 1
+fi

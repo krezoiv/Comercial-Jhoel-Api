@@ -50,13 +50,16 @@ erDiagram
   sales ||--o{ quotations : "converted_to_sale_id"
   users ||--o{ quotations : "user_id"
   users ||--o{ quotations : "voided_by"
+  users ||--o{ quotations : "accepted_by"
+  users ||--o{ quotations : "rejected_by"
+  users ||--o{ quotations : "sold_by"
 ```
 
 ## `quotation_details`
 
 - **Entidad TypeORM:** [QuotationDetailOrmEntity](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-quotation-detail-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [quotation-detail.orm-entity.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-quotation-detail-orm-entity-ts)
+- **Archivos TypeScript que la usan:** [quotation-detail.orm-entity.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-quotation-detail-orm-entity-ts), [typeorm-quotation.repository.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-typeorm-quotation-repository-ts)
 - **Funciones SQL que la escriben:** `create_quotation`
 
 | Columna | Tipo | Nulo | Default |
@@ -88,13 +91,13 @@ erDiagram
 - **Entidad TypeORM:** [QuotationOrmEntity](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-quotation-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
 - **Archivos TypeScript que la usan:** [quotation.orm-entity.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-quotation-orm-entity-ts)
-- **Funciones SQL que la escriben:** `create_quotation`
+- **Funciones SQL que la escriben:** `change_quotation_status`, `convert_quotation_to_sale`, `create_quotation`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
 | `id` | uuid | NOT NULL | gen_random_uuid() |
 | `quotation_number` | character varying(20) | NOT NULL |  |
-| `client_id` | uuid | NOT NULL |  |
+| `client_id` | uuid | sí |  |
 | `user_id` | uuid | NOT NULL |  |
 | `quotation_date` | timestamp with time zone | NOT NULL | now() |
 | `expiration_date` | date | NOT NULL |  |
@@ -110,14 +113,30 @@ erDiagram
 | `converted_to_sale_id` | uuid | sí |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `customer_name` | character varying(150) | sí |  |
+| `customer_phone` | character varying(20) | sí |  |
+| `student_name` | character varying(150) | sí |  |
+| `grade` | character varying(60) | sí |  |
+| `accepted_at` | timestamp with time zone | sí |  |
+| `accepted_by` | uuid | sí |  |
+| `rejected_at` | timestamp with time zone | sí |  |
+| `rejected_by` | uuid | sí |  |
+| `reject_reason` | character varying(255) | sí |  |
+| `sold_at` | timestamp with time zone | sí |  |
+| `sold_by` | uuid | sí |  |
 
 | Restricción | Tipo | Definición |
 |---|---|---|
-| `CHK_quotations_status` | CHECK | CHECK (((status)::text = ANY ((ARRAY['PENDIENTE'::character varying, 'ACEPTADA'::character varying, 'ANULADA'::character varying])::text[]))) |
+| `CHK_quotations_customer` | CHECK | CHECK (((client_id IS NOT NULL) OR ((customer_name IS NOT NULL) AND (customer_phone IS NOT NULL)))) |
+| `CHK_quotations_sold` | CHECK | CHECK ((((status)::text = 'VENDIDA'::text) = (converted_to_sale_id IS NOT NULL))) |
+| `CHK_quotations_status` | CHECK | CHECK (((status)::text = ANY ((ARRAY['BORRADOR'::character varying, 'COTIZADA'::character varying, 'ACEPTADA'::character varying, 'VENDIDA'::character varying, 'RECHAZADA'::character varying, 'CANCELADA'::character varying])::text[]))) |
 | `FK_quotations_client` | FK | FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE RESTRICT |
 | `FK_quotations_converted_to_sale` | FK | FOREIGN KEY (converted_to_sale_id) REFERENCES sales(id) ON DELETE RESTRICT |
 | `FK_quotations_user` | FK | FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT |
 | `FK_quotations_voided_by` | FK | FOREIGN KEY (voided_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `quotations_accepted_by_fkey` | FK | FOREIGN KEY (accepted_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `quotations_rejected_by_fkey` | FK | FOREIGN KEY (rejected_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `quotations_sold_by_fkey` | FK | FOREIGN KEY (sold_by) REFERENCES users(id) ON DELETE RESTRICT |
 | `PK_6c00eb8ba181f28c21ffba7ecb1` | PK | PRIMARY KEY (id) |
 
 **Índices:**
@@ -126,5 +145,6 @@ erDiagram
 - `IDX_quotations_status`: CREATE INDEX "IDX_quotations_status" ON public.quotations USING btree (status)
 - `IDX_quotations_user_id`: CREATE INDEX "IDX_quotations_user_id" ON public.quotations USING btree (user_id)
 - `PK_6c00eb8ba181f28c21ffba7ecb1`: CREATE UNIQUE INDEX "PK_6c00eb8ba181f28c21ffba7ecb1" ON public.quotations USING btree (id)
+- `UQ_quotations_converted_to_sale`: CREATE UNIQUE INDEX "UQ_quotations_converted_to_sale" ON public.quotations USING btree (converted_to_sale_id) WHERE (converted_to_sale_id IS NOT NULL)
 - `UQ_quotations_quotation_number`: CREATE UNIQUE INDEX "UQ_quotations_quotation_number" ON public.quotations USING btree (quotation_number)
 

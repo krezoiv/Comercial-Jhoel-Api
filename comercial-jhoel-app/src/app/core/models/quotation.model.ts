@@ -1,4 +1,30 @@
-export type QuotationStatus = 'PENDIENTE' | 'ACEPTADA' | 'ANULADA' | 'VENCIDA';
+/**
+ * Commercial life cycle (migration 1760008200000). VENCIDA is derived by the
+ * backend for a COTIZADA past its expiration date. Saving a quotation never
+ * touches inventory; only "Confirmar venta" creates a real sale (VENDIDA).
+ */
+export type QuotationStatus = 'BORRADOR' | 'COTIZADA' | 'ACEPTADA' | 'VENDIDA' | 'RECHAZADA' | 'CANCELADA' | 'VENCIDA';
+
+/** Actions any operator may run on their quotations (CANCELAR = "Anular", admin only, has its own route). */
+export type QuotationStatusAction = 'CONFIRMAR' | 'ACEPTAR' | 'RECHAZAR';
+
+/** "Confirmar venta" summary line with the current Vitrina stock. */
+export interface QuotationSalePreviewLine {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  available: number;
+  isActive: boolean;
+  sufficient: boolean;
+}
+
+export interface QuotationSalePreview {
+  quotation: Quotation;
+  lines: QuotationSalePreviewLine[];
+  canConfirm: boolean;
+}
 
 export interface QuotationItem {
   id: string;
@@ -25,8 +51,12 @@ export interface QuotationItem {
 export interface Quotation {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  /** Registered client (older quotations); null when the customer was typed in. */
+  clientId: string | null;
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   quotationDate: string;
@@ -43,6 +73,11 @@ export interface Quotation {
   voidedByUsername: string | null;
   voidReason: string | null;
   convertedToSaleId: string | null;
+  acceptedAt: string | null;
+  rejectedAt: string | null;
+  rejectReason: string | null;
+  soldAt: string | null;
+  soldByUsername: string | null;
   items: QuotationItem[];
   createdAt: string;
   updatedAt: string;
@@ -52,8 +87,11 @@ export interface Quotation {
 export interface QuotationSummary {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   expirationDate: string;
@@ -68,8 +106,13 @@ export interface CreateQuotationItemInput {
   discount?: number;
 }
 
+/** The customer is typed in by hand; no `clients` row is created. */
 export interface CreateQuotationInput {
-  clientId: string;
+  customerName: string;
+  customerPhone: string;
+  studentName?: string;
+  grade?: string;
+  asDraft?: boolean;
   expirationDate: string;
   observations?: string;
   commercialTerms?: string;
@@ -122,16 +165,32 @@ export function calculateQuotationDraftTotal(items: QuotationDraftItem[]): numbe
   return calculateQuotationDraftSubtotal(items) - calculateQuotationDraftDiscount(items);
 }
 
-export const QUOTATION_STATUS_TONE: Record<QuotationStatus, 'gold' | 'success' | 'danger' | 'neutral-dark'> = {
-  PENDIENTE: 'gold',
-  ACEPTADA: 'success',
+export const QUOTATION_STATUS_TONE: Record<
+  QuotationStatus,
+  'brand' | 'gold' | 'success' | 'danger' | 'neutral-dark' | 'neutral-light'
+> = {
+  BORRADOR: 'neutral-light',
+  COTIZADA: 'gold',
+  ACEPTADA: 'brand',
+  VENDIDA: 'success',
+  RECHAZADA: 'danger',
+  CANCELADA: 'neutral-dark',
   VENCIDA: 'danger',
-  ANULADA: 'neutral-dark',
 };
 
+/** A quotation that can still become a sale. */
+export function isQuotationSellable(status: QuotationStatus): boolean {
+  return status === 'COTIZADA' || status === 'ACEPTADA';
+}
+
 export const QUOTATION_STATUS_LABEL: Record<QuotationStatus, string> = {
-  PENDIENTE: 'Pendiente',
+  BORRADOR: 'Borrador',
+  COTIZADA: 'Cotizada',
   ACEPTADA: 'Aceptada',
+  VENDIDA: 'Vendida',
+  RECHAZADA: 'Rechazada',
+  CANCELADA: 'Cancelada',
   VENCIDA: 'Vencida',
-  ANULADA: 'Anulada',
 };
+
+export const QUOTATION_STATUSES = Object.keys(QUOTATION_STATUS_LABEL) as QuotationStatus[];

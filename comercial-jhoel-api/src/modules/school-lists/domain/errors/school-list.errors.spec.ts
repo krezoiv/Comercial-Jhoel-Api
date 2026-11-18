@@ -44,6 +44,33 @@ describe('Listas Escolares — SQL error mapping', () => {
     ).toContain('"Cuaderno 100 hojas: rayado"');
   });
 
+  it('names the product without stock in Bodega', () => {
+    expect(
+      schoolListErrorFromMessage(
+        'SCHOOL_INSUFFICIENT_STOCK:8:9:Cuaderno 100 hojas: rayado',
+      ),
+    ).toMatchObject({
+      status: 409,
+      message:
+        'No hay existencias suficientes de "Cuaderno 100 hojas: rayado" en Bodega: disponibles 8, se necesitan 9.',
+    });
+  });
+
+  it('explains why a list cannot be dispatched or allocated', () => {
+    expect(
+      schoolListErrorFromMessage('SCHOOL_SUPPLY_INCOMPLETE:3:Cuaderno: grande')
+        ?.message,
+    ).toBe(
+      'No se puede despachar: faltan 3 unidad(es) de "Cuaderno: grande" por abastecer.',
+    );
+    expect(
+      schoolListErrorFromMessage('SCHOOL_SUPPLY_NO_FREE_UNITS:0')?.status,
+    ).toBe(409);
+    expect(
+      schoolListErrorFromMessage('SCHOOL_USE_DISPATCH')?.message,
+    ).toContain('Preparar y despachar');
+  });
+
   it('ignores messages that are not from this module', () => {
     expect(schoolListErrorFromMessage('CASH_DAY_NOT_OPENED')).toBeNull();
     expect(schoolListErrorFromMessage('duplicate key value')).toBeNull();

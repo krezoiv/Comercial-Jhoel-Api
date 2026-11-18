@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -19,14 +19,18 @@ import {
   ValidateNested,
 } from 'class-validator';
 import {
+  QUOTATION_SORT_FIELDS,
   SCHOOL_PAYMENT_METHODS,
   SCHOOL_QUOTATION_STATUSES,
   SCHOOL_STATUS_ACTIONS,
+  SCHOOL_SUPPLY_STATUSES,
 } from '../../domain/repositories/school-list.repository';
 import type {
+  QuotationSortField,
   SchoolPaymentMethod,
   SchoolQuotationStatus,
   SchoolStatusAction,
+  SchoolSupplyStatus,
 } from '../../domain/repositories/school-list.repository';
 
 const MAX_MONEY = 999999.99;
@@ -174,10 +178,65 @@ export class QuotationsQueryDto {
   @IsOptional() @IsString() @MaxLength(20) number?: string;
   @IsOptional() @IsString() @MaxLength(60) grade?: string;
   @IsOptional() @IsIn(SCHOOL_QUOTATION_STATUSES) status?: SchoolQuotationStatus;
+  @IsOptional() @IsIn(SCHOOL_SUPPLY_STATUSES) supplyStatus?: SchoolSupplyStatus;
   @IsOptional() @IsDateString({ strict: true }) dateFrom?: string;
   @IsOptional() @IsDateString({ strict: true }) dateTo?: string;
+  /** Column to order by; only the whitelisted names reach the repository. */
+  @IsOptional() @IsIn(QUOTATION_SORT_FIELDS) sortBy?: QuotationSortField;
+  @IsOptional() @IsIn(['asc', 'desc']) sortDirection?: 'asc' | 'desc';
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
+}
+
+export class SupplyProductsQueryDto {
+  @IsOptional() @IsString() @MaxLength(100) search?: string;
+  @IsOptional() @IsUUID() categoryId?: string;
+  @IsOptional() @IsDateString({ strict: true }) dateFrom?: string;
+  @IsOptional() @IsDateString({ strict: true }) dateTo?: string;
+  @IsOptional() @IsString() @MaxLength(20) quotationNumber?: string;
+  @IsOptional() @IsIn(['PENDIENTE', 'PARCIAL', 'ABASTECIDO']) status?:
+    'PENDIENTE' | 'PARCIAL' | 'ABASTECIDO';
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
+}
+
+export class SupplyPurchasesQueryDto {
+  @IsOptional() @IsUUID() purchaseId?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
+}
+
+export class SupplySettingsRequestDto {
+  @IsIn(['FIFO_AUTO', 'MANUAL']) allocationMode: 'FIFO_AUTO' | 'MANUAL';
+}
+
+export class SupplyFifoRequestDto {
+  /** Omit to hand out free units of every product with pending lists. */
+  @IsOptional() @IsUUID() productId?: string;
+}
+
+export class ManualAllocationRequestDto {
+  @IsUUID() quotationId: string;
+  @IsUUID() productId: string;
+  @IsInt() @Min(1) @Max(9999) quantity: number;
+  /** Take the units from this purchase (traceability); omit for stock on hand. */
+  @IsOptional() @IsUUID() purchaseId?: string;
+  @IsUUID() clientRequestId: string;
+}
+
+export class DispatchRequestDto {
+  @IsOptional() @IsString() @MaxLength(500) observations?: string;
+  @IsUUID() clientRequestId: string;
+}
+
+export class StockQueryDto {
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.split(',').filter(Boolean) : value,
+  )
+  @IsArray()
+  @ArrayMaxSize(300)
+  @IsUUID('all', { each: true })
+  productIds: string[];
 }
 
 export class DashboardQueryDto {

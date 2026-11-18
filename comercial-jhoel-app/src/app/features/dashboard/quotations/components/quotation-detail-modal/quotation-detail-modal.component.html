@@ -13,12 +13,31 @@
         <p class="modal__meta">
           {{ q.quotationDate | date: 'dd/MM/yyyy HH:mm' }} · {{ q.username }} · {{ q.clientName }}
         </p>
-        <p class="modal__meta">Válida hasta: {{ q.expirationDate | date: 'dd/MM/yyyy' }}</p>
+        <p class="modal__meta">
+          Válida hasta: {{ q.expirationDate | date: 'dd/MM/yyyy' }} · Estado:
+          <app-badge [tone]="statusTone[q.status]">{{ statusLabel[q.status] }}</app-badge>
+        </p>
+        @if (q.customerPhone || q.studentName || q.grade) {
+          <p class="modal__meta">
+            {{ q.customerPhone ? 'Tel. ' + q.customerPhone : '' }}{{ q.studentName ? ' · Estudiante: ' + q.studentName : '' }}{{ q.grade ? ' · ' + q.grade : '' }}
+          </p>
+        }
+        @if (q.status === 'VENDIDA') {
+          <p class="modal__meta">Vendida el {{ q.soldAt | date: 'dd/MM/yyyy HH:mm' }} por {{ q.soldByUsername }} — el inventario se descontó con esa venta.</p>
+        } @else {
+          <p class="modal__meta">Esta cotización no ha descontado inventario.</p>
+        }
 
-        @if (q.status === 'ANULADA') {
+        @if (q.status === 'CANCELADA') {
           <div class="modal__void-banner">
             <app-icon name="alert-triangle" [size]="16" />
-            Anulada — {{ q.voidReason }}
+            Cancelada — {{ q.voidReason }}
+          </div>
+        }
+        @if (q.status === 'RECHAZADA') {
+          <div class="modal__void-banner">
+            <app-icon name="alert-triangle" [size]="16" />
+            Rechazada por el cliente — {{ q.rejectReason }}
           </div>
         }
 

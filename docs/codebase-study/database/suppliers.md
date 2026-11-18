@@ -21,7 +21,7 @@ erDiagram
 
 - **Entidad TypeORM:** [SupplierOrmEntity](../reference/backend/suppliers.md#f-comercial-jhoel-api-src-modules-suppliers-infrastructure-persistence-supplier-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [supplier.orm-entity.ts](../reference/backend/suppliers.md#f-comercial-jhoel-api-src-modules-suppliers-infrastructure-persistence-supplier-orm-entity-ts)
+- **Archivos TypeScript que la usan:** [supplier.orm-entity.ts](../reference/backend/suppliers.md#f-comercial-jhoel-api-src-modules-suppliers-infrastructure-persistence-supplier-orm-entity-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|

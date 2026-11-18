@@ -15,8 +15,12 @@ export class QuotationItemResponseDto {
 export class QuotationResponseDto {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  clientId: string | null;
+  /** Typed-in customer (or the registered client's name for older quotations). */
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   quotationDate: Date;
@@ -32,6 +36,11 @@ export class QuotationResponseDto {
   voidedByUsername: string | null;
   voidReason: string | null;
   convertedToSaleId: string | null;
+  acceptedAt: Date | null;
+  rejectedAt: Date | null;
+  rejectReason: string | null;
+  soldAt: Date | null;
+  soldByUsername: string | null;
   items: QuotationItemResponseDto[];
   createdAt: Date;
   updatedAt: Date;
@@ -40,8 +49,12 @@ export class QuotationResponseDto {
 export class QuotationSummaryResponseDto {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  clientId: string | null;
+  /** Typed-in customer (or the registered client's name for older quotations). */
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   expirationDate: string;
@@ -55,4 +68,20 @@ export class PaginatedQuotationsResponseDto {
   total: number;
   page: number;
   limit: number;
+}
+
+/** "Confirmar venta" summary: each line with the current Vitrina stock. */
+export class QuotationSalePreviewResponseDto {
+  quotation: QuotationResponseDto;
+  lines: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    available: number;
+    isActive: boolean;
+    sufficient: boolean;
+  }[];
+  canConfirm: boolean;
 }

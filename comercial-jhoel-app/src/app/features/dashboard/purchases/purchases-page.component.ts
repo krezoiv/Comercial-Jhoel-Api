@@ -7,6 +7,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { PdfPromptModalService } from '../../../core/services/pdf-prompt-modal.service';
 import { PurchaseDraft, PurchaseDraftStore } from '../../../core/services/purchase-draft.store';
 import { PurchasesService } from '../../../core/services/purchases.service';
+import { SchoolListService } from '../../../core/services/school-list.service';
 import { SupplierService } from '../../../core/services/supplier.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { PageHeaderComponent } from '../../../shared/ui';
@@ -47,6 +48,7 @@ export class PurchasesPageComponent {
   private readonly supplierService = inject(SupplierService);
   private readonly notificationService = inject(NotificationService);
   private readonly pdfPromptModalService = inject(PdfPromptModalService);
+  private readonly schoolLists = inject(SchoolListService);
   protected readonly draft = inject(PurchaseDraftStore);
 
   /** Real, active suppliers from the backend — never hardcoded. */
@@ -215,6 +217,7 @@ export class PurchasesPageComponent {
           this.isSaveConfirmOpen.set(false);
           this.draft.closeDraft(savedDraftId);
           this.notificationService.success('Compra registrada correctamente.');
+          this.reportSchoolSupply(purchase.id);
           this.pdfPromptModalService.prompt({
             title: 'Compra registrada',
             generate: () => this.purchasesService.exportPurchasePdf(purchase.id),
@@ -227,5 +230,26 @@ export class PurchasesPageComponent {
           this.notificationService.error(extractErrorMessage(error, 'No se pudo registrar la compra.'));
         },
       });
+  }
+
+  /**
+   * Informative only — the purchase flow is unchanged. Units entering Bodega may
+   * have been assigned FIFO to pending school lists (Listas Escolares →
+   * Abastecimiento, migration 1760008300000); tell the user how many.
+   */
+  private reportSchoolSupply(purchaseId: string): void {
+    this.schoolLists.supplyPurchases(purchaseId, 1, 100).subscribe({
+      next: (result) => {
+        const units = result.items.reduce((sum, row) => sum + row.allocated, 0);
+        const lists = new Set(result.items.flatMap((row) => row.lists.map((l) => l.quotationId))).size;
+        if (units > 0) {
+          this.notificationService.info(
+            `${units} unidad(es) de esta compra se asignaron a ${lists} lista(s) escolar(es). ` +
+              'Detalle en Listas Escolares → Abastecimiento.',
+          );
+        }
+      },
+      error: () => undefined,
+    });
   }
 }

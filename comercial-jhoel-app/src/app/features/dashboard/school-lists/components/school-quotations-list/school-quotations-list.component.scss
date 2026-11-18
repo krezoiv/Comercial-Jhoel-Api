@@ -1,5 +1,15 @@
 @use '../../../guayacan-cash-box/guayacan-modal';
 @use '../../school-lists';
+@use '../../school-ui' as ui;
+
+@include ui.status-pills;
+@include ui.kpis;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
 
 .filters__actions {
   display: flex;
@@ -15,6 +25,12 @@
 .actions {
   display: flex;
   gap: 2px;
+}
+
+.field--search {
+  @media (min-width: 992px) {
+    grid-column: span 2;
+  }
 }
 
 .link {
@@ -49,4 +65,191 @@
 
 .dot--neutral-light {
   background: var(--color-ink-300, #cbd5e1);
+}
+
+.supply-pill {
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.supply-pill--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.supply-pill--gold {
+  background: var(--color-gold-soft);
+  color: #b7791f;
+}
+
+.supply-pill--success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.supply-pill--brand {
+  background: var(--color-bg-light-muted);
+  color: var(--color-primary-600);
+}
+
+.kpi--skeleton {
+  min-height: 5.5rem;
+  background: linear-gradient(90deg, var(--color-bg-light-muted), var(--color-surface-light), var(--color-bg-light-muted));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: inherit;
+  color: inherit;
+
+  app-icon {
+    opacity: 0.35;
+  }
+
+  .sort__on {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--color-primary-600);
+  }
+}
+
+.num .sort {
+  flex-direction: row-reverse;
+}
+
+.list-wrap {
+  transition: opacity 0.15s;
+
+  &--busy {
+    opacity: 0.6;
+  }
+}
+
+.list__number {
+  white-space: nowrap;
+}
+
+.list th,
+.list td {
+  padding: var(--space-3) var(--space-2);
+}
+
+// Desktop: the action icons wrap in rows of four instead of widening the table.
+@media (min-width: 768px) {
+  .list__actions .actions {
+    flex-wrap: wrap;
+    width: 8.5rem;
+  }
+}
+
+.list__customer {
+  display: flex;
+  flex-direction: column;
+}
+
+.list__name {
+  font-weight: var(--fw-medium);
+}
+
+.list tbody tr {
+  transition: background-color 0.15s;
+}
+
+// Phones and small tablets: each quotation becomes a card.
+@media (max-width: 767px) {
+  .list-wrap {
+    overflow: visible;
+    border: 0;
+  }
+
+  .list {
+    thead {
+      display: none;
+    }
+
+    tbody,
+    tr,
+    td {
+      display: block;
+    }
+
+    tr {
+      margin-bottom: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: var(--space-1) 0;
+      border-top: 0;
+      text-align: right;
+
+      &[data-label]::before {
+        content: attr(data-label);
+        font-size: var(--fs-xs);
+        color: var(--color-text-on-light-muted);
+        text-align: left;
+      }
+    }
+
+    .list__customer {
+      align-items: flex-end;
+      flex-direction: row;
+      flex-wrap: wrap;
+      column-gap: var(--space-2);
+    }
+
+    .list__actions {
+      margin-top: var(--space-2);
+      padding-top: var(--space-2);
+      border-top: 1px dashed var(--color-border-light);
+    }
+
+    .actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi--skeleton {
+    animation: none;
+  }
 }

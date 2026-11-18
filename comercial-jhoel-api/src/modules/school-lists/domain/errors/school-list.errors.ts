@@ -167,6 +167,41 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   SCHOOL_REASON_REQUIRED: {
     message: 'El motivo es obligatorio (mínimo 5 caracteres).',
   },
+  SCHOOL_USE_DISPATCH: {
+    message: 'La entrega se registra con "Preparar y despachar lista".',
+    status: 409,
+  },
+  SCHOOL_SUPPLY_INCOMPLETE: {
+    message: 'La lista todavía tiene productos pendientes de abastecimiento.',
+    status: 409,
+  },
+  SCHOOL_SUPPLY_OVER_PENDING: {
+    message: 'No se puede asignar más de lo que la lista tiene pendiente.',
+    status: 409,
+  },
+  SCHOOL_SUPPLY_NO_FREE_UNITS: {
+    message: 'No hay unidades libres en Bodega para asignar.',
+    status: 409,
+  },
+  SCHOOL_SUPPLY_PURCHASE_EXHAUSTED: {
+    message: 'Las unidades de esa compra ya fueron asignadas.',
+    status: 409,
+  },
+  SCHOOL_PURCHASE_NOT_FOUND: {
+    message: 'No se encontró la compra o no incluye ese producto.',
+    status: 404,
+  },
+  SCHOOL_INVALID_SUPPLY_MODE: {
+    message: 'El modo de asignación no es válido.',
+  },
+  SCHOOL_INSUFFICIENT_STOCK: {
+    message: 'No hay existencias suficientes en Bodega para guardar la lista.',
+    status: 409,
+  },
+  SCHOOL_LOCATION_NOT_FOUND: {
+    message: 'No existe la ubicación de inventario "Bodega".',
+    status: 500,
+  },
   SCHOOL_REFUND_METHOD_REQUIRED: {
     message: 'Indique cómo se devuelve al cliente el dinero recibido.',
   },
@@ -221,6 +256,22 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
     withName(parts, (name) => `El precio de "${name}" no es válido.`),
   SCHOOL_INVALID_DISCOUNT: (parts) =>
     withName(parts, (name) => `El descuento de "${name}" no es válido.`),
+  // SCHOOL_SUPPLY_INCOMPLETE:<pending>:<product name>
+  SCHOOL_SUPPLY_INCOMPLETE: ([pending, ...name]) =>
+    name.length
+      ? `No se puede despachar: faltan ${pending} unidad(es) de "${name.join(':')}" por abastecer.`
+      : null,
+  SCHOOL_SUPPLY_OVER_PENDING: ([pending]) =>
+    `No se puede asignar más de lo pendiente en la lista (${pending} unidad(es)).`,
+  SCHOOL_SUPPLY_NO_FREE_UNITS: ([free]) =>
+    `No hay suficientes unidades libres en Bodega (libres: ${free}).`,
+  SCHOOL_SUPPLY_PURCHASE_EXHAUSTED: ([left]) =>
+    `A esa compra solo le quedan ${left} unidad(es) sin asignar.`,
+  // SCHOOL_INSUFFICIENT_STOCK:<available>:<requested>:<product name>
+  SCHOOL_INSUFFICIENT_STOCK: ([available, requested, ...name]) =>
+    name.length
+      ? `No hay existencias suficientes de "${name.join(':')}" en Bodega: disponibles ${available}, se necesitan ${requested}.`
+      : null,
   SCHOOL_PRODUCT_INACTIVE: (parts) =>
     withName(
       parts,

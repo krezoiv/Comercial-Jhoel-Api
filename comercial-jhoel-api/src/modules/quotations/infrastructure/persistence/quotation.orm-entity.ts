@@ -12,6 +12,7 @@ import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.or
 import { ClientOrmEntity } from '../../../clients/infrastructure/persistence/client.orm-entity';
 import { DecimalColumnTransformer } from '../../../../shared/infrastructure/persistence/decimal.transformer';
 import { QuotationDetailOrmEntity } from './quotation-detail.orm-entity';
+import type { QuotationStoredStatus } from '../../domain/entities/quotation.entity';
 
 @Entity('quotations')
 export class QuotationOrmEntity {
@@ -21,12 +22,72 @@ export class QuotationOrmEntity {
   @Column({ name: 'quotation_number', type: 'varchar', length: 20 })
   quotationNumber: string;
 
-  @Column({ name: 'client_id' })
-  clientId: string;
+  @Column({ name: 'client_id', type: 'uuid', nullable: true })
+  clientId: string | null;
 
-  @ManyToOne(() => ClientOrmEntity, { eager: true, onDelete: 'RESTRICT' })
+  @ManyToOne(() => ClientOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'client_id' })
-  client: ClientOrmEntity;
+  client: ClientOrmEntity | null;
+
+  /** Customer typed in on the quotation (migration 1760008200000). */
+  @Column({
+    name: 'customer_name',
+    type: 'varchar',
+    length: 150,
+    nullable: true,
+  })
+  customerName: string | null;
+
+  @Column({
+    name: 'customer_phone',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  customerPhone: string | null;
+
+  @Column({
+    name: 'student_name',
+    type: 'varchar',
+    length: 150,
+    nullable: true,
+  })
+  studentName: string | null;
+
+  @Column({ type: 'varchar', length: 60, nullable: true })
+  grade: string | null;
+
+  @Column({ name: 'accepted_at', type: 'timestamptz', nullable: true })
+  acceptedAt: Date | null;
+
+  @Column({ name: 'rejected_at', type: 'timestamptz', nullable: true })
+  rejectedAt: Date | null;
+
+  @Column({
+    name: 'reject_reason',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  rejectReason: string | null;
+
+  @Column({ name: 'sold_at', type: 'timestamptz', nullable: true })
+  soldAt: Date | null;
+
+  @Column({ name: 'sold_by', type: 'uuid', nullable: true })
+  soldBy: string | null;
+
+  @ManyToOne(() => UserOrmEntity, {
+    eager: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'sold_by' })
+  soldByUser: UserOrmEntity | null;
 
   @Column({ name: 'user_id' })
   userId: string;
@@ -71,11 +132,16 @@ export class QuotationOrmEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   observations: string | null;
 
-  @Column({ name: 'commercial_terms', type: 'varchar', length: 500, nullable: true })
+  @Column({
+    name: 'commercial_terms',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
   commercialTerms: string | null;
 
   @Column({ type: 'varchar', length: 20 })
-  status: 'PENDIENTE' | 'ACEPTADA' | 'ANULADA';
+  status: QuotationStoredStatus;
 
   @Column({ name: 'voided_at', type: 'timestamptz', nullable: true })
   voidedAt: Date | null;

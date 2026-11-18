@@ -1598,9 +1598,39 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **No cambia**: el depósito de caja a banco no valida por denominación (no se pidió). Transaccionar, CxC, Activos y los movimientos manuales siguen sin desglose y aparecen como "sin desglosar".
 - **Pruebas**: `sql/tests/cash-denomination-inventory.test.sql` (31), concurrencia de Bodega por denominación en `cash-control-concurrency.sh`, `test/cash-inventory.e2e-spec.ts`, specs de casos de uso y de errores. Documento técnico: `docs/cash-control/inventario-por-denominacion-y-borradores.md`.
 
+### Listas Escolares — inventario negativo, abastecimiento FIFO y despacho (migración `1760008300000`)
+
+- **Restricciones de no negativos**: los CHECK `CHK_inventory_stock_quantity_non_negative` y `CHK_products_stock_non_negative` son ahora triggers con la misma regla y el mismo error (23514 y mismo nombre de restricción).
+  - Solo `school_quotation_sync_inventory` puede dejar Bodega en negativo: usa la bandera de transacción `cj.allow_negative_stock='SCHOOL_LIST'` y la limpia al terminar.
+  - `products.stock` solo puede ser tan negativo como sus ubicaciones.
+  - No relajes estas reglas en otros módulos.
+- **Modelo de abastecimiento**:
+  - Comprometido: vista `school_supply_commitments`. Reservado: `school_supply_allocations` (ASIGNADA/LIBERADA/ENTREGADA, con origen compra o movimiento). Pendiente = comprometido − reservado.
+  - Invariante en Bodega: existencia = libres − pendientes, por eso reservar o despachar no mueve inventario.
+  - FIFO por `school_quotations.confirmed_at`, automático por el trigger `trg_school_supply_on_stock_in` en cada entrada a Bodega (modo `school_supply_settings`), o manual.
+- **Despacho = entrega** (`dispatch_school_quotation`): exige saldo pagado y nada pendiente; sin movimiento de inventario. `change_school_quotation_status('ENTREGAR')` responde `SCHOOL_USE_DISPATCH`.
+- **Anular** devuelve lo descontado y libera las reservas una sola vez.
+- **Permiso** `school_lists.supply.manage` (supervisor/admin).
+- **Pruebas**: `sql/tests/school-supply.test.sql`, `test/school-supply.e2e-spec.ts`. Documento: `docs/school-lists/abastecimiento-y-despacho.md`.
+
+### Listas Escolares — categoría por línea, orden y tarjetas (sin migración)
+
+- Líneas de plantilla y cotización traen `productSku`/`categoryId`/`categoryName` vía LEFT JOIN `products → categories` (`LINE_PRODUCT_JOIN`); null en líneas a mano.
+- `GET /school-lists/quotations`: `sortBy` (lista blanca `QUOTATION_SORT_FIELDS` → `QUOTATION_SORT_SQL`, nunca texto del usuario) + `sortDirection`; `search` incluye el número; cada fila trae `advance`. El tablero agrega `awaitingQuotations` (BORRADOR + COTIZADA).
+- "Cambiar producto" del frontend reutiliza `GET /products?categoryId=&search=` y `GET /categories`; no hay endpoint nuevo. Guardar sigue las reglas de inventario de siempre (por diferencia).
+- Pruebas: `test/school-lists-catalog.e2e-spec.ts`. Documento: `docs/school-lists/categorias-y-cambio-de-producto.md`.
+
+### Cotizaciones — cliente a mano, estados y "Confirmar venta" (migración `1760008200000`)
+
+- **Cliente**: `quotations.client_id` es opcional; el cliente se captura en la cotización (`customer_name`, `customer_phone`, `student_name`, `grade`) y no se crea ningún registro en `clients`.
+- **Estados**: BORRADOR, COTIZADA, ACEPTADA, VENDIDA, RECHAZADA, CANCELADA (las filas viejas PENDIENTE → COTIZADA, ANULADA → CANCELADA). VENCIDA es derivada. `change_quotation_status` aplica los cambios bajo bloqueo; anular (`/void`) usa CANCELAR y rechaza una VENDIDA.
+- **Guardar nunca toca inventario.** `convert_quotation_to_sale` bloquea la cotización (si ya está VENDIDA devuelve la misma venta), valida Vitrina con el nombre del producto y llama al mismo `confirm_sale` de Ventas con `unitPrice`/`lineTotal` cotizados. Es el único que puede enviarlos: el DTO de `POST /sales` los rechaza. Una venta por cotización (índice único).
+- **Pagos**: Cotizaciones no recibe anticipos (decisión del dueño); la venta entra a la Caja de ventas una sola vez.
+- **Pruebas**: `sql/tests/quotations-sale.test.sql`, `test/quotations-sale.e2e-spec.ts`. Documento: `docs/inventario-listas-y-cotizaciones.md`.
+
 ### Listas Escolares (`modules/school-lists/`, migración `1760007900000`)
 
-- **Módulo independiente de Cotizaciones**: no toca `quotations`, ventas, inventario, Caja de ventas, Control de Efectivo ni bancos. Los pagos viven **solo** en el estado de cuenta (`school_quotation_payments`); la entrega solo cambia el estado (exige saldo 0) y **no** crea una venta. Las tres decisiones las tomó el dueño.
+- **Módulo independiente de Cotizaciones**: no toca `quotations`, ventas, Caja de ventas, Control de Efectivo ni bancos. **Inventario (migración `1760008100000`)**: `school_quotation_sync_inventory` descuenta de Bodega los productos del inventario de una lista confirmada (target − lo ya movido según `inventory_movements` con `reference_type='SCHOOL_LIST'`; repetir no duplica), edita por diferencia y anular devuelve todo; un borrador no descuenta. Los pagos viven **solo** en el estado de cuenta (`school_quotation_payments`); la entrega solo cambia el estado (exige saldo 0) y **no** crea una venta. Las tres decisiones las tomó el dueño.
 - **Tablas**:
   - `school_list_templates` y `_items`: configuración; las líneas se reemplazan al editar.
   - `school_quotations` y `school_quotation_items`: copia propia de cada línea (origen PLANTILLA/INVENTARIO/MANUAL, `subtotal` generado).
@@ -1618,7 +1648,7 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   - Estáticas: `GET permissions`, `GET quotations/dashboard`, `GET quotations/:id/pdf` (declaradas antes de `:id`).
   - Comprobante: `GET payments/:id/receipt` (A5).
 - **Siembra**: Primero, Segundo y Tercero Básico, **vacías**. El `down` solo elimina las tablas si no hay cotizaciones.
-- **Pruebas**: `sql/tests/school-lists.test.sql` (62), `sql/tests/school-lists-concurrency.sh`, `test/school-lists.e2e-spec.ts`, specs de casos de uso y errores. Documento: `docs/school-lists/listas-escolares.md`.
+- **Pruebas**: `sql/tests/school-lists.test.sql` (79), `sql/tests/school-lists-concurrency.sh`, `test/school-lists.e2e-spec.ts`, specs de casos de uso y errores. Documento: `docs/school-lists/listas-escolares.md`.
 
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 

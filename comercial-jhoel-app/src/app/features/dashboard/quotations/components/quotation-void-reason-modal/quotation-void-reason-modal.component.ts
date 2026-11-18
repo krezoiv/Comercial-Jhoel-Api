@@ -23,6 +23,11 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 export class QuotationVoidReasonModalComponent {
   @Input() open = false;
   @Input() quotationNumber = '';
+  /** Copy of the dialog; defaults are the "Anular" texts (also used for "Rechazar"). */
+  @Input() title = 'Anular cotización';
+  @Input() description =
+    'Esta acción no se puede deshacer. La cotización permanecerá en el historial marcada como cancelada — indique el motivo.';
+  @Input() confirmText = 'Anular cotización';
   @Output() confirmed = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
 

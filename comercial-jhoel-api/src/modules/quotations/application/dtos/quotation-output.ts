@@ -1,7 +1,8 @@
 import { Quotation } from '../../domain/entities/quotation.entity';
 import { todayIsoDate } from '../utils/today-iso-date';
 
-export type QuotationDisplayStatus = 'PENDIENTE' | 'ACEPTADA' | 'ANULADA' | 'VENCIDA';
+/** Stored status, or VENCIDA for a COTIZADA past its expiration date. */
+export type QuotationDisplayStatus = Quotation['status'] | 'VENCIDA';
 
 export interface QuotationItemOutput {
   id: string;
@@ -19,8 +20,11 @@ export interface QuotationItemOutput {
 export interface QuotationOutput {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   quotationDate: Date;
@@ -36,6 +40,11 @@ export interface QuotationOutput {
   voidedByUsername: string | null;
   voidReason: string | null;
   convertedToSaleId: string | null;
+  acceptedAt: Date | null;
+  rejectedAt: Date | null;
+  rejectReason: string | null;
+  soldAt: Date | null;
+  soldByUsername: string | null;
   items: QuotationItemOutput[];
   createdAt: Date;
   updatedAt: Date;
@@ -45,8 +54,11 @@ export interface QuotationOutput {
 export interface QuotationSummaryOutput {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   expirationDate: string;
@@ -66,7 +78,7 @@ function deriveDisplayStatus(
   status: Quotation['status'],
   expirationDate: string,
 ): QuotationDisplayStatus {
-  if (status === 'PENDIENTE' && expirationDate < todayIsoDate()) {
+  if (status === 'COTIZADA' && expirationDate < todayIsoDate()) {
     return 'VENCIDA';
   }
   return status;
@@ -78,6 +90,9 @@ export function toQuotationOutput(quotation: Quotation): QuotationOutput {
     quotationNumber: quotation.quotationNumber,
     clientId: quotation.clientId,
     clientName: quotation.clientName,
+    customerPhone: quotation.customerPhone,
+    studentName: quotation.studentName,
+    grade: quotation.grade,
     userId: quotation.userId,
     username: quotation.username,
     quotationDate: quotation.quotationDate,
@@ -93,6 +108,11 @@ export function toQuotationOutput(quotation: Quotation): QuotationOutput {
     voidedByUsername: quotation.voidedByUsername,
     voidReason: quotation.voidReason,
     convertedToSaleId: quotation.convertedToSaleId,
+    acceptedAt: quotation.acceptedAt,
+    rejectedAt: quotation.rejectedAt,
+    rejectReason: quotation.rejectReason,
+    soldAt: quotation.soldAt,
+    soldByUsername: quotation.soldByUsername,
     items: quotation.items.map((item) => ({
       id: item.id,
       productId: item.productId,
@@ -117,6 +137,9 @@ export function toQuotationSummaryOutput(
     quotationNumber: quotation.quotationNumber,
     clientId: quotation.clientId,
     clientName: quotation.clientName,
+    customerPhone: quotation.customerPhone,
+    studentName: quotation.studentName,
+    grade: quotation.grade,
     userId: quotation.userId,
     username: quotation.username,
     expirationDate: quotation.expirationDate,

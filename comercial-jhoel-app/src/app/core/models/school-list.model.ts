@@ -33,6 +33,7 @@ export type SchoolListPermission =
   | 'school_lists.payments.void'
   | 'school_lists.statements.view'
   | 'school_lists.quotations.cancel'
+  | 'school_lists.supply.manage'
   | 'school_lists.documents.generate';
 
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
@@ -63,6 +64,181 @@ export const SCHOOL_STATUS_TONE: Record<
 };
 
 export const SCHOOL_STATUSES = Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[];
+
+/**
+ * Color key of each status pill (`.status-pill--<key>` in `_school-lists.scss`):
+ * gray draft, blue quoted, purple anticipo, orange partial, green paid, sky
+ * preparing, indigo finished, dark green delivered, red cancelled.
+ */
+export const SCHOOL_STATUS_COLOR: Record<SchoolQuotationStatus, string> = {
+  BORRADOR: 'gray',
+  COTIZADA: 'blue',
+  ANTICIPO_RECIBIDO: 'purple',
+  PAGO_PARCIAL: 'orange',
+  PAGADA: 'green',
+  EN_PREPARACION: 'sky',
+  TERMINADA: 'indigo',
+  ENTREGADA: 'darkgreen',
+  CANCELADA: 'red',
+};
+
+/** Supply state of a list (migration 1760008300000), independent of the commercial status. */
+export type SchoolSupplyStatus = 'PENDIENTE' | 'PARCIAL' | 'DISPONIBLE' | 'DESPACHADA' | 'NO_APLICA';
+
+export const SCHOOL_SUPPLY_LABEL: Record<SchoolSupplyStatus, string> = {
+  PENDIENTE: 'Pendiente de abastecimiento',
+  PARCIAL: 'Parcialmente abastecida',
+  DISPONIBLE: 'Disponible para despacho',
+  DESPACHADA: 'Despachada',
+  NO_APLICA: 'Sin control',
+};
+
+export const SCHOOL_SUPPLY_TONE: Record<SchoolSupplyStatus, 'danger' | 'gold' | 'success' | 'brand' | 'neutral-light'> = {
+  PENDIENTE: 'danger',
+  PARCIAL: 'gold',
+  DISPONIBLE: 'success',
+  DESPACHADA: 'brand',
+  NO_APLICA: 'neutral-light',
+};
+
+export const SCHOOL_SUPPLY_FILTERS: SchoolSupplyStatus[] = ['PENDIENTE', 'PARCIAL', 'DISPONIBLE', 'DESPACHADA'];
+
+export type SupplyProductStatus = 'PENDIENTE' | 'PARCIAL' | 'ABASTECIDO';
+export const SUPPLY_PRODUCT_LABEL: Record<SupplyProductStatus, string> = {
+  PENDIENTE: 'Pendiente',
+  PARCIAL: 'Parcialmente abastecido',
+  ABASTECIDO: 'Abastecido',
+};
+export const SUPPLY_PRODUCT_TONE: Record<SupplyProductStatus, 'danger' | 'gold' | 'success'> = {
+  PENDIENTE: 'danger',
+  PARCIAL: 'gold',
+  ABASTECIDO: 'success',
+};
+
+export const SUPPLY_SOURCE_LABEL: Record<'EXISTENCIA' | 'COMPRA' | 'TRASLADO' | 'DEVOLUCION', string> = {
+  EXISTENCIA: 'Existencia en Bodega',
+  COMPRA: 'Compra',
+  TRASLADO: 'Traslado',
+  DEVOLUCION: 'Devolución',
+};
+
+export interface SupplyLine {
+  productId: string;
+  productName: string;
+  requested: number;
+  allocated: number;
+  pending: number;
+  delivered: number;
+}
+
+export interface SupplyAllocation {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  sourceType: 'EXISTENCIA' | 'COMPRA' | 'TRASLADO' | 'DEVOLUCION';
+  mode: 'AUTO' | 'FIFO_MANUAL' | 'MANUAL';
+  status: 'ASIGNADA' | 'LIBERADA' | 'ENTREGADA';
+  purchaseId: string | null;
+  purchaseInvoice: string | null;
+  purchaseDate: string | null;
+  createdAt: string;
+  username: string;
+  releasedAt: string | null;
+  releaseReason: string | null;
+}
+
+export interface SchoolDispatch {
+  id: string;
+  dispatchedAt: string;
+  username: string;
+  observations: string | null;
+  items: {
+    productId: string | null;
+    productName: string;
+    requested: number;
+    supplied: number;
+    delivered: number;
+    inventoryControlled: boolean;
+  }[];
+}
+
+export interface QuotationSupply {
+  status: SchoolSupplyStatus;
+  confirmedAt: string | null;
+  lines: SupplyLine[];
+  uncontrolledLines: number;
+  allocations: SupplyAllocation[];
+  dispatch: SchoolDispatch | null;
+}
+
+export interface SupplyProduct {
+  productId: string;
+  productName: string;
+  sku: string | null;
+  category: string;
+  bodega: number;
+  committed: number;
+  allocated: number;
+  pending: number;
+  freeUnits: number;
+  lists: number;
+  firstOrderAt: string | null;
+  lastOrderAt: string | null;
+  status: SupplyProductStatus;
+}
+
+export interface SupplySummary {
+  pendingProducts: number;
+  pendingUnits: number;
+  affectedLists: number;
+  suppliedProducts: number;
+  partialProducts: number;
+}
+
+export interface SupplyProductPage {
+  items: SupplyProduct[];
+  total: number;
+  page: number;
+  limit: number;
+  summary: SupplySummary;
+}
+
+export interface SupplyProductFilters {
+  search?: string;
+  categoryId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  quotationNumber?: string;
+  status?: SupplyProductStatus | '';
+  page?: number;
+  limit?: number;
+}
+
+export interface SupplyProductList {
+  quotationId: string;
+  quotationNumber: string;
+  customerName: string;
+  grade: string;
+  confirmedAt: string | null;
+  committed: number;
+  allocated: number;
+  pending: number;
+  supplyStatus: SchoolSupplyStatus;
+}
+
+export interface SupplyPurchase {
+  purchaseId: string;
+  invoiceNumber: string | null;
+  purchaseDate: string;
+  productId: string;
+  productName: string;
+  purchased: number;
+  allocated: number;
+  lists: { quotationId: string; quotationNumber: string; customerName: string; quantity: number; status: string }[];
+}
+
+export type SupplyAllocationMode = 'FIFO_AUTO' | 'MANUAL';
 
 export const SCHOOL_PAYMENT_METHOD_LABEL: Record<SchoolPaymentMethod, string> = {
   EFECTIVO: 'Efectivo',
@@ -126,6 +302,11 @@ export interface SchoolTemplateItem {
   subtotal: number;
   observations: string | null;
   inventoryPrice: number | null;
+  /** SKU of the linked inventory product (null for free-text lines). */
+  productSku: string | null;
+  /** Category from the product's real relation in the database (null for free-text lines). */
+  categoryId: string | null;
+  categoryName: string | null;
 }
 
 export interface SchoolTemplateSummary {
@@ -178,6 +359,11 @@ export interface SchoolQuotationItem {
   discount: number;
   subtotal: number;
   observations: string | null;
+  /** SKU of the linked inventory product (null for free-text lines). */
+  productSku: string | null;
+  /** Category from the product's real relation in the database (null for free-text lines). */
+  categoryId: string | null;
+  categoryName: string | null;
 }
 
 export interface SchoolPayment {
@@ -212,6 +398,29 @@ export interface SchoolHistoryEntry {
   createdByUsername: string;
 }
 
+/** Inventory movement caused by the list in Bodega (discount, adjustment or return). */
+export interface SchoolListInventoryMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  movementType: 'SALIDA_LISTA_ESCOLAR' | 'ENTRADA_AJUSTE_LISTA' | 'ENTRADA_ANULACION_LISTA';
+  quantity: number;
+  reason: string | null;
+  createdAt: string;
+  username: string;
+}
+
+export const SCHOOL_INVENTORY_MOVEMENT_LABEL: Record<SchoolListInventoryMovement['movementType'], string> = {
+  SALIDA_LISTA_ESCOLAR: 'Salida por lista',
+  ENTRADA_AJUSTE_LISTA: 'Devolución por ajuste',
+  ENTRADA_ANULACION_LISTA: 'Devolución por anulación',
+};
+
+/** Statuses in which the list keeps its inventory lines discounted from Bodega. */
+export function schoolListHoldsStock(status: SchoolQuotationStatus): boolean {
+  return status !== 'BORRADOR' && status !== 'CANCELADA';
+}
+
 export interface SchoolAccount {
   total: number;
   advances: number;
@@ -233,10 +442,13 @@ export interface SchoolQuotationSummary {
   templateId: string | null;
   templateName: string | null;
   total: number;
+  /** Applied anticipos (not voided). */
+  advance: number;
   paid: number;
   balance: number;
   status: SchoolQuotationStatus;
   accountStatus: SchoolAccountStatus;
+  supplyStatus: SchoolSupplyStatus;
   version: number;
   createdAt: string;
   createdByUsername: string;
@@ -257,6 +469,8 @@ export interface SchoolQuotation extends SchoolQuotationSummary {
   items: SchoolQuotationItem[];
   payments: SchoolPayment[];
   history: SchoolHistoryEntry[];
+  inventory: SchoolListInventoryMovement[];
+  supply: QuotationSupply;
   account: SchoolAccount;
 }
 
@@ -312,11 +526,17 @@ export interface SchoolQuotationFilters {
   number?: string;
   grade?: string;
   status?: SchoolQuotationStatus | '';
+  supplyStatus?: SchoolSupplyStatus | '';
   dateFrom?: string;
   dateTo?: string;
+  sortBy?: SchoolQuotationSortField;
+  sortDirection?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }
+
+/** Columns the backend can order the quotation list by (`GET /school-lists/quotations?sortBy=`). */
+export type SchoolQuotationSortField = 'number' | 'customer' | 'grade' | 'date' | 'total' | 'balance' | 'status';
 
 export interface SchoolQuotationPage {
   items: SchoolQuotationSummary[];
@@ -329,6 +549,9 @@ export interface SchoolDashboard {
   dateFrom: string;
   dateTo: string;
   totalQuotations: number;
+  /** BORRADOR or COTIZADA: still waiting for the customer. */
+  awaitingQuotations: number;
+  /** Active quotations with a balance still to collect. */
   pendingQuotations: number;
   paidQuotations: number;
   totalQuoted: number;
@@ -349,7 +572,9 @@ export const SCHOOL_HISTORY_LABEL: Record<string, string> = {
   PREPARAR: 'En preparación',
   TERMINAR: 'Terminada · despachada, lista para entregar',
   ENTREGAR: 'Entregada al cliente',
-  CANCELADA: 'Cotización cancelada',
+  CANCELADA: 'Lista anulada',
+  ABASTECIMIENTO: 'Productos asignados (abastecimiento)',
+  DESPACHO: 'Lista despachada y entregada',
 };
 
 /** Rounds to cents the same way the backend does (display/live totals only). */
@@ -388,4 +613,34 @@ export function guatemalaToday(now = new Date()): string {
     month: '2-digit',
     day: '2-digit',
   }).format(now);
+}
+
+// ── Product catalog for "Cambiar producto" ─────────────────────────────────
+/**
+ * Active inventory product as the change-product modal shows it. Read from the
+ * existing `GET /products` (filtered by `categoryId` and `search`, paginated);
+ * `bodega` is filled afterwards from `GET /school-lists/stock`, because lists
+ * take their stock from Bodega.
+ */
+export interface SchoolCatalogProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  categoryId: string;
+  categoryName: string;
+  publicPrice: number;
+}
+
+export interface SchoolCatalogPage {
+  items: SchoolCatalogProduct[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface SchoolCatalogFilters {
+  categoryId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
 }

@@ -161,3 +161,12 @@
 .action-btn--danger:hover:not(:disabled) {
   color: var(--color-danger);
 }
+
+.history-table__sub {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.action-btn--sale {
+  color: var(--color-success);
+}

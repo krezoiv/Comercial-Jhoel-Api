@@ -1,0 +1,65 @@
+@if (quotationId) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="quotation-sale-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="quotation-sale-title"><app-icon name="shopping-bag" [size]="20" /> Confirmar venta</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="saving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (preview(); as p) {
+        <p class="modal__meta">
+          {{ p.quotation.quotationNumber }} · {{ p.quotation.clientName }}{{ p.quotation.customerPhone ? ' · ' + p.quotation.customerPhone : '' }}
+          · Estado: <strong>{{ statusLabel[p.quotation.status] }}</strong>
+        </p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Total</th><th class="num">En Vitrina</th></tr>
+            </thead>
+            <tbody>
+              @for (line of p.lines; track $index) {
+                <tr [class.short]="!line.sufficient">
+                  <td>{{ line.productName }}@if (!line.isActive) { <span class="tag">desactivado</span> }</td>
+                  <td class="num">{{ line.quantity }}</td>
+                  <td class="num">{{ formatCurrency(line.unitPrice) }}</td>
+                  <td class="num">{{ formatCurrency(line.total) }}</td>
+                  <td class="num">{{ line.available }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr><td>Total</td><td class="num">{{ units() }}</td><td></td><td class="num">{{ formatCurrency(p.quotation.total) }}</td><td></td></tr>
+            </tfoot>
+          </table>
+        </div>
+        @if (p.canConfirm) {
+          <p class="modal__notice">
+            Se registrará una venta con los precios de esta cotización y se descontarán {{ units() }} unidad(es) de Vitrina.
+            La cotización quedará como <strong>Vendida</strong>. Esta operación se realiza una sola vez.
+          </p>
+        } @else if (missing().length) {
+          <p class="modal__error" role="alert">
+            No hay existencias suficientes en Vitrina para: {{ missingNames() }}.
+            Traslade producto desde Bodega o ajuste la cotización.
+          </p>
+        } @else {
+          <p class="modal__error" role="alert">Solo una cotización cotizada o aceptada (no vencida) se puede convertir en venta.</p>
+        }
+      } @else if (loading()) {
+        <p class="modal__state">Validando existencias…</p>
+      }
+
+      @if (error()) {
+        <p class="modal__error" role="alert">{{ error() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="saving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="saving() || !preview()?.canConfirm" (click)="confirm()">
+          {{ saving() ? 'Registrando venta…' : 'Confirmar venta' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

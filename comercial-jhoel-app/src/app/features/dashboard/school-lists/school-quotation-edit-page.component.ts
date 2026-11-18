@@ -24,7 +24,7 @@ import { SchoolQuotationEditorComponent } from './components/school-quotation-ed
       @if (quotation(); as q) {
         <app-page-header icon="edit-2" [title]="'Editar ' + q.quotationNumber" [subtitle]="q.customerName + ' · ' + q.grade" />
         @if (editable()) {
-          <app-school-quotation-editor [quotation]="q" (saved)="back()" (cancelled)="back()" />
+          <app-school-quotation-editor [quotation]="q" [swapItemId]="swapItemId" (saved)="back()" (cancelled)="back()" />
         } @else {
           <p class="state">La cotización está {{ q.status === 'ENTREGADA' ? 'entregada' : 'cancelada' }} y ya no se puede modificar.</p>
         }
@@ -51,6 +51,8 @@ export class SchoolQuotationEditPageComponent {
   private readonly service = inject(SchoolListService);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
+  /** `?cambiar=<itemId>` (from the detail page): open "Cambiar producto" on that line. */
+  readonly swapItemId = this.route.snapshot.queryParamMap.get('cambiar');
   readonly quotation = signal<SchoolQuotation | null>(null);
   readonly failed = signal<string | null>(null);
   readonly editable = signal(false);

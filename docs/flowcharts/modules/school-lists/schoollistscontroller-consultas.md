@@ -1,0 +1,110 @@
+# Mapa de SchoolListsController (consultas)
+
+Módulo: **school-lists (school-lists)** · Fuente editable: [`schoollistscontroller-consultas.mmd`](schoollistscontroller-consultas.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart LR
+  subgraph s1["Frontend"]
+  n2["SchoolListService<br/><small>app/core/services/school-list.service.ts</small>"]
+  n3["SchoolSupplyComponent<br/><small>app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts</small>"]
+  n4["PurchasesPageComponent<br/><small>app/features/dashboard/purchases/purchases-page.component.ts</small>"]
+  n5["SchoolTemplatesComponent<br/><small>app/features/dashboard/school-lists/components/school-templates/school-templates.component.ts</small>"]
+  n6["SchoolQuotationEditorComponent<br/><small>app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts</small>"]
+  n7["SchoolQuotationsListComponent<br/><small>app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts</small>"]
+  n8["SchoolDashboardComponent<br/><small>app/features/dashboard/school-lists/components/school-dashboard/school-dashboard.component.ts</small>"]
+  n9["SchoolDocumentsService<br/><small>app/features/dashboard/school-lists/school-documents.service.ts</small>"]
+  n10["SchoolQuotationDetailPageComponent<br/><small>app/features/dashboard/school-lists/school-quotation-detail-page.component.ts</small>"]
+  end
+  subgraph s11["SchoolListsController (api/school-lists/presentation/controllers/school-lists.controller.ts)"]
+  n12["GET /api/school-lists/permissions<br/><small>myPermissions()</small>"]
+  n13["GET /api/school-lists/stock<br/><small>stock()</small>"]
+  n14["GET /api/school-lists/supply/products<br/><small>supplyProductsList()</small>"]
+  n15["GET /api/school-lists/supply/products/:productId/lists<br/><small>supplyProductListsOf()</small>"]
+  n16["GET /api/school-lists/supply/purchases<br/><small>supplyPurchasesList()</small>"]
+  n17["GET /api/school-lists/supply/settings<br/><small>supplySettingsGet()</small>"]
+  n18["GET /api/school-lists/templates<br/><small>templates()</small>"]
+  n19["GET /api/school-lists/templates/:id<br/><small>template()</small>"]
+  n20["GET /api/school-lists/quotations<br/><small>quotations()</small>"]
+  n21["GET /api/school-lists/quotations/dashboard<br/><small>dashboard()</small>"]
+  n22["GET /api/school-lists/quotations/:id/pdf<br/><small>pdf()</small>"]
+  n23["GET /api/school-lists/quotations/:id<br/><small>quotation()</small>"]
+  n24["GET /api/school-lists/payments/:paymentId/receipt<br/><small>receipt()</small>"]
+  end
+  subgraph s25["Aplicación"]
+  n26["GetSchoolListPermissionsUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n27["GetSchoolBodegaStockUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n28["ListSupplyProductsUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n29["ListSupplyProductListsUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n30["ListSupplyPurchasesUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n31["GetSupplySettingsUseCase<br/><small>api/school-lists/application/use-cases/school-supply.use-cases.ts</small>"]
+  n32["ListSchoolTemplatesUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n33["GetSchoolTemplateUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n34["ListSchoolQuotationsUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n35["GetSchoolListDashboardUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n36["GetSchoolQuotationPdfUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n37["GetSchoolQuotationUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n38["GetSchoolReceiptPdfUseCase<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  end
+  subgraph s39["Dominio · Infraestructura · PostgreSQL"]
+  end
+  n3 -->|load→supplyProducts, refresh→supplyProducts, openLists→supplyProductLists …| n2
+  n4 -->|reportSchoolSupply→supplyPurchases| n2
+  n5 -->|load→getTemplates, toggle→getTemplate, edit→getTemplate| n2
+  n6 -->|selectTemplate→getTemplate| n2
+  n7 -->|load→getQuotations| n2
+  n8 -->|load→getDashboard| n2
+  n9 -->|quotation→quotationPdf, receipt→receiptPdf| n2
+  n10 -->|load→getQuotation, onPaid→receiptPdf| n2
+  n2 -->|loadPermissions| n12
+  n2 -->|bodegaStock| n13
+  n2 -->|supplyProducts| n14
+  n2 -->|supplyProductLists| n15
+  n2 -->|supplyPurchases| n16
+  n2 -->|supplySettings| n17
+  n2 -->|getTemplates| n18
+  n2 -->|getTemplate| n19
+  n2 -->|getQuotations| n20
+  n2 -->|getDashboard| n21
+  n2 -->|quotationPdf| n22
+  n2 -->|getQuotation| n23
+  n2 -->|receiptPdf| n24
+  n12 --> n26
+  n13 --> n27
+  n14 --> n28
+  n15 --> n29
+  n16 --> n30
+  n17 --> n31
+  n18 --> n32
+  n19 --> n33
+  n20 --> n34
+  n21 --> n35
+  n22 --> n36
+  n23 --> n37
+  n24 --> n38
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n2,n3,n4,n5,n6,n7,n8,n9,n10 fe
+  class n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24 api
+  class n26,n27,n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38 app
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a SchoolListsController, sus 13 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts), [`comercial-jhoel-app/src/app/core/services/school-list.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-supply/school-supply.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-templates/school-templates.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-templates/school-templates.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-dashboard/school-dashboard.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-dashboard/school-dashboard.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-documents.service.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-documents.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts), [`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts), [`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/school-lists/
+6. **¿Dónde se almacenan los datos?** sin tablas detectadas
+7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
+8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

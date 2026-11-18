@@ -64,7 +64,7 @@ export function assertPositiveMoney(amount: number): void {
   }
 }
 
-function requireKey(
+export function requireKey(
   clientRequestId: string | undefined,
   prefix: string,
 ): string {
@@ -74,7 +74,7 @@ function requireKey(
   return `${prefix}:${clientRequestId}`;
 }
 
-abstract class SchoolListUseCase {
+export abstract class SchoolListUseCase {
   constructor(
     @Inject(SCHOOL_LIST_REPOSITORY)
     protected readonly repository: SchoolListRepository,
@@ -341,6 +341,19 @@ export class VoidSchoolPaymentUseCase extends SchoolListUseCase {
       requireKey(clientRequestId, 'SLV'),
     );
     return { reversalId, quotation: await this.detail(payment.quotationId) };
+  }
+}
+
+// ── Inventory ─────────────────────────────────────────────────────────────
+@Injectable()
+export class GetSchoolBodegaStockUseCase extends SchoolListUseCase {
+  /** Bodega stock shown next to inventory lines; the SQL sync validates again under lock. */
+  execute(
+    actor: Actor,
+    productIds: string[],
+  ): Promise<{ productId: string; quantity: number }[]> {
+    this.can(actor, 'school_lists.view');
+    return this.repository.bodegaStock([...new Set(productIds)].slice(0, 300));
   }
 }
 

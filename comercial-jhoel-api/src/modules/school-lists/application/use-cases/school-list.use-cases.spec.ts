@@ -18,7 +18,15 @@ import {
   VoidSchoolPaymentUseCase,
   CancelSchoolQuotationUseCase,
   ChangeSchoolQuotationStatusUseCase,
+  GetSchoolBodegaStockUseCase,
 } from './school-list.use-cases';
+import {
+  AllocateSupplyManualUseCase,
+  AllocateSupplyPurchaseUseCase,
+  DispatchSchoolQuotationUseCase,
+  RunSupplyFifoUseCase,
+  SetSupplySettingsUseCase,
+} from './school-supply.use-cases';
 import { SchoolListRuleError } from '../../domain/errors/school-list.errors';
 
 const admin = { userId: 'u-admin', role: 'ADMIN' };
@@ -38,10 +46,12 @@ const detail: QuotationDetailRow = {
   templateId: 't1',
   templateName: 'Primero Básico',
   total: 850,
+  advance: 300,
   paid: 300,
   balance: 550,
   status: 'ANTICIPO_RECIBIDO',
   accountStatus: 'PARCIAL',
+  supplyStatus: 'NO_APLICA',
   version: 2,
   createdAt: '2099-01-10T15:00:00.000Z',
   createdByUsername: 'cajero',
@@ -64,6 +74,9 @@ const detail: QuotationDetailRow = {
       templateItemId: null,
       productId: null,
       productName: 'Cuaderno grande',
+      productSku: null,
+      categoryId: null,
+      categoryName: null,
       description: null,
       quantity: 1,
       unitPrice: 25,
@@ -96,6 +109,15 @@ const detail: QuotationDetailRow = {
     },
   ],
   history: [],
+  inventory: [],
+  supply: {
+    status: 'NO_APLICA',
+    confirmedAt: null,
+    lines: [],
+    uncontrolledLines: 0,
+    allocations: [],
+    dispatch: null,
+  },
   account: {
     total: 850,
     advances: 300,
@@ -124,6 +146,20 @@ function repository(): jest.Mocked<SchoolListRepository> {
     voidPayment: jest.fn().mockResolvedValue('p3'),
     findPayment: jest.fn().mockResolvedValue(detail.payments[0]),
     dashboard: jest.fn().mockResolvedValue({ totalQuotations: 0 }),
+    supplyProducts: jest.fn(),
+    supplyProductLists: jest.fn().mockResolvedValue([]),
+    supplyPurchases: jest.fn(),
+    supplyMode: jest.fn().mockResolvedValue('FIFO_AUTO'),
+    setSupplyMode: jest
+      .fn()
+      .mockImplementation((mode: string) => Promise.resolve(mode)),
+    runFifo: jest.fn().mockResolvedValue(3),
+    allocatePurchase: jest.fn().mockResolvedValue(5),
+    allocateManual: jest.fn().mockResolvedValue('a1'),
+    dispatch: jest.fn().mockResolvedValue('d1'),
+    bodegaStock: jest
+      .fn()
+      .mockResolvedValue([{ productId: 'p1', quantity: 7 }]),
   };
 }
 
@@ -166,7 +202,13 @@ describe('Listas Escolares — use cases', () => {
     expect(useCase.execute(supervisor).permissions).not.toContain(
       'school_lists.payments.void',
     );
-    expect(useCase.execute(admin).permissions).toHaveLength(10);
+    expect(useCase.execute(admin).permissions).toHaveLength(11);
+    expect(useCase.execute(supervisor).permissions).toContain(
+      'school_lists.supply.manage',
+    );
+    expect(useCase.execute(cashier).permissions).not.toContain(
+      'school_lists.supply.manage',
+    );
     expect(useCase.execute({ userId: 'x', role: 'GUEST' }).permissions).toEqual(
       [],
     );
@@ -327,6 +369,74 @@ describe('Listas Escolares — use cases', () => {
     await expect(
       useCase.execute({ userId: 'x', role: 'GUEST' }, 'q1', 'TERMINAR', 2),
     ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+  });
+
+  it('reads Bodega stock for the editor (deduplicated) with the view permission', async () => {
+    const repo = repository();
+    const result = await new GetSchoolBodegaStockUseCase(repo).execute(
+      cashier,
+      ['p1', 'p1'],
+    );
+    expect(repo.bodegaStock).toHaveBeenCalledWith(['p1']);
+    expect(result).toEqual([{ productId: 'p1', quantity: 7 }]);
+  });
+
+  it('supply actions: managers allocate, admins switch the mode, everyone dispatches with a key', async () => {
+    const repo = repository();
+    await expect(
+      new RunSupplyFifoUseCase(repo).execute(cashier, null),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    expect(
+      await new RunSupplyFifoUseCase(repo).execute(supervisor, 'p1'),
+    ).toEqual({
+      allocated: 3,
+    });
+    expect(repo.runFifo).toHaveBeenCalledWith('p1', 'u-sup');
+    expect(
+      await new AllocateSupplyPurchaseUseCase(repo).execute(supervisor, 'pu1'),
+    ).toEqual({ allocated: 5 });
+
+    await expect(
+      new SetSupplySettingsUseCase(repo).execute(supervisor, 'MANUAL'),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    expect(
+      await new SetSupplySettingsUseCase(repo).execute(admin, 'MANUAL'),
+    ).toEqual({ allocationMode: 'MANUAL' });
+
+    const manual = new AllocateSupplyManualUseCase(repo);
+    await expect(
+      manual.execute(
+        supervisor,
+        { quotationId: 'q1', productId: 'p1', quantity: 0 },
+        REQUEST_ID,
+      ),
+    ).rejects.toMatchObject({ code: 'SCHOOL_INVALID_QUANTITY' });
+    await manual.execute(
+      supervisor,
+      { quotationId: 'q1', productId: 'p1', quantity: 2 },
+      REQUEST_ID,
+    );
+    expect(repo.allocateManual).toHaveBeenCalledWith(
+      { quotationId: 'q1', productId: 'p1', quantity: 2, purchaseId: null },
+      'u-sup',
+      `SLA:${REQUEST_ID}`,
+    );
+
+    await new DispatchSchoolQuotationUseCase(repo).execute(
+      cashier,
+      'q1',
+      'Entregada',
+      REQUEST_ID,
+    );
+    expect(repo.dispatch).toHaveBeenCalledWith(
+      'q1',
+      'Entregada',
+      'u-user',
+      `SLD:${REQUEST_ID}`,
+    );
+    await expect(
+      new DispatchSchoolQuotationUseCase(repo).execute(cashier, 'q1', null, ''),
+    ).rejects.toMatchObject({ code: 'SCHOOL_IDEMPOTENCY_KEY_REQUIRED' });
   });
 
   it('dashboard defaults to the current year and rejects inverted ranges', async () => {

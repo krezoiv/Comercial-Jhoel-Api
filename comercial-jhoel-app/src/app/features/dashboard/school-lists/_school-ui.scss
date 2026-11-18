@@ -1,0 +1,181 @@
+// Redesign pieces of Listas Escolares shared by the quotation list, editor,
+// detail page and the "Cambiar producto" modal: category badge, status pills
+// and summary (KPI) cards. Kept apart from `_school-lists.scss` so only the
+// components that show them pay for these styles (12 kB component budget):
+// each piece is a mixin, so a component includes only what it renders, e.g.
+// `@use '../../school-ui' as ui;` then `@include ui.cat-badge;`.
+//
+// Status palette (one color per existing status, no new statuses): gray
+// draft, blue quoted, purple anticipo, orange partial, green paid, sky
+// preparing, indigo finished, dark green delivered, red cancelled. Soft
+// backgrounds are translucent so the same pills read well in dark mode.
+
+$school-colors: (
+  'gray': #64748b,
+  'blue': #2563eb,
+  'purple': #7c3aed,
+  'orange': #d97706,
+  'green': #16a34a,
+  'sky': #0284c7,
+  'indigo': #4f46e5,
+  'darkgreen': #166534,
+  'red': #dc2626,
+);
+
+/// Category badge of a product line (`.cat-badge`, `--none`, `--sm`).
+@mixin cat-badge {
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 2px var(--space-2);
+    border: 1px solid rgba(14, 165, 233, 0.28);
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.1);
+    color: #0369a1;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+
+    &--none {
+      border-color: var(--color-border-light);
+      background: var(--color-bg-light-muted);
+      color: var(--color-text-on-light-muted);
+    }
+
+    &--sm {
+      padding: 0 6px;
+    }
+  }
+
+  :host-context([data-theme='dark']) .cat-badge:not(.cat-badge--none) {
+    color: #7dd3fc;
+  }
+}
+
+/// Colored status pills (`.status-pill--<SCHOOL_STATUS_COLOR>`).
+@mixin status-pills {
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold, 600);
+    white-space: nowrap;
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    @each $name, $color in $school-colors {
+      &--#{$name} {
+        color: $color;
+        background: rgba($color, 0.12);
+      }
+    }
+  }
+
+  :host-context([data-theme='dark']) .status-pill {
+    filter: brightness(1.45);
+  }
+}
+
+/// Summary cards (`.kpis` grid of `.kpi.kpi--<color>`).
+@mixin kpis {
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: var(--space-3);
+  }
+
+  .kpi {
+    --kpi: #2563eb;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-light);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--kpi);
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    @each $name, $color in $school-colors {
+      &--#{$name} {
+        --kpi: #{$color};
+      }
+    }
+  }
+
+  .kpi__icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+    color: var(--kpi);
+    background: color-mix(in srgb, var(--kpi) 12%, transparent);
+  }
+
+  .kpi__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .kpi__label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+  }
+
+  .kpi__value {
+    font-size: var(--fs-xl, 1.375rem);
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-on-light);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+  }
+
+  .kpi__hint {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kpi {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}

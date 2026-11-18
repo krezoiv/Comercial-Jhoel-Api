@@ -9,7 +9,7 @@ flowchart TD
   n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
   subgraph s4["Frontend (Angular)"]
   n5["SchoolListService.changeStatus<br/><small>app/core/services/school-list.service.ts</small>"]
-  n6["SchoolQuotationsListComponent.deliver<br/><small>app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n6["SchoolQuotationsListComponent.finish<br/><small>app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts</small><br/>(se invoca desde su plantilla)"]
   n7["SchoolQuotationDetailPageComponent.runAction<br/><small>app/features/dashboard/school-lists/school-quotation-detail-page.component.ts</small><br/>(se invoca desde su plantilla)"]
   n8["HTTP POST /api/school-lists/quotations/:id/status<br/>authInterceptor agrega Authorization: Bearer"]
   end
@@ -63,7 +63,7 @@ flowchart TD
 ## Explicación
 
 1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/school-lists/quotations/:id/status: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
-2. **¿Dónde comienza?** SchoolQuotationsListComponent.deliver (comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts)
+2. **¿Dónde comienza?** SchoolQuotationsListComponent.finish (comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts)
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts), [`comercial-jhoel-app/src/app/core/services/school-list.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts), [`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
 5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO StatusActionRequestDto

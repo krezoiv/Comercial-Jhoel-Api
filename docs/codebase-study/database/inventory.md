@@ -71,7 +71,7 @@ erDiagram
 
 - **Entidad TypeORM:** [InventoryLocationOrmEntity](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-location-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [inventory-location.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-location-orm-entity-ts)
+- **Archivos TypeScript que la usan:** [inventory-location.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-location-orm-entity-ts), [typeorm-quotation.repository.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-typeorm-quotation-repository-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [quotations-sale.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -94,8 +94,8 @@ erDiagram
 
 - **Entidad TypeORM:** [InventoryMovementOrmEntity](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-movement-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [inventory-movement.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-movement-orm-entity-ts)
-- **Funciones SQL que la escriben:** `confirm_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `register_inventory_transfer`, `void_purchase`, `void_sale`
+- **Archivos TypeScript que la usan:** [inventory-movement.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-movement-orm-entity-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [quotations-sale.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
+- **Funciones SQL que la escriben:** `confirm_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `register_inventory_transfer`, `school_quotation_sync_inventory`, `void_purchase`, `void_sale`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -130,12 +130,16 @@ erDiagram
 - `IDX_inventory_movements_reference_id`: CREATE INDEX "IDX_inventory_movements_reference_id" ON public.inventory_movements USING btree (reference_id)
 - `PK_d7597827c1dcffae889db3ab873`: CREATE UNIQUE INDEX "PK_d7597827c1dcffae889db3ab873" ON public.inventory_movements USING btree (id)
 
+**Triggers:**
+
+- `trg_school_supply_on_stock_in`: CREATE TRIGGER trg_school_supply_on_stock_in AFTER INSERT ON public.inventory_movements FOR EACH ROW EXECUTE FUNCTION school_supply_on_stock_in()
+
 ## `inventory_stock`
 
 - **Entidad TypeORM:** [InventoryStockOrmEntity](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-stock-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [inventory-stock.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-stock-orm-entity-ts)
-- **Funciones SQL que la escriben:** `adjust_sale_item`, `cancel_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `ensure_inventory_stock_row`, `register_inventory_transfer`, `void_purchase`, `void_sale`
+- **Archivos TypeScript que la usan:** [inventory-stock.orm-entity.ts](../reference/backend/inventory.md#f-comercial-jhoel-api-src-modules-inventory-infrastructure-persistence-inventory-stock-orm-entity-ts), [typeorm-quotation.repository.ts](../reference/backend/quotations.md#f-comercial-jhoel-api-src-modules-quotations-infrastructure-persistence-typeorm-quotation-repository-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [quotations-sale.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts), [school-supply.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts)
+- **Funciones SQL que la escriben:** `adjust_sale_item`, `cancel_open_sale`, `confirm_purchase`, `confirm_sale`, `confirm_sale`, `ensure_inventory_stock_row`, `register_inventory_transfer`, `school_quotation_sync_inventory`, `void_purchase`, `void_sale`
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
@@ -149,7 +153,6 @@ erDiagram
 | Restricción | Tipo | Definición |
 |---|---|---|
 | `CHK_inventory_stock_min_stock_non_negative` | CHECK | CHECK ((min_stock &gt;= 0)) |
-| `CHK_inventory_stock_quantity_non_negative` | CHECK | CHECK ((quantity &gt;= 0)) |
 | `FK_inventory_stock_location` | FK | FOREIGN KEY (location_id) REFERENCES inventory_locations(id) ON DELETE RESTRICT |
 | `FK_inventory_stock_product` | FK | FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT |
 | `PK_a13d56d2087e6d9eb3d480395bf` | PK | PRIMARY KEY (id) |
@@ -158,6 +161,10 @@ erDiagram
 
 - `PK_a13d56d2087e6d9eb3d480395bf`: CREATE UNIQUE INDEX "PK_a13d56d2087e6d9eb3d480395bf" ON public.inventory_stock USING btree (id)
 - `UQ_inventory_stock_product_location`: CREATE UNIQUE INDEX "UQ_inventory_stock_product_location" ON public.inventory_stock USING btree (product_id, location_id)
+
+**Triggers:**
+
+- `trg_inventory_stock_non_negative`: CREATE TRIGGER trg_inventory_stock_non_negative BEFORE INSERT OR UPDATE OF quantity ON public.inventory_stock FOR EACH ROW EXECUTE FUNCTION inventory_stock_non_negative_guard()
 
 ## `product_presentations`
 

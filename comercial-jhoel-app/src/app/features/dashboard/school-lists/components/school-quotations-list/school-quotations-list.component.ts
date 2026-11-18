@@ -7,8 +7,15 @@ import {
   SCHOOL_ACCOUNT_LABEL,
   SCHOOL_ACCOUNT_TONE,
   SCHOOL_STATUSES,
+  SCHOOL_STATUS_COLOR,
   SCHOOL_STATUS_LABEL,
   SCHOOL_STATUS_TONE,
+  SCHOOL_SUPPLY_FILTERS,
+  SCHOOL_SUPPLY_LABEL,
+  SCHOOL_SUPPLY_TONE,
+  SchoolDashboard,
+  SchoolQuotationSortField,
+  SchoolSupplyStatus,
   SchoolQuotationStatus,
   SchoolQuotationSummary,
   canReceiveSchoolPayment,
@@ -20,20 +27,31 @@ import { ConfirmDialogService } from '../../../../../core/services/confirm-dialo
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { SchoolListService } from '../../../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { BadgeComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { ReportPaginationComponent } from '../../../reports/components/report-pagination/report-pagination.component';
 import { SchoolDocumentsService } from '../../school-documents.service';
 import { SchoolPaymentModalComponent } from '../school-payment-modal/school-payment-modal.component';
 
+/** One summary card above the list (values always come from the backend dashboard). */
+interface SummaryCard {
+  label: string;
+  value: string;
+  hint: string;
+  icon: string;
+  color: string;
+}
+
 /**
- * "Listado general de cotizaciones": filters (customer, phone, number, grade,
- * status, dates) applied on demand, server-side pagination and the actions
- * the role may run on each row.
+ * "Listado general de cotizaciones": summary cards (real figures from
+ * `GET /school-lists/quotations/dashboard` for the filtered period), filters
+ * (customer or number, phone, grade, status, supply, dates) applied on
+ * demand, server-side sorting by column and pagination, and the actions the
+ * role may run on each row. Below 768 px the table turns into cards.
  */
 @Component({
   selector: 'app-school-quotations-list',
   standalone: true,
-  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, ReportPaginationComponent, SchoolPaymentModalComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent, ReportPaginationComponent, SchoolPaymentModalComponent],
   templateUrl: './school-quotations-list.component.html',
   styleUrl: './school-quotations-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,9 +69,13 @@ export class SchoolQuotationsListComponent {
   readonly formatDate = formatSchoolDate;
   readonly statusLabel = SCHOOL_STATUS_LABEL;
   readonly statusTone = SCHOOL_STATUS_TONE;
+  readonly statusColor = SCHOOL_STATUS_COLOR;
   readonly accountTone = SCHOOL_ACCOUNT_TONE;
   readonly accountLabel = SCHOOL_ACCOUNT_LABEL;
   readonly statuses = SCHOOL_STATUSES;
+  readonly supplyLabel = SCHOOL_SUPPLY_LABEL;
+  readonly supplyTone = SCHOOL_SUPPLY_TONE;
+  readonly supplyStatuses = SCHOOL_SUPPLY_FILTERS;
   readonly isEditable = isSchoolQuotationEditable;
   readonly canPay = canReceiveSchoolPayment;
   readonly pageSize = 20;
@@ -63,9 +85,16 @@ export class SchoolQuotationsListComponent {
   readonly number = signal('');
   readonly grade = signal('');
   readonly status = signal<SchoolQuotationStatus | ''>('');
+  readonly supplyStatus = signal<SchoolSupplyStatus | ''>('');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
   readonly page = signal(1);
+  /** Column the backend orders by (null = newest first). */
+  readonly sortBy = signal<SchoolQuotationSortField | null>(null);
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
+
+  readonly summary = signal<SchoolDashboard | null>(null);
+  readonly summaryFailed = signal(false);
 
   readonly grades = signal<string[]>([]);
   readonly items = signal<SchoolQuotationSummary[]>([]);
@@ -80,11 +109,59 @@ export class SchoolQuotationsListComponent {
       next: (templates) => this.grades.set([...new Set(templates.map((t) => t.grade))].sort()),
     });
     this.load();
+    this.loadSummary();
   }
 
   applyFilters(): void {
     this.page.set(1);
     this.load();
+    this.loadSummary();
+  }
+
+  /**
+   * Clicking a column orders by it (descending first for amounts and dates,
+   * ascending for text); clicking it again flips the direction.
+   */
+  sort(field: SchoolQuotationSortField): void {
+    if (this.sortBy() === field) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortBy.set(field);
+      this.sortDirection.set(['customer', 'grade', 'status', 'number'].includes(field) ? 'asc' : 'desc');
+    }
+    this.page.set(1);
+    this.load();
+  }
+
+  /** aria-sort value of a sortable header. */
+  ariaSort(field: SchoolQuotationSortField): 'ascending' | 'descending' | 'none' {
+    return this.sortBy() !== field ? 'none' : this.sortDirection() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /** Cards built from the backend dashboard of the same period as the date filters. */
+  cards(): SummaryCard[] {
+    const d = this.summary();
+    if (!d) {
+      return [];
+    }
+    const period = `${formatSchoolDate(d.dateFrom)} – ${formatSchoolDate(d.dateTo)}`;
+    return [
+      { label: 'Total de cotizaciones', value: String(d.totalQuotations), hint: period, icon: 'file-check', color: 'blue' },
+      { label: 'Pendientes', value: String(d.awaitingQuotations), hint: 'Borrador o cotizada, sin anticipo', icon: 'clock', color: 'sky' },
+      { label: 'Pagadas', value: String(d.paidQuotations), hint: 'Saldo cubierto o entregadas', icon: 'check-circle', color: 'green' },
+      { label: 'Con saldo pendiente', value: String(d.pendingQuotations), hint: `Por cobrar ${formatCurrency(d.pendingBalance)}`, icon: 'wallet', color: 'orange' },
+      { label: 'Total cotizado', value: formatCurrency(d.totalQuoted), hint: `Recibido ${formatCurrency(d.totalReceived)}`, icon: 'receipt', color: 'purple' },
+    ];
+  }
+
+  loadSummary(): void {
+    this.service.getDashboard(this.dateFrom() || undefined, this.dateTo() || undefined).subscribe({
+      next: (d) => {
+        this.summary.set(d);
+        this.summaryFailed.set(false);
+      },
+      error: () => this.summaryFailed.set(true),
+    });
   }
 
   clearFilters(): void {
@@ -93,6 +170,7 @@ export class SchoolQuotationsListComponent {
     this.number.set('');
     this.grade.set('');
     this.status.set('');
+    this.supplyStatus.set('');
     this.dateFrom.set('');
     this.dateTo.set('');
     this.applyFilters();
@@ -112,8 +190,11 @@ export class SchoolQuotationsListComponent {
         number: this.number().trim() || undefined,
         grade: this.grade() || undefined,
         status: this.status() || undefined,
+        supplyStatus: this.supplyStatus() || undefined,
         dateFrom: this.dateFrom() || undefined,
         dateTo: this.dateTo() || undefined,
+        sortBy: this.sortBy() ?? undefined,
+        sortDirection: this.sortBy() ? this.sortDirection() : undefined,
         page: this.page(),
         limit: this.pageSize,
       })
@@ -131,7 +212,7 @@ export class SchoolQuotationsListComponent {
       });
   }
 
-  open(q: SchoolQuotationSummary, tab?: 'cuenta' | 'historial'): void {
+  open(q: SchoolQuotationSummary, tab?: 'cuenta' | 'historial' | 'abastecimiento'): void {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', q.id], {
       queryParams: tab ? { vista: tab } : {},
     });
@@ -141,8 +222,9 @@ export class SchoolQuotationsListComponent {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', q.id, 'editar']);
   }
 
+  /** "Preparar y despachar" (= entrega): fully paid and fully supplied. */
   canDeliver(q: SchoolQuotationSummary): boolean {
-    return ['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0;
+    return ['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0 && q.supplyStatus === 'DISPONIBLE';
   }
 
   /** The list can be marked as packed/dispatched until it is finished, delivered or cancelled. */
@@ -167,6 +249,7 @@ export class SchoolQuotationsListComponent {
         this.delivering.set(null);
         this.notifications.success(`${q.quotationNumber} terminada: lista para entregar.`);
         this.load();
+        this.loadSummary();
       },
       error: (error: HttpErrorResponse) => {
         this.delivering.set(null);
@@ -178,29 +261,13 @@ export class SchoolQuotationsListComponent {
   onPaid(): void {
     this.paying.set(null);
     this.load();
+    this.loadSummary();
   }
 
-  async deliver(q: SchoolQuotationSummary): Promise<void> {
-    const ok = await this.confirm.confirm({
-      type: 'UPDATE',
-      title: 'Registrar entrega',
-      message: `¿Confirmar que los útiles de ${q.quotationNumber} (${q.customerName}) fueron entregados? La cotización quedará cerrada. No descuenta inventario ni registra una venta.`,
-      confirmText: 'Registrar entrega',
-    });
-    if (!ok) {
-      return;
-    }
-    this.delivering.set(q.id);
-    this.service.changeStatus(q.id, 'ENTREGAR', q.version).subscribe({
-      next: () => {
-        this.delivering.set(null);
-        this.notifications.success('Entrega registrada.');
-        this.load();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.delivering.set(null);
-        this.notifications.error(extractErrorMessage(error, 'No se pudo registrar la entrega.'));
-      },
+  /** Opens the dispatch (detail → Abastecimiento), where the products are reviewed before delivery. */
+  deliver(q: SchoolQuotationSummary): void {
+    void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', q.id], {
+      queryParams: { vista: 'abastecimiento', despachar: 1 },
     });
   }
 }

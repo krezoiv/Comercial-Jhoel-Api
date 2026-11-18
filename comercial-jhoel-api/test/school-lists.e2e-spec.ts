@@ -77,7 +77,34 @@ describe('Listas Escolares (e2e)', () => {
     [product] = (await dataSource.query(
       `SELECT id, name, public_price FROM products WHERE is_active ORDER BY created_at LIMIT 1`,
     )) as (typeof product)[];
+    // Clone only: a known Bodega stock (10) for the product the lists use.
+    await dataSource.query(
+      `SELECT ensure_inventory_stock_row($1, (SELECT id FROM inventory_locations WHERE name = 'Bodega'))`,
+      [product.id],
+    );
+    await dataSource.query(
+      `WITH b AS (SELECT s.quantity FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id
+                   WHERE s.product_id = $1 AND l.name = 'Bodega')
+       UPDATE products SET stock = stock - (SELECT quantity FROM b) + 10 WHERE id = $1`,
+      [product.id],
+    );
+    await dataSource.query(
+      `UPDATE inventory_stock SET quantity = 10 WHERE product_id = $1
+          AND location_id = (SELECT id FROM inventory_locations WHERE name = 'Bodega')`,
+      [product.id],
+    );
   });
+
+  const bodega = async (): Promise<number> =>
+    Number(
+      (
+        (await dataSource.query(
+          `SELECT s.quantity FROM inventory_stock s JOIN inventory_locations l ON l.id = s.location_id
+            WHERE s.product_id = $1 AND l.name = 'Bodega'`,
+          [product.id],
+        )) as Body[]
+      )[0].quantity,
+    );
 
   afterAll(async () => {
     await app.close();
@@ -348,7 +375,20 @@ describe('Listas Escolares (e2e)', () => {
           .send({ action }),
       );
     await status('PREPARAR').expect(200);
-    const notPaid = await status('ENTREGAR').expect(409);
+    const dispatch = () =>
+      as(userToken)(
+        api()
+          .post(`/api/school-lists/quotations/${created.id}/dispatch`)
+          .send({
+            observations: 'Entregada en mostrador',
+            clientRequestId: randomUUID(),
+          }),
+      );
+    // Delivery is the dispatch (migration 1760008300000); the old action is redirected.
+    expect(message(await status('ENTREGAR').expect(409))).toContain(
+      'Preparar y despachar',
+    );
+    const notPaid = await dispatch().expect(409);
     expect(message(notPaid)).toContain('Q20.00');
     const paid = data(await pay(20).expect(201));
     expect(paid.quotation.status).toBe('EN_PREPARACION');
@@ -358,8 +398,12 @@ describe('Listas Escolares (e2e)', () => {
     expect(finished.status).toBe('TERMINADA');
     expect(finished.finishedAt).toBeTruthy();
     await status('TERMINAR').expect(409);
-    const delivered = data(await status('ENTREGAR').expect(200));
+    const delivered = data(await dispatch().expect(200));
     expect(delivered.status).toBe('ENTREGADA');
+    expect(delivered.supply.status).toBe('DESPACHADA');
+    expect(delivered.supply.dispatch.observations).toBe(
+      'Entregada en mostrador',
+    );
     await pay(1).expect(409);
     expect(
       (delivered.history as Body[]).map((h) => h.action).reverse(),
@@ -372,7 +416,7 @@ describe('Listas Escolares (e2e)', () => {
       'PREPARAR',
       'PAGO',
       'TERMINAR',
-      'ENTREGAR',
+      'DESPACHO',
     ]);
 
     // Documents.
@@ -460,13 +504,11 @@ describe('Listas Escolares (e2e)', () => {
     );
     expect(draft.status).toBe('BORRADOR');
     await as(userToken)(
-      api()
-        .post(`/api/school-lists/quotations/${draft.id}/payments`)
-        .send({
-          amount: 5,
-          paymentMethod: 'EFECTIVO',
-          clientRequestId: randomUUID(),
-        }),
+      api().post(`/api/school-lists/quotations/${draft.id}/payments`).send({
+        amount: 5,
+        paymentMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
     ).expect(409);
 
     // Edit with a stale version → 409; with the current one → saved.
@@ -511,6 +553,60 @@ describe('Listas Escolares (e2e)', () => {
       ).expect(200),
     );
     expect(confirmed.status).toBe('COTIZADA');
+    // Confirming the draft discounts its inventory line (2 units) from Bodega.
+    expect(await bodega()).toBe(8);
+    expect(
+      (confirmed.inventory as Body[]).map(
+        (m) => `${m.movementType}:${m.quantity}`,
+      ),
+    ).toEqual(['SALIDA_LISTA_ESCOLAR:2']);
+    // Not enough stock: the list is saved anyway and Bodega goes negative (1760008300000).
+    const noStock = await as(userToken)(
+      api()
+        .post('/api/school-lists/quotations')
+        .send({
+          grade: 'Tercero Básico',
+          customerName: 'Sin existencias',
+          customerPhone: '5555-0000',
+          items: [
+            {
+              productId: product.id,
+              productName: product.name,
+              quantity: 9,
+              unitPrice: Number(product.public_price),
+            },
+          ],
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(201);
+    expect(await bodega()).toBe(-1);
+    expect(data(noStock).supply.status).toBe('PARCIAL');
+    expect(data(noStock).supply.lines).toEqual([
+      expect.objectContaining({ requested: 9, allocated: 8, pending: 1 }),
+    ]);
+    // Annulling it returns the 9 units and releases its 8 reserved ones.
+    const annulled = data(
+      await as(adminToken)(
+        api()
+          .post(`/api/school-lists/quotations/${data(noStock).id}/cancel`)
+          .send({
+            reason: 'Prueba sin existencias',
+            clientRequestId: randomUUID(),
+          }),
+      ).expect(200),
+    );
+    expect(await bodega()).toBe(8);
+    expect(
+      (annulled.supply.allocations as Body[]).every(
+        (a) => a.status === 'LIBERADA',
+      ),
+    ).toBe(true);
+    const stock = data(
+      await as(userToken)(
+        api().get('/api/school-lists/stock').query({ productIds: product.id }),
+      ).expect(200),
+    ) as unknown as Body[];
+    expect(stock).toEqual([{ productId: product.id, quantity: 8 }]);
     await as(userToken)(
       api()
         .patch(`/api/school-lists/quotations/${draft.id}/observations`)
@@ -521,13 +617,11 @@ describe('Listas Escolares (e2e)', () => {
     ).expect(200);
 
     await as(userToken)(
-      api()
-        .post(`/api/school-lists/quotations/${draft.id}/payments`)
-        .send({
-          amount: 50,
-          paymentMethod: 'EFECTIVO',
-          clientRequestId: randomUUID(),
-        }),
+      api().post(`/api/school-lists/quotations/${draft.id}/payments`).send({
+        amount: 50,
+        paymentMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
     ).expect(201);
 
     // Cancel: cashier 403; manager with refund.
@@ -554,6 +648,13 @@ describe('Listas Escolares (e2e)', () => {
       ).expect(200),
     );
     expect(cancelled.status).toBe('CANCELADA');
+    // Annulled: exactly what was discounted goes back to Bodega, once.
+    expect(await bodega()).toBe(10);
+    expect(
+      (cancelled.inventory as Body[]).map(
+        (m) => `${m.movementType}:${m.quantity}`,
+      ),
+    ).toEqual(['SALIDA_LISTA_ESCOLAR:2', 'ENTRADA_ANULACION_LISTA:2']);
     expect(cancelled.account).toEqual(
       expect.objectContaining({ paid: 0, refunds: 50, balance: 0 }),
     );
@@ -562,13 +663,11 @@ describe('Listas Escolares (e2e)', () => {
       'DEVOLUCION',
     ]);
     await as(userToken)(
-      api()
-        .post(`/api/school-lists/quotations/${draft.id}/payments`)
-        .send({
-          amount: 5,
-          paymentMethod: 'EFECTIVO',
-          clientRequestId: randomUUID(),
-        }),
+      api().post(`/api/school-lists/quotations/${draft.id}/payments`).send({
+        amount: 5,
+        paymentMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
     ).expect(409);
   });
 });

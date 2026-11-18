@@ -18,7 +18,7 @@ erDiagram
 
 - **Entidad TypeORM:** [CategoryOrmEntity](../reference/backend/categories.md#f-comercial-jhoel-api-src-modules-categories-infrastructure-persistence-category-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [category.orm-entity.ts](../reference/backend/categories.md#f-comercial-jhoel-api-src-modules-categories-infrastructure-persistence-category-orm-entity-ts)
+- **Archivos TypeScript que la usan:** [category.orm-entity.ts](../reference/backend/categories.md#f-comercial-jhoel-api-src-modules-categories-infrastructure-persistence-category-orm-entity-ts), [typeorm-school-list.repository.ts](../reference/backend/school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
 
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|

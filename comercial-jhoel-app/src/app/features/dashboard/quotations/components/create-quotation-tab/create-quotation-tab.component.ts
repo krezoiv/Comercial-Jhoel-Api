@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 
 import {
-  Client,
   CreateQuotationItemInput,
   Product,
   QuotationDraftItem,
@@ -18,7 +17,6 @@ import { QuotationsService } from '../../../../../core/services/quotations.servi
 import { downloadBlob } from '../../../../../core/utils/download-blob';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, EmptyStateComponent, IconComponent } from '../../../../../shared/ui';
-import { ClientSearchSelectComponent } from '../../../accounts-receivable/components/client-search-select/client-search-select.component';
 import { QuotationProductSearchComponent } from '../quotation-product-search/quotation-product-search.component';
 
 function todayIsoDate(): string {
@@ -44,7 +42,6 @@ function todayIsoDate(): string {
   imports: [
     FormsModule,
     QuotationProductSearchComponent,
-    ClientSearchSelectComponent,
     EmptyStateComponent,
     IconComponent,
     ButtonComponent,
@@ -59,8 +56,12 @@ export class CreateQuotationTabComponent {
   private readonly notificationService = inject(NotificationService);
 
   readonly items = signal<QuotationDraftItem[]>([]);
-  readonly selectedClientId = signal<string | null>(null);
-  readonly selectedClientName = signal<string | null>(null);
+  /** Customer typed in by hand (no registered client needed, none is created). */
+  readonly customerName = signal('');
+  readonly customerPhone = signal('');
+  readonly studentName = signal('');
+  readonly grade = signal('');
+  readonly asDraft = signal(false);
   readonly expirationDate = signal(todayIsoDate());
   readonly observations = signal('');
   readonly commercialTerms = signal('');
@@ -85,12 +86,17 @@ export class CreateQuotationTabComponent {
     return calculateQuotationDraftTotal(this.items());
   }
 
-  onClientSelectionChange(client: Client | null): void {
-    this.selectedClientId.set(client?.id ?? null);
-    this.selectedClientName.set(client?.name ?? null);
-    if (client) {
-      this.clientError.set(false);
+  /** Client-side echo of the backend rule: name 3–150 characters, phone with at least 8 digits. */
+  customerProblem(): string | null {
+    const name = this.customerName().trim();
+    const phone = this.customerPhone().trim();
+    if (name.length < 3) {
+      return 'Escriba el nombre completo del cliente.';
     }
+    if (!/^[+0-9 ()-]{8,20}$/.test(phone) || phone.replace(/\D/g, '').length < 8) {
+      return 'Escriba un número de teléfono válido (mínimo 8 dígitos).';
+    }
+    return null;
   }
 
   onExpirationDateChange(value: string): void {
@@ -141,10 +147,10 @@ export class CreateQuotationTabComponent {
       return;
     }
 
-    const clientId = this.selectedClientId();
-    if (!clientId) {
+    const customerProblem = this.customerProblem();
+    if (customerProblem) {
       this.clientError.set(true);
-      this.notificationService.error('Debe seleccionar un cliente para la cotización.');
+      this.notificationService.error(customerProblem);
       return;
     }
     if (this.expirationDate() < this.today) {
@@ -155,9 +161,11 @@ export class CreateQuotationTabComponent {
 
     const confirmed = await this.confirmDialogService.confirm({
       type: 'SAVE',
-      title: 'Guardar cotización',
-      message: '¿Desea guardar esta cotización? Una cotización no afecta el inventario ni se registra como una venta real.',
-      confirmText: 'Guardar cotización',
+      title: this.asDraft() ? 'Guardar borrador' : 'Guardar cotización',
+      message:
+        `${this.customerName().trim()} · ${this.items().length} producto(s) · ${formatCurrency(this.total)}. ` +
+        'Guardar la cotización NO descuenta inventario ni registra una venta; el inventario solo cambia con "Confirmar venta".',
+      confirmText: this.asDraft() ? 'Guardar borrador' : 'Guardar cotización',
     });
     if (!confirmed) {
       return;
@@ -172,7 +180,11 @@ export class CreateQuotationTabComponent {
 
     this.quotationsService
       .createQuotation({
-        clientId,
+        customerName: this.customerName().trim(),
+        customerPhone: this.customerPhone().trim(),
+        studentName: this.studentName().trim() || undefined,
+        grade: this.grade().trim() || undefined,
+        asDraft: this.asDraft(),
         expirationDate: this.expirationDate(),
         observations: this.observations().trim() || undefined,
         commercialTerms: this.commercialTerms().trim() || undefined,
@@ -203,8 +215,11 @@ export class CreateQuotationTabComponent {
 
   private resetForm(): void {
     this.items.set([]);
-    this.selectedClientId.set(null);
-    this.selectedClientName.set(null);
+    this.customerName.set('');
+    this.customerPhone.set('');
+    this.studentName.set('');
+    this.grade.set('');
+    this.asDraft.set(false);
     this.expirationDate.set(this.today);
     this.observations.set('');
     this.commercialTerms.set('');

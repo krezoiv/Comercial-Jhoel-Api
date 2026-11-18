@@ -8,10 +8,12 @@ import {
   SCHOOL_ACCOUNT_LABEL,
   SCHOOL_ACCOUNT_TONE,
   SCHOOL_HISTORY_LABEL,
+  SCHOOL_INVENTORY_MOVEMENT_LABEL,
   SCHOOL_LINE_SOURCE_LABEL,
   SCHOOL_PAYMENT_KIND_LABEL,
   SCHOOL_PAYMENT_METHOD_LABEL,
   SCHOOL_STATUS_LABEL,
+  SCHOOL_STATUS_COLOR,
   SCHOOL_STATUS_TONE,
   SchoolHistoryEntry,
   SchoolPayment,
@@ -30,15 +32,17 @@ import { SchoolListService } from '../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { BadgeComponent, ButtonComponent, IconComponent, SummaryTileComponent } from '../../../shared/ui';
 import { SchoolPaymentModalComponent } from './components/school-payment-modal/school-payment-modal.component';
+import { SchoolQuotationSupplyComponent } from './components/school-quotation-supply/school-quotation-supply.component';
 import { SchoolReasonModalComponent, SchoolReasonResult } from './components/school-reason-modal/school-reason-modal.component';
 import { SchoolDocumentsService } from './school-documents.service';
 
-type DetailView = 'detalle' | 'cuenta' | 'historial';
+type DetailView = 'detalle' | 'abastecimiento' | 'cuenta' | 'historial';
 
 const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; done: string }> = {
   CONFIRMAR: {
     title: 'Confirmar cotización',
-    message: 'El borrador pasará a "Cotizada" y podrá recibir anticipos y abonos.',
+    message:
+      'El borrador pasará a "Cotizada", podrá recibir anticipos y abonos, y se descontarán de Bodega los productos del inventario.',
     done: 'Cotización confirmada.',
   },
   PREPARAR: {
@@ -75,6 +79,7 @@ const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; 
     SummaryTileComponent,
     SchoolPaymentModalComponent,
     SchoolReasonModalComponent,
+    SchoolQuotationSupplyComponent,
   ],
   templateUrl: './school-quotation-detail-page.component.html',
   styleUrl: './school-quotation-detail-page.component.scss',
@@ -94,18 +99,35 @@ export class SchoolQuotationDetailPageComponent {
   readonly formatDateTime = formatSchoolDateTime;
   readonly statusLabel = SCHOOL_STATUS_LABEL;
   readonly statusTone = SCHOOL_STATUS_TONE;
+  readonly statusColor = SCHOOL_STATUS_COLOR;
   readonly accountLabel = SCHOOL_ACCOUNT_LABEL;
   readonly accountTone = SCHOOL_ACCOUNT_TONE;
   readonly kindLabel = SCHOOL_PAYMENT_KIND_LABEL;
   readonly methodLabel = SCHOOL_PAYMENT_METHOD_LABEL;
   readonly sourceLabel = SCHOOL_LINE_SOURCE_LABEL;
   readonly historyLabel = SCHOOL_HISTORY_LABEL;
+  readonly movementLabel = SCHOOL_INVENTORY_MOVEMENT_LABEL;
+  /** Units the list currently holds from Bodega (what an annulment returns). */
+  /** Opens "Preparar y despachar" in the supply section. */
+  readonly openDispatch = signal(false);
+  /** Units reserved for this list that an annulment releases back to free stock. */
+  readonly reservedUnits = computed(() =>
+    (this.quotation()?.supply.allocations ?? [])
+      .filter((a) => a.status === 'ASIGNADA')
+      .reduce((sum, a) => sum + a.quantity, 0),
+  );
+  readonly heldUnits = computed(() =>
+    (this.quotation()?.inventory ?? []).reduce(
+      (sum, m) => sum + (m.movementType === 'SALIDA_LISTA_ESCOLAR' ? m.quantity : -m.quantity),
+      0,
+    ),
+  );
   readonly actionIcon: Record<SchoolStatusAction, string> = { CONFIRMAR: 'check', PREPARAR: 'package', TERMINAR: 'check-check', ENTREGAR: 'truck' };
   readonly actionLabel: Record<SchoolStatusAction, string> = {
     CONFIRMAR: 'Confirmar',
     PREPARAR: 'En preparación',
     TERMINAR: 'Marcar como terminada',
-    ENTREGAR: 'Registrar entrega',
+    ENTREGAR: 'Preparar y despachar lista',
   };
 
   readonly quotation = signal<SchoolQuotation | null>(null);
@@ -141,15 +163,19 @@ export class SchoolQuotationDetailPageComponent {
     if (q.status === 'BORRADOR') actions.push('CONFIRMAR');
     if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA'].includes(q.status)) actions.push('PREPARAR');
     if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status)) actions.push('TERMINAR');
-    if (['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0) actions.push('ENTREGAR');
+    // Delivery = dispatch: only when paid and fully supplied (the dialog reviews the products).
+    if (['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0 && q.supply.status === 'DISPONIBLE') {
+      actions.push('ENTREGAR');
+    }
     return actions;
   });
 
   constructor() {
     const vista = this.route.snapshot.queryParamMap.get('vista');
-    if (vista === 'cuenta' || vista === 'historial') {
+    if (vista === 'cuenta' || vista === 'historial' || vista === 'abastecimiento') {
       this.view.set(vista);
     }
+    this.openDispatch.set(this.route.snapshot.queryParamMap.get('despachar') === '1');
     if (!this.service.permissionsLoaded()) {
       this.service.loadPermissions().subscribe({ error: () => undefined });
     }
@@ -167,7 +193,7 @@ export class SchoolQuotationDetailPageComponent {
     });
   }
 
-  private apply(q: SchoolQuotation): void {
+  apply(q: SchoolQuotation): void {
     this.quotation.set(q);
     this.failed.set(null);
     if (!this.editingNotes()) {
@@ -182,6 +208,13 @@ export class SchoolQuotationDetailPageComponent {
 
   edit(): void {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'editar']);
+  }
+
+  /** Opens the editor with the "Cambiar producto" modal already on this line (`?cambiar=`). */
+  swapItem(itemId: string): void {
+    void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'editar'], {
+      queryParams: { cambiar: itemId },
+    });
   }
 
   pdf(mode: 'download' | 'print'): void {
@@ -210,6 +243,12 @@ export class SchoolQuotationDetailPageComponent {
   async runAction(action: SchoolStatusAction): Promise<void> {
     const q = this.quotation();
     if (!q || this.busy()) return;
+    if (action === 'ENTREGAR') {
+      this.view.set('abastecimiento');
+      this.openDispatch.set(false);
+      queueMicrotask(() => this.openDispatch.set(true));
+      return;
+    }
     const copy = ACTION_COPY[action];
     const ok = await this.confirm.confirm({ type: 'UPDATE', title: copy.title, message: `${q.quotationNumber}: ${copy.message}`, confirmText: copy.title });
     if (!ok) return;
@@ -311,6 +350,10 @@ export class SchoolQuotationDetailPageComponent {
         return `${String(d['receipt'] ?? '')} por ${money(d['amount'])} — ${String(d['reason'] ?? '')}`;
       case 'CANCELADA':
         return `${String(d['reason'] ?? '')}${Number(d['refunded'] ?? 0) > 0 ? ` · devolución ${money(d['refunded'])}` : ''}`;
+      case 'ABASTECIMIENTO':
+        return `${String(d['quantity'] ?? '')} unidad(es) reservadas (${d['source'] === 'COMPRA' ? 'compra' : String(d['source'] ?? '').toLowerCase()}, ${d['mode'] === 'MANUAL' ? 'manual' : 'FIFO'})`;
+      case 'DESPACHO':
+        return `${String(d['units'] ?? '')} unidad(es) entregadas${d['observations'] ? ' — ' + String(d['observations']) : ''}`;
       case 'OBSERVACIONES':
         return String(d['after'] ?? '(sin observaciones)');
       default:

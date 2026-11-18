@@ -12,6 +12,7 @@ import {
   GetSchoolQuotationPdfUseCase,
   GetSchoolQuotationUseCase,
   GetSchoolReceiptPdfUseCase,
+  GetSchoolBodegaStockUseCase,
   GetSchoolTemplateUseCase,
   ListSchoolQuotationsUseCase,
   ListSchoolTemplatesUseCase,
@@ -22,6 +23,17 @@ import {
   UpdateSchoolQuotationUseCase,
   VoidSchoolPaymentUseCase,
 } from './application/use-cases/school-list.use-cases';
+import {
+  ListSupplyProductsUseCase,
+  ListSupplyProductListsUseCase,
+  ListSupplyPurchasesUseCase,
+  GetSupplySettingsUseCase,
+  SetSupplySettingsUseCase,
+  RunSupplyFifoUseCase,
+  AllocateSupplyPurchaseUseCase,
+  AllocateSupplyManualUseCase,
+  DispatchSchoolQuotationUseCase,
+} from './application/use-cases/school-supply.use-cases';
 import { SchoolListsController } from './presentation/controllers/school-lists.controller';
 
 /**
@@ -51,6 +63,16 @@ import { SchoolListsController } from './presentation/controllers/school-lists.c
     GetSchoolListDashboardUseCase,
     GetSchoolQuotationPdfUseCase,
     GetSchoolReceiptPdfUseCase,
+    GetSchoolBodegaStockUseCase,
+    ListSupplyProductsUseCase,
+    ListSupplyProductListsUseCase,
+    ListSupplyPurchasesUseCase,
+    GetSupplySettingsUseCase,
+    SetSupplySettingsUseCase,
+    RunSupplyFifoUseCase,
+    AllocateSupplyPurchaseUseCase,
+    AllocateSupplyManualUseCase,
+    DispatchSchoolQuotationUseCase,
   ],
 })
 export class SchoolListsModule {}

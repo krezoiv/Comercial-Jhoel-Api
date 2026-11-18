@@ -12,11 +12,9 @@ export interface VoidQuotationInput {
 }
 
 /**
- * The correction path for a mistaken Cotización — never an edit, never a
- * physical delete. Same shape as `VoidTicketUseCase`/
- * `VoidBankDepositOperationUseCase`. Admin-only (enforced at the controller
- * via `@Roles`). `'ANULADA'` is terminal — voiding an already-voided
- * quotation is rejected, same as re-voiding a ticket.
+ * Anular (status CANCELADA) — never a physical delete/edit. Runs through
+ * `change_quotation_status('CANCELAR')`, which locks the row and refuses a
+ * VENDIDA quotation (its sale must be voided in Ventas first).
  */
 @Injectable()
 export class VoidQuotationUseCase {
@@ -30,12 +28,13 @@ export class VoidQuotationUseCase {
     if (!quotation) {
       throw new QuotationNotFoundError(input.id);
     }
-    if (quotation.status === 'ANULADA') {
+    if (quotation.status === 'CANCELADA') {
       throw new QuotationAlreadyVoidedError(input.id);
     }
 
-    const voided = await this.quotationRepository.voidQuotation(
+    const voided = await this.quotationRepository.changeStatus(
       input.id,
+      'CANCELAR',
       input.voidedBy,
       input.reason,
     );

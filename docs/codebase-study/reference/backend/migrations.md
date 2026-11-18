@@ -120,6 +120,10 @@
 | [1760007700000-CuadreBreakdownFromLatestCut.ts](#f-comercial-jhoel-api-src-database-migrations-1760007700000-cuadrebreakdownfromlatestcut-ts) | .ts | Migración TypeORM | Base de datos (migración) | Cuadre de Agentes → "Cargar último arqueo de Caja" loads the arqueo of the "Segundo corte · final del día" of Control de Efectivo (`cash_cut_counts` of `period_number = 2`) — exactly that one cut's breakdown, never the first cut, never a standalone Arqueo de Caja and never an aggregate of both cuts. | 1 internas; ext.: typeorm | 0 | Media (historial de esquema) |
 | [1760007800000-CashDenominationInventoryAndCountDrafts.ts](#f-comercial-jhoel-api-src-database-migrations-1760007800000-cashdenominationinventoryandcountdrafts-ts) | .ts | Migración TypeORM | Base de datos (migración) | Control de Efectivo — inventario por denominación (caja y Bodega), desglose obligatorio en los traslados caja ↔ Bodega y borradores del Arqueo de Caja. | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
 | [1760007900000-SchoolLists.ts](#f-comercial-jhoel-api-src-database-migrations-1760007900000-schoollists-ts) | .ts | Migración TypeORM | Base de datos (migración) | Listas Escolares — official school-supply templates per grade, customer quotations built from them, and an account statement per quotation (anticipo, abonos, devolución) with audited reversals. | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760008000000-SchoolQuotationFinishedStatus.ts](#f-comercial-jhoel-api-src-database-migrations-1760008000000-schoolquotationfinishedstatus-ts) | .ts | Migración TypeORM | Base de datos (migración) | Migración TypeORM: declara `SchoolQuotationFinishedStatus1760008000000`, `patchFunction`, `REFRESH_FROM`, `REFRESH_TO`, `DELIVER_FROM` (sin comentario de documentación en el código). | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760008100000-SchoolListInventory.ts](#f-comercial-jhoel-api-src-database-migrations-1760008100000-schoollistinventory-ts) | .ts | Migración TypeORM | Base de datos (migración) | Listas Escolares — the list discounts inventory (decided with the owner): - Confirmed lists (any status but BORRADOR/CANCELADA) keep their inventory lines discounted from BODEGA (free-text lines have no stock to move). | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760008200000-QuotationsManualCustomerAndSale.ts](#f-comercial-jhoel-api-src-database-migrations-1760008200000-quotationsmanualcustomerandsale-ts) | .ts | Migración TypeORM | Base de datos (migración) | Migración TypeORM: declara `QuotationsManualCustomerAndSale1760008200000`, `patchConfirmSale`, `OLD_CREATE_QUOTATION`, `SALE_PRICE_FROM`, `SALE_PRICE_TO` (sin comentario de documentación en el código). | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760008300000-SchoolListSupply.ts](#f-comercial-jhoel-api-src-database-migrations-1760008300000-schoollistsupply-ts) | .ts | Migración TypeORM | Base de datos (migración) | Migración TypeORM: declara `SchoolListSupply1760008300000`, `patchFunction`, `OLD_SYNC`, `PERMISSION_FROM`, `PERMISSION_TO` (sin comentario de documentación en el código). | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
 
 ## Detalle por archivo
 
@@ -4490,4 +4494,203 @@
 - **Dependencias (llamadas en su cuerpo):** `queryRunner.query`
 - **Efectos secundarios:** Tablas en su SQL: `school_quotations`; Ejecuta SQL crudo (`query`)
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760008000000-schoolquotationfinishedstatus-ts"></a>
+
+### 1760008000000-SchoolQuotationFinishedStatus.ts
+
+- **Ruta:** [1760008000000-SchoolQuotationFinishedStatus.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008000000-SchoolQuotationFinishedStatus.ts) (`comercial-jhoel-api/src/database/migrations/1760008000000-SchoolQuotationFinishedStatus.ts`, 102 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Migración TypeORM: declara `SchoolQuotationFinishedStatus1760008000000`, `patchFunction`, `REFRESH_FROM`, `REFRESH_TO`, `DELIVER_FROM` (sin comentario de documentación en el código).
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+
+#### Clase `SchoolQuotationFinishedStatus1760008000000` (L47–101)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 50–71 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 73–100 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `SchoolQuotationFinishedStatus1760008000000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760008000000-SchoolQuotationFinishedStatus.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008000000-SchoolQuotationFinishedStatus.ts#L50) (L50–71)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `patchFunction`
+- **Efectos secundarios:** Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolQuotationFinishedStatus1760008000000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760008000000-SchoolQuotationFinishedStatus.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008000000-SchoolQuotationFinishedStatus.ts#L73) (L73–100)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `new Error`, `patchFunction`
+- **Efectos secundarios:** Tablas en su SQL: `school_quotations`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error( 'Hay ${count} cotización(es) TERMINADA; entréguelas o cancélelas antes de revertir esta migración.', )`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+#### Función `patchFunction` (L30–45)
+
+- **Tipo:** función local del archivo, async
+- **Firma:** `patchFunction(queryRunner: QueryRunner, name: string, from: string, to: string): Promise<void>` — [1760008000000-SchoolQuotationFinishedStatus.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008000000-SchoolQuotationFinishedStatus.ts#L30)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `queryRunner.query`, `rows[0].def.split`, `new Error`, `rows[0].def.replace`
+- **Efectos secundarios:** Llama funciones SQL: `pg_get_functiondef`; Tablas en su SQL: `pg_proc`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error('${name}: anchor not found exactly once')`
+- **Consumidores:** uso interno del archivo
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760008100000-schoollistinventory-ts"></a>
+
+### 1760008100000-SchoolListInventory.ts
+
+- **Ruta:** [1760008100000-SchoolListInventory.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts) (`comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts`, 173 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Listas Escolares — the list discounts inventory (decided with the owner): - Confirmed lists (any status but BORRADOR/CANCELADA) keep their inventory lines discounted from BODEGA (free-text lines have no stock to move).
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+- **Define en la base de datos:** funciones `school_quotation_sync_inventory`; 
+
+#### Clase `SchoolListInventory1760008100000` (L74–172)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 77–154 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 156–171 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `SchoolListInventory1760008100000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760008100000-SchoolListInventory.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts#L77) (L77–154)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `patchFunction`
+- **Efectos secundarios:** Llama funciones SQL: `ensure_inventory_stock_row`; Tablas en su SQL: `v_status`, `school_quotations`, `v_bodega`, `inventory_locations`, `school_quotation_items`, `inventory_movements`, `target`, `moved`, `v_name`, `products`, `v_stock`, `inventory_stock`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListInventory1760008100000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760008100000-SchoolListInventory.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts#L156) (L156–171)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `new Error`, `[...PATCHES].reverse`, `patchFunction`
+- **Efectos secundarios:** Tablas en su SQL: `inventory_movements`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error( 'Existen ${count} movimientos de inventario de listas escolares; revertir dejaría ese inventario descontado s`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+#### Función `SYNC_CALL` (L27–28)
+
+- **Tipo:** función local del archivo
+- **Firma:** `SYNC_CALL(id: string, reason: string)` — [1760008100000-SchoolListInventory.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts#L27)
+- **Propósito / descripción:** Listas Escolares — the list discounts inventory (decided with the owner): - Confirmed lists (any status but BORRADOR/CANCELADA) keep their inventory lines discounted from BODEGA (free-text lines have no stock to move). - Cancelling ("anular") returns exactly what was discounted. - Editing a saved list moves only the difference. `school_quotation_sync_inventory` is the single writer. It computes, per product, target − already moved, where "already moved" is read from `inventory_movements` (reference_type 'SCHOOL_LIST', reference_id = the quotation). The movements are therefore both the audit trail and the ledger: repeating a save, a retry or a second cancel finds delta 0 and writes nothing, s
+- **Efectos secundarios:** Llama funciones SQL: `school_quotation_sync_inventory`
+- **Consumidores:** uso interno del archivo
+
+#### Función `patchFunction` (L57–72)
+
+- **Tipo:** función local del archivo, async
+- **Firma:** `patchFunction(queryRunner: QueryRunner, name: string, from: string, to: string): Promise<void>` — [1760008100000-SchoolListInventory.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008100000-SchoolListInventory.ts#L57)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `queryRunner.query`, `rows[0].def.split`, `new Error`, `rows[0].def.replace`
+- **Efectos secundarios:** Llama funciones SQL: `pg_get_functiondef`; Tablas en su SQL: `pg_proc`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error('${name}: anchor not found exactly once')`
+- **Consumidores:** uso interno del archivo
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760008200000-quotationsmanualcustomerandsale-ts"></a>
+
+### 1760008200000-QuotationsManualCustomerAndSale.ts
+
+- **Ruta:** [1760008200000-QuotationsManualCustomerAndSale.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008200000-QuotationsManualCustomerAndSale.ts) (`comercial-jhoel-api/src/database/migrations/1760008200000-QuotationsManualCustomerAndSale.ts`, 397 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Migración TypeORM: declara `QuotationsManualCustomerAndSale1760008200000`, `patchConfirmSale`, `OLD_CREATE_QUOTATION`, `SALE_PRICE_FROM`, `SALE_PRICE_TO` (sin comentario de documentación en el código).
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+- **Define en la base de datos:** funciones `public`, `create_quotation`, `change_quotation_status`, `convert_quotation_to_sale`; 
+
+#### Clase `QuotationsManualCustomerAndSale1760008200000` (L120–396)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 123–359 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 361–395 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `QuotationsManualCustomerAndSale1760008200000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760008200000-QuotationsManualCustomerAndSale.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008200000-QuotationsManualCustomerAndSale.ts#L123) (L123–359)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `patchConfirmSale`
+- **Efectos secundarios:** Llama funciones SQL: `jsonb_array_elements`, `ensure_inventory_stock_row`, `jsonb_agg`; Tablas en su SQL: `quotations`, `v_name`, `clients`, `v_quotation_id`, `v_product`, `products`, `v_q`, `v_vitrina`, `inventory_locations`, `quotation_details`, `v_stock`, `inventory_stock`, `v_items`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `QuotationsManualCustomerAndSale1760008200000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760008200000-QuotationsManualCustomerAndSale.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008200000-QuotationsManualCustomerAndSale.ts#L361) (L361–395)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `new Error`, `patchConfirmSale`
+- **Efectos secundarios:** Tablas en su SQL: `quotations`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error( 'No se puede revertir: hay ${row.new_states} cotización(es) en estados nuevos y ${row.manual} con cliente cap`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+#### Función `patchConfirmSale` (L105–118)
+
+- **Tipo:** función local del archivo, async
+- **Firma:** `patchConfirmSale(queryRunner: QueryRunner, from: string, to: string): Promise<void>` — [1760008200000-QuotationsManualCustomerAndSale.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008200000-QuotationsManualCustomerAndSale.ts#L105)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `queryRunner.query`, `rows[0].def.split`, `new Error`, `rows[0].def.replace`
+- **Efectos secundarios:** Llama funciones SQL: `pg_get_functiondef`; Tablas en su SQL: `pg_proc`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error('confirm_sale: anchor not found exactly once')`
+- **Consumidores:** uso interno del archivo
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760008300000-schoollistsupply-ts"></a>
+
+### 1760008300000-SchoolListSupply.ts
+
+- **Ruta:** [1760008300000-SchoolListSupply.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008300000-SchoolListSupply.ts) (`comercial-jhoel-api/src/database/migrations/1760008300000-SchoolListSupply.ts`, 759 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Migración TypeORM: declara `SchoolListSupply1760008300000`, `patchFunction`, `OLD_SYNC`, `PERMISSION_FROM`, `PERMISSION_TO` (sin comentario de documentación en el código).
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+- **Define en la base de datos:** tablas `school_supply_settings`, `school_dispatches`, `school_dispatch_items`, `school_supply_allocations`; funciones `public`, `inventory_stock_non_negative_guard`, `products_stock_non_negative_guard`, `school_supply_allocation_guard`, `school_supply_free_units`, `school_supply_allocate_fifo`, `school_supply_on_stock_in`, `run_school_supply_fifo`, `allocate_school_supply_purchase`, `allocate_school_supply_manual`, `set_school_supply_mode`, `school_quotation_supply_status`, `school_quotation_sync_inventory`, `dispatch_school_quotation`; triggers `trg_inventory_stock_non_negative`, `trg_products_stock_non_negative`, `trg_school_supply_allocations_guard`, `trg_school_dispatches_guard`, `trg_school_dispatch_items_guard`, `trg_school_supply_on_stock_in`
+
+#### Clase `SchoolListSupply1760008300000` (L142–758)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 145–705 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 707–757 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `SchoolListSupply1760008300000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760008300000-SchoolListSupply.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008300000-SchoolListSupply.ts#L145) (L145–705)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `patchFunction`
+- **Efectos secundarios:** Llama funciones SQL: `greatest`, `school_supply_allocate_fifo`, `school_list_assert_permission`, `set_config`, `ensure_inventory_stock_row`; Tablas en su SQL: `inventory_stock`, `school_quotations`, `school_supply_allocations`, `school_quotation_items`, `inventory_locations`, `school_supply_commitments`, `products`, `v_movement`, `inventory_movements`, `school_supply_settings`, `purchases`, `v_id`, `v_pending`, `v_status`, `school_dispatches`, `v_allocated`, `v_bodega`, `target`, `moved`, `v_q`, `v_short`, `v_units`, `school_dispatch_items`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListSupply1760008300000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760008300000-SchoolListSupply.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008300000-SchoolListSupply.ts#L707) (L707–757)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `new Error`, `patchFunction`
+- **Efectos secundarios:** Tablas en su SQL: `school_supply_allocations`, `school_dispatches`, `inventory_stock`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error( 'No se puede revertir: ${row.allocations} asignaciones, ${row.dispatches} despachos y ${row.negative} existen`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+#### Función `patchFunction` (L125–140)
+
+- **Tipo:** función local del archivo, async
+- **Firma:** `patchFunction(queryRunner: QueryRunner, name: string, from: string, to: string): Promise<void>` — [1760008300000-SchoolListSupply.ts](../../../../comercial-jhoel-api/src/database/migrations/1760008300000-SchoolListSupply.ts#L125)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `queryRunner.query`, `rows[0].def.split`, `new Error`, `rows[0].def.replace`
+- **Efectos secundarios:** Llama funciones SQL: `pg_get_functiondef`; Tablas en su SQL: `pg_proc`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error('${name}: anchor not found exactly once')`
+- **Consumidores:** uso interno del archivo
 

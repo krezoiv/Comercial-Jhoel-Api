@@ -1,15 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, inject, signal } from '@angular/core';
 
-import { Quotation, formatCurrency } from '../../../../../core/models';
+import { QUOTATION_STATUS_LABEL, QUOTATION_STATUS_TONE, Quotation, formatCurrency } from '../../../../../core/models';
 import { QuotationsService } from '../../../../../core/services/quotations.service';
-import { IconComponent } from '../../../../../shared/ui';
+import { BadgeComponent, IconComponent } from '../../../../../shared/ui';
 
 /** Read-only line-item detail for one cotización — reached from Historial's "Ver detalle" action. */
 @Component({
   selector: 'app-quotation-detail-modal',
   standalone: true,
-  imports: [DatePipe, IconComponent],
+  imports: [DatePipe, BadgeComponent, IconComponent],
   templateUrl: './quotation-detail-modal.component.html',
   styleUrl: './quotation-detail-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +24,8 @@ export class QuotationDetailModalComponent implements OnChanges {
   readonly loading = signal(false);
 
   formatCurrency = formatCurrency;
+  readonly statusLabel = QUOTATION_STATUS_LABEL;
+  readonly statusTone = QUOTATION_STATUS_TONE;
 
   ngOnChanges(): void {
     if (!this.quotationId) {

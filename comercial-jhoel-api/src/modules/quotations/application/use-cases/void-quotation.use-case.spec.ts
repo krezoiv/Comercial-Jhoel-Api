@@ -2,10 +2,13 @@ import { VoidQuotationUseCase } from './void-quotation.use-case';
 import { QuotationRepository } from '../../domain/repositories/quotation.repository';
 import { QuotationNotFoundError } from '../../domain/errors/quotation-not-found.error';
 import { QuotationAlreadyVoidedError } from '../../domain/errors/quotation-already-voided.error';
-import { Quotation, QuotationStoredStatus } from '../../domain/entities/quotation.entity';
+import {
+  Quotation,
+  QuotationStoredStatus,
+} from '../../domain/entities/quotation.entity';
 
 function makeQuotation(status: QuotationStoredStatus): Quotation {
-  const isVoided = status === 'ANULADA';
+  const isVoided = status === 'CANCELADA';
   return Quotation.create({
     id: 'quotation-1',
     quotationNumber: 'COT-000001',
@@ -26,6 +29,14 @@ function makeQuotation(status: QuotationStoredStatus): Quotation {
     voidedByUsername: isVoided ? 'admin1' : null,
     voidReason: isVoided ? 'Error de registro' : null,
     convertedToSaleId: null,
+    customerPhone: null,
+    studentName: null,
+    grade: null,
+    acceptedAt: null,
+    rejectedAt: null,
+    rejectReason: null,
+    soldAt: null,
+    soldByUsername: null,
     items: [],
     createdAt: new Date('2026-09-01T00:00:00Z'),
     updatedAt: new Date('2026-09-01T00:00:00Z'),
@@ -41,7 +52,7 @@ describe('VoidQuotationUseCase', () => {
       createQuotation: jest.fn(),
       findAll: jest.fn(),
       findById: jest.fn(),
-      voidQuotation: jest.fn(),
+      changeStatus: jest.fn(),
     } as unknown as jest.Mocked<QuotationRepository>;
     useCase = new VoidQuotationUseCase(repository);
   });
@@ -52,11 +63,11 @@ describe('VoidQuotationUseCase', () => {
     await expect(
       useCase.execute({ id: 'missing', voidedBy: 'admin-1', reason: 'x' }),
     ).rejects.toThrow(QuotationNotFoundError);
-    expect(repository.voidQuotation).not.toHaveBeenCalled();
+    expect(repository.changeStatus).not.toHaveBeenCalled();
   });
 
-  it('throws QuotationAlreadyVoidedError when the quotation is already ANULADA', async () => {
-    repository.findById.mockResolvedValue(makeQuotation('ANULADA'));
+  it('throws QuotationAlreadyVoidedError when the quotation is already CANCELADA', async () => {
+    repository.findById.mockResolvedValue(makeQuotation('CANCELADA'));
 
     await expect(
       useCase.execute({
@@ -65,12 +76,12 @@ describe('VoidQuotationUseCase', () => {
         reason: 'x',
       }),
     ).rejects.toThrow(QuotationAlreadyVoidedError);
-    expect(repository.voidQuotation).not.toHaveBeenCalled();
+    expect(repository.changeStatus).not.toHaveBeenCalled();
   });
 
-  it('voids a PENDIENTE quotation with the given reason', async () => {
-    repository.findById.mockResolvedValue(makeQuotation('PENDIENTE'));
-    repository.voidQuotation.mockResolvedValue(makeQuotation('ANULADA'));
+  it('cancels a COTIZADA quotation with the given reason', async () => {
+    repository.findById.mockResolvedValue(makeQuotation('COTIZADA'));
+    repository.changeStatus.mockResolvedValue(makeQuotation('CANCELADA'));
 
     const result = await useCase.execute({
       id: 'quotation-1',
@@ -78,11 +89,12 @@ describe('VoidQuotationUseCase', () => {
       reason: 'Error de registro',
     });
 
-    expect(repository.voidQuotation).toHaveBeenCalledWith(
+    expect(repository.changeStatus).toHaveBeenCalledWith(
       'quotation-1',
+      'CANCELAR',
       'admin-1',
       'Error de registro',
     );
-    expect(result.status).toBe('ANULADA');
+    expect(result.status).toBe('CANCELADA');
   });
 });

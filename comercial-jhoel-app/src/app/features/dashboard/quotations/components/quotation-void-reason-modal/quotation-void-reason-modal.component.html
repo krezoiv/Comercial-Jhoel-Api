@@ -5,9 +5,9 @@
         <app-icon name="alert-triangle" [size]="24" />
       </div>
 
-      <h2 class="modal__title" id="void-reason-title">Anular cotización {{ quotationNumber }}</h2>
+      <h2 class="modal__title" id="void-reason-title">{{ title }} {{ quotationNumber }}</h2>
       <p class="modal__description">
-        Esta acción no se puede deshacer. La cotización permanecerá en el historial marcada como anulada — indique el motivo.
+        {{ description }}
       </p>
 
       <label class="modal__field">
@@ -22,7 +22,7 @@
 
       <div class="modal__actions">
         <app-button variant="ghost" (click)="cancel()">Cancelar</app-button>
-        <app-button variant="danger" [disabled]="!isValid" (click)="confirm()">Anular cotización</app-button>
+        <app-button variant="danger" [disabled]="!isValid" (click)="confirm()">{{ confirmText }}</app-button>
       </div>
     </div>
   </div>

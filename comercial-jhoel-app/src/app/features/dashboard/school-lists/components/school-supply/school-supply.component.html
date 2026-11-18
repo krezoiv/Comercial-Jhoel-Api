@@ -1,0 +1,194 @@
+<div class="supply">
+  @if (summary(); as s) {
+    <div class="tiles">
+      <app-summary-tile icon="alert-circle" tone="danger" title="Productos pendientes" [value]="s.pendingProducts + ''" description="Con unidades por comprar" />
+      <app-summary-tile icon="package" tone="gold" title="Unidades pendientes" [value]="s.pendingUnits + ''" description="Faltan para cumplir las listas" />
+      <app-summary-tile icon="book-open" title="Listas afectadas" [value]="s.affectedLists + ''" description="Con productos pendientes" />
+      <app-summary-tile icon="check-circle" tone="success" title="Completamente abastecidos" [value]="s.suppliedProducts + ''" />
+      <app-summary-tile icon="layers" tone="gold" title="Parcialmente abastecidos" [value]="s.partialProducts + ''" />
+    </div>
+  }
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title"><app-icon name="package" [size]="18" /> Productos pendientes de abastecimiento</h2>
+      <div class="head-actions">
+        <span class="mode" [class.mode--auto]="mode() === 'FIFO_AUTO'">
+          Asignación: {{ mode() === 'FIFO_AUTO' ? 'automática FIFO al registrar compras' : 'manual' }}
+        </span>
+        @if (isAdmin()) {
+          <app-button variant="ghost" size="sm" (click)="toggleMode()">Cambiar a {{ mode() === 'FIFO_AUTO' ? 'manual' : 'automática' }}</app-button>
+        }
+        @if (canManage()) {
+          <app-button variant="primary" size="sm" [disabled]="busy()" (click)="fifo()"><app-icon name="refresh-cw" [size]="14" /> Asignar FIFO</app-button>
+        }
+      </div>
+    </div>
+    <p class="panel__hint">
+      La existencia negativa es el resultado de los movimientos; el pendiente es lo que todavía falta comprar para cumplir las listas,
+      según lo comprometido y lo ya reservado para cada lista.
+    </p>
+
+    <form class="filters" (ngSubmit)="applyFilters()">
+      <label class="field"><span class="field__label">Producto o SKU</span>
+        <input name="search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </label>
+      <label class="field"><span class="field__label">Categoría</span>
+        <select name="category" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)">
+          <option value="">Todas</option>
+          @for (c of categories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+        </select>
+      </label>
+      <label class="field"><span class="field__label">Lista escolar</span>
+        <input name="number" type="search" placeholder="LE-000001" [ngModel]="quotationNumber()" (ngModelChange)="quotationNumber.set($event)" />
+      </label>
+      <label class="field"><span class="field__label">Estado</span>
+        <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event)">
+          <option value="">Todos</option>
+          @for (st of statuses; track st) { <option [value]="st">{{ productLabel[st] }}</option> }
+        </select>
+      </label>
+      <label class="field"><span class="field__label">Pedidos desde</span>
+        <input name="from" type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
+      </label>
+      <label class="field"><span class="field__label">Hasta</span>
+        <input name="to" type="date" [min]="dateFrom()" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" />
+      </label>
+      <div class="filters__actions">
+        <app-button type="submit" variant="primary" size="sm"><app-icon name="filter" [size]="14" /> Aplicar</app-button>
+        <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
+      </div>
+    </form>
+
+    @if (failed()) {
+      <p class="state state--error" role="alert">No se pudieron cargar los productos pendientes.</p>
+    } @else if (!items().length) {
+      <p class="state">No hay productos comprometidos por listas escolares con estos filtros.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Producto</th><th>SKU</th><th>Categoría</th>
+              <th class="num">Existencia (Bodega)</th><th class="num">Comprometido</th><th class="num">Reservado</th>
+              <th class="num">Pendiente</th><th class="num">Listas</th><th>Pedidos</th><th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of items(); track p.productId) {
+              <tr>
+                <td>{{ p.productName }}</td>
+                <td>{{ p.sku || '—' }}</td>
+                <td>{{ p.category }}</td>
+                <td class="num" [class.money-out]="p.bodega < 0">{{ p.bodega }}</td>
+                <td class="num">{{ p.committed }}</td>
+                <td class="num">{{ p.allocated }}</td>
+                <td class="num"><strong>{{ p.pending }}</strong></td>
+                <td class="num">{{ p.lists }}</td>
+                <td class="muted">{{ formatDate(p.firstOrderAt) }}{{ p.lastOrderAt && p.lastOrderAt !== p.firstOrderAt ? ' – ' + formatDate(p.lastOrderAt) : '' }}</td>
+                <td><app-badge [tone]="productTone[p.status]">{{ productLabel[p.status] }}</app-badge></td>
+                <td>
+                  <div class="row-actions">
+                    <button type="button" class="icon-btn" title="Ver listas que lo necesitan" aria-label="Ver listas que lo necesitan" (click)="openLists(p)"><app-icon name="eye" [size]="16" /></button>
+                    @if (canManage()) {
+                      <button type="button" class="icon-btn" title="Asignar FIFO" aria-label="Asignar FIFO" [disabled]="busy() || p.pending === 0 || p.freeUnits === 0" (click)="fifo(p)"><app-icon name="refresh-cw" [size]="16" /></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-report-pagination [total]="total()" [page]="page()" [limit]="pageSize" (pageChange)="onPage($event)" />
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title"><app-icon name="shopping-bag" [size]="18" /> Compras asignadas a listas escolares</h2>
+      @if (purchaseFilter()) {
+        <app-button variant="ghost" size="sm" (click)="clearPurchaseFilter()">Ver todas las compras</app-button>
+      }
+    </div>
+    @if (!purchases().length) {
+      <p class="state">{{ purchaseFilter() ? 'Esta compra no abasteció ninguna lista escolar.' : 'Aún no hay compras asignadas a listas.' }}</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Compra</th><th>Fecha</th><th>Producto</th><th class="num">Comprado</th><th class="num">Asignado</th><th>Listas abastecidas</th><th></th></tr></thead>
+          <tbody>
+            @for (row of purchases(); track row.purchaseId + row.productId) {
+              <tr>
+                <td>{{ row.invoiceNumber || 'Sin factura' }}</td>
+                <td>{{ formatDateTime(row.purchaseDate) }}</td>
+                <td>{{ row.productName }}</td>
+                <td class="num">{{ row.purchased }}</td>
+                <td class="num">{{ row.allocated }}</td>
+                <td>
+                  @for (l of row.lists; track $index) {
+                    <button type="button" class="chip" [class.chip--off]="l.status === 'LIBERADA'" (click)="openList(l.quotationId)">
+                      {{ l.quotationNumber }} · {{ l.quantity }}{{ l.status === 'LIBERADA' ? ' (liberada)' : l.status === 'ENTREGADA' ? ' (entregada)' : '' }}
+                    </button>
+                  } @empty { <span class="muted">—</span> }
+                </td>
+                <td>
+                  @if (canManage() && row.allocated < row.purchased) {
+                    <button type="button" class="icon-btn" title="Asignar compra a listas" aria-label="Asignar compra a listas" [disabled]="busy()" (click)="allocatePurchase(row)"><app-icon name="refresh-cw" [size]="16" /></button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-report-pagination [total]="purchasesTotal()" [page]="purchasesPage()" [limit]="10" (pageChange)="onPurchasesPage($event)" />
+    }
+  </section>
+</div>
+
+@if (selected(); as p) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="supply-lists-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="supply-lists-title"><app-icon name="book-open" [size]="20" /> Listas que necesitan {{ p.productName }}</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="selected.set(null)"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <p class="modal__hint">
+        Bodega: {{ p.bodega }} · comprometido {{ p.committed }} · reservado {{ p.allocated }} · pendiente {{ p.pending }} ·
+        libres para asignar {{ p.freeUnits }}. Orden FIFO por fecha de confirmación.
+      </p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Lista</th><th>Cliente</th><th>Confirmada</th><th class="num">Pedido</th><th class="num">Reservado</th><th class="num">Pendiente</th><th>Abastecimiento</th>@if (canManage()) { <th>Asignar</th> }</tr></thead>
+          <tbody>
+            @for (row of productLists(); track row.quotationId) {
+              <tr>
+                <td><button type="button" class="link" (click)="openList(row.quotationId)">{{ row.quotationNumber }}</button></td>
+                <td>{{ row.customerName }} <span class="muted">· {{ row.grade }}</span></td>
+                <td>{{ formatDateTime(row.confirmedAt) }}</td>
+                <td class="num">{{ row.committed }}</td>
+                <td class="num">{{ row.allocated }}</td>
+                <td class="num"><strong>{{ row.pending }}</strong></td>
+                <td><app-badge [tone]="listTone[row.supplyStatus]">{{ listLabel[row.supplyStatus] }}</app-badge></td>
+                @if (canManage()) {
+                  <td>
+                    @if (row.pending > 0 && p.freeUnits > 0) {
+                      <div class="assign">
+                        <input type="number" min="1" [max]="row.pending" [attr.aria-label]="'Unidades para ' + row.quotationNumber" [ngModel]="manualQty()[row.quotationId] || ''" (ngModelChange)="setManual(row.quotationId, $event)" />
+                        <app-button variant="ghost" size="sm" [disabled]="busy() || !(manualQty()[row.quotationId] > 0)" (click)="allocateManual(row)">Asignar</app-button>
+                      </div>
+                    } @else { <span class="muted">—</span> }
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="state">Ninguna lista activa necesita este producto.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="modal__actions"><app-button variant="ghost" (click)="selected.set(null)">Cerrar</app-button></div>
+    </div>
+  </div>
+}

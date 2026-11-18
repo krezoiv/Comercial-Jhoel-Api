@@ -1,6 +1,6 @@
 # Listas Escolares — plantillas, cotizaciones y estado de cuenta
 
-Migraciones `1760007900000-SchoolLists` y `1760008000000-SchoolQuotationFinishedStatus` (estado Terminada). El código está documentado en inglés en sus propios archivos; este documento resume el módulo para el equipo.
+Migraciones `1760007900000-SchoolLists`, `1760008000000-SchoolQuotationFinishedStatus` (estado Terminada) y `1760008100000-SchoolListInventory` (descuento de inventario; ver `docs/inventario-listas-y-cotizaciones.md`). El código está documentado en inglés en sus propios archivos; este documento resume el módulo para el equipo.
 
 ## 1. Análisis previo y decisiones
 
@@ -88,7 +88,7 @@ El backend es la autoridad: totales, saldos y estados se calculan en SQL. El fro
 
    Los estados de pago se recalculan con cada pago, anulación o edición.
 7. **Concurrencia**: toda escritura bloquea la fila de la cotización. Las ediciones llevan `version`; si otro usuario guardó antes, se rechaza con 409 y un mensaje claro.
-8. **Sin efecto en inventario, ventas ni cajas**. La prueba e2e lo comprueba con una huella de `products.stock`, `sales` y `sales_cash_box_movements`.
+8. **Inventario (desde la migración `1760008100000`)**: al guardar una lista confirmada se descuentan de **Bodega** sus productos del inventario; editarla mueve solo la diferencia y anularla devuelve exactamente lo descontado, una sola vez. Un borrador no descuenta. Las líneas a mano no mueven inventario. Sigue sin crear ventas ni mover cajas.
 
 ## 5. Endpoints (`/api/school-lists`, todos con JWT)
 

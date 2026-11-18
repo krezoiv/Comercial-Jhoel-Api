@@ -11,7 +11,7 @@
 | [purchase-product-search.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-product-search-purchase-product-search-component-ts) | .ts | Componente Angular | Feature (pantalla) | Purchases' own product picker — structurally the same live-search pattern as Ventas' `ProductSearchComponent` (same debounce/search mechanics, reuses `InventoryService.searchProducts()`), but the dropdown shows cost price alongside public price and stock, since a purchase invoice needs both current prices pre-filled. | 3 internas; ext.: @angular/core, @angular/forms, rxjs | 2 | Baja (2 consumidores) |
 | [purchase-summary.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-summary-purchase-summary-component-ts) | .ts | Componente Angular | Feature (pantalla) | Componente Angular: declara `PurchaseSummaryComponent` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [save-confirm-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-save-confirm-modal-save-confirm-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Componente Angular: declara `SaveConfirmModalComponent` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core | 2 | Baja (2 consumidores) |
-| [purchases-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | All invoice state (supplier/date/items/total, for every open tab) lives in `PurchaseDraftStore`, a root-provided singleton persisted to `sessionStorage` — this component is purely a thin view over whichever draft is currently active. | 13 internas; ext.: @angular/common, @angular/core, @angular/forms | 1 | Baja (1 consumidores) |
+| [purchases-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | All invoice state (supplier/date/items/total, for every open tab) lives in `PurchaseDraftStore`, a root-provided singleton persisted to `sessionStorage` — this component is purely a thin view over whichever draft is currently active. | 14 internas; ext.: @angular/common, @angular/core, @angular/forms | 1 | Baja (1 consumidores) |
 | [cancel-confirm-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/components/cancel-confirm-modal/cancel-confirm-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cancel-confirm-modal.component.ts`; usa 2 componentes hijos: `app-icon`, `app-button`. | — | — | Media |
 | [cancel-confirm-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/components/cancel-confirm-modal/cancel-confirm-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [purchase-items-table.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/components/purchase-items-table/purchase-items-table.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `purchase-items-table.component.ts`; usa 3 componentes hijos: `app-empty-state`, `app-icon`, `app-presentation-form-modal`. | — | — | Media |
@@ -357,49 +357,50 @@
 
 ### purchases-page.component.ts
 
-- **Ruta:** [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts`, 232 líneas)
+- **Ruta:** [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts`, 256 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-purchases`
 - **Responsabilidad:** All invoice state (supplier/date/items/total, for every open tab) lives in `PurchaseDraftStore`, a root-provided singleton persisted to `sessionStorage` — this component is purely a thin view over whichever draft is currently active.
-- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [pdf-prompt-modal.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts), [purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchase-draft-store-ts), [purchases.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchases-service-ts), [supplier.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-supplier-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [purchase-product-search.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-product-search-purchase-product-search-component-ts), [purchase-items-table.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-items-table-purchase-items-table-component-ts), [purchase-summary.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-summary-purchase-summary-component-ts), [cancel-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-cancel-confirm-modal-cancel-confirm-modal-component-ts), [save-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-save-confirm-modal-save-confirm-modal-component-ts)
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [pdf-prompt-modal.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts), [purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchase-draft-store-ts), [purchases.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchases-service-ts), [school-list.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts), [supplier.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-supplier-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [purchase-product-search.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-product-search-purchase-product-search-component-ts), [purchase-items-table.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-items-table-purchase-items-table-component-ts), [purchase-summary.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-summary-purchase-summary-component-ts), [cancel-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-cancel-confirm-modal-cancel-confirm-modal-component-ts), [save-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-save-confirm-modal-save-confirm-modal-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `@angular/forms`
 - **Consumidores:** [app.routes.ts](root.md#f-comercial-jhoel-app-src-app-app-routes-ts)
 - **Plantilla:** [purchases-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.html) · **Usa componentes:** [page-header.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-page-header-page-header-component-ts), [purchase-product-search.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-product-search-purchase-product-search-component-ts), [purchase-items-table.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-items-table-purchase-items-table-component-ts), [purchase-summary.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-purchase-summary-purchase-summary-component-ts), [cancel-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-cancel-confirm-modal-cancel-confirm-modal-component-ts), [save-confirm-modal.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-components-save-confirm-modal-save-confirm-modal-component-ts)
 - **Eventos enlazados en la plantilla:** `(click)="switchDraft(draftItem.id)"`, `(click)="requestCloseTab(draftItem.id); $event.stopPropagation()"`, `(click)="openNewDraft()"`, `(ngModelChange)="onSupplierChange($event)"`, `(ngModelChange)="onDateChange($event)"`, `(ngModelChange)="draft.setInvoiceNumber($event)"`, `(ngModelChange)="onPaymentTypeChange($event)"`, `(ngModelChange)="onPaymentDueDateChange($event)"`, `(productSelected)="onProductSelected($event)"`, `(quantityChange)="onQuantityChange($event)"`, `(costPriceChange)="onCostPriceChange($event)"`, `(publicPriceChange)="onPublicPriceChange($event)"`, `(presentationChange)="onPresentationChange($event)"`, `(removeItem)="onRemoveItem($event)"`, `(cancel)="requestCancel()"`
 
-#### Clase `PurchasesPageComponent` (L29–231)
+#### Clase `PurchasesPageComponent` (L30–255)
 
 - **Decoradores:** `@Component({ selector: 'app-purchases-page', standalone: true, imports: [ FormsModule, PageHeaderComponent, PurchaseProductSearchComponent, PurchaseItemsTableCom`
 - **Propósito:** All invoice state (supplier/date/items/total, for every open tab) lives in `PurchaseDraftStore`, a root-provided singleton persisted to `sessionStorage` — this component is purely a thin view over whichever draft is currently active. That's what makes navigating away (e.g. to Inventario) and back lose nothing, and what makes an accidental reload lose nothing either. The tab bar (`draft.drafts()`) is what lets a cashier work on several unrelated invoices at once — see `PurchaseDraftStore`'s own doc comment for why this is Compras-only and not also on Ventas.
-- **Servicios inyectados con `inject()`:** `purchasesService = inject(PurchasesService)`, `supplierService = inject(SupplierService)`, `notificationService = inject(NotificationService)`, `pdfPromptModalService = inject(PdfPromptModalService)`, `draft = inject(PurchaseDraftStore)`
+- **Servicios inyectados con `inject()`:** `purchasesService = inject(PurchasesService)`, `supplierService = inject(SupplierService)`, `notificationService = inject(NotificationService)`, `pdfPromptModalService = inject(PdfPromptModalService)`, `schoolLists = inject(SchoolListService)`, `draft = inject(PurchaseDraftStore)`
 - **Datos / estado que administra:** `suppliers = signal<Supplier[]>([])`, `isSaving = signal(false)`, `closeConfirmDraftId = signal<string \| null>(null)`, `isSaveConfirmOpen = signal(false)`, `selectedSupplierName = computed(() => { const supplier = this.suppliers()`, `purchaseDateAsDate = computed(() => new Date('${this.draft.purchaseDate`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `onSupplierChange` | método public | 75–77 | `supplierId: string` | `void` |
-| `onDateChange` | método public | 79–81 | `date: string` | `void` |
-| `onPaymentTypeChange` | método public | 83–85 | `paymentType: PurchasePaymentType` | `void` |
-| `onPaymentDueDateChange` | método public | 87–89 | `date: string` | `void` |
-| `onProductSelected` | método public | 91–93 | `product: Product` | `void` |
-| `onQuantityChange` | método public | 95–97 | `change: { productId: string; quantity: number }` | `void` |
-| `onCostPriceChange` | método public | 99–101 | `change: { productId: string; costPrice: number }` | `void` |
-| `onPublicPriceChange` | método public | 103–105 | `change: { productId: string; publicPrice: number }` | `void` |
-| `onPresentationChange` | método public | 107–109 | `change: { productId: string; presentation: ProductPresentation \| null }` | `void` |
-| `onRemoveItem` | método public | 111–113 | `productId: string` | `void` |
-| `draftLabel` | método public | 118–125 | `draftItem: PurchaseDraft` | `string` |
-| `draftHasItems` | método public | 127–129 | `draftItem: PurchaseDraft` | `boolean` |
-| `switchDraft` | método public | 131–133 | `id: string` | `void` |
-| `openNewDraft` | método public | 135–137 | — | `void` |
-| `requestCloseTab` | método public | 140–147 | `id: string` | `void` |
-| `requestCancel` | método public | 150–152 | — | `void` |
-| `confirmCloseTab` | método public | 154–160 | — | `void` |
-| `dismissCancel` | método public | 162–164 | — | `void` |
-| `requestSave` | método public | 166–175 | — | `void` |
-| `dismissSaveConfirm` | método public | 177–182 | — | `void` |
-| `confirmSave` | método public | 184–230 | — | `void` |
+| `onSupplierChange` | método public | 77–79 | `supplierId: string` | `void` |
+| `onDateChange` | método public | 81–83 | `date: string` | `void` |
+| `onPaymentTypeChange` | método public | 85–87 | `paymentType: PurchasePaymentType` | `void` |
+| `onPaymentDueDateChange` | método public | 89–91 | `date: string` | `void` |
+| `onProductSelected` | método public | 93–95 | `product: Product` | `void` |
+| `onQuantityChange` | método public | 97–99 | `change: { productId: string; quantity: number }` | `void` |
+| `onCostPriceChange` | método public | 101–103 | `change: { productId: string; costPrice: number }` | `void` |
+| `onPublicPriceChange` | método public | 105–107 | `change: { productId: string; publicPrice: number }` | `void` |
+| `onPresentationChange` | método public | 109–111 | `change: { productId: string; presentation: ProductPresentation \| null }` | `void` |
+| `onRemoveItem` | método public | 113–115 | `productId: string` | `void` |
+| `draftLabel` | método public | 120–127 | `draftItem: PurchaseDraft` | `string` |
+| `draftHasItems` | método public | 129–131 | `draftItem: PurchaseDraft` | `boolean` |
+| `switchDraft` | método public | 133–135 | `id: string` | `void` |
+| `openNewDraft` | método public | 137–139 | — | `void` |
+| `requestCloseTab` | método public | 142–149 | `id: string` | `void` |
+| `requestCancel` | método public | 152–154 | — | `void` |
+| `confirmCloseTab` | método public | 156–162 | — | `void` |
+| `dismissCancel` | método public | 164–166 | — | `void` |
+| `requestSave` | método public | 168–177 | — | `void` |
+| `dismissSaveConfirm` | método public | 179–184 | — | `void` |
+| `confirmSave` | método public | 186–233 | — | `void` |
+| `reportSchoolSupply` | método private | 240–254 | `purchaseId: string` | `void` |
 
 ##### `PurchasesPageComponent.onSupplierChange`
 
-- **Firma:** `onSupplierChange(supplierId: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L75) (L75–77)
+- **Firma:** `onSupplierChange(supplierId: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L77) (L77–79)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.setSupplier`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -407,7 +408,7 @@
 
 ##### `PurchasesPageComponent.onDateChange`
 
-- **Firma:** `onDateChange(date: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L79) (L79–81)
+- **Firma:** `onDateChange(date: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L81) (L81–83)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.setPurchaseDate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -415,7 +416,7 @@
 
 ##### `PurchasesPageComponent.onPaymentTypeChange`
 
-- **Firma:** `onPaymentTypeChange(paymentType: PurchasePaymentType): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L83) (L83–85)
+- **Firma:** `onPaymentTypeChange(paymentType: PurchasePaymentType): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L85) (L85–87)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.setPaymentType`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -423,7 +424,7 @@
 
 ##### `PurchasesPageComponent.onPaymentDueDateChange`
 
-- **Firma:** `onPaymentDueDateChange(date: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L87) (L87–89)
+- **Firma:** `onPaymentDueDateChange(date: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L89) (L89–91)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.setPaymentDueDate`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -431,7 +432,7 @@
 
 ##### `PurchasesPageComponent.onProductSelected`
 
-- **Firma:** `onProductSelected(product: Product): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L91) (L91–93)
+- **Firma:** `onProductSelected(product: Product): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L93) (L93–95)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.onProductSelected`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -439,7 +440,7 @@
 
 ##### `PurchasesPageComponent.onQuantityChange`
 
-- **Firma:** `onQuantityChange(change: { productId: string; quantity: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L95) (L95–97)
+- **Firma:** `onQuantityChange(change: { productId: string; quantity: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L97) (L97–99)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.updateQuantity`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -447,7 +448,7 @@
 
 ##### `PurchasesPageComponent.onCostPriceChange`
 
-- **Firma:** `onCostPriceChange(change: { productId: string; costPrice: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L99) (L99–101)
+- **Firma:** `onCostPriceChange(change: { productId: string; costPrice: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L101) (L101–103)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.updateCostPrice`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -455,7 +456,7 @@
 
 ##### `PurchasesPageComponent.onPublicPriceChange`
 
-- **Firma:** `onPublicPriceChange(change: { productId: string; publicPrice: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L103) (L103–105)
+- **Firma:** `onPublicPriceChange(change: { productId: string; publicPrice: number }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L105) (L105–107)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.updatePublicPrice`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -463,7 +464,7 @@
 
 ##### `PurchasesPageComponent.onPresentationChange`
 
-- **Firma:** `onPresentationChange(change: { productId: string; presentation: ProductPresentation \| null }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L107) (L107–109)
+- **Firma:** `onPresentationChange(change: { productId: string; presentation: ProductPresentation \| null }): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L109) (L109–111)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.updatePresentation`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -471,7 +472,7 @@
 
 ##### `PurchasesPageComponent.onRemoveItem`
 
-- **Firma:** `onRemoveItem(productId: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L111) (L111–113)
+- **Firma:** `onRemoveItem(productId: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L113) (L113–115)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.removeItem`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -479,7 +480,7 @@
 
 ##### `PurchasesPageComponent.draftLabel`
 
-- **Firma:** `draftLabel(draftItem: PurchaseDraft): string` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L118) (L118–125)
+- **Firma:** `draftLabel(draftItem: PurchaseDraft): string` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L120) (L120–127)
 - **Propósito / descripción:** Supplier name if chosen, else a stable positional label — never blank, so an empty new tab is still identifiable in the bar.
 - **Dependencias (llamadas en su cuerpo):** `this.suppliers().find`, `this.suppliers`, `this.draft.drafts().findIndex`, `this.draft.drafts`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -487,14 +488,14 @@
 
 ##### `PurchasesPageComponent.draftHasItems`
 
-- **Firma:** `draftHasItems(draftItem: PurchaseDraft): boolean` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L127) (L127–129)
+- **Firma:** `draftHasItems(draftItem: PurchaseDraft): boolean` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L129) (L129–131)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** `purchases-page.component.html` (plantilla)
 
 ##### `PurchasesPageComponent.switchDraft`
 
-- **Firma:** `switchDraft(id: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L131) (L131–133)
+- **Firma:** `switchDraft(id: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L133) (L133–135)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.setActiveDraft`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -502,7 +503,7 @@
 
 ##### `PurchasesPageComponent.openNewDraft`
 
-- **Firma:** `openNewDraft(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L135) (L135–137)
+- **Firma:** `openNewDraft(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L137) (L137–139)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.openNewDraft`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -510,7 +511,7 @@
 
 ##### `PurchasesPageComponent.requestCloseTab`
 
-- **Firma:** `requestCloseTab(id: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L140) (L140–147)
+- **Firma:** `requestCloseTab(id: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L142) (L142–149)
 - **Propósito / descripción:** Explicit "×" on a tab — targets that specific draft, whether or not it's the active one.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.drafts().find`, `this.draft.drafts`, `this.draft.closeDraft`, `this.closeConfirmDraftId.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.closeConfirmDraftId.set`
@@ -518,7 +519,7 @@
 
 ##### `PurchasesPageComponent.requestCancel`
 
-- **Firma:** `requestCancel(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L150) (L150–152)
+- **Firma:** `requestCancel(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L152) (L152–154)
 - **Propósito / descripción:** "Cancelar" in the summary panel — always targets whichever tab is currently active.
 - **Dependencias (llamadas en su cuerpo):** `this.requestCloseTab`, `this.draft.activeDraftId`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -526,7 +527,7 @@
 
 ##### `PurchasesPageComponent.confirmCloseTab`
 
-- **Firma:** `confirmCloseTab(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L154) (L154–160)
+- **Firma:** `confirmCloseTab(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L156) (L156–162)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.closeConfirmDraftId`, `this.closeConfirmDraftId.set`, `this.draft.closeDraft`
 - **Efectos secundarios:** Actualiza estado (signals): `this.closeConfirmDraftId.set`
@@ -534,7 +535,7 @@
 
 ##### `PurchasesPageComponent.dismissCancel`
 
-- **Firma:** `dismissCancel(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L162) (L162–164)
+- **Firma:** `dismissCancel(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L164) (L164–166)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.closeConfirmDraftId.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.closeConfirmDraftId.set`
@@ -542,7 +543,7 @@
 
 ##### `PurchasesPageComponent.requestSave`
 
-- **Firma:** `requestSave(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L166) (L166–175)
+- **Firma:** `requestSave(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L168) (L168–177)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.supplierId`, `this.draft.items`, `this.isSaving`, `this.draft.paymentType`, `this.draft.paymentDueDate`, `this.notificationService.error`, `this.isSaveConfirmOpen.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaveConfirmOpen.set`
@@ -550,7 +551,7 @@
 
 ##### `PurchasesPageComponent.dismissSaveConfirm`
 
-- **Firma:** `dismissSaveConfirm(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L177) (L177–182)
+- **Firma:** `dismissSaveConfirm(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L179) (L179–184)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.isSaveConfirmOpen.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaveConfirmOpen.set`
@@ -558,9 +559,17 @@
 
 ##### `PurchasesPageComponent.confirmSave`
 
-- **Firma:** `confirmSave(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L184) (L184–230)
+- **Firma:** `confirmSave(): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L186) (L186–233)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.draft.activeDraftId`, `this.isSaving.set`, `this.purchasesService.createPurchase`, `this.draft.supplierId`, `new Date('${this.draft.purchaseDate()}T00:00:00').toISOString`, `new Date`, `this.draft.purchaseDate`, `this.draft.items().map`, `this.draft.items`, `this.draft.paymentType`, `this.draft.paymentDueDate`, `this.draft.invoiceNumber().trim`, `this.draft.invoiceNumber`, `this.isSaveConfirmOpen.set`, `this.draft.closeDraft`, `this.notificationService.success`, `this.pdfPromptModalService.prompt`…
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.draft.activeDraftId`, `this.isSaving.set`, `this.purchasesService.createPurchase`, `this.draft.supplierId`, `new Date('${this.draft.purchaseDate()}T00:00:00').toISOString`, `new Date`, `this.draft.purchaseDate`, `this.draft.items().map`, `this.draft.items`, `this.draft.paymentType`, `this.draft.paymentDueDate`, `this.draft.invoiceNumber().trim`, `this.draft.invoiceNumber`, `this.isSaveConfirmOpen.set`, `this.draft.closeDraft`, `this.notificationService.success`, `this.reportSchoolSupply`…
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.isSaveConfirmOpen.set`
 - **Consumidores:** `purchases-page.component.html` (plantilla)
+
+##### `PurchasesPageComponent.reportSchoolSupply`
+
+- **Firma:** `reportSchoolSupply(purchaseId: string): void` — [purchases-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/purchases/purchases-page.component.ts#L240) (L240–254)
+- **Propósito / descripción:** Informative only — the purchase flow is unchanged. Units entering Bodega may have been assigned FIFO to pending school lists (Listas Escolares → Abastecimiento, migration 1760008300000); tell the user how many.
+- **Dependencias (llamadas en su cuerpo):** `this.schoolLists.supplyPurchases(purchaseId, 1, 100).subscribe`, `this.schoolLists.supplyPurchases`, `result.items.reduce`, `new Set`, `result.items.flatMap`, `row.lists.map`, `this.notificationService.info`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
 

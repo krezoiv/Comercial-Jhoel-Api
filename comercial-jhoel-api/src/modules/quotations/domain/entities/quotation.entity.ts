@@ -1,12 +1,19 @@
 import { QuotationDetail } from './quotation-detail.entity';
 
-export type QuotationStoredStatus = 'PENDIENTE' | 'ACEPTADA' | 'ANULADA';
+/** Commercial life cycle (migration 1760008200000). VENCIDA is derived, never stored. */
+export type QuotationStoredStatus =
+  'BORRADOR' | 'COTIZADA' | 'ACEPTADA' | 'VENDIDA' | 'RECHAZADA' | 'CANCELADA';
 
 export interface QuotationProps {
   id: string;
   quotationNumber: string;
-  clientId: string;
+  /** Registered client (legacy quotations); null when the customer was typed in. */
+  clientId: string | null;
+  /** Customer name: typed in on the quotation, or the registered client's name. */
   clientName: string;
+  customerPhone: string | null;
+  studentName: string | null;
+  grade: string | null;
   userId: string;
   username: string;
   quotationDate: Date;
@@ -23,15 +30,22 @@ export interface QuotationProps {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
-  /** Always `null` today — the forward-compat hook for a future, explicit "Cotización -> Venta" conversion, not implemented by this module. */
+  /** Sale created by "Confirmar venta" (status VENDIDA). */
   convertedToSaleId: string | null;
+  acceptedAt: Date | null;
+  rejectedAt: Date | null;
+  rejectReason: string | null;
+  soldAt: Date | null;
+  soldByUsername: string | null;
   items: QuotationDetail[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 /**
- * A Cotización is explicitly NOT a sale — created in one shot (like a
+ * A Cotización is explicitly NOT a sale — saving it never touches inventory;
+ * only "Confirmar venta" (`convert_quotation_to_sale`) creates a real sale
+ * through Ventas. Original notes: a Cotización is explicitly NOT a sale — created in one shot (like a
  * Ticket/Purchase), never touches `products.stock`/`inventory_stock`/
  * `inventory_movements` (see `create_quotation()`), never appears in Sales
  * reports/dashboard. Every line item is historicized at creation time, so a
@@ -53,12 +67,44 @@ export class Quotation {
     return this.props.quotationNumber;
   }
 
-  get clientId(): string {
+  get clientId(): string | null {
     return this.props.clientId;
   }
 
   get clientName(): string {
     return this.props.clientName;
+  }
+
+  get customerPhone(): string | null {
+    return this.props.customerPhone;
+  }
+
+  get studentName(): string | null {
+    return this.props.studentName;
+  }
+
+  get grade(): string | null {
+    return this.props.grade;
+  }
+
+  get acceptedAt(): Date | null {
+    return this.props.acceptedAt;
+  }
+
+  get rejectedAt(): Date | null {
+    return this.props.rejectedAt;
+  }
+
+  get rejectReason(): string | null {
+    return this.props.rejectReason;
+  }
+
+  get soldAt(): Date | null {
+    return this.props.soldAt;
+  }
+
+  get soldByUsername(): string | null {
+    return this.props.soldByUsername;
   }
 
   get userId(): string {

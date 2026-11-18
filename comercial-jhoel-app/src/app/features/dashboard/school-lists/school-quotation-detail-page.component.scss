@@ -2,6 +2,10 @@
 @use 'breakpoints' as bp;
 @use '../guayacan-cash-box/guayacan-modal';
 @use 'school-lists';
+@use 'school-ui' as ui;
+
+@include ui.cat-badge;
+@include ui.status-pills;
 
 .detail {
   display: flex;

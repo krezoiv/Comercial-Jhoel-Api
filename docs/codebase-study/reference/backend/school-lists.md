@@ -8,42 +8,53 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Ruta | Controlador | Caso(s) de uso | Repositorio → SQL / tablas | Guards / roles | Frontend |
 |---|---|---|---|---|---|
-| `GET /api/school-lists/permissions` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L102) `SchoolListsController.myPermissions` | [GetSchoolListPermissionsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.loadPermissions` |
-| `GET /api/school-lists/templates` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L108) `SchoolListsController.templates` | [ListSchoolTemplatesUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getTemplates` |
-| `GET /api/school-lists/templates/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L119) `SchoolListsController.template` | [GetSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getTemplate` |
-| `POST /api/school-lists/templates` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L127) `SchoolListsController.createTemplate` | [SaveSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.saveTemplate` |
-| `PUT /api/school-lists/templates/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L137) `SchoolListsController.replaceTemplate` | [SaveSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.saveTemplate` |
-| `PATCH /api/school-lists/templates/:id/status` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L147) `SchoolListsController.templateStatus` | [SetSchoolTemplateActiveUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.setTemplateActive` |
-| `POST /api/school-lists/templates/:id/duplicate` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L156) `SchoolListsController.duplicate` | [DuplicateSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.duplicateTemplate` |
-| `GET /api/school-lists/quotations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L172) `SchoolListsController.quotations` | [ListSchoolQuotationsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getQuotations` |
-| `GET /api/school-lists/quotations/dashboard` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L185) `SchoolListsController.dashboard` | [GetSchoolListDashboardUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getDashboard` |
-| `POST /api/school-lists/quotations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L197) `SchoolListsController.create` | [CreateSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.createQuotation` |
-| `GET /api/school-lists/quotations/:id/pdf` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L207) `SchoolListsController.pdf` | [GetSchoolQuotationPdfUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.quotationPdf` |
-| `GET /api/school-lists/quotations/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L216) `SchoolListsController.quotation` | [GetSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getQuotation` |
-| `PUT /api/school-lists/quotations/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L224) `SchoolListsController.update` | [UpdateSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.updateQuotation` |
-| `PATCH /api/school-lists/quotations/:id/observations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L234) `SchoolListsController.observations` | [UpdateSchoolQuotationObservationsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.updateObservations` |
-| `POST /api/school-lists/quotations/:id/status` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L248) `SchoolListsController.status` | [ChangeSchoolQuotationStatusUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.changeStatus` |
-| `POST /api/school-lists/quotations/:id/cancel` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L263) `SchoolListsController.cancel` | [CancelSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.cancelQuotation` |
-| `POST /api/school-lists/quotations/:id/payments` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L280) `SchoolListsController.pay` | [RegisterSchoolPaymentUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.registerPayment` |
-| `POST /api/school-lists/payments/:paymentId/void` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L296) `SchoolListsController.void` | [VoidSchoolPaymentUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.voidPayment` |
-| `GET /api/school-lists/payments/:paymentId/receipt` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L311) `SchoolListsController.receipt` | [GetSchoolReceiptPdfUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.receiptPdf` |
+| `GET /api/school-lists/permissions` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L131) `SchoolListsController.myPermissions` | [GetSchoolListPermissionsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.loadPermissions` |
+| `GET /api/school-lists/stock` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L137) `SchoolListsController.stock` | [GetSchoolBodegaStockUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.bodegaStock` |
+| `GET /api/school-lists/supply/products` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L144) `SchoolListsController.supplyProductsList` | [ListSupplyProductsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.supplyProducts` |
+| `GET /api/school-lists/supply/products/:productId/lists` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L158) `SchoolListsController.supplyProductListsOf` | [ListSupplyProductListsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.supplyProductLists` |
+| `GET /api/school-lists/supply/purchases` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L167) `SchoolListsController.supplyPurchasesList` | [ListSupplyPurchasesUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.supplyPurchases` |
+| `POST /api/school-lists/supply/purchases/:purchaseId/allocate` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L179) `SchoolListsController.allocatePurchaseUnits` | [AllocateSupplyPurchaseUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.allocatePurchase` |
+| `GET /api/school-lists/supply/settings` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L188) `SchoolListsController.supplySettingsGet` | [GetSupplySettingsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.supplySettings` |
+| `PUT /api/school-lists/supply/settings` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L193) `SchoolListsController.supplySettingsPut` | [SetSupplySettingsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.setSupplyMode` |
+| `POST /api/school-lists/supply/fifo` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L201) `SchoolListsController.fifo` | [RunSupplyFifoUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.runFifo` |
+| `POST /api/school-lists/supply/allocations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L207) `SchoolListsController.allocate` | [AllocateSupplyManualUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.allocateManual` |
+| `GET /api/school-lists/templates` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L218) `SchoolListsController.templates` | [ListSchoolTemplatesUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getTemplates` |
+| `GET /api/school-lists/templates/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L229) `SchoolListsController.template` | [GetSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getTemplate` |
+| `POST /api/school-lists/templates` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L237) `SchoolListsController.createTemplate` | [SaveSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.saveTemplate` |
+| `PUT /api/school-lists/templates/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L247) `SchoolListsController.replaceTemplate` | [SaveSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.saveTemplate` |
+| `PATCH /api/school-lists/templates/:id/status` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L257) `SchoolListsController.templateStatus` | [SetSchoolTemplateActiveUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.setTemplateActive` |
+| `POST /api/school-lists/templates/:id/duplicate` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L266) `SchoolListsController.duplicate` | [DuplicateSchoolTemplateUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.duplicateTemplate` |
+| `GET /api/school-lists/quotations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L282) `SchoolListsController.quotations` | [ListSchoolQuotationsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getQuotations` |
+| `GET /api/school-lists/quotations/dashboard` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L295) `SchoolListsController.dashboard` | [GetSchoolListDashboardUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getDashboard` |
+| `POST /api/school-lists/quotations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L307) `SchoolListsController.create` | [CreateSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.createQuotation` |
+| `GET /api/school-lists/quotations/:id/pdf` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L317) `SchoolListsController.pdf` | [GetSchoolQuotationPdfUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.quotationPdf` |
+| `GET /api/school-lists/quotations/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L326) `SchoolListsController.quotation` | [GetSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.getQuotation` |
+| `PUT /api/school-lists/quotations/:id` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L334) `SchoolListsController.update` | [UpdateSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.updateQuotation` |
+| `PATCH /api/school-lists/quotations/:id/observations` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L344) `SchoolListsController.observations` | [UpdateSchoolQuotationObservationsUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.updateObservations` |
+| `POST /api/school-lists/quotations/:id/status` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L358) `SchoolListsController.status` | [ChangeSchoolQuotationStatusUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.changeStatus` |
+| `POST /api/school-lists/quotations/:id/dispatch` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L374) `SchoolListsController.dispatch` | [DispatchSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.dispatch` |
+| `POST /api/school-lists/quotations/:id/cancel` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L389) `SchoolListsController.cancel` | [CancelSchoolQuotationUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.cancelQuotation` |
+| `POST /api/school-lists/quotations/:id/payments` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L406) `SchoolListsController.pay` | [RegisterSchoolPaymentUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.registerPayment` |
+| `POST /api/school-lists/payments/:paymentId/void` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L422) `SchoolListsController.void` | [VoidSchoolPaymentUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.voidPayment` |
+| `GET /api/school-lists/payments/:paymentId/receipt` | [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L437) `SchoolListsController.receipt` | [GetSchoolReceiptPdfUseCase](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | — | UseGuards(JwtAuthGuard) | `SchoolListService.receiptPdf` |
 
 ## Inventario de archivos
 
 | Archivo | Ext. | Tipo | Capa | Responsabilidad | Dependencias internas | Consumidores | Importancia |
 |---|---|---|---|---|---|---|---|
-| [school-list.use-cases.spec.ts](#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts) | .ts | Prueba unitaria | Aplicación | Prueba unitaria: declara `repository`, `admin`, `cashier`, `supervisor`, `REQUEST_ID` (sin comentario de documentación en el código). | 4 internas | 0 | Soporte (pruebas) |
-| [school-list.use-cases.ts](#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | .ts | Caso de uso | Aplicación | `yyyy-MM-dd` of "today" in Guatemala. | 6 internas; ext.: @nestjs/common | 3 | Media (3 consumidores) |
+| [school-list.use-cases.spec.ts](#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts) | .ts | Prueba unitaria | Aplicación | Prueba unitaria: declara `repository`, `admin`, `cashier`, `supervisor`, `REQUEST_ID` (sin comentario de documentación en el código). | 5 internas | 0 | Soporte (pruebas) |
+| [school-list.use-cases.ts](#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts) | .ts | Caso de uso | Aplicación | `yyyy-MM-dd` of "today" in Guatemala. | 6 internas; ext.: @nestjs/common | 4 | Media (4 consumidores) |
+| [school-supply.use-cases.ts](#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts) | .ts | Caso de uso | Aplicación | "Productos pendientes de abastecimiento". | 3 internas; ext.: @nestjs/common | 3 | Media (3 consumidores) |
 | [school-list.errors.spec.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-spec-ts) | .ts | Prueba unitaria | Dominio | Prueba unitaria (sin comentario de documentación en el código). | 1 internas | 0 | Soporte (pruebas) |
-| [school-list.errors.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts) | .ts | Errores de dominio | Dominio | Business-rule violation of Listas Escolares. | 1 internas | 5 | Media (5 consumidores) |
+| [school-list.errors.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts) | .ts | Errores de dominio | Dominio | Business-rule violation of Listas Escolares. | 1 internas | 6 | Media (6 consumidores) |
 | [school-list.policy.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts) | .ts | Política de dominio | Dominio | Política de dominio: declara `hasSchoolListPermission`, `assertSchoolListPermission`, `schoolListPermissionsFor`, `SchoolListPermission`, `ALL_OPERATORS` (sin comentario de documentación en el código). | 1 internas | 1 | Baja (1 consumidores) |
-| [school-list.repository.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts) | .ts | Puerto de repositorio (interfaz) | Dominio | Puerto de repositorio (interfaz): declara `Paginated`, `TemplateItemInput`, `TemplateInput`, `TemplateItemRow`, `TemplateSummaryRow` (sin comentario de documentación en el código). | 0 internas | 6 | Media (6 consumidores) |
+| [school-list.repository.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts) | .ts | Puerto de repositorio (interfaz) | Dominio | Puerto de repositorio (interfaz): declara `Paginated`, `TemplateItemInput`, `TemplateInput`, `TemplateItemRow`, `TemplateSummaryRow` (sin comentario de documentación en el código). | 0 internas | 7 | Media (7 consumidores) |
 | [school-list.labels.ts](#f-comercial-jhoel-api-src-modules-school-lists-domain-school-list-labels-ts) | .ts | Código TypeScript | Dominio | Código TypeScript: declara `SCHOOL_STATUS_LABEL`, `SCHOOL_PAYMENT_METHOD_LABEL`, `SCHOOL_PAYMENT_KIND_LABEL` (sin comentario de documentación en el código). | 1 internas | 1 | Baja (1 consumidores) |
 | [school-list-pdf.builder.ts](#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-pdf-school-list-pdf-builder-ts) | .ts | Builder | Infraestructura | `yyyy-MM-dd` → `dd/mm/yyyy` without a `Date` round-trip. | 1 internas; ext.: pdfkit | 1 | Baja (1 consumidores) |
 | [typeorm-school-list.repository.ts](#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts) | .ts | Repositorio (implementación) | Infraestructura | Repositorio (implementación): declara `TypeOrmSchoolListRepository`, `text`, `textOrNull`, `num`, `numOrNull` (sin comentario de documentación en el código). | 2 internas; ext.: @nestjs/common, @nestjs/typeorm, typeorm | 1 | Media (repositorio (implementación)) |
-| [school-lists.controller.ts](#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts) | .ts | Controlador | Presentación | Listas Escolares: templates per grade, customer quotations and their account statement. | 4 internas; ext.: @nestjs/common, express | 1 | Media (controlador) |
+| [school-lists.controller.ts](#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts) | .ts | Controlador | Presentación | Listas Escolares: templates per grade, customer quotations and their account statement. | 5 internas; ext.: @nestjs/common, express | 1 | Media (controlador) |
 | [school-list.request.dto.ts](#f-comercial-jhoel-api-src-modules-school-lists-presentation-dtos-school-list-request-dto-ts) | .ts | DTO de entrada | Presentación | DTO de entrada: declara `TemplateItemRequestDto`, `SaveTemplateRequestDto`, `TemplateStatusRequestDto`, `DuplicateTemplateRequestDto`, `TemplatesQueryDto` (sin comentario de documentación en el código). | 1 internas; ext.: class-transformer, class-validator | 1 | Baja (1 consumidores) |
-| [school-lists.module.ts](#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts) | .ts | Módulo | Arranque / configuración | Listas Escolares (migration 1760007900000). | 5 internas; ext.: @nestjs/common | 1 | Baja (1 consumidores) |
+| [school-lists.module.ts](#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts) | .ts | Módulo | Arranque / configuración | Listas Escolares (migration 1760007900000). | 6 internas; ext.: @nestjs/common | 1 | Baja (1 consumidores) |
 
 ## Detalle por archivo
 
@@ -51,17 +62,17 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.use-cases.spec.ts
 
-- **Ruta:** [school-list.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts) (`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts`, 358 líneas)
+- **Ruta:** [school-list.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts) (`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts`, 482 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Aplicación · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Prueba unitaria: declara `repository`, `admin`, `cashier`, `supervisor`, `REQUEST_ID` (sin comentario de documentación en el código).
-- **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [company-settings.repository.ts](company-settings.md#f-comercial-jhoel-api-src-modules-company-settings-domain-repositories-company-settings-repository-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts)
+- **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [company-settings.repository.ts](company-settings.md#f-comercial-jhoel-api-src-modules-company-settings-domain-repositories-company-settings-repository-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts)
 - **Consumidores:** —
-#### Función `repository` (L106–125)
+#### Función `repository` (L127–160)
 
 - **Tipo:** función local del archivo
-- **Firma:** `repository(): jest.Mocked<SchoolListRepository>` — [school-list.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts#L106)
+- **Firma:** `repository(): jest.Mocked<SchoolListRepository>` — [school-list.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.spec.ts#L127)
 - **Propósito / descripción:** Sin JSDoc en el código.
-- **Dependencias:** `jest.fn().mockResolvedValue`, `jest.fn`
+- **Dependencias:** `jest.fn().mockResolvedValue`, `jest.fn`, `jest.fn().mockImplementation`, `Promise.resolve`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
@@ -69,12 +80,12 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.use-cases.ts
 
-- **Ruta:** [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts) (`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts`, 477 líneas)
+- **Ruta:** [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts) (`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts`, 490 líneas)
 - **Tipo:** Caso de uso · **Capa:** Aplicación · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** `yyyy-MM-dd` of "today" in Guatemala.
 - **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [school-list.policy.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts), [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts), [school-list.labels.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-school-list-labels-ts), [company-settings.repository.ts](company-settings.md#f-comercial-jhoel-api-src-modules-company-settings-domain-repositories-company-settings-repository-ts), [school-list-pdf.builder.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-pdf-school-list-pdf-builder-ts)
 - **Paquetes externos:** `@nestjs/common`
-- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts), [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
+- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts), [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
 
 **Interfaces, tipos y enums:**
 
@@ -97,7 +108,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertSchoolListPermission`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
-- **Consumidores:** (mismo archivo)
+- **Consumidores:** [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), (mismo archivo)
 
 ##### `SchoolListUseCase.detail`
 
@@ -106,7 +117,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Dependencias (llamadas en su cuerpo):** `this.repository.getQuotation`, `schoolListError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `schoolListError('SCHOOL_QUOTE_NOT_FOUND')`
-- **Consumidores:** (mismo archivo)
+- **Consumidores:** [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), (mismo archivo)
 
 ##### `SchoolListUseCase.template`
 
@@ -403,7 +414,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 
 
-#### Clase `GetSchoolListDashboardUseCase` (L348–366)
+#### Clase `GetSchoolBodegaStockUseCase` (L348–358)
 
 - **Decoradores:** `@Injectable()`
 - **Herencia / contratos:** extends SchoolListUseCase
@@ -411,11 +422,30 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 351–365 | `actor: Actor`, `dateFrom?: string`, `dateTo?: string` | `Promise<DashboardRow & { dateFrom: string; dateTo: string }>` |
+| `execute` | método public | 351–357 | `actor: Actor`, `productIds: string[]` | `Promise<{ productId: string; quantity: number }[]>` |
+
+##### `GetSchoolBodegaStockUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, productIds: string[]): Promise<{ productId: string; quantity: number }[]>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L351) (L351–357)
+- **Propósito / descripción:** Bodega stock shown next to inventory lines; the SQL sync validates again under lock.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.bodegaStock`, `[...new Set(productIds)].slice`, `new Set`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `GetSchoolListDashboardUseCase` (L361–379)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 364–378 | `actor: Actor`, `dateFrom?: string`, `dateTo?: string` | `Promise<DashboardRow & { dateFrom: string; dateTo: string }>` |
 
 ##### `GetSchoolListDashboardUseCase.execute`
 
-- **Firma:** `execute(actor: Actor, dateFrom?: string, dateTo?: string): Promise<DashboardRow & { dateFrom: string; dateTo: string }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L351) (L351–365)
+- **Firma:** `execute(actor: Actor, dateFrom?: string, dateTo?: string): Promise<DashboardRow & { dateFrom: string; dateTo: string }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L364) (L364–378)
 - **Propósito / descripción:** Defaults to the current calendar year (the school season).
 - **Dependencias (llamadas en su cuerpo):** `this.can`, `guatemalaToday`, `today.slice`, `schoolListError`, `this.repository.dashboard`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -423,7 +453,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 
 
-#### Clase `SchoolDocumentUseCase` (L369–392)
+#### Clase `SchoolDocumentUseCase` (L382–405)
 
 - **Herencia / contratos:** extends SchoolListUseCase
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
@@ -431,18 +461,18 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `company` | método protected async | 378–391 | — | `Promise<SchoolListPdfCompany>` |
+| `company` | método protected async | 391–404 | — | `Promise<SchoolListPdfCompany>` |
 
 ##### `SchoolDocumentUseCase.company`
 
-- **Firma:** `company(): Promise<SchoolListPdfCompany>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L378) (L378–391)
+- **Firma:** `company(): Promise<SchoolListPdfCompany>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L391) (L391–404)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.companySettings.get`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** (mismo archivo)
 
 
-#### Clase `GetSchoolQuotationPdfUseCase` (L394–423)
+#### Clase `GetSchoolQuotationPdfUseCase` (L407–436)
 
 - **Decoradores:** `@Injectable()`
 - **Herencia / contratos:** extends SchoolDocumentUseCase
@@ -450,18 +480,18 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 396–422 | `actor: Actor`, `id: string` | `Promise<{ filename: string; pdf: Buffer }>` |
+| `execute` | método public async | 409–435 | `actor: Actor`, `id: string` | `Promise<{ filename: string; pdf: Buffer }>` |
 
 ##### `GetSchoolQuotationPdfUseCase.execute`
 
-- **Firma:** `execute(actor: Actor, id: string): Promise<{ filename: string; pdf: Buffer }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L396) (L396–422)
+- **Firma:** `execute(actor: Actor, id: string): Promise<{ filename: string; pdf: Buffer }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L409) (L409–435)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.can`, `this.detail`, `buildSchoolQuotationPdf`, `this.company`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 
 
-#### Clase `GetSchoolReceiptPdfUseCase` (L425–476)
+#### Clase `GetSchoolReceiptPdfUseCase` (L438–489)
 
 - **Decoradores:** `@Injectable()`
 - **Herencia / contratos:** extends SchoolDocumentUseCase
@@ -469,11 +499,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 427–475 | `actor: Actor`, `paymentId: string` | `Promise<{ filename: string; pdf: Buffer }>` |
+| `execute` | método public async | 440–488 | `actor: Actor`, `paymentId: string` | `Promise<{ filename: string; pdf: Buffer }>` |
 
 ##### `GetSchoolReceiptPdfUseCase.execute`
 
-- **Firma:** `execute(actor: Actor, paymentId: string): Promise<{ filename: string; pdf: Buffer }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L427) (L427–475)
+- **Firma:** `execute(actor: Actor, paymentId: string): Promise<{ filename: string; pdf: Buffer }>` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L440) (L440–488)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.findPayment`, `schoolListError`, `this.detail`, `buildSchoolReceiptPdf`, `this.company`, `new Date`, `'Anulación del comprobante ${payment.reference ?? ''}'.trim`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -501,19 +531,201 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 #### Función `requireKey` (L67–75)
 
-- **Tipo:** función local del archivo
+- **Tipo:** función exportada
 - **Firma:** `requireKey(clientRequestId: string \| undefined, prefix: string): string` — [school-list.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts#L67)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `schoolListError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `schoolListError('SCHOOL_IDEMPOTENCY_KEY_REQUIRED')`
-- **Consumidores:** uso interno del archivo
+- **Consumidores:** [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts)
+
+<a id="f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts"></a>
+
+### school-supply.use-cases.ts
+
+- **Ruta:** [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts) (`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts`, 162 líneas)
+- **Tipo:** Caso de uso · **Capa:** Aplicación · **Módulo:** Módulo backend `school-lists`
+- **Responsabilidad:** "Productos pendientes de abastecimiento".
+- **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts)
+- **Paquetes externos:** `@nestjs/common`
+- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts), [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
+
+#### Clase `ListSupplyProductsUseCase` (L24–33)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** "Productos pendientes de abastecimiento".
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public | 26–32 | `actor: Actor`, `options: FindSupplyProductsOptions` | `Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }>` |
+
+##### `ListSupplyProductsUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, options: FindSupplyProductsOptions): Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L26) (L26–32)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.supplyProducts`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `ListSupplyProductListsUseCase` (L36–42)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** Lists that need a product (FIFO order).
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public | 38–41 | `actor: Actor`, `productId: string` | `Promise<SupplyProductListRow[]>` |
+
+##### `ListSupplyProductListsUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, productId: string): Promise<SupplyProductListRow[]>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L38) (L38–41)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.supplyProductLists`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `ListSupplyPurchasesUseCase` (L45–54)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** Purchases and the lists their units were assigned to.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public | 47–53 | `actor: Actor`, `options: { purchaseId?: string; page: number; limit: number }` | `Promise<Paginated<SupplyPurchaseRow>>` |
+
+##### `ListSupplyPurchasesUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, options: { purchaseId?: string; page: number; limit: number }): Promise<Paginated<SupplyPurchaseRow>>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L47) (L47–53)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.supplyPurchases`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `GetSupplySettingsUseCase` (L56–64)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 58–63 | `actor: Actor` | `Promise<{ allocationMode: SupplyAllocationMode }>` |
+
+##### `GetSupplySettingsUseCase.execute`
+
+- **Firma:** `execute(actor: Actor): Promise<{ allocationMode: SupplyAllocationMode }>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L58) (L58–63)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.supplyMode`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `SetSupplySettingsUseCase` (L67–81)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** FIFO automático ↔ manual (administrators).
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 69–80 | `actor: Actor`, `allocationMode: SupplyAllocationMode` | `Promise<{ allocationMode: SupplyAllocationMode }>` |
+
+##### `SetSupplySettingsUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, allocationMode: SupplyAllocationMode): Promise<{ allocationMode: SupplyAllocationMode }>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L69) (L69–80)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.setSupplyMode`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `RunSupplyFifoUseCase` (L84–95)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** "Asignar FIFO": free units of one product (or all) to pending lists.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 86–94 | `actor: Actor`, `productId: string \| null` | `Promise<{ allocated: number }>` |
+
+##### `RunSupplyFifoUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, productId: string \| null): Promise<{ allocated: number }>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L86) (L86–94)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.runFifo`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `AllocateSupplyPurchaseUseCase` (L98–112)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** "Asignar compra a listas": FIFO with the purchase's own unassigned units.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 100–111 | `actor: Actor`, `purchaseId: string` | `Promise<{ allocated: number }>` |
+
+##### `AllocateSupplyPurchaseUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, purchaseId: string): Promise<{ allocated: number }>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L100) (L100–111)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.allocatePurchase`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `AllocateSupplyManualUseCase` (L115–138)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** Manual allocation of free units to one list.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 117–137 | `actor: Actor`, `input: { quotationId: string; productId: string; quantity: number; purchaseId?: string \| null; }`, `clientRequestId: string` | `Promise<QuotationDetailRow>` |
+
+##### `AllocateSupplyManualUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, input: { quotationId: string; productId: string; quantity: number; purchaseId?: string \| null; }, clientRequestId: string): Promise<QuotationDetailRow>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L117) (L117–137)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `Number.isInteger`, `schoolListError`, `this.repository.allocateManual`, `requireKey`, `this.detail`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Errores que lanza:** `schoolListError('SCHOOL_INVALID_QUANTITY')`
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+
+
+#### Clase `DispatchSchoolQuotationUseCase` (L144–161)
+
+- **Decoradores:** `@Injectable()`
+- **Herencia / contratos:** extends SchoolListUseCase
+- **Propósito:** "Preparar y despachar lista" (= delivery): requires the list fully supplied and paid; never discounts inventory again.
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 146–160 | `actor: Actor`, `quotationId: string`, `observations: string \| null`, `clientRequestId: string` | `Promise<QuotationDetailRow>` |
+
+##### `DispatchSchoolQuotationUseCase.execute`
+
+- **Firma:** `execute(actor: Actor, quotationId: string, observations: string \| null, clientRequestId: string): Promise<QuotationDetailRow>` — [school-supply.use-cases.ts](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-supply.use-cases.ts#L146) (L146–160)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.can`, `this.repository.dispatch`, `requireKey`, `this.detail`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 
 <a id="f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-spec-ts"></a>
 
 ### school-list.errors.spec.ts
 
-- **Ruta:** [school-list.errors.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.spec.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.spec.ts`, 59 líneas)
+- **Ruta:** [school-list.errors.spec.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.spec.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.spec.ts`, 86 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Dominio · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Prueba unitaria (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts)
@@ -522,48 +734,48 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.errors.ts
 
-- **Ruta:** [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts`, 251 líneas)
+- **Ruta:** [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts`, 302 líneas)
 - **Tipo:** Errores de dominio · **Capa:** Dominio · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Business-rule violation of Listas Escolares.
 - **Depende de (archivos del proyecto):** [domain-error.ts](shared.md#f-comercial-jhoel-api-src-shared-domain-domain-error-ts)
-- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-list.errors.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-spec-ts), [school-list.policy.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
+- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-list.errors.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-spec-ts), [school-list.policy.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
 
 #### Clase `SchoolListRuleError` (L8–16)
 
 - **Herencia / contratos:** extends DomainError
 - **Propósito:** Business-rule violation of Listas Escolares. One class with a stable `code` (the same code the SQL functions `RAISE`), carrying its user-facing message and HTTP status through `GlobalExceptionFilter`.
 - **Dependencias inyectadas (constructor):** `code: string`, `message: string`, `status: number`
-#### Función `money` (L180–181)
+#### Función `money` (L215–216)
 
 - **Tipo:** función local del archivo
-- **Firma:** `money(value: string \| undefined)` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L180)
+- **Firma:** `money(value: string \| undefined)` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L215)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Number(value ?? 0).toLocaleString`, `Number`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `withName` (L184–190)
+#### Función `withName` (L219–225)
 
 - **Tipo:** función local del archivo
-- **Firma:** `withName(parts: string[], format: (name: string) => string): string \| null` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L184)
+- **Firma:** `withName(parts: string[], format: (name: string) => string): string \| null` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L219)
 - **Propósito / descripción:** A product name may itself contain ":"; the whole tail is the name.
 - **Dependencias:** `parts.join(':').trim`, `parts.join`, `format`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `schoolListError` (L231–236)
+#### Función `schoolListError` (L282–287)
 
 - **Tipo:** función exportada
-- **Firma:** `schoolListError(code: string): SchoolListRuleError` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L231)
+- **Firma:** `schoolListError(code: string): SchoolListRuleError` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L282)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `new SchoolListRuleError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
-- **Consumidores:** [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-list.policy.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
+- **Consumidores:** [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-list.policy.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-policies-school-list-policy-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts)
 
-#### Función `schoolListErrorFromMessage` (L239–250)
+#### Función `schoolListErrorFromMessage` (L290–301)
 
 - **Tipo:** función exportada
-- **Firma:** `schoolListErrorFromMessage(message: string): SchoolListRuleError \| null` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L239)
+- **Firma:** `schoolListErrorFromMessage(message: string): SchoolListRuleError \| null` — [school-list.errors.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/errors/school-list.errors.ts#L290)
 - **Propósito / descripción:** Maps the message of a SQL `RAISE EXCEPTION 'CODE[:detail…]'`; null when it isn't ours.
 - **Dependencias:** `message.split`, `DETAILED[code]`, `new SchoolListRuleError`, `schoolListError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -573,7 +785,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.policy.ts
 
-- **Ruta:** [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts`, 69 líneas)
+- **Ruta:** [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts`, 71 líneas)
 - **Tipo:** Política de dominio · **Capa:** Dominio · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Política de dominio: declara `hasSchoolListPermission`, `assertSchoolListPermission`, `schoolListPermissionsFor`, `SchoolListPermission`, `ALL_OPERATORS` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts)
@@ -581,34 +793,34 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 **Interfaces, tipos y enums:**
 
-- `type SchoolListPermission` (L40) = `keyof typeof SCHOOL_LIST_PERMISSION_ROLES`
+- `type SchoolListPermission` (L42) = `keyof typeof SCHOOL_LIST_PERMISSION_ROLES`
 
 **Constantes exportadas:**
 
 - `SCHOOL_LIST_PERMISSION_ROLES` (L17): Permissions of "Listas Escolares" (role-based RBAC, same model as the rest of the system). = `{ /** Consultar plantillas, cotizaciones y el tablero. */ 'school_lists.view': ALL_OPERATORS, /** Crear, edita`
-#### Función `hasSchoolListPermission` (L42–49)
+#### Función `hasSchoolListPermission` (L44–51)
 
 - **Tipo:** función exportada
-- **Firma:** `hasSchoolListPermission(role: string \| undefined, permission: SchoolListPermission): boolean` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L42)
+- **Firma:** `hasSchoolListPermission(role: string \| undefined, permission: SchoolListPermission): boolean` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L44)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `( SCHOOL_LIST_PERMISSION_ROLES[permission] as readonly string[] ).includes`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts)
 
-#### Función `assertSchoolListPermission` (L52–59)
+#### Función `assertSchoolListPermission` (L54–61)
 
 - **Tipo:** función exportada
-- **Firma:** `assertSchoolListPermission(role: string \| undefined, permission: SchoolListPermission): void` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L52)
+- **Firma:** `assertSchoolListPermission(role: string \| undefined, permission: SchoolListPermission): void` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L54)
 - **Propósito / descripción:** Throws `SCHOOL_LIST_FORBIDDEN` (403) unless the role holds the permission.
 - **Dependencias:** `hasSchoolListPermission`, `schoolListError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `schoolListError('SCHOOL_LIST_FORBIDDEN')`
 - **Consumidores:** [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts)
 
-#### Función `schoolListPermissionsFor` (L62–68)
+#### Función `schoolListPermissionsFor` (L64–70)
 
 - **Tipo:** función exportada
-- **Firma:** `schoolListPermissionsFor(role: string \| undefined): SchoolListPermission[]` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L62)
+- **Firma:** `schoolListPermissionsFor(role: string \| undefined): SchoolListPermission[]` — [school-list.policy.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/policies/school-list.policy.ts#L64)
 - **Propósito / descripción:** Every permission the role holds — the frontend shows only these actions.
 - **Dependencias:** `( Object.keys(SCHOOL_LIST_PERMISSION_ROLES) as SchoolListPermission[] ).filter`, `Object.keys`, `hasSchoolListPermission`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -618,50 +830,64 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.repository.ts
 
-- **Ruta:** [school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/repositories/school-list.repository.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/repositories/school-list.repository.ts`, 334 líneas)
+- **Ruta:** [school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/repositories/school-list.repository.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/repositories/school-list.repository.ts`, 524 líneas)
 - **Tipo:** Puerto de repositorio (interfaz) · **Capa:** Dominio · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Puerto de repositorio (interfaz): declara `Paginated`, `TemplateItemInput`, `TemplateInput`, `TemplateItemRow`, `TemplateSummaryRow` (sin comentario de documentación en el código).
-- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-list.labels.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-school-list-labels-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [school-list.request.dto.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-dtos-school-list-request-dto-ts), [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
+- **Consumidores:** [school-list.use-cases.spec.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-spec-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-list.labels.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-school-list-labels-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [school-list.request.dto.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-dtos-school-list-request-dto-ts), [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
 
 **Interfaces, tipos y enums:**
 
-- `interface Paginated` (L39): sin documentación — miembros: `items`, `total`, `page`, `limit`
-- `interface TemplateItemInput` (L47): sin documentación — miembros: `productId`, `productName`, `description`, `quantity`, `unitPrice`, `observations`
-- `interface TemplateInput` (L56): sin documentación — miembros: `name`, `grade`, `description`, `isActive`, `items`
-- `interface TemplateItemRow` (L64): sin documentación — miembros: `id`, `lineNo`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `subtotal`, `observations`, `inventoryPrice`
-- `interface TemplateSummaryRow` (L78): sin documentación — miembros: `id`, `name`, `grade`, `description`, `isActive`, `sortOrder`, `version`, `itemCount`, `total`, `updatedAt`, `updatedByUsername`
-- `interface TemplateRow` (L92) extends TemplateSummaryRow: sin documentación — miembros: `items`
-- `interface QuotationItemInput` (L97): sin documentación — miembros: `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`
-- `interface PaymentInput` (L110): sin documentación — miembros: `amount`, `paymentMethod`, `bankId`, `reference`, `observations`
-- `interface QuotationInput` (L118): sin documentación — miembros: `templateId`, `grade`, `customerName`, `customerPhone`, `studentName`, `quotationDate`, `deliveryDate`, `observations`, `asDraft`, `advance`, `items`
-- `interface QuotationSummaryRow` (L132): sin documentación — miembros: `id`, `quotationNumber`, `quotationDate`, `deliveryDate`, `customerName`, `customerPhone`, `studentName`, `grade`, `templateId`, `templateName`, `total`, `paid`, `balance`, `status`, `accountStatus`, `version`, `createdAt`, `createdByUsername`
-- `interface QuotationItemRow` (L153): sin documentación — miembros: `id`, `lineNo`, `source`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `subtotal`, `observations`
-- `interface PaymentRow` (L168): sin documentación — miembros: `id`, `quotationId`, `receiptNumber`, `kind`, `amount`, `effect`, `runningBalance`, `paymentMethod`, `bankId`, `bankName`, `reference`, `observations`, `status`, `reversalOfId`, `receivedAt`, `receivedByUsername`, `voidedAt`, `voidedByUsername`, `voidReason`
-- `interface HistoryRow` (L192): sin documentación — miembros: `id`, `action`, `fromStatus`, `toStatus`, `details`, `createdAt`, `createdByUsername`
-- `interface AccountSummary` (L202): sin documentación — miembros: `total`, `advances`, `installments`, `refunds`, `paid`, `balance`
-- `interface QuotationDetailRow` (L211) extends QuotationSummaryRow: sin documentación — miembros: `subtotal`, `discount`, `observations`, `updatedAt`, `deliveredAt`, `deliveredByUsername`, `cancelledAt`, `cancelledByUsername`, `cancelReason`, `items`, `payments`, `history`, `account`
-- `interface FindQuotationsOptions` (L227): sin documentación — miembros: `search`, `phone`, `number`, `grade`, `status`, `dateFrom`, `dateTo`, `page`, `limit`
-- `interface DashboardRow` (L239): sin documentación — miembros: `totalQuotations`, `pendingQuotations`, `paidQuotations`, `totalQuoted`, `totalReceived`, `pendingBalance`, `byGrade`, `incomeByDay`, `byStatus`
-- `interface CancelInput` (L251): sin documentación — miembros: `reason`, `refundMethod`, `bankId`, `reference`
-- `interface SchoolListRepository` (L263): Port of Listas Escolares. — miembros: `listTemplates`, `getTemplate`, `saveTemplate`, `setTemplateActive`, `duplicateTemplate`, `findQuotations`, `getQuotation`, `createQuotation`, `updateQuotation`, `setObservations`, `changeStatus`, `cancelQuotation`, `registerPayment`, `voidPayment`, `findPayment`, `dashboard`
-- `type SchoolQuotationStatus` (L13) = `(typeof SCHOOL_QUOTATION_STATUSES)[number]`
-- `type SchoolPaymentMethod` (L22) = `(typeof SCHOOL_PAYMENT_METHODS)[number]`
-- `type SchoolStatusAction` (L29) = `(typeof SCHOOL_STATUS_ACTIONS)[number]`
-- `type SchoolPaymentKind` (L31) = `'ANTICIPO' \| 'ABONO' \| 'DEVOLUCION' \| 'ANULACION'`
-- `type SchoolLineSource` (L33) = `'PLANTILLA' \| 'INVENTARIO' \| 'MANUAL'`
-- `type SchoolAccountStatus` (L36) = `'PENDIENTE' \| 'PARCIAL' \| 'PAGADA' \| 'CERRADA'` — Red / yellow / green account status shown next to every quotation.
+- `interface Paginated` (L53): sin documentación — miembros: `items`, `total`, `page`, `limit`
+- `interface TemplateItemInput` (L61): sin documentación — miembros: `productId`, `productName`, `description`, `quantity`, `unitPrice`, `observations`
+- `interface TemplateInput` (L70): sin documentación — miembros: `name`, `grade`, `description`, `isActive`, `items`
+- `interface TemplateItemRow` (L78): sin documentación — miembros: `id`, `lineNo`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `subtotal`, `observations`, `inventoryPrice`
+- `interface TemplateSummaryRow` (L92): sin documentación — miembros: `id`, `name`, `grade`, `description`, `isActive`, `sortOrder`, `version`, `itemCount`, `total`, `updatedAt`, `updatedByUsername`
+- `interface TemplateRow` (L106) extends TemplateSummaryRow: sin documentación — miembros: `items`
+- `interface QuotationItemInput` (L111): sin documentación — miembros: `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`
+- `interface PaymentInput` (L124): sin documentación — miembros: `amount`, `paymentMethod`, `bankId`, `reference`, `observations`
+- `interface QuotationInput` (L132): sin documentación — miembros: `templateId`, `grade`, `customerName`, `customerPhone`, `studentName`, `quotationDate`, `deliveryDate`, `observations`, `asDraft`, `advance`, `items`
+- `interface QuotationSummaryRow` (L146): sin documentación — miembros: `id`, `quotationNumber`, `quotationDate`, `deliveryDate`, `customerName`, `customerPhone`, `studentName`, `grade`, `templateId`, `templateName`, `total`, `paid`, `balance`, `status`, `accountStatus`, `supplyStatus`, `version`, `createdAt`, `createdByUsername`
+- `interface QuotationItemRow` (L168): sin documentación — miembros: `id`, `lineNo`, `source`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `subtotal`, `observations`
+- `interface PaymentRow` (L183): sin documentación — miembros: `id`, `quotationId`, `receiptNumber`, `kind`, `amount`, `effect`, `runningBalance`, `paymentMethod`, `bankId`, `bankName`, `reference`, `observations`, `status`, `reversalOfId`, `receivedAt`, `receivedByUsername`, `voidedAt`, `voidedByUsername`, `voidReason`
+- `interface HistoryRow` (L207): sin documentación — miembros: `id`, `action`, `fromStatus`, `toStatus`, `details`, `createdAt`, `createdByUsername`
+- `interface ListInventoryMovementRow` (L218): Inventory movement caused by the list (discount, adjustment or return in Bodega). — miembros: `id`, `productId`, `productName`, `movementType`, `quantity`, `reason`, `createdAt`, `username`
+- `interface SupplyLineRow` (L231): One inventory product of a list: committed, reserved (allocated), pending, delivered. — miembros: `productId`, `productName`, `requested`, `allocated`, `pending`, `delivered`
+- `interface SupplyAllocationRow` (L240): sin documentación — miembros: `id`, `productId`, `productName`, `quantity`, `sourceType`, `mode`, `status`, `purchaseId`, `purchaseInvoice`, `purchaseDate`, `createdAt`, `username`, `releasedAt`, `releaseReason`
+- `interface DispatchRow` (L257): sin documentación — miembros: `id`, `dispatchedAt`, `username`, `observations`, `items`
+- `interface QuotationSupplyRow` (L272): sin documentación — miembros: `status`, `confirmedAt`, `lines`, `uncontrolledLines`, `allocations`, `dispatch`
+- `interface SupplyProductRow` (L282): sin documentación — miembros: `productId`, `productName`, `sku`, `category`, `bodega`, `committed`, `allocated`, `pending`, `freeUnits`, `lists`, `firstOrderAt`, `lastOrderAt`, `status`
+- `interface SupplySummary` (L298): sin documentación — miembros: `pendingProducts`, `pendingUnits`, `affectedLists`, `suppliedProducts`, `partialProducts`
+- `interface FindSupplyProductsOptions` (L306): sin documentación — miembros: `search`, `categoryId`, `dateFrom`, `dateTo`, `quotationNumber`, `status`, `page`, `limit`
+- `interface SupplyProductListRow` (L317): sin documentación — miembros: `quotationId`, `quotationNumber`, `customerName`, `grade`, `confirmedAt`, `committed`, `allocated`, `pending`, `supplyStatus`
+- `interface SupplyPurchaseRow` (L330): Units of a purchase handed to school lists. — miembros: `purchaseId`, `invoiceNumber`, `purchaseDate`, `productId`, `productName`, `purchased`, `allocated`, `lists`
+- `interface AccountSummary` (L347): sin documentación — miembros: `total`, `advances`, `installments`, `refunds`, `paid`, `balance`
+- `interface QuotationDetailRow` (L356) extends QuotationSummaryRow: sin documentación — miembros: `subtotal`, `discount`, `observations`, `updatedAt`, `finishedAt`, `finishedByUsername`, `deliveredAt`, `deliveredByUsername`, `cancelledAt`, `cancelledByUsername`, `cancelReason`, `items`, `payments`, `history`, `inventory`, `supply`, `account`
+- `interface FindQuotationsOptions` (L377): sin documentación — miembros: `supplyStatus`, `search`, `phone`, `number`, `grade`, `status`, `dateFrom`, `dateTo`, `page`, `limit`
+- `interface DashboardRow` (L390): sin documentación — miembros: `totalQuotations`, `pendingQuotations`, `paidQuotations`, `totalQuoted`, `totalReceived`, `pendingBalance`, `byGrade`, `incomeByDay`, `byStatus`
+- `interface CancelInput` (L402): sin documentación — miembros: `reason`, `refundMethod`, `bankId`, `reference`
+- `interface SchoolListRepository` (L414): Port of Listas Escolares. — miembros: `listTemplates`, `getTemplate`, `saveTemplate`, `setTemplateActive`, `duplicateTemplate`, `findQuotations`, `getQuotation`, `createQuotation`, `updateQuotation`, `setObservations`, `changeStatus`, `cancelQuotation`, `registerPayment`, `voidPayment`, `findPayment`, `dashboard`, `supplyProducts`, `supplyProductLists`, `supplyPurchases`, `supplyMode`, `setSupplyMode`, `runFifo`, `allocatePurchase`, `allocateManual`, `dispatch`…
+- `type SchoolQuotationStatus` (L14) = `(typeof SCHOOL_QUOTATION_STATUSES)[number]`
+- `type SchoolPaymentMethod` (L23) = `(typeof SCHOOL_PAYMENT_METHODS)[number]`
+- `type SchoolStatusAction` (L31) = `(typeof SCHOOL_STATUS_ACTIONS)[number]`
+- `type SchoolPaymentKind` (L33) = `'ANTICIPO' \| 'ABONO' \| 'DEVOLUCION' \| 'ANULACION'`
+- `type SchoolLineSource` (L35) = `'PLANTILLA' \| 'INVENTARIO' \| 'MANUAL'`
+- `type SchoolSupplyStatus` (L45) = `(typeof SCHOOL_SUPPLY_STATUSES)[number]`
+- `type SupplyProductStatus` (L46) = `'PENDIENTE' \| 'PARCIAL' \| 'ABASTECIDO'`
+- `type SupplyAllocationMode` (L47) = `'FIFO_AUTO' \| 'MANUAL'`
+- `type SchoolAccountStatus` (L50) = `'PENDIENTE' \| 'PARCIAL' \| 'PAGADA' \| 'CERRADA'` — Red / yellow / green account status shown next to every quotation.
 
 **Constantes exportadas:**
 
 - `SCHOOL_LIST_REPOSITORY` (L1) = `Symbol('SCHOOL_LIST_REPOSITORY')`
-- `SCHOOL_QUOTATION_STATUSES` (L3) = `[ 'BORRADOR', 'COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION', 'ENTREGADA', 'CANCE`
-- `SCHOOL_PAYMENT_METHODS` (L15) = `[ 'EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO', 'TARJETA', 'OTRO', ] as const`
-- `SCHOOL_STATUS_ACTIONS` (L24) = `[ 'CONFIRMAR', 'PREPARAR', 'ENTREGAR', ] as const`
+- `SCHOOL_QUOTATION_STATUSES` (L3) = `[ 'BORRADOR', 'COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION', 'TERMINADA', 'ENTRE`
+- `SCHOOL_PAYMENT_METHODS` (L16) = `[ 'EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO', 'TARJETA', 'OTRO', ] as const`
+- `SCHOOL_STATUS_ACTIONS` (L25) = `[ 'CONFIRMAR', 'PREPARAR', 'TERMINAR', 'ENTREGAR', ] as const`
+- `SCHOOL_SUPPLY_STATUSES` (L38): Supply state of a list (independent of its commercial status). = `[ 'PENDIENTE', 'PARCIAL', 'DISPONIBLE', 'DESPACHADA', 'NO_APLICA', ] as const`
 <a id="f-comercial-jhoel-api-src-modules-school-lists-domain-school-list-labels-ts"></a>
 
 ### school-list.labels.ts
 
-- **Ruta:** [school-list.labels.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/school-list.labels.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/school-list.labels.ts`, 34 líneas)
+- **Ruta:** [school-list.labels.ts](../../../../comercial-jhoel-api/src/modules/school-lists/domain/school-list.labels.ts) (`comercial-jhoel-api/src/modules/school-lists/domain/school-list.labels.ts`, 35 líneas)
 - **Tipo:** Código TypeScript · **Capa:** Dominio · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Código TypeScript: declara `SCHOOL_STATUS_LABEL`, `SCHOOL_PAYMENT_METHOD_LABEL`, `SCHOOL_PAYMENT_KIND_LABEL` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts)
@@ -670,8 +896,8 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 **Constantes exportadas:**
 
 - `SCHOOL_STATUS_LABEL` (L8): Spanish labels printed on documents (the app keeps its own copy for the UI). = `{ BORRADOR: 'Borrador', COTIZADA: 'Cotizada', ANTICIPO_RECIBIDO: 'Anticipo recibido', PAGO_PARCIAL: 'Pago parc`
-- `SCHOOL_PAYMENT_METHOD_LABEL` (L19) = `{ EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', DEPOSITO: 'Depósito bancario', TARJETA: 'Tarjeta', OTR`
-- `SCHOOL_PAYMENT_KIND_LABEL` (L28) = `{ ANTICIPO: 'Anticipo', ABONO: 'Abono', DEVOLUCION: 'Devolución', ANULACION: 'Anulación', }`
+- `SCHOOL_PAYMENT_METHOD_LABEL` (L20) = `{ EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', DEPOSITO: 'Depósito bancario', TARJETA: 'Tarjeta', OTR`
+- `SCHOOL_PAYMENT_KIND_LABEL` (L29) = `{ ANTICIPO: 'Anticipo', ABONO: 'Abono', DEVOLUCION: 'Devolución', ANULACION: 'Anulación', }`
 <a id="f-comercial-jhoel-api-src-modules-school-lists-infrastructure-pdf-school-list-pdf-builder-ts"></a>
 
 ### school-list-pdf.builder.ts
@@ -763,7 +989,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### typeorm-school-list.repository.ts
 
-- **Ruta:** [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts) (`comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts`, 604 líneas)
+- **Ruta:** [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts) (`comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts`, 1010 líneas)
 - **Tipo:** Repositorio (implementación) · **Capa:** Infraestructura · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Repositorio (implementación): declara `TypeOrmSchoolListRepository`, `text`, `textOrNull`, `num`, `numOrNull` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [school-list.errors.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-errors-school-list-errors-ts)
@@ -772,9 +998,9 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 **Interfaces, tipos y enums:**
 
-- `type SqlRow` (L30) = `Record<string, unknown>`
+- `type SqlRow` (L41) = `Record<string, unknown>`
 
-#### Clase `TypeOrmSchoolListRepository` (L183–603)
+#### Clase `TypeOrmSchoolListRepository` (L199–1009)
 
 - **Decoradores:** `@Injectable()`
 - **Herencia / contratos:** implements SchoolListRepository
@@ -783,27 +1009,38 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `listTemplates` | método public async | 188–194 | `includeInactive: boolean` | `Promise<TemplateSummaryRow[]>` |
-| `getTemplate` | método public async | 196–226 | `id: string` | `Promise<TemplateRow \| null>` |
-| `saveTemplate` | método public async | 228–238 | `id: string \| null`, `input: TemplateInput`, `userId: string`, `expectedVersion: number \| null` | `Promise<string>` |
-| `setTemplateActive` | método public async | 240–249 | `id: string`, `active: boolean`, `userId: string` | `Promise<string>` |
-| `duplicateTemplate` | método public async | 251–261 | `id: string`, `name: string`, `grade: string \| null`, `userId: string` | `Promise<string>` |
-| `findQuotations` | método public async | 264–317 | `options: FindQuotationsOptions` | `Promise<Paginated<QuotationSummaryRow>>` |
-| `getQuotation` | método public async | 319–407 | `id: string` | `Promise<QuotationDetailRow \| null>` |
-| `createQuotation` | método public async | 409–418 | `input: QuotationInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
-| `updateQuotation` | método public async | 420–430 | `id: string`, `input: QuotationInput`, `userId: string`, `expectedVersion: number` | `Promise<string>` |
-| `setObservations` | método public async | 432–442 | `id: string`, `observations: string \| null`, `userId: string`, `expectedVersion: number` | `Promise<string>` |
-| `changeStatus` | método public async | 444–454 | `id: string`, `action: SchoolStatusAction`, `userId: string`, `expectedVersion: number \| null` | `Promise<string>` |
-| `cancelQuotation` | método public async | 456–474 | `id: string`, `input: CancelInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
-| `registerPayment` | método public async | 476–495 | `quotationId: string`, `input: PaymentInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
-| `voidPayment` | método public async | 497–507 | `paymentId: string`, `reason: string`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
-| `findPayment` | método public async | 509–515 | `paymentId: string` | `Promise<PaymentRow \| null>` |
-| `dashboard` | método public async | 518–581 | `dateFrom: string`, `dateTo: string` | `Promise<DashboardRow>` |
-| `scalar` | método private async | 584–602 | `sql: string`, `params: unknown[]` | `Promise<string>` |
+| `listTemplates` | método public async | 204–210 | `includeInactive: boolean` | `Promise<TemplateSummaryRow[]>` |
+| `getTemplate` | método public async | 212–242 | `id: string` | `Promise<TemplateRow \| null>` |
+| `saveTemplate` | método public async | 244–254 | `id: string \| null`, `input: TemplateInput`, `userId: string`, `expectedVersion: number \| null` | `Promise<string>` |
+| `setTemplateActive` | método public async | 256–265 | `id: string`, `active: boolean`, `userId: string` | `Promise<string>` |
+| `duplicateTemplate` | método public async | 267–277 | `id: string`, `name: string`, `grade: string \| null`, `userId: string` | `Promise<string>` |
+| `findQuotations` | método public async | 280–336 | `options: FindQuotationsOptions` | `Promise<Paginated<QuotationSummaryRow>>` |
+| `getQuotation` | método public async | 338–452 | `id: string` | `Promise<QuotationDetailRow \| null>` |
+| `supplyOf` | método private async | 455–542 | `id: string`, `status: string`, `confirmedAt: string \| null` | `Promise<QuotationSupplyRow>` |
+| `supplyProducts` | método public async | 545–648 | `options: FindSupplyProductsOptions` | `Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }>` |
+| `supplyProductLists` | método public async | 650–672 | `productId: string` | `Promise<SupplyProductListRow[]>` |
+| `supplyPurchases` | método public async | 674–723 | `options: { purchaseId?: string; page: number; limit: number; }` | `Promise<Paginated<SupplyPurchaseRow>>` |
+| `supplyMode` | método public async | 725–730 | — | `Promise<SupplyAllocationMode>` |
+| `setSupplyMode` | método public async | 732–740 | `mode: SupplyAllocationMode`, `userId: string` | `Promise<SupplyAllocationMode>` |
+| `runFifo` | método public async | 742–749 | `productId: string \| null`, `userId: string` | `Promise<number>` |
+| `allocatePurchase` | método public async | 751–758 | `purchaseId: string`, `userId: string` | `Promise<number>` |
+| `allocateManual` | método public async | 760–781 | `input: { quotationId: string; productId: string; quantity: number; purchaseId: string \| null; }`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `dispatch` | método public async | 783–793 | `quotationId: string`, `observations: string \| null`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `bodegaStock` | método public async | 795–813 | `productIds: string[]` | `Promise<{ productId: string; quantity: number }[]>` |
+| `createQuotation` | método public async | 815–824 | `input: QuotationInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `updateQuotation` | método public async | 826–836 | `id: string`, `input: QuotationInput`, `userId: string`, `expectedVersion: number` | `Promise<string>` |
+| `setObservations` | método public async | 838–848 | `id: string`, `observations: string \| null`, `userId: string`, `expectedVersion: number` | `Promise<string>` |
+| `changeStatus` | método public async | 850–860 | `id: string`, `action: SchoolStatusAction`, `userId: string`, `expectedVersion: number \| null` | `Promise<string>` |
+| `cancelQuotation` | método public async | 862–880 | `id: string`, `input: CancelInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `registerPayment` | método public async | 882–901 | `quotationId: string`, `input: PaymentInput`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `voidPayment` | método public async | 903–913 | `paymentId: string`, `reason: string`, `userId: string`, `idempotencyKey: string` | `Promise<string>` |
+| `findPayment` | método public async | 915–921 | `paymentId: string` | `Promise<PaymentRow \| null>` |
+| `dashboard` | método public async | 924–987 | `dateFrom: string`, `dateTo: string` | `Promise<DashboardRow>` |
+| `scalar` | método private async | 990–1008 | `sql: string`, `params: unknown[]` | `Promise<string>` |
 
 ##### `TypeOrmSchoolListRepository.listTemplates`
 
-- **Firma:** `listTemplates(includeInactive: boolean): Promise<TemplateSummaryRow[]>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L188) (L188–194)
+- **Firma:** `listTemplates(includeInactive: boolean): Promise<TemplateSummaryRow[]>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L204) (L204–210)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
@@ -811,7 +1048,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.getTemplate`
 
-- **Firma:** `getTemplate(id: string): Promise<TemplateRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L196) (L196–226)
+- **Firma:** `getTemplate(id: string): Promise<TemplateRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L212) (L212–242)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `toTemplateSummary`, `items.map`, `text`, `num`, `textOrNull`, `numOrNull`
 - **Efectos secundarios:** Tablas en su SQL: `school_list_template_items`, `products`; Ejecuta SQL crudo (`query`)
@@ -819,7 +1056,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.saveTemplate`
 
-- **Firma:** `saveTemplate(id: string \| null, input: TemplateInput, userId: string, expectedVersion: number \| null): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L228) (L228–238)
+- **Firma:** `saveTemplate(id: string \| null, input: TemplateInput, userId: string, expectedVersion: number \| null): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L244) (L244–254)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`, `JSON.stringify`
 - **Efectos secundarios:** Llama funciones SQL: `save_school_list_template`
@@ -827,7 +1064,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.setTemplateActive`
 
-- **Firma:** `setTemplateActive(id: string, active: boolean, userId: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L240) (L240–249)
+- **Firma:** `setTemplateActive(id: string, active: boolean, userId: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L256) (L256–265)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `set_school_list_template_active`
@@ -835,7 +1072,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.duplicateTemplate`
 
-- **Firma:** `duplicateTemplate(id: string, name: string, grade: string \| null, userId: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L251) (L251–261)
+- **Firma:** `duplicateTemplate(id: string, name: string, grade: string \| null, userId: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L267) (L267–277)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `duplicate_school_list_template`
@@ -843,7 +1080,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.findQuotations`
 
-- **Firma:** `findQuotations(options: FindQuotationsOptions): Promise<Paginated<QuotationSummaryRow>>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L264) (L264–317)
+- **Firma:** `findQuotations(options: FindQuotationsOptions): Promise<Paginated<QuotationSummaryRow>>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L280) (L280–336)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `params.push`, `where.push`, `clause.replace`, `add`, `options.phone.replace`, `where.join`, `this.dataSource.query`, `rows.map`, `num`
 - **Efectos secundarios:** Tablas en su SQL: `school_quotations`; Ejecuta SQL crudo (`query`)
@@ -851,15 +1088,103 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.getQuotation`
 
-- **Firma:** `getQuotation(id: string): Promise<QuotationDetailRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L319) (L319–407)
+- **Firma:** `getQuotation(id: string): Promise<QuotationDetailRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L338) (L338–452)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `Promise.all`, `toSummary`, `payments.map`, `Math.round`, `num`, `toPayment`, `textOrNull`, `text`, `items.map`, `history.map`
-- **Efectos secundarios:** Tablas en su SQL: `school_quotation_items`, `school_list_history`, `users`; Ejecuta SQL crudo (`query`)
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `Promise.all`, `this.supplyOf`, `text`, `textOrNull`, `toSummary`, `payments.map`, `Math.round`, `num`, `toPayment`, `items.map`, `history.map`, `inventory.map`
+- **Efectos secundarios:** Tablas en su SQL: `school_quotation_items`, `school_list_history`, `users`, `inventory_movements`, `products`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.supplyOf`
+
+- **Firma:** `supplyOf(id: string, status: string, confirmedAt: string \| null): Promise<QuotationSupplyRow>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L455) (L455–542)
+- **Propósito / descripción:** Supply section of a list: per-product commitment, reservations, deliveries and the dispatch.
+- **Dependencias (llamadas en su cuerpo):** `Promise.all`, `this.dataSource.query`, `lines.map`, `num`, `text`, `Math.max`, `allocations.map`, `textOrNull`
+- **Efectos secundarios:** Llama funciones SQL: `jsonb_agg`; Tablas en su SQL: `school_supply_allocations`, `school_dispatch_items`, `school_dispatches`, `school_quotation_items`, `products`, `users`, `purchases`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** (mismo archivo)
+
+##### `TypeOrmSchoolListRepository.supplyProducts`
+
+- **Firma:** `supplyProducts(options: FindSupplyProductsOptions): Promise<Paginated<SupplyProductRow> & { summary: SupplySummary }>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L545) (L545–648)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `params.push`, `listFilter.push`, `bind`, `productFilter.push`, `this.dataSource.query`, `listFilter.join`, `productFilter.join`, `rows.map`, `num`, `text`, `textOrNull`, `new Map`, `((r.pending_lists as string[] \| null) ?? []).map`, `all.filter`, `all.reduce`, `new Set`, `all.flatMap`, `pendingLists.get`…
+- **Efectos secundarios:** Tablas en su SQL: `school_supply_commitments`, `inventory_stock`, `inventory_locations`, `agg`, `products`, `categories`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.supplyProductLists`
+
+- **Firma:** `supplyProductLists(productId: string): Promise<SupplyProductListRow[]>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L650) (L650–672)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`, `text`, `textOrNull`, `num`
+- **Efectos secundarios:** Tablas en su SQL: `school_supply_commitments`, `school_quotations`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.supplyPurchases`
+
+- **Firma:** `supplyPurchases(options: { purchaseId?: string; page: number; limit: number; }): Promise<Paginated<SupplyPurchaseRow>>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L674) (L674–723)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`, `text`, `textOrNull`, `num`
+- **Efectos secundarios:** Llama funciones SQL: `jsonb_agg`; Tablas en su SQL: `school_supply_allocations`, `purchases`, `inventory_movements`, `products`, `school_quotations`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.supplyMode`
+
+- **Firma:** `supplyMode(): Promise<SupplyAllocationMode>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L725) (L725–730)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `text`
+- **Efectos secundarios:** Tablas en su SQL: `school_supply_settings`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.setSupplyMode`
+
+- **Firma:** `setSupplyMode(mode: SupplyAllocationMode, userId: string): Promise<SupplyAllocationMode>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L732) (L732–740)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.scalar`
+- **Efectos secundarios:** Llama funciones SQL: `set_school_supply_mode`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.runFifo`
+
+- **Firma:** `runFifo(productId: string \| null, userId: string): Promise<number>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L742) (L742–749)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `Number`, `this.scalar`
+- **Efectos secundarios:** Llama funciones SQL: `run_school_supply_fifo`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.allocatePurchase`
+
+- **Firma:** `allocatePurchase(purchaseId: string, userId: string): Promise<number>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L751) (L751–758)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `Number`, `this.scalar`
+- **Efectos secundarios:** Llama funciones SQL: `allocate_school_supply_purchase`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.allocateManual`
+
+- **Firma:** `allocateManual(input: { quotationId: string; productId: string; quantity: number; purchaseId: string \| null; }, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L760) (L760–781)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.scalar`
+- **Efectos secundarios:** Llama funciones SQL: `allocate_school_supply_manual`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.dispatch`
+
+- **Firma:** `dispatch(quotationId: string, observations: string \| null, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L783) (L783–793)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.scalar`
+- **Efectos secundarios:** Llama funciones SQL: `dispatch_school_quotation`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmSchoolListRepository.bodegaStock`
+
+- **Firma:** `bodegaStock(productIds: string[]): Promise<{ productId: string; quantity: number }[]>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L795) (L795–813)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`, `text`, `num`
+- **Efectos secundarios:** Tablas en su SQL: `products`, `inventory_locations`, `inventory_stock`; Ejecuta SQL crudo (`query`)
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
 ##### `TypeOrmSchoolListRepository.createQuotation`
 
-- **Firma:** `createQuotation(input: QuotationInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L409) (L409–418)
+- **Firma:** `createQuotation(input: QuotationInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L815) (L815–824)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`, `JSON.stringify`
 - **Efectos secundarios:** Llama funciones SQL: `create_school_quotation`
@@ -867,7 +1192,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.updateQuotation`
 
-- **Firma:** `updateQuotation(id: string, input: QuotationInput, userId: string, expectedVersion: number): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L420) (L420–430)
+- **Firma:** `updateQuotation(id: string, input: QuotationInput, userId: string, expectedVersion: number): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L826) (L826–836)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`, `JSON.stringify`
 - **Efectos secundarios:** Llama funciones SQL: `update_school_quotation`
@@ -875,7 +1200,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.setObservations`
 
-- **Firma:** `setObservations(id: string, observations: string \| null, userId: string, expectedVersion: number): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L432) (L432–442)
+- **Firma:** `setObservations(id: string, observations: string \| null, userId: string, expectedVersion: number): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L838) (L838–848)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `set_school_quotation_observations`
@@ -883,7 +1208,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.changeStatus`
 
-- **Firma:** `changeStatus(id: string, action: SchoolStatusAction, userId: string, expectedVersion: number \| null): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L444) (L444–454)
+- **Firma:** `changeStatus(id: string, action: SchoolStatusAction, userId: string, expectedVersion: number \| null): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L850) (L850–860)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `change_school_quotation_status`
@@ -891,7 +1216,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.cancelQuotation`
 
-- **Firma:** `cancelQuotation(id: string, input: CancelInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L456) (L456–474)
+- **Firma:** `cancelQuotation(id: string, input: CancelInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L862) (L862–880)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `cancel_school_quotation`
@@ -899,7 +1224,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.registerPayment`
 
-- **Firma:** `registerPayment(quotationId: string, input: PaymentInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L476) (L476–495)
+- **Firma:** `registerPayment(quotationId: string, input: PaymentInput, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L882) (L882–901)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `register_school_quotation_payment`
@@ -907,7 +1232,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.voidPayment`
 
-- **Firma:** `voidPayment(paymentId: string, reason: string, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L497) (L497–507)
+- **Firma:** `voidPayment(paymentId: string, reason: string, userId: string, idempotencyKey: string): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L903) (L903–913)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.scalar`
 - **Efectos secundarios:** Llama funciones SQL: `void_school_quotation_payment`
@@ -915,7 +1240,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.findPayment`
 
-- **Firma:** `findPayment(paymentId: string): Promise<PaymentRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L509) (L509–515)
+- **Firma:** `findPayment(paymentId: string): Promise<PaymentRow \| null>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L915) (L915–921)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `toPayment`, `num`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
@@ -923,7 +1248,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.dashboard`
 
-- **Firma:** `dashboard(dateFrom: string, dateTo: string): Promise<DashboardRow>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L518) (L518–581)
+- **Firma:** `dashboard(dateFrom: string, dateTo: string): Promise<DashboardRow>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L924) (L924–987)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `Promise.all`, `num`, `byGrade.map`, `text`, `byStatus.map`, `income.map`
 - **Efectos secundarios:** Tablas en su SQL: `school_quotations`, `school_quotation_payments`; Ejecuta SQL crudo (`query`)
@@ -931,88 +1256,88 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmSchoolListRepository.scalar`
 
-- **Firma:** `scalar(sql: string, params: unknown[]): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L584) (L584–602)
+- **Firma:** `scalar(sql: string, params: unknown[]): Promise<string>` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L990) (L990–1008)
 - **Propósito / descripción:** Runs a writer function and returns its single `id` column, mapping its RAISE codes.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `text`, `schoolListErrorFromMessage`, `schoolListError`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
 - **Errores que lanza:** `mapped`, `schoolListError('SCHOOL_INVALID_ITEMS')`, `error`
 - **Consumidores:** (mismo archivo)
 
-#### Función `text` (L32–47)
+#### Función `text` (L43–58)
 
 - **Tipo:** función local del archivo
-- **Firma:** `text(value: unknown): string` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L32)
+- **Firma:** `text(value: unknown): string` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L43)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `value.toISOString`, `value.toString`, `JSON.stringify`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `textOrNull` (L49–51)
+#### Función `textOrNull` (L60–62)
 
 - **Tipo:** función local del archivo
-- **Firma:** `textOrNull(value: unknown): string \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L49)
+- **Firma:** `textOrNull(value: unknown): string \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L60)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `text`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `num` (L53–55)
+#### Función `num` (L64–66)
 
 - **Tipo:** función local del archivo
-- **Firma:** `num(value: unknown): number` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L53)
+- **Firma:** `num(value: unknown): number` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L64)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Number`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `numOrNull` (L57–59)
+#### Función `numOrNull` (L68–70)
 
 - **Tipo:** función local del archivo
-- **Firma:** `numOrNull(value: unknown): number \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L57)
+- **Firma:** `numOrNull(value: unknown): number \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L68)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Number`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `dateOrNull` (L62–64)
+#### Función `dateOrNull` (L73–75)
 
 - **Tipo:** función local del archivo
-- **Firma:** `dateOrNull(value: unknown): string \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L62)
+- **Firma:** `dateOrNull(value: unknown): string \| null` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L73)
 - **Propósito / descripción:** `DATE` columns are read as `yyyy-MM-dd` text (`::text` in every query).
 - **Dependencias:** `text`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `accountStatus` (L66–78)
+#### Función `accountStatus` (L77–89)
 
 - **Tipo:** función local del archivo
-- **Firma:** `accountStatus(status: string, paid: number, balance: number): SchoolAccountStatus` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L66)
+- **Firma:** `accountStatus(status: string, paid: number, balance: number): SchoolAccountStatus` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L77)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `toSummary` (L108–134)
+#### Función `toSummary` (L121–150)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toSummary(row: SqlRow): QuotationSummaryRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L108)
+- **Firma:** `toSummary(row: SqlRow): QuotationSummaryRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L121)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `num`, `text`, `Math.round`, `dateOrNull`, `textOrNull`, `accountStatus`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `toPayment` (L136–158)
+#### Función `toPayment` (L152–174)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toPayment(row: SqlRow, runningBalance: number): PaymentRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L136)
+- **Firma:** `toPayment(row: SqlRow, runningBalance: number): PaymentRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L152)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `text`, `num`, `textOrNull`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `toTemplateSummary` (L160–174)
+#### Función `toTemplateSummary` (L176–190)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toTemplateSummary(row: SqlRow): TemplateSummaryRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L160)
+- **Firma:** `toTemplateSummary(row: SqlRow): TemplateSummaryRow` — [typeorm-school-list.repository.ts](../../../../comercial-jhoel-api/src/modules/school-lists/infrastructure/persistence/typeorm-school-list.repository.ts#L176)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `text`, `textOrNull`, `num`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -1022,44 +1347,54 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-lists.controller.ts
 
-- **Ruta:** [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts) (`comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts`, 320 líneas)
+- **Ruta:** [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts) (`comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts`, 446 líneas)
 - **Tipo:** Controlador · **Capa:** Presentación · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Listas Escolares: templates per grade, customer quotations and their account statement.
-- **Depende de (archivos del proyecto):** [jwt-auth.guard.ts](auth.md#f-comercial-jhoel-api-src-modules-auth-infrastructure-guards-jwt-auth-guard-ts), [current-user.decorator.ts](shared.md#f-comercial-jhoel-api-src-shared-decorators-current-user-decorator-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-list.request.dto.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-dtos-school-list-request-dto-ts)
+- **Depende de (archivos del proyecto):** [jwt-auth.guard.ts](auth.md#f-comercial-jhoel-api-src-modules-auth-infrastructure-guards-jwt-auth-guard-ts), [current-user.decorator.ts](shared.md#f-comercial-jhoel-api-src-shared-decorators-current-user-decorator-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-list.request.dto.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-dtos-school-list-request-dto-ts)
 - **Paquetes externos:** `@nestjs/common`, `express`
 - **Consumidores:** [school-lists.module.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts)
 
-#### Clase `SchoolListsController` (L77–319)
+#### Clase `SchoolListsController` (L96–445)
 
 - **Decoradores:** `@UseGuards(JwtAuthGuard)` `@Controller('school-lists')`
 - **Propósito:** Listas Escolares: templates per grade, customer quotations and their account statement. Every use case checks its permission (`SCHOOL_LIST_PERMISSION_ROLES`) and the SQL functions check it again. Static routes are declared before `:id` ones.
-- **Dependencias inyectadas (constructor):** `permissions: GetSchoolListPermissionsUseCase`, `listTemplates: ListSchoolTemplatesUseCase`, `getTemplate: GetSchoolTemplateUseCase`, `saveTemplate: SaveSchoolTemplateUseCase`, `setTemplateActive: SetSchoolTemplateActiveUseCase`, `duplicateTemplate: DuplicateSchoolTemplateUseCase`, `listQuotations: ListSchoolQuotationsUseCase`, `getQuotation: GetSchoolQuotationUseCase`, `createQuotation: CreateSchoolQuotationUseCase`, `updateQuotation: UpdateSchoolQuotationUseCase`, `updateObservations: UpdateSchoolQuotationObservationsUseCase`, `changeStatus: ChangeSchoolQuotationStatusUseCase`, `cancelQuotation: CancelSchoolQuotationUseCase`, `registerPayment: RegisterSchoolPaymentUseCase`, `voidPayment: VoidSchoolPaymentUseCase`, `dashboardUseCase: GetSchoolListDashboardUseCase`, `quotationPdf: GetSchoolQuotationPdfUseCase`, `receiptPdf: GetSchoolReceiptPdfUseCase`
+- **Dependencias inyectadas (constructor):** `permissions: GetSchoolListPermissionsUseCase`, `listTemplates: ListSchoolTemplatesUseCase`, `getTemplate: GetSchoolTemplateUseCase`, `saveTemplate: SaveSchoolTemplateUseCase`, `setTemplateActive: SetSchoolTemplateActiveUseCase`, `duplicateTemplate: DuplicateSchoolTemplateUseCase`, `listQuotations: ListSchoolQuotationsUseCase`, `getQuotation: GetSchoolQuotationUseCase`, `createQuotation: CreateSchoolQuotationUseCase`, `updateQuotation: UpdateSchoolQuotationUseCase`, `updateObservations: UpdateSchoolQuotationObservationsUseCase`, `changeStatus: ChangeSchoolQuotationStatusUseCase`, `cancelQuotation: CancelSchoolQuotationUseCase`, `registerPayment: RegisterSchoolPaymentUseCase`, `voidPayment: VoidSchoolPaymentUseCase`, `dashboardUseCase: GetSchoolListDashboardUseCase`, `quotationPdf: GetSchoolQuotationPdfUseCase`, `receiptPdf: GetSchoolReceiptPdfUseCase`, `bodegaStock: GetSchoolBodegaStockUseCase`, `supplyProducts: ListSupplyProductsUseCase`, `supplyProductLists: ListSupplyProductListsUseCase`, `supplyPurchases: ListSupplyPurchasesUseCase`, `supplySettings: GetSupplySettingsUseCase`, `setSupplySettings: SetSupplySettingsUseCase`, `supplyFifo: RunSupplyFifoUseCase`, `allocatePurchase: AllocateSupplyPurchaseUseCase`, `allocateManual: AllocateSupplyManualUseCase`, `dispatchQuotation: DispatchSchoolQuotationUseCase`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `myPermissions` | método public | 102–105 | `user: RequestUser` | (inferido) |
-| `templates` | método public | 108–117 | `query: TemplatesQueryDto`, `user: RequestUser` | (inferido) |
-| `template` | método public | 119–125 | `id: string`, `user: RequestUser` | (inferido) |
-| `createTemplate` | método public | 127–135 | `dto: SaveTemplateRequestDto`, `user: RequestUser` | (inferido) |
-| `replaceTemplate` | método public | 137–145 | `id: string`, `dto: SaveTemplateRequestDto`, `user: RequestUser` | (inferido) |
-| `templateStatus` | método public | 147–154 | `id: string`, `dto: TemplateStatusRequestDto`, `user: RequestUser` | (inferido) |
-| `duplicate` | método public | 156–169 | `id: string`, `dto: DuplicateTemplateRequestDto`, `user: RequestUser` | (inferido) |
-| `quotations` | método public | 172–183 | `query: QuotationsQueryDto`, `user: RequestUser` | (inferido) |
-| `dashboard` | método public | 185–195 | `query: DashboardQueryDto`, `user: RequestUser` | (inferido) |
-| `create` | método public | 197–205 | `dto: CreateQuotationRequestDto`, `user: RequestUser` | (inferido) |
-| `pdf` | método public async | 207–214 | `id: string`, `user: RequestUser`, `res: Response` | `Promise<void>` |
-| `quotation` | método public | 216–222 | `id: string`, `user: RequestUser` | (inferido) |
-| `update` | método public | 224–232 | `id: string`, `dto: UpdateQuotationRequestDto`, `user: RequestUser` | (inferido) |
-| `observations` | método public | 234–246 | `id: string`, `dto: ObservationsRequestDto`, `user: RequestUser` | (inferido) |
-| `status` | método public | 248–261 | `id: string`, `dto: StatusActionRequestDto`, `user: RequestUser` | (inferido) |
-| `cancel` | método public | 263–277 | `id: string`, `dto: CancelQuotationRequestDto`, `user: RequestUser` | (inferido) |
-| `pay` | método public | 280–294 | `id: string`, `dto: RegisterPaymentRequestDto`, `user: RequestUser` | (inferido) |
-| `void` | método public | 296–309 | `paymentId: string`, `dto: VoidPaymentRequestDto`, `user: RequestUser` | (inferido) |
-| `receipt` | método public async | 311–318 | `paymentId: string`, `user: RequestUser`, `res: Response` | `Promise<void>` |
+| `myPermissions` | método public | 131–134 | `user: RequestUser` | (inferido) |
+| `stock` | método public | 137–140 | `query: StockQueryDto`, `user: RequestUser` | (inferido) |
+| `supplyProductsList` | método public | 144–155 | `query: SupplyProductsQueryDto`, `user: RequestUser` | (inferido) |
+| `supplyProductListsOf` | método public | 158–164 | `productId: string`, `user: RequestUser` | (inferido) |
+| `supplyPurchasesList` | método public | 167–177 | `query: SupplyPurchasesQueryDto`, `user: RequestUser` | (inferido) |
+| `allocatePurchaseUnits` | método public | 179–186 | `purchaseId: string`, `user: RequestUser` | (inferido) |
+| `supplySettingsGet` | método public | 188–191 | `user: RequestUser` | (inferido) |
+| `supplySettingsPut` | método public | 193–199 | `dto: SupplySettingsRequestDto`, `user: RequestUser` | (inferido) |
+| `fifo` | método public | 201–205 | `dto: SupplyFifoRequestDto`, `user: RequestUser` | (inferido) |
+| `allocate` | método public | 207–215 | `dto: ManualAllocationRequestDto`, `user: RequestUser` | (inferido) |
+| `templates` | método public | 218–227 | `query: TemplatesQueryDto`, `user: RequestUser` | (inferido) |
+| `template` | método public | 229–235 | `id: string`, `user: RequestUser` | (inferido) |
+| `createTemplate` | método public | 237–245 | `dto: SaveTemplateRequestDto`, `user: RequestUser` | (inferido) |
+| `replaceTemplate` | método public | 247–255 | `id: string`, `dto: SaveTemplateRequestDto`, `user: RequestUser` | (inferido) |
+| `templateStatus` | método public | 257–264 | `id: string`, `dto: TemplateStatusRequestDto`, `user: RequestUser` | (inferido) |
+| `duplicate` | método public | 266–279 | `id: string`, `dto: DuplicateTemplateRequestDto`, `user: RequestUser` | (inferido) |
+| `quotations` | método public | 282–293 | `query: QuotationsQueryDto`, `user: RequestUser` | (inferido) |
+| `dashboard` | método public | 295–305 | `query: DashboardQueryDto`, `user: RequestUser` | (inferido) |
+| `create` | método public | 307–315 | `dto: CreateQuotationRequestDto`, `user: RequestUser` | (inferido) |
+| `pdf` | método public async | 317–324 | `id: string`, `user: RequestUser`, `res: Response` | `Promise<void>` |
+| `quotation` | método public | 326–332 | `id: string`, `user: RequestUser` | (inferido) |
+| `update` | método public | 334–342 | `id: string`, `dto: UpdateQuotationRequestDto`, `user: RequestUser` | (inferido) |
+| `observations` | método public | 344–356 | `id: string`, `dto: ObservationsRequestDto`, `user: RequestUser` | (inferido) |
+| `status` | método public | 358–371 | `id: string`, `dto: StatusActionRequestDto`, `user: RequestUser` | (inferido) |
+| `dispatch` | método public | 374–387 | `id: string`, `dto: DispatchRequestDto`, `user: RequestUser` | (inferido) |
+| `cancel` | método public | 389–403 | `id: string`, `dto: CancelQuotationRequestDto`, `user: RequestUser` | (inferido) |
+| `pay` | método public | 406–420 | `id: string`, `dto: RegisterPaymentRequestDto`, `user: RequestUser` | (inferido) |
+| `void` | método public | 422–435 | `paymentId: string`, `dto: VoidPaymentRequestDto`, `user: RequestUser` | (inferido) |
+| `receipt` | método public async | 437–444 | `paymentId: string`, `user: RequestUser`, `res: Response` | `Promise<void>` |
 
 ##### `SchoolListsController.myPermissions`
 
-- **Firma:** `myPermissions(user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L102) (L102–105)
+- **Firma:** `myPermissions(user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L131) (L131–134)
 - **Decoradores:** `@Get('permissions')`
 - **Propósito / descripción:** Permissions of the caller's role — the frontend shows only these actions.
 - **Origen de parámetros:** `@CurrentUser() user`
@@ -1067,9 +1402,99 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
+##### `SchoolListsController.stock`
+
+- **Firma:** `stock(query: StockQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L137) (L137–140)
+- **Decoradores:** `@Get('stock')`
+- **Propósito / descripción:** Bodega stock of the given products (`?productIds=a,b`), for the list editor.
+- **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.bodegaStock.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.supplyProductsList`
+
+- **Firma:** `supplyProductsList(query: SupplyProductsQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L144) (L144–155)
+- **Decoradores:** `@Get('supply/products')`
+- **Propósito / descripción:** "Productos pendientes de abastecimiento" with summary cards.
+- **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.supplyProducts.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.supplyProductListsOf`
+
+- **Firma:** `supplyProductListsOf(productId: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L158) (L158–164)
+- **Decoradores:** `@Get('supply/products/:productId/lists')`
+- **Propósito / descripción:** Lists that need a product, in FIFO order.
+- **Origen de parámetros:** `@Param('productId', ParseUUIDPipe) productId`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.supplyProductLists.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.supplyPurchasesList`
+
+- **Firma:** `supplyPurchasesList(query: SupplyPurchasesQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L167) (L167–177)
+- **Decoradores:** `@Get('supply/purchases')`
+- **Propósito / descripción:** Purchases and the lists their units went to (`?purchaseId=` for one purchase).
+- **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.supplyPurchases.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.allocatePurchaseUnits`
+
+- **Firma:** `allocatePurchaseUnits(purchaseId: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L179) (L179–186)
+- **Decoradores:** `@Post('supply/purchases/:purchaseId/allocate')` `@HttpCode(HttpStatus.OK)`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Origen de parámetros:** `@Param('purchaseId', ParseUUIDPipe) purchaseId`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.allocatePurchase.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.supplySettingsGet`
+
+- **Firma:** `supplySettingsGet(user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L188) (L188–191)
+- **Decoradores:** `@Get('supply/settings')`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Origen de parámetros:** `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.supplySettings.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.supplySettingsPut`
+
+- **Firma:** `supplySettingsPut(dto: SupplySettingsRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L193) (L193–199)
+- **Decoradores:** `@Put('supply/settings')`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.setSupplySettings.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.fifo`
+
+- **Firma:** `fifo(dto: SupplyFifoRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L201) (L201–205)
+- **Decoradores:** `@Post('supply/fifo')` `@HttpCode(HttpStatus.OK)`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.supplyFifo.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListsController.allocate`
+
+- **Firma:** `allocate(dto: ManualAllocationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L207) (L207–215)
+- **Decoradores:** `@Post('supply/allocations')` `@HttpCode(HttpStatus.CREATED)`
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.allocateManual.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
 ##### `SchoolListsController.templates`
 
-- **Firma:** `templates(query: TemplatesQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L108) (L108–117)
+- **Firma:** `templates(query: TemplatesQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L218) (L218–227)
 - **Decoradores:** `@Get('templates')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -1079,7 +1504,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.template`
 
-- **Firma:** `template(id: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L119) (L119–125)
+- **Firma:** `template(id: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L229) (L229–235)
 - **Decoradores:** `@Get('templates/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`
@@ -1089,7 +1514,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.createTemplate`
 
-- **Firma:** `createTemplate(dto: SaveTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L127) (L127–135)
+- **Firma:** `createTemplate(dto: SaveTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L237) (L237–245)
 - **Decoradores:** `@Post('templates')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -1099,7 +1524,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.replaceTemplate`
 
-- **Firma:** `replaceTemplate(id: string, dto: SaveTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L137) (L137–145)
+- **Firma:** `replaceTemplate(id: string, dto: SaveTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L247) (L247–255)
 - **Decoradores:** `@Put('templates/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1109,7 +1534,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.templateStatus`
 
-- **Firma:** `templateStatus(id: string, dto: TemplateStatusRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L147) (L147–154)
+- **Firma:** `templateStatus(id: string, dto: TemplateStatusRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L257) (L257–264)
 - **Decoradores:** `@Patch('templates/:id/status')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1119,7 +1544,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.duplicate`
 
-- **Firma:** `duplicate(id: string, dto: DuplicateTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L156) (L156–169)
+- **Firma:** `duplicate(id: string, dto: DuplicateTemplateRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L266) (L266–279)
 - **Decoradores:** `@Post('templates/:id/duplicate')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1129,7 +1554,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.quotations`
 
-- **Firma:** `quotations(query: QuotationsQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L172) (L172–183)
+- **Firma:** `quotations(query: QuotationsQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L282) (L282–293)
 - **Decoradores:** `@Get('quotations')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -1139,7 +1564,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.dashboard`
 
-- **Firma:** `dashboard(query: DashboardQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L185) (L185–195)
+- **Firma:** `dashboard(query: DashboardQueryDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L295) (L295–305)
 - **Decoradores:** `@Get('quotations/dashboard')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -1149,7 +1574,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.create`
 
-- **Firma:** `create(dto: CreateQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L197) (L197–205)
+- **Firma:** `create(dto: CreateQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L307) (L307–315)
 - **Decoradores:** `@Post('quotations')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -1159,7 +1584,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.pdf`
 
-- **Firma:** `pdf(id: string, user: RequestUser, res: Response): Promise<void>` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L207) (L207–214)
+- **Firma:** `pdf(id: string, user: RequestUser, res: Response): Promise<void>` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L317) (L317–324)
 - **Decoradores:** `@Get('quotations/:id/pdf')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`, `@Res() res`
@@ -1169,7 +1594,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.quotation`
 
-- **Firma:** `quotation(id: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L216) (L216–222)
+- **Firma:** `quotation(id: string, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L326) (L326–332)
 - **Decoradores:** `@Get('quotations/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`
@@ -1179,7 +1604,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.update`
 
-- **Firma:** `update(id: string, dto: UpdateQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L224) (L224–232)
+- **Firma:** `update(id: string, dto: UpdateQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L334) (L334–342)
 - **Decoradores:** `@Put('quotations/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1189,7 +1614,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.observations`
 
-- **Firma:** `observations(id: string, dto: ObservationsRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L234) (L234–246)
+- **Firma:** `observations(id: string, dto: ObservationsRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L344) (L344–356)
 - **Decoradores:** `@Patch('quotations/:id/observations')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1199,7 +1624,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.status`
 
-- **Firma:** `status(id: string, dto: StatusActionRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L248) (L248–261)
+- **Firma:** `status(id: string, dto: StatusActionRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L358) (L358–371)
 - **Decoradores:** `@Post('quotations/:id/status')` `@HttpCode(HttpStatus.OK)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1207,9 +1632,19 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
+##### `SchoolListsController.dispatch`
+
+- **Firma:** `dispatch(id: string, dto: DispatchRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L374) (L374–387)
+- **Decoradores:** `@Post('quotations/:id/dispatch')` `@HttpCode(HttpStatus.OK)`
+- **Propósito / descripción:** "Preparar y despachar lista" (= entrega): no second inventory discount.
+- **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.dispatchQuotation.execute`, `actor`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
 ##### `SchoolListsController.cancel`
 
-- **Firma:** `cancel(id: string, dto: CancelQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L263) (L263–277)
+- **Firma:** `cancel(id: string, dto: CancelQuotationRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L389) (L389–403)
 - **Decoradores:** `@Post('quotations/:id/cancel')` `@HttpCode(HttpStatus.OK)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1219,7 +1654,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.pay`
 
-- **Firma:** `pay(id: string, dto: RegisterPaymentRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L280) (L280–294)
+- **Firma:** `pay(id: string, dto: RegisterPaymentRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L406) (L406–420)
 - **Decoradores:** `@Post('quotations/:id/payments')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -1229,7 +1664,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.void`
 
-- **Firma:** `void(paymentId: string, dto: VoidPaymentRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L296) (L296–309)
+- **Firma:** `void(paymentId: string, dto: VoidPaymentRequestDto, user: RequestUser)` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L422) (L422–435)
 - **Decoradores:** `@Post('payments/:paymentId/void')` `@HttpCode(HttpStatus.OK)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('paymentId', ParseUUIDPipe) paymentId`, `@Body() dto`, `@CurrentUser() user`
@@ -1239,7 +1674,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `SchoolListsController.receipt`
 
-- **Firma:** `receipt(paymentId: string, user: RequestUser, res: Response): Promise<void>` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L311) (L311–318)
+- **Firma:** `receipt(paymentId: string, user: RequestUser, res: Response): Promise<void>` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L437) (L437–444)
 - **Decoradores:** `@Get('payments/:paymentId/receipt')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('paymentId', ParseUUIDPipe) paymentId`, `@CurrentUser() user`, `@Res() res`
@@ -1247,18 +1682,18 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
-#### Función `actor` (L57–60)
+#### Función `actor` (L76–79)
 
 - **Tipo:** función local del archivo
-- **Firma:** `actor(user: RequestUser): Actor` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L57)
+- **Firma:** `actor(user: RequestUser): Actor` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L76)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `sendPdf` (L62–69)
+#### Función `sendPdf` (L81–88)
 
 - **Tipo:** función local del archivo
-- **Firma:** `sendPdf(res: Response, file: { filename: string; pdf: Buffer }): void` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L62)
+- **Firma:** `sendPdf(res: Response, file: { filename: string; pdf: Buffer }): void` — [school-lists.controller.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts#L81)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `res.set`, `res.end`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -1268,95 +1703,123 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### school-list.request.dto.ts
 
-- **Ruta:** [school-list.request.dto.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/dtos/school-list.request.dto.ts) (`comercial-jhoel-api/src/modules/school-lists/presentation/dtos/school-list.request.dto.ts`, 187 líneas)
+- **Ruta:** [school-list.request.dto.ts](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/dtos/school-list.request.dto.ts) (`comercial-jhoel-api/src/modules/school-lists/presentation/dtos/school-list.request.dto.ts`, 241 líneas)
 - **Tipo:** DTO de entrada · **Capa:** Presentación · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** DTO de entrada: declara `TemplateItemRequestDto`, `SaveTemplateRequestDto`, `TemplateStatusRequestDto`, `DuplicateTemplateRequestDto`, `TemplatesQueryDto` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts)
 - **Paquetes externos:** `class-transformer`, `class-validator`
 - **Consumidores:** [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 
-#### Clase `TemplateItemRequestDto` (L37–44)
+#### Clase `TemplateItemRequestDto` (L39–46)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `SaveTemplateRequestDto` (L46–60)
+#### Clase `SaveTemplateRequestDto` (L48–62)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `TemplateStatusRequestDto` (L62–64)
+#### Clase `TemplateStatusRequestDto` (L64–66)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `DuplicateTemplateRequestDto` (L66–69)
+#### Clase `DuplicateTemplateRequestDto` (L68–71)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `TemplatesQueryDto` (L71–76)
+#### Clase `TemplatesQueryDto` (L73–78)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `QuotationItemRequestDto` (L79–93)
+#### Clase `QuotationItemRequestDto` (L81–95)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `PaymentRequestDto` (L95–101)
+#### Clase `PaymentRequestDto` (L97–103)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `QuotationBodyDto` (L103–119)
+#### Clase `QuotationBodyDto` (L105–121)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `CreateQuotationRequestDto` (L121–136)
+#### Clase `CreateQuotationRequestDto` (L123–138)
 
 - **Herencia / contratos:** extends QuotationBodyDto
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `UpdateQuotationRequestDto` (L138–140)
+#### Clase `UpdateQuotationRequestDto` (L140–142)
 
 - **Herencia / contratos:** extends QuotationBodyDto
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `ObservationsRequestDto` (L142–145)
+#### Clase `ObservationsRequestDto` (L144–147)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `StatusActionRequestDto` (L147–150)
+#### Clase `StatusActionRequestDto` (L149–152)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `RegisterPaymentRequestDto` (L152–154)
+#### Clase `RegisterPaymentRequestDto` (L154–156)
 
 - **Herencia / contratos:** extends PaymentRequestDto
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `VoidPaymentRequestDto` (L156–159)
+#### Clase `VoidPaymentRequestDto` (L158–161)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `CancelQuotationRequestDto` (L161–169)
+#### Clase `CancelQuotationRequestDto` (L163–171)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `QuotationsQueryDto` (L171–181)
+#### Clase `QuotationsQueryDto` (L173–184)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `DashboardQueryDto` (L183–186)
+#### Clase `SupplyProductsQueryDto` (L186–196)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `SupplyPurchasesQueryDto` (L198–202)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `SupplySettingsRequestDto` (L204–206)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `SupplyFifoRequestDto` (L208–211)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `ManualAllocationRequestDto` (L213–220)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `DispatchRequestDto` (L222–225)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `StockQueryDto` (L227–235)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `DashboardQueryDto` (L237–240)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 <a id="f-comercial-jhoel-api-src-modules-school-lists-school-lists-module-ts"></a>
 
 ### school-lists.module.ts
 
-- **Ruta:** [school-lists.module.ts](../../../../comercial-jhoel-api/src/modules/school-lists/school-lists.module.ts) (`comercial-jhoel-api/src/modules/school-lists/school-lists.module.ts`, 57 líneas)
+- **Ruta:** [school-lists.module.ts](../../../../comercial-jhoel-api/src/modules/school-lists/school-lists.module.ts) (`comercial-jhoel-api/src/modules/school-lists/school-lists.module.ts`, 79 líneas)
 - **Tipo:** Módulo · **Capa:** Arranque / configuración · **Módulo:** Módulo backend `school-lists`
 - **Responsabilidad:** Listas Escolares (migration 1760007900000).
-- **Depende de (archivos del proyecto):** [company-settings.module.ts](company-settings.md#f-comercial-jhoel-api-src-modules-company-settings-company-settings-module-ts), [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
+- **Depende de (archivos del proyecto):** [company-settings.module.ts](company-settings.md#f-comercial-jhoel-api-src-modules-company-settings-company-settings-module-ts), [school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-domain-repositories-school-list-repository-ts), [typeorm-school-list.repository.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-infrastructure-persistence-typeorm-school-list-repository-ts), [school-list.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-list-use-cases-ts), [school-supply.use-cases.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-application-use-cases-school-supply-use-cases-ts), [school-lists.controller.ts](school-lists.md#f-comercial-jhoel-api-src-modules-school-lists-presentation-controllers-school-lists-controller-ts)
 - **Paquetes externos:** `@nestjs/common`
 - **Consumidores:** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts)
 
-#### Clase `SchoolListsModule` (L31–56)
+#### Clase `SchoolListsModule` (L43–78)
 
 - **Decoradores:** `@Module({ imports: [CompanySettingsModule], controllers: [SchoolListsController], providers: [ { provide: SCHOOL_LIST_REPOSITORY, useClass: TypeOrmSchoolListRepo`
 - **Propósito:** Listas Escolares (migration 1760007900000). Independent of Cotizaciones, Ventas and inventory: it never writes products, stock, sales or cash boxes.

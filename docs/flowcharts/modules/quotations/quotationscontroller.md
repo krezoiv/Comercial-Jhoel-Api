@@ -8,59 +8,89 @@ flowchart LR
   n2["QuotationsService<br/><small>app/core/services/quotations.service.ts</small>"]
   n3["CreateQuotationTabComponent<br/><small>app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts</small>"]
   n4["QuotationHistoryTabComponent<br/><small>app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts</small>"]
-  n5["QuotationDetailModalComponent<br/><small>app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts</small>"]
+  n5["QuotationSaleModalComponent<br/><small>app/features/dashboard/quotations/components/quotation-sale-modal/quotation-sale-modal.component.ts</small>"]
+  n6["QuotationDetailModalComponent<br/><small>app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts</small>"]
   end
-  subgraph s6["QuotationsController (api/quotations/presentation/controllers/quotations.controller.ts)"]
-  n7["POST /api/quotations<br/><small>create()</small>"]
-  n8["GET /api/quotations<br/><small>findAll()</small>"]
-  n9["GET /api/quotations/:id/pdf<br/><small>getPdf()</small>"]
-  n10["POST /api/quotations/:id/void<br/><small>voidQuotation() · 'ADMIN', 'SUPER_ADMIN'</small>"]
-  n11["GET /api/quotations/:id<br/><small>findOne()</small>"]
+  subgraph s7["QuotationsController (api/quotations/presentation/controllers/quotations.controller.ts)"]
+  n8["POST /api/quotations<br/><small>create()</small>"]
+  n9["GET /api/quotations<br/><small>findAll()</small>"]
+  n10["GET /api/quotations/:id/pdf<br/><small>getPdf()</small>"]
+  n11["POST /api/quotations/:id/status<br/><small>changeStatus()</small>"]
+  n12["GET /api/quotations/:id/sale-preview<br/><small>salePreview()</small>"]
+  n13["POST /api/quotations/:id/confirm-sale<br/><small>confirmSale()</small>"]
+  n14["POST /api/quotations/:id/void<br/><small>voidQuotation() · 'ADMIN', 'SUPER_ADMIN'</small>"]
+  n15["GET /api/quotations/:id<br/><small>findOne()</small>"]
   end
-  subgraph s12["Aplicación"]
-  n13["CreateQuotationUseCase<br/><small>api/quotations/application/use-cases/create-quotation.use-case.ts</small>"]
-  n14["ListQuotationsUseCase<br/><small>api/quotations/application/use-cases/list-quotations.use-case.ts</small>"]
-  n15["GetQuotationPdfUseCase<br/><small>api/quotations/application/use-cases/get-quotation-pdf.use-case.ts</small>"]
-  n16["VoidQuotationUseCase<br/><small>api/quotations/application/use-cases/void-quotation.use-case.ts</small>"]
-  n17["GetQuotationByIdUseCase<br/><small>api/quotations/application/use-cases/get-quotation-by-id.use-case.ts</small>"]
+  subgraph s16["Aplicación"]
+  n17["CreateQuotationUseCase<br/><small>api/quotations/application/use-cases/create-quotation.use-case.ts</small>"]
+  n18["ListQuotationsUseCase<br/><small>api/quotations/application/use-cases/list-quotations.use-case.ts</small>"]
+  n19["GetQuotationPdfUseCase<br/><small>api/quotations/application/use-cases/get-quotation-pdf.use-case.ts</small>"]
+  n20["ChangeQuotationStatusUseCase<br/><small>api/quotations/application/use-cases/quotation-sale.use-cases.ts</small>"]
+  n21["GetQuotationSalePreviewUseCase<br/><small>api/quotations/application/use-cases/quotation-sale.use-cases.ts</small>"]
+  n22["ConvertQuotationToSaleUseCase<br/><small>api/quotations/application/use-cases/quotation-sale.use-cases.ts</small>"]
+  n23["VoidQuotationUseCase<br/><small>api/quotations/application/use-cases/void-quotation.use-case.ts</small>"]
+  n24["GetQuotationByIdUseCase<br/><small>api/quotations/application/use-cases/get-quotation-by-id.use-case.ts</small>"]
   end
-  subgraph s18["Dominio · Infraestructura · PostgreSQL"]
-  n19["QuotationRepository"]
-  n20["TypeOrmQuotationRepository<br/><small>api/quotations/infrastructure/persistence/typeorm-quotation.repository.ts</small>"]
-  n21[["create_quotation()"]]
-  n22[("quotation_details")]
-  n23[("quotations")]
-  n24["ClientRepository"]
-  n25["TypeOrmClientRepository<br/><small>api/clients/infrastructure/persistence/typeorm-client.repository.ts</small>"]
-  n26["CompanySettingsRepository"]
-  n27["TypeOrmCompanySettingsRepository<br/><small>api/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts</small>"]
+  subgraph s25["Dominio · Infraestructura · PostgreSQL"]
+  n26["QuotationRepository"]
+  n27["TypeOrmQuotationRepository<br/><small>api/quotations/infrastructure/persistence/typeorm-quotation.repository.ts</small>"]
+  n28[["create_quotation()"]]
+  n29[("quotation_details")]
+  n30[("quotations")]
+  n31["ClientRepository"]
+  n32["TypeOrmClientRepository<br/><small>api/clients/infrastructure/persistence/typeorm-client.repository.ts</small>"]
+  n33["CompanySettingsRepository"]
+  n34["TypeOrmCompanySettingsRepository<br/><small>api/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts</small>"]
+  n35[["change_quotation_status()"]]
+  n36[("products")]
+  n37[("inventory_locations")]
+  n38[("inventory_stock")]
+  n39[["convert_quotation_to_sale()"]]
   end
   n3 -->|saveQuotation→createQuotation, saveQuotation→exportQuotationPdf| n2
-  n4 -->|fetch→getQuotations, regeneratePdf→exportQuotationPdf, confirmVoid→voidQuotation| n2
-  n5 -->|ngOnChanges→getQuotationById| n2
-  n2 -->|createQuotation| n7
-  n2 -->|getQuotations| n8
-  n2 -->|exportQuotationPdf| n9
-  n2 -->|voidQuotation| n10
-  n2 -->|getQuotationById| n11
-  n7 --> n13
-  n8 --> n14
-  n9 --> n15
-  n10 --> n16
-  n11 --> n17
-  n13 -->|createQuotation| n19
-  n19 -->|implementa| n20
-  n20 -->|createQuotation| n21
-  n21 -->|escribe| n22
-  n21 -->|escribe| n23
-  n13 -->|findById| n24
-  n24 -->|implementa| n25
-  n14 -->|findAll| n19
-  n15 -->|findById| n19
-  n15 -->|get| n26
+  n4 -->|fetch→getQuotations, regeneratePdf→exportQuotationPdf, runAction→changeStatus …| n2
+  n5 -->|ngOnChanges→getSalePreview, confirm→confirmSale| n2
+  n6 -->|ngOnChanges→getQuotationById| n2
+  n2 -->|createQuotation| n8
+  n2 -->|getQuotations| n9
+  n2 -->|exportQuotationPdf| n10
+  n2 -->|changeStatus| n11
+  n2 -->|getSalePreview| n12
+  n2 -->|confirmSale| n13
+  n2 -->|voidQuotation| n14
+  n2 -->|getQuotationById| n15
+  n8 --> n17
+  n9 --> n18
+  n10 --> n19
+  n11 --> n20
+  n12 --> n21
+  n13 --> n22
+  n14 --> n23
+  n15 --> n24
+  n17 -->|createQuotation| n26
   n26 -->|implementa| n27
-  n16 -->|findById, voidQuotation| n19
-  n17 -->|findById| n19
+  n27 -->|createQuotation| n28
+  n28 -->|escribe| n29
+  n28 -->|escribe| n30
+  n17 -->|findById| n31
+  n31 -->|implementa| n32
+  n18 -->|findAll| n26
+  n19 -->|findById| n26
+  n19 -->|get| n33
+  n33 -->|implementa| n34
+  n20 -->|changeStatus| n26
+  n27 -->|changeStatus| n35
+  n35 -->|escribe| n30
+  n21 -->|salePreview| n26
+  n27 -->|salePreview| n29
+  n27 -->|salePreview| n36
+  n27 -->|salePreview| n37
+  n27 -->|salePreview| n38
+  n22 -->|convertToSale, findById| n26
+  n27 -->|convertToSale| n39
+  n39 -->|escribe| n30
+  n23 -->|findById, changeStatus| n26
+  n24 -->|findById| n26
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -71,22 +101,22 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n2,n3,n4,n5 fe
-  class n7,n8,n9,n10,n11 api
-  class n13,n14,n15,n16,n17 app
-  class n19,n24,n26 dom
-  class n20,n25,n27 infra
-  class n21,n22,n23 db
+  class n2,n3,n4,n5,n6 fe
+  class n8,n9,n10,n11,n12,n13,n14,n15 api
+  class n17,n18,n19,n20,n21,n22,n23,n24 app
+  class n26,n31,n33 dom
+  class n27,n32,n34 infra
+  class n28,n29,n30,n35,n36,n37,n38,n39 db
 ```
 
 ## Explicación
 
-1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a QuotationsController, sus 5 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a QuotationsController, sus 8 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
 2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
-3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts`](../../../../comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts), [`comercial-jhoel-app/src/app/core/services/quotations.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/list-quotations.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/list-quotations.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-pdf.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-pdf.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts), [`comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts`](../../../../comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts), [`comercial-jhoel-api/src/modules/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts`](../../../../comercial-jhoel-api/src/modules/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts`](../../../../comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts), [`comercial-jhoel-app/src/app/core/services/quotations.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/create-quotation-tab/create-quotation-tab.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-sale-modal/quotation-sale-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-sale-modal/quotation-sale-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-detail-modal/quotation-detail-modal.component.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/create-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/list-quotations.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/list-quotations.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-pdf.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-pdf.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/quotation-sale.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/quotation-sale.use-cases.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-by-id.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/get-quotation-by-id.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts), [`comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts`](../../../../comercial-jhoel-api/src/modules/clients/infrastructure/persistence/typeorm-client.repository.ts), [`comercial-jhoel-api/src/modules/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts`](../../../../comercial-jhoel-api/src/modules/company-settings/infrastructure/persistence/typeorm-company-settings.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
 5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/quotations/
-6. **¿Dónde se almacenan los datos?** quotation_details, quotations
+6. **¿Dónde se almacenan los datos?** quotation_details, quotations, products, inventory_locations, inventory_stock
 7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
 8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
 

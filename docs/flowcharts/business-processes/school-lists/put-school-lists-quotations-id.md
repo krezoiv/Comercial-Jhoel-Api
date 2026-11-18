@@ -23,7 +23,7 @@ flowchart TD
   subgraph s15["Aplicación — caso de uso"]
   n16["UpdateSchoolQuotationUseCase.execute<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
   end
-  n17(["Fin: la interfaz se actualiza<br/>this.touched.set<br/>this.saving.set<br/>this.error.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n17(["Fin: la interfaz se actualiza<br/>this.touched.set<br/>this.saving.set<br/>this.error.set"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5

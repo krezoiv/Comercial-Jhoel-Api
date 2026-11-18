@@ -22,12 +22,19 @@ import { ListQuotationsUseCase } from '../../application/use-cases/list-quotatio
 import { GetQuotationByIdUseCase } from '../../application/use-cases/get-quotation-by-id.use-case';
 import { VoidQuotationUseCase } from '../../application/use-cases/void-quotation.use-case';
 import { GetQuotationPdfUseCase } from '../../application/use-cases/get-quotation-pdf.use-case';
+import {
+  ChangeQuotationStatusUseCase,
+  ConvertQuotationToSaleUseCase,
+  GetQuotationSalePreviewUseCase,
+} from '../../application/use-cases/quotation-sale.use-cases';
+import { QuotationStatusRequestDto } from '../dtos/quotation-status.request.dto';
 import { CreateQuotationRequestDto } from '../dtos/create-quotation.request.dto';
 import { ListQuotationsQueryDto } from '../dtos/list-quotations.query.dto';
 import { VoidQuotationRequestDto } from '../dtos/void-quotation.request.dto';
 import {
   PaginatedQuotationsResponseDto,
   QuotationResponseDto,
+  QuotationSalePreviewResponseDto,
 } from '../dtos/quotation.response.dto';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -51,6 +58,9 @@ export class QuotationsController {
     private readonly getQuotationByIdUseCase: GetQuotationByIdUseCase,
     private readonly voidQuotationUseCase: VoidQuotationUseCase,
     private readonly getQuotationPdfUseCase: GetQuotationPdfUseCase,
+    private readonly changeStatusUseCase: ChangeQuotationStatusUseCase,
+    private readonly salePreviewUseCase: GetQuotationSalePreviewUseCase,
+    private readonly convertToSaleUseCase: ConvertQuotationToSaleUseCase,
   ) {}
 
   @Post()
@@ -61,7 +71,12 @@ export class QuotationsController {
   ): Promise<QuotationResponseDto> {
     return this.createQuotationUseCase.execute({
       userId,
-      clientId: dto.clientId,
+      clientId: dto.clientId ?? null,
+      customerName: dto.customerName,
+      customerPhone: dto.customerPhone,
+      studentName: dto.studentName,
+      grade: dto.grade,
+      asDraft: dto.asDraft,
       expirationDate: dto.expirationDate,
       observations: dto.observations,
       commercialTerms: dto.commercialTerms,
@@ -103,6 +118,53 @@ export class QuotationsController {
       'Content-Length': String(buffer.length),
     });
     res.send(buffer);
+  }
+
+  /** Confirmar borrador / Aceptar / Rechazar (commercial status only; never inventory). */
+  @Post(':id/status')
+  @HttpCode(HttpStatus.OK)
+  changeStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: QuotationStatusRequestDto,
+    @CurrentUser() user: RequestUser,
+  ): Promise<QuotationResponseDto> {
+    return this.changeStatusUseCase.execute(
+      id,
+      dto.action,
+      dto.reason ?? null,
+      {
+        currentUserId: user.userId,
+        isAdmin: ADMIN_ROLES.includes(user.role),
+      },
+    );
+  }
+
+  /** Summary shown before "Confirmar venta" (quoted lines + current Vitrina stock). */
+  @Get(':id/sale-preview')
+  salePreview(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<QuotationSalePreviewResponseDto> {
+    return this.salePreviewUseCase.execute(id, {
+      currentUserId: user.userId,
+      isAdmin: ADMIN_ROLES.includes(user.role),
+    });
+  }
+
+  /**
+   * "Confirmar venta": one sale through Ventas with the quoted prices; a retry
+   * returns the same sale (no second stock discount).
+   */
+  @Post(':id/confirm-sale')
+  @HttpCode(HttpStatus.OK)
+  confirmSale(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<{ saleId: string; quotation: QuotationResponseDto }> {
+    return this.convertToSaleUseCase.execute(id, {
+      currentUserId: user.userId,
+      isAdmin: ADMIN_ROLES.includes(user.role),
+    });
   }
 
   /** Anular — never a physical delete/edit, see `VoidQuotationUseCase`. */

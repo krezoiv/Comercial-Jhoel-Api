@@ -8,6 +8,8 @@ import {
   ListQuotationsQuery,
   PaginatedResponse,
   Quotation,
+  QuotationSalePreview,
+  QuotationStatusAction,
   QuotationSummary,
 } from '../models';
 import { environment } from '../../../environments/environment';
@@ -57,6 +59,27 @@ export class QuotationsService {
 
   exportQuotationPdf(id: string): Observable<Blob> {
     return this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  /** Confirmar borrador / Aceptar / Rechazar (reason required to reject). */
+  changeStatus(id: string, action: QuotationStatusAction, reason?: string): Observable<Quotation> {
+    return this.http
+      .post<ApiSuccessResponse<Quotation>>(`${BASE_URL}/${id}/status`, { action, reason })
+      .pipe(map((response) => response.data));
+  }
+
+  /** Lines with the current Vitrina stock, shown before "Confirmar venta". */
+  getSalePreview(id: string): Observable<QuotationSalePreview> {
+    return this.http
+      .get<ApiSuccessResponse<QuotationSalePreview>>(`${BASE_URL}/${id}/sale-preview`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** Creates the sale once through Ventas; a retry returns the same sale. */
+  confirmSale(id: string): Observable<{ saleId: string; quotation: Quotation }> {
+    return this.http
+      .post<ApiSuccessResponse<{ saleId: string; quotation: Quotation }>>(`${BASE_URL}/${id}/confirm-sale`, {})
+      .pipe(map((response) => response.data));
   }
 
   voidQuotation(id: string, reason: string): Observable<Quotation> {

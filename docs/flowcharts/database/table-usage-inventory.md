@@ -6,20 +6,25 @@ Módulo: **Inventario (inventory)** · Fuente editable: [`table-usage-inventory.
 flowchart LR
   n1[("inventory_locations")]
   n2["Inventario<br/><small>api/inventory</small>"]
-  n3[("inventory_movements")]
-  n4["Compras<br/><small>api/purchases</small>"]
-  n5["Ventas<br/><small>api/sales</small>"]
-  n6[("product_presentations")]
-  n7["Tipos de presentación<br/><small>api/presentation-types</small>"]
-  n8["Productos<br/><small>api/products</small>"]
+  n3["Cotizaciones<br/><small>api/quotations</small>"]
+  n4["school-lists<br/><small>api/school-lists</small>"]
+  n5[("inventory_movements")]
+  n6["Compras<br/><small>api/purchases</small>"]
+  n7["Ventas<br/><small>api/sales</small>"]
+  n8[("product_presentations")]
+  n9["Tipos de presentación<br/><small>api/presentation-types</small>"]
+  n10["Productos<br/><small>api/products</small>"]
   n2 -->|consulta · entidad ORM| n1
-  n2 -->|consulta · entidad ORM …| n3
-  n4 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n3
-  n5 -->|escribe vía confirm_open_sale() · escribe vía confirm_sale() …| n3
-  n2 -->|consulta · entidad ORM| n6
-  n7 -->|consulta| n6
-  n8 -->|consulta| n6
-  n4 -->|escribe vía confirm_purchase()| n6
+  n3 -->|consulta| n1
+  n4 -->|consulta| n1
+  n2 -->|consulta · entidad ORM …| n5
+  n6 -->|escribe vía confirm_purchase() · escribe vía void_purchase()| n5
+  n7 -->|escribe vía confirm_open_sale() · escribe vía confirm_sale() …| n5
+  n4 -->|consulta| n5
+  n2 -->|consulta · entidad ORM| n8
+  n9 -->|consulta| n8
+  n10 -->|consulta| n8
+  n6 -->|escribe vía confirm_purchase()| n8
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -30,8 +35,8 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n1,n3,n6 db
-  class n2,n4,n5,n7,n8 app
+  class n1,n5,n8 db
+  class n2,n3,n4,n6,n7,n9,n10 app
 ```
 
 ## Explicación

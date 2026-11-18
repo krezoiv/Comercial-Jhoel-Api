@@ -24,18 +24,28 @@ flowchart TD
   end
   subgraph s17["Aplicación — caso de uso"]
   n18["VoidQuotationUseCase.execute<br/><small>api/quotations/application/use-cases/void-quotation.use-case.ts</small>"]
-  n19{"¿!quotation?<br/><small>L30</small>"}
+  n19{"¿!quotation?<br/><small>L28</small>"}
   n20(["QuotationNotFoundError(input.id)"])
-  n21{"¿quotation.status === 'ANULADA'?<br/><small>L33</small>"}
+  n21{"¿quotation.status === 'CANCELADA'?<br/><small>L31</small>"}
   n22(["QuotationAlreadyVoidedError(input.id)"])
   end
   subgraph s23["Dominio → Infraestructura"]
-  n24["Puerto QuotationRepository.findById / voidQuotation<br/>@Inject(QUOTATION_REPOSITORY)"]
+  n24["Puerto QuotationRepository.findById / changeStatus<br/>@Inject(QUOTATION_REPOSITORY)"]
   n25["TypeOrmQuotationRepository<br/><small>api/quotations/infrastructure/persistence/typeorm-quotation.repository.ts</small>"]
   n26[("findById: TypeORM Repository")]
-  n27[("voidQuotation: TypeORM Repository")]
+  subgraph s27["PostgreSQL — función change_quotation_status"]
+  n28[["SELECT change_quotation_status(…)<br/><small>changeStatus — una transacción</small>"]]
+  n29{"¿NOT FOUND?"}
+  n30(["RAISE QUOTATION_NOT_FOUND<br/>(rollback)"])
+  n31{"¿p_action IN ('RECHAZAR','CANCELAR') AND (p_reason IS NULL OR length(btrim(p_reason)) #lt; 5 OR length(p_reason) #gt; 255)?"}
+  n32(["RAISE QUOTATION_REASON_REQUIRED<br/>(rollback)"])
+  n33{"¿v_q.status = 'VENDIDA'?"}
+  n34(["RAISE QUOTATION_ALREADY_SOLD<br/>(rollback)"])
+  n35["Otros RAISE de change_quotation_status (condición no extraída):<br/>QUOTATION_ALREADY_VOIDED, QUOTATION_EXPIRED, QUOTATION_INVALID_TRANSITION"]
+  n36[("Escribe:<br/>quotations")]
   end
-  n28(["Fin: la interfaz se actualiza<br/>this.notificationService.success<br/>this.voidTarget.set<br/>this.notificationService.error"])
+  end
+  n37(["Fin: la interfaz se actualiza<br/>this.notificationService.success<br/>this.voidTarget.set<br/>this.notificationService.error"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5
@@ -61,9 +71,21 @@ flowchart TD
   n24 -->|implementa| n25
   n25 --> n26
   n26 --> n8
-  n25 --> n27
-  n27 --> n8
-  n8 --> n28
+  n25 -->|changeStatus| n28
+  n28 --> n29
+  n29 -->|sí| n30
+  n30 --> n2
+  n29 -->|no| n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n33
+  n33 -->|sí| n34
+  n34 --> n2
+  n28 -.->|también puede lanzar| n35
+  n35 --> n2
+  n33 -->|no| n36
+  n36 -->|COMMIT| n8
+  n8 --> n37
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -75,15 +97,15 @@ flowchart TD
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
   class n1 start
-  class n2,n3,n11,n13,n15,n20,n22 err
+  class n2,n3,n11,n13,n15,n20,n22,n30,n32,n34,n35 err
   class n5,n6,n7 fe
-  class n8,n28 ok
-  class n10,n12,n14,n19,n21 dec
+  class n8,n37 ok
+  class n10,n12,n14,n19,n21,n29,n31,n33 dec
   class n16 api
   class n18 app
   class n24 dom
   class n25 infra
-  class n26,n27 db
+  class n26,n28,n36 db
 ```
 
 ## Explicación
@@ -92,8 +114,8 @@ flowchart TD
 2. **¿Dónde comienza?** QuotationHistoryTabComponent.confirmVoid (comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts)
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts`](../../../../comercial-jhoel-api/src/modules/quotations/presentation/controllers/quotations.controller.ts), [`comercial-jhoel-app/src/app/core/services/quotations.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/quotations.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/quotations/components/quotation-history-tab/quotation-history-tab.component.ts), [`comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts`](../../../../comercial-jhoel-api/src/modules/quotations/application/use-cases/void-quotation.use-case.ts), [`comercial-jhoel-api/src/modules/quotations/domain/repositories/quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/domain/repositories/quotation.repository.ts), [`comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts`](../../../../comercial-jhoel-api/src/modules/quotations/infrastructure/persistence/typeorm-quotation.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
-5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO VoidQuotationRequestDto | !quotation | quotation.status === 'ANULADA'
-6. **¿Dónde se almacenan los datos?** ver repositorio
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | rol 'ADMIN', 'SUPER_ADMIN' | DTO VoidQuotationRequestDto | !quotation | quotation.status === 'CANCELADA' | SQL change_quotation_status: NOT FOUND | SQL change_quotation_status: p_action IN ('RECHAZAR','CANCELAR') AND (p_reason IS NULL OR length(btrim(p_reason)) < 5 OR length(p_reason) > 255) | SQL change_quotation_status: v_q.status = 'VENDIDA'
+6. **¿Dónde se almacenan los datos?** change_quotation_status(), quotations
 7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
 8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
 

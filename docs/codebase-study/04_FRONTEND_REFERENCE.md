@@ -13,7 +13,7 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `core-guards` | 3 | 0 | 0 | — | [abrir](reference/frontend/core-guards.md) |
 | Frontend `core-interceptors` | 3 | 0 | 0 | — | [abrir](reference/frontend/core-interceptors.md) |
 | Frontend `core-models` | 70 | 0 | 0 | — | [abrir](reference/frontend/core-models.md) |
-| Frontend `core-services` | 98 | 95 | 620 | — | [abrir](reference/frontend/core-services.md) |
+| Frontend `core-services` | 98 | 95 | 633 | — | [abrir](reference/frontend/core-services.md) |
 | Frontend `core-utils` | 12 | 0 | 0 | — | [abrir](reference/frontend/core-utils.md) |
 | Frontend `dashboard` | 1 | 1 | 8 | — | [abrir](reference/frontend/dashboard.md) |
 | Frontend `dashboard-account-types` | 6 | 6 | 17 | — | [abrir](reference/frontend/dashboard-account-types.md) |
@@ -50,9 +50,9 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `dashboard-phones` | 11 | 11 | 39 | — | [abrir](reference/frontend/dashboard-phones.md) |
 | Frontend `dashboard-placeholder-page` | 1 | 1 | 0 | — | [abrir](reference/frontend/dashboard-placeholder-page.md) |
 | Frontend `dashboard-presentation-units` | 3 | 3 | 21 | — | [abrir](reference/frontend/dashboard-presentation-units.md) |
-| Frontend `dashboard-purchases` | 6 | 6 | 46 | — | [abrir](reference/frontend/dashboard-purchases.md) |
+| Frontend `dashboard-purchases` | 6 | 6 | 47 | — | [abrir](reference/frontend/dashboard-purchases.md) |
 | Frontend `dashboard-purchases-admin` | 3 | 3 | 16 | — | [abrir](reference/frontend/dashboard-purchases-admin.md) |
-| Frontend `dashboard-quotations` | 6 | 6 | 36 | — | [abrir](reference/frontend/dashboard-quotations.md) |
+| Frontend `dashboard-quotations` | 8 | 7 | 41 | — | [abrir](reference/frontend/dashboard-quotations.md) |
 | Frontend `dashboard-recharge-cash-box` | 5 | 5 | 21 | — | [abrir](reference/frontend/dashboard-recharge-cash-box.md) |
 | Frontend `dashboard-recharge-days` | 4 | 4 | 26 | — | [abrir](reference/frontend/dashboard-recharge-days.md) |
 | Frontend `dashboard-recharges` | 18 | 18 | 84 | — | [abrir](reference/frontend/dashboard-recharges.md) |
@@ -62,7 +62,7 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `dashboard-sales` | 6 | 6 | 31 | — | [abrir](reference/frontend/dashboard-sales.md) |
 | Frontend `dashboard-sales-admin` | 3 | 3 | 16 | — | [abrir](reference/frontend/dashboard-sales-admin.md) |
 | Frontend `dashboard-sales-register` | 3 | 3 | 20 | — | [abrir](reference/frontend/dashboard-sales-register.md) |
-| Frontend `dashboard-school-lists` | 11 | 10 | 73 | — | [abrir](reference/frontend/dashboard-school-lists.md) |
+| Frontend `dashboard-school-lists` | 13 | 12 | 99 | — | [abrir](reference/frontend/dashboard-school-lists.md) |
 | Frontend `dashboard-sidebar` | 1 | 1 | 10 | — | [abrir](reference/frontend/dashboard-sidebar.md) |
 | Frontend `dashboard-suppliers` | 6 | 6 | 18 | — | [abrir](reference/frontend/dashboard-suppliers.md) |
 | Frontend `dashboard-tickets` | 6 | 6 | 32 | — | [abrir](reference/frontend/dashboard-tickets.md) |

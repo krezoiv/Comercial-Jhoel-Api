@@ -7,8 +7,10 @@ flowchart LR
   n1[("purchase_details")]
   n2["Compras<br/><small>api/purchases</small>"]
   n3[("purchases")]
+  n4["school-lists<br/><small>api/school-lists</small>"]
   n2 -->|consulta · entidad ORM …| n1
   n2 -->|consulta · entidad ORM …| n3
+  n4 -->|consulta| n3
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -20,7 +22,7 @@ flowchart LR
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
   class n1,n3 db
-  class n2 app
+  class n2,n4 app
 ```
 
 ## Explicación

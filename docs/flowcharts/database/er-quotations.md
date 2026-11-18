@@ -42,10 +42,13 @@ erDiagram
   }
   products ||--o{ quotation_details : "product_id"
   quotations ||--o{ quotation_details : "quotation_id"
-  clients ||--o{ quotations : "client_id"
+  clients |o--o{ quotations : "client_id"
   sales |o--o{ quotations : "converted_to_sale_id"
   users ||--o{ quotations : "user_id"
   users |o--o{ quotations : "voided_by"
+  users |o--o{ quotations : "accepted_by"
+  users |o--o{ quotations : "rejected_by"
+  users |o--o{ quotations : "sold_by"
 ```
 
 ## Explicación

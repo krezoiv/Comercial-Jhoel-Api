@@ -1,0 +1,132 @@
+@if (line; as current) {
+  <!-- No (click) on the backdrop: like every dashboard modal it only closes from its buttons. -->
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal swap" role="dialog" aria-modal="true" aria-labelledby="swap-title">
+      <div class="modal__header">
+        <div class="swap__heading">
+          <span class="swap__icon"><app-icon name="package" [size]="20" /></span>
+          <div>
+            <h2 class="swap__title" id="swap-title">Cambiar producto</h2>
+            <p class="swap__subtitle">Selecciona un producto de la categoría correspondiente.</p>
+          </div>
+        </div>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+      </div>
+
+      <!-- Producto actual -->
+      <section class="swap__current" aria-label="Producto actual">
+        <span class="swap__eyebrow">Producto actual</span>
+        <div class="swap__current-row">
+          <strong class="swap__name">{{ current.productName || 'Sin nombre' }}</strong>
+          @if (current.categoryName) {
+            <span class="cat-badge"><app-icon name="tag" [size]="12" /> {{ current.categoryName }}</span>
+          } @else {
+            <span class="cat-badge cat-badge--none">Escrito a mano</span>
+          }
+        </div>
+        <dl class="swap__facts">
+          <div><dt>Cantidad</dt><dd>{{ current.quantity }}</dd></div>
+          <div><dt>Precio</dt><dd>{{ formatCurrency(current.unitPrice) }}</dd></div>
+          @if (current.sku) { <div><dt>SKU</dt><dd>{{ current.sku }}</dd></div> }
+        </dl>
+      </section>
+
+      <!-- Filtros: categoría + búsqueda -->
+      <div class="swap__filters">
+        <div class="field">
+          <label for="swap-category"><app-icon name="tag" [size]="13" /> Categoría</label>
+          <select id="swap-category" [ngModel]="categoryId()" (ngModelChange)="onCategory($event)">
+            <option value="">Todas las categorías</option>
+            @for (c of categories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label for="swap-search"><app-icon name="search" [size]="13" /> Buscar en {{ categoryName() }}</label>
+          <input id="swap-search" type="search" placeholder="Nombre o SKU" autocomplete="off" [ngModel]="search()" (ngModelChange)="onSearch($event)" />
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="swap__results" [class.swap__results--busy]="loading()" aria-live="polite">
+        @if (failed()) {
+          <p class="state state--error" role="alert">No se pudieron cargar los productos.</p>
+        } @else if (!results()) {
+          <p class="state">Cargando productos…</p>
+        } @else {
+          @if (results(); as page) {
+          @if (!page.items.length) {
+            <p class="state">No hay productos activos{{ search().trim() ? ' que coincidan con la búsqueda' : '' }} en {{ categoryName() }}.</p>
+          } @else {
+            <ul class="swap__grid">
+              @for (p of page.items; track p.id) {
+                <li>
+                  <button type="button" class="product" [class.product--on]="selected()?.id === p.id" [class.product--current]="p.id === current.productId" [attr.aria-pressed]="selected()?.id === p.id" [disabled]="p.id === current.productId" (click)="select(p)">
+                    <span class="product__name">{{ p.name }}</span>
+                    <span class="product__meta">{{ p.sku || 'Sin SKU' }} · <span class="cat-badge cat-badge--sm">{{ p.categoryName }}</span></span>
+                    <span class="product__foot">
+                      <strong>{{ formatCurrency(p.publicPrice) }}</strong>
+                      @if (stockOf(p.id) !== null) {
+                        <span class="product__stock" [class.product__stock--low]="stockOf(p.id)! <= 0">Bodega: {{ stockOf(p.id) }}</span>
+                      }
+                    </span>
+                    <span class="product__cta">{{ p.id === current.productId ? 'Producto actual' : selected()?.id === p.id ? 'Seleccionado' : 'Seleccionar' }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+            <app-report-pagination [total]="page.total" [page]="page.page" [limit]="pageSize" (pageChange)="onPage($event)" />
+          }
+          }
+        }
+      </div>
+
+      <!-- Producto seleccionado y resumen del cambio -->
+      @if (selected(); as product) {
+        <section class="swap__chosen" aria-label="Producto seleccionado">
+          <div class="swap__change">
+            <span class="swap__from">{{ current.productName || 'Sin nombre' }}</span>
+            <app-icon name="arrow-right" [size]="16" />
+            <strong class="swap__to">{{ product.name }}</strong>
+          </div>
+          <dl class="swap__facts">
+            <div><dt>SKU</dt><dd>{{ product.sku || '—' }}</dd></div>
+            <div><dt>Categoría</dt><dd>{{ product.categoryName }}</dd></div>
+            <div><dt>Precio de venta</dt><dd>{{ formatCurrency(product.publicPrice) }}</dd></div>
+            <div><dt>Existencia (Bodega)</dt><dd>{{ stockOf(product.id) ?? '—' }}</dd></div>
+          </dl>
+          <div class="modal__grid">
+            <div class="field">
+              <label for="swap-qty">Cantidad</label>
+              <input id="swap-qty" type="number" min="1" [max]="maxQuantity" step="1" [ngModel]="quantity()" (ngModelChange)="setQuantity($event)" />
+              @if (quantityError()) { <small class="swap__error">{{ quantityError() }}</small> }
+            </div>
+            <div class="field">
+              <label for="swap-price">Precio unitario</label>
+              <input id="swap-price" type="number" min="0" step="0.01" [readonly]="!canOverride" [title]="canOverride ? '' : 'Su rol usa el precio de venta del inventario'" [ngModel]="canOverride ? price() : product.publicPrice" (ngModelChange)="setPrice($event)" />
+              @if (canOverride && priceError()) { <small class="swap__error">{{ priceError() }}</small> }
+            </div>
+          </div>
+          @if (duplicate(); as dup) {
+            <p class="swap__notice" role="status">
+              <app-icon name="alert-circle" [size]="16" />
+              <span>
+                <strong>{{ product.name }}</strong> ya está en la lista ({{ dup.quantity }} unidad(es)). Para no duplicarlo, al confirmar se
+                sumarán {{ quantity() }} unidad(es) a esa línea —con su precio actual— y se quitará la línea de {{ current.productName || 'este producto' }}.
+              </span>
+            </p>
+          }
+          <p class="muted">Cambiar el producto no mueve inventario: Bodega se ajusta solo al guardar la cotización.</p>
+        </section>
+      }
+
+      <div class="modal__actions swap__actions">
+        <button type="button" class="link" (click)="manual.emit()">Usar un producto escrito a mano</button>
+        <span class="swap__spacer"></span>
+        <app-button variant="ghost" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canConfirm()" (click)="confirm()">
+          <app-icon name="arrow-left-right" [size]="16" /> {{ duplicate() ? 'Consolidar cantidades' : 'Confirmar cambio' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

@@ -59,7 +59,7 @@
       }
 
       @if (lines().length || template() || isEdit()) {
-        <div class="table-wrap">
+        <div class="table-wrap lines-wrap">
           <table class="table lines">
             <thead>
               <tr>
@@ -68,46 +68,53 @@
                 <th class="num">Precio unitario</th>
                 <th class="num">Descuento</th>
                 <th class="num">Subtotal</th>
-                <th></th>
+                <th class="lines__actions-head" aria-label="Acciones"></th>
               </tr>
             </thead>
             <tbody>
               @for (line of lines(); track line.key) {
                 <tr [class.lines__bad]="touched() && lineError(line)">
-                  <td class="lines__product">
+                  <td class="lines__product" data-label="Producto">
                     <div class="lines__name">
                       <input type="text" maxlength="150" placeholder="Nombre del producto" [attr.aria-label]="'Producto ' + ($index + 1)" [ngModel]="line.productName" (ngModelChange)="update(line.key, { productName: $event })" />
-                      <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ sourceLabel[line.source] }}</app-badge>
                     </div>
-                    <input class="lines__note" type="text" maxlength="255" placeholder="Observación del producto (opcional)" [attr.aria-label]="'Observación ' + ($index + 1)" [ngModel]="line.observations" (ngModelChange)="update(line.key, { observations: $event })" />
-                    @if (replacingKey() === line.key) {
-                      <div class="lines__replace">
-                        <app-quotation-product-search (productSelected)="replaceWith(line.key, $event)" />
-                        <button type="button" class="link" (click)="makeManual(line.key)">Usar un producto escrito a mano</button>
-                        <button type="button" class="link" (click)="replacingKey.set(null)">Cancelar</button>
-                      </div>
+                    <div class="lines__meta">
+                      <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ sourceLabel[line.source] }}</app-badge>
+                      @if (line.categoryName) {
+                        <span class="cat-badge" [title]="'Categoría: ' + line.categoryName"><app-icon name="tag" [size]="12" /> {{ line.categoryName }}</span>
+                      } @else {
+                        <span class="cat-badge cat-badge--none">Sin categoría</span>
+                      }
+                      <span class="lines__sku">{{ line.sku ? 'SKU ' + line.sku : line.productId ? 'Sin SKU' : 'Producto escrito a mano' }}</span>
+                    </div>
+                    @if (line.observations || openNotes().has(line.key)) {
+                      <input class="lines__note" type="text" maxlength="255" placeholder="Observación del producto (opcional)" [attr.aria-label]="'Observación ' + ($index + 1)" [ngModel]="line.observations" (ngModelChange)="update(line.key, { observations: $event })" />
                     }
                     @if (touched() && lineError(line)) {
                       <span class="lines__error">{{ lineError(line) }}</span>
                     }
                   </td>
-                  <td class="num">
+                  <td class="num" data-label="Cantidad">
                     <div class="qty">
-                      <button type="button" aria-label="Restar uno" (click)="step(line, -1)"><app-icon name="minus" [size]="14" /></button>
+                      <button type="button" title="Restar uno" aria-label="Restar uno" (click)="step(line, -1)"><app-icon name="minus" [size]="14" /></button>
                       <input type="number" min="1" max="9999" step="1" [attr.aria-label]="'Cantidad ' + ($index + 1)" [ngModel]="line.quantity" (ngModelChange)="setNumber(line.key, 'quantity', $event)" />
-                      <button type="button" aria-label="Sumar uno" (click)="step(line, 1)"><app-icon name="plus" [size]="14" /></button>
+                      <button type="button" title="Sumar uno" aria-label="Sumar uno" (click)="step(line, 1)"><app-icon name="plus" [size]="14" /></button>
                     </div>
+                    @if (line.productId && available(line.productId) !== null) {
+                      <small class="stock" [class.stock--short]="movesStock() && isShort(line.productId)">Bodega: {{ available(line.productId) }}</small>
+                    }
                   </td>
-                  <td class="num">
-                    <input class="money" type="number" min="0" step="0.01" [readonly]="!priceEditable(line)" [title]="priceEditable(line) ? '' : 'Su rol no puede cambiar este precio'" [attr.aria-label]="'Precio ' + ($index + 1)" [ngModel]="line.unitPrice" (ngModelChange)="setNumber(line.key, 'unitPrice', $event)" />
+                  <td class="num" data-label="Precio">
+                    <input class="money" type="number" min="0" step="0.01" [readonly]="!priceEditable(line)" [title]="priceEditable(line) ? 'Modificar precio' : 'Su rol no puede cambiar este precio'" [attr.aria-label]="'Precio ' + ($index + 1)" [ngModel]="line.unitPrice" (ngModelChange)="setNumber(line.key, 'unitPrice', $event)" />
                   </td>
-                  <td class="num">
+                  <td class="num" data-label="Descuento">
                     <input class="money" type="number" min="0" step="0.01" [readonly]="!canOverride()" [attr.aria-label]="'Descuento ' + ($index + 1)" [ngModel]="line.discount" (ngModelChange)="setNumber(line.key, 'discount', $event)" />
                   </td>
-                  <td class="num"><strong>{{ formatCurrency(lineSubtotal(line)) }}</strong></td>
-                  <td>
+                  <td class="num" data-label="Subtotal"><strong>{{ formatCurrency(lineSubtotal(line)) }}</strong></td>
+                  <td class="lines__actions">
                     <div class="row-actions">
-                      <button type="button" class="icon-btn" title="Cambiar producto" aria-label="Cambiar producto" (click)="replacingKey.set(replacingKey() === line.key ? null : line.key)"><app-icon name="refresh-cw" [size]="15" /></button>
+                      <button type="button" class="icon-btn icon-btn--brand" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="replacingKey.set(line.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                      <button type="button" class="icon-btn" title="Agregar observación" aria-label="Agregar observación" [disabled]="!!line.observations" (click)="toggleNote(line.key)"><app-icon name="message-square" [size]="15" /></button>
                       <button type="button" class="icon-btn icon-btn--danger" title="Eliminar producto" aria-label="Eliminar producto" (click)="remove(line.key)"><app-icon name="trash-2" [size]="15" /></button>
                     </div>
                   </td>
@@ -189,6 +196,12 @@
       <div><dt>{{ isEdit() ? 'Pagado' : 'Anticipo' }}</dt><dd class="money-in">{{ formatCurrency(paid()) }}</dd></div>
       <div class="summary__balance"><dt>Saldo pendiente</dt><dd>{{ formatCurrency(balance()) }}</dd></div>
     </dl>
+    @if (movesStock() && shortProducts().length) {
+      <p class="summary__info">
+        <app-icon name="alert-circle" [size]="14" />
+        Sin existencias suficientes: {{ shortProducts().join(', ') }}. Se puede confirmar; quedarán pendientes de abastecimiento.
+      </p>
+    }
     @if (touched() && problems().length) {
       <ul class="summary__problems" role="alert">
         @for (p of problems(); track p) { <li>{{ p }}</li> }
@@ -203,6 +216,21 @@
     @if (isEdit()) {
       <app-button variant="ghost" fullWidth [disabled]="saving()" (click)="cancelled.emit()">Cancelar</app-button>
     }
-    <p class="muted">La cotización no descuenta inventario ni registra una venta.</p>
+    <p class="muted">
+      @if (movesStock()) {
+        Al guardar se descuentan de Bodega {{ inventoryUnits() }} unidad(es) de los productos del inventario. Anular la lista las devuelve.
+      } @else {
+        Un borrador no descuenta inventario hasta que se confirme.
+      }
+    </p>
   </aside>
 </div>
+
+<app-school-product-swap-modal
+  [line]="replacing()"
+  [lines]="lines()"
+  [canOverride]="canOverride()"
+  (swapped)="onSwapped(replacingKey()!, $event)"
+  (manual)="makeManual(replacingKey()!)"
+  (closed)="replacingKey.set(null)"
+/>

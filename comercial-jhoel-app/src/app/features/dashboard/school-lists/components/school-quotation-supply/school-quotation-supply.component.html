@@ -1,0 +1,122 @@
+@if (supply(); as s) {
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title"><app-icon name="package" [size]="18" /> Estado de abastecimiento</h2>
+      <div class="head">
+        <app-badge [tone]="supplyTone[s.status]">{{ supplyLabel[s.status] }}</app-badge>
+        @if (!s.dispatch && service.can('school_lists.quotations.edit')) {
+          <app-button variant="primary" size="sm" [disabled]="!canDispatch()" [attr.title]="blocker()" (click)="open()">
+            <app-icon name="truck" [size]="15" /> Preparar y despachar lista
+          </app-button>
+        }
+      </div>
+    </div>
+    @if (blocker() && !s.dispatch) {
+      <p class="panel__hint">{{ blocker() }}</p>
+    }
+
+    @if (s.lines.length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Producto</th><th class="num">Solicitado</th><th class="num">Abastecido (reservado)</th><th class="num">Pendiente</th><th class="num">Entregado</th></tr></thead>
+          <tbody>
+            @for (l of s.lines; track l.productId) {
+              <tr>
+                <td>{{ l.productName }}</td>
+                <td class="num">{{ l.requested }}</td>
+                <td class="num">{{ l.allocated }}</td>
+                <td class="num" [class.money-out]="l.pending > 0"><strong>{{ l.pending }}</strong></td>
+                <td class="num">{{ l.delivered }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td>Total</td><td class="num">{{ totals().requested }}</td><td class="num">{{ totals().allocated }}</td><td class="num">{{ totals().pending }}</td><td class="num">{{ totals().delivered }}</td></tr></tfoot>
+        </table>
+      </div>
+    } @else {
+      <p class="state">La lista no tiene productos del inventario.</p>
+    }
+    @if (s.uncontrolledLines > 0) {
+      <p class="panel__hint">{{ s.uncontrolledLines }} producto(s) escrito(s) a mano: sin control de inventario, no bloquean el despacho.</p>
+    }
+    <p class="panel__hint">
+      Las cantidades se descontaron de Bodega al confirmar la lista{{ s.confirmedAt ? ' (' + formatDateTime(s.confirmedAt) + ')' : '' }};
+      reservar o despachar no vuelve a descontarlas.
+    </p>
+
+    @if (s.allocations.length) {
+      <h3 class="sub">Reservas para esta lista</h3>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Fecha</th><th>Producto</th><th class="num">Cantidad</th><th>Origen</th><th>Asignación</th><th>Estado</th><th>Usuario</th></tr></thead>
+          <tbody>
+            @for (a of s.allocations; track a.id) {
+              <tr [class.released]="a.status === 'LIBERADA'">
+                <td>{{ formatDateTime(a.createdAt) }}</td>
+                <td>{{ a.productName }}</td>
+                <td class="num">{{ a.quantity }}</td>
+                <td>{{ sourceLabel[a.sourceType] }}{{ a.purchaseId ? ' · ' + (a.purchaseInvoice || 'compra ' + formatDateTime(a.purchaseDate)) : '' }}</td>
+                <td>{{ modeLabel[a.mode] }}</td>
+                <td>{{ allocationStatus[a.status] }}@if (a.releaseReason) { <span class="muted"> — {{ a.releaseReason }}</span> }</td>
+                <td>{{ a.username }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (s.dispatch; as d) {
+      <div class="dispatched">
+        <app-icon name="truck" [size]="18" />
+        <div>
+          <strong>Despachada el {{ formatDateTime(d.dispatchedAt) }} por {{ d.username }}</strong>
+          <p class="muted">{{ d.items.length }} producto(s) entregados{{ d.observations ? ' · ' + d.observations : '' }}. Sin movimiento de inventario adicional.</p>
+        </div>
+      </div>
+    }
+  </section>
+
+  @if (dialog()) {
+    <div class="modal-backdrop" role="presentation">
+      <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="dispatch-title">
+        <div class="modal__header">
+          <h2 class="modal__title" id="dispatch-title"><app-icon name="truck" [size]="20" /> Preparar y despachar {{ quotation.quotationNumber }}</h2>
+          <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="saving()" (click)="dialog.set(false)"><app-icon name="close" [size]="18" /></button>
+        </div>
+        <p class="modal__hint">{{ quotation.customerName }} · {{ quotation.grade }} — revise los productos antes de entregarlos.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Producto</th><th class="num">Solicitado</th><th class="num">Abastecido</th><th class="num">Pendiente</th><th class="num">A entregar</th></tr></thead>
+            <tbody>
+              @for (item of quotation.items; track item.id) {
+                <tr>
+                  <td>{{ item.productName }}@if (!item.productId) { <span class="muted"> (a mano)</span> }</td>
+                  <td class="num">{{ item.quantity }}</td>
+                  <td class="num">{{ item.productId ? item.quantity : '—' }}</td>
+                  <td class="num">{{ item.productId ? 0 : '—' }}</td>
+                  <td class="num"><strong>{{ item.quantity }}</strong></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="modal__grid">
+          <div class="field field--wide">
+            <label for="dispatch-notes">Observaciones <span class="field__optional">(opcional)</span></label>
+            <input id="dispatch-notes" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+          </div>
+        </div>
+        <p class="modal__hint">
+          Se registrará la entrega con fecha, hora y usuario; la lista quedará <strong>Despachada</strong> y <strong>Entregada</strong>.
+          El inventario no se descuenta de nuevo.
+        </p>
+        @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
+        <div class="modal__actions">
+          <app-button variant="ghost" [disabled]="saving()" (click)="dialog.set(false)">Cancelar</app-button>
+          <app-button variant="primary" [disabled]="saving() || !canDispatch()" (click)="confirm()">{{ saving() ? 'Registrando…' : 'Confirmar despacho' }}</app-button>
+        </div>
+      </div>
+    </div>
+  }
+}

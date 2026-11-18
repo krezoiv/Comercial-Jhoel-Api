@@ -24,12 +24,20 @@ function makeQuotation(): Quotation {
     total: 10,
     observations: null,
     commercialTerms: null,
-    status: 'PENDIENTE',
+    status: 'COTIZADA',
     voidedAt: null,
     voidedBy: null,
     voidedByUsername: null,
     voidReason: null,
     convertedToSaleId: null,
+    customerPhone: null,
+    studentName: null,
+    grade: null,
+    acceptedAt: null,
+    rejectedAt: null,
+    rejectReason: null,
+    soldAt: null,
+    soldByUsername: null,
     items: [],
     createdAt: new Date('2026-09-01T00:00:00Z'),
     updatedAt: new Date('2026-09-01T00:00:00Z'),
@@ -74,7 +82,7 @@ describe('CreateQuotationUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       deactivate: jest.fn(),
-    } as unknown as jest.Mocked<ClientRepository>;
+    };
     useCase = new CreateQuotationUseCase(quotationRepository, clientRepository);
   });
 
@@ -178,10 +186,57 @@ describe('CreateQuotationUseCase', () => {
     expect(quotationRepository.createQuotation).toHaveBeenCalledWith({
       userId: 'user-1',
       clientId: 'client-1',
+      customer: null,
+      asDraft: false,
       expirationDate: futureDate,
       observations: null,
       commercialTerms: null,
       items: [{ productId: 'product-1', quantity: 5, discount: 3 }],
     });
+  });
+
+  it('creates a quotation for a typed-in customer without looking up or creating a client', async () => {
+    quotationRepository.createQuotation.mockResolvedValue(makeQuotation());
+
+    await useCase.execute({
+      userId: 'user-1',
+      customerName: '  María López ',
+      customerPhone: '5555-1234',
+      studentName: 'Ana',
+      grade: 'Primero Básico',
+      asDraft: true,
+      expirationDate: futureDate,
+      items: [{ productId: 'product-1', quantity: 1 }],
+    });
+
+    expect(clientRepository.findById).not.toHaveBeenCalled();
+    expect(clientRepository.create).not.toHaveBeenCalled();
+    expect(quotationRepository.createQuotation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: null,
+        asDraft: true,
+        customer: {
+          name: 'María López',
+          phone: '5555-1234',
+          studentName: 'Ana',
+          grade: 'Primero Básico',
+        },
+      }),
+    );
+  });
+
+  it('requires the typed-in customer name and phone', async () => {
+    const base = {
+      userId: 'user-1',
+      expirationDate: futureDate,
+      items: [{ productId: 'product-1', quantity: 1 }],
+    };
+    await expect(
+      useCase.execute({ ...base, customerName: 'María', customerPhone: '12' }),
+    ).rejects.toMatchObject({ code: 'QUOTATION_INVALID_PHONE' });
+    await expect(
+      useCase.execute({ ...base, customerPhone: '5555-1234' }),
+    ).rejects.toMatchObject({ code: 'QUOTATION_INVALID_CUSTOMER_NAME' });
+    expect(quotationRepository.createQuotation).not.toHaveBeenCalled();
   });
 });

@@ -15,7 +15,9 @@
 | [cash-inventory.e2e-spec.ts](#f-comercial-jhoel-api-test-cash-inventory-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
 | [cuadre-cash-breakdown.e2e-spec.ts](#f-comercial-jhoel-api-test-cuadre-cash-breakdown-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
 | [financial-day-review.e2e-spec.ts](#f-comercial-jhoel-api-test-financial-day-review-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
+| [quotations-sale.e2e-spec.ts](#f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
 | [school-lists.e2e-spec.ts](#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
+| [school-supply.e2e-spec.ts](#f-comercial-jhoel-api-test-school-supply-e2e-spec-ts) | .ts | Prueba E2E | Pruebas | Prueba E2E (sin comentario de documentación en el código). | 1 internas; ext.: @nestjs/testing, @nestjs/common, @nestjs/jwt, typeorm | 0 | Soporte (pruebas) |
 | [jest-e2e.json](../../../../comercial-jhoel-api/test/jest-e2e.json) | .json | Configuración JSON | Pruebas | Configuración JSON | — | — | Media |
 | [run-cash-control-e2e.sh](../../../../comercial-jhoel-api/test/run-cash-control-e2e.sh) | .sh | Script shell | Pruebas | !/usr/bin/env bash Runs test/cash-control.e2e-spec.ts (HTTP, full AppModule) against a TEMPORARY clone of the dev database — the Kardex is append-only, so the e2e flow must never write to the real database. Clones (pg_dump → &lt;db&gt;_e2e), runs jest inside the api container pointed at the clone, then drops only the clone.  | — | — | Media |
 
@@ -111,11 +113,31 @@
 - **Depende de (archivos del proyecto):** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts)
 - **Paquetes externos:** `@nestjs/testing`, `@nestjs/common`, `@nestjs/jwt`, `typeorm`, `crypto`, `supertest`
 - **Consumidores:** —
+<a id="f-comercial-jhoel-api-test-quotations-sale-e2e-spec-ts"></a>
+
+### quotations-sale.e2e-spec.ts
+
+- **Ruta:** [quotations-sale.e2e-spec.ts](../../../../comercial-jhoel-api/test/quotations-sale.e2e-spec.ts) (`comercial-jhoel-api/test/quotations-sale.e2e-spec.ts`, 293 líneas)
+- **Tipo:** Prueba E2E · **Capa:** Pruebas · **Módulo:** Pruebas E2E del backend
+- **Responsabilidad:** Prueba E2E (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts)
+- **Paquetes externos:** `@nestjs/testing`, `@nestjs/common`, `@nestjs/jwt`, `typeorm`, `supertest`
+- **Consumidores:** —
 <a id="f-comercial-jhoel-api-test-school-lists-e2e-spec-ts"></a>
 
 ### school-lists.e2e-spec.ts
 
-- **Ruta:** [school-lists.e2e-spec.ts](../../../../comercial-jhoel-api/test/school-lists.e2e-spec.ts) (`comercial-jhoel-api/test/school-lists.e2e-spec.ts`, 569 líneas)
+- **Ruta:** [school-lists.e2e-spec.ts](../../../../comercial-jhoel-api/test/school-lists.e2e-spec.ts) (`comercial-jhoel-api/test/school-lists.e2e-spec.ts`, 674 líneas)
+- **Tipo:** Prueba E2E · **Capa:** Pruebas · **Módulo:** Pruebas E2E del backend
+- **Responsabilidad:** Prueba E2E (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts)
+- **Paquetes externos:** `@nestjs/testing`, `@nestjs/common`, `@nestjs/jwt`, `typeorm`, `crypto`, `supertest`
+- **Consumidores:** —
+<a id="f-comercial-jhoel-api-test-school-supply-e2e-spec-ts"></a>
+
+### school-supply.e2e-spec.ts
+
+- **Ruta:** [school-supply.e2e-spec.ts](../../../../comercial-jhoel-api/test/school-supply.e2e-spec.ts) (`comercial-jhoel-api/test/school-supply.e2e-spec.ts`, 374 líneas)
 - **Tipo:** Prueba E2E · **Capa:** Pruebas · **Módulo:** Pruebas E2E del backend
 - **Responsabilidad:** Prueba E2E (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts)
