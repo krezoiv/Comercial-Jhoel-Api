@@ -63,7 +63,7 @@
 
 ### dashboard-nav.data.ts
 
-- **Ruta:** [dashboard-nav.data.ts](../../../../comercial-jhoel-app/src/app/core/data/dashboard-nav.data.ts) (`comercial-jhoel-app/src/app/core/data/dashboard-nav.data.ts`, 205 líneas)
+- **Ruta:** [dashboard-nav.data.ts](../../../../comercial-jhoel-app/src/app/core/data/dashboard-nav.data.ts) (`comercial-jhoel-app/src/app/core/data/dashboard-nav.data.ts`, 206 líneas)
 - **Tipo:** Código TypeScript · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-data`
 - **Responsabilidad:** Código TypeScript: declara `ADMIN_ONLY`, `DASHBOARD_NAV_ITEMS` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)

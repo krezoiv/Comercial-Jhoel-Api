@@ -27,10 +27,11 @@ flowchart TD
   n21[["apply_bank_account_movement()"]]
   n22[["apply_cash_movement()"]]
   n23[["apply_warehouse_cash_movement()"]]
-  n24[["cash_custody_assert_role()"]]
-  n25["Otros RAISE (condición no extraída del código):<br/>CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE"]
-  n26[("Bajo pg_advisory_xact_lock: cash_control_main, warehouse_cash_main<br/>Escribe: warehouse_cash_movement_details, warehouse_cash_withdrawals")]
-  n27(["RETURN uuid"])
+  n24[["cash_assert_denominations_available()"]]
+  n25[["cash_custody_assert_role()"]]
+  n26["Otros RAISE (condición no extraída del código):<br/>CASH_CUSTODY_BREAKDOWN_REQUIRED, CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE"]
+  n27[("Bajo pg_advisory_xact_lock: cash_control_main, warehouse_cash_main<br/>Escribe: warehouse_cash_movement_details, warehouse_cash_withdrawals")]
+  n28(["RETURN uuid"])
   n1 --> n3
   n3 -->|sí| n4
   n4 --> n2
@@ -62,10 +63,11 @@ flowchart TD
   n19 -->|no · llama| n22
   n19 -->|no · llama| n23
   n19 -->|no · llama| n24
-  n1 -.->|también puede lanzar| n25
-  n25 --> n2
-  n19 -->|no| n26
-  n26 --> n27
+  n19 -->|no · llama| n25
+  n1 -.->|también puede lanzar| n26
+  n26 --> n2
+  n19 -->|no| n27
+  n27 --> n28
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -77,10 +79,10 @@ flowchart TD
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
   class n1 start
-  class n2,n4,n6,n8,n10,n12,n14,n16,n18,n20,n25 err
+  class n2,n4,n6,n8,n10,n12,n14,n16,n18,n20,n26 err
   class n3,n5,n7,n9,n11,n13,n15,n17,n19 dec
-  class n21,n22,n23,n24,n26 db
-  class n27 ok
+  class n21,n22,n23,n24,n25,n27 db
+  class n28 ok
 ```
 
 ## Explicación
@@ -89,7 +91,7 @@ flowchart TD
 2. **¿Dónde comienza?** TypeOrmCashCustodyRepository.registerWithdrawal (comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/database/migrations`](../../../../comercial-jhoel-api/src/database/migrations), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
-5. **¿Qué decisiones toma el sistema?** CASH_IDEMPOTENCY_KEY_REQUIRED, CASH_INVALID_AMOUNT, CASH_WAREHOUSE_PEOPLE_REQUIRED, CASH_CUSTODY_DAY_NOT_OPEN, WAREHOUSE_WITHDRAWAL_BANK_REQUIRED, CASH_DEPOSIT_INVALID_BANK, CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED, WAREHOUSE_WITHDRAWAL_INVALID_DESTINATION, CASH_BREAKDOWN_MISMATCH · además lanza (condición no extraída): CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE
+5. **¿Qué decisiones toma el sistema?** CASH_IDEMPOTENCY_KEY_REQUIRED, CASH_INVALID_AMOUNT, CASH_WAREHOUSE_PEOPLE_REQUIRED, CASH_CUSTODY_DAY_NOT_OPEN, WAREHOUSE_WITHDRAWAL_BANK_REQUIRED, CASH_DEPOSIT_INVALID_BANK, CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED, WAREHOUSE_WITHDRAWAL_INVALID_DESTINATION, CASH_BREAKDOWN_MISMATCH · además lanza (condición no extraída): CASH_CUSTODY_BREAKDOWN_REQUIRED, CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE
 6. **¿Dónde se almacenan los datos?** warehouse_cash_movement_details, warehouse_cash_withdrawals
 7. **¿Cómo termina el proceso?** RETURN uuid dentro de la transacción de quien la llamó
 8. **¿Qué sucede cuando ocurre un error?** Cada RAISE revierte también lo que hizo la función que la llamó

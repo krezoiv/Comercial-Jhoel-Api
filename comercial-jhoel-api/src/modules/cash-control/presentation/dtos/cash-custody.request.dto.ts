@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
@@ -83,7 +84,7 @@ export class RegisterWarehouseTransferRequestDto {
   @Max(MAX_AMOUNT)
   amount: number;
 
-  /** Optional breakdown; without it the delivery needs an administrator. */
+  /** Bills/coins sent (required by the use case: every caja ↔ Bodega transfer carries its breakdown). */
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(DENOMINATIONS.length)
@@ -135,7 +136,7 @@ export class RegisterWarehouseWithdrawalRequestDto {
   @Max(MAX_AMOUNT)
   amount: number;
 
-  /** Optional breakdown; without it the withdrawal needs an administrator. */
+  /** Bills/coins withdrawn (required by the use case: every caja ↔ Bodega transfer carries its breakdown). */
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(DENOMINATIONS.length)
@@ -158,4 +159,70 @@ export class LatestCashCountQueryDto {
   @IsOptional()
   @IsDateString({ strict: true })
   businessDate?: string;
+}
+
+/** "Conteo de Bodega por denominación" — sets the reference of the Bodega inventory. */
+export class RegisterWarehouseCashCountRequestDto {
+  @IsArray()
+  @ArrayMaxSize(DENOMINATIONS.length)
+  @ValidateNested({ each: true })
+  @Type(() => DenominationRequestDto)
+  details: DenominationRequestDto[];
+
+  @IsOptional() @IsString() @MaxLength(500) observations?: string;
+
+  /** One per form opening: a double click or retry returns the same count. */
+  @IsUUID() clientRequestId: string;
+}
+
+export class PageQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(200) limit?: number;
+}
+
+/** In-progress Arqueo de Caja (autosave). Quantities may be 0; nothing here is a financial record. */
+export class SaveCashCountDraftRequestDto {
+  @IsArray()
+  @ArrayMaxSize(DENOMINATIONS.length)
+  @ValidateNested({ each: true })
+  @Type(() => DraftDenominationRequestDto)
+  details: DraftDenominationRequestDto[];
+
+  @IsOptional() @IsString() @MaxLength(500) observations?: string;
+
+  @IsOptional() @IsBoolean() countWarehouse?: boolean;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(MAX_AMOUNT)
+  warehouseCounted?: number | null;
+}
+
+export class DraftDenominationRequestDto {
+  @IsIn(DENOMINATIONS)
+  denomination: number;
+
+  @IsInt()
+  @Min(0)
+  @Max(1_000_000)
+  quantity: number;
+}
+
+export const CUSTODY_TRANSFER_KINDS = [
+  'CAJA_A_BODEGA',
+  'BODEGA_A_CAJA',
+  'BODEGA_A_BANCO',
+] as const;
+export type CustodyTransferKindDto = (typeof CUSTODY_TRANSFER_KINDS)[number];
+
+/** Unified history of caja ↔ Bodega transfers (and Bodega → bank deposits). */
+export class CustodyTransfersQueryDto {
+  @IsOptional() @IsIn(CUSTODY_TRANSFER_KINDS) kind?: CustodyTransferKindDto;
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsDateString({ strict: true }) dateFrom?: string;
+  @IsOptional() @IsDateString({ strict: true }) dateTo?: string;
+  @IsOptional() @IsIn(['APLICADO', 'ANULADO']) status?: 'APLICADO' | 'ANULADO';
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(200) limit?: number;
 }

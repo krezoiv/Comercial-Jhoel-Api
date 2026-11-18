@@ -53,7 +53,8 @@ flowchart LR
   n42["Cotizaciones<br/><small>quotations</small>"]
   n43["Caja de ventas<br/><small>sales-cash-box</small>"]
   n44["Registro de ventas<br/><small>sales-register</small>"]
-  n45["Tickets<br/><small>tickets</small>"]
+  n45["school-lists<br/><small>school-lists</small>"]
+  n46["Tickets<br/><small>tickets</small>"]
   n1 -->|2 · infrastructure| n2
   n1 -->|1 · infrastructure| n3
   n4 -->|4 · infrastructure| n2
@@ -192,11 +193,13 @@ flowchart LR
   n26 -->|1 · infrastructure| n10
   n26 -->|1 · infrastructure| n32
   n26 -->|1 · infrastructure| n3
-  n30 -->|2 · infrastructure| n2
-  n45 -->|2 · infrastructure| n2
-  n45 -->|4 · domain/infrastructure/módulo| n6
+  n45 -->|1 · infrastructure| n2
   n45 -->|3 · domain/módulo| n22
-  n45 -->|1 · infrastructure| n3
+  n30 -->|2 · infrastructure| n2
+  n46 -->|2 · infrastructure| n2
+  n46 -->|4 · domain/infrastructure/módulo| n6
+  n46 -->|3 · domain/módulo| n22
+  n46 -->|1 · infrastructure| n3
   n18 -->|2 · infrastructure| n2
   n18 -->|1 · infrastructure| n3
   n19 -->|2 · infrastructure| n2
@@ -215,4 +218,4 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38,n39,n40,n41,n42,n43,n44,n45 app
+  class n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38,n39,n40,n41,n42,n43,n44,n45,n46 app

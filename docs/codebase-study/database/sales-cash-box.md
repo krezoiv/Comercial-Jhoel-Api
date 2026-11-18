@@ -32,7 +32,7 @@ erDiagram
 
 - **Entidad TypeORM:** [SalesCashBoxMovementOrmEntity](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-sales-cash-box-movement-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [sales-cash-box-movement.orm-entity.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-sales-cash-box-movement-orm-entity-ts), [typeorm-sales-cash-box.repository.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-typeorm-sales-cash-box-repository-ts)
+- **Archivos TypeScript que la usan:** [sales-cash-box-movement.orm-entity.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-sales-cash-box-movement-orm-entity-ts), [typeorm-sales-cash-box.repository.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-typeorm-sales-cash-box-repository-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts)
 - **Funciones SQL que la escriben:** `register_sales_cash_box_movement`
 
 | Columna | Tipo | Nulo | Default |

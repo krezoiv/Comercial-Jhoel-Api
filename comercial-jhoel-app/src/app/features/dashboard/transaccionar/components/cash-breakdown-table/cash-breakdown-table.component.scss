@@ -116,3 +116,19 @@
   display: flex;
   justify-content: flex-end;
 }
+
+// Stock of the origin (deliveries / withdrawals between caja and Bodega).
+.cash-row__available {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light-subtle);
+}
+
+.cash-row--over {
+  border-color: var(--color-danger, #c62828);
+
+  .cash-row__available {
+    color: var(--color-danger, #c62828);
+  }
+}

@@ -11,6 +11,16 @@ erDiagram
     integer quantity
     numeric subtotal
   }
+  cash_count_drafts {
+    uuid id PK
+    uuid user_id FK
+    uuid day_opening_id FK
+    date business_date
+    jsonb payload
+    integer version
+    timestamp_with_time_zone created_at
+    timestamp_with_time_zone updated_at
+  }
   cash_counts {
     uuid id PK
     bigint number
@@ -117,6 +127,27 @@ erDiagram
     uuid warehouse_movement_id FK
     character_varying status
   }
+  warehouse_cash_count_details {
+    uuid id PK
+    uuid count_id FK
+    numeric denomination
+    integer quantity
+    numeric subtotal
+  }
+  warehouse_cash_counts {
+    uuid id PK
+    bigint number
+    timestamp_with_time_zone counted_at
+    date business_date
+    uuid day_opening_id FK
+    bigint warehouse_sequence
+    numeric warehouse_balance
+    numeric total_counted
+    character_varying observations
+    character_varying idempotency_key
+    uuid created_by FK
+    timestamp_with_time_zone created_at
+  }
   warehouse_cash_movement_details {
     uuid id PK
     uuid movement_id FK
@@ -156,10 +187,10 @@ erDiagram
     uuid day_opening_id FK
     uuid warehouse_movement_id FK
   }
-  users {
+  day_openings {
     uuid id PK
   }
-  day_openings {
+  users {
     uuid id PK
   }
   banks {
@@ -175,6 +206,8 @@ erDiagram
     uuid id PK
   }
   cash_counts ||--o{ cash_count_details : "count_id"
+  day_openings ||--o{ cash_count_drafts : "day_opening_id"
+  users ||--o{ cash_count_drafts : "user_id"
   cash_counts ||--o{ cash_counts : "replaced_by_id"
   users ||--o{ cash_counts : "created_by"
   day_openings ||--o{ cash_counts : "day_opening_id"
@@ -201,6 +234,9 @@ erDiagram
   day_openings ||--o{ cash_warehouse_transfers : "day_opening_id"
   users ||--o{ cash_warehouse_transfers : "voided_by"
   warehouse_cash_movements ||--o{ cash_warehouse_transfers : "warehouse_movement_id"
+  warehouse_cash_counts ||--o{ warehouse_cash_count_details : "count_id"
+  users ||--o{ warehouse_cash_counts : "created_by"
+  day_openings ||--o{ warehouse_cash_counts : "day_opening_id"
   warehouse_cash_movements ||--o{ warehouse_cash_movement_details : "movement_id"
   users ||--o{ warehouse_cash_movements : "created_by"
   day_openings ||--o{ warehouse_cash_movements : "day_opening_id"
@@ -246,6 +282,36 @@ erDiagram
 **Triggers:**
 
 - `trg_cash_count_details_guard`: CREATE TRIGGER trg_cash_count_details_guard BEFORE DELETE OR UPDATE ON public.cash_count_details FOR EACH ROW EXECUTE FUNCTION cash_custody_status_only_guard()
+
+## `cash_count_drafts`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760007800000-CashDenominationInventoryAndCountDrafts.ts`
+- **Archivos TypeScript que la usan:** [typeorm-cash-custody.repository.ts](../reference/backend/cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `user_id` | uuid | NOT NULL |  |
+| `day_opening_id` | uuid | NOT NULL |  |
+| `business_date` | date | NOT NULL |  |
+| `payload` | jsonb | NOT NULL |  |
+| `version` | integer | NOT NULL | 1 |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `CHK_cash_count_drafts_payload` | CHECK | CHECK ((jsonb_typeof(payload) = 'object'::text)) |
+| `cash_count_drafts_day_opening_id_fkey` | FK | FOREIGN KEY (day_opening_id) REFERENCES day_openings(id) ON DELETE RESTRICT |
+| `cash_count_drafts_user_id_fkey` | FK | FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT |
+| `cash_count_drafts_pkey` | PK | PRIMARY KEY (id) |
+| `UQ_cash_count_drafts_user_day` | UNIQUE | UNIQUE (user_id, day_opening_id) |
+
+**Índices:**
+
+- `UQ_cash_count_drafts_user_day`: CREATE UNIQUE INDEX "UQ_cash_count_drafts_user_day" ON public.cash_count_drafts USING btree (user_id, day_opening_id)
+- `cash_count_drafts_pkey`: CREATE UNIQUE INDEX cash_count_drafts_pkey ON public.cash_count_drafts USING btree (id)
 
 ## `cash_counts`
 
@@ -627,6 +693,79 @@ erDiagram
 **Triggers:**
 
 - `trg_cash_warehouse_transfers_guard`: CREATE TRIGGER trg_cash_warehouse_transfers_guard BEFORE DELETE OR UPDATE ON public.cash_warehouse_transfers FOR EACH ROW EXECUTE FUNCTION cash_custody_status_only_guard('status', 'voided_at', 'voided_by', 'void_reason')
+
+## `warehouse_cash_count_details`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760007800000-CashDenominationInventoryAndCountDrafts.ts`
+- **Archivos TypeScript que la usan:** [typeorm-cash-custody.repository.ts](../reference/backend/cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
+- **Funciones SQL que la escriben:** `register_warehouse_cash_count`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `count_id` | uuid | NOT NULL |  |
+| `denomination` | numeric(10,2) | NOT NULL |  |
+| `quantity` | integer | NOT NULL |  |
+| `subtotal` | numeric(14,2) | NOT NULL |  |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `CHK_warehouse_cash_count_details_quantity` | CHECK | CHECK ((quantity &gt;= 0)) |
+| `CHK_warehouse_cash_count_details_subtotal` | CHECK | CHECK ((subtotal = (denomination * (quantity)::numeric))) |
+| `warehouse_cash_count_details_count_id_fkey` | FK | FOREIGN KEY (count_id) REFERENCES warehouse_cash_counts(id) ON DELETE RESTRICT |
+| `warehouse_cash_count_details_pkey` | PK | PRIMARY KEY (id) |
+| `UQ_warehouse_cash_count_details` | UNIQUE | UNIQUE (count_id, denomination) |
+
+**Índices:**
+
+- `UQ_warehouse_cash_count_details`: CREATE UNIQUE INDEX "UQ_warehouse_cash_count_details" ON public.warehouse_cash_count_details USING btree (count_id, denomination)
+- `warehouse_cash_count_details_pkey`: CREATE UNIQUE INDEX warehouse_cash_count_details_pkey ON public.warehouse_cash_count_details USING btree (id)
+
+**Triggers:**
+
+- `trg_warehouse_cash_count_details_guard`: CREATE TRIGGER trg_warehouse_cash_count_details_guard BEFORE DELETE OR UPDATE ON public.warehouse_cash_count_details FOR EACH ROW EXECUTE FUNCTION cash_custody_status_only_guard()
+
+## `warehouse_cash_counts`
+
+- **Entidad TypeORM:** ninguna (se accede con SQL crudo o solo desde funciones PL/pgSQL)
+- **Creada en:** `1760007800000-CashDenominationInventoryAndCountDrafts.ts`
+- **Archivos TypeScript que la usan:** [typeorm-cash-custody.repository.ts](../reference/backend/cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
+- **Funciones SQL que la escriben:** `register_warehouse_cash_count`
+
+| Columna | Tipo | Nulo | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `number` | bigint | NOT NULL | nextval('warehouse_cash_counts_number_seq'::regclass) |
+| `counted_at` | timestamp with time zone | NOT NULL | now() |
+| `business_date` | date | NOT NULL |  |
+| `day_opening_id` | uuid | NOT NULL |  |
+| `warehouse_sequence` | bigint | NOT NULL |  |
+| `warehouse_balance` | numeric(14,2) | NOT NULL |  |
+| `total_counted` | numeric(14,2) | NOT NULL |  |
+| `observations` | character varying(500) | sí |  |
+| `idempotency_key` | character varying(120) | NOT NULL |  |
+| `created_by` | uuid | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+| Restricción | Tipo | Definición |
+|---|---|---|
+| `CHK_warehouse_cash_counts_total` | CHECK | CHECK (((total_counted = warehouse_balance) AND (total_counted &gt;= (0)::numeric))) |
+| `warehouse_cash_counts_created_by_fkey` | FK | FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT |
+| `warehouse_cash_counts_day_opening_id_fkey` | FK | FOREIGN KEY (day_opening_id) REFERENCES day_openings(id) ON DELETE RESTRICT |
+| `warehouse_cash_counts_pkey` | PK | PRIMARY KEY (id) |
+| `UQ_warehouse_cash_counts_idempotency` | UNIQUE | UNIQUE (idempotency_key) |
+| `UQ_warehouse_cash_counts_number` | UNIQUE | UNIQUE (number) |
+
+**Índices:**
+
+- `UQ_warehouse_cash_counts_idempotency`: CREATE UNIQUE INDEX "UQ_warehouse_cash_counts_idempotency" ON public.warehouse_cash_counts USING btree (idempotency_key)
+- `UQ_warehouse_cash_counts_number`: CREATE UNIQUE INDEX "UQ_warehouse_cash_counts_number" ON public.warehouse_cash_counts USING btree (number)
+- `warehouse_cash_counts_pkey`: CREATE UNIQUE INDEX warehouse_cash_counts_pkey ON public.warehouse_cash_counts USING btree (id)
+
+**Triggers:**
+
+- `trg_warehouse_cash_counts_guard`: CREATE TRIGGER trg_warehouse_cash_counts_guard BEFORE DELETE OR UPDATE ON public.warehouse_cash_counts FOR EACH ROW EXECUTE FUNCTION cash_custody_status_only_guard()
 
 ## `warehouse_cash_movement_details`
 

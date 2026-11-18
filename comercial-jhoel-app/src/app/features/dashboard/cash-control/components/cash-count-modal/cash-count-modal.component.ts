@@ -1,8 +1,26 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
-import { CASH_COUNT_RESULT_LABEL, CashCountRecord, CashCustody, formatCurrency } from '../../../../../core/models';
+import {
+  CASH_COUNT_RESULT_LABEL,
+  CashCountDraft,
+  CashCountDraftPayload,
+  CashCountRecord,
+  CashCustody,
+  formatCurrency,
+} from '../../../../../core/models';
 import { CuadreStatus } from '../../../../../core/services/bank-deposit-draft.store';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
@@ -25,6 +43,15 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatGuatemalaD
  * With `correctionOf` it is the audited correction of an earlier count
  * (admin): same photograph (theoretical values of that moment), new
  * quantities and a mandatory reason; the original stays as "reemplazado".
+ *
+ * Draft persistence (new counts only): every change is written at once to a
+ * local copy (`localStorage`, keyed by user and bank day) and autosaved to the
+ * backend (`PUT /cash-control/counts/draft`, debounced) — the database is the
+ * source of truth, so the typed quantities survive navigating away, a reload,
+ * closing the browser and a new login. On open the newest of both copies is
+ * restored (a local copy newer than the server one is re-synced). The draft
+ * is cleared only when the count is confirmed (the backend deletes it) or by
+ * an explicit "Reiniciar arqueo".
  */
 @Component({
   selector: 'app-cash-count-modal',
@@ -47,6 +74,7 @@ export class CashCountModalComponent implements OnChanges {
   private readonly service = inject(CashCustodyService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly formatCurrency = formatCurrency;
   readonly formatDateTime = formatGuatemalaDateTime;
@@ -66,6 +94,29 @@ export class CashCountModalComponent implements OnChanges {
   private readonly theoreticalSignal = signal(0);
   private readonly warehouseSignal = signal(0);
   private requestId = crypto.randomUUID();
+
+  /** Autosave indicator: Guardando… / Guardado correctamente / Error al guardar. */
+  readonly draftStatus = signal<'idle' | 'loading' | 'saving' | 'saved' | 'error'>('idle');
+  readonly draftSavedAt = signal<string | null>(null);
+  readonly draftError = signal<string | null>(null);
+  /** A draft (server or local) was restored when the form opened. */
+  readonly draftRestored = signal(false);
+  private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingSave = false;
+  /** Bumped on every open: responses of an earlier opening are ignored. */
+  private session = 0;
+  private static readonly AUTOSAVE_MS = 800;
+
+  constructor() {
+    // Leaving the screen with a pending autosave: send it now (the request outlives the component).
+    this.destroyRef.onDestroy(() => {
+      if (this.saveTimer) {
+        clearTimeout(this.saveTimer);
+        this.saveTimer = null;
+        this.pushDraft();
+      }
+    });
+  }
 
   readonly username = computed(() => this.auth.currentUser()?.username ?? '');
   readonly totalCounted = computed(() => cashCountsTotal(this.cashCounts()));
@@ -104,11 +155,223 @@ export class CashCountModalComponent implements OnChanges {
     this.result.set(null);
     this.openedAt.set(original?.countedAt ?? new Date().toISOString());
     this.requestId = crypto.randomUUID();
+    this.draftRestored.set(false);
+    this.draftError.set(null);
+    if (!original) {
+      this.restoreDraft();
+    } else {
+      this.draftStatus.set('idle');
+    }
   }
 
   onQuantityChange(change: { denomination: number; quantity: number }): void {
     const quantity = Math.max(0, Math.trunc(Number(change.quantity) || 0));
     this.cashCounts.update((counts) => ({ ...counts, [String(change.denomination)]: quantity }));
+    this.scheduleDraftSave();
+  }
+
+  setObservations(value: string): void {
+    this.observations.set(value);
+    this.scheduleDraftSave();
+  }
+
+  setCountWarehouse(value: boolean): void {
+    this.countWarehouse.set(value);
+    this.scheduleDraftSave();
+  }
+
+  setWarehouseCounted(value: number | null): void {
+    this.warehouseCounted.set(value);
+    this.scheduleDraftSave();
+  }
+
+  /** Whether anything was typed (enables "Reiniciar arqueo"). */
+  readonly hasInput = computed(
+    () =>
+      Object.values(this.cashCounts()).some((q) => (q || 0) > 0) ||
+      this.observations().trim().length > 0 ||
+      this.countWarehouse(),
+  );
+
+  /** "Reiniciar arqueo": explicit, confirmed reset — discards the draft (server and local). */
+  async resetDraft(): Promise<void> {
+    if (this.correctionOf || this.isSaving()) {
+      return;
+    }
+    const confirmed = await this.confirmDialog.confirm({
+      type: 'DELETE',
+      title: 'Reiniciar arqueo',
+      message: 'Se borrarán todas las cantidades ingresadas en este arqueo en proceso. ¿Deseas empezar de nuevo?',
+      confirmText: 'Reiniciar arqueo',
+    });
+    if (!confirmed) {
+      return;
+    }
+    this.cancelPendingSave();
+    this.applyPayload({ details: [], observations: null, countWarehouse: false, warehouseCounted: null });
+    this.clearLocalDraft();
+    this.draftRestored.set(false);
+    this.service.discardCountDraft().subscribe({
+      next: () => {
+        this.draftStatus.set('idle');
+        this.draftSavedAt.set(null);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.draftStatus.set('error');
+        this.draftError.set(extractErrorMessage(error, 'No se pudo reiniciar el borrador.'));
+      },
+    });
+  }
+
+  // ── Draft persistence ─────────────────────────────────────────────────────
+
+  private draftKey(): string | null {
+    const userId = this.auth.currentUser()?.id;
+    const day = this.custody?.currentDay?.businessDate;
+    return userId && day ? `cj_cash_count_draft:${userId}:${day}` : null;
+  }
+
+  private payload(): CashCountDraftPayload {
+    return {
+      details: cashCountsToDetails(this.cashCounts(), { keepZero: true }),
+      observations: this.observations().trim() || null,
+      countWarehouse: this.countWarehouse(),
+      warehouseCounted: this.countWarehouse() ? (this.warehouseCounted() ?? null) : null,
+    };
+  }
+
+  private applyPayload(payload: CashCountDraftPayload): void {
+    this.cashCounts.set({
+      ...emptyCashCounts(),
+      ...Object.fromEntries(payload.details.map((row) => [String(row.denomination), row.quantity])),
+    });
+    this.observations.set(payload.observations ?? '');
+    this.countWarehouse.set(payload.countWarehouse);
+    this.warehouseCounted.set(payload.warehouseCounted);
+  }
+
+  private readLocalDraft(): { payload: CashCountDraftPayload; savedAt: string } | null {
+    const key = this.draftKey();
+    if (!key) {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as { payload: CashCountDraftPayload; savedAt: string }) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeLocalDraft(): void {
+    const key = this.draftKey();
+    if (!key) {
+      return;
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify({ payload: this.payload(), savedAt: new Date().toISOString() }));
+    } catch {
+      // Storage unavailable (private mode / quota): the server copy still applies.
+    }
+  }
+
+  private clearLocalDraft(): void {
+    const key = this.draftKey();
+    if (!key) {
+      return;
+    }
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  }
+
+  /** On open: show the local copy at once, then reconcile with the server draft (newest wins). */
+  private restoreDraft(): void {
+    const session = ++this.session;
+    const local = this.readLocalDraft();
+    if (local) {
+      this.applyPayload(local.payload);
+      this.draftRestored.set(true);
+    }
+    this.draftStatus.set('loading');
+    this.service.getCountDraft().subscribe({
+      next: (server: CashCountDraft | null) => {
+        if (session !== this.session) {
+          return;
+        }
+        const localNewer = !!local && (!server || new Date(local.savedAt) > new Date(server.updatedAt));
+        if (server && !localNewer) {
+          this.applyPayload(server.payload);
+          this.draftRestored.set(true);
+          this.writeLocalDraft();
+          this.draftStatus.set('saved');
+          this.draftSavedAt.set(server.updatedAt);
+        } else if (localNewer) {
+          // An earlier autosave did not reach the server: sync it now.
+          this.pushDraft();
+        } else {
+          this.draftStatus.set('idle');
+        }
+      },
+      error: () => {
+        if (session !== this.session) {
+          return;
+        }
+        this.draftStatus.set(local ? 'error' : 'idle');
+        if (local) {
+          this.draftError.set('No se pudo consultar el borrador guardado; se muestra la copia de este navegador.');
+        }
+      },
+    });
+  }
+
+  private scheduleDraftSave(): void {
+    if (this.correctionOf || !this.open) {
+      return;
+    }
+    this.writeLocalDraft();
+    this.draftStatus.set('saving');
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+    }
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null;
+      this.pushDraft();
+    }, CashCountModalComponent.AUTOSAVE_MS);
+  }
+
+  private cancelPendingSave(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+  }
+
+  private pushDraft(): void {
+    if (this.pendingSave) {
+      // One request at a time; the latest values are sent when it finishes.
+      this.scheduleDraftSave();
+      return;
+    }
+    this.pendingSave = true;
+    this.draftStatus.set('saving');
+    this.service.saveCountDraft(this.payload()).subscribe({
+      next: (draft) => {
+        this.pendingSave = false;
+        this.draftStatus.set('saved');
+        this.draftSavedAt.set(draft.updatedAt);
+        this.draftError.set(null);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.pendingSave = false;
+        this.draftStatus.set('error');
+        this.draftError.set(
+          extractErrorMessage(error, 'No se pudo guardar el borrador.') + ' Las cantidades se conservan en este navegador.',
+        );
+      },
+    });
   }
 
   async save(): Promise<void> {
@@ -127,6 +390,7 @@ export class CashCountModalComponent implements OnChanges {
     if (!confirmed) {
       return;
     }
+    this.cancelPendingSave();
     const input = {
       details: cashCountsToDetails(this.cashCounts(), { keepZero: true }),
       observations: this.observations().trim() || undefined,
@@ -142,6 +406,13 @@ export class CashCountModalComponent implements OnChanges {
       next: (count) => {
         this.isSaving.set(false);
         this.result.set(count);
+        if (!this.correctionOf) {
+          // Confirmed: the backend already deleted the draft; drop the local copy too.
+          this.cancelPendingSave();
+          this.clearLocalDraft();
+          this.draftStatus.set('idle');
+          this.draftSavedAt.set(null);
+        }
         this.saved.emit(count);
       },
       error: (error: HttpErrorResponse) => {

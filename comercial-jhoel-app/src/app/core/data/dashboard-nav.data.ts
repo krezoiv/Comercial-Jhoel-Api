@@ -21,6 +21,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Compras', icon: 'arrow-down-circle', path: 'compras' },
       { label: 'Tickets', icon: 'tag', path: 'tickets' },
       { label: 'Cotizaciones', icon: 'file-check', path: 'cotizaciones' },
+      { label: 'Listas Escolares', icon: 'book-open', path: 'listas-escolares' },
     ],
   },
   {

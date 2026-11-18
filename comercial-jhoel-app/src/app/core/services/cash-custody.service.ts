@@ -8,7 +8,15 @@ import {
   CashCountRecord,
   CashCountFilters,
   CashCustody,
+  CashCountDraft,
+  CashCountDraftPayload,
+  CashInventory,
+  CustodyTransfer,
+  CustodyTransferFilters,
   LatestCashCountResponse,
+  LocationInventory,
+  RegisterWarehouseCashCountInput,
+  WarehouseCashCount,
   PaginatedResult,
   RegisterCashCountInput,
   RegisterWarehouseTransferInput,
@@ -125,6 +133,52 @@ export class CashCustodyService {
   registerWarehouseInitialBalance(amount: number, reason: string, clientRequestId: string): Observable<CashCustody> {
     return this.http
       .post<ApiSuccessResponse<CashCustody>>(`${BASE_URL}/warehouse/initial-balance`, { amount, reason, clientRequestId })
+      .pipe(map((r) => r.data));
+  }
+
+  // ── Inventario por denominación, conteo de Bodega, borradores e historial ──
+
+  /** Per-denomination inventory of caja and Bodega (derived by the backend). */
+  getInventory(): Observable<CashInventory> {
+    return this.http.get<ApiSuccessResponse<CashInventory>>(`${BASE_URL}/inventory`).pipe(map((r) => r.data));
+  }
+
+  /** "Conteo de Bodega por denominación" (admin): must equal the Bodega balance. */
+  registerWarehouseCount(
+    input: RegisterWarehouseCashCountInput,
+  ): Observable<{ count: WarehouseCashCount; inventory: LocationInventory }> {
+    return this.http
+      .post<ApiSuccessResponse<{ count: WarehouseCashCount; inventory: LocationInventory }>>(`${BASE_URL}/warehouse/counts`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  getWarehouseCounts(page = 1, limit = 10): Observable<PaginatedResult<WarehouseCashCount>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResult<WarehouseCashCount>>>(`${BASE_URL}/warehouse/counts`, {
+        params: toParams({ page, limit }),
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  /** The caller's own Arqueo de Caja draft for the current bank day (null when none). */
+  getCountDraft(): Observable<CashCountDraft | null> {
+    return this.http.get<ApiSuccessResponse<CashCountDraft | null>>(`${BASE_URL}/counts/draft`).pipe(map((r) => r.data));
+  }
+
+  /** Autosave (upsert) of the caller's draft. Not a cash write: excluded from the cash-change broadcast. */
+  saveCountDraft(payload: CashCountDraftPayload): Observable<CashCountDraft> {
+    return this.http.put<ApiSuccessResponse<CashCountDraft>>(`${BASE_URL}/counts/draft`, payload).pipe(map((r) => r.data));
+  }
+
+  /** Explicit "Reiniciar arqueo". */
+  discardCountDraft(): Observable<void> {
+    return this.http.delete<ApiSuccessResponse<unknown>>(`${BASE_URL}/counts/draft`).pipe(map(() => undefined));
+  }
+
+  /** Unified history of caja ↔ Bodega transfers with their breakdown. */
+  getCustodyTransfers(filters: CustodyTransferFilters): Observable<PaginatedResult<CustodyTransfer>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResult<CustodyTransfer>>>(`${BASE_URL}/custody/transfers`, { params: toParams(filters) })
       .pipe(map((r) => r.data));
   }
 }

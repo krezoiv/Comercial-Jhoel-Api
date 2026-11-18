@@ -62,6 +62,9 @@ BEGIN
       v_super, 'Prueba retiros', NULL, NULL, NULL, 'Prueba', NULL, 'WHW-T-' || gen_random_uuid());
   END IF;
   PERFORM register_warehouse_initial_balance(20000, v_super, 'Saldo inicial de prueba', 'WHW-INIT');
+  -- Inventario por denominación (1760007800000): arqueo de caja y conteo de Bodega de partida.
+  PERFORM register_cash_count(pg_temp.breakdown(200, 500), 'Inventario de partida', NULL, v_super, 'WHW-A0', NULL, NULL);
+  PERFORM register_warehouse_cash_count(pg_temp.breakdown(200, 50, 100, 100), 'Conteo inicial de Bodega', v_super, 'WHW-C0');
   PERFORM register_cash_warehouse_transfer(15000, pg_temp.breakdown(200, 75), 'Juan Caja', 'Ana Bodega', NULL, NULL, v_super, 'WHW-T1');
   PERFORM pg_temp.expect('0 punto de partida', pg_temp.state(v_bank),
     'caja 85000.00 / bodega 35000.00 / banco ' || v_bank_base);
@@ -82,7 +85,8 @@ BEGIN
       'CASH_DEPOSIT_GUAYACAN_NOT_ALLOWED');
   END IF;
   PERFORM pg_temp.expect('V5 no se retira más de lo que hay en Bodega',
-    pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 35000.01, NULL, NULL, %L, %L, NULL, NULL, %L, %L)', 'CAJA', 'Ana Bodega', 'Juan Caja', v_super, 'W-V5')),
+    pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 35000.01, %L, NULL, %L, %L, NULL, NULL, %L, %L)', 'CAJA',
+      pg_temp.breakdown(200, 125, 100, 100, 0.01, 1), 'Ana Bodega', 'Juan Caja', v_super, 'W-V5')),
     'WAREHOUSE_INSUFFICIENT_BALANCE');
   PERFORM pg_temp.expect('V6 personas identificadas',
     pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 100, NULL, NULL, %L, %L, NULL, NULL, %L, %L)', 'CAJA', 'Ana Bodega', 'x', v_super, 'W-V6')),
@@ -122,8 +126,8 @@ BEGIN
   PERFORM pg_temp.expect('C5 reintento devuelve el mismo retiro, sin duplicar', (v_retry = v_to_cash)::text || ' ' || pg_temp.state(v_bank),
     'true caja 90000.00 / bodega 30000.00 / banco ' || v_bank_base);
 
-  -- ── Retiro a cuenta bancaria Q10,000 (sin desglose: administrador) ────────────────
-  v_to_bank := register_warehouse_withdrawal('BANCO', 10000, NULL, v_bank, 'Ana Bodega', 'Mensajero Pedro',
+  -- ── Retiro a cuenta bancaria Q10,000 (50 × Q200) ──────────────────────────────────
+  v_to_bank := register_warehouse_withdrawal('BANCO', 10000, pg_temp.breakdown(200, 50), v_bank, 'Ana Bodega', 'Mensajero Pedro',
     'BOLETA-778', NULL, v_super, 'W-2');
   PERFORM pg_temp.expect('B1 Bodega −10,000 y la cuenta +10,000; la caja no cambia', pg_temp.state(v_bank),
     'caja 90000.00 / bodega 20000.00 / banco ' || (v_bank_base + 10000));
@@ -133,10 +137,13 @@ BEGIN
   PERFORM pg_temp.expect('B3 el depósito no crea movimiento de caja',
     (SELECT count(*)::text FROM cash_movements WHERE reference_id = v_to_bank), '0');
   IF v_user IS NOT NULL THEN
-    PERFORM pg_temp.expect('B4 sin desglose solo administradores',
-      pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 100, NULL, %L, %L, %L, NULL, NULL, %L, %L)', 'BANCO', v_bank, 'Ana Bodega', 'Juan Caja', v_user, 'W-B4')),
+    PERFORM pg_temp.expect('B4 un cajero no retira de Bodega (RBAC en la base)',
+      pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 100, %L, %L, %L, %L, NULL, NULL, %L, %L)', 'BANCO', pg_temp.breakdown(100, 1), v_bank, 'Ana Bodega', 'Juan Caja', v_user, 'W-B4')),
       'CASH_CUSTODY_FORBIDDEN');
   END IF;
+  PERFORM pg_temp.expect('B5 sin desglose se rechaza también para administradores (1760007800000)',
+    pg_temp.err(format('SELECT register_warehouse_withdrawal(%L, 100, NULL, %L, %L, %L, NULL, NULL, %L, %L)', 'BANCO', v_bank, 'Ana Bodega', 'Juan Caja', v_super, 'W-B5')),
+    'CASH_CUSTODY_BREAKDOWN_REQUIRED');
 
   -- ── Inmutabilidad ─────────────────────────────────────────────────────────────────
   PERFORM pg_temp.expect('I1 un retiro no se edita',

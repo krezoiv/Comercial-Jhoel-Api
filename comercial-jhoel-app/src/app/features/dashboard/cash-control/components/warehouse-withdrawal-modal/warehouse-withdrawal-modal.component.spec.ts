@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { CashCustody, WarehouseWithdrawal } from '../../../../../core/models';
+import { CashCustody, WarehouseWithdrawal, LocationInventory } from '../../../../../core/models';
 import { CashControlService } from '../../../../../core/services/cash-control.service';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
@@ -21,14 +21,27 @@ const custody: CashCustody = {
   depositedToBankToday: 0,
 };
 
+
+/** Inventory as the backend returns it: 12 denominations, only those given non-zero. */
+function inventoryOf(location: 'CAJA' | 'BODEGA', quantities: Record<number, number>, hasAnchor = true): LocationInventory {
+  const denoms = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
+  const lines = denoms.map((denomination) => {
+    const quantity = quantities[denomination] ?? 0;
+    return { denomination, quantity, subtotal: denomination * quantity };
+  });
+  const known = lines.reduce((sum, l) => sum + l.subtotal, 0);
+  return { location, hasAnchor, anchorKind: hasAnchor ? (location === 'CAJA' ? 'ARQUEO_CAJA' : 'CONTEO_BODEGA') : null,
+    anchorId: null, anchorNumber: 1, anchorAt: null, anchorByUsername: null, balance: known, knownTotal: known, unbroken: 0, lines };
+}
+
 describe('WarehouseWithdrawalModalComponent (retiro de Bodega)', () => {
   let modal: WarehouseWithdrawalModalComponent;
   let registerSpy: jasmine.Spy;
+  let inventorySpy: jasmine.Spy;
 
-  function open(admin = false): void {
+  function open(): void {
     modal.open = true;
     modal.custody = custody;
-    modal.canSkipBreakdown = admin;
     modal.ngOnChanges();
     modal.deliveredBy.set('Ana Bodega');
     modal.receivedBy.set('Juan Caja');
@@ -52,6 +65,9 @@ describe('WarehouseWithdrawalModalComponent (retiro de Bodega)', () => {
     registerSpy = spyOn(TestBed.inject(CashCustodyService), 'registerWithdrawal').and.returnValue(
       of({ withdrawal: { referenceNumber: 'RET-000001' } as WarehouseWithdrawal, custody }),
     );
+    inventorySpy = spyOn(TestBed.inject(CashCustodyService), 'getInventory').and.returnValue(
+      of({ cash: inventoryOf('CAJA', {}), warehouse: inventoryOf('BODEGA', { 200: 100, 100: 150 }) }),
+    );
     modal = TestBed.createComponent(WarehouseWithdrawalModalComponent).componentInstance;
   });
 
@@ -74,17 +90,28 @@ describe('WarehouseWithdrawalModalComponent (retiro de Bodega)', () => {
     expect(modal.canSave()).toBeTrue();
   });
 
-  it('cannot withdraw more than Bodega has; without breakdown only administrators', () => {
+  it('cannot withdraw more than Bodega has, nor more bills of a denomination than in stock; never without breakdown', () => {
     open();
     modal.amount.set(35000.01);
     expect(modal.insufficient()).toBeTrue();
     modal.amount.set(100);
-    modal.withBreakdown.set(false);
+    expect(modal.canSave()).toBeFalse(); // no breakdown
+    modal.amount.set(30200);
+    modal.onQuantityChange({ denomination: 200, quantity: 151 });
+    expect(modal.overStock()).toBeTrue();
     expect(modal.canSave()).toBeFalse();
-    open(true);
-    modal.amount.set(100);
-    modal.withBreakdown.set(false);
+    modal.amount.set(20000);
+    modal.onQuantityChange({ denomination: 200, quantity: 100 });
     expect(modal.canSave()).toBeTrue();
+  });
+
+  it('Bodega without its initial count cannot withdraw', () => {
+    inventorySpy.and.returnValue(of({ cash: inventoryOf('CAJA', {}), warehouse: inventoryOf('BODEGA', {}, false) }));
+    open();
+    modal.amount.set(200);
+    modal.onQuantityChange({ denomination: 200, quantity: 1 });
+    expect(modal.needsCount()).toBeTrue();
+    expect(modal.canSave()).toBeFalse();
   });
 
   it('sends one request with destination, bank and breakdown', async () => {

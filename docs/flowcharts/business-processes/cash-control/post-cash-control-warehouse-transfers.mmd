@@ -27,10 +27,10 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["RegisterWarehouseTransferUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n17["assertCashCustodyPermission()<br/><small>llamada en L87</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L111</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
   n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
   n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
-  n20{"¿!transfer?<br/><small>L106</small>"}
+  n20{"¿!transfer?<br/><small>L127</small>"}
   n21(["cashControlError('CASH_WAREHOUSE_TRANSFER_NOT_FOUND')"])
   end
   subgraph s22["Dominio → Infraestructura"]
@@ -54,15 +54,16 @@ flowchart TD
   n38(["RAISE CASH_BREAKDOWN_MISMATCH<br/>(rollback)"])
   n39{"¿cash_balance() #lt; p_amount?"}
   n40(["RAISE CASH_INSUFFICIENT_BALANCE<br/>(rollback)"])
-  n41["Otros RAISE de register_cash_warehouse_transfer (condición no extraída):<br/>CASH_INVALID_AMOUNT, CASH_INVALID_DENOMINATION"]
+  n41["Otros RAISE de register_cash_warehouse_transfer (condición no extraída):<br/>CASH_CUSTODY_BREAKDOWN_REQUIRED, CASH_INVALID_AMOUNT, CASH_INVALID_DENOMINATION"]
   n42[["apply_cash_movement()"]]
   n43[["apply_warehouse_cash_movement()"]]
-  n44[["cash_custody_assert_role()"]]
-  n45[("Escribe:<br/>cash_movement_details<br/>cash_warehouse_transfers")]
+  n44[["cash_assert_denominations_available()"]]
+  n45[["cash_custody_assert_role()"]]
+  n46[("Escribe:<br/>cash_movement_details<br/>cash_warehouse_transfers")]
   end
-  n46[("findTransferById: TypeORM Repository")]
+  n47[("findTransferById: TypeORM Repository")]
   end
-  n47(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n48(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.notifications.success<br/>this.saved.emit"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5
@@ -109,11 +110,12 @@ flowchart TD
   n39 -->|no · llama| n42
   n39 -->|no · llama| n43
   n39 -->|no · llama| n44
-  n39 -->|no| n45
-  n45 -->|COMMIT| n8
-  n24 --> n46
-  n46 --> n8
-  n8 --> n47
+  n39 -->|no · llama| n45
+  n39 -->|no| n46
+  n46 -->|COMMIT| n8
+  n24 --> n47
+  n47 --> n8
+  n8 --> n48
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -127,10 +129,10 @@ flowchart TD
   class n1 start
   class n2,n3,n11,n13,n19,n21,n32,n34,n36,n38,n40,n41 err
   class n5,n6,n7 fe
-  class n8,n47 ok
+  class n8,n48 ok
   class n10,n12,n18,n20,n31,n33,n35,n37,n39 dec
   class n14 api
   class n16 app
   class n17,n23 dom
   class n24 infra
-  class n26,n28,n30,n42,n43,n44,n45,n46 db
+  class n26,n28,n30,n42,n43,n44,n45,n46,n47 db

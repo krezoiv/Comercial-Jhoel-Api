@@ -1,0 +1,65 @@
+%% @generado: docs/codebase-study/tools/flowcharts.js (no editar a mano; se regenera)
+%% @titulo: POST /api/school-lists/quotations/:id/status
+%% @modulo: school-lists (school-lists)
+%% @representa: Flujo de decisiones real de POST /api/school-lists/quotations/:id/status: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+%% @inicio: SchoolQuotationsListComponent.deliver (comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts)
+%% @archivos: comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts ; comercial-jhoel-app/src/app/core/services/school-list.service.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts ; comercial-jhoel-app/src/app/features/dashboard/school-lists/school-quotation-detail-page.component.ts ; comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts
+%% @decisiones: sesión JWT válida | DTO StatusActionRequestDto
+%% @datos: ver repositorio
+%% @fin: Respuesta { success: true, data } y actualización de la pantalla
+%% @errores: Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/school-lists/quotations/:id/status"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["SchoolListService.changeStatus<br/><small>app/core/services/school-list.service.ts</small>"]
+  n6["SchoolQuotationsListComponent.deliver<br/><small>app/features/dashboard/school-lists/components/school-quotations-list/school-quotations-list.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["SchoolQuotationDetailPageComponent.runAction<br/><small>app/features/dashboard/school-lists/school-quotation-detail-page.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n8["HTTP POST /api/school-lists/quotations/:id/status<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n9["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s10["API NestJS — presentación"]
+  n11{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n12(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n13{"¿StatusActionRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n14(["400 Datos inválidos"])
+  n15["SchoolListsController.status<br/><small>api/school-lists/presentation/controllers/school-lists.controller.ts</small>"]
+  end
+  subgraph s16["Aplicación — caso de uso"]
+  n17["ChangeSchoolQuotationStatusUseCase.execute<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  end
+  n18(["Fin: la interfaz se actualiza<br/>this.delivering.set<br/>this.notifications.success<br/>this.notifications.error"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n1 -->|acción del usuario| n7
+  n7 --> n5
+  n5 --> n8
+  n8 --> n11
+  n11 -->|no| n12
+  n12 --> n3
+  n11 -->|sí| n13
+  n13 -->|no| n14
+  n14 --> n2
+  n13 -->|sí| n15
+  n15 --> n17
+  n17 --> n9
+  n9 --> n18
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n12,n14 err
+  class n5,n6,n7,n8 fe
+  class n9,n18 ok
+  class n11,n13 dec
+  class n15 api
+  class n17 app

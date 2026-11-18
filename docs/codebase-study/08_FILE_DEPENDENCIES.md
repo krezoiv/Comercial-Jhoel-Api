@@ -161,6 +161,8 @@ graph LR
   api_sales["sales"] -->|1| api_inventory["inventory"]
   api_sales["sales"] -->|1| api_products["products"]
   api_sales["sales"] -->|1| api_users["users"]
+  api_school_lists["school-lists"] -->|1| api_auth["auth"]
+  api_school_lists["school-lists"] -->|3| api_company_settings["company-settings"]
   api_suppliers["suppliers"] -->|2| api_auth["auth"]
   api_tickets["tickets"] -->|2| api_auth["auth"]
   api_tickets["tickets"] -->|5| api_clients["clients"]
@@ -316,6 +318,8 @@ graph LR
 | sales | inventory | 1 |
 | sales | products | 1 |
 | sales | users | 1 |
+| school-lists | auth | 1 |
+| school-lists | company-settings | 3 |
 | suppliers | auth | 2 |
 | tickets | auth | 2 |
 | tickets | clients | 5 |
@@ -380,6 +384,7 @@ graph LR
 | dashboard-sales | `inventory.service`, `sales-draft.store` |
 | dashboard-sales-admin | `client.service`, `notification.service`, `sales.service` |
 | dashboard-sales-register | `auth.service`, `business.service`, `confirm-dialog.service`, `notification.service`, `sales-cash-box.service`, `sales-register.service` |
+| dashboard-school-lists | `bank.service`, `confirm-dialog.service`, `notification.service`, `pdf-prompt-modal.service`, `school-list.service` |
 | dashboard-sidebar | `auth.service`, `bank-balance-draft.store`, `day-status.service`, `ice-cream-purchase-draft.store`, `ice-cream-sale-draft.store`, `notification.service`, `purchase-draft.store`, `sales-draft.store` |
 | dashboard-suppliers | `auth.service`, `confirm-dialog.service`, `notification.service`, `supplier.service` |
 | dashboard-tickets | `auth.service`, `confirm-dialog.service`, `inventory.service`, `notification.service`, `tickets.service` |

@@ -11,6 +11,31 @@
         </button>
       </div>
 
+      @if (!correctionOf && !result()) {
+        <div class="draft-bar" role="status" aria-live="polite">
+          @switch (draftStatus()) {
+            @case ('loading') { <span class="draft-bar__state"><app-icon name="clock" [size]="14" /> Recuperando borrador…</span> }
+            @case ('saving') { <span class="draft-bar__state"><app-icon name="clock" [size]="14" /> Guardando…</span> }
+            @case ('saved') {
+              <span class="draft-bar__state draft-bar__state--ok">
+                <app-icon name="check-circle" [size]="14" /> Guardado correctamente{{ draftSavedAt() ? ' · ' + formatDateTime(draftSavedAt()!) : '' }}
+              </span>
+            }
+            @case ('error') { <span class="draft-bar__state draft-bar__state--error"><app-icon name="alert-triangle" [size]="14" /> Error al guardar</span> }
+            @default { <span class="draft-bar__state">Los cambios se guardan automáticamente.</span> }
+          }
+          @if (draftRestored()) {
+            <span class="draft-bar__note">Se recuperó tu arqueo en proceso.</span>
+          }
+          <button type="button" class="draft-bar__reset" [disabled]="isSaving() || !hasInput()" (click)="resetDraft()">
+            <app-icon name="rotate-ccw" [size]="14" /> Reiniciar arqueo
+          </button>
+        </div>
+        @if (draftError()) {
+          <p class="modal__hint" role="alert">{{ draftError() }}</p>
+        }
+      }
+
       @if (result(); as r) {
         <!-- Resultado oficial guardado -->
         <div class="outcome" [class]="'outcome outcome--' + r.result.toLowerCase()" role="status">
@@ -69,14 +94,14 @@
         </div>
 
         <label class="checkbox">
-          <input type="checkbox" [ngModel]="countWarehouse()" (ngModelChange)="countWarehouse.set($event)" />
+          <input type="checkbox" [ngModel]="countWarehouse()" (ngModelChange)="setCountWarehouse($event)" />
           También conté físicamente el efectivo de Bodega (vista consolidada)
         </label>
         @if (countWarehouse()) {
           <div class="field">
             <label for="count-warehouse">Efectivo contado en Bodega</label>
             <input id="count-warehouse" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
-              [ngModel]="warehouseCounted()" (ngModelChange)="warehouseCounted.set($event)" />
+              [ngModel]="warehouseCounted()" (ngModelChange)="setWarehouseCounted($event)" />
           </div>
         } @else {
           <p class="modal__hint">Bodega se mostrará con su saldo teórico ({{ formatCurrency(warehouseTheoretical()) }}), no como efectivo verificado.</p>
@@ -84,7 +109,7 @@
 
         <div class="field">
           <label for="count-observations">Observaciones <span class="field__optional">(opcional)</span></label>
-          <textarea id="count-observations" rows="2" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
+          <textarea id="count-observations" rows="2" maxlength="500" [ngModel]="observations()" (ngModelChange)="setObservations($event)"></textarea>
         </div>
         @if (correctionOf) {
           <div class="field">

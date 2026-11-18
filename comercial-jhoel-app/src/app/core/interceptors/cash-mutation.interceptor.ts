@@ -15,7 +15,9 @@ import { CashControlSyncService } from '../services/cash-control-sync.service';
  */
 const CASH_RESOURCES = /\/(bank-deposits|accounts-receivable|account-receivable-payments|assets|bank-transfers|cash-control)(\/|$|\?)/;
 /** POSTs that only read (no write, nothing to notify). */
-const READ_ONLY_POSTS = /\/account-receivable-payments\/preview(\?|$)/;
+// Writes that never move cash: a preview, and the autosaved Arqueo de Caja draft
+// (broadcasting every autosave would make every open screen reload continuously).
+const READ_ONLY_POSTS = /\/account-receivable-payments\/preview(\?|$)|\/cash-control\/counts\/draft(\?|$)/;
 
 /** True for a successful-write candidate on a cash-moving resource of our own API. */
 export function isCashMutation(method: string, url: string): boolean {

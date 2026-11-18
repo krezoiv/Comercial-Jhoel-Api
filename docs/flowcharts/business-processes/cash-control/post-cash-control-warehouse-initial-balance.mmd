@@ -27,10 +27,10 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["RegisterWarehouseInitialBalanceUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n17["assertCashCustodyPermission()<br/><small>llamada en L210</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L231</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
   n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
   n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
-  n20{"¿!input.reason #124;#124; input.reason.trim().length #lt; 5?<br/><small>L211</small>"}
+  n20{"¿!input.reason #124;#124; input.reason.trim().length #lt; 5?<br/><small>L232</small>"}
   n21(["cashControlError('CASH_REASON_REQUIRED')"])
   end
   subgraph s22["Dominio → Infraestructura"]

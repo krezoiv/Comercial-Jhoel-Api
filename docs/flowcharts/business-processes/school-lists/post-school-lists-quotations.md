@@ -1,0 +1,79 @@
+# POST /api/school-lists/quotations
+
+Módulo: **school-lists (school-lists)** · Fuente editable: [`post-school-lists-quotations.mmd`](post-school-lists-quotations.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/school-lists/quotations"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["SchoolListService.createQuotation<br/><small>app/core/services/school-list.service.ts</small>"]
+  n6["SchoolQuotationEditorComponent.save<br/><small>app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/school-lists/quotations<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿CreateQuotationRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["SchoolListsController.create<br/><small>api/school-lists/presentation/controllers/school-lists.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["CreateSchoolQuotationUseCase.execute<br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n17["assertPositiveMoney()<br/><small>llamada en L220</small><br/><small>api/school-lists/application/use-cases/school-list.use-cases.ts</small>"]
+  n18{"¿!Number.isFinite(amount) #124;#124; amount #lt;= 0 #124;#124; Math.round(amount * 100) !== Number((amount * 100).toFixed(6))?<br/><small>L58</small>"}
+  n19(["schoolListError('SCHOOL_INVALID_AMOUNT')"])
+  end
+  n20(["Fin: la interfaz se actualiza<br/>this.touched.set<br/>this.saving.set<br/>this.error.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n8
+  n8 --> n20
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19 err
+  class n5,n6,n7 fe
+  class n8,n20 ok
+  class n10,n12,n18 dec
+  class n14 api
+  class n16 app
+  class n17 dom
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/school-lists/quotations: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** SchoolQuotationEditorComponent.save (comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/presentation/controllers/school-lists.controller.ts), [`comercial-jhoel-app/src/app/core/services/school-list.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/school-lists/components/school-quotation-editor/school-quotation-editor.component.ts), [`comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/school-lists/application/use-cases/school-list.use-cases.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO CreateQuotationRequestDto | !Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== Number((amount * 100).toFixed(6))
+6. **¿Dónde se almacenan los datos?** ver repositorio
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

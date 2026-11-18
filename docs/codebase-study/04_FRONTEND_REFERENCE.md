@@ -12,9 +12,9 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `core-data` | 10 | 0 | 0 | — | [abrir](reference/frontend/core-data.md) |
 | Frontend `core-guards` | 3 | 0 | 0 | — | [abrir](reference/frontend/core-guards.md) |
 | Frontend `core-interceptors` | 3 | 0 | 0 | — | [abrir](reference/frontend/core-interceptors.md) |
-| Frontend `core-models` | 69 | 0 | 0 | — | [abrir](reference/frontend/core-models.md) |
-| Frontend `core-services` | 97 | 94 | 594 | — | [abrir](reference/frontend/core-services.md) |
-| Frontend `core-utils` | 11 | 0 | 0 | — | [abrir](reference/frontend/core-utils.md) |
+| Frontend `core-models` | 70 | 0 | 0 | — | [abrir](reference/frontend/core-models.md) |
+| Frontend `core-services` | 98 | 95 | 620 | — | [abrir](reference/frontend/core-services.md) |
+| Frontend `core-utils` | 12 | 0 | 0 | — | [abrir](reference/frontend/core-utils.md) |
 | Frontend `dashboard` | 1 | 1 | 8 | — | [abrir](reference/frontend/dashboard.md) |
 | Frontend `dashboard-account-types` | 6 | 6 | 17 | — | [abrir](reference/frontend/dashboard-account-types.md) |
 | Frontend `dashboard-accounts-receivable` | 10 | 8 | 59 | — | [abrir](reference/frontend/dashboard-accounts-receivable.md) |
@@ -24,7 +24,7 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `dashboard-bank-transfers` | 2 | 2 | 25 | — | [abrir](reference/frontend/dashboard-bank-transfers.md) |
 | Frontend `dashboard-banks` | 6 | 6 | 18 | — | [abrir](reference/frontend/dashboard-banks.md) |
 | Frontend `dashboard-businesses` | 6 | 6 | 17 | — | [abrir](reference/frontend/dashboard-businesses.md) |
-| Frontend `dashboard-cash-control` | 22 | 15 | 92 | — | [abrir](reference/frontend/dashboard-cash-control.md) |
+| Frontend `dashboard-cash-control` | 27 | 18 | 121 | — | [abrir](reference/frontend/dashboard-cash-control.md) |
 | Frontend `dashboard-catalog-banks` | 5 | 5 | 28 | — | [abrir](reference/frontend/dashboard-catalog-banks.md) |
 | Frontend `dashboard-catalog-phones` | 4 | 4 | 30 | — | [abrir](reference/frontend/dashboard-catalog-phones.md) |
 | Frontend `dashboard-catalog-product-requests` | 3 | 3 | 10 | — | [abrir](reference/frontend/dashboard-catalog-product-requests.md) |
@@ -62,11 +62,12 @@ Cada enlace abre la referencia generada del área: inventario, componentes (sele
 | Frontend `dashboard-sales` | 6 | 6 | 31 | — | [abrir](reference/frontend/dashboard-sales.md) |
 | Frontend `dashboard-sales-admin` | 3 | 3 | 16 | — | [abrir](reference/frontend/dashboard-sales-admin.md) |
 | Frontend `dashboard-sales-register` | 3 | 3 | 20 | — | [abrir](reference/frontend/dashboard-sales-register.md) |
+| Frontend `dashboard-school-lists` | 11 | 10 | 73 | — | [abrir](reference/frontend/dashboard-school-lists.md) |
 | Frontend `dashboard-sidebar` | 1 | 1 | 10 | — | [abrir](reference/frontend/dashboard-sidebar.md) |
 | Frontend `dashboard-suppliers` | 6 | 6 | 18 | — | [abrir](reference/frontend/dashboard-suppliers.md) |
 | Frontend `dashboard-tickets` | 6 | 6 | 32 | — | [abrir](reference/frontend/dashboard-tickets.md) |
 | Frontend `dashboard-topbar` | 2 | 2 | 15 | — | [abrir](reference/frontend/dashboard-topbar.md) |
-| Frontend `dashboard-transaccionar` | 16 | 12 | 63 | — | [abrir](reference/frontend/dashboard-transaccionar.md) |
+| Frontend `dashboard-transaccionar` | 17 | 12 | 63 | — | [abrir](reference/frontend/dashboard-transaccionar.md) |
 | Frontend `dashboard-transaction-banks` | 7 | 7 | 25 | — | [abrir](reference/frontend/dashboard-transaction-banks.md) |
 | Frontend `dashboard-transaction-days` | 4 | 4 | 26 | — | [abrir](reference/frontend/dashboard-transaction-days.md) |
 | Frontend `dashboard-transaction-types` | 6 | 6 | 20 | — | [abrir](reference/frontend/dashboard-transaction-types.md) |

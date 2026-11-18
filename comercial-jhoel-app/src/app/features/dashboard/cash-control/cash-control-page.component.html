@@ -22,6 +22,9 @@
       <button type="button" role="tab" [attr.aria-selected]="tab() === 'bodega'" [class.tabs__tab--on]="tab() === 'bodega'" (click)="setTab('bodega')">
         <app-icon name="package" [size]="16" /> Bodega
       </button>
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'inventario'" [class.tabs__tab--on]="tab() === 'inventario'" (click)="setTab('inventario')">
+        <app-icon name="layers" [size]="16" /> Inventario y traslados
+      </button>
     }
   </div>
 
@@ -282,6 +285,15 @@
     <app-cash-counts-panel [refreshKey]="custodyRefresh()" [canCorrect]="isAdmin()" (correct)="openCount($event)" />
   }
 
+  @if (tab() === 'inventario' && canCustody()) {
+    <div class="custody-actions">
+      <app-button variant="primary" (click)="openWithdrawal()"><app-icon name="arrow-up-circle" [size]="16" /> Enviar de Bodega a caja</app-button>
+      <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Retirar de caja a Bodega</app-button>
+    </div>
+    <app-cash-inventory-panel [refreshKey]="custodyRefresh()" [isAdmin]="isAdmin()" (changed)="onCustodyChanged()" />
+    <app-custody-transfers-panel [refreshKey]="custodyRefresh()" />
+  }
+
   @if (tab() === 'bodega' && canCustody()) {
     <app-warehouse-panel
       [custody]="custody()"
@@ -325,7 +337,6 @@
 <app-warehouse-transfer-modal
   [open]="transferOpen()"
   [custody]="custody()"
-  [canSkipBreakdown]="isAdmin()"
   (saved)="onTransferSaved($event)"
   (closed)="transferOpen.set(false)"
 />
@@ -333,7 +344,6 @@
 <app-warehouse-withdrawal-modal
   [open]="withdrawalOpen()"
   [custody]="custody()"
-  [canSkipBreakdown]="isAdmin()"
   (saved)="onWithdrawalSaved($event)"
   (closed)="withdrawalOpen.set(false)"
 />

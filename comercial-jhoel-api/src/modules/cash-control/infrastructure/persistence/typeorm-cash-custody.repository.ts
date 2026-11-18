@@ -9,6 +9,14 @@ import {
   DenominationRow,
   FindCashCountsOptions,
   FindTransfersOptions,
+  CashCountDraft,
+  CashCountDraftPayload,
+  CashLocation,
+  CustodyTransferRow,
+  FindCustodyTransfersOptions,
+  LocationInventory,
+  RegisterWarehouseCashCountData,
+  WarehouseCashCountRow,
   LatestCashCountCandidate,
   LatestCashCountLookup,
   Paginated,
@@ -89,6 +97,40 @@ const WITHDRAWAL_SELECT = `
   LEFT JOIN banks b ON b.id = w.bank_id
   JOIN warehouse_cash_movements wm ON wm.id = w.warehouse_movement_id
   LEFT JOIN cash_movements cm ON cm.id = w.cash_movement_id
+`;
+
+const WAREHOUSE_COUNT_SELECT = `
+  SELECT w.*, to_char(w.business_date, 'YYYY-MM-DD') AS business_date_text, u.username,
+         COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
+                     'subtotal', d.subtotal) ORDER BY d.denomination DESC)
+                   FROM warehouse_cash_count_details d WHERE d.count_id = w.id), '[]') AS details
+  FROM warehouse_cash_counts w JOIN users u ON u.id = w.created_by
+`;
+
+/**
+ * Deliveries caja → Bodega and withdrawals Bodega → caja / bank in one shape,
+ * each with its own breakdown (caja-side details for deliveries, Bodega-side
+ * details for withdrawals — where the writers store them).
+ */
+const CUSTODY_TRANSFERS_UNION = `
+  SELECT t.id, 'CAJA_A_BODEGA'::text AS kind, t.reference_number, 'CAJA'::text AS origin, 'BODEGA'::text AS destination,
+         NULL::text AS bank_name, t.amount,
+         CASE t.status WHEN 'APLICADA' THEN 'APLICADO' ELSE 'ANULADO' END AS status,
+         t.delivered_by, t.received_by, t.voucher_reference, t.observations, t.has_breakdown, t.business_date,
+         t.created_by, t.created_at, t.voided_at, t.void_reason,
+         COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
+                     'subtotal', d.subtotal) ORDER BY d.denomination DESC)
+                   FROM cash_movement_details d WHERE d.movement_id = t.cash_movement_id), '[]') AS details
+  FROM cash_warehouse_transfers t
+  UNION ALL
+  SELECT w.id, CASE w.destination WHEN 'CAJA' THEN 'BODEGA_A_CAJA' ELSE 'BODEGA_A_BANCO' END, w.reference_number,
+         'BODEGA', w.destination, b.name, w.amount, w.status,
+         w.delivered_by, w.received_by, w.voucher_reference, w.observations, w.has_breakdown, w.business_date,
+         w.created_by, w.created_at, w.voided_at, w.void_reason,
+         COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
+                     'subtotal', d.subtotal) ORDER BY d.denomination DESC)
+                   FROM warehouse_cash_movement_details d WHERE d.movement_id = w.warehouse_movement_id), '[]')
+  FROM warehouse_cash_withdrawals w LEFT JOIN banks b ON b.id = w.bank_id
 `;
 
 const COUNT_SELECT = `
@@ -476,6 +518,223 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
           }
         : null,
       referenceBusinessDate,
+    };
+  }
+
+  // ── Inventario por denominación (1760007800000) ───────────────────────────
+
+  async getInventory(location: CashLocation): Promise<LocationInventory> {
+    const [summary] = await this.dataSource.query<SqlRow[]>(
+      `SELECT s.*, u.username AS anchor_username
+       FROM cash_location_inventory_summary($1) s LEFT JOIN users u ON u.id = s.anchor_by`,
+      [location],
+    );
+    const lines = await this.dataSource.query<SqlRow[]>(
+      `SELECT denomination, quantity FROM cash_location_inventory($1)`,
+      [location],
+    );
+    return {
+      location,
+      hasAnchor: summary?.has_anchor === true,
+      anchorKind:
+        (textOrNull(summary?.anchor_kind) as LocationInventory['anchorKind']) ??
+        null,
+      anchorId: textOrNull(summary?.anchor_id),
+      anchorNumber: numOrNull(summary?.anchor_number),
+      anchorAt: (summary?.anchor_at as Date | null) ?? null,
+      anchorByUsername: textOrNull(summary?.anchor_username),
+      balance: num(summary?.balance),
+      knownTotal: num(summary?.known_total),
+      unbroken: num(summary?.unbroken),
+      lines: lines.map((r) => {
+        const denomination = num(r.denomination);
+        const quantity = num(r.quantity);
+        return {
+          denomination,
+          quantity,
+          subtotal: Math.round(denomination * 100 * quantity) / 100,
+        };
+      }),
+    };
+  }
+
+  async registerWarehouseCount(
+    data: RegisterWarehouseCashCountData,
+  ): Promise<string> {
+    const [row] = await this.write<SqlRow[]>(
+      `SELECT register_warehouse_cash_count($1::jsonb, $2, $3, $4) AS id`,
+      [
+        JSON.stringify(data.details),
+        data.observations ?? null,
+        data.userId,
+        data.idempotencyKey,
+      ],
+    );
+    return text(row.id);
+  }
+
+  async findWarehouseCounts(
+    page: number,
+    limit: number,
+  ): Promise<Paginated<WarehouseCashCountRow>> {
+    const [count] = await this.dataSource.query<SqlRow[]>(
+      `SELECT count(*) AS total FROM warehouse_cash_counts`,
+    );
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `${WAREHOUSE_COUNT_SELECT} ORDER BY w.number DESC LIMIT $1 OFFSET $2`,
+      [limit, (page - 1) * limit],
+    );
+    return {
+      items: rows.map((r) => this.toWarehouseCount(r)),
+      total: num(count?.total),
+      page,
+      limit,
+    };
+  }
+
+  async findWarehouseCountById(
+    id: string,
+  ): Promise<WarehouseCashCountRow | null> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `${WAREHOUSE_COUNT_SELECT} WHERE w.id = $1`,
+      [id],
+    );
+    return row ? this.toWarehouseCount(row) : null;
+  }
+
+  // ── Borradores del Arqueo de Caja (por usuario × día bancario actual) ─────
+
+  async getCountDraft(userId: string): Promise<CashCountDraft | null> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `SELECT d.payload, d.version, d.updated_at, to_char(d.business_date, 'YYYY-MM-DD') AS business_date
+       FROM cash_count_drafts d JOIN cash_current_bank_day() b ON b.day_opening_id = d.day_opening_id
+       WHERE d.user_id = $1`,
+      [userId],
+    );
+    return row ? this.toDraft(row) : null;
+  }
+
+  async saveCountDraft(
+    userId: string,
+    payload: CashCountDraftPayload,
+  ): Promise<CashCountDraft | null> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `INSERT INTO cash_count_drafts (user_id, day_opening_id, business_date, payload)
+       SELECT $1, b.day_opening_id, b.business_date, $2::jsonb
+       FROM cash_current_bank_day() b WHERE b.day_opening_id IS NOT NULL AND b.is_open
+       ON CONFLICT (user_id, day_opening_id)
+       DO UPDATE SET payload = EXCLUDED.payload, version = cash_count_drafts.version + 1, updated_at = now()
+       RETURNING payload, version, updated_at, to_char(business_date, 'YYYY-MM-DD') AS business_date`,
+      [userId, JSON.stringify(payload)],
+    );
+    return row ? this.toDraft(row) : null;
+  }
+
+  async deleteCountDraft(userId: string): Promise<void> {
+    await this.dataSource.query(
+      `DELETE FROM cash_count_drafts d USING cash_current_bank_day() b
+       WHERE d.user_id = $1 AND d.day_opening_id = b.day_opening_id`,
+      [userId],
+    );
+  }
+
+  // ── Historial unificado de traslados caja ↔ Bodega ────────────────────────
+
+  async findCustodyTransfers(
+    options: FindCustodyTransfersOptions,
+  ): Promise<Paginated<CustodyTransferRow>> {
+    const where: string[] = [];
+    const params: unknown[] = [];
+    const add = (clause: string, value: unknown) => {
+      params.push(value);
+      where.push(clause.replace('?', `$${params.length}`));
+    };
+    if (options.kind) add('x.kind = ?', options.kind);
+    if (options.userId) add('x.created_by = ?::uuid', options.userId);
+    if (options.status) add('x.status = ?', options.status);
+    if (options.dateFrom)
+      add(
+        `(x.created_at AT TIME ZONE 'America/Guatemala')::date >= ?::date`,
+        options.dateFrom,
+      );
+    if (options.dateTo)
+      add(
+        `(x.created_at AT TIME ZONE 'America/Guatemala')::date <= ?::date`,
+        options.dateTo,
+      );
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const [count] = await this.dataSource.query<SqlRow[]>(
+      `WITH x AS (${CUSTODY_TRANSFERS_UNION}) SELECT count(*) AS total FROM x ${whereSql}`,
+      params,
+    );
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `WITH x AS (${CUSTODY_TRANSFERS_UNION})
+       SELECT x.*, to_char(x.business_date, 'YYYY-MM-DD') AS business_date_text, u.username AS created_by_username
+       FROM x JOIN users u ON u.id = x.created_by ${whereSql}
+       ORDER BY x.created_at DESC, x.reference_number DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, options.limit, (options.page - 1) * options.limit],
+    );
+    return {
+      items: rows.map((r) => ({
+        id: text(r.id),
+        kind: text(r.kind) as CustodyTransferRow['kind'],
+        referenceNumber: text(r.reference_number),
+        origin: text(r.origin) as CustodyTransferRow['origin'],
+        destination: text(r.destination) as CustodyTransferRow['destination'],
+        bankName: textOrNull(r.bank_name),
+        amount: num(r.amount),
+        status: text(r.status) as CustodyTransferRow['status'],
+        deliveredBy: text(r.delivered_by),
+        receivedBy: text(r.received_by),
+        voucherReference: textOrNull(r.voucher_reference),
+        observations: textOrNull(r.observations),
+        hasBreakdown: r.has_breakdown === true,
+        businessDate: text(r.business_date_text),
+        createdById: text(r.created_by),
+        createdByUsername: text(r.created_by_username),
+        createdAt: r.created_at as Date,
+        voidedAt: (r.voided_at as Date | null) ?? null,
+        voidReason: textOrNull(r.void_reason),
+        details: toDetails(r.details),
+      })),
+      total: num(count?.total),
+      page: options.page,
+      limit: options.limit,
+    };
+  }
+
+  private toWarehouseCount(row: SqlRow): WarehouseCashCountRow {
+    return {
+      id: text(row.id),
+      number: num(row.number),
+      countedAt: row.counted_at as Date,
+      businessDate: text(row.business_date_text),
+      warehouseBalance: num(row.warehouse_balance),
+      totalCounted: num(row.total_counted),
+      observations: textOrNull(row.observations),
+      createdByUsername: text(row.username),
+      details: toDetails(row.details),
+    };
+  }
+
+  private toDraft(row: SqlRow): CashCountDraft {
+    const p = (row.payload ?? {}) as Partial<CashCountDraftPayload>;
+    return {
+      businessDate: text(row.business_date),
+      payload: {
+        details: Array.isArray(p.details)
+          ? p.details.map((d) => ({
+              denomination: num(d.denomination),
+              quantity: num(d.quantity),
+            }))
+          : [],
+        observations: p.observations ?? null,
+        countWarehouse: p.countWarehouse === true,
+        warehouseCounted: p.warehouseCounted ?? null,
+      },
+      version: num(row.version),
+      updatedAt: row.updated_at as Date,
     };
   }
 

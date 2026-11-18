@@ -19,6 +19,11 @@ describe('cashMutationInterceptor (real-time cash refresh)', () => {
     expect(isCashMutation('GET', `${api}/bank-deposits/recent`)).toBeFalse();
     expect(isCashMutation('POST', `${api}/sales/confirm`)).toBeFalse();
     expect(isCashMutation('POST', 'https://otro.example.com/bank-deposits')).toBeFalse();
+    // The autosaved Arqueo de Caja draft is not a cash movement.
+    expect(isCashMutation('PUT', `${api}/cash-control/counts/draft`)).toBeFalse();
+    expect(isCashMutation('DELETE', `${api}/cash-control/counts/draft`)).toBeFalse();
+    expect(isCashMutation('POST', `${api}/cash-control/counts`)).toBeTrue();
+    expect(isCashMutation('POST', `${api}/cash-control/warehouse/counts`)).toBeTrue();
   });
 
   it('notifies after a successful write and stays silent on failures', () => {

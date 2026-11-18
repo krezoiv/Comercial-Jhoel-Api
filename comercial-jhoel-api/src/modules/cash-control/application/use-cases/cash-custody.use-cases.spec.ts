@@ -7,6 +7,12 @@ import {
   VoidWarehouseWithdrawalUseCase,
   GetCashCustodyUseCase,
   GetLatestCashCountUseCase,
+  GetCashInventoryUseCase,
+  RegisterWarehouseCashCountUseCase,
+  GetCashCountDraftUseCase,
+  SaveCashCountDraftUseCase,
+  DiscardCashCountDraftUseCase,
+  ListCustodyTransfersUseCase,
   ListCashCountsUseCase,
   RegisterCashCountUseCase,
   RegisterWarehouseInitialBalanceUseCase,
@@ -59,6 +65,31 @@ function repository(): jest.Mocked<CashCustodyRepository> {
     findLatestValidCount: jest
       .fn()
       .mockResolvedValue({ count: null, referenceBusinessDate: '2026-11-11' }),
+    getInventory: jest
+      .fn()
+      .mockImplementation((location: string) =>
+        Promise.resolve({ location, hasAnchor: true, lines: [] }),
+      ),
+    registerWarehouseCount: jest.fn().mockResolvedValue('wc1'),
+    findWarehouseCounts: jest
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, page: 1, limit: 25 }),
+    findWarehouseCountById: jest.fn().mockResolvedValue({ id: 'wc1' }),
+    getCountDraft: jest.fn().mockResolvedValue(null),
+    saveCountDraft: jest
+      .fn()
+      .mockImplementation((_u: string, payload: unknown) =>
+        Promise.resolve({
+          businessDate: '2026-11-16',
+          payload,
+          version: 1,
+          updatedAt: new Date(),
+        }),
+      ),
+    deleteCountDraft: jest.fn().mockResolvedValue(undefined),
+    findCustodyTransfers: jest
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, page: 1, limit: 25 }),
   };
 }
 
@@ -101,7 +132,7 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
     expect(result.custody.custodyTotal).toBe(120000);
   });
 
-  it('a delivery without breakdown needs an administrator (business policy)', async () => {
+  it('a delivery always needs its breakdown — also for administrators (per-denomination inventory)', async () => {
     const repo = repository();
     const base = {
       amount: 100,
@@ -109,21 +140,32 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
       receivedBy: 'Ana Bodega',
       clientRequestId: 'req-2',
     };
+    for (const actor of [SUPERVISOR, SUPER]) {
+      await expectCode(
+        new RegisterWarehouseTransferUseCase(repo).execute({
+          ...base,
+          ...actor,
+        }),
+        'CASH_CUSTODY_BREAKDOWN_REQUIRED',
+      );
+      await expectCode(
+        new RegisterWarehouseTransferUseCase(repo).execute({
+          ...base,
+          details: [{ denomination: 100, quantity: 0 }],
+          ...actor,
+        }),
+        'CASH_CUSTODY_BREAKDOWN_REQUIRED',
+      );
+    }
     await expectCode(
       new RegisterWarehouseTransferUseCase(repo).execute({
         ...base,
-        ...SUPERVISOR,
+        details: [{ denomination: 100, quantity: 1.5 }],
+        ...SUPER,
       }),
-      'CASH_CUSTODY_FORBIDDEN',
+      'CASH_INVALID_DENOMINATION',
     );
     expect(repo.registerTransfer).not.toHaveBeenCalled();
-    await new RegisterWarehouseTransferUseCase(repo).execute({
-      ...base,
-      ...SUPER,
-    });
-    expect(repo.registerTransfer).toHaveBeenCalledWith(
-      expect.objectContaining({ details: [] }),
-    );
   });
 
   it('cashiers cannot deliver; voids need authorize and a reason', async () => {
@@ -295,7 +337,7 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
     );
   });
 
-  it('withdrawal: without breakdown needs authorize; cashiers cannot withdraw; voids need authorize', async () => {
+  it('withdrawal: breakdown always required; cashiers cannot withdraw; voids need authorize', async () => {
     const repo = repository();
     const base = {
       amount: 100,
@@ -304,13 +346,15 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
       clientRequestId: 'w-2',
       destination: 'CAJA' as const,
     };
-    await expectCode(
-      new RegisterWarehouseWithdrawalUseCase(repo).execute({
-        ...base,
-        ...SUPERVISOR,
-      }),
-      'CASH_CUSTODY_FORBIDDEN',
-    );
+    for (const actor of [SUPERVISOR, SUPER]) {
+      await expectCode(
+        new RegisterWarehouseWithdrawalUseCase(repo).execute({
+          ...base,
+          ...actor,
+        }),
+        'CASH_CUSTODY_BREAKDOWN_REQUIRED',
+      );
+    }
     await expectCode(
       new RegisterWarehouseWithdrawalUseCase(repo).execute({
         ...base,
@@ -422,6 +466,177 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
           role: 'ADMIN',
         }),
         'CASH_INVALID_DATE_RANGE',
+      );
+    });
+  });
+
+  describe('inventario por denominación, conteo de Bodega y borradores del arqueo', () => {
+    it('inventory of both locations requires cash_custody.view', async () => {
+      const repo = repository();
+      await expectCode(
+        new GetCashInventoryUseCase(repo).execute(USER),
+        'CASH_CUSTODY_FORBIDDEN',
+      );
+      const result = await new GetCashInventoryUseCase(repo).execute(
+        SUPERVISOR,
+      );
+      expect(repo.getInventory).toHaveBeenCalledWith('CAJA');
+      expect(repo.getInventory).toHaveBeenCalledWith('BODEGA');
+      expect(result.cash.location).toBe('CAJA');
+      expect(result.warehouse.location).toBe('BODEGA');
+    });
+
+    it('the Bodega count is admin-only, needs a breakdown and namespaces its key', async () => {
+      const repo = repository();
+      const input = {
+        details: [{ denomination: 200, quantity: 5 }],
+        clientRequestId: 'c-1',
+      };
+      await expectCode(
+        new RegisterWarehouseCashCountUseCase(repo).execute({
+          ...input,
+          ...SUPERVISOR,
+        }),
+        'CASH_CUSTODY_FORBIDDEN',
+      );
+      await expectCode(
+        new RegisterWarehouseCashCountUseCase(repo).execute({
+          ...input,
+          details: [],
+          ...SUPER,
+        }),
+        'CASH_CUSTODY_BREAKDOWN_REQUIRED',
+      );
+      await new RegisterWarehouseCashCountUseCase(repo).execute({
+        ...input,
+        ...SUPER,
+      });
+      expect(repo.registerWarehouseCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          idempotencyKey: 'WHC:c-1',
+          userId: 'u-super',
+        }),
+      );
+    });
+
+    it('a draft is always the caller own (JWT user) and validates quantities', async () => {
+      const repo = repository();
+      await expectCode(
+        new GetCashCountDraftUseCase(repo).execute(USER),
+        'CASH_CUSTODY_FORBIDDEN',
+      );
+      await new GetCashCountDraftUseCase(repo).execute(SUPERVISOR);
+      expect(repo.getCountDraft).toHaveBeenCalledWith('u-sup');
+      await expectCode(
+        new SaveCashCountDraftUseCase(repo).execute({
+          details: [{ denomination: 200, quantity: -1 }],
+          ...SUPERVISOR,
+        }),
+        'CASH_COUNT_DRAFT_INVALID',
+      );
+      await expectCode(
+        new SaveCashCountDraftUseCase(repo).execute({
+          details: [{ denomination: 200, quantity: 1.5 }],
+          ...SUPERVISOR,
+        }),
+        'CASH_COUNT_DRAFT_INVALID',
+      );
+      const saved = await new SaveCashCountDraftUseCase(repo).execute({
+        details: [
+          { denomination: 200, quantity: 3 },
+          { denomination: 0.01, quantity: 0 },
+        ],
+        observations: 'Medio conteo',
+        countWarehouse: false,
+        warehouseCounted: 999,
+        ...SUPERVISOR,
+      });
+      expect(repo.saveCountDraft).toHaveBeenCalledWith('u-sup', {
+        details: [
+          { denomination: 200, quantity: 3 },
+          { denomination: 0.01, quantity: 0 },
+        ],
+        observations: 'Medio conteo',
+        countWarehouse: false,
+        warehouseCounted: null,
+      });
+      expect(saved.version).toBe(1);
+    });
+
+    it('saving a draft without an open bank day fails clearly', async () => {
+      const repo = repository();
+      repo.saveCountDraft.mockResolvedValue(null);
+      await expectCode(
+        new SaveCashCountDraftUseCase(repo).execute({
+          details: [],
+          ...SUPERVISOR,
+        }),
+        'CASH_CUSTODY_DAY_NOT_OPEN',
+      );
+    });
+
+    it('confirming a count clears the caller draft; an admin correction does not; discarding is explicit', async () => {
+      const repo = repository();
+      await new RegisterCashCountUseCase(repo).execute({
+        details: [{ denomination: 200, quantity: 1 }],
+        clientRequestId: 'a-1',
+        ...SUPERVISOR,
+      });
+      expect(repo.deleteCountDraft).toHaveBeenCalledWith('u-sup');
+      repo.deleteCountDraft.mockClear();
+      await new RegisterCashCountUseCase(repo).execute({
+        details: [{ denomination: 200, quantity: 1 }],
+        clientRequestId: 'a-2',
+        replacesId: 'c1',
+        correctionReason: 'Conteo equivocado',
+        ...SUPER,
+      });
+      expect(repo.deleteCountDraft).not.toHaveBeenCalled();
+      await new DiscardCashCountDraftUseCase(repo).execute(SUPERVISOR);
+      expect(repo.deleteCountDraft).toHaveBeenCalledWith('u-sup');
+    });
+
+    it('a failed count keeps the draft (nothing is cleared before a valid confirmation)', async () => {
+      const repo = repository();
+      repo.registerCount.mockRejectedValue(
+        new Error('CASH_CUSTODY_DAY_NOT_OPEN'),
+      );
+      await expect(
+        new RegisterCashCountUseCase(repo).execute({
+          details: [{ denomination: 200, quantity: 1 }],
+          clientRequestId: 'a-3',
+          ...SUPERVISOR,
+        }),
+      ).rejects.toThrow();
+      expect(repo.deleteCountDraft).not.toHaveBeenCalled();
+    });
+
+    it('transfer history requires view and validates the range', async () => {
+      const repo = repository();
+      await expectCode(
+        new ListCustodyTransfersUseCase(repo).execute({ role: 'USER' }),
+        'CASH_CUSTODY_FORBIDDEN',
+      );
+      await expectCode(
+        new ListCustodyTransfersUseCase(repo).execute({
+          dateFrom: '2026-11-10',
+          dateTo: '2026-11-01',
+          role: 'ADMIN',
+        }),
+        'CASH_INVALID_DATE_RANGE',
+      );
+      await new ListCustodyTransfersUseCase(repo).execute({
+        kind: 'BODEGA_A_CAJA',
+        userId: 'u1',
+        role: 'ADMIN',
+      });
+      expect(repo.findCustodyTransfers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'BODEGA_A_CAJA',
+          userId: 'u1',
+          page: 1,
+          limit: 25,
+        }),
       );
     });
   });

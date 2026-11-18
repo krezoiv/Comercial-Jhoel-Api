@@ -22,18 +22,18 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["RegisterCashCountUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n17["assertCashCustodyPermission()<br/><small>llamada en L268</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L289</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
   n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
   n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
-  n20{"¿!input.correctionReason #124;#124; input.correctionReason.trim().length #lt; 5?<br/><small>L271</small>"}
+  n20{"¿!input.correctionReason #124;#124; input.correctionReason.trim().length #lt; 5?<br/><small>L292</small>"}
   n21(["cashControlError('CASH_REASON_REQUIRED')"])
-  n22{"¿!input.details?.length?<br/><small>L275</small>"}
+  n22{"¿!input.details?.length?<br/><small>L296</small>"}
   n23(["cashControlError('CASH_BREAKDOWN_REQUIRED')"])
-  n24{"¿!count?<br/><small>L288</small>"}
+  n24{"¿!count?<br/><small>L309</small>"}
   n25(["cashControlError('CASH_COUNT_NOT_FOUND')"])
   end
   subgraph s26["Dominio → Infraestructura"]
-  n27["Puerto CashCustodyRepository.registerCount / findCountById<br/>@Inject(CASH_CUSTODY_REPOSITORY)"]
+  n27["Puerto CashCustodyRepository.registerCount / findCountById / deleteCountDraft<br/>@Inject(CASH_CUSTODY_REPOSITORY)"]
   n28["TypeOrmCashCustodyRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts</small>"]
   subgraph s29["PostgreSQL — función register_cash_count"]
   n30[["SELECT register_cash_count(…)<br/><small>registerCount — una transacción</small>"]]
@@ -56,8 +56,9 @@ flowchart TD
   n47[("Escribe:<br/>cash_count_details<br/>cash_counts")]
   end
   n48[("findCountById: TypeORM Repository")]
+  n49[("deleteCountDraft: SQL / TypeORM sobre<br/>cash_count_drafts")]
   end
-  n49(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.result.set<br/>this.saved.emit"])
+  n50(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.result.set<br/>this.draftStatus.set<br/>this.draftSavedAt.set<br/>this.saved.emit"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5
@@ -113,7 +114,9 @@ flowchart TD
   n47 -->|COMMIT| n8
   n28 --> n48
   n48 --> n8
-  n8 --> n49
+  n28 --> n49
+  n49 --> n8
+  n8 --> n50
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -127,13 +130,13 @@ flowchart TD
   class n1 start
   class n2,n3,n11,n13,n19,n21,n23,n25,n32,n34,n36,n38,n40,n42,n43 err
   class n5,n6,n7 fe
-  class n8,n49 ok
+  class n8,n50 ok
   class n10,n12,n18,n20,n22,n24,n31,n33,n35,n37,n39,n41 dec
   class n14 api
   class n16 app
   class n17,n27 dom
   class n28 infra
-  class n30,n44,n45,n46,n47,n48 db
+  class n30,n44,n45,n46,n47,n48,n49 db
 ```
 
 ## Explicación
@@ -143,7 +146,7 @@ flowchart TD
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts), [`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
 5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO RegisterCashCountRequestDto | !(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', ) | !input.correctionReason || input.correctionReason.trim().length < 5 | !input.details?.length | !count | SQL register_cash_count: p_idempotency_key IS NULL OR length(trim(p_idempotency_key)) = 0 | SQL register_cash_count: v_row.denomination IS NULL OR NOT cash_valid_denomination(v_row.denomination) OR v_row.quantity IS NULL OR v_row.quantity < 0 OR v_row.quantity <> trunc(v_row.q | SQL register_cash_count: p_warehouse_counted IS NOT NULL AND (p_warehouse_counted < 0 OR p_warehouse_counted <> round(p_warehouse_counted, 2)) | SQL register_cash_count: NOT FOUND | SQL register_cash_count: v_original.status <> 'VIGENTE' | SQL register_cash_count: v_day.day_opening_id IS NULL
-6. **¿Dónde se almacenan los datos?** register_cash_count(), cash_count_details, cash_counts
+6. **¿Dónde se almacenan los datos?** register_cash_count(), cash_count_details, cash_counts, cash_count_drafts
 7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
 8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
 

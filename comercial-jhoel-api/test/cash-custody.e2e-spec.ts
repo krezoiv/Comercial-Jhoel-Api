@@ -137,14 +137,30 @@ describe('Control de Efectivo — arqueo y Bodega (e2e)', () => {
       }),
     );
 
+    // Per-denomination inventory (1760007800000): the caja starts from an arqueo.
+    await as(adminToken)(
+      api()
+        .post('/api/cash-control/counts')
+        .send({
+          details: [{ denomination: 200, quantity: 500 }],
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(201);
+
     // Over the caja balance: rejected, nothing written.
     const over = await as(adminToken)(
-      api().post('/api/cash-control/warehouse/transfers').send({
-        amount: 100000.01,
-        deliveredBy: 'Juan Caja',
-        receivedBy: 'Ana Bodega',
-        clientRequestId: randomUUID(),
-      }),
+      api()
+        .post('/api/cash-control/warehouse/transfers')
+        .send({
+          amount: 100000.01,
+          details: [
+            { denomination: 200, quantity: 500 },
+            { denomination: 0.01, quantity: 1 },
+          ],
+          deliveredBy: 'Juan Caja',
+          receivedBy: 'Ana Bodega',
+          clientRequestId: randomUUID(),
+        }),
     ).expect(400);
     expect(JSON.stringify(over.body)).toContain('efectivo');
     expect(await custody()).toEqual(
@@ -276,6 +292,20 @@ describe('Control de Efectivo — arqueo y Bodega (e2e)', () => {
       `SELECT id, final_balance FROM banks WHERE is_active AND special_account IS NULL ORDER BY created_at LIMIT 1`,
     )) as Body[];
     const before = await custody();
+    // Bodega starts its per-denomination inventory from an audited count = its balance.
+    const rest = Math.round((before.warehouseBalance - 7000) * 100);
+    await as(adminToken)(
+      api()
+        .post('/api/cash-control/warehouse/counts')
+        .send({
+          details: [
+            { denomination: 100, quantity: 70 },
+            { denomination: 200, quantity: Math.floor(rest / 20000) },
+            { denomination: 0.01, quantity: rest % 20000 },
+          ],
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(201);
     const toCash = data(
       await as(adminToken)(
         api()

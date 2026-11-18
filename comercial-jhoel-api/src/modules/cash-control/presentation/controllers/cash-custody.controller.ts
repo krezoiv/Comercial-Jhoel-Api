@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -27,6 +29,13 @@ import {
   VoidWarehouseTransferUseCase,
   GetWarehouseWithdrawalUseCase,
   ListWarehouseWithdrawalsUseCase,
+  GetCashInventoryUseCase,
+  RegisterWarehouseCashCountUseCase,
+  ListWarehouseCashCountsUseCase,
+  GetCashCountDraftUseCase,
+  SaveCashCountDraftUseCase,
+  DiscardCashCountDraftUseCase,
+  ListCustodyTransfersUseCase,
   RegisterWarehouseWithdrawalUseCase,
   VoidWarehouseWithdrawalUseCase,
 } from '../../application/use-cases/cash-custody.use-cases';
@@ -34,6 +43,10 @@ import { ReasonRequestDto } from '../dtos/cash-control.request.dto';
 import {
   CashCountsQueryDto,
   CorrectCashCountRequestDto,
+  CustodyTransfersQueryDto,
+  PageQueryDto,
+  RegisterWarehouseCashCountRequestDto,
+  SaveCashCountDraftRequestDto,
   LatestCashCountQueryDto,
   RegisterCashCountRequestDto,
   RegisterWarehouseTransferRequestDto,
@@ -67,7 +80,80 @@ export class CashCustodyController {
     private readonly voidWithdrawal: VoidWarehouseWithdrawalUseCase,
     private readonly listWithdrawals: ListWarehouseWithdrawalsUseCase,
     private readonly getWithdrawal: GetWarehouseWithdrawalUseCase,
+    private readonly getInventory: GetCashInventoryUseCase,
+    private readonly registerWarehouseCount: RegisterWarehouseCashCountUseCase,
+    private readonly listWarehouseCounts: ListWarehouseCashCountsUseCase,
+    private readonly getDraft: GetCashCountDraftUseCase,
+    private readonly saveDraft: SaveCashCountDraftUseCase,
+    private readonly discardDraft: DiscardCashCountDraftUseCase,
+    private readonly listCustodyTransfers: ListCustodyTransfersUseCase,
   ) {}
+
+  /** Per-denomination inventory of caja and Bodega (derived from counts + movements). */
+  @Get('inventory')
+  inventory(@CurrentUser() user: RequestUser) {
+    return this.getInventory.execute({ role: user.role });
+  }
+
+  /** History of the audited Bodega counts. */
+  @Get('warehouse/counts')
+  warehouseCounts(
+    @Query() query: PageQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listWarehouseCounts.execute({ ...query, role: user.role });
+  }
+
+  /** "Conteo de Bodega por denominación" (admin): sets the reference of the Bodega inventory. */
+  @Post('warehouse/counts')
+  @HttpCode(HttpStatus.CREATED)
+  createWarehouseCount(
+    @Body() dto: RegisterWarehouseCashCountRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerWarehouseCount.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  /** Unified history of caja ↔ Bodega transfers (filters: kind, user, dates, status). */
+  @Get('custody/transfers')
+  custodyTransfers(
+    @Query() query: CustodyTransfersQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listCustodyTransfers.execute({ ...query, role: user.role });
+  }
+
+  /**
+   * The caller's in-progress Arqueo de Caja for the current bank day (or null).
+   * Declared before `counts/:id`, like `counts/latest`.
+   */
+  @Get('counts/draft')
+  countDraft(@CurrentUser() user: RequestUser) {
+    return this.getDraft.execute({ userId: user.userId, role: user.role });
+  }
+
+  /** Autosave of the Arqueo de Caja form (upsert of the caller's own draft). */
+  @Put('counts/draft')
+  saveCountDraft(
+    @Body() dto: SaveCashCountDraftRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.saveDraft.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  /** Explicit "Reiniciar arqueo": discards the caller's draft. */
+  @Delete('counts/draft')
+  discardCountDraft(@CurrentUser() user: RequestUser) {
+    return this.discardDraft.execute({ userId: user.userId, role: user.role });
+  }
 
   /** "Retiro de Bodega" history. */
   @Get('warehouse/withdrawals')

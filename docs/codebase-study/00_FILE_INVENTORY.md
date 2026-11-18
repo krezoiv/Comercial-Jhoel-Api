@@ -2,9 +2,9 @@
 
 Resumen del inventario completo. El detalle archivo por archivo (ruta, extensión, tipo, capa, responsabilidad, dependencias, consumidores, importancia) está al inicio de cada documento de módulo.
 
-- Archivos TypeScript analizados: **2325** (clases: 2143, métodos: 5099, funciones: 604, interfaces: 1496).
-- Plantillas HTML: **379**. Otros (SCSS, SQL, shell, JSON de configuración de pruebas): **384**.
-- Endpoints HTTP: **440** ([12_API_ENDPOINTS.md](12_API_ENDPOINTS.md)).
+- Archivos TypeScript analizados: **2362** (clases: 2212, métodos: 5313, funciones: 656, interfaces: 1557).
+- Plantillas HTML: **390**. Otros (SCSS, SQL, shell, JSON de configuración de pruebas): **398**.
+- Endpoints HTTP: **466** ([12_API_ENDPOINTS.md](12_API_ENDPOINTS.md)).
 - Excluido: `node_modules`, `dist`, `.angular`, `coverage`, `src/assets` (imágenes/fuentes) y archivos de configuración del tooling fuera de `src` (ver [01_PROJECT_OVERVIEW.md](01_PROJECT_OVERVIEW.md)).
 
 **Importancia** es una heurística: cantidad de consumidores por import, más el papel del archivo (arranque, controlador, caso de uso). Sirve para priorizar el estudio, no es una métrica oficial.
@@ -13,12 +13,12 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 |---|---|---|---|
 | Backend | Configuración del backend | 1 | [abrir](reference/backend/config.md) |
 | Backend | Base de datos: data-source y seeds | 2 | [abrir](reference/backend/database.md) |
-| Backend | Pruebas E2E del backend | 10 | [abrir](reference/backend/e2e.md) |
+| Backend | Pruebas E2E del backend | 12 | [abrir](reference/backend/e2e.md) |
 | Backend | Health check | 2 | [abrir](reference/backend/health.md) |
-| Backend | Migraciones TypeORM (esquema de base de datos) | 112 | [abrir](reference/backend/migrations.md) |
+| Backend | Migraciones TypeORM (esquema de base de datos) | 114 | [abrir](reference/backend/migrations.md) |
 | Backend | Raíz del backend (main, AppModule) | 2 | [abrir](reference/backend/root.md) |
 | Backend | Código transversal del backend (shared) | 14 | [abrir](reference/backend/shared.md) |
-| Backend | Scripts y pruebas SQL | 16 | [abrir](reference/backend/sql.md) |
+| Backend | Scripts y pruebas SQL | 19 | [abrir](reference/backend/sql.md) |
 | Backend | Módulo backend `account-types` | 19 | [abrir](reference/backend/account-types.md) |
 | Backend | Módulo backend `accounts-receivable` | 37 | [abrir](reference/backend/accounts-receivable.md) |
 | Backend | Módulo backend `alert-settings` | 15 | [abrir](reference/backend/alert-settings.md) |
@@ -28,7 +28,7 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 | Backend | Módulo backend `bank-deposits` | 54 | [abrir](reference/backend/bank-deposits.md) |
 | Backend | Módulo backend `banks` | 108 | [abrir](reference/backend/banks.md) |
 | Backend | Módulo backend `businesses` | 19 | [abrir](reference/backend/businesses.md) |
-| Backend | Módulo backend `cash-control` | 22 | [abrir](reference/backend/cash-control.md) |
+| Backend | Módulo backend `cash-control` | 23 | [abrir](reference/backend/cash-control.md) |
 | Backend | Módulo backend `catalog` | 61 | [abrir](reference/backend/catalog.md) |
 | Backend | Módulo backend `catalog-banks` | 30 | [abrir](reference/backend/catalog-banks.md) |
 | Backend | Módulo backend `categories` | 19 | [abrir](reference/backend/categories.md) |
@@ -58,6 +58,7 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 | Backend | Módulo backend `sales` | 49 | [abrir](reference/backend/sales.md) |
 | Backend | Módulo backend `sales-cash-box` | 22 | [abrir](reference/backend/sales-cash-box.md) |
 | Backend | Módulo backend `sales-register` | 8 | [abrir](reference/backend/sales-register.md) |
+| Backend | Módulo backend `school-lists` | 12 | [abrir](reference/backend/school-lists.md) |
 | Backend | Módulo backend `site-visits` | 7 | [abrir](reference/backend/site-visits.md) |
 | Backend | Módulo backend `suppliers` | 19 | [abrir](reference/backend/suppliers.md) |
 | Backend | Módulo backend `tickets` | 31 | [abrir](reference/backend/tickets.md) |
@@ -73,9 +74,9 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 | Frontend | Frontend `core-data` | 10 | [abrir](reference/frontend/core-data.md) |
 | Frontend | Frontend `core-guards` | 3 | [abrir](reference/frontend/core-guards.md) |
 | Frontend | Frontend `core-interceptors` | 3 | [abrir](reference/frontend/core-interceptors.md) |
-| Frontend | Frontend `core-models` | 69 | [abrir](reference/frontend/core-models.md) |
-| Frontend | Frontend `core-services` | 97 | [abrir](reference/frontend/core-services.md) |
-| Frontend | Frontend `core-utils` | 11 | [abrir](reference/frontend/core-utils.md) |
+| Frontend | Frontend `core-models` | 70 | [abrir](reference/frontend/core-models.md) |
+| Frontend | Frontend `core-services` | 98 | [abrir](reference/frontend/core-services.md) |
+| Frontend | Frontend `core-utils` | 12 | [abrir](reference/frontend/core-utils.md) |
 | Frontend | Frontend `dashboard` | 3 | [abrir](reference/frontend/dashboard.md) |
 | Frontend | Frontend `dashboard-account-types` | 18 | [abrir](reference/frontend/dashboard-account-types.md) |
 | Frontend | Frontend `dashboard-accounts-receivable` | 26 | [abrir](reference/frontend/dashboard-accounts-receivable.md) |
@@ -85,7 +86,7 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 | Frontend | Frontend `dashboard-bank-transfers` | 7 | [abrir](reference/frontend/dashboard-bank-transfers.md) |
 | Frontend | Frontend `dashboard-banks` | 18 | [abrir](reference/frontend/dashboard-banks.md) |
 | Frontend | Frontend `dashboard-businesses` | 18 | [abrir](reference/frontend/dashboard-businesses.md) |
-| Frontend | Frontend `dashboard-cash-control` | 48 | [abrir](reference/frontend/dashboard-cash-control.md) |
+| Frontend | Frontend `dashboard-cash-control` | 58 | [abrir](reference/frontend/dashboard-cash-control.md) |
 | Frontend | Frontend `dashboard-catalog-banks` | 15 | [abrir](reference/frontend/dashboard-catalog-banks.md) |
 | Frontend | Frontend `dashboard-catalog-phones` | 12 | [abrir](reference/frontend/dashboard-catalog-phones.md) |
 | Frontend | Frontend `dashboard-catalog-product-requests` | 9 | [abrir](reference/frontend/dashboard-catalog-product-requests.md) |
@@ -123,11 +124,12 @@ Resumen del inventario completo. El detalle archivo por archivo (ruta, extensió
 | Frontend | Frontend `dashboard-sales` | 18 | [abrir](reference/frontend/dashboard-sales.md) |
 | Frontend | Frontend `dashboard-sales-admin` | 9 | [abrir](reference/frontend/dashboard-sales-admin.md) |
 | Frontend | Frontend `dashboard-sales-register` | 9 | [abrir](reference/frontend/dashboard-sales-register.md) |
+| Frontend | Frontend `dashboard-school-lists` | 28 | [abrir](reference/frontend/dashboard-school-lists.md) |
 | Frontend | Frontend `dashboard-sidebar` | 3 | [abrir](reference/frontend/dashboard-sidebar.md) |
 | Frontend | Frontend `dashboard-suppliers` | 18 | [abrir](reference/frontend/dashboard-suppliers.md) |
 | Frontend | Frontend `dashboard-tickets` | 18 | [abrir](reference/frontend/dashboard-tickets.md) |
 | Frontend | Frontend `dashboard-topbar` | 6 | [abrir](reference/frontend/dashboard-topbar.md) |
-| Frontend | Frontend `dashboard-transaccionar` | 39 | [abrir](reference/frontend/dashboard-transaccionar.md) |
+| Frontend | Frontend `dashboard-transaccionar` | 40 | [abrir](reference/frontend/dashboard-transaccionar.md) |
 | Frontend | Frontend `dashboard-transaction-banks` | 21 | [abrir](reference/frontend/dashboard-transaction-banks.md) |
 | Frontend | Frontend `dashboard-transaction-days` | 12 | [abrir](reference/frontend/dashboard-transaction-days.md) |
 | Frontend | Frontend `dashboard-transaction-types` | 18 | [abrir](reference/frontend/dashboard-transaction-types.md) |

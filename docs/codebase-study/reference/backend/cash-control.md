@@ -28,22 +28,29 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 | `POST /api/cash-control/cuts/:id/start` | [cash-control.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts#L252) `CashControlController.startCut` | [StartCashCutUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts) | `CashControlRepository`.findPeriodById/startPeriod → `start_cash_cut_period`<br>`GetCashPositionUseCase`.execute | UseGuards(JwtAuthGuard) UseGuards(RolesGuard) Roles('SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO') | `CashControlService.startCut` |
 | `POST /api/cash-control/cuts/:id/finish` | [cash-control.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts#L267) `CashControlController.finishCut` | [FinishCashCutUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts) | `CashControlRepository`.findPeriodById/finishPeriod → `finish_cash_cut_period`<br>`GetCashPositionUseCase`.execute | UseGuards(JwtAuthGuard) UseGuards(RolesGuard) Roles('SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO') | `CashControlService.finishCut` |
 | `POST /api/cash-control/cuts/:id/reopen` | [cash-control.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-control.controller.ts#L284) `CashControlController.reopenCut` | [ReopenCashCutUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts) | `CashControlRepository`.findPeriodById/reopenPeriod → `reopen_cash_cut_period`<br>`GetCashPositionUseCase`.execute | UseGuards(JwtAuthGuard) UseGuards(RolesGuard) Roles('SUPER_ADMIN', 'ADMIN') | `CashControlService.reopenCut` |
-| `GET /api/cash-control/warehouse/withdrawals` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L73) `CashCustodyController.withdrawals` | [ListWarehouseWithdrawalsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWithdrawals [warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getWithdrawals` |
-| `GET /api/cash-control/warehouse/withdrawals/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L81) `CashCustodyController.withdrawal` | [GetWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWithdrawalById | UseGuards(JwtAuthGuard) | — |
-| `POST /api/cash-control/warehouse/withdrawals` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L90) `CashCustodyController.createWithdrawal` | [RegisterWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerWithdrawal/findWithdrawalById/getCustody → `cash_balance`, `cash_current_bank_day`, `register_warehouse_withdrawal` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerWithdrawal` |
-| `POST /api/cash-control/warehouse/withdrawals/:id/void` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L103) `CashCustodyController.voidWarehouseWithdrawal` | [VoidWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.voidWithdrawal/findWithdrawalById/getCustody → `cash_balance`, `cash_current_bank_day`, `void_warehouse_withdrawal` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.voidWithdrawal` |
-| `GET /api/cash-control/custody` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L119) `CashCustodyController.custody` | [GetCashCustodyUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.getCustody → `cash_balance`, `cash_current_bank_day` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCustody` |
-| `GET /api/cash-control/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L124) `CashCustodyController.counts` | [ListCashCountsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findCounts [cash_counts] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCounts` |
-| `GET /api/cash-control/counts/latest` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L133) `CashCustodyController.latestCount` | [GetLatestCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findLatestValidCount → `cash_current_bank_day`, `cash_latest_count_candidate` | UseGuards(JwtAuthGuard) | `CashCustodyService.getLatestCount` |
-| `GET /api/cash-control/counts/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L144) `CashCustodyController.count` | [GetCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findCountById | UseGuards(JwtAuthGuard) | `CashCustodyService.getCount` |
-| `POST /api/cash-control/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L152) `CashCustodyController.createCount` | [RegisterCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerCount/findCountById → `register_cash_count` | UseGuards(JwtAuthGuard) | `CashCustodyService.registerCount` |
-| `POST /api/cash-control/counts/:id/corrections` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L166) `CashCustodyController.correctCount` | [RegisterCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerCount/findCountById → `register_cash_count` | UseGuards(JwtAuthGuard) | `CashCustodyService.correctCount` |
-| `GET /api/cash-control/warehouse/movements` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L183) `CashCustodyController.warehouseMovements` | [ListWarehouseMovementsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWarehouseMovements [warehouse_cash_movements, users, cash_warehouse_transfers, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getWarehouseMovements` |
-| `POST /api/cash-control/warehouse/initial-balance` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L191) `CashCustodyController.warehouseInitialBalance` | [RegisterWarehouseInitialBalanceUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerWarehouseInitialBalance/getCustody → `cash_balance`, `cash_current_bank_day`, `register_warehouse_initial_balance` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerWarehouseInitialBalance` |
-| `GET /api/cash-control/warehouse/transfers` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L204) `CashCustodyController.transfers` | [ListWarehouseTransfersUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findTransfers [cash_warehouse_transfers] | UseGuards(JwtAuthGuard) | `CashCustodyService.getTransfers` |
-| `GET /api/cash-control/warehouse/transfers/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L212) `CashCustodyController.transfer` | [GetWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findTransferById | UseGuards(JwtAuthGuard) | — |
-| `POST /api/cash-control/warehouse/transfers` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L220) `CashCustodyController.createTransfer` | [RegisterWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerTransfer/findTransferById/getCustody → `cash_balance`, `cash_current_bank_day`, `register_cash_warehouse_transfer` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerTransfer` |
-| `POST /api/cash-control/warehouse/transfers/:id/void` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L233) `CashCustodyController.voidWarehouseTransfer` | [VoidWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.voidTransfer/findTransferById/getCustody → `cash_balance`, `cash_current_bank_day`, `void_cash_warehouse_transfer` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.voidTransfer` |
+| `GET /api/cash-control/inventory` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L93) `CashCustodyController.inventory` | [GetCashInventoryUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.getInventory → `cash_location_inventory_summary`, `cash_location_inventory` [users] | UseGuards(JwtAuthGuard) | `CashCustodyService.getInventory` |
+| `GET /api/cash-control/warehouse/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L99) `CashCustodyController.warehouseCounts` | [ListWarehouseCashCountsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWarehouseCounts [warehouse_cash_counts] | UseGuards(JwtAuthGuard) | `CashCustodyService.getWarehouseCounts` |
+| `POST /api/cash-control/warehouse/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L108) `CashCustodyController.createWarehouseCount` | [RegisterWarehouseCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerWarehouseCount/findWarehouseCountById/getInventory → `cash_location_inventory_summary`, `cash_location_inventory`, `register_warehouse_cash_count` [users] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerWarehouseCount` |
+| `GET /api/cash-control/custody/transfers` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L122) `CashCustodyController.custodyTransfers` | [ListCustodyTransfersUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findCustodyTransfers [users] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCustodyTransfers` |
+| `GET /api/cash-control/counts/draft` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L134) `CashCustodyController.countDraft` | [GetCashCountDraftUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.getCountDraft [cash_count_drafts] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCountDraft` |
+| `PUT /api/cash-control/counts/draft` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L140) `CashCustodyController.saveCountDraft` | [SaveCashCountDraftUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.saveCountDraft → `cash_current_bank_day` | UseGuards(JwtAuthGuard) | `CashCustodyService.saveCountDraft` |
+| `DELETE /api/cash-control/counts/draft` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L153) `CashCustodyController.discardCountDraft` | [DiscardCashCountDraftUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.deleteCountDraft [cash_count_drafts] | UseGuards(JwtAuthGuard) | `CashCustodyService.discardCountDraft` |
+| `GET /api/cash-control/warehouse/withdrawals` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L159) `CashCustodyController.withdrawals` | [ListWarehouseWithdrawalsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWithdrawals [warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getWithdrawals` |
+| `GET /api/cash-control/warehouse/withdrawals/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L167) `CashCustodyController.withdrawal` | [GetWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWithdrawalById | UseGuards(JwtAuthGuard) | — |
+| `POST /api/cash-control/warehouse/withdrawals` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L176) `CashCustodyController.createWithdrawal` | [RegisterWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerWithdrawal/findWithdrawalById/getCustody → `cash_balance`, `cash_current_bank_day`, `register_warehouse_withdrawal` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerWithdrawal` |
+| `POST /api/cash-control/warehouse/withdrawals/:id/void` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L189) `CashCustodyController.voidWarehouseWithdrawal` | [VoidWarehouseWithdrawalUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.voidWithdrawal/findWithdrawalById/getCustody → `cash_balance`, `cash_current_bank_day`, `void_warehouse_withdrawal` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.voidWithdrawal` |
+| `GET /api/cash-control/custody` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L205) `CashCustodyController.custody` | [GetCashCustodyUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.getCustody → `cash_balance`, `cash_current_bank_day` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCustody` |
+| `GET /api/cash-control/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L210) `CashCustodyController.counts` | [ListCashCountsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findCounts [cash_counts] | UseGuards(JwtAuthGuard) | `CashCustodyService.getCounts` |
+| `GET /api/cash-control/counts/latest` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L219) `CashCustodyController.latestCount` | [GetLatestCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findLatestValidCount → `cash_current_bank_day`, `cash_latest_count_candidate` | UseGuards(JwtAuthGuard) | `CashCustodyService.getLatestCount` |
+| `GET /api/cash-control/counts/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L230) `CashCustodyController.count` | [GetCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findCountById | UseGuards(JwtAuthGuard) | `CashCustodyService.getCount` |
+| `POST /api/cash-control/counts` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L238) `CashCustodyController.createCount` | [RegisterCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerCount/findCountById/deleteCountDraft → `register_cash_count` [cash_count_drafts] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerCount` |
+| `POST /api/cash-control/counts/:id/corrections` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L252) `CashCustodyController.correctCount` | [RegisterCashCountUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerCount/findCountById/deleteCountDraft → `register_cash_count` [cash_count_drafts] | UseGuards(JwtAuthGuard) | `CashCustodyService.correctCount` |
+| `GET /api/cash-control/warehouse/movements` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L269) `CashCustodyController.warehouseMovements` | [ListWarehouseMovementsUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findWarehouseMovements [warehouse_cash_movements, users, cash_warehouse_transfers, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.getWarehouseMovements` |
+| `POST /api/cash-control/warehouse/initial-balance` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L277) `CashCustodyController.warehouseInitialBalance` | [RegisterWarehouseInitialBalanceUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerWarehouseInitialBalance/getCustody → `cash_balance`, `cash_current_bank_day`, `register_warehouse_initial_balance` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerWarehouseInitialBalance` |
+| `GET /api/cash-control/warehouse/transfers` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L290) `CashCustodyController.transfers` | [ListWarehouseTransfersUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findTransfers [cash_warehouse_transfers] | UseGuards(JwtAuthGuard) | `CashCustodyService.getTransfers` |
+| `GET /api/cash-control/warehouse/transfers/:id` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L298) `CashCustodyController.transfer` | [GetWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.findTransferById | UseGuards(JwtAuthGuard) | — |
+| `POST /api/cash-control/warehouse/transfers` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L306) `CashCustodyController.createTransfer` | [RegisterWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.registerTransfer/findTransferById/getCustody → `cash_balance`, `cash_current_bank_day`, `register_cash_warehouse_transfer` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.registerTransfer` |
+| `POST /api/cash-control/warehouse/transfers/:id/void` | [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L319) `CashCustodyController.voidWarehouseTransfer` | [VoidWarehouseTransferUseCase](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts) | `CashCustodyRepository`.voidTransfer/findTransferById/getCustody → `cash_balance`, `cash_current_bank_day`, `void_cash_warehouse_transfer` [warehouse_cash_movements, warehouse_cash_withdrawals] | UseGuards(JwtAuthGuard) | `CashCustodyService.voidTransfer` |
 
 ## Inventario de archivos
 
@@ -61,7 +68,8 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 | [cash-control.module.ts](#f-comercial-jhoel-api-src-modules-cash-control-cash-control-module-ts) | .ts | Módulo | Arranque / configuración | Finance → Control de Efectivo: the single official physical-cash Kardex (`cash_movements`), the operational-day opening/closing and the two daily cuts. | 14 internas; ext.: @nestjs/common | 2 | Baja (2 consumidores) |
 | [cash-denominations.spec.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-cash-denominations-spec-ts) | .ts | Prueba unitaria | Dominio | Prueba unitaria (sin comentario de documentación en el código). | 1 internas | 0 | Soporte (pruebas) |
 | [cash-denominations.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-cash-denominations-ts) | .ts | Código TypeScript | Dominio | Every bill/coin the business counts, in display order (Q200 … Q0.01). | 0 internas | 4 | Media (4 consumidores) |
-| [cash-control.errors.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts) | .ts | Errores de dominio | Dominio | Business-rule violation of Control de Efectivo. | 1 internas | 10 | Alta (10 consumidores) |
+| [cash-control.errors.spec.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-spec-ts) | .ts | Prueba unitaria | Dominio | Prueba unitaria (sin comentario de documentación en el código). | 1 internas | 0 | Soporte (pruebas) |
+| [cash-control.errors.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts) | .ts | Errores de dominio | Dominio | Business-rule violation of Control de Efectivo. | 1 internas | 11 | Alta (11 consumidores) |
 | [cash-control.policy.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-policies-cash-control-policy-ts) | .ts | Política de dominio | Dominio | Throws `CASH_CUSTODY_FORBIDDEN` unless the role holds the permission. | 1 internas | 7 | Media (7 consumidores) |
 | [cash-control.repository.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-control-repository-ts) | .ts | Puerto de repositorio (interfaz) | Dominio | Control de Efectivo — persistence port. | 0 internas | 12 | Alta (12 consumidores) |
 | [cash-custody.repository.ts](#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts) | .ts | Puerto de repositorio (interfaz) | Dominio | Port of "Arqueo de Caja" and "Entrega de Efectivo a Bodega". | 0 internas | 5 | Media (5 consumidores) |
@@ -132,24 +140,24 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-custody.use-cases.spec.ts
 
-- **Ruta:** [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts) (`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts`, 429 líneas)
+- **Ruta:** [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts) (`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts`, 644 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Aplicación · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Prueba unitaria: declara `repository`, `expectCode`, `SUPER`, `SUPERVISOR`, `USER` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts), [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts)
 - **Consumidores:** —
-#### Función `repository` (L33–63)
+#### Función `repository` (L39–94)
 
 - **Tipo:** función local del archivo
-- **Firma:** `repository(): jest.Mocked<CashCustodyRepository>` — [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts#L33)
+- **Firma:** `repository(): jest.Mocked<CashCustodyRepository>` — [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts#L39)
 - **Propósito / descripción:** Sin JSDoc en el código.
-- **Dependencias:** `jest.fn().mockResolvedValue`, `jest.fn`
+- **Dependencias:** `jest.fn().mockResolvedValue`, `jest.fn`, `jest.fn().mockImplementation`, `Promise.resolve`, `new Date`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `expectCode` (L65–67)
+#### Función `expectCode` (L96–98)
 
 - **Tipo:** función local del archivo, async
-- **Firma:** `expectCode(promise: Promise<unknown>, code: string)` — [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts#L65)
+- **Firma:** `expectCode(promise: Promise<unknown>, code: string)` — [cash-custody.use-cases.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.spec.ts#L96)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `expect(promise).rejects.toMatchObject`, `expect`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -159,7 +167,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-custody.use-cases.ts
 
-- **Ruta:** [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts) (`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`, 537 líneas)
+- **Ruta:** [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts) (`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`, 757 líneas)
 - **Tipo:** Caso de uso · **Capa:** Aplicación · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** "Efectivo en caja / en Bodega / total bajo custodia" — official balances from both Kardex.
 - **Depende de (archivos del proyecto):** [cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts), [cash-control.policy.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-policies-cash-control-policy-ts), [cash-control.errors.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts), [cash-denominations.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-cash-denominations-ts)
@@ -168,11 +176,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 **Interfaces, tipos y enums:**
 
-- `interface CustodyActor` (L23): The JWT identity every custody use case re-checks. — miembros: `userId`, `role`
-- `interface DenominationInput` (L28): sin documentación — miembros: `denomination`, `quantity`
-- `interface LatestCashCountOutput` (L351): What "Cargar último arqueo de Caja" receives. — miembros: `count`, `breakdown`, `referenceBusinessDate`, `isFromReferenceDay`
+- `interface CustodyActor` (L28): The JWT identity every custody use case re-checks. — miembros: `userId`, `role`
+- `interface DenominationInput` (L33): sin documentación — miembros: `denomination`, `quantity`
+- `interface LatestCashCountOutput` (L377): What "Cargar último arqueo de Caja" receives. — miembros: `count`, `breakdown`, `referenceBusinessDate`, `isFromReferenceDay`
 
-#### Clase `GetCashCustodyUseCase` (L51–62)
+#### Clase `GetCashCustodyUseCase` (L73–84)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** "Efectivo en caja / en Bodega / total bajo custodia" — official balances from both Kardex.
@@ -180,38 +188,38 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 58–61 | `actor: { role: string }` | `Promise<CashCustodySnapshot>` |
+| `execute` | método public async | 80–83 | `actor: { role: string }` | `Promise<CashCustodySnapshot>` |
 
 ##### `GetCashCustodyUseCase.execute`
 
-- **Firma:** `execute(actor: { role: string }): Promise<CashCustodySnapshot>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L58) (L58–61)
+- **Firma:** `execute(actor: { role: string }): Promise<CashCustodySnapshot>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L80) (L80–83)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.getCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `RegisterWarehouseTransferUseCase` (L69–111)
+#### Clase `RegisterWarehouseTransferUseCase` (L93–132)
 
 - **Decoradores:** `@Injectable()`
-- **Propósito:** "Entrega de Efectivo a Bodega": one atomic SQL call moves the cash from the caja Kardex to the Bodega Kardex (same amount, same reference). Without a breakdown it requires `cash_custody.authorize` (business policy).
+- **Propósito:** "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): one atomic SQL call moves the cash from the caja Kardex to the Bodega Kardex (same amount, same reference). Since migration 1760007800000 the breakdown is mandatory and every denomination must be available in the caja inventory (checked by the SQL function under the caja lock).
 - **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 76–110 | `input: { amount: number; details?: DenominationInput[]; deliveredBy: string; receivedBy: string; voucherReference?: string; observations?: string; clientRequestId: str` | `Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` |
+| `execute` | método public async | 100–131 | `input: { amount: number; details?: DenominationInput[]; deliveredBy: string; receivedBy: string; voucherReference?: string; observations?: string; clientRequestId: str` | `Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` |
 
 ##### `RegisterWarehouseTransferUseCase.execute`
 
-- **Firma:** `execute(input: { amount: number; details?: DenominationInput[]; deliveredBy: string; receivedBy: string; voucherReference?: string; observations?: string; clientRequestId: str): Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L76) (L76–110)
+- **Firma:** `execute(input: { amount: number; details?: DenominationInput[]; deliveredBy: string; receivedBy: string; voucherReference?: string; observations?: string; clientRequestId: str): Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L100) (L100–131)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `nonZero`, `this.repository.registerTransfer`, `input.deliveredBy.trim`, `input.receivedBy.trim`, `input.voucherReference?.trim`, `input.observations?.trim`, `Promise.all`, `this.repository.findTransferById`, `this.repository.getCustody`, `cashControlError`
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `requireBreakdown`, `this.repository.registerTransfer`, `input.deliveredBy.trim`, `input.receivedBy.trim`, `input.voucherReference?.trim`, `input.observations?.trim`, `Promise.all`, `this.repository.findTransferById`, `this.repository.getCustody`, `cashControlError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `cashControlError('CASH_WAREHOUSE_TRANSFER_NOT_FOUND')`
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `VoidWarehouseTransferUseCase` (L114–142)
+#### Clase `VoidWarehouseTransferUseCase` (L135–163)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** Voids a delivery (both Kardex reversed together). Admin + reason.
@@ -219,11 +227,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 121–141 | `input: { id: string; reason: string } & CustodyActor` | `Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` |
+| `execute` | método public async | 142–162 | `input: { id: string; reason: string } & CustodyActor` | `Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` |
 
 ##### `VoidWarehouseTransferUseCase.execute`
 
-- **Firma:** `execute(input: { id: string; reason: string } & CustodyActor): Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L121) (L121–141)
+- **Firma:** `execute(input: { id: string; reason: string } & CustodyActor): Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L142) (L142–162)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `input.reason.trim`, `cashControlError`, `this.repository.voidTransfer`, `Promise.all`, `this.repository.findTransferById`, `this.repository.getCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -231,7 +239,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `ListWarehouseTransfersUseCase` (L145–172)
+#### Clase `ListWarehouseTransfersUseCase` (L166–193)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** History of deliveries to Bodega.
@@ -239,11 +247,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 152–171 | `input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseTransferRow>>` |
+| `execute` | método public async | 173–192 | `input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseTransferRow>>` |
 
 ##### `ListWarehouseTransfersUseCase.execute`
 
-- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseTransferRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L152) (L152–171)
+- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseTransferRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L173) (L173–192)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `cashControlError`, `this.repository.findTransfers`, `page`, `limit`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -251,7 +259,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `GetWarehouseTransferUseCase` (L175–193)
+#### Clase `GetWarehouseTransferUseCase` (L196–214)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** One delivery with both related Kardex movements and its breakdown.
@@ -259,11 +267,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 182–192 | `input: { id: string; role: string; }` | `Promise<WarehouseTransferRow>` |
+| `execute` | método public async | 203–213 | `input: { id: string; role: string; }` | `Promise<WarehouseTransferRow>` |
 
 ##### `GetWarehouseTransferUseCase.execute`
 
-- **Firma:** `execute(input: { id: string; role: string; }): Promise<WarehouseTransferRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L182) (L182–192)
+- **Firma:** `execute(input: { id: string; role: string; }): Promise<WarehouseTransferRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L203) (L203–213)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.findTransferById`, `cashControlError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -271,7 +279,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `RegisterWarehouseInitialBalanceUseCase` (L196–222)
+#### Clase `RegisterWarehouseInitialBalanceUseCase` (L217–243)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** One-time initial balance of Bodega (admin, reason).
@@ -279,11 +287,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 203–221 | `input: { amount: number; reason: string; clientRequestId: string; } & CustodyActor` | `Promise<CashCustodySnapshot>` |
+| `execute` | método public async | 224–242 | `input: { amount: number; reason: string; clientRequestId: string; } & CustodyActor` | `Promise<CashCustodySnapshot>` |
 
 ##### `RegisterWarehouseInitialBalanceUseCase.execute`
 
-- **Firma:** `execute(input: { amount: number; reason: string; clientRequestId: string; } & CustodyActor): Promise<CashCustodySnapshot>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L203) (L203–221)
+- **Firma:** `execute(input: { amount: number; reason: string; clientRequestId: string; } & CustodyActor): Promise<CashCustodySnapshot>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L224) (L224–242)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `input.reason.trim`, `cashControlError`, `this.repository.registerWarehouseInitialBalance`, `this.repository.getCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -291,7 +299,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `ListWarehouseMovementsUseCase` (L225–243)
+#### Clase `ListWarehouseMovementsUseCase` (L246–264)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** Kardex de Bodega (newest first).
@@ -299,18 +307,18 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 232–242 | `input: { page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseMovementRow>>` |
+| `execute` | método public async | 253–263 | `input: { page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseMovementRow>>` |
 
 ##### `ListWarehouseMovementsUseCase.execute`
 
-- **Firma:** `execute(input: { page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseMovementRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L232) (L232–242)
+- **Firma:** `execute(input: { page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseMovementRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L253) (L253–263)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.findWarehouseMovements`, `page`, `limit`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `RegisterCashCountUseCase` (L251–293)
+#### Clase `RegisterCashCountUseCase` (L272–319)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** "Arqueo de Caja": stores the count as a photograph (theoretical caja and Bodega read under their locks). It never touches the Kardex; a difference stays recorded as FALTANTE/SOBRANTE. With `replacesId` it is an audited correction (admin + reason) that keeps the original photograph.
@@ -318,19 +326,19 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 258–292 | `input: { details: DenominationInput[]; observations?: string; warehouseCounted?: number \| null; clientRequestId: string; replacesId?: string; correctionReason?: string` | `Promise<CashCountRow>` |
+| `execute` | método public async | 279–318 | `input: { details: DenominationInput[]; observations?: string; warehouseCounted?: number \| null; clientRequestId: string; replacesId?: string; correctionReason?: string` | `Promise<CashCountRow>` |
 
 ##### `RegisterCashCountUseCase.execute`
 
-- **Firma:** `execute(input: { details: DenominationInput[]; observations?: string; warehouseCounted?: number \| null; clientRequestId: string; replacesId?: string; correctionReason?: string): Promise<CashCountRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L258) (L258–292)
+- **Firma:** `execute(input: { details: DenominationInput[]; observations?: string; warehouseCounted?: number \| null; clientRequestId: string; replacesId?: string; correctionReason?: string): Promise<CashCountRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L279) (L279–318)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `input.correctionReason.trim`, `cashControlError`, `this.repository.registerCount`, `input.observations?.trim`, `input.correctionReason?.trim`, `this.repository.findCountById`
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `input.correctionReason.trim`, `cashControlError`, `this.repository.registerCount`, `input.observations?.trim`, `input.correctionReason?.trim`, `this.repository.findCountById`, `this.repository.deleteCountDraft`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `cashControlError('CASH_REASON_REQUIRED')`, `cashControlError('CASH_BREAKDOWN_REQUIRED')`, `cashControlError('CASH_COUNT_NOT_FOUND')`
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `ListCashCountsUseCase` (L296–330)
+#### Clase `ListCashCountsUseCase` (L322–356)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** Historial de arqueos (filters: date, bank day, user, result).
@@ -338,11 +346,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 303–329 | `input: { dateFrom?: string; dateTo?: string; businessDate?: string; userId?: string; result?: CashCountResult; page?: number; limit?: number; role: string; }` | `Promise<Paginated<CashCountRow>>` |
+| `execute` | método public async | 329–355 | `input: { dateFrom?: string; dateTo?: string; businessDate?: string; userId?: string; result?: CashCountResult; page?: number; limit?: number; role: string; }` | `Promise<Paginated<CashCountRow>>` |
 
 ##### `ListCashCountsUseCase.execute`
 
-- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; businessDate?: string; userId?: string; result?: CashCountResult; page?: number; limit?: number; role: string; }): Promise<Paginated<CashCountRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L303) (L303–329)
+- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; businessDate?: string; userId?: string; result?: CashCountResult; page?: number; limit?: number; role: string; }): Promise<Paginated<CashCountRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L329) (L329–355)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `cashControlError`, `DATE.test`, `this.repository.findCounts`, `page`, `limit`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -350,7 +358,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `GetCashCountUseCase` (L333–348)
+#### Clase `GetCashCountUseCase` (L359–374)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** One count exactly as it was recorded.
@@ -358,11 +366,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 340–347 | `input: { id: string; role: string }` | `Promise<CashCountRow>` |
+| `execute` | método public async | 366–373 | `input: { id: string; role: string }` | `Promise<CashCountRow>` |
 
 ##### `GetCashCountUseCase.execute`
 
-- **Firma:** `execute(input: { id: string; role: string }): Promise<CashCountRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L340) (L340–347)
+- **Firma:** `execute(input: { id: string; role: string }): Promise<CashCountRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L366) (L366–373)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.findCountById`, `cashControlError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -370,7 +378,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `GetLatestCashCountUseCase` (L368–393)
+#### Clase `GetLatestCashCountUseCase` (L394–419)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** Breakdown for Cuadre de Agentes: the arqueo of the "Segundo corte · final del día" (reference day first, else the latest earlier one — flagged by `isFromReferenceDay`). Exactly that cut's quantities, Q0.01 completed with 0 on older cuts; the two cuts are never added up. Read-only.
@@ -378,11 +386,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 375–392 | `input: { businessDate?: string; role: string; }` | `Promise<LatestCashCountOutput>` |
+| `execute` | método public async | 401–418 | `input: { businessDate?: string; role: string; }` | `Promise<LatestCashCountOutput>` |
 
 ##### `GetLatestCashCountUseCase.execute`
 
-- **Firma:** `execute(input: { businessDate?: string; role: string; }): Promise<LatestCashCountOutput>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L375) (L375–392)
+- **Firma:** `execute(input: { businessDate?: string; role: string; }): Promise<LatestCashCountOutput>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L401) (L401–418)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `DATE.test`, `cashControlError`, `this.repository.findLatestValidCount`, `completeBreakdown`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -390,7 +398,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `RegisterWarehouseWithdrawalUseCase` (L401–453)
+#### Clase `RegisterWarehouseWithdrawalUseCase` (L427–476)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** "Retiro de Bodega": cash leaves Bodega either back to the caja (internal transfer, total custody unchanged) or deposited into a bank account (Bodega down, bank up). One atomic SQL call; without a breakdown it needs `cash_custody.authorize` (same policy as the deliveries).
@@ -398,19 +406,19 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 408–452 | `input: { destination: WarehouseWithdrawalDestination; amount: number; details?: DenominationInput[]; bankId?: string; deliveredBy: string; receivedBy: string; voucherR` | `Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` |
+| `execute` | método public async | 434–475 | `input: { destination: WarehouseWithdrawalDestination; amount: number; details?: DenominationInput[]; bankId?: string; deliveredBy: string; receivedBy: string; voucherR` | `Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` |
 
 ##### `RegisterWarehouseWithdrawalUseCase.execute`
 
-- **Firma:** `execute(input: { destination: WarehouseWithdrawalDestination; amount: number; details?: DenominationInput[]; bankId?: string; deliveredBy: string; receivedBy: string; voucherR): Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L408) (L408–452)
+- **Firma:** `execute(input: { destination: WarehouseWithdrawalDestination; amount: number; details?: DenominationInput[]; bankId?: string; deliveredBy: string; receivedBy: string; voucherR): Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L434) (L434–475)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `nonZero`, `cashControlError`, `this.repository.registerWithdrawal`, `input.deliveredBy.trim`, `input.receivedBy.trim`, `input.voucherReference?.trim`, `input.observations?.trim`, `Promise.all`, `this.repository.findWithdrawalById`, `this.repository.getCustody`
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `requireBreakdown`, `cashControlError`, `this.repository.registerWithdrawal`, `input.deliveredBy.trim`, `input.receivedBy.trim`, `input.voucherReference?.trim`, `input.observations?.trim`, `Promise.all`, `this.repository.findWithdrawalById`, `this.repository.getCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `cashControlError('WAREHOUSE_WITHDRAWAL_BANK_REQUIRED')`, `cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND')`
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `VoidWarehouseWithdrawalUseCase` (L456–485)
+#### Clase `VoidWarehouseWithdrawalUseCase` (L479–508)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** Voids a withdrawal (both sides reversed together). Admin + reason.
@@ -418,11 +426,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 463–484 | `input: { id: string; reason: string } & CustodyActor` | `Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` |
+| `execute` | método public async | 486–507 | `input: { id: string; reason: string } & CustodyActor` | `Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` |
 
 ##### `VoidWarehouseWithdrawalUseCase.execute`
 
-- **Firma:** `execute(input: { id: string; reason: string } & CustodyActor): Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L463) (L463–484)
+- **Firma:** `execute(input: { id: string; reason: string } & CustodyActor): Promise<{ withdrawal: WarehouseWithdrawalRow; custody: CashCustodySnapshot; }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L486) (L486–507)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `input.reason.trim`, `cashControlError`, `this.repository.voidWithdrawal`, `Promise.all`, `this.repository.findWithdrawalById`, `this.repository.getCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -430,7 +438,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `ListWarehouseWithdrawalsUseCase` (L488–515)
+#### Clase `ListWarehouseWithdrawalsUseCase` (L511–538)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** History of withdrawals from Bodega.
@@ -438,11 +446,11 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 495–514 | `input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseWithdrawalRow>>` |
+| `execute` | método public async | 518–537 | `input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseWithdrawalRow>>` |
 
 ##### `ListWarehouseWithdrawalsUseCase.execute`
 
-- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseWithdrawalRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L495) (L495–514)
+- **Firma:** `execute(input: { dateFrom?: string; dateTo?: string; status?: 'APLICADA' \| 'ANULADA'; page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseWithdrawalRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L518) (L518–537)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `cashControlError`, `this.repository.findWithdrawals`, `page`, `limit`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -450,7 +458,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
 
-#### Clase `GetWarehouseWithdrawalUseCase` (L518–536)
+#### Clase `GetWarehouseWithdrawalUseCase` (L541–559)
 
 - **Decoradores:** `@Injectable()`
 - **Propósito:** One withdrawal with its related movements and breakdown.
@@ -458,42 +466,188 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `execute` | método public async | 525–535 | `input: { id: string; role: string; }` | `Promise<WarehouseWithdrawalRow>` |
+| `execute` | método public async | 548–558 | `input: { id: string; role: string; }` | `Promise<WarehouseWithdrawalRow>` |
 
 ##### `GetWarehouseWithdrawalUseCase.execute`
 
-- **Firma:** `execute(input: { id: string; role: string; }): Promise<WarehouseWithdrawalRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L525) (L525–535)
+- **Firma:** `execute(input: { id: string; role: string; }): Promise<WarehouseWithdrawalRow>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L548) (L548–558)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.findWithdrawalById`, `cashControlError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Errores que lanza:** `cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND')`
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
-#### Función `page` (L35–37)
+
+#### Clase `GetCashInventoryUseCase` (L564–581)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** Caja and Bodega inventories by denomination (derived in SQL from counts + movements).
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 571–580 | `actor: { role: string; }` | `Promise<{ cash: LocationInventory; warehouse: LocationInventory }>` |
+
+##### `GetCashInventoryUseCase.execute`
+
+- **Firma:** `execute(actor: { role: string; }): Promise<{ cash: LocationInventory; warehouse: LocationInventory }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L571) (L571–580)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `Promise.all`, `this.repository.getInventory`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `RegisterWarehouseCashCountUseCase` (L588–621)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** "Conteo de Bodega por denominación": the audited reference of the Bodega inventory. Administrators only (`cash_custody.authorize`); the SQL function requires the counted total to equal the Bodega balance and never moves cash.
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 595–620 | `input: { details: DenominationInput[]; observations?: string; clientRequestId: string; } & CustodyActor` | `Promise<{ count: WarehouseCashCountRow; inventory: LocationInventory }>` |
+
+##### `RegisterWarehouseCashCountUseCase.execute`
+
+- **Firma:** `execute(input: { details: DenominationInput[]; observations?: string; clientRequestId: string; } & CustodyActor): Promise<{ count: WarehouseCashCountRow; inventory: LocationInventory }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L595) (L595–620)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `cashControlError`, `this.repository.registerWarehouseCount`, `input.observations?.trim`, `Promise.all`, `this.repository.findWarehouseCountById`, `this.repository.getInventory`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Errores que lanza:** `cashControlError('CASH_CUSTODY_BREAKDOWN_REQUIRED')`, `cashControlError('CASH_COUNT_NOT_FOUND')`
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `ListWarehouseCashCountsUseCase` (L624–642)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** History of Bodega counts.
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 631–641 | `input: { page?: number; limit?: number; role: string; }` | `Promise<Paginated<WarehouseCashCountRow>>` |
+
+##### `ListWarehouseCashCountsUseCase.execute`
+
+- **Firma:** `execute(input: { page?: number; limit?: number; role: string; }): Promise<Paginated<WarehouseCashCountRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L631) (L631–641)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.findWarehouseCounts`, `page`, `limit`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `GetCashCountDraftUseCase` (L645–656)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** The caller's own in-progress Arqueo de Caja for the current bank day (never another user's).
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 652–655 | `actor: CustodyActor` | `Promise<CashCountDraft \| null>` |
+
+##### `GetCashCountDraftUseCase.execute`
+
+- **Firma:** `execute(actor: CustodyActor): Promise<CashCountDraft \| null>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L652) (L652–655)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.getCountDraft`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `SaveCashCountDraftUseCase` (L663–707)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** Autosave of the Arqueo de Caja form. Keyed by the JWT user and the current bank day, so a user can only ever write their own draft. Requires an open bank day (same rule as registering the count).
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 670–706 | `input: { details: DenominationInput[]; observations?: string; countWarehouse?: boolean; warehouseCounted?: number \| null; } & CustodyActor` | `Promise<CashCountDraft>` |
+
+##### `SaveCashCountDraftUseCase.execute`
+
+- **Firma:** `execute(input: { details: DenominationInput[]; observations?: string; countWarehouse?: boolean; warehouseCounted?: number \| null; } & CustodyActor): Promise<CashCountDraft>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L670) (L670–706)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `new Set`, `Math.round`, `Number.isInteger`, `seen.has`, `cashControlError`, `seen.add`, `this.repository.saveCountDraft`, `(input.details ?? []).map`, `input.observations?.slice`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Errores que lanza:** `cashControlError('CASH_COUNT_DRAFT_INVALID')`, `cashControlError('CASH_CUSTODY_DAY_NOT_OPEN')`
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `DiscardCashCountDraftUseCase` (L710–722)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** Explicit "Reiniciar arqueo": discards the caller's draft of the current bank day.
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 717–721 | `actor: CustodyActor` | `Promise<{ discarded: true }>` |
+
+##### `DiscardCashCountDraftUseCase.execute`
+
+- **Firma:** `execute(actor: CustodyActor): Promise<{ discarded: true }>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L717) (L717–721)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `this.repository.deleteCountDraft`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+
+#### Clase `ListCustodyTransfersUseCase` (L725–756)
+
+- **Decoradores:** `@Injectable()`
+- **Propósito:** Unified history of caja ↔ Bodega transfers, filterable by kind, user, date and status.
+- **Dependencias inyectadas (constructor):** `@Inject(CASH_CUSTODY_REPOSITORY) repository: CashCustodyRepository`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `execute` | método public async | 732–755 | `input: { kind?: CustodyTransferKind; userId?: string; dateFrom?: string; dateTo?: string; status?: 'APLICADO' \| 'ANULADO'; page?: number; limit?: number; role: string;` | `Promise<Paginated<CustodyTransferRow>>` |
+
+##### `ListCustodyTransfersUseCase.execute`
+
+- **Firma:** `execute(input: { kind?: CustodyTransferKind; userId?: string; dateFrom?: string; dateTo?: string; status?: 'APLICADO' \| 'ANULADO'; page?: number; limit?: number; role: string;): Promise<Paginated<CustodyTransferRow>>` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L732) (L732–755)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `assertCashCustodyPermission`, `cashControlError`, `this.repository.findCustodyTransfers`, `page`, `limit`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Errores que lanza:** `cashControlError('CASH_INVALID_DATE_RANGE')`
+- **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
+
+#### Función `page` (L40–42)
 
 - **Tipo:** función local del archivo
-- **Firma:** `page(value?: number): number` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L35)
+- **Firma:** `page(value?: number): number` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L40)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Math.max`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `limit` (L39–41)
+#### Función `limit` (L44–46)
 
 - **Tipo:** función local del archivo
-- **Firma:** `limit(value?: number): number` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L39)
+- **Firma:** `limit(value?: number): number` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L44)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Math.min`, `Math.max`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `nonZero` (L44–48)
+#### Función `nonZero` (L49–53)
 
 - **Tipo:** función local del archivo
-- **Firma:** `nonZero(details: DenominationInput[] \| undefined): DenominationInput[]` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L44)
+- **Firma:** `nonZero(details: DenominationInput[] \| undefined): DenominationInput[]` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L49)
 - **Propósito / descripción:** Only non-zero rows travel to the transfer (a delivery breakdown lists what was handed over).
 - **Dependencias:** `(details ?? []).filter`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
+#### Función `requireBreakdown` (L59–70)
+
+- **Tipo:** función local del archivo
+- **Firma:** `requireBreakdown(details: DenominationInput[] \| undefined): DenominationInput[]` — [cash-custody.use-cases.ts](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts#L59)
+- **Propósito / descripción:** Every caja ↔ Bodega transfer carries its bills/coins (per-denomination inventory): non-zero rows only, at least one, whole quantities.
+- **Dependencias:** `nonZero`, `cashControlError`, `rows.some`, `Number.isInteger`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Errores que lanza:** `cashControlError('CASH_CUSTODY_BREAKDOWN_REQUIRED')`, `cashControlError('CASH_INVALID_DENOMINATION')`
 - **Consumidores:** uso interno del archivo
 
 <a id="f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts"></a>
@@ -1020,14 +1174,14 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-control.module.ts
 
-- **Ruta:** [cash-control.module.ts](../../../../comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts) (`comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts`, 117 líneas)
+- **Ruta:** [cash-control.module.ts](../../../../comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts) (`comercial-jhoel-api/src/modules/cash-control/cash-control.module.ts`, 131 líneas)
 - **Tipo:** Módulo · **Capa:** Arranque / configuración · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Finance → Control de Efectivo: the single official physical-cash Kardex (`cash_movements`), the operational-day opening/closing and the two daily cuts.
 - **Depende de (archivos del proyecto):** [banks.module.ts](banks.md#f-comercial-jhoel-api-src-modules-banks-banks-module-ts), [register-cash-bank-deposit.use-case.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-register-cash-bank-deposit-use-case-ts), [cash-control.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-control-repository-ts), [typeorm-cash-control.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-control-repository-ts), [get-cash-position.use-case.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-get-cash-position-use-case-ts), [cash-movement-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-queries-use-cases-ts), [cash-movement-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-commands-use-cases-ts), [cash-cut-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts), [cash-cut-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-queries-use-cases-ts), [cash-control.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-control-controller-ts), [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts), [cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts), [typeorm-cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts), [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts)
 - **Paquetes externos:** `@nestjs/common`
 - **Consumidores:** [app.module.ts](root.md#f-comercial-jhoel-api-src-app-module-ts), [bank-deposits.module.ts](bank-deposits.md#f-comercial-jhoel-api-src-modules-bank-deposits-bank-deposits-module-ts)
 
-#### Clase `CashControlModule` (L64–116)
+#### Clase `CashControlModule` (L71–130)
 
 - **Decoradores:** `@Module({ // DAY_OPENING_REPOSITORY: a bank deposit, like every balance-moving bank operation, needs the day open. imports: [BanksModule], controllers: [CashCont`
 - **Propósito:** Finance → Control de Efectivo: the single official physical-cash Kardex (`cash_movements`), the operational-day opening/closing and the two daily cuts. Transaccionar, Cartera (CxC/Activos) and Transferencias Bancarias feed the Kardex through database triggers in the same transaction as their own write — this module never has to be called by them. It exports the repository token so `BankDepositsModule` can return the cash movement an operation produced.
@@ -1094,36 +1248,63 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts)
 
+<a id="f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-spec-ts"></a>
+
+### cash-control.errors.spec.ts
+
+- **Ruta:** [cash-control.errors.spec.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.spec.ts) (`comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.spec.ts`, 38 líneas)
+- **Tipo:** Prueba unitaria · **Capa:** Dominio · **Módulo:** Módulo backend `cash-control`
+- **Responsabilidad:** Prueba unitaria (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [cash-control.errors.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts)
+- **Consumidores:** —
 <a id="f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts"></a>
 
 ### cash-control.errors.ts
 
-- **Ruta:** [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts) (`comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts`, 220 líneas)
+- **Ruta:** [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts) (`comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts`, 284 líneas)
 - **Tipo:** Errores de dominio · **Capa:** Dominio · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Business-rule violation of Control de Efectivo.
 - **Depende de (archivos del proyecto):** [domain-error.ts](shared.md#f-comercial-jhoel-api-src-shared-domain-domain-error-ts)
-- **Consumidores:** [cash-control.use-cases.spec.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-control-use-cases-spec-ts), [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts), [cash-cut-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts), [cash-cut-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-queries-use-cases-ts), [cash-movement-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-commands-use-cases-ts), [cash-movement-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-queries-use-cases-ts), [register-cash-bank-deposit.use-case.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-register-cash-bank-deposit-use-case-ts), [cash-control.policy.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-policies-cash-control-policy-ts), [typeorm-cash-control.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-control-repository-ts), [typeorm-cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
+- **Consumidores:** [cash-control.use-cases.spec.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-control-use-cases-spec-ts), [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts), [cash-cut-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts), [cash-cut-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-queries-use-cases-ts), [cash-movement-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-commands-use-cases-ts), [cash-movement-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-queries-use-cases-ts), [register-cash-bank-deposit.use-case.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-register-cash-bank-deposit-use-case-ts), [cash-control.errors.spec.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-spec-ts), [cash-control.policy.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-policies-cash-control-policy-ts), [typeorm-cash-control.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-control-repository-ts), [typeorm-cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
 
 #### Clase `CashControlRuleError` (L9–17)
 
 - **Herencia / contratos:** extends DomainError
 - **Propósito:** Business-rule violation of Control de Efectivo. One class with a stable `code` (the same code the SQL functions `RAISE`) instead of one class per rule: the rules live in SQL, this only carries their user-facing message and HTTP status through `GlobalExceptionFilter`.
 - **Dependencias inyectadas (constructor):** `code: string`, `message: string`, `status: number`
-#### Función `cashControlError` (L206–211)
+#### Función `money` (L238–239)
+
+- **Tipo:** función local del archivo
+- **Firma:** `money(value: string): string` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L238)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `Number(value).toLocaleString`, `Number`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
+#### Función `bill` (L240–241)
+
+- **Tipo:** función local del archivo
+- **Firma:** `bill(value: string): string` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L240)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `Number(value).toLocaleString`, `Number`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
+#### Función `cashControlError` (L264–269)
 
 - **Tipo:** función exportada
-- **Firma:** `cashControlError(code: string): CashControlRuleError` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L206)
+- **Firma:** `cashControlError(code: string): CashControlRuleError` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L264)
 - **Propósito / descripción:** Builds the domain error for a known rule code.
 - **Dependencias:** `new CashControlRuleError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts), [cash-cut-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-commands-use-cases-ts), [cash-cut-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-cut-queries-use-cases-ts), [cash-movement-commands.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-commands-use-cases-ts), [cash-movement-queries.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-movement-queries-use-cases-ts), [register-cash-bank-deposit.use-case.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-register-cash-bank-deposit-use-case-ts), [cash-control.policy.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-policies-cash-control-policy-ts)
 
-#### Función `cashControlErrorFromMessage` (L214–219)
+#### Función `cashControlErrorFromMessage` (L272–283)
 
 - **Tipo:** función exportada
-- **Firma:** `cashControlErrorFromMessage(message: string): CashControlRuleError \| null` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L214)
+- **Firma:** `cashControlErrorFromMessage(message: string): CashControlRuleError \| null` — [cash-control.errors.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/errors/cash-control.errors.ts#L272)
 - **Propósito / descripción:** `RAISE EXCEPTION '&lt;CODE&gt;'` from the cash SQL functions → domain error; `null` if it is not one of them.
-- **Dependencias:** `message.split`, `cashControlError`
+- **Dependencias:** `message.split`, `DETAILED[code]`, `new CashControlRuleError`, `cashControlError`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** [typeorm-cash-control.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-control-repository-ts), [typeorm-cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-custody-repository-ts)
 
@@ -1279,7 +1460,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-custody.repository.ts
 
-- **Ruta:** [cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts) (`comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts`, 272 líneas)
+- **Ruta:** [cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts) (`comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts`, 392 líneas)
 - **Tipo:** Puerto de repositorio (interfaz) · **Capa:** Dominio · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Port of "Arqueo de Caja" and "Entrega de Efectivo a Bodega".
 - **Descripción del autor (comentario del archivo):** Port of "Arqueo de Caja" and "Entrega de Efectivo a Bodega". Caja balance = the cash Kardex; Bodega balance = its own Kardex; every write is one call to the PostgreSQL functions of migration 1760007400000 (locks, idempotency, RBAC, audit). Nothing here computes a balance.
@@ -1301,16 +1482,26 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 - `interface RegisterCashCountData` (L194): sin documentación — miembros: `details`, `observations`, `warehouseCounted`, `userId`, `idempotencyKey`, `replacesId`, `correctionReason`
 - `interface LatestCashCountCandidate` (L212): One individual cash count record — the arqueo of ONE cut (`cash_cut_counts`) or one standalone Arqueo de Caja (`cash_counts`). — miembros: `source`, `id`, `number`, `cutPeriodId`, `cutNumber`, `businessDate`, `countedAt`, `totalCounted`, `createdByUsername`, `details`
 - `interface LatestCashCountLookup` (L229): Result of looking up the most recent valid individual count. — miembros: `count`, `referenceBusinessDate`
-- `interface CashCustodyRepository` (L235): sin documentación — miembros: `getCustody`, `registerTransfer`, `voidTransfer`, `findTransfers`, `findTransferById`, `registerWarehouseInitialBalance`, `findWarehouseMovements`, `registerWithdrawal`, `voidWithdrawal`, `findWithdrawals`, `findWithdrawalById`, `registerCount`, `findCounts`, `findCountById`, `findLatestValidCount`
+- `interface LocationInventory` (L246): Inventory of one location, derived by `cash_location_inventory` from its anchor (latest physical count) plus the later movements with denominations. — miembros: `location`, `hasAnchor`, `anchorKind`, `anchorId`, `anchorNumber`, `anchorAt`, `anchorByUsername`, `balance`, `knownTotal`, `unbroken`, `lines`
+- `interface WarehouseCashCountRow` (L263): Audited per-denomination count of Bodega (must equal its balance). — miembros: `id`, `number`, `countedAt`, `businessDate`, `warehouseBalance`, `totalCounted`, `observations`, `createdByUsername`, `details`
+- `interface RegisterWarehouseCashCountData` (L275): sin documentación — miembros: `details`, `observations`, `userId`, `idempotencyKey`
+- `interface CashCountDraftPayload` (L283): What the Arqueo de Caja form had typed (autosaved). — miembros: `details`, `observations`, `countWarehouse`, `warehouseCounted`
+- `interface CashCountDraft` (L291): The user's in-progress Arqueo de Caja for the current bank day. — miembros: `businessDate`, `payload`, `version`, `updatedAt`
+- `interface CustodyTransferRow` (L302): One caja ↔ Bodega transfer (or Bodega → bank deposit) with its breakdown. — miembros: `id`, `kind`, `referenceNumber`, `origin`, `destination`, `bankName`, `amount`, `status`, `deliveredBy`, `receivedBy`, `voucherReference`, `observations`, `hasBreakdown`, `businessDate`, `createdById`, `createdByUsername`, `createdAt`, `voidedAt`, `voidReason`, `details`
+- `interface FindCustodyTransfersOptions` (L325): sin documentación — miembros: `kind`, `userId`, `dateFrom`, `dateTo`, `status`, `page`, `limit`
+- `interface CashCustodyRepository` (L335): sin documentación — miembros: `getCustody`, `registerTransfer`, `voidTransfer`, `findTransfers`, `findTransferById`, `registerWarehouseInitialBalance`, `findWarehouseMovements`, `registerWithdrawal`, `voidWithdrawal`, `findWithdrawals`, `findWithdrawalById`, `registerCount`, `findCounts`, `findCountById`, `findLatestValidCount`, `getInventory`, `registerWarehouseCount`, `findWarehouseCounts`, `findWarehouseCountById`, `getCountDraft`, `saveCountDraft`, `deleteCountDraft`, `findCustodyTransfers`
 - `type CashCountResult` (L10) = `(typeof CASH_COUNT_RESULTS)[number]`
 - `type WarehouseWithdrawalDestination` (L31) = `(typeof WAREHOUSE_WITHDRAWAL_DESTINATIONS)[number]`
 - `type LatestCashCountSourceKind` (L205) = `'CORTE_CAJA' \| 'ARQUEO_CAJA'` — Which kind of individual cash count a Cuadre de Agentes breakdown can be loaded from.
+- `type CashLocation` (L238) = `(typeof CASH_LOCATIONS)[number]`
+- `type CustodyTransferKind` (L298) = `'CAJA_A_BODEGA' \| 'BODEGA_A_CAJA' \| 'BODEGA_A_BANCO'`
 
 **Constantes exportadas:**
 
 - `CASH_CUSTODY_REPOSITORY` (L7): Port of "Arqueo de Caja" and "Entrega de Efectivo a Bodega". = `Symbol('CASH_CUSTODY_REPOSITORY')`
 - `CASH_COUNT_RESULTS` (L9) = `['CUADRADO', 'FALTANTE', 'SOBRANTE'] as const`
 - `WAREHOUSE_WITHDRAWAL_DESTINATIONS` (L30) = `['CAJA', 'BANCO'] as const`
+- `CASH_LOCATIONS` (L237) = `['CAJA', 'BODEGA'] as const`
 <a id="f-comercial-jhoel-api-src-modules-cash-control-infrastructure-persistence-typeorm-cash-control-repository-ts"></a>
 
 ### typeorm-cash-control.repository.ts
@@ -1692,7 +1883,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### typeorm-cash-custody.repository.ts
 
-- **Ruta:** [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts) (`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`, 562 líneas)
+- **Ruta:** [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts) (`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`, 821 líneas)
 - **Tipo:** Repositorio (implementación) · **Capa:** Infraestructura · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Raw-SQL adapter of the custody port: reads are plain SELECTs; writes call `register_cash_warehouse_transfer`, `void_cash_warehouse_transfer`, `register_warehouse_initial_balance` and `register_cash_count`, whose `RAISE EXCEPTION` codes are mapped to the cash-control domain errors.
 - **Depende de (archivos del proyecto):** [cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts), [cash-control.errors.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-errors-cash-control-errors-ts), [bank-movement.errors.ts](banks.md#f-comercial-jhoel-api-src-modules-banks-domain-errors-bank-movement-errors-ts)
@@ -1701,9 +1892,9 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 **Interfaces, tipos y enums:**
 
-- `type SqlRow` (L25) = `Record<string, unknown>`
+- `type SqlRow` (L33) = `Record<string, unknown>`
 
-#### Clase `TypeOrmCashCustodyRepository` (L108–561)
+#### Clase `TypeOrmCashCustodyRepository` (L150–820)
 
 - **Decoradores:** `@Injectable()`
 - **Herencia / contratos:** implements CashCustodyRepository
@@ -1712,29 +1903,39 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `getCustody` | método public async | 112–145 | — | `Promise<CashCustodySnapshot>` |
-| `registerTransfer` | método public async | 147–162 | `data: RegisterTransferData` | `Promise<string>` |
-| `voidTransfer` | método public async | 164–174 | `id: string`, `userId: string`, `reason: string` | `Promise<string>` |
-| `findTransfers` | método public async | 176–209 | `options: FindTransfersOptions` | `Promise<Paginated<WarehouseTransferRow>>` |
-| `findTransferById` | método public async | 211–217 | `id: string` | `Promise<WarehouseTransferRow \| null>` |
-| `registerWarehouseInitialBalance` | método public async | 219–230 | `amount: number`, `userId: string`, `reason: string`, `idempotencyKey: string` | `Promise<string>` |
-| `findWarehouseMovements` | método public async | 232–275 | `page: number`, `limit: number` | `Promise<Paginated<WarehouseMovementRow>>` |
-| `registerWithdrawal` | método public async | 277–294 | `data: RegisterWithdrawalData` | `Promise<string>` |
-| `voidWithdrawal` | método public async | 296–306 | `id: string`, `userId: string`, `reason: string` | `Promise<string>` |
-| `findWithdrawals` | método public async | 308–341 | `options: FindTransfersOptions` | `Promise<Paginated<WarehouseWithdrawalRow>>` |
-| `findWithdrawalById` | método public async | 343–349 | `id: string` | `Promise<WarehouseWithdrawalRow \| null>` |
-| `toWithdrawal` | método private | 351–381 | `row: SqlRow` | `WarehouseWithdrawalRow` |
-| `registerCount` | método public async | 383–397 | `data: RegisterCashCountData` | `Promise<string>` |
-| `findCounts` | método public async | 399–438 | `options: FindCashCountsOptions` | `Promise<Paginated<CashCountRow>>` |
-| `findCountById` | método public async | 440–446 | `id: string` | `Promise<CashCountRow \| null>` |
-| `findLatestValidCount` | método public async | 448–480 | `preferredBusinessDate: string \| null` | `Promise<LatestCashCountLookup>` |
-| `toTransfer` | método private | 482–505 | `row: SqlRow` | `WarehouseTransferRow` |
-| `toCount` | método private | 507–543 | `row: SqlRow` | `CashCountRow` |
-| `write` | método private async | 545–560 | `sql: string`, `params: unknown[]` | `Promise<T>` |
+| `getCustody` | método public async | 154–187 | — | `Promise<CashCustodySnapshot>` |
+| `registerTransfer` | método public async | 189–204 | `data: RegisterTransferData` | `Promise<string>` |
+| `voidTransfer` | método public async | 206–216 | `id: string`, `userId: string`, `reason: string` | `Promise<string>` |
+| `findTransfers` | método public async | 218–251 | `options: FindTransfersOptions` | `Promise<Paginated<WarehouseTransferRow>>` |
+| `findTransferById` | método public async | 253–259 | `id: string` | `Promise<WarehouseTransferRow \| null>` |
+| `registerWarehouseInitialBalance` | método public async | 261–272 | `amount: number`, `userId: string`, `reason: string`, `idempotencyKey: string` | `Promise<string>` |
+| `findWarehouseMovements` | método public async | 274–317 | `page: number`, `limit: number` | `Promise<Paginated<WarehouseMovementRow>>` |
+| `registerWithdrawal` | método public async | 319–336 | `data: RegisterWithdrawalData` | `Promise<string>` |
+| `voidWithdrawal` | método public async | 338–348 | `id: string`, `userId: string`, `reason: string` | `Promise<string>` |
+| `findWithdrawals` | método public async | 350–383 | `options: FindTransfersOptions` | `Promise<Paginated<WarehouseWithdrawalRow>>` |
+| `findWithdrawalById` | método public async | 385–391 | `id: string` | `Promise<WarehouseWithdrawalRow \| null>` |
+| `toWithdrawal` | método private | 393–423 | `row: SqlRow` | `WarehouseWithdrawalRow` |
+| `registerCount` | método public async | 425–439 | `data: RegisterCashCountData` | `Promise<string>` |
+| `findCounts` | método public async | 441–480 | `options: FindCashCountsOptions` | `Promise<Paginated<CashCountRow>>` |
+| `findCountById` | método public async | 482–488 | `id: string` | `Promise<CashCountRow \| null>` |
+| `findLatestValidCount` | método public async | 490–522 | `preferredBusinessDate: string \| null` | `Promise<LatestCashCountLookup>` |
+| `getInventory` | método public async | 526–559 | `location: CashLocation` | `Promise<LocationInventory>` |
+| `registerWarehouseCount` | método public async | 561–574 | `data: RegisterWarehouseCashCountData` | `Promise<string>` |
+| `findWarehouseCounts` | método public async | 576–593 | `page: number`, `limit: number` | `Promise<Paginated<WarehouseCashCountRow>>` |
+| `findWarehouseCountById` | método public async | 595–603 | `id: string` | `Promise<WarehouseCashCountRow \| null>` |
+| `getCountDraft` | método public async | 607–615 | `userId: string` | `Promise<CashCountDraft \| null>` |
+| `saveCountDraft` | método public async | 617–631 | `userId: string`, `payload: CashCountDraftPayload` | `Promise<CashCountDraft \| null>` |
+| `deleteCountDraft` | método public async | 633–639 | `userId: string` | `Promise<void>` |
+| `findCustodyTransfers` | método public async | 643–705 | `options: FindCustodyTransfersOptions` | `Promise<Paginated<CustodyTransferRow>>` |
+| `toWarehouseCount` | método private | 707–719 | `row: SqlRow` | `WarehouseCashCountRow` |
+| `toDraft` | método private | 721–739 | `row: SqlRow` | `CashCountDraft` |
+| `toTransfer` | método private | 741–764 | `row: SqlRow` | `WarehouseTransferRow` |
+| `toCount` | método private | 766–802 | `row: SqlRow` | `CashCountRow` |
+| `write` | método private async | 804–819 | `sql: string`, `params: unknown[]` | `Promise<T>` |
 
 ##### `TypeOrmCashCustodyRepository.getCustody`
 
-- **Firma:** `getCustody(): Promise<CashCustodySnapshot>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L112) (L112–145)
+- **Firma:** `getCustody(): Promise<CashCustodySnapshot>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L154) (L154–187)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `num`, `Math.round`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `cash_balance`, `cash_current_bank_day`; Tablas en su SQL: `warehouse_cash_movements`, `warehouse_cash_withdrawals`; Ejecuta SQL crudo (`query`)
@@ -1742,7 +1943,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.registerTransfer`
 
-- **Firma:** `registerTransfer(data: RegisterTransferData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L147) (L147–162)
+- **Firma:** `registerTransfer(data: RegisterTransferData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L189) (L189–204)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `JSON.stringify`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `register_cash_warehouse_transfer`
@@ -1750,7 +1951,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.voidTransfer`
 
-- **Firma:** `voidTransfer(id: string, userId: string, reason: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L164) (L164–174)
+- **Firma:** `voidTransfer(id: string, userId: string, reason: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L206) (L206–216)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `void_cash_warehouse_transfer`
@@ -1758,7 +1959,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findTransfers`
 
-- **Firma:** `findTransfers(options: FindTransfersOptions): Promise<Paginated<WarehouseTransferRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L176) (L176–209)
+- **Firma:** `findTransfers(options: FindTransfersOptions): Promise<Paginated<WarehouseTransferRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L218) (L218–251)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `params.push`, `where.push`, `where.join`, `this.dataSource.query`, `rows.map`, `this.toTransfer`, `num`
 - **Efectos secundarios:** Tablas en su SQL: `cash_warehouse_transfers`; Ejecuta SQL crudo (`query`)
@@ -1766,7 +1967,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findTransferById`
 
-- **Firma:** `findTransferById(id: string): Promise<WarehouseTransferRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L211) (L211–217)
+- **Firma:** `findTransferById(id: string): Promise<WarehouseTransferRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L253) (L253–259)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `this.toTransfer`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
@@ -1774,7 +1975,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.registerWarehouseInitialBalance`
 
-- **Firma:** `registerWarehouseInitialBalance(amount: number, userId: string, reason: string, idempotencyKey: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L219) (L219–230)
+- **Firma:** `registerWarehouseInitialBalance(amount: number, userId: string, reason: string, idempotencyKey: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L261) (L261–272)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `register_warehouse_initial_balance`
@@ -1782,7 +1983,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findWarehouseMovements`
 
-- **Firma:** `findWarehouseMovements(page: number, limit: number): Promise<Paginated<WarehouseMovementRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L232) (L232–275)
+- **Firma:** `findWarehouseMovements(page: number, limit: number): Promise<Paginated<WarehouseMovementRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L274) (L274–317)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`, `text`, `num`, `textOrNull`
 - **Efectos secundarios:** Tablas en su SQL: `warehouse_cash_movements`, `users`, `cash_warehouse_transfers`, `warehouse_cash_withdrawals`; Ejecuta SQL crudo (`query`)
@@ -1790,7 +1991,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.registerWithdrawal`
 
-- **Firma:** `registerWithdrawal(data: RegisterWithdrawalData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L277) (L277–294)
+- **Firma:** `registerWithdrawal(data: RegisterWithdrawalData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L319) (L319–336)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `JSON.stringify`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `register_warehouse_withdrawal`
@@ -1798,7 +1999,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.voidWithdrawal`
 
-- **Firma:** `voidWithdrawal(id: string, userId: string, reason: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L296) (L296–306)
+- **Firma:** `voidWithdrawal(id: string, userId: string, reason: string): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L338) (L338–348)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `void_warehouse_withdrawal`
@@ -1806,7 +2007,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findWithdrawals`
 
-- **Firma:** `findWithdrawals(options: FindTransfersOptions): Promise<Paginated<WarehouseWithdrawalRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L308) (L308–341)
+- **Firma:** `findWithdrawals(options: FindTransfersOptions): Promise<Paginated<WarehouseWithdrawalRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L350) (L350–383)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `params.push`, `where.push`, `where.join`, `this.dataSource.query`, `rows.map`, `this.toWithdrawal`, `num`
 - **Efectos secundarios:** Tablas en su SQL: `warehouse_cash_withdrawals`; Ejecuta SQL crudo (`query`)
@@ -1814,7 +2015,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findWithdrawalById`
 
-- **Firma:** `findWithdrawalById(id: string): Promise<WarehouseWithdrawalRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L343) (L343–349)
+- **Firma:** `findWithdrawalById(id: string): Promise<WarehouseWithdrawalRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L385) (L385–391)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `this.toWithdrawal`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
@@ -1822,7 +2023,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.toWithdrawal`
 
-- **Firma:** `toWithdrawal(row: SqlRow): WarehouseWithdrawalRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L351) (L351–381)
+- **Firma:** `toWithdrawal(row: SqlRow): WarehouseWithdrawalRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L393) (L393–423)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `text`, `num`, `textOrNull`, `numOrNull`, `toDetails`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -1830,7 +2031,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.registerCount`
 
-- **Firma:** `registerCount(data: RegisterCashCountData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L383) (L383–397)
+- **Firma:** `registerCount(data: RegisterCashCountData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L425) (L425–439)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.write`, `JSON.stringify`, `text`
 - **Efectos secundarios:** Llama funciones SQL: `register_cash_count`
@@ -1838,7 +2039,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findCounts`
 
-- **Firma:** `findCounts(options: FindCashCountsOptions): Promise<Paginated<CashCountRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L399) (L399–438)
+- **Firma:** `findCounts(options: FindCashCountsOptions): Promise<Paginated<CashCountRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L441) (L441–480)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `params.push`, `where.push`, `clause.replace`, `add`, `where.join`, `this.dataSource.query`, `rows.map`, `this.toCount`, `num`
 - **Efectos secundarios:** Tablas en su SQL: `cash_counts`; Ejecuta SQL crudo (`query`)
@@ -1846,7 +2047,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findCountById`
 
-- **Firma:** `findCountById(id: string): Promise<CashCountRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L440) (L440–446)
+- **Firma:** `findCountById(id: string): Promise<CashCountRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L482) (L482–488)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `this.toCount`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
@@ -1854,15 +2055,95 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.findLatestValidCount`
 
-- **Firma:** `findLatestValidCount(preferredBusinessDate: string \| null): Promise<LatestCashCountLookup>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L448) (L448–480)
+- **Firma:** `findLatestValidCount(preferredBusinessDate: string \| null): Promise<LatestCashCountLookup>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L490) (L490–522)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `textOrNull`, `text`, `numOrNull`, `num`, `toDetails`
 - **Efectos secundarios:** Llama funciones SQL: `cash_current_bank_day`, `cash_latest_count_candidate`; Ejecuta SQL crudo (`query`)
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
+##### `TypeOrmCashCustodyRepository.getInventory`
+
+- **Firma:** `getInventory(location: CashLocation): Promise<LocationInventory>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L526) (L526–559)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `textOrNull`, `numOrNull`, `num`, `lines.map`, `Math.round`
+- **Efectos secundarios:** Llama funciones SQL: `cash_location_inventory_summary`, `cash_location_inventory`; Tablas en su SQL: `users`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.registerWarehouseCount`
+
+- **Firma:** `registerWarehouseCount(data: RegisterWarehouseCashCountData): Promise<string>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L561) (L561–574)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.write`, `JSON.stringify`, `text`
+- **Efectos secundarios:** Llama funciones SQL: `register_warehouse_cash_count`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.findWarehouseCounts`
+
+- **Firma:** `findWarehouseCounts(page: number, limit: number): Promise<Paginated<WarehouseCashCountRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L576) (L576–593)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `rows.map`, `this.toWarehouseCount`, `num`
+- **Efectos secundarios:** Tablas en su SQL: `warehouse_cash_counts`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.findWarehouseCountById`
+
+- **Firma:** `findWarehouseCountById(id: string): Promise<WarehouseCashCountRow \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L595) (L595–603)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `this.toWarehouseCount`
+- **Efectos secundarios:** Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.getCountDraft`
+
+- **Firma:** `getCountDraft(userId: string): Promise<CashCountDraft \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L607) (L607–615)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `this.toDraft`
+- **Efectos secundarios:** Tablas en su SQL: `cash_count_drafts`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.saveCountDraft`
+
+- **Firma:** `saveCountDraft(userId: string, payload: CashCountDraftPayload): Promise<CashCountDraft \| null>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L617) (L617–631)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `JSON.stringify`, `this.toDraft`
+- **Efectos secundarios:** Llama funciones SQL: `cash_current_bank_day`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.deleteCountDraft`
+
+- **Firma:** `deleteCountDraft(userId: string): Promise<void>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L633) (L633–639)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`
+- **Efectos secundarios:** Tablas en su SQL: `cash_count_drafts`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.findCustodyTransfers`
+
+- **Firma:** `findCustodyTransfers(options: FindCustodyTransfersOptions): Promise<Paginated<CustodyTransferRow>>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L643) (L643–705)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `params.push`, `where.push`, `clause.replace`, `add`, `where.join`, `this.dataSource.query`, `rows.map`, `text`, `textOrNull`, `num`, `toDetails`
+- **Efectos secundarios:** Tablas en su SQL: `users`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `TypeOrmCashCustodyRepository.toWarehouseCount`
+
+- **Firma:** `toWarehouseCount(row: SqlRow): WarehouseCashCountRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L707) (L707–719)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `text`, `num`, `textOrNull`, `toDetails`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `TypeOrmCashCustodyRepository.toDraft`
+
+- **Firma:** `toDraft(row: SqlRow): CashCountDraft` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L721) (L721–739)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `text`, `Array.isArray`, `p.details.map`, `num`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
 ##### `TypeOrmCashCustodyRepository.toTransfer`
 
-- **Firma:** `toTransfer(row: SqlRow): WarehouseTransferRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L482) (L482–505)
+- **Firma:** `toTransfer(row: SqlRow): WarehouseTransferRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L741) (L741–764)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `text`, `num`, `textOrNull`, `toDetails`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -1870,7 +2151,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.toCount`
 
-- **Firma:** `toCount(row: SqlRow): CashCountRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L507) (L507–543)
+- **Firma:** `toCount(row: SqlRow): CashCountRow` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L766) (L766–802)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `num`, `numOrNull`, `Math.round`, `text`, `textOrNull`, `toDetails`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -1878,53 +2159,53 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `TypeOrmCashCustodyRepository.write`
 
-- **Firma:** `write(sql: string, params: unknown[]): Promise<T>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L545) (L545–560)
+- **Firma:** `write(sql: string, params: unknown[]): Promise<T>` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L804) (L804–819)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.dataSource.query`, `cashControlErrorFromMessage`, `bankMovementErrorFromMessage`
 - **Efectos secundarios:** Ejecuta SQL crudo (`query`)
 - **Errores que lanza:** `mapped`, `error`
 - **Consumidores:** (mismo archivo)
 
-#### Función `text` (L27–42)
+#### Función `text` (L35–50)
 
 - **Tipo:** función local del archivo
-- **Firma:** `text(value: unknown): string` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L27)
+- **Firma:** `text(value: unknown): string` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L35)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `value.toISOString`, `value.toString`, `JSON.stringify`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `textOrNull` (L44–46)
+#### Función `textOrNull` (L52–54)
 
 - **Tipo:** función local del archivo
-- **Firma:** `textOrNull(value: unknown): string \| null` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L44)
+- **Firma:** `textOrNull(value: unknown): string \| null` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L52)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `text`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `num` (L48–50)
+#### Función `num` (L56–58)
 
 - **Tipo:** función local del archivo
-- **Firma:** `num(value: unknown): number` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L48)
+- **Firma:** `num(value: unknown): number` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L56)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Number`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `numOrNull` (L52–54)
+#### Función `numOrNull` (L60–62)
 
 - **Tipo:** función local del archivo
-- **Firma:** `numOrNull(value: unknown): number \| null` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L52)
+- **Firma:** `numOrNull(value: unknown): number \| null` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L60)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Number`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
-#### Función `toDetails` (L56–62)
+#### Función `toDetails` (L64–70)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toDetails(value: unknown): DenominationRow[]` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L56)
+- **Firma:** `toDetails(value: unknown): DenominationRow[]` — [typeorm-cash-custody.repository.ts](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts#L64)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `((value as SqlRow[] \| null) ?? []).map`, `num`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -2170,41 +2451,118 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-custody.controller.ts
 
-- **Ruta:** [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts) (`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`, 248 líneas)
+- **Ruta:** [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts) (`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`, 334 líneas)
 - **Tipo:** Controlador · **Capa:** Presentación · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** Control de Efectivo → "Arqueo de Caja" and "Bodega".
 - **Depende de (archivos del proyecto):** [jwt-auth.guard.ts](auth.md#f-comercial-jhoel-api-src-modules-auth-infrastructure-guards-jwt-auth-guard-ts), [current-user.decorator.ts](shared.md#f-comercial-jhoel-api-src-shared-decorators-current-user-decorator-ts), [cash-custody.use-cases.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-application-use-cases-cash-custody-use-cases-ts), [cash-control.request.dto.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-dtos-cash-control-request-dto-ts), [cash-custody.request.dto.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-dtos-cash-custody-request-dto-ts)
 - **Paquetes externos:** `@nestjs/common`
 - **Consumidores:** [cash-control.module.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-cash-control-module-ts)
 
-#### Clase `CashCustodyController` (L51–247)
+#### Clase `CashCustodyController` (L64–333)
 
 - **Decoradores:** `@UseGuards(JwtAuthGuard)` `@Controller('cash-control')`
 - **Propósito:** Control de Efectivo → "Arqueo de Caja" and "Bodega". Every use case checks its permission (cash_custody.view / operate / authorize) and the SQL functions check operate/authorize again.
-- **Dependencias inyectadas (constructor):** `getCustody: GetCashCustodyUseCase`, `registerCount: RegisterCashCountUseCase`, `listCounts: ListCashCountsUseCase`, `getCount: GetCashCountUseCase`, `getLatestCount: GetLatestCashCountUseCase`, `registerTransfer: RegisterWarehouseTransferUseCase`, `voidTransfer: VoidWarehouseTransferUseCase`, `listTransfers: ListWarehouseTransfersUseCase`, `getTransfer: GetWarehouseTransferUseCase`, `initialBalance: RegisterWarehouseInitialBalanceUseCase`, `listWarehouseMovements: ListWarehouseMovementsUseCase`, `registerWithdrawal: RegisterWarehouseWithdrawalUseCase`, `voidWithdrawal: VoidWarehouseWithdrawalUseCase`, `listWithdrawals: ListWarehouseWithdrawalsUseCase`, `getWithdrawal: GetWarehouseWithdrawalUseCase`
+- **Dependencias inyectadas (constructor):** `getCustody: GetCashCustodyUseCase`, `registerCount: RegisterCashCountUseCase`, `listCounts: ListCashCountsUseCase`, `getCount: GetCashCountUseCase`, `getLatestCount: GetLatestCashCountUseCase`, `registerTransfer: RegisterWarehouseTransferUseCase`, `voidTransfer: VoidWarehouseTransferUseCase`, `listTransfers: ListWarehouseTransfersUseCase`, `getTransfer: GetWarehouseTransferUseCase`, `initialBalance: RegisterWarehouseInitialBalanceUseCase`, `listWarehouseMovements: ListWarehouseMovementsUseCase`, `registerWithdrawal: RegisterWarehouseWithdrawalUseCase`, `voidWithdrawal: VoidWarehouseWithdrawalUseCase`, `listWithdrawals: ListWarehouseWithdrawalsUseCase`, `getWithdrawal: GetWarehouseWithdrawalUseCase`, `getInventory: GetCashInventoryUseCase`, `registerWarehouseCount: RegisterWarehouseCashCountUseCase`, `listWarehouseCounts: ListWarehouseCashCountsUseCase`, `getDraft: GetCashCountDraftUseCase`, `saveDraft: SaveCashCountDraftUseCase`, `discardDraft: DiscardCashCountDraftUseCase`, `listCustodyTransfers: ListCustodyTransfersUseCase`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `withdrawals` | método public | 73–79 | `query: WarehouseTransfersQueryDto`, `user: RequestUser` | (inferido) |
-| `withdrawal` | método public | 81–87 | `id: string`, `user: RequestUser` | (inferido) |
-| `createWithdrawal` | método public | 90–101 | `dto: RegisterWarehouseWithdrawalRequestDto`, `user: RequestUser` | (inferido) |
-| `voidWarehouseWithdrawal` | método public | 103–116 | `id: string`, `dto: ReasonRequestDto`, `user: RequestUser` | (inferido) |
-| `custody` | método public | 119–122 | `user: RequestUser` | (inferido) |
-| `counts` | método public | 124–127 | `query: CashCountsQueryDto`, `user: RequestUser` | (inferido) |
-| `latestCount` | método public | 133–142 | `query: LatestCashCountQueryDto`, `user: RequestUser` | (inferido) |
-| `count` | método public | 144–150 | `id: string`, `user: RequestUser` | (inferido) |
-| `createCount` | método public | 152–163 | `dto: RegisterCashCountRequestDto`, `user: RequestUser` | (inferido) |
-| `correctCount` | método public | 166–181 | `id: string`, `dto: CorrectCashCountRequestDto`, `user: RequestUser` | (inferido) |
-| `warehouseMovements` | método public | 183–189 | `query: WarehouseMovementsQueryDto`, `user: RequestUser` | (inferido) |
-| `warehouseInitialBalance` | método public | 191–202 | `dto: WarehouseInitialBalanceRequestDto`, `user: RequestUser` | (inferido) |
-| `transfers` | método public | 204–210 | `query: WarehouseTransfersQueryDto`, `user: RequestUser` | (inferido) |
-| `transfer` | método public | 212–218 | `id: string`, `user: RequestUser` | (inferido) |
-| `createTransfer` | método public | 220–231 | `dto: RegisterWarehouseTransferRequestDto`, `user: RequestUser` | (inferido) |
-| `voidWarehouseTransfer` | método public | 233–246 | `id: string`, `dto: ReasonRequestDto`, `user: RequestUser` | (inferido) |
+| `inventory` | método public | 93–96 | `user: RequestUser` | (inferido) |
+| `warehouseCounts` | método public | 99–105 | `query: PageQueryDto`, `user: RequestUser` | (inferido) |
+| `createWarehouseCount` | método public | 108–119 | `dto: RegisterWarehouseCashCountRequestDto`, `user: RequestUser` | (inferido) |
+| `custodyTransfers` | método public | 122–128 | `query: CustodyTransfersQueryDto`, `user: RequestUser` | (inferido) |
+| `countDraft` | método public | 134–137 | `user: RequestUser` | (inferido) |
+| `saveCountDraft` | método public | 140–150 | `dto: SaveCashCountDraftRequestDto`, `user: RequestUser` | (inferido) |
+| `discardCountDraft` | método public | 153–156 | `user: RequestUser` | (inferido) |
+| `withdrawals` | método public | 159–165 | `query: WarehouseTransfersQueryDto`, `user: RequestUser` | (inferido) |
+| `withdrawal` | método public | 167–173 | `id: string`, `user: RequestUser` | (inferido) |
+| `createWithdrawal` | método public | 176–187 | `dto: RegisterWarehouseWithdrawalRequestDto`, `user: RequestUser` | (inferido) |
+| `voidWarehouseWithdrawal` | método public | 189–202 | `id: string`, `dto: ReasonRequestDto`, `user: RequestUser` | (inferido) |
+| `custody` | método public | 205–208 | `user: RequestUser` | (inferido) |
+| `counts` | método public | 210–213 | `query: CashCountsQueryDto`, `user: RequestUser` | (inferido) |
+| `latestCount` | método public | 219–228 | `query: LatestCashCountQueryDto`, `user: RequestUser` | (inferido) |
+| `count` | método public | 230–236 | `id: string`, `user: RequestUser` | (inferido) |
+| `createCount` | método public | 238–249 | `dto: RegisterCashCountRequestDto`, `user: RequestUser` | (inferido) |
+| `correctCount` | método public | 252–267 | `id: string`, `dto: CorrectCashCountRequestDto`, `user: RequestUser` | (inferido) |
+| `warehouseMovements` | método public | 269–275 | `query: WarehouseMovementsQueryDto`, `user: RequestUser` | (inferido) |
+| `warehouseInitialBalance` | método public | 277–288 | `dto: WarehouseInitialBalanceRequestDto`, `user: RequestUser` | (inferido) |
+| `transfers` | método public | 290–296 | `query: WarehouseTransfersQueryDto`, `user: RequestUser` | (inferido) |
+| `transfer` | método public | 298–304 | `id: string`, `user: RequestUser` | (inferido) |
+| `createTransfer` | método public | 306–317 | `dto: RegisterWarehouseTransferRequestDto`, `user: RequestUser` | (inferido) |
+| `voidWarehouseTransfer` | método public | 319–332 | `id: string`, `dto: ReasonRequestDto`, `user: RequestUser` | (inferido) |
+
+##### `CashCustodyController.inventory`
+
+- **Firma:** `inventory(user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L93) (L93–96)
+- **Decoradores:** `@Get('inventory')`
+- **Propósito / descripción:** Per-denomination inventory of caja and Bodega (derived from counts + movements).
+- **Origen de parámetros:** `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.getInventory.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.warehouseCounts`
+
+- **Firma:** `warehouseCounts(query: PageQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L99) (L99–105)
+- **Decoradores:** `@Get('warehouse/counts')`
+- **Propósito / descripción:** History of the audited Bodega counts.
+- **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.listWarehouseCounts.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.createWarehouseCount`
+
+- **Firma:** `createWarehouseCount(dto: RegisterWarehouseCashCountRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L108) (L108–119)
+- **Decoradores:** `@Post('warehouse/counts')` `@HttpCode(HttpStatus.CREATED)`
+- **Propósito / descripción:** "Conteo de Bodega por denominación" (admin): sets the reference of the Bodega inventory.
+- **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.registerWarehouseCount.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.custodyTransfers`
+
+- **Firma:** `custodyTransfers(query: CustodyTransfersQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L122) (L122–128)
+- **Decoradores:** `@Get('custody/transfers')`
+- **Propósito / descripción:** Unified history of caja ↔ Bodega transfers (filters: kind, user, dates, status).
+- **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.listCustodyTransfers.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.countDraft`
+
+- **Firma:** `countDraft(user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L134) (L134–137)
+- **Decoradores:** `@Get('counts/draft')`
+- **Propósito / descripción:** The caller's in-progress Arqueo de Caja for the current bank day (or null). Declared before `counts/:id`, like `counts/latest`.
+- **Origen de parámetros:** `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.getDraft.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.saveCountDraft`
+
+- **Firma:** `saveCountDraft(dto: SaveCashCountDraftRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L140) (L140–150)
+- **Decoradores:** `@Put('counts/draft')`
+- **Propósito / descripción:** Autosave of the Arqueo de Caja form (upsert of the caller's own draft).
+- **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.saveDraft.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashCustodyController.discardCountDraft`
+
+- **Firma:** `discardCountDraft(user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L153) (L153–156)
+- **Decoradores:** `@Delete('counts/draft')`
+- **Propósito / descripción:** Explicit "Reiniciar arqueo": discards the caller's draft.
+- **Origen de parámetros:** `@CurrentUser() user`
+- **Dependencias (llamadas en su cuerpo):** `this.discardDraft.execute`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
 ##### `CashCustodyController.withdrawals`
 
-- **Firma:** `withdrawals(query: WarehouseTransfersQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L73) (L73–79)
+- **Firma:** `withdrawals(query: WarehouseTransfersQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L159) (L159–165)
 - **Decoradores:** `@Get('warehouse/withdrawals')`
 - **Propósito / descripción:** "Retiro de Bodega" history.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -2214,7 +2572,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.withdrawal`
 
-- **Firma:** `withdrawal(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L81) (L81–87)
+- **Firma:** `withdrawal(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L167) (L167–173)
 - **Decoradores:** `@Get('warehouse/withdrawals/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`
@@ -2224,7 +2582,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.createWithdrawal`
 
-- **Firma:** `createWithdrawal(dto: RegisterWarehouseWithdrawalRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L90) (L90–101)
+- **Firma:** `createWithdrawal(dto: RegisterWarehouseWithdrawalRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L176) (L176–187)
 - **Decoradores:** `@Post('warehouse/withdrawals')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Cash out of Bodega: back to the caja or deposited into a bank account.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -2234,7 +2592,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.voidWarehouseWithdrawal`
 
-- **Firma:** `voidWarehouseWithdrawal(id: string, dto: ReasonRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L103) (L103–116)
+- **Firma:** `voidWarehouseWithdrawal(id: string, dto: ReasonRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L189) (L189–202)
 - **Decoradores:** `@Post('warehouse/withdrawals/:id/void')` `@HttpCode(HttpStatus.OK)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -2244,7 +2602,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.custody`
 
-- **Firma:** `custody(user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L119) (L119–122)
+- **Firma:** `custody(user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L205) (L205–208)
 - **Decoradores:** `@Get('custody')`
 - **Propósito / descripción:** Caja, Bodega and total under custody.
 - **Origen de parámetros:** `@CurrentUser() user`
@@ -2254,7 +2612,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.counts`
 
-- **Firma:** `counts(query: CashCountsQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L124) (L124–127)
+- **Firma:** `counts(query: CashCountsQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L210) (L210–213)
 - **Decoradores:** `@Get('counts')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -2264,7 +2622,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.latestCount`
 
-- **Firma:** `latestCount(query: LatestCashCountQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L133) (L133–142)
+- **Firma:** `latestCount(query: LatestCashCountQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L219) (L219–228)
 - **Decoradores:** `@Get('counts/latest')`
 - **Propósito / descripción:** Latest valid Arqueo de Caja (+ full 12-denomination breakdown) for Cuadre de Agentes. Declared before `counts/:id` so "latest" is not parsed as an id.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -2274,7 +2632,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.count`
 
-- **Firma:** `count(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L144) (L144–150)
+- **Firma:** `count(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L230) (L230–236)
 - **Decoradores:** `@Get('counts/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`
@@ -2284,7 +2642,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.createCount`
 
-- **Firma:** `createCount(dto: RegisterCashCountRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L152) (L152–163)
+- **Firma:** `createCount(dto: RegisterCashCountRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L238) (L238–249)
 - **Decoradores:** `@Post('counts')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -2294,7 +2652,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.correctCount`
 
-- **Firma:** `correctCount(id: string, dto: CorrectCashCountRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L166) (L166–181)
+- **Firma:** `correctCount(id: string, dto: CorrectCashCountRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L252) (L252–267)
 - **Decoradores:** `@Post('counts/:id/corrections')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Audited correction: new count with the original photograph; the original becomes REEMPLAZADO.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -2304,7 +2662,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.warehouseMovements`
 
-- **Firma:** `warehouseMovements(query: WarehouseMovementsQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L183) (L183–189)
+- **Firma:** `warehouseMovements(query: WarehouseMovementsQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L269) (L269–275)
 - **Decoradores:** `@Get('warehouse/movements')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -2314,7 +2672,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.warehouseInitialBalance`
 
-- **Firma:** `warehouseInitialBalance(dto: WarehouseInitialBalanceRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L191) (L191–202)
+- **Firma:** `warehouseInitialBalance(dto: WarehouseInitialBalanceRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L277) (L277–288)
 - **Decoradores:** `@Post('warehouse/initial-balance')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -2324,7 +2682,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.transfers`
 
-- **Firma:** `transfers(query: WarehouseTransfersQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L204) (L204–210)
+- **Firma:** `transfers(query: WarehouseTransfersQueryDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L290) (L290–296)
 - **Decoradores:** `@Get('warehouse/transfers')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Query() query`, `@CurrentUser() user`
@@ -2334,7 +2692,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.transfer`
 
-- **Firma:** `transfer(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L212) (L212–218)
+- **Firma:** `transfer(id: string, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L298) (L298–304)
 - **Decoradores:** `@Get('warehouse/transfers/:id')`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@CurrentUser() user`
@@ -2344,7 +2702,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.createTransfer`
 
-- **Firma:** `createTransfer(dto: RegisterWarehouseTransferRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L220) (L220–231)
+- **Firma:** `createTransfer(dto: RegisterWarehouseTransferRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L306) (L306–317)
 - **Decoradores:** `@Post('warehouse/transfers')` `@HttpCode(HttpStatus.CREATED)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Body() dto`, `@CurrentUser() user`
@@ -2354,7 +2712,7 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ##### `CashCustodyController.voidWarehouseTransfer`
 
-- **Firma:** `voidWarehouseTransfer(id: string, dto: ReasonRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L233) (L233–246)
+- **Firma:** `voidWarehouseTransfer(id: string, dto: ReasonRequestDto, user: RequestUser)` — [cash-custody.controller.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts#L319) (L319–332)
 - **Decoradores:** `@Post('warehouse/transfers/:id/void')` `@HttpCode(HttpStatus.OK)`
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Origen de parámetros:** `@Param('id', ParseUUIDPipe) id`, `@Body() dto`, `@CurrentUser() user`
@@ -2432,50 +2790,78 @@ Para cada ruta: controlador → caso de uso → métodos del puerto de repositor
 
 ### cash-custody.request.dto.ts
 
-- **Ruta:** [cash-custody.request.dto.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/dtos/cash-custody.request.dto.ts) (`comercial-jhoel-api/src/modules/cash-control/presentation/dtos/cash-custody.request.dto.ts`, 162 líneas)
+- **Ruta:** [cash-custody.request.dto.ts](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/dtos/cash-custody.request.dto.ts) (`comercial-jhoel-api/src/modules/cash-control/presentation/dtos/cash-custody.request.dto.ts`, 229 líneas)
 - **Tipo:** DTO de entrada · **Capa:** Presentación · **Módulo:** Módulo backend `cash-control`
 - **Responsabilidad:** One denomination row (quantity: whole number ≥ 0).
 - **Depende de (archivos del proyecto):** [cash-custody.repository.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-domain-repositories-cash-custody-repository-ts)
 - **Paquetes externos:** `class-transformer`, `class-validator`
 - **Consumidores:** [cash-custody.controller.ts](cash-control.md#f-comercial-jhoel-api-src-modules-cash-control-presentation-controllers-cash-custody-controller-ts)
 
-#### Clase `DenominationRequestDto` (L31–39)
+**Interfaces, tipos y enums:**
+
+- `type CustodyTransferKindDto` (L217) = `(typeof CUSTODY_TRANSFER_KINDS)[number]`
+
+**Constantes exportadas:**
+
+- `CUSTODY_TRANSFER_KINDS` (L212) = `[ 'CAJA_A_BODEGA', 'BODEGA_A_CAJA', 'BODEGA_A_BANCO', ] as const`
+
+#### Clase `DenominationRequestDto` (L32–40)
 
 - **Propósito:** One denomination row (quantity: whole number ≥ 0).
 
-#### Clase `RegisterCashCountRequestDto` (L42–60)
+#### Clase `RegisterCashCountRequestDto` (L43–61)
 
 - **Propósito:** "Arqueo de Caja" (or its audited correction).
 
-#### Clase `CorrectCashCountRequestDto` (L62–67)
+#### Clase `CorrectCashCountRequestDto` (L63–68)
 
 - **Herencia / contratos:** extends RegisterCashCountRequestDto
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `CashCountsQueryDto` (L69–77)
+#### Clase `CashCountsQueryDto` (L70–78)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `RegisterWarehouseTransferRequestDto` (L80–99)
+#### Clase `RegisterWarehouseTransferRequestDto` (L81–100)
 
 - **Propósito:** "Entrega de Efectivo a Bodega".
 
-#### Clase `WarehouseTransfersQueryDto` (L101–107)
+#### Clase `WarehouseTransfersQueryDto` (L102–108)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `WarehouseMovementsQueryDto` (L109–112)
+#### Clase `WarehouseMovementsQueryDto` (L110–113)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `WarehouseInitialBalanceRequestDto` (L114–126)
+#### Clase `WarehouseInitialBalanceRequestDto` (L115–127)
 
 - **Propósito:** Sin comentario de documentación; ver los métodos abajo.
 
-#### Clase `RegisterWarehouseWithdrawalRequestDto` (L129–154)
+#### Clase `RegisterWarehouseWithdrawalRequestDto` (L130–155)
 
 - **Propósito:** "Retiro de Bodega" — to the caja or to a bank account.
 
-#### Clase `LatestCashCountQueryDto` (L157–161)
+#### Clase `LatestCashCountQueryDto` (L158–162)
 
 - **Propósito:** `GET /cash-control/counts/latest?businessDate=yyyy-MM-dd` (optional: default current bank day).
+
+#### Clase `RegisterWarehouseCashCountRequestDto` (L165–176)
+
+- **Propósito:** "Conteo de Bodega por denominación" — sets the reference of the Bodega inventory.
+
+#### Clase `PageQueryDto` (L178–181)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `SaveCashCountDraftRequestDto` (L184–200)
+
+- **Propósito:** In-progress Arqueo de Caja (autosave). Quantities may be 0; nothing here is a financial record.
+
+#### Clase `DraftDenominationRequestDto` (L202–210)
+
+- **Propósito:** Sin comentario de documentación; ver los métodos abajo.
+
+#### Clase `CustodyTransfersQueryDto` (L220–228)
+
+- **Propósito:** Unified history of caja ↔ Bodega transfers (and Bodega → bank deposits).

@@ -1,7 +1,12 @@
 <div class="cash-grid">
   @for (row of rows; track row.denomination) {
-    <div class="cash-row" [class.cash-row--filled]="row.quantity > 0">
-      <span class="cash-row__label">{{ formatDenomination(row.denomination) }}</span>
+    <div class="cash-row" [class.cash-row--filled]="row.quantity > 0" [class.cash-row--over]="row.over">
+      <span class="cash-row__label">
+        {{ formatDenomination(row.denomination) }}
+        @if (row.available !== null) {
+          <small class="cash-row__available" [attr.title]="'Disponibles: ' + row.available">disp. {{ row.available }}</small>
+        }
+      </span>
       <span class="cash-row__times">×</span>
       <input
         type="text"

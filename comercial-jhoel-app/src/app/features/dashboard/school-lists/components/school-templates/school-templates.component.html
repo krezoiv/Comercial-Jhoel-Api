@@ -1,0 +1,156 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="book-open" [size]="18" /> Plantillas de Listas Escolares</h2>
+    @if (canManage()) {
+      <app-button variant="primary" size="sm" (click)="create()"><app-icon name="plus" [size]="16" /> Nueva plantilla</app-button>
+    }
+  </div>
+  <p class="panel__hint">Cada plantilla es la lista oficial solicitada por el instituto. Cambiarla no modifica cotizaciones ya generadas.</p>
+
+  @if (failed()) {
+    <p class="state state--error" role="alert">No se pudieron cargar las plantillas.</p>
+  }
+
+  <div class="cards">
+    @for (t of templates(); track t.id) {
+      <article class="tpl" [class.tpl--off]="!t.isActive">
+        <header>
+          <div>
+            <h3>{{ t.name }}</h3>
+            <span class="muted">{{ t.grade }}</span>
+          </div>
+          <app-badge [tone]="t.isActive ? 'success' : 'neutral-light'">{{ t.isActive ? 'Activa' : 'Inactiva' }}</app-badge>
+        </header>
+        <div class="tpl__figures">
+          <div><span>Productos</span><strong>{{ t.itemCount }}</strong></div>
+          <div><span>Total de la lista</span><strong>{{ formatCurrency(t.total) }}</strong></div>
+        </div>
+        <p class="muted">Actualizada {{ formatDateTime(t.updatedAt) }}{{ t.updatedByUsername ? ' por ' + t.updatedByUsername : '' }}</p>
+        <footer>
+          <app-button variant="ghost" size="sm" (click)="toggle(t)"><app-icon name="eye" [size]="14" /> {{ expanded()?.id === t.id ? 'Ocultar' : 'Ver contenido' }}</app-button>
+          @if (canManage()) {
+            <button type="button" class="icon-btn" title="Editar" aria-label="Editar plantilla" (click)="edit(t)"><app-icon name="edit-2" [size]="16" /></button>
+            <button type="button" class="icon-btn" title="Duplicar" aria-label="Duplicar plantilla" (click)="startDuplicate(t)"><app-icon name="copy" [size]="16" /></button>
+            <button type="button" class="icon-btn" [class.icon-btn--danger]="t.isActive" [title]="t.isActive ? 'Desactivar' : 'Activar'" [attr.aria-label]="t.isActive ? 'Desactivar plantilla' : 'Activar plantilla'" (click)="toggleActive(t)">
+              <app-icon [name]="t.isActive ? 'x-circle' : 'rotate-ccw'" [size]="16" />
+            </button>
+          }
+        </footer>
+      </article>
+    } @empty {
+      @if (!failed()) { <p class="state">No hay plantillas registradas.</p> }
+    }
+  </div>
+</section>
+
+@if (expanded(); as tpl) {
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title"><app-icon name="layers" [size]="18" /> {{ tpl.name }} · {{ tpl.grade }}</h2>
+      <span class="muted">{{ tpl.description }}</span>
+    </div>
+    @if (tpl.items.length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Producto</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Subtotal</th><th>Observaciones</th></tr></thead>
+          <tbody>
+            @for (i of tpl.items; track i.id) {
+              <tr>
+                <td>{{ i.productName }} @if (i.productId) { <app-badge tone="success">Inventario</app-badge> }</td>
+                <td>{{ i.description || '—' }}</td>
+                <td class="num">{{ i.quantity }}</td>
+                <td class="num">{{ formatCurrency(i.unitPrice) }}</td>
+                <td class="num">{{ formatCurrency(i.subtotal) }}</td>
+                <td>{{ i.observations || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td colspan="4">Total</td><td class="num">{{ formatCurrency(tpl.total) }}</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    } @else {
+      <p class="state">Esta plantilla aún no tiene productos{{ canManage() ? '. Use "Editar" para configurarla.' : '.' }}</p>
+    }
+  </section>
+}
+
+@if (draft(); as d) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--xl" role="dialog" aria-modal="true" aria-labelledby="tpl-editor-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="tpl-editor-title"><app-icon name="book-open" [size]="20" /> {{ d.id ? 'Editar plantilla' : 'Nueva plantilla' }}</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="saving()" (click)="draft.set(null)"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <div class="modal__grid">
+        <div class="field"><label for="tpl-name">Nombre</label>
+          <input id="tpl-name" type="text" maxlength="120" [ngModel]="d.name" (ngModelChange)="patch({ name: $event })" /></div>
+        <div class="field"><label for="tpl-grade">Grado escolar</label>
+          <input id="tpl-grade" type="text" maxlength="60" placeholder="Primero Básico" [ngModel]="d.grade" (ngModelChange)="patch({ grade: $event })" /></div>
+        <div class="field field--wide"><label for="tpl-desc">Descripción <span class="field__optional">(opcional)</span></label>
+          <input id="tpl-desc" type="text" maxlength="500" [ngModel]="d.description" (ngModelChange)="patch({ description: $event })" /></div>
+      </div>
+
+      <div class="table-wrap editor-lines">
+        <table class="table">
+          <thead><tr><th>Producto</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Subtotal</th><th>Observaciones</th><th></th></tr></thead>
+          <tbody>
+            @for (l of d.lines; track l.key; let idx = $index) {
+              <tr>
+                <td><input type="text" maxlength="150" [attr.aria-label]="'Producto ' + (idx + 1)" [ngModel]="l.productName" (ngModelChange)="patchLine(l.key, { productName: $event })" /></td>
+                <td><input type="text" maxlength="255" [attr.aria-label]="'Descripción ' + (idx + 1)" [ngModel]="l.description" (ngModelChange)="patchLine(l.key, { description: $event })" /></td>
+                <td class="num"><input class="small" type="number" min="1" step="1" [attr.aria-label]="'Cantidad ' + (idx + 1)" [ngModel]="l.quantity" (ngModelChange)="patchLine(l.key, { quantity: num($event) })" /></td>
+                <td class="num"><input class="small" type="number" min="0" step="0.01" [attr.aria-label]="'Precio ' + (idx + 1)" [ngModel]="l.unitPrice" (ngModelChange)="patchLine(l.key, { unitPrice: num($event) })" /></td>
+                <td class="num">{{ formatCurrency(l.quantity * l.unitPrice) }}</td>
+                <td><input type="text" maxlength="255" [attr.aria-label]="'Observaciones ' + (idx + 1)" [ngModel]="l.observations" (ngModelChange)="patchLine(l.key, { observations: $event })" /></td>
+                <td>
+                  <div class="line-actions">
+                    <button type="button" class="icon-btn" aria-label="Subir" [disabled]="idx === 0" (click)="moveLine(idx, -1)"><app-icon name="chevron-up" [size]="14" /></button>
+                    <button type="button" class="icon-btn" aria-label="Bajar" [disabled]="idx === d.lines.length - 1" (click)="moveLine(idx, 1)"><app-icon name="chevron-down" [size]="14" /></button>
+                    <button type="button" class="icon-btn icon-btn--danger" aria-label="Eliminar producto" (click)="removeLine(l.key)"><app-icon name="trash-2" [size]="14" /></button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="state">Agregue los productos de la lista oficial.</td></tr>
+            }
+          </tbody>
+          <tfoot><tr><td colspan="4">Total de la lista</td><td class="num">{{ formatCurrency(draftTotal()) }}</td><td colspan="2"></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="add">
+        <div class="add__search"><span class="muted">Agregar del inventario</span><app-quotation-product-search (productSelected)="addLine($event)" /></div>
+        <app-button variant="ghost" size="sm" (click)="addLine()"><app-icon name="plus" [size]="14" /> Producto escrito a mano</app-button>
+      </div>
+
+      @if (draftProblem()) { <p class="modal__hint">{{ draftProblem() }}</p> }
+      @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="saving()" (click)="draft.set(null)">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="saving() || !!draftProblem()" (click)="saveDraft()">{{ saving() ? 'Guardando…' : 'Guardar plantilla' }}</app-button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (duplicating(); as source) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tpl-dup-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="tpl-dup-title"><app-icon name="copy" [size]="20" /> Duplicar "{{ source.name }}"</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="saving()" (click)="duplicating.set(null)"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <div class="modal__grid">
+        <div class="field"><label for="dup-name">Nombre de la nueva plantilla</label>
+          <input id="dup-name" type="text" maxlength="120" [ngModel]="copyName()" (ngModelChange)="copyName.set($event)" /></div>
+        <div class="field"><label for="dup-grade">Grado escolar</label>
+          <input id="dup-grade" type="text" maxlength="60" [ngModel]="copyGrade()" (ngModelChange)="copyGrade.set($event)" /></div>
+      </div>
+      <p class="modal__hint">Se copian todos los productos, cantidades y precios; después puede editarla sin afectar la original.</p>
+      @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="saving()" (click)="duplicating.set(null)">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="saving() || copyName().trim().length < 3" (click)="duplicate()">Duplicar</app-button>
+      </div>
+    </div>
+  </div>
+}

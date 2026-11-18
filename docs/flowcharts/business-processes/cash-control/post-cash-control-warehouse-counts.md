@@ -1,0 +1,148 @@
+# POST /api/cash-control/warehouse/counts
+
+Módulo: **Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)** · Fuente editable: [`post-cash-control-warehouse-counts.mmd`](post-cash-control-warehouse-counts.mmd) · [Índice de diagramas](../../README.md)
+
+```mermaid
+flowchart TD
+  n1(["Inicio: el usuario ejecuta POST /api/cash-control/warehouse/counts"])
+  n2["GlobalExceptionFilter<br/>{ success: false, statusCode, message }"]
+  n3(["Fin con error: la pantalla muestra el mensaje<br/>(extractErrorMessage / notificación)"])
+  subgraph s4["Frontend (Angular)"]
+  n5["CashCustodyService.registerWarehouseCount<br/><small>app/core/services/cash-custody.service.ts</small>"]
+  n6["WarehouseCountModalComponent.save<br/><small>app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts</small><br/>(se invoca desde su plantilla)"]
+  n7["HTTP POST /api/cash-control/warehouse/counts<br/>authInterceptor agrega Authorization: Bearer"]
+  end
+  n8["Respuesta 201/200: { success: true, data }<br/>(ResponseInterceptor)"]
+  subgraph s9["API NestJS — presentación"]
+  n10{"¿Token válido y usuario activo?<br/>(JwtAuthGuard → JwtStrategy.validate)"}
+  n11(["401 No autorizado<br/>(authInterceptor cierra sesión)"])
+  n12{"¿RegisterWarehouseCashCountRequestDto válido?<br/>(ValidationPipe: whitelist + forbidNonWhitelisted)"}
+  n13(["400 Datos inválidos"])
+  n14["CashCustodyController.createWarehouseCount<br/><small>api/cash-control/presentation/controllers/cash-custody.controller.ts</small>"]
+  end
+  subgraph s15["Aplicación — caso de uso"]
+  n16["RegisterWarehouseCashCountUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L602</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
+  n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
+  n20{"¿!input.details?.length?<br/><small>L603</small>"}
+  n21(["cashControlError('CASH_CUSTODY_BREAKDOWN_REQUIRED')"])
+  n22{"¿!count?<br/><small>L616</small>"}
+  n23(["cashControlError('CASH_COUNT_NOT_FOUND')"])
+  end
+  subgraph s24["Dominio → Infraestructura"]
+  n25["Puerto CashCustodyRepository.registerWarehouseCount / findWarehouseCountById / getInventory<br/>@Inject(CASH_CUSTODY_REPOSITORY)"]
+  n26["TypeOrmCashCustodyRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts</small>"]
+  subgraph s27["PostgreSQL — función cash_location_inventory_summary"]
+  n28[["SELECT cash_location_inventory_summary(…)<br/><small>getInventory — una transacción</small>"]]
+  end
+  subgraph s29["PostgreSQL — función cash_location_inventory"]
+  n30[["SELECT cash_location_inventory(…)<br/><small>getInventory — una transacción</small>"]]
+  n31{"¿p_location NOT IN ('CAJA', 'BODEGA')?"}
+  n32(["RAISE CASH_INVALID_LOCATION<br/>(rollback)"])
+  end
+  subgraph s33["PostgreSQL — función register_warehouse_cash_count"]
+  n34[["SELECT register_warehouse_cash_count(…)<br/><small>registerWarehouseCount — una transacción</small>"]]
+  n35{"¿p_idempotency_key IS NULL OR length(trim(p_idempotency_key)) = 0?"}
+  n36(["RAISE CASH_IDEMPOTENCY_KEY_REQUIRED<br/>(rollback)"])
+  n37{"¿p_details IS NULL OR jsonb_typeof(p_details) #lt;#gt; 'array' OR jsonb_array_length(p_details) = 0?"}
+  n38(["RAISE CASH_CUSTODY_BREAKDOWN_REQUIRED<br/>(rollback)"])
+  n39{"¿v_row.denomination IS NULL OR NOT cash_valid_denomination(v_row.denomination) OR v_row.quantity IS NULL OR v_row.quantity #lt; 0 OR v_row.quantity #lt;#gt; trunc(v_row.q?"}
+  n40(["RAISE CASH_INVALID_DENOMINATION<br/>(rollback)"])
+  n41{"¿v_total #lt;#gt; v_balance?"}
+  n42(["RAISE WAREHOUSE_COUNT_MISMATCH<br/>(rollback)"])
+  n43["Otros RAISE de register_warehouse_cash_count (condición no extraída):<br/>CASH_CUSTODY_DAY_NOT_OPEN"]
+  n44[["cash_custody_assert_role()"]]
+  n45[["warehouse_cash_balance()"]]
+  n46[("Escribe:<br/>warehouse_cash_count_details<br/>warehouse_cash_counts")]
+  end
+  n47[("findWarehouseCountById: TypeORM Repository")]
+  end
+  n48(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n2 --> n3
+  n1 -->|acción del usuario| n6
+  n6 --> n5
+  n5 --> n7
+  n7 --> n10
+  n10 -->|no| n11
+  n11 --> n3
+  n10 -->|sí| n12
+  n12 -->|no| n13
+  n13 --> n2
+  n12 -->|sí| n14
+  n14 --> n16
+  n16 --> n17
+  n17 --> n18
+  n18 -->|sí| n19
+  n19 --> n2
+  n18 -->|no| n20
+  n20 -->|sí| n21
+  n21 --> n2
+  n20 -->|no| n22
+  n22 -->|sí| n23
+  n23 --> n2
+  n22 -->|no| n25
+  n25 -->|implementa| n26
+  n26 -->|getInventory| n28
+  n28 --> n8
+  n26 -->|getInventory| n30
+  n30 --> n31
+  n31 -->|sí| n32
+  n32 --> n2
+  n31 -->|no| n8
+  n26 -->|registerWarehouseCount| n34
+  n34 --> n35
+  n35 -->|sí| n36
+  n36 --> n2
+  n35 -->|no| n37
+  n37 -->|sí| n38
+  n38 --> n2
+  n37 -->|no| n39
+  n39 -->|sí| n40
+  n40 --> n2
+  n39 -->|no| n41
+  n41 -->|sí| n42
+  n42 --> n2
+  n34 -.->|también puede lanzar| n43
+  n43 --> n2
+  n41 -->|no · llama| n44
+  n41 -->|no · llama| n45
+  n41 -->|no| n46
+  n46 -->|COMMIT| n8
+  n26 --> n47
+  n47 --> n8
+  n8 --> n48
+  classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
+  classDef app fill:#e0f2f1,stroke:#00695c,color:#004d40
+  classDef dom fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef infra fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef db fill:#eceff1,stroke:#455a64,color:#263238
+  classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
+  classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
+  class n1 start
+  class n2,n3,n11,n13,n19,n21,n23,n32,n36,n38,n40,n42,n43 err
+  class n5,n6,n7 fe
+  class n8,n48 ok
+  class n10,n12,n18,n20,n22,n31,n35,n37,n39,n41 dec
+  class n14 api
+  class n16 app
+  class n17,n25 dom
+  class n26 infra
+  class n28,n30,n34,n44,n45,n46,n47 db
+```
+
+## Explicación
+
+1. **¿Qué proceso representa?** Flujo de decisiones real de POST /api/cash-control/warehouse/counts: guards, DTO, validaciones del caso de uso (if … throw) y reglas de las funciones PL/pgSQL (IF … RAISE).
+2. **¿Dónde comienza?** WarehouseCountModalComponent.save (comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts), [`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/domain/policies/cash-control.policy.ts), [`comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/domain/repositories/cash-custody.repository.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
+4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
+5. **¿Qué decisiones toma el sistema?** sesión JWT válida | DTO RegisterWarehouseCashCountRequestDto | !(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', ) | !input.details?.length | !count | SQL cash_location_inventory: p_location NOT IN ('CAJA', 'BODEGA') | SQL register_warehouse_cash_count: p_idempotency_key IS NULL OR length(trim(p_idempotency_key)) = 0 | SQL register_warehouse_cash_count: p_details IS NULL OR jsonb_typeof(p_details) <> 'array' OR jsonb_array_length(p_details) = 0 | SQL register_warehouse_cash_count: v_row.denomination IS NULL OR NOT cash_valid_denomination(v_row.denomination) OR v_row.quantity IS NULL OR v_row.quantity < 0 OR v_row.quantity <> trunc(v_row.q | SQL register_warehouse_cash_count: v_total <> v_balance
+6. **¿Dónde se almacenan los datos?** cash_location_inventory_summary(), cash_location_inventory(), register_warehouse_cash_count(), users, warehouse_cash_count_details, warehouse_cash_counts
+7. **¿Cómo termina el proceso?** Respuesta { success: true, data } y actualización de la pantalla
+8. **¿Qué sucede cuando ocurre un error?** Cada rama roja termina en GlobalExceptionFilter → { success: false, message } y la pantalla muestra el mensaje; un RAISE en SQL revierte toda la transacción
+
+> Generado desde el código. Las condiciones de los rombos son el texto literal de los `if … throw` (TypeScript) y de los `IF … RAISE EXCEPTION` (PL/pgSQL).

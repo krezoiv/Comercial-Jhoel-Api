@@ -137,6 +137,8 @@ graph LR
   api_sales["sales"] -->|1| api_inventory["inventory"]
   api_sales["sales"] -->|1| api_products["products"]
   api_sales["sales"] -->|1| api_users["users"]
+  api_school_lists["school-lists"] -->|1| api_auth["auth"]
+  api_school_lists["school-lists"] -->|3| api_company_settings["company-settings"]
   api_suppliers["suppliers"] -->|2| api_auth["auth"]
   api_tickets["tickets"] -->|2| api_auth["auth"]
   api_tickets["tickets"] -->|5| api_clients["clients"]

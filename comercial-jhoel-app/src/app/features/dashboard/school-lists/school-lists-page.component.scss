@@ -1,0 +1,50 @@
+@use 'mixins' as *;
+
+.school {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 3px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  align-self: flex-start;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light-muted);
+    @include focus-ring;
+  }
+
+  .tabs__on {
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.school__error,
+.school__loading {
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-light);
+  color: var(--color-text-on-light-muted);
+  text-align: center;
+}
+
+.school__error {
+  color: var(--color-danger);
+}

@@ -24,6 +24,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CashControlService } from '../../../core/services/cash-control.service';
 import { CashCustodyService } from '../../../core/services/cash-custody.service';
 import { onCashChanged } from '../../../core/services/cash-control-sync.service';
+import { CashInventoryPanelComponent } from './components/cash-inventory-panel/cash-inventory-panel.component';
+import { CustodyTransfersPanelComponent } from './components/custody-transfers-panel/custody-transfers-panel.component';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { refetchOnTabVisible } from '../../../core/utils/refetch-on-tab-visible';
@@ -54,7 +56,7 @@ import { WarehouseWithdrawalModalComponent } from './components/warehouse-withdr
 import { CashBankDayCardComponent } from './components/bank-day-card/bank-day-card.component';
 import { CashBankDayHistoryComponent } from './components/bank-day-history/bank-day-history.component';
 
-type CashTab = 'efectivo' | 'cortes' | 'historial' | 'arqueos' | 'bodega';
+type CashTab = 'efectivo' | 'cortes' | 'historial' | 'arqueos' | 'bodega' | 'inventario';
 
 const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '', userId: '' } as const;
 
@@ -87,6 +89,8 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     WarehouseWithdrawalModalComponent,
     CashBankDayCardComponent,
     CashBankDayHistoryComponent,
+    CashInventoryPanelComponent,
+    CustodyTransfersPanelComponent,
   ],
   templateUrl: './cash-control-page.component.html',
   styleUrl: './cash-control-page.component.scss',
@@ -421,6 +425,8 @@ export class CashControlPageComponent {
 
   private initialTab(): CashTab {
     const tab = this.route.snapshot.queryParamMap.get('tab') ?? (this.route.snapshot.data['tab'] as string | undefined);
-    return tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' ? tab : 'efectivo';
+    return tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' || tab === 'inventario'
+      ? tab
+      : 'efectivo';
   }
 }

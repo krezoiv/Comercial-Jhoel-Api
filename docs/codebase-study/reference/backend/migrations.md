@@ -118,6 +118,8 @@
 | [1760007500000-WarehouseWithdrawals.ts](#f-comercial-jhoel-api-src-database-migrations-1760007500000-warehousewithdrawals-ts) | .ts | Migración TypeORM | Base de datos (migración) | Bodega → "Retiro de Bodega": cash leaves Bodega and goes either - back to the caja (`DEVOLUCION_A_CAJA` in Bodega + `DEVOLUCION_BODEGA` IN in the caja Kardex: an internal transfer, total custody unchanged), or - to a registered bank account (`DEPOSITO_BANCARIO` in Bodega + the existing bank type `DE | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
 | [1760007600000-CuadreCashBreakdownAndCentDenomination.ts](#f-comercial-jhoel-api-src-database-migrations-1760007600000-cuadrecashbreakdownandcentdenomination-ts) | .ts | Migración TypeORM | Base de datos (migración) | 1. Q0.01 ("un centavo") becomes a valid denomination everywhere the cash is counted: `cash_valid_denomination` (Arqueo de Caja, Bodega deliveries and withdrawals, cash bank deposits, cut counts) and `guayacan_valid_denomination` (Caja Guayacán). | 0 internas; ext.: typeorm | 1 | Media (historial de esquema) |
 | [1760007700000-CuadreBreakdownFromLatestCut.ts](#f-comercial-jhoel-api-src-database-migrations-1760007700000-cuadrebreakdownfromlatestcut-ts) | .ts | Migración TypeORM | Base de datos (migración) | Cuadre de Agentes → "Cargar último arqueo de Caja" loads the arqueo of the "Segundo corte · final del día" of Control de Efectivo (`cash_cut_counts` of `period_number = 2`) — exactly that one cut's breakdown, never the first cut, never a standalone Arqueo de Caja and never an aggregate of both cuts. | 1 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760007800000-CashDenominationInventoryAndCountDrafts.ts](#f-comercial-jhoel-api-src-database-migrations-1760007800000-cashdenominationinventoryandcountdrafts-ts) | .ts | Migración TypeORM | Base de datos (migración) | Control de Efectivo — inventario por denominación (caja y Bodega), desglose obligatorio en los traslados caja ↔ Bodega y borradores del Arqueo de Caja. | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
+| [1760007900000-SchoolLists.ts](#f-comercial-jhoel-api-src-database-migrations-1760007900000-schoollists-ts) | .ts | Migración TypeORM | Base de datos (migración) | Listas Escolares — official school-supply templates per grade, customer quotations built from them, and an account statement per quotation (anticipo, abonos, devolución) with audited reversals. | 0 internas; ext.: typeorm | 0 | Media (historial de esquema) |
 
 ## Detalle por archivo
 
@@ -4403,5 +4405,89 @@
 - **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `new Error`, `new CuadreCashBreakdownAndCentDenomination1760007600000().up`, `new CuadreCashBreakdownAndCentDenomination1760007600000`
 - **Efectos secundarios:** Tablas en su SQL: `agent_reconciliation_cash_breakdowns`; Ejecuta SQL crudo (`query`)
 - **Errores que lanza:** `new Error( 'Cannot revert: cuadres saved from a cut arqueo (CORTE_CAJA) exist and must be kept.', )`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760007800000-cashdenominationinventoryandcountdrafts-ts"></a>
+
+### 1760007800000-CashDenominationInventoryAndCountDrafts.ts
+
+- **Ruta:** [1760007800000-CashDenominationInventoryAndCountDrafts.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007800000-CashDenominationInventoryAndCountDrafts.ts) (`comercial-jhoel-api/src/database/migrations/1760007800000-CashDenominationInventoryAndCountDrafts.ts`, 441 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Control de Efectivo — inventario por denominación (caja y Bodega), desglose obligatorio en los traslados caja ↔ Bodega y borradores del Arqueo de Caja.
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+- **Define en la base de datos:** tablas `warehouse_cash_counts`, `warehouse_cash_count_details`, `cash_count_drafts`; funciones `cash_location_anchor`, `cash_location_inventory`, `cash_location_inventory_summary`, `cash_assert_denominations_available`, `register_warehouse_cash_count`; triggers `trg_`
+
+#### Clase `CashDenominationInventoryAndCountDrafts1760007800000` (L38–386)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Control de Efectivo — inventario por denominación (caja y Bodega), desglose obligatorio en los traslados caja ↔ Bodega y borradores del Arqueo de Caja. Inventory is DERIVED, never stored as mutable stock (no drift between movements and stock): - CAJA: anchored on the latest valid physical count of the caja — a VIGENTE standalone Arqueo de Caja (`cash_counts`, at `last_cash_sequence`) or the current count of a FINALIZADO cut (`cash_cut_counts`, at the cut's `closing_sequence`), whichever is later in the Kardex — plus every later caja movement that carries denominations (`cash_movement_details`, or the Bodega-side details of a withdrawal to caja). Reversals (ANULACION) apply the original's details with their own direction. - BODEGA: anchored on the latest `warehouse_cash_counts` (new: an audited per-denomination count of Bodega that must equal its balance) plus every later Bodega movement 
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 41–342 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 344–385 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `CashDenominationInventoryAndCountDrafts1760007800000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760007800000-CashDenominationInventoryAndCountDrafts.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007800000-CashDenominationInventoryAndCountDrafts.ts#L41) (L41–342)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`, `patchFunction`
+- **Efectos secundarios:** Llama funciones SQL: `unnest`, `cash_location_anchor`, `cash_location_inventory`, `jsonb_array_elements`, `cash_custody_assert_role`, `pg_advisory_xact_lock`, `cash_current_bank_day`; Tablas en su SQL: `cash_counts`, `cash_cut_counts`, `cash_cut_periods`, `warehouse_cash_counts`, `cash_count_details`, `cash_cut_count_details`, `cash_movements`, `mv`, `cash_movement_details`, `warehouse_cash_withdrawals`, `warehouse_cash_movement_details`, `base`, `det`, `den`, `agg`, `warehouse_cash_count_details`, `warehouse_cash_movements`, `cash_warehouse_transfers`, `v_known`, `v_available`, `v_existing`, `v_day`, `v_sequence`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashDenominationInventoryAndCountDrafts1760007800000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760007800000-CashDenominationInventoryAndCountDrafts.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007800000-CashDenominationInventoryAndCountDrafts.ts#L344) (L344–385)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `patchFunction`, `queryRunner.query`
+- **Efectos secundarios:** Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+#### Función `patchFunction` (L425–440)
+
+- **Tipo:** función local del archivo, async
+- **Firma:** `patchFunction(queryRunner: QueryRunner, name: string, from: string, to: string): Promise<void>` — [1760007800000-CashDenominationInventoryAndCountDrafts.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007800000-CashDenominationInventoryAndCountDrafts.ts#L425)
+- **Propósito / descripción:** Replaces `from` with `to` in the live definition of `name`; fails if the anchor is not there exactly once.
+- **Dependencias:** `queryRunner.query`, `rows[0].def.split`, `new Error`, `rows[0].def.replace`
+- **Efectos secundarios:** Llama funciones SQL: `pg_get_functiondef`; Tablas en su SQL: `pg_proc`; Ejecuta SQL crudo (`query`)
+- **Errores que lanza:** `new Error('${name}: anchor not found exactly once')`
+- **Consumidores:** uso interno del archivo
+
+<a id="f-comercial-jhoel-api-src-database-migrations-1760007900000-schoollists-ts"></a>
+
+### 1760007900000-SchoolLists.ts
+
+- **Ruta:** [1760007900000-SchoolLists.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007900000-SchoolLists.ts) (`comercial-jhoel-api/src/database/migrations/1760007900000-SchoolLists.ts`, 1090 líneas)
+- **Tipo:** Migración TypeORM · **Capa:** Base de datos (migración) · **Módulo:** Migraciones TypeORM (esquema de base de datos)
+- **Responsabilidad:** Listas Escolares — official school-supply templates per grade, customer quotations built from them, and an account statement per quotation (anticipo, abonos, devolución) with audited reversals.
+- **Paquetes externos:** `typeorm`
+- **Consumidores:** —
+- **Define en la base de datos:** tablas `school_list_templates`, `school_list_template_items`, `school_quotations`, `school_quotation_items`, `school_quotation_payments`, `school_list_history`; funciones `school_list_append_only_guard`, `school_payment_guard`, `school_list_assert_permission`, `school_list_has_permission`, `school_list_assert_money`, `school_list_template_insert_items`, `save_school_list_template`, `set_school_list_template_active`, `duplicate_school_list_template`, `school_quotation_paid`, `school_quotation_refresh_status`, `school_quotation_insert_items`, `school_quotation_assert_customer`, `school_quotation_insert_payment`, `create_school_quotation`, `update_school_quotation`, `set_school_quotation_observations`, `change_school_quotation_status`, `register_school_quotation_payment`, `void_school_quotation_payment`, `cancel_school_quotation`; triggers `trg_school_payments_guard`, `trg_school_history_guard`, `trg_school_quotations_no_delete`, `trg_school_templates_no_delete`
+
+#### Clase `SchoolLists1760007900000` (L28–1089)
+
+- **Herencia / contratos:** implements MigrationInterface
+- **Propósito:** Listas Escolares — official school-supply templates per grade, customer quotations built from them, and an account statement per quotation (anticipo, abonos, devolución) with audited reversals. Design decisions (agreed with the business owner): - Payments live ONLY in the quotation's account statement: they never move the Caja de ventas, Control de Efectivo or bank balances. - A line is either an inventory product (its name/price are copied) or a free-text product. The quotation keeps its own copy of every line, so a later change to the template or to the product never alters it. - Delivering only changes the status (it requires the quotation fully paid): no sale is created and inventory is never touched. - Cancelling a quotation that received money records a DEVOLUCION for the whole amount paid; the original payments are kept. Integrity: every write goes through a plpgsql function that 
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `up` | método public async | 31–1044 | `queryRunner: QueryRunner` | `Promise<void>` |
+| `down` | método public async | 1046–1088 | `queryRunner: QueryRunner` | `Promise<void>` |
+
+##### `SchoolLists1760007900000.up`
+
+- **Firma:** `up(queryRunner: QueryRunner): Promise<void>` — [1760007900000-SchoolLists.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007900000-SchoolLists.ts#L31) (L31–1044)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`
+- **Efectos secundarios:** Llama funciones SQL: `school_list_assert_permission`, `school_list_assert_money`, `jsonb_array_elements`, `nullif`, `school_quotation_assert_customer`, `school_quotation_insert_payment`, `school_quotation_insert_items`; Tablas en su SQL: `v_role`, `users`, `roles`, `products`, `v_id`, `v_old`, `school_list_templates`, `school_list_template_items`, `v_source`, `school_quotation_payments`, `v_q`, `school_quotations`, `v_tpl`, `p_template_id`, `v_product`, `v_ref_price`, `banks`, `v_template`, `v_totals`, `v_existing`, `school_quotation_items`, `v_p`, `v_refund`; Ejecuta SQL crudo (`query`)
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolLists1760007900000.down`
+
+- **Firma:** `down(queryRunner: QueryRunner): Promise<void>` — [1760007900000-SchoolLists.ts](../../../../comercial-jhoel-api/src/database/migrations/1760007900000-SchoolLists.ts#L1046) (L1046–1088)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `queryRunner.query`
+- **Efectos secundarios:** Tablas en su SQL: `school_quotations`; Ejecuta SQL crudo (`query`)
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 

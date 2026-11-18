@@ -22,12 +22,12 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["VoidWarehouseWithdrawalUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n17["assertCashCustodyPermission()<br/><small>llamada en L467</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L490</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
   n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
   n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
-  n20{"¿!input.reason #124;#124; input.reason.trim().length #lt; 5?<br/><small>L468</small>"}
+  n20{"¿!input.reason #124;#124; input.reason.trim().length #lt; 5?<br/><small>L491</small>"}
   n21(["cashControlError('CASH_REASON_REQUIRED')"])
-  n22{"¿!withdrawal?<br/><small>L480</small>"}
+  n22{"¿!withdrawal?<br/><small>L503</small>"}
   n23(["cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND')"])
   end
   subgraph s24["Dominio → Infraestructura"]

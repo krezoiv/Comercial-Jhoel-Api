@@ -14,19 +14,19 @@
 | [app-update.service.ts](#f-comercial-jhoel-app-src-app-core-services-app-update-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Detecta y aplica actualizaciones del Service Worker de Angular (`ngsw-worker.js` — el único que existe, ver `app.config.ts`) para que una PWA instalada deje de quedarse atrapada en una versión vieja hasta que el cliente la cierre y reabra manualmente. | 6 internas; ext.: @angular/core, @angular/service-worker, rxjs | 2 | Baja (2 consumidores) |
 | [asset.service.ts](#f-comercial-jhoel-app-src-app-core-services-asset-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Drops `undefined`/empty-string values — `HttpParams` would otherwise send the literal string `"undefined"` as a query value. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
 | [assets-receivables-report-state.service.ts](#f-comercial-jhoel-app-src-app-core-services-assets-receivables-report-state-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Holds the Reportería de Activos y Cuentas por Cobrar page's checkboxes, filters, and last-fetched results in a root-provided singleton — the same `providedIn: 'root'` + signals technique `PurchaseDraftStore`/ `SalesDraftStore` already established for surviving component destruction on route navigation (see those services' own doc comments). | 1 internas; ext.: @angular/core | 1 | Baja (1 consumidores) |
-| [auth.service.ts](#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `AuthService`, `AuthUser`, `AuthResult`, `LoginResponse`, `UserRole` (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 52 | Alta (52 consumidores) |
+| [auth.service.ts](#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `AuthService`, `AuthUser`, `AuthResult`, `LoginResponse`, `UserRole` (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 53 | Alta (53 consumidores) |
 | [bank-agent.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-agent-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Backs the public landing page's "Agente Bancario" marketing section (`features/landing/sections/bank-agents/`) — static service-offering copy (deposits, withdrawals, bill pay...), unrelated to the internal "Agentes Bancarios" → Cuadre Agentes admin module (`BankService`/ `BankBalanceService`/`CuadreAgentesService`) despite the similar name. | 2 internas; ext.: @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [bank-balance-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-bank-balance-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Agentes Bancarios → Bancos" cuadre — same root-provided, sessionStorage-backed singleton pattern as `PurchaseDraftStore`/ `IceCreamPurchaseDraftStore` (see those files' own doc comments for the full reasoning): nothing is sent to the backend until "Guardar Cambios", and navigating away and back must never lose what was typed. | 1 internas; ext.: @angular/core | 5 | Media (5 consumidores) |
 | [bank-balance.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-balance-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `BankBalanceService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [bank-deposit-draft.store.spec.ts](#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-spec-ts) | .ts | Prueba unitaria | Core (servicios, modelos, guards) | Prueba unitaria: declara `USER_ID`, `STORAGE_KEY` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/core | 0 | Soporte (pruebas) |
-| [bank-deposit-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Transaccionar" deposit — a root-provided singleton so it survives route navigation, mirroring `PurchaseDraftStore`'s exact reasoning (see that store's own doc comment): Transaccionar has no server-side draft either — nothing is sent to the backend until "Confirmar y Guardar" — so th | 2 internas; ext.: @angular/core | 15 | Alta (15 consumidores) |
+| [bank-deposit-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Transaccionar" deposit — a root-provided singleton so it survives route navigation, mirroring `PurchaseDraftStore`'s exact reasoning (see that store's own doc comment): Transaccionar has no server-side draft either — nothing is sent to the backend until "Confirmar y Guardar" — so th | 2 internas; ext.: @angular/core | 16 | Alta (16 consumidores) |
 | [bank-deposit.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-deposit-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `BankDepositService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 9 | Media (9 consumidores) |
 | [bank-transfer.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-transfer-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Finanzas → Transferencias Bancarias. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
-| [bank.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `BankService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 10 | Alta (10 consumidores) |
+| [bank.service.ts](#f-comercial-jhoel-app-src-app-core-services-bank-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `BankService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 13 | Alta (13 consumidores) |
 | [business.service.ts](#f-comercial-jhoel-app-src-app-core-services-business-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `BusinessService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
-| [cash-control-sync.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "El efectivo físico cambió" — the real-time update mechanism of Control de Efectivo. | 1 internas; ext.: @angular/core, rxjs | 4 | Media (4 consumidores) |
-| [cash-control.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Finance → Control de Efectivo API client. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 17 | Alta (17 consumidores) |
-| [cash-custody.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | API client of "Arqueo de Caja" and "Bodega". | 2 internas; ext.: @angular/common, @angular/core, rxjs | 11 | Alta (11 consumidores) |
+| [cash-control-sync.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "El efectivo físico cambió" — the real-time update mechanism of Control de Efectivo. | 1 internas; ext.: @angular/core, rxjs | 6 | Media (6 consumidores) |
+| [cash-control.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Finance → Control de Efectivo API client. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 19 | Alta (19 consumidores) |
+| [cash-custody.service.ts](#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | API client of "Arqueo de Caja" and "Bodega". | 2 internas; ext.: @angular/common, @angular/core, rxjs | 16 | Alta (16 consumidores) |
 | [catalog-bank.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-bank-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Catálogo de Bancos" — CRUD + orden + imagen. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [catalog-phone.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-phone-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Catálogo → Teléfonos" — gestión completa (CRUD + publicar/despublicar + orden + imágenes). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [catalog-product-request.service.ts](#f-comercial-jhoel-app-src-app-core-services-catalog-product-request-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Solicitudes de Variedades" — leads de "Lo quiero" capturados desde la landing pública. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
@@ -37,7 +37,7 @@
 | [client.service.ts](#f-comercial-jhoel-app-src-app-core-services-client-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `ClientService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
 | [closed-days.service.ts](#f-comercial-jhoel-app-src-app-core-services-closed-days-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | "Sistema → Gestión de Días Cerrados" — every backend route (`ClosedDaysController`) already requires ADMIN/SUPER_ADMIN via a class-level `@Roles`; this service doesn't repeat that check, it's just the HTTP client. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 4 | Media (4 consumidores) |
 | [company-settings.service.ts](#f-comercial-jhoel-app-src-app-core-services-company-settings-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `CompanySettingsService`, `BASE_URL`, `PUBLIC_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
-| [confirm-dialog.service.ts](#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`). | 0 internas; ext.: @angular/core | 73 | Alta (73 consumidores) |
+| [confirm-dialog.service.ts](#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`). | 0 internas; ext.: @angular/core | 81 | Alta (81 consumidores) |
 | [contact.service.ts](#f-comercial-jhoel-app-src-app-core-services-contact-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Digits only — `tel:`/`wa.me` links need a clean numeric string, whatever formatting the admin typed (spaces, dashes, +) is stripped. | 3 internas; ext.: @angular/core, rxjs | 8 | Media (8 consumidores) |
 | [cuadre-agentes-state.service.spec.ts](#f-comercial-jhoel-app-src-app-core-services-cuadre-agentes-state-service-spec-ts) | .ts | Prueba unitaria | Core (servicios, modelos, guards) | Prueba unitaria: declara `INFO` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/core | 0 | Soporte (pruebas) |
 | [cuadre-agentes-state.service.ts](#f-comercial-jhoel-app-src-app-core-services-cuadre-agentes-state-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Holds the Cuadre Agentes page's cash-count quantities in a root-provided singleton — the same `providedIn: 'root'` + signals technique the draft stores use for surviving component destruction on route navigation. | 1 internas; ext.: @angular/core | 3 | Media (3 consumidores) |
@@ -66,11 +66,11 @@
 | [news-subscriber.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-subscriber-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Suscriptores de Noticias" — todo el controller es admin-only en el backend, incluidos los `GET` (expone WhatsApp/consentimiento de clientes). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [news-type.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-type-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Tipos de Noticias" — CRUD + orden. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [news.service.ts](#f-comercial-jhoel-app-src-app-core-services-news-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Admin "Sistema → Noticias" — CRUD + orden + imagen. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
-| [notification.service.ts](#f-comercial-jhoel-app-src-app-core-services-notification-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent. | 1 internas; ext.: @angular/core | 112 | Alta (112 consumidores) |
+| [notification.service.ts](#f-comercial-jhoel-app-src-app-core-services-notification-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent. | 1 internas; ext.: @angular/core | 119 | Alta (119 consumidores) |
 | [notifications-modal.service.ts](#f-comercial-jhoel-app-src-app-core-services-notifications-modal-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Único estado "abierto/cerrado" del `NotificationsModalComponent` (el modal de Web Push que monta el Navbar una sola vez). | 0 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [offers.service.ts](#f-comercial-jhoel-app-src-app-core-services-offers-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Provides the list of services Comercial Jhoel offers (útiles escolares, fotocopias, agente bancario, etc). | 2 internas; ext.: @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [parallax.service.ts](#f-comercial-jhoel-app-src-app-core-services-parallax-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Single shared scroll-linked parallax engine for the whole app — ONE `window.scroll`/`resize` listener total, no matter how many decorative layers register with it (`ParallaxLayerDirective` is the consumer-facing side of this). | 0 internas; ext.: @angular/core | 1 | Baja (1 consumidores) |
-| [pdf-prompt-modal.service.ts](#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | A dedicated, small modal for the post-save "¿Generar PDF?" prompt used by Ventas/Compras — deliberately NOT built on `ConfirmDialogService`, which only ever renders exactly two buttons (Cancelar/Confirmar) and has no loading/error state of its own (by design — see its own doc comment). | 0 internas; ext.: @angular/core, rxjs | 3 | Media (3 consumidores) |
+| [pdf-prompt-modal.service.ts](#f-comercial-jhoel-app-src-app-core-services-pdf-prompt-modal-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | A dedicated, small modal for the post-save "¿Generar PDF?" prompt used by Ventas/Compras — deliberately NOT built on `ConfirmDialogService`, which only ever renders exactly two buttons (Cancelar/Confirmar) and has no loading/error state of its own (by design — see its own doc comment). | 0 internas; ext.: @angular/core, rxjs | 4 | Media (4 consumidores) |
 | [phones.service.ts](#f-comercial-jhoel-app-src-app-core-services-phones-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Mirrors `RechargeSimsService`'s own shape — `registerSale`/`getSaleDpiImage` follow the identical `FormData`/blob conventions documented there. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 4 | Media (4 consumidores) |
 | [presentation-type.service.ts](#f-comercial-jhoel-app-src-app-core-services-presentation-type-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `PresentationTypeService`, `toParams`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 3 | Media (3 consumidores) |
 | [public-catalog-bank.service.ts](#f-comercial-jhoel-app-src-app-core-services-public-catalog-bank-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Público, sin autenticación — backs "Bancos" en la landing. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
@@ -94,6 +94,7 @@
 | [sales-draft.store.ts](#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts) | .ts | Store (estado) | Core (servicios, modelos, guards) | The in-progress "Ventas" receipt(s), lifted out of `SalesPageComponent` into a root-provided singleton — same reasoning `PurchaseDraftStore` documents for Compras (sidebar indicator without a round-trip, no refetch needed on revisiting the page). | 5 internas; ext.: @angular/common, @angular/core | 4 | Media (4 consumidores) |
 | [sales-register.service.ts](#f-comercial-jhoel-app-src-app-core-services-sales-register-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Talks to `${environment.apiUrl}/sales-register` — "Gestión de Caja de Ventas", read-only. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [sales.service.ts](#f-comercial-jhoel-app-src-app-core-services-sales-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `SalesService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
+| [school-list.service.ts](#f-comercial-jhoel-app-src-app-core-services-school-list-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | API client of Listas Escolares. | 2 internas; ext.: @angular/common, @angular/core, rxjs | 10 | Alta (10 consumidores) |
 | [site-visits.service.ts](#f-comercial-jhoel-app-src-app-core-services-site-visits-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Contador anónimo y agregado de visitas a la landing pública — el backend es la única fuente de verdad (nunca `localStorage`/`sessionStorage`/ cookies). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 2 | Baja (2 consumidores) |
 | [stats.service.ts](#f-comercial-jhoel-app-src-app-core-services-stats-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Credibility metrics shown right under the hero. | 2 internas; ext.: @angular/core, rxjs | 1 | Baja (1 consumidores) |
 | [supplier.service.ts](#f-comercial-jhoel-app-src-app-core-services-supplier-service-ts) | .ts | Servicio | Core (servicios, modelos, guards) | Servicio: declara `SupplierService`, `BASE_URL` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/common, @angular/core, rxjs | 6 | Media (6 consumidores) |
@@ -670,7 +671,7 @@
 - **Responsabilidad:** Servicio: declara `AuthService`, `AuthUser`, `AuthResult`, `LoginResponse`, `UserRole` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [theme.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-theme-service-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [admin.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-admin-guard-ts), [auth.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-auth-guard-ts), [guest.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-guest-guard-ts), [auth.interceptor.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-auth-interceptor-ts), [bank-balance-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-balance-draft-store-ts), [bank-deposit-draft.store.spec.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-spec-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [ice-cream-purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-ice-cream-purchase-draft-store-ts), [ice-cream-sale-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-ice-cream-sale-draft-store-ts), [purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchase-draft-store-ts), [login-page.component.ts](auth.md#f-comercial-jhoel-app-src-app-features-auth-login-login-page-component-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts) y 37 más
+- **Consumidores:** [admin.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-admin-guard-ts), [auth.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-auth-guard-ts), [guest.guard.ts](core-guards.md#f-comercial-jhoel-app-src-app-core-guards-guest-guard-ts), [auth.interceptor.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-auth-interceptor-ts), [bank-balance-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-balance-draft-store-ts), [bank-deposit-draft.store.spec.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-spec-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [ice-cream-purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-ice-cream-purchase-draft-store-ts), [ice-cream-sale-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-ice-cream-sale-draft-store-ts), [purchase-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-purchase-draft-store-ts), [login-page.component.ts](auth.md#f-comercial-jhoel-app-src-app-features-auth-login-login-page-component-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts) y 38 más
 
 **Interfaces, tipos y enums:**
 
@@ -943,7 +944,7 @@
 - **Responsabilidad:** The in-progress "Transaccionar" deposit — a root-provided singleton so it survives route navigation, mirroring `PurchaseDraftStore`'s exact reasoning (see that store's own doc comment): Transaccionar has no server-side draft either — nothing is sent to the backend until "Confirmar y Guardar" — so th
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts)
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [app-update.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-app-update-service-ts), [bank-deposit-draft.store.spec.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts), [guayacan-cash.util.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-guayacan-cash-util-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cuadre-result-card.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cuadre-result-card-cuadre-result-card-component-ts), [status-indicator.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-status-indicator-status-indicator-component-ts), [transaction-distribution.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-transaction-distribution-transaction-distribution-component-ts), [transaccionar-page.component.spec.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-spec-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts)
+- **Consumidores:** [app-update.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-app-update-service-ts), [bank-deposit-draft.store.spec.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts), [guayacan-cash.util.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-guayacan-cash-util-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cuadre-result-card.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cuadre-result-card-cuadre-result-card-component-ts), [status-indicator.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-status-indicator-status-indicator-component-ts), [transaction-distribution.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-transaction-distribution-transaction-distribution-component-ts), [transaccionar-page.component.spec.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-spec-ts) y 1 más
 
 **Interfaces, tipos y enums:**
 
@@ -1178,7 +1179,7 @@
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `Object.fromEntries`, `BANK_DEPOSIT_CASH_DENOMINATIONS.map`, `String`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
-- **Consumidores:** [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts)
+- **Consumidores:** [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts)
 
 <a id="f-comercial-jhoel-app-src-app-core-services-bank-deposit-service-ts"></a>
 
@@ -1364,7 +1365,7 @@
 - **Responsabilidad:** Servicio: declara `BankService`, `BASE_URL` (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts), [bank-form-modal.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-components-bank-form-modal-bank-form-modal-component-ts), [bank-movements-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-bank-movements-bank-movements-report-page-component-ts), [bank-transfers-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-bank-transfers-bank-transfers-report-page-component-ts), [transaccionar-page.component.spec.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-spec-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts), [bank-balance-strip.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-bank-balance-strip-bank-balance-strip-component-ts)
+- **Consumidores:** [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts), [bank-form-modal.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-components-bank-form-modal-bank-form-modal-component-ts), [bank-movements-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-bank-movements-bank-movements-report-page-component-ts), [bank-transfers-report-page.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-bank-transfers-bank-transfers-report-page-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [transaccionar-page.component.spec.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-spec-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts), [bank-balance-strip.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-bank-balance-strip-bank-balance-strip-component-ts)
 
 #### Clase `BankService` (L17–64)
 
@@ -1389,7 +1390,7 @@
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `BASE_URL`
-- **Consumidores:** [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts)
+- **Consumidores:** [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts)
 
 ##### `BankService.getBalanceStrip`
 
@@ -1521,7 +1522,7 @@
 - **Responsabilidad:** "El efectivo físico cambió" — the real-time update mechanism of Control de Efectivo.
 - **Depende de (archivos del proyecto):** [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts)
 - **Paquetes externos:** `@angular/core`, `rxjs`
-- **Consumidores:** [cash-mutation.interceptor.spec.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-spec-ts), [cash-mutation.interceptor.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts)
+- **Consumidores:** [cash-mutation.interceptor.spec.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-spec-ts), [cash-mutation.interceptor.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts)
 
 **Constantes exportadas:**
 
@@ -1562,7 +1563,7 @@
 - **Responsabilidad:** Finance → Control de Efectivo API client.
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [settlement-modal.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-spec-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [cash-control-page.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-spec-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-detail-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-detail-modal-cut-detail-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts), [warehouse-withdrawal-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts) y 2 más
+- **Consumidores:** [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [settlement-modal.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-spec-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [cash-control-page.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-spec-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [custody-transfers-panel.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-spec-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-detail-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-detail-modal-cut-detail-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts) y 4 más
 
 #### Clase `CashControlService` (L42–152)
 
@@ -1766,14 +1767,14 @@
 
 ### cash-custody.service.ts
 
-- **Ruta:** [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts) (`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`, 131 líneas)
+- **Ruta:** [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts) (`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`, 185 líneas)
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** API client of "Arqueo de Caja" and "Bodega".
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
-- **Consumidores:** [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts), [warehouse-transfer-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts)
+- **Consumidores:** [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [custody-transfers-panel.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-spec-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [warehouse-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts), [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts), [warehouse-transfer-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts) y 1 más
 
-#### Clase `CashCustodyService` (L38–130)
+#### Clase `CashCustodyService` (L46–184)
 
 - **Decoradores:** `@Injectable({ providedIn: 'root' })`
 - **Propósito:** API client of "Arqueo de Caja" and "Bodega". Every write under `/cash-control` is broadcast by `cashMutationInterceptor`, so all open views re-read the official balances (same real-time channel as the rest).
@@ -1781,24 +1782,31 @@
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `getCustody` | método public | 43–45 | — | `Observable<CashCustody>` |
-| `getCounts` | método public | 47–51 | `filters: CashCountFilters` | `Observable<PaginatedResult<CashCountRecord>>` |
-| `getLatestCount` | método public | 57–63 | `businessDate?: string` | `Observable<LatestCashCountResponse>` |
-| `getCount` | método public | 65–67 | `id: string` | `Observable<CashCountRecord>` |
-| `registerCount` | método public | 70–72 | `input: RegisterCashCountInput` | `Observable<CashCountRecord>` |
-| `correctCount` | método public | 75–79 | `id: string`, `input: RegisterCashCountInput & { reason: string }` | `Observable<CashCountRecord>` |
-| `getTransfers` | método public | 81–85 | `filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }` | `Observable<PaginatedResult<WarehouseTransfer>>` |
-| `registerTransfer` | método public | 88–92 | `input: RegisterWarehouseTransferInput` | `Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` |
-| `voidTransfer` | método public | 94–98 | `id: string`, `reason: string` | `Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` |
-| `getWithdrawals` | método public | 100–104 | `filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }` | `Observable<PaginatedResult<WarehouseWithdrawal>>` |
-| `registerWithdrawal` | método public | 107–111 | `input: RegisterWarehouseWithdrawalInput` | `Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` |
-| `voidWithdrawal` | método public | 113–117 | `id: string`, `reason: string` | `Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` |
-| `getWarehouseMovements` | método public | 119–123 | `page?`, `limit?` | `Observable<PaginatedResult<WarehouseMovement>>` |
-| `registerWarehouseInitialBalance` | método public | 125–129 | `amount: number`, `reason: string`, `clientRequestId: string` | `Observable<CashCustody>` |
+| `getCustody` | método public | 51–53 | — | `Observable<CashCustody>` |
+| `getCounts` | método public | 55–59 | `filters: CashCountFilters` | `Observable<PaginatedResult<CashCountRecord>>` |
+| `getLatestCount` | método public | 65–71 | `businessDate?: string` | `Observable<LatestCashCountResponse>` |
+| `getCount` | método public | 73–75 | `id: string` | `Observable<CashCountRecord>` |
+| `registerCount` | método public | 78–80 | `input: RegisterCashCountInput` | `Observable<CashCountRecord>` |
+| `correctCount` | método public | 83–87 | `id: string`, `input: RegisterCashCountInput & { reason: string }` | `Observable<CashCountRecord>` |
+| `getTransfers` | método public | 89–93 | `filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }` | `Observable<PaginatedResult<WarehouseTransfer>>` |
+| `registerTransfer` | método public | 96–100 | `input: RegisterWarehouseTransferInput` | `Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` |
+| `voidTransfer` | método public | 102–106 | `id: string`, `reason: string` | `Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` |
+| `getWithdrawals` | método public | 108–112 | `filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }` | `Observable<PaginatedResult<WarehouseWithdrawal>>` |
+| `registerWithdrawal` | método public | 115–119 | `input: RegisterWarehouseWithdrawalInput` | `Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` |
+| `voidWithdrawal` | método public | 121–125 | `id: string`, `reason: string` | `Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` |
+| `getWarehouseMovements` | método public | 127–131 | `page?`, `limit?` | `Observable<PaginatedResult<WarehouseMovement>>` |
+| `registerWarehouseInitialBalance` | método public | 133–137 | `amount: number`, `reason: string`, `clientRequestId: string` | `Observable<CashCustody>` |
+| `getInventory` | método public | 142–144 | — | `Observable<CashInventory>` |
+| `registerWarehouseCount` | método public | 147–153 | `input: RegisterWarehouseCashCountInput` | `Observable<{ count: WarehouseCashCount; inventory: LocationInventory }>` |
+| `getWarehouseCounts` | método public | 155–161 | `page?`, `limit?` | `Observable<PaginatedResult<WarehouseCashCount>>` |
+| `getCountDraft` | método public | 164–166 | — | `Observable<CashCountDraft \| null>` |
+| `saveCountDraft` | método public | 169–171 | `payload: CashCountDraftPayload` | `Observable<CashCountDraft>` |
+| `discardCountDraft` | método public | 174–176 | — | `Observable<void>` |
+| `getCustodyTransfers` | método public | 179–183 | `filters: CustodyTransferFilters` | `Observable<PaginatedResult<CustodyTransfer>>` |
 
 ##### `CashCustodyService.getCustody`
 
-- **Firma:** `getCustody(): Observable<CashCustody>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L43) (L43–45)
+- **Firma:** `getCustody(): Observable<CashCustody>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L51) (L51–53)
 - **Propósito / descripción:** Caja, Bodega and total under custody.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<CashCustody>>('${BASE_URL}/custody').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/custody'`
@@ -1806,7 +1814,7 @@
 
 ##### `CashCustodyService.getCounts`
 
-- **Firma:** `getCounts(filters: CashCountFilters): Observable<PaginatedResult<CashCountRecord>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L47) (L47–51)
+- **Firma:** `getCounts(filters: CashCountFilters): Observable<PaginatedResult<CashCountRecord>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L55) (L55–59)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/counts'`
@@ -1814,7 +1822,7 @@
 
 ##### `CashCustodyService.getLatestCount`
 
-- **Firma:** `getLatestCount(businessDate?: string): Observable<LatestCashCountResponse>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L57) (L57–63)
+- **Firma:** `getLatestCount(businessDate?: string): Observable<LatestCashCountResponse>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L65) (L65–71)
 - **Propósito / descripción:** Latest valid Arqueo de Caja (all 12 denominations, missing ones as 0) for Cuadre de Agentes; a count of `businessDate` is preferred. Read-only.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/counts/latest'`
@@ -1822,7 +1830,7 @@
 
 ##### `CashCustodyService.getCount`
 
-- **Firma:** `getCount(id: string): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L65) (L65–67)
+- **Firma:** `getCount(id: string): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L73) (L73–75)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<CashCountRecord>>('${BASE_URL}/counts/${id}').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/counts/${id}'`
@@ -1830,7 +1838,7 @@
 
 ##### `CashCustodyService.registerCount`
 
-- **Firma:** `registerCount(input: RegisterCashCountInput): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L70) (L70–72)
+- **Firma:** `registerCount(input: RegisterCashCountInput): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L78) (L78–80)
 - **Propósito / descripción:** Saves a count (photograph only — it never adjusts the caja).
 - **Dependencias (llamadas en su cuerpo):** `this.http.post<ApiSuccessResponse<CashCountRecord>>('${BASE_URL}/counts', input).pipe`, `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/counts'`
@@ -1838,7 +1846,7 @@
 
 ##### `CashCustodyService.correctCount`
 
-- **Firma:** `correctCount(id: string, input: RegisterCashCountInput & { reason: string }): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L75) (L75–79)
+- **Firma:** `correctCount(id: string, input: RegisterCashCountInput & { reason: string }): Observable<CashCountRecord>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L83) (L83–87)
 - **Propósito / descripción:** Audited correction of a count (admin): the original stays, marked as replaced.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/counts/${id}/corrections'`
@@ -1846,7 +1854,7 @@
 
 ##### `CashCustodyService.getTransfers`
 
-- **Firma:** `getTransfers(filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }): Observable<PaginatedResult<WarehouseTransfer>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L81) (L81–85)
+- **Firma:** `getTransfers(filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }): Observable<PaginatedResult<WarehouseTransfer>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L89) (L89–93)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/warehouse/transfers'`
@@ -1854,7 +1862,7 @@
 
 ##### `CashCustodyService.registerTransfer`
 
-- **Firma:** `registerTransfer(input: RegisterWarehouseTransferInput): Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L88) (L88–92)
+- **Firma:** `registerTransfer(input: RegisterWarehouseTransferInput): Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L96) (L96–100)
 - **Propósito / descripción:** Internal transfer caja → Bodega (both Kardex in one transaction).
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/transfers'`
@@ -1862,7 +1870,7 @@
 
 ##### `CashCustodyService.voidTransfer`
 
-- **Firma:** `voidTransfer(id: string, reason: string): Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L94) (L94–98)
+- **Firma:** `voidTransfer(id: string, reason: string): Observable<{ transfer: WarehouseTransfer; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L102) (L102–106)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/transfers/${id}/void'`
@@ -1870,7 +1878,7 @@
 
 ##### `CashCustodyService.getWithdrawals`
 
-- **Firma:** `getWithdrawals(filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }): Observable<PaginatedResult<WarehouseWithdrawal>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L100) (L100–104)
+- **Firma:** `getWithdrawals(filters: { dateFrom?: string; dateTo?: string; status?: string; page?: number; limit?: number }): Observable<PaginatedResult<WarehouseWithdrawal>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L108) (L108–112)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/warehouse/withdrawals'`
@@ -1878,7 +1886,7 @@
 
 ##### `CashCustodyService.registerWithdrawal`
 
-- **Firma:** `registerWithdrawal(input: RegisterWarehouseWithdrawalInput): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L107) (L107–111)
+- **Firma:** `registerWithdrawal(input: RegisterWarehouseWithdrawalInput): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L115) (L115–119)
 - **Propósito / descripción:** Cash out of Bodega: back to the caja or deposited into a bank account (one transaction in the backend).
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/withdrawals'`
@@ -1886,7 +1894,7 @@
 
 ##### `CashCustodyService.voidWithdrawal`
 
-- **Firma:** `voidWithdrawal(id: string, reason: string): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L113) (L113–117)
+- **Firma:** `voidWithdrawal(id: string, reason: string): Observable<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L121) (L121–125)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/withdrawals/${id}/void'`
@@ -1894,7 +1902,7 @@
 
 ##### `CashCustodyService.getWarehouseMovements`
 
-- **Firma:** `getWarehouseMovements(page?, limit?): Observable<PaginatedResult<WarehouseMovement>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L119) (L119–123)
+- **Firma:** `getWarehouseMovements(page?, limit?): Observable<PaginatedResult<WarehouseMovement>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L127) (L127–131)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/warehouse/movements'`
@@ -1902,16 +1910,72 @@
 
 ##### `CashCustodyService.registerWarehouseInitialBalance`
 
-- **Firma:** `registerWarehouseInitialBalance(amount: number, reason: string, clientRequestId: string): Observable<CashCustody>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L125) (L125–129)
+- **Firma:** `registerWarehouseInitialBalance(amount: number, reason: string, clientRequestId: string): Observable<CashCustody>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L133) (L133–137)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
 - **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/initial-balance'`
 - **Consumidores:** [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts)
 
-#### Función `toParams` (L23–31)
+##### `CashCustodyService.getInventory`
+
+- **Firma:** `getInventory(): Observable<CashInventory>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L142) (L142–144)
+- **Propósito / descripción:** Per-denomination inventory of caja and Bodega (derived by the backend).
+- **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<CashInventory>>('${BASE_URL}/inventory').pipe`, `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/inventory'`
+- **Consumidores:** [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts)
+
+##### `CashCustodyService.registerWarehouseCount`
+
+- **Firma:** `registerWarehouseCount(input: RegisterWarehouseCashCountInput): Observable<{ count: WarehouseCashCount; inventory: LocationInventory }>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L147) (L147–153)
+- **Propósito / descripción:** "Conteo de Bodega por denominación" (admin): must equal the Bodega balance.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/warehouse/counts'`
+- **Consumidores:** [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts)
+
+##### `CashCustodyService.getWarehouseCounts`
+
+- **Firma:** `getWarehouseCounts(page?, limit?): Observable<PaginatedResult<WarehouseCashCount>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L155) (L155–161)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/warehouse/counts'`
+- **Consumidores:** [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts)
+
+##### `CashCustodyService.getCountDraft`
+
+- **Firma:** `getCountDraft(): Observable<CashCountDraft \| null>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L164) (L164–166)
+- **Propósito / descripción:** The caller's own Arqueo de Caja draft for the current bank day (null when none).
+- **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<CashCountDraft \| null>>('${BASE_URL}/counts/draft').pipe`, `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/counts/draft'`
+- **Consumidores:** [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts)
+
+##### `CashCustodyService.saveCountDraft`
+
+- **Firma:** `saveCountDraft(payload: CashCountDraftPayload): Observable<CashCountDraft>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L169) (L169–171)
+- **Propósito / descripción:** Autosave (upsert) of the caller's draft. Not a cash write: excluded from the cash-change broadcast.
+- **Dependencias (llamadas en su cuerpo):** `this.http.put`, `map`
+- **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/counts/draft'`
+- **Consumidores:** [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts)
+
+##### `CashCustodyService.discardCountDraft`
+
+- **Firma:** `discardCountDraft(): Observable<void>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L174) (L174–176)
+- **Propósito / descripción:** Explicit "Reiniciar arqueo".
+- **Dependencias (llamadas en su cuerpo):** `this.http.delete<ApiSuccessResponse<unknown>>('${BASE_URL}/counts/draft').pipe`, `this.http.delete`, `map`
+- **Efectos secundarios:** HTTP: DELETE `'${BASE_URL}/counts/draft'`
+- **Consumidores:** [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts)
+
+##### `CashCustodyService.getCustodyTransfers`
+
+- **Firma:** `getCustodyTransfers(filters: CustodyTransferFilters): Observable<PaginatedResult<CustodyTransfer>>` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L179) (L179–183)
+- **Propósito / descripción:** Unified history of caja ↔ Bodega transfers with their breakdown.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/custody/transfers'`
+- **Consumidores:** [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts)
+
+#### Función `toParams` (L31–39)
 
 - **Tipo:** función local del archivo
-- **Firma:** `toParams(filters: object): HttpParams` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L23)
+- **Firma:** `toParams(filters: object): HttpParams` — [cash-custody.service.ts](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts#L31)
 - **Propósito / descripción:** Sin JSDoc en el código.
 - **Dependencias:** `new HttpParams`, `Object.entries`, `params.set`, `String`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -2634,7 +2698,7 @@
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** Global, reusable "are you sure?" mechanism — the `ConfirmDialogService`/ `ConfirmDialogComponent` pair mirrors `NotificationService`/ `ToastContainerComponent` exactly (root-provided signal-based service + one component mounted once in `AppComponent`).
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [keyboard-shortcuts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-keyboard-shortcuts-service-ts), [account-type-form-modal.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-components-account-type-form-modal-account-type-form-modal-component-ts), [account-receivable-form-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-account-receivable-form-modal-account-receivable-form-modal-component-ts), [asset-form-modal.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-components-asset-form-modal-asset-form-modal-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [business-form-modal.component.ts](dashboard-businesses.md#f-comercial-jhoel-app-src-app-features-dashboard-businesses-components-business-form-modal-business-form-modal-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-transfer-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts) y 58 más
+- **Consumidores:** [keyboard-shortcuts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-keyboard-shortcuts-service-ts), [account-type-form-modal.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-components-account-type-form-modal-account-type-form-modal-component-ts), [account-receivable-form-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-account-receivable-form-modal-account-receivable-form-modal-component-ts), [asset-form-modal.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-components-asset-form-modal-asset-form-modal-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [business-form-modal.component.ts](dashboard-businesses.md#f-comercial-jhoel-app-src-app-features-dashboard-businesses-components-business-form-modal-business-form-modal-component-ts), [cash-bank-deposit-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts) y 66 más
 
 **Interfaces, tipos y enums:**
 
@@ -4482,7 +4546,7 @@
 - **Responsabilidad:** Global toast feedback — one signal list, rendered once by ToastContainerComponent in AppComponent.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [theme.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-theme-service-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-spec-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [payment-history-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-payment-history-modal-payment-history-modal-component-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [alert-settings-page.component.ts](dashboard-alert-settings.md#f-comercial-jhoel-app-src-app-features-dashboard-alert-settings-alert-settings-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts) y 97 más
+- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [theme.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-theme-service-ts), [account-types-page.component.ts](dashboard-account-types.md#f-comercial-jhoel-app-src-app-features-dashboard-account-types-account-types-page-component-ts), [accounts-receivable-page.component.spec.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-spec-ts), [accounts-receivable-page.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-accounts-receivable-page-component-ts), [payment-history-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-payment-history-modal-payment-history-modal-component-ts), [settlement-modal.component.ts](dashboard-accounts-receivable.md#f-comercial-jhoel-app-src-app-features-dashboard-accounts-receivable-components-settlement-modal-settlement-modal-component-ts), [alert-settings-page.component.ts](dashboard-alert-settings.md#f-comercial-jhoel-app-src-app-features-dashboard-alert-settings-alert-settings-page-component-ts), [assets-page.component.ts](dashboard-assets.md#f-comercial-jhoel-app-src-app-features-dashboard-assets-assets-page-component-ts), [bank-agents-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-bank-agents-page-component-ts), [cuadre-agentes-page.component.spec.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-spec-ts), [cuadre-agentes-page.component.ts](dashboard-bank-agents.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-agents-cuadre-agentes-page-component-ts), [bank-transfers-page.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-bank-transfers-page-component-ts), [balance-credit.component.ts](dashboard-bank-transfers.md#f-comercial-jhoel-app-src-app-features-dashboard-bank-transfers-components-balance-credit-balance-credit-component-ts), [banks-page.component.ts](dashboard-banks.md#f-comercial-jhoel-app-src-app-features-dashboard-banks-banks-page-component-ts) y 104 más
 
 #### Clase `NotificationService` (L9–39)
 
@@ -4665,7 +4729,7 @@
 - **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
 - **Responsabilidad:** A dedicated, small modal for the post-save "¿Generar PDF?" prompt used by Ventas/Compras — deliberately NOT built on `ConfirmDialogService`, which only ever renders exactly two buttons (Cancelar/Confirmar) and has no loading/error state of its own (by design — see its own doc comment).
 - **Paquetes externos:** `@angular/core`, `rxjs`
-- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [pdf-prompt-modal.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-pdf-prompt-modal-pdf-prompt-modal-component-ts)
+- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [pdf-prompt-modal.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-pdf-prompt-modal-pdf-prompt-modal-component-ts)
 
 **Interfaces, tipos y enums:**
 
@@ -4688,7 +4752,7 @@
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.pending.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.pending.set`
-- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts)
+- **Consumidores:** [sales-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-sales-draft-store-ts), [purchases-page.component.ts](dashboard-purchases.md#f-comercial-jhoel-app-src-app-features-dashboard-purchases-purchases-page-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
 
 ##### `PdfPromptModalService.dismiss`
 
@@ -7047,6 +7111,207 @@
 - **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<SalesYearlyStats>>('${BASE_URL}/yearly-stats').pipe`, `this.http.get`, `map`
 - **Efectos secundarios:** HTTP: GET `'${BASE_URL}/yearly-stats'`
 - **Consumidores:** [sales-yearly-chart.component.ts](dashboard-graphs.md#f-comercial-jhoel-app-src-app-features-dashboard-graphs-components-sales-yearly-chart-sales-yearly-chart-component-ts)
+
+<a id="f-comercial-jhoel-app-src-app-core-services-school-list-service-ts"></a>
+
+### school-list.service.ts
+
+- **Ruta:** [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts) (`comercial-jhoel-app/src/app/core/services/school-list.service.ts`, 179 líneas)
+- **Tipo:** Servicio · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-services`
+- **Responsabilidad:** API client of Listas Escolares.
+- **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
+- **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
+- **Consumidores:** [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts), [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts), [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts), [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-lists-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-page-component-ts), [school-lists.spec.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-lists-spec-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts), [school-quotation-edit-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-edit-page-component-ts)
+
+#### Clase `SchoolListService` (L40–178)
+
+- **Decoradores:** `@Injectable({ providedIn: 'root' })`
+- **Propósito:** API client of Listas Escolares. Permissions come from the backend (`GET /school-lists/permissions`) so the UI shows exactly the actions the role may run — the backend and SQL still enforce them.
+- **Servicios inyectados con `inject()`:** `http = inject(HttpClient)`
+- **Datos / estado que administra:** `permissionSet = signal<ReadonlySet<SchoolListPermission>>(new Set(`, `permissionsLoaded = signal(false)`, `permissions = computed(() => this.permissionSet())`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `can` | método public | 48–50 | `permission: SchoolListPermission` | `boolean` |
+| `loadPermissions` | método public | 52–60 | — | `Observable<SchoolListPermission[]>` |
+| `getTemplates` | método public | 63–69 | `includeInactive?` | `Observable<SchoolTemplateSummary[]>` |
+| `getTemplate` | método public | 71–73 | `id: string` | `Observable<SchoolTemplate>` |
+| `saveTemplate` | método public | 75–80 | `id: string \| null`, `input: SaveSchoolTemplateInput` | `Observable<SchoolTemplate>` |
+| `setTemplateActive` | método public | 82–86 | `id: string`, `isActive: boolean` | `Observable<SchoolTemplate>` |
+| `duplicateTemplate` | método public | 88–92 | `id: string`, `name: string`, `grade?: string` | `Observable<SchoolTemplate>` |
+| `getQuotations` | método public | 95–99 | `filters: SchoolQuotationFilters` | `Observable<SchoolQuotationPage>` |
+| `getDashboard` | método public | 101–107 | `dateFrom?: string`, `dateTo?: string` | `Observable<SchoolDashboard>` |
+| `getQuotation` | método public | 109–111 | `id: string` | `Observable<SchoolQuotation>` |
+| `createQuotation` | método public | 113–115 | `input: CreateSchoolQuotationInput` | `Observable<SchoolQuotation>` |
+| `updateQuotation` | método public | 117–121 | `id: string`, `input: SchoolQuotationInput`, `version: number` | `Observable<SchoolQuotation>` |
+| `updateObservations` | método public | 123–130 | `id: string`, `observations: string`, `version: number` | `Observable<SchoolQuotation>` |
+| `changeStatus` | método public | 132–136 | `id: string`, `action: SchoolStatusAction`, `version: number` | `Observable<SchoolQuotation>` |
+| `cancelQuotation` | método public | 138–142 | `id: string`, `input: SchoolCancelInput` | `Observable<SchoolQuotation>` |
+| `registerPayment` | método public | 144–155 | `quotationId: string`, `input: SchoolPaymentInput`, `clientRequestId: string` | `Observable<{ paymentId: string; quotation: SchoolQuotation }>` |
+| `voidPayment` | método public | 157–168 | `paymentId: string`, `reason: string`, `clientRequestId: string` | `Observable<{ reversalId: string; quotation: SchoolQuotation }>` |
+| `quotationPdf` | método public | 171–173 | `id: string` | `Observable<Blob>` |
+| `receiptPdf` | método public | 175–177 | `paymentId: string` | `Observable<Blob>` |
+
+##### `SchoolListService.can`
+
+- **Firma:** `can(permission: SchoolListPermission): boolean` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L48) (L48–50)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.permissionSet().has`, `this.permissionSet`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.loadPermissions`
+
+- **Firma:** `loadPermissions(): Observable<SchoolListPermission[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L52) (L52–60)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `map`, `tap`, `this.permissionSet.set`, `new Set`, `this.permissionsLoaded.set`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/permissions'`; Actualiza estado (signals): `this.permissionSet.set`, `this.permissionsLoaded.set`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `SchoolListService.getTemplates`
+
+- **Firma:** `getTemplates(includeInactive?): Observable<SchoolTemplateSummary[]>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L63) (L63–69)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/templates'`
+- **Consumidores:** [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+
+##### `SchoolListService.getTemplate`
+
+- **Firma:** `getTemplate(id: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L71) (L71–73)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<SchoolTemplate>>('${BASE_URL}/templates/${id}').pipe`, `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/templates/${id}'`
+- **Consumidores:** [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts), [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+
+##### `SchoolListService.saveTemplate`
+
+- **Firma:** `saveTemplate(id: string \| null, input: SaveSchoolTemplateInput): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L75) (L75–80)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.put`, `this.http.post`, `request.pipe`, `map`
+- **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/templates/${id}'`, POST `'${BASE_URL}/templates'`
+- **Consumidores:** [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+
+##### `SchoolListService.setTemplateActive`
+
+- **Firma:** `setTemplateActive(id: string, isActive: boolean): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L82) (L82–86)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.patch`, `map`
+- **Efectos secundarios:** HTTP: PATCH `'${BASE_URL}/templates/${id}/status'`
+- **Consumidores:** [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+
+##### `SchoolListService.duplicateTemplate`
+
+- **Firma:** `duplicateTemplate(id: string, name: string, grade?: string): Observable<SchoolTemplate>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L88) (L88–92)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/templates/${id}/duplicate'`
+- **Consumidores:** [school-templates.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-templates-school-templates-component-ts)
+
+##### `SchoolListService.getQuotations`
+
+- **Firma:** `getQuotations(filters: SchoolQuotationFilters): Observable<SchoolQuotationPage>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L95) (L95–99)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations'`
+- **Consumidores:** [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts)
+
+##### `SchoolListService.getDashboard`
+
+- **Firma:** `getDashboard(dateFrom?: string, dateTo?: string): Observable<SchoolDashboard>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L101) (L101–107)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`, `toParams`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/dashboard'`
+- **Consumidores:** [school-dashboard.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-dashboard-school-dashboard-component-ts)
+
+##### `SchoolListService.getQuotation`
+
+- **Firma:** `getQuotation(id: string): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L109) (L109–111)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get<ApiSuccessResponse<SchoolQuotation>>('${BASE_URL}/quotations/${id}').pipe`, `this.http.get`, `map`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/${id}'`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.createQuotation`
+
+- **Firma:** `createQuotation(input: CreateSchoolQuotationInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L113) (L113–115)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post<ApiSuccessResponse<SchoolQuotation>>('${BASE_URL}/quotations', input).pipe`, `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations'`
+- **Consumidores:** [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts)
+
+##### `SchoolListService.updateQuotation`
+
+- **Firma:** `updateQuotation(id: string, input: SchoolQuotationInput, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L117) (L117–121)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.put`, `map`
+- **Efectos secundarios:** HTTP: PUT `'${BASE_URL}/quotations/${id}'`
+- **Consumidores:** [school-quotation-editor.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotation-editor-school-quotation-editor-component-ts)
+
+##### `SchoolListService.updateObservations`
+
+- **Firma:** `updateObservations(id: string, observations: string, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L123) (L123–130)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.patch`, `map`
+- **Efectos secundarios:** HTTP: PATCH `'${BASE_URL}/quotations/${id}/observations'`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.changeStatus`
+
+- **Firma:** `changeStatus(id: string, action: SchoolStatusAction, version: number): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L132) (L132–136)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${id}/status'`
+- **Consumidores:** [school-quotations-list.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-quotations-list-school-quotations-list-component-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.cancelQuotation`
+
+- **Firma:** `cancelQuotation(id: string, input: SchoolCancelInput): Observable<SchoolQuotation>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L138) (L138–142)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${id}/cancel'`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.registerPayment`
+
+- **Firma:** `registerPayment(quotationId: string, input: SchoolPaymentInput, clientRequestId: string): Observable<{ paymentId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L144) (L144–155)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/quotations/${quotationId}/payments'`
+- **Consumidores:** [school-payment-modal.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-components-school-payment-modal-school-payment-modal-component-ts)
+
+##### `SchoolListService.voidPayment`
+
+- **Firma:** `voidPayment(paymentId: string, reason: string, clientRequestId: string): Observable<{ reversalId: string; quotation: SchoolQuotation }>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L157) (L157–168)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.post`, `map`
+- **Efectos secundarios:** HTTP: POST `'${BASE_URL}/payments/${paymentId}/void'`
+- **Consumidores:** [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+##### `SchoolListService.quotationPdf`
+
+- **Firma:** `quotationPdf(id: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L171) (L171–173)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/quotations/${id}/pdf'`
+- **Consumidores:** [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts)
+
+##### `SchoolListService.receiptPdf`
+
+- **Firma:** `receiptPdf(paymentId: string): Observable<Blob>` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L175) (L175–177)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.http.get`
+- **Efectos secundarios:** HTTP: GET `'${BASE_URL}/payments/${paymentId}/receipt'`
+- **Consumidores:** [school-documents.service.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-documents-service-ts), [school-quotation-detail-page.component.ts](dashboard-school-lists.md#f-comercial-jhoel-app-src-app-features-dashboard-school-lists-school-quotation-detail-page-component-ts)
+
+#### Función `toParams` (L25–33)
+
+- **Tipo:** función local del archivo
+- **Firma:** `toParams(filters: object): HttpParams` — [school-list.service.ts](../../../../comercial-jhoel-app/src/app/core/services/school-list.service.ts#L25)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `new HttpParams`, `Object.entries`, `params.set`, `String`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
 
 <a id="f-comercial-jhoel-app-src-app-core-services-site-visits-service-ts"></a>
 

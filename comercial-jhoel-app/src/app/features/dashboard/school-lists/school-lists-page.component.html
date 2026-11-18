@@ -1,0 +1,46 @@
+<div class="school">
+  <app-page-header
+    icon="book-open"
+    title="Listas Escolares"
+    subtitle="Listas oficiales por grado, cotizaciones personalizadas y control de anticipos, abonos y saldos de cada cliente."
+  />
+
+  @if (loadError()) {
+    <p class="school__error" role="alert">No se pudieron cargar sus permisos de Listas Escolares. Recargue la página.</p>
+  } @else if (service.permissionsLoaded()) {
+    @if (!service.can('school_lists.view')) {
+      <p class="school__error" role="alert">Su rol no tiene acceso a Listas Escolares.</p>
+    } @else {
+      <div class="tabs" role="tablist" aria-label="Secciones de Listas Escolares">
+        @for (tab of tabs(); track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.tabs__on]="activeTab() === tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            (click)="selectTab(tab.id)"
+          >
+            <app-icon [name]="tab.icon" [size]="16" /> {{ tab.label }}
+          </button>
+        }
+      </div>
+
+      @switch (activeTab()) {
+        @case ('tablero') {
+          <app-school-dashboard (openList)="selectTab('cotizaciones')" />
+        }
+        @case ('cotizaciones') {
+          <app-school-quotations-list (createNew)="selectTab('nueva')" />
+        }
+        @case ('nueva') {
+          <app-school-quotation-editor (saved)="onCreated($event)" />
+        }
+        @case ('plantillas') {
+          <app-school-templates />
+        }
+      }
+    }
+  } @else {
+    <p class="school__loading">Cargando…</p>
+  }
+</div>

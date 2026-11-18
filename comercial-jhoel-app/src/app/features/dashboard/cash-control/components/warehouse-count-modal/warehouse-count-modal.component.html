@@ -1,0 +1,50 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="warehouse-count-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="warehouse-count-title">
+          <app-icon name="check-check" [size]="20" />
+          Conteo de Bodega por denominación
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      <p class="modal__hint modal__hint--top">
+        Cuenta los billetes y monedas que hay físicamente en Bodega. El total debe ser igual a su saldo
+        ({{ formatCurrency(balance()) }}); desde este conteo se calculan las existencias por denominación. No mueve efectivo.
+      </p>
+
+      <div class="breakdown">
+        <app-cash-breakdown-table
+          [cashCounts]="cashCounts()"
+          [totalCash]="totalCounted()"
+          [totalAmount]="balance()"
+          [status]="status()"
+          emptyAmountText="Bodega no tiene saldo"
+          (quantityChange)="onQuantityChange($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="wh-count-observations">Observaciones <span class="field__optional">(opcional)</span></label>
+        <input id="wh-count-observations" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+      </div>
+
+      @if (totalCounted() > 0 && difference() !== 0) {
+        <p class="modal__error" role="alert">
+          El conteo ({{ formatCurrency(totalCounted()) }}) no coincide con el saldo de Bodega ({{ formatCurrency(balance()) }}).
+        </p>
+      }
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Registrar conteo' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

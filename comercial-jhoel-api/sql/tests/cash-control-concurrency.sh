@@ -107,19 +107,22 @@ else
   exit 1
 fi
 
-# Entrega a Bodega (migración 1760007400000): dos usuarios entregan a la vez el
-# 60 % de la caja cada uno. La caja se valida bajo su lock: debe aplicarse una
-# sola entrega, la otra recibe CASH_INSUFFICIENT_BALANCE, la caja nunca queda
-# negativa y el total bajo custodia no cambia.
+# Entrega a Bodega con inventario por denominación (migraciones 1760007400000 y
+# 1760007800000): un arqueo deja 10 billetes de Q200 en caja (y saldo de sobra);
+# dos usuarios envían a la vez 6 × Q200 cada uno. La disponibilidad por
+# denominación se valida bajo el lock de caja: debe aplicarse una sola entrega,
+# la otra recibe CASH_DENOMINATION_NOT_AVAILABLE, el inventario nunca queda
+# negativo y el total bajo custodia no cambia.
 "${PSQL[@]}" -d "$TEST_DB" -c "INSERT INTO day_openings (date, opened_by) VALUES ('2099-07-01', '$ADMIN_ID')" >/dev/null
+"${PSQL[@]}" -d "$TEST_DB" -c "SELECT register_manual_cash_movement('ENTRADA_MANUAL', 5000, '$ADMIN_ID', NULL, 'Fondo concurrencia', 'CONC:WH:FUND')" >/dev/null
+"${PSQL[@]}" -d "$TEST_DB" -c "SELECT register_cash_count('[{\"denomination\":200,\"quantity\":10}]'::jsonb, 'Arqueo concurrencia', NULL, '$ADMIN_ID', 'CONC:WH:COUNT', NULL, NULL)" >/dev/null
 WH_CASH_BEFORE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
 WH_BEFORE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT warehouse_cash_balance()::numeric(14,2)")
-WH_AMOUNT=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT round(cash_balance() * 0.6, 2)")
 
 transfer_sql() {
   cat <<SQL
 BEGIN;
-SELECT register_cash_warehouse_transfer($WH_AMOUNT, NULL, 'Cajero concurrencia', 'Bodeguero concurrencia', NULL, NULL, '$ADMIN_ID', 'CONC:WH:$1');
+SELECT register_cash_warehouse_transfer(1200, '[{"denomination":200,"quantity":6}]'::jsonb, 'Cajero concurrencia', 'Bodeguero concurrencia', NULL, NULL, '$ADMIN_ID', 'CONC:WH:$1');
 SELECT pg_sleep($2);
 COMMIT;
 SQL
@@ -129,13 +132,14 @@ sleep 0.5
 (transfer_sql Q 0 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
 wait
 
-WH_TRANSFERS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT count(*) FROM cash_warehouse_transfers WHERE idempotency_key LIKE 'CONC:WH:%'")
+WH_TRANSFERS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT count(*) FROM cash_warehouse_transfers WHERE idempotency_key IN ('CONC:WH:P', 'CONC:WH:Q')")
+WH_Q200=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT quantity FROM cash_location_inventory('CAJA') WHERE denomination = 200")
 WH_CASH_AFTER=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
 WH_AFTER=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT warehouse_cash_balance()::numeric(14,2)")
 WH_CUSTODY_OK=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT ($WH_CASH_AFTER + $WH_AFTER) = ($WH_CASH_BEFORE + $WH_BEFORE) AND $WH_CASH_AFTER >= 0")
-echo "Bodega: entregas $WH_TRANSFERS (esperado 1) · caja $WH_CASH_BEFORE → $WH_CASH_AFTER · Bodega $WH_BEFORE → $WH_AFTER · custodia constante y caja ≥ 0: $WH_CUSTODY_OK"
-if [[ "$WH_TRANSFERS" == "1" && "$WH_CUSTODY_OK" == "t" ]]; then
-  echo "OK  concurrencia Bodega: una sola entrega, sin saldo negativo, custodia constante"
+echo "Bodega: entregas $WH_TRANSFERS (esperado 1) · Q200 en caja 10 → $WH_Q200 (esperado 4) · caja $WH_CASH_BEFORE → $WH_CASH_AFTER · Bodega $WH_BEFORE → $WH_AFTER · custodia constante: $WH_CUSTODY_OK"
+if [[ "$WH_TRANSFERS" == "1" && "$WH_Q200" == "4" && "$WH_CUSTODY_OK" == "t" ]]; then
+  echo "OK  concurrencia Bodega: una sola entrega, billetes nunca negativos, custodia constante"
 else
   echo "FALLÓ concurrencia Bodega"
   exit 1

@@ -68,29 +68,25 @@
 
       <div class="breakdown">
         <div class="breakdown__header">
-          <label class="field__label">
-            <input type="checkbox" [ngModel]="withBreakdown()" [disabled]="!canSkipBreakdown" (ngModelChange)="withBreakdown.set($event)" />
-            Registrar desglose de denominaciones
-            @if (!canSkipBreakdown) {
-              <span class="field__optional">(obligatorio para su rol)</span>
-            }
-          </label>
-          @if (withBreakdown() && totalCounted() > 0 && totalCounted() !== (amount() ?? 0)) {
+          <span class="field__label">Billetes y monedas que salen de Bodega <span class="field__optional">(obligatorio)</span></span>
+          @if (totalCounted() > 0 && totalCounted() !== (amount() ?? 0)) {
             <button type="button" class="link" (click)="useCountedAsAmount()">Usar {{ formatCurrency(totalCounted()) }} como monto</button>
           }
         </div>
-        @if (withBreakdown()) {
-          <app-cash-breakdown-table
-            [cashCounts]="cashCounts()"
-            [totalCash]="totalCounted()"
-            [totalAmount]="amount() ?? 0"
-            [status]="breakdownStatus()"
-            emptyAmountText="Ingresa el monto del retiro"
-            (quantityChange)="onQuantityChange($event)"
-          />
-        } @else {
-          <p class="modal__hint">El retiro quedará registrado sin detalle de denominaciones.</p>
+        @if (needsCount()) {
+          <p class="modal__hint" role="alert">Bodega aún no tiene su conteo inicial por denominación. Un administrador debe registrarlo en "Inventario y traslados" antes de retirar efectivo.</p>
+        } @else if (overStock()) {
+          <p class="modal__hint" role="alert">Alguna cantidad supera los billetes o monedas disponibles en Bodega ("disp.").</p>
         }
+        <app-cash-breakdown-table
+          [cashCounts]="cashCounts()"
+          [totalCash]="totalCounted()"
+          [totalAmount]="amount() ?? 0"
+          [status]="breakdownStatus()"
+          [available]="available()"
+          emptyAmountText="Ingresa el monto del retiro"
+          (quantityChange)="onQuantityChange($event)"
+        />
       </div>
 
       <div class="previews" aria-live="polite">

@@ -1,0 +1,148 @@
+// Shared look of Listas Escolares (panels, tables, chips). Modals reuse the
+// Caja Guayacán modal language so every dialog of the dashboard feels the same.
+@use 'mixins' as *;
+@use 'breakpoints' as bp;
+
+.panel {
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--color-text-on-light);
+
+  app-icon {
+    color: var(--color-primary-500);
+  }
+}
+
+.panel__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+
+  th {
+    background: var(--color-table-header-bg);
+    color: var(--color-table-header-text);
+    font-weight: var(--fw-medium);
+    text-align: left;
+    padding: var(--space-3);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: var(--space-3);
+    border-top: 1px solid var(--color-border-light);
+    color: var(--color-text-on-light);
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td {
+    background: var(--color-surface-light-hover);
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tfoot td {
+    font-weight: var(--fw-semibold, 600);
+    background: var(--color-bg-light-muted);
+  }
+}
+
+.muted {
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-xs);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-on-light-muted);
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-light-muted);
+    color: var(--color-primary-600);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--danger:hover:not(:disabled) {
+    color: var(--color-danger);
+  }
+}
+
+.state {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+
+  &--error {
+    color: var(--color-danger);
+  }
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+
+  @include bp.respond(lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  > .field {
+    min-width: 0;
+  }
+}
+
+.money-in {
+  color: var(--color-success);
+}
+
+.money-out {
+  color: var(--color-danger);
+}

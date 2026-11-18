@@ -1,0 +1,213 @@
+<div class="detail">
+  <a class="back" routerLink="/dashboard/listas-escolares" [queryParams]="{ tab: 'cotizaciones' }"><app-icon name="chevron-left" [size]="16" /> Volver a cotizaciones</a>
+
+  @if (quotation(); as q) {
+    <header class="hero">
+      <div>
+        <p class="hero__eyebrow">Cotización de lista escolar</p>
+        <h1>{{ q.quotationNumber }}</h1>
+        <div class="hero__badges">
+          <app-badge [tone]="statusTone[q.status]">{{ statusLabel[q.status] }}</app-badge>
+          @if (accountLabel[q.accountStatus] !== statusLabel[q.status] && q.status !== 'CANCELADA') {
+            <app-badge [tone]="accountTone[q.accountStatus]">{{ accountLabel[q.accountStatus] }}</app-badge>
+          }
+          <span class="muted">{{ q.grade }} · {{ formatDate(q.quotationDate) }}</span>
+        </div>
+      </div>
+      <div class="hero__actions">
+        @if (canPay()) {
+          <app-button variant="primary" size="sm" (click)="paying.set(true)"><app-icon name="wallet" [size]="15" /> Registrar abono</app-button>
+        }
+        @for (a of nextActions(); track a) {
+          <app-button variant="secondary" size="sm" [disabled]="busy()" (click)="runAction(a)">
+            <app-icon [name]="a === 'ENTREGAR' ? 'truck' : a === 'PREPARAR' ? 'package' : 'check'" [size]="15" />
+            {{ a === 'ENTREGAR' ? 'Registrar entrega' : a === 'PREPARAR' ? 'En preparación' : 'Confirmar' }}
+          </app-button>
+        }
+        @if (editable()) {
+          <app-button variant="ghost" size="sm" (click)="edit()"><app-icon name="edit-2" [size]="15" /> Editar</app-button>
+        }
+        @if (service.can('school_lists.documents.generate')) {
+          <app-button variant="ghost" size="sm" [disabled]="documents.busy() === q.id" (click)="pdf('download')"><app-icon name="download" [size]="15" /> PDF</app-button>
+          <app-button variant="ghost" size="sm" [disabled]="documents.busy() === q.id" (click)="pdf('print')"><app-icon name="printer" [size]="15" /> Imprimir</app-button>
+        }
+        @if (canCancel()) {
+          <app-button variant="danger" size="sm" (click)="startCancel()"><app-icon name="x-circle" [size]="15" /> Cancelar</app-button>
+        }
+      </div>
+    </header>
+
+    <div class="tiles">
+      <app-summary-tile icon="receipt" title="Total de cotización" [value]="formatCurrency(q.account.total)" />
+      <app-summary-tile icon="arrow-down-circle" title="Total de anticipos" tone="gold" [value]="formatCurrency(q.account.advances)" />
+      <app-summary-tile icon="wallet" title="Total de abonos" tone="gold" [value]="formatCurrency(q.account.installments)" />
+      <app-summary-tile icon="check-circle" title="Total pagado" tone="success" [value]="formatCurrency(q.account.paid)" [description]="q.account.refunds > 0 ? 'Devuelto ' + formatCurrency(q.account.refunds) : undefined" />
+      <app-summary-tile icon="alert-circle" title="Saldo pendiente" [tone]="q.balance > 0 ? 'danger' : 'success'" [value]="formatCurrency(q.balance)" />
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" [class.tabs__on]="view() === 'detalle'" [attr.aria-selected]="view() === 'detalle'" (click)="setView('detalle')"><app-icon name="layers" [size]="15" /> Detalle</button>
+      <button type="button" role="tab" [class.tabs__on]="view() === 'cuenta'" [attr.aria-selected]="view() === 'cuenta'" (click)="setView('cuenta')"><app-icon name="receipt" [size]="15" /> Estado de cuenta ({{ q.payments.length }})</button>
+      <button type="button" role="tab" [class.tabs__on]="view() === 'historial'" [attr.aria-selected]="view() === 'historial'" (click)="setView('historial')"><app-icon name="clock" [size]="15" /> Historial</button>
+    </div>
+
+    @switch (view()) {
+      @case ('detalle') {
+        <div class="grid">
+          <section class="panel">
+            <h2 class="panel__title"><app-icon name="user" [size]="18" /> Cliente</h2>
+            <dl class="facts">
+              <div><dt>Cliente o encargado</dt><dd>{{ q.customerName }}</dd></div>
+              <div><dt>Teléfono</dt><dd>{{ q.customerPhone }}</dd></div>
+              <div><dt>Estudiante</dt><dd>{{ q.studentName || '—' }}</dd></div>
+              <div><dt>Grado</dt><dd>{{ q.grade }}{{ q.templateName && q.templateName !== q.grade ? ' · ' + q.templateName : '' }}</dd></div>
+              <div><dt>Fecha de cotización</dt><dd>{{ formatDate(q.quotationDate) }}</dd></div>
+              <div><dt>Fecha de entrega</dt><dd>{{ q.deliveryDate ? formatDate(q.deliveryDate) : 'Por definir' }}</dd></div>
+              <div><dt>Registró</dt><dd>{{ q.createdByUsername }} · {{ formatDateTime(q.createdAt) }}</dd></div>
+              @if (q.deliveredAt) { <div><dt>Entregada</dt><dd>{{ formatDateTime(q.deliveredAt) }} · {{ q.deliveredByUsername }}</dd></div> }
+              @if (q.cancelledAt) { <div><dt>Cancelada</dt><dd>{{ formatDateTime(q.cancelledAt) }} · {{ q.cancelledByUsername }} — {{ q.cancelReason }}</dd></div> }
+            </dl>
+          </section>
+
+          <section class="panel">
+            <div class="panel__head">
+              <h2 class="panel__title"><app-icon name="edit-2" [size]="18" /> Observaciones</h2>
+              @if (editable() && !editingNotes()) {
+                <app-button variant="ghost" size="sm" (click)="editingNotes.set(true)">Modificar</app-button>
+              }
+            </div>
+            @if (editingNotes()) {
+              <div class="field">
+                <textarea rows="4" maxlength="1000" aria-label="Observaciones generales" [ngModel]="notes()" (ngModelChange)="notes.set($event)"></textarea>
+              </div>
+              <div class="notes__actions">
+                <app-button variant="ghost" size="sm" [disabled]="busy()" (click)="editingNotes.set(false); notes.set(q.observations ?? '')">Cancelar</app-button>
+                <app-button variant="primary" size="sm" [disabled]="busy()" (click)="saveNotes()">Guardar</app-button>
+              </div>
+            } @else {
+              <p class="notes">{{ q.observations || 'Sin observaciones.' }}</p>
+            }
+          </section>
+        </div>
+
+        <section class="panel">
+          <h2 class="panel__title"><app-icon name="book-open" [size]="18" /> Productos de la lista</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Producto</th><th>Origen</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Descuento</th><th class="num">Subtotal</th></tr></thead>
+              <tbody>
+                @for (i of q.items; track i.id) {
+                  <tr>
+                    <td>
+                      {{ i.productName }}
+                      @if (i.description || i.observations) { <div class="muted">{{ i.description }}{{ i.description && i.observations ? ' · ' : '' }}{{ i.observations }}</div> }
+                    </td>
+                    <td><span class="muted">{{ sourceLabel[i.source] }}</span></td>
+                    <td class="num">{{ i.quantity }}</td>
+                    <td class="num">{{ formatCurrency(i.unitPrice) }}</td>
+                    <td class="num">{{ i.discount ? formatCurrency(i.discount) : '—' }}</td>
+                    <td class="num">{{ formatCurrency(i.subtotal) }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                @if (q.discount > 0) {
+                  <tr><td colspan="5">Subtotal</td><td class="num">{{ formatCurrency(q.subtotal) }}</td></tr>
+                  <tr><td colspan="5">Descuentos</td><td class="num">−{{ formatCurrency(q.discount) }}</td></tr>
+                }
+                <tr><td colspan="5">Total</td><td class="num">{{ formatCurrency(q.total) }}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      }
+
+      @case ('cuenta') {
+        <section class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title"><app-icon name="receipt" [size]="18" /> Movimientos financieros</h2>
+            <span class="panel__hint">Los pagos no se eliminan: una corrección se registra como anulación auditada.</span>
+          </div>
+          @if (q.payments.length) {
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>Fecha</th><th>Comprobante</th><th>Descripción</th><th>Método</th><th>Recibió</th><th class="num">Ingreso</th><th class="num">Egreso</th><th class="num">Saldo</th><th></th></tr></thead>
+                <tbody>
+                  @for (p of q.payments; track p.id) {
+                    <tr [class.voided]="p.status === 'ANULADO'">
+                      <td>{{ formatDateTime(p.receivedAt) }}</td>
+                      <td>{{ p.receiptNumber }}</td>
+                      <td>
+                        {{ kindLabel[p.kind] }}{{ p.kind === 'ANULACION' ? ' de ' + p.reference : '' }}
+                        @if (p.status === 'ANULADO') { <app-badge tone="danger">Anulado</app-badge> }
+                        @if (p.observations || p.voidReason) { <div class="muted">{{ p.voidReason || p.observations }}</div> }
+                      </td>
+                      <td>{{ methodLabel[p.paymentMethod] }}{{ p.bankName ? ' · ' + p.bankName : '' }}{{ p.kind !== 'ANULACION' && p.reference ? ' · ' + p.reference : '' }}</td>
+                      <td>{{ p.receivedByUsername }}</td>
+                      <td class="num money-in">{{ p.effect > 0 ? formatCurrency(p.effect) : '' }}</td>
+                      <td class="num money-out">{{ p.effect < 0 ? formatCurrency(-p.effect) : '' }}</td>
+                      <td class="num">{{ formatCurrency(p.runningBalance) }}</td>
+                      <td>
+                        <div class="row-actions">
+                          @if (service.can('school_lists.documents.generate')) {
+                            <button type="button" class="icon-btn" title="Comprobante" aria-label="Descargar comprobante" [disabled]="documents.busy() === p.id" (click)="receipt(p)"><app-icon name="download" [size]="15" /></button>
+                          }
+                          @if (canVoid(p)) {
+                            <button type="button" class="icon-btn icon-btn--danger" title="Anular pago" aria-label="Anular pago" (click)="startVoid(p)"><app-icon name="rotate-ccw" [size]="15" /></button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot><tr><td colspan="5">Total pagado</td><td class="num" colspan="2">{{ formatCurrency(q.account.paid) }}</td><td class="num">{{ formatCurrency(q.balance) }}</td><td></td></tr></tfoot>
+              </table>
+            </div>
+          } @else {
+            <p class="state">Aún no hay pagos registrados.{{ canPay() ? ' Use "Registrar abono" para el primer anticipo.' : '' }}</p>
+          }
+        </section>
+      }
+
+      @case ('historial') {
+        <section class="panel">
+          <h2 class="panel__title"><app-icon name="clock" [size]="18" /> Historial de modificaciones</h2>
+          <ol class="timeline">
+            @for (h of q.history; track h.id) {
+              <li>
+                <span class="timeline__dot"></span>
+                <div>
+                  <strong>{{ historyLabel[h.action] || h.action }}</strong>
+                  @if (h.fromStatus && h.toStatus && h.fromStatus !== h.toStatus) {
+                    <span class="muted"> · {{ statusLabel[h.fromStatus] }} → {{ statusLabel[h.toStatus] }}</span>
+                  }
+                  <p class="muted">{{ historyDetail(h) }}</p>
+                  <p class="muted">{{ formatDateTime(h.createdAt) }} · {{ h.createdByUsername }}</p>
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+    }
+
+    <app-school-payment-modal [quotation]="paying() ? q : null" (closed)="paying.set(false)" (paid)="onPaid($event)" />
+    <app-school-reason-modal
+      [open]="!!voiding() || cancelling()"
+      [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : 'Cancelar cotización ' + q.quotationNumber"
+      [message]="voiding()
+        ? 'Se registrará una anulación por ' + formatCurrency(voiding()!.amount) + '; el pago original se conserva como anulado y el saldo vuelve a quedar pendiente.'
+        : 'La cotización quedará cancelada y conservará todo su historial.' + (q.account.paid > 0 ? ' Se registrará la devolución de lo pagado.' : '')"
+      [confirmText]="voiding() ? 'Anular pago' : 'Cancelar cotización'"
+      [refundAmount]="voiding() ? 0 : q.account.paid"
+      [busy]="reasonBusy()"
+      [error]="reasonError()"
+      (closed)="closeReason()"
+      (confirmed)="onReason($event)"
+    />
+  } @else if (failed()) {
+    <p class="state state--error" role="alert">{{ failed() }}</p>
+  } @else {
+    <p class="state">Cargando cotización…</p>
+  }
+</div>

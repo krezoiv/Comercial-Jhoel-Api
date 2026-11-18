@@ -9,7 +9,8 @@
 | [bank-fly-effect.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-bank-fly-effect-bank-fly-effect-component-ts) | .ts | Componente Angular | Feature (pantalla) | Efecto de selección de banco en Transaccionar: el icono parte de su posición real en la tarjeta, viene al centro, crece hasta rebasar la pantalla y se disuelve con un destello ("la atraviesa"). | 0 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [bank-picker-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-bank-picker-modal-bank-picker-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `agent`, `account`, `AGENTS`, `ACCOUNTS` (sin comentario de documentación en el código). | 2 internas; ext.: @angular/core | 0 | Soporte (pruebas) |
 | [bank-picker-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-bank-picker-modal-bank-picker-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Paso previo de Depósito / Retiro / Reintegro: elegir el banco por su icono. | 6 internas; ext.: @angular/core | 3 | Media (3 consumidores) |
-| [cash-breakdown-table.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Efectivo" — the fixed 11-row denomination breakdown; quantity per row is the only editable value, subtotal and the running total are always derived, never entered directly. | 4 internas; ext.: @angular/core | 16 | Alta (16 consumidores) |
+| [cash-breakdown-table.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria (sin comentario de documentación en el código). | 1 internas; ext.: @angular/core | 0 | Soporte (pruebas) |
+| [cash-breakdown-table.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Efectivo" — the fixed 11-row denomination breakdown; quantity per row is the only editable value, subtotal and the running total are always derived, never entered directly. | 4 internas; ext.: @angular/core | 19 | Alta (19 consumidores) |
 | [change-confirm-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-change-confirm-modal-change-confirm-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Confirmar Vuelto" — deliberately does NOT close on a backdrop click (per the ticket's own explicit requirement: giving change to a client is a real-money action, not something to lose by an accidental outside click). | 2 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [commission-summary-card.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-commission-summary-card-commission-summary-card-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Comisión Estimada" — sits alongside "Resumen Diario"/"Resumen Mes en Curso" on Transaccionar's own type-picker dashboard. | 2 internas; ext.: @angular/core | 3 | Media (3 consumidores) |
 | [cuadre-result-card.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cuadre-result-card-cuadre-result-card-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Resultado del Cuadre" — Total esperado / Total contado / Diferencia / Estado, all derived from the exact same `totalAmount`/`totalCash`/ `cashStatus` signals `CashBreakdownTableComponent` already reads from `BankDepositDraftStore`. | 4 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
@@ -248,39 +249,49 @@
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** uso interno del archivo
 
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-spec-ts"></a>
+
+### cash-breakdown-table.component.spec.ts
+
+- **Ruta:** [cash-breakdown-table.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.spec.ts`, 26 líneas)
+- **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-transaccionar`
+- **Responsabilidad:** Prueba unitaria (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts)
+- **Paquetes externos:** `@angular/core`
+- **Consumidores:** —
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts"></a>
 
 ### cash-breakdown-table.component.ts
 
-- **Ruta:** [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts`, 67 líneas)
+- **Ruta:** [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts`, 79 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-transaccionar`
 - **Responsabilidad:** "Efectivo" — the fixed 11-row denomination breakdown; quantity per row is the only editable value, subtotal and the running total are always derived, never entered directly.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [decimal-input.directive.ts](shared-directives.md#f-comercial-jhoel-app-src-app-shared-directives-decimal-input-directive-ts), [status-indicator.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-status-indicator-status-indicator-component-ts)
 - **Paquetes externos:** `@angular/core`
-- **Consumidores:** [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts), [movement-form-modal.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-movement-form-modal-movement-form-modal-component-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts), [cash-bank-deposit-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts) (plantilla), [cash-count-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts) (plantilla), [cut-finish-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts) (plantilla), [warehouse-transfer-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts) (plantilla), [warehouse-withdrawal-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts) (plantilla), [cash-count-panel.component.ts (plantilla)](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts) (plantilla), [movement-form-modal.component.ts (plantilla)](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-movement-form-modal-movement-form-modal-component-ts) (plantilla) y 1 más
+- **Consumidores:** [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts), [cash-count-panel.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-cash-count-panel-cash-count-panel-component-ts), [movement-form-modal.component.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-components-movement-form-modal-movement-form-modal-component-ts), [cash-breakdown-table.component.spec.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-spec-ts), [transaccionar-page.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-transaccionar-page-component-ts), [cash-bank-deposit-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts) (plantilla), [cash-count-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts) (plantilla), [cut-finish-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts) (plantilla), [warehouse-count-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts) (plantilla), [warehouse-transfer-modal.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts) (plantilla) y 4 más
 - **Plantilla:** [cash-breakdown-table.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.html) · **Usa componentes:** [status-indicator.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-status-indicator-status-indicator-component-ts)
 - **Eventos enlazados en la plantilla:** `(change)="onQuantityInput(row.denomination, $any($event.target).value)"`
 
 **Interfaces, tipos y enums:**
 
-- `interface CashRow` (L8): sin documentación — miembros: `denomination`, `quantity`, `subtotal`
+- `interface CashRow` (L8): sin documentación — miembros: `denomination`, `quantity`, `subtotal`, `available`, `over`
 
-#### Clase `CashBreakdownTableComponent` (L15–66)
+#### Clase `CashBreakdownTableComponent` (L19–78)
 
 - **Decoradores:** `@Component({ selector: 'app-cash-breakdown-table', standalone: true, imports: [DecimalInputDirective, StatusIndicatorComponent], templateUrl: './cash-breakdown-t`
 - **Propósito:** "Efectivo" — the fixed 11-row denomination breakdown; quantity per row is the only editable value, subtotal and the running total are always derived, never entered directly.
-- **Datos / estado que administra:** `@Input cashCounts = {}`, `@Input totalCash = 0`, `@Input totalAmount = 0`, `@Input status: CuadreStatus`, `@Input disabled = false`, `@Input emptyAmountText = 'Ingresa el monto total a depositar'`, `@Output quantityChange = new EventEmitter<{ denomination: number; quantity:`
+- **Datos / estado que administra:** `@Input cashCounts = {}`, `@Input totalCash = 0`, `@Input totalAmount = 0`, `@Input status: CuadreStatus`, `@Input disabled = false`, `@Input emptyAmountText = 'Ingresa el monto total a depositar'`, `@Input available = null`, `@Output quantityChange = new EventEmitter<{ denomination: number; quantity:`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `rows` | getter public | 37–42 | — | `CashRow[]` |
-| `onQuantityInput` | método public | 44–47 | `denomination: number`, `value: string` | `void` |
-| `statusText` | getter public | 50–61 | — | `string` |
-| `formatDenomination` | método public | 63–65 | `denomination: number` | `string` |
+| `rows` | getter public | 48–54 | — | `CashRow[]` |
+| `onQuantityInput` | método public | 56–59 | `denomination: number`, `value: string` | `void` |
+| `statusText` | getter public | 62–73 | — | `string` |
+| `formatDenomination` | método public | 75–77 | `denomination: number` | `string` |
 
 ##### `CashBreakdownTableComponent.rows`
 
-- **Firma:** `rows(): CashRow[]` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L37) (L37–42)
+- **Firma:** `rows(): CashRow[]` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L48) (L48–54)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.denominations.map`, `String`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -288,7 +299,7 @@
 
 ##### `CashBreakdownTableComponent.onQuantityInput`
 
-- **Firma:** `onQuantityInput(denomination: number, value: string): void` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L44) (L44–47)
+- **Firma:** `onQuantityInput(denomination: number, value: string): void` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L56) (L56–59)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `parseInt`, `this.quantityChange.emit`, `Number.isNaN`, `Math.max`
 - **Efectos secundarios:** Emite eventos: `this.quantityChange.emit`
@@ -296,7 +307,7 @@
 
 ##### `CashBreakdownTableComponent.statusText`
 
-- **Firma:** `statusText(): string` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L50) (L50–61)
+- **Firma:** `statusText(): string` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L62) (L62–73)
 - **Propósito / descripción:** Dynamic status copy — tells the user exactly how much is missing or in excess, not just that it doesn't match yet.
 - **Dependencias (llamadas en su cuerpo):** `formatCurrency`, `Math.abs`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -304,7 +315,7 @@
 
 ##### `CashBreakdownTableComponent.formatDenomination`
 
-- **Firma:** `formatDenomination(denomination: number): string` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L63) (L63–65)
+- **Firma:** `formatDenomination(denomination: number): string` — [cash-breakdown-table.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/transaccionar/components/cash-breakdown-table/cash-breakdown-table.component.ts#L75) (L75–77)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `denomination.toLocaleString`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).

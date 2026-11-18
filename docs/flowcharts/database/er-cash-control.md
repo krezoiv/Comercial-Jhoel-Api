@@ -10,6 +10,13 @@ erDiagram
     integer quantity
     numeric subtotal
   }
+  cash_count_drafts {
+    uuid id PK
+    uuid user_id FK
+    uuid day_opening_id FK
+    date business_date
+    timestamp_with_time_zone updated_at
+  }
   cash_counts {
     uuid id PK
     bigint number
@@ -95,6 +102,21 @@ erDiagram
     uuid voided_by FK
     uuid created_by FK
   }
+  warehouse_cash_count_details {
+    uuid id PK
+    uuid count_id FK
+    integer quantity
+    numeric subtotal
+  }
+  warehouse_cash_counts {
+    uuid id PK
+    bigint number
+    date business_date
+    uuid day_opening_id FK
+    numeric warehouse_balance
+    numeric total_counted
+    uuid created_by FK
+  }
   warehouse_cash_movement_details {
     uuid id PK
     uuid movement_id FK
@@ -129,10 +151,10 @@ erDiagram
     character_varying status
     uuid voided_by FK
   }
-  users {
+  day_openings {
     uuid id PK
   }
-  day_openings {
+  users {
     uuid id PK
   }
   banks {
@@ -145,6 +167,8 @@ erDiagram
     uuid id PK
   }
   cash_counts ||--o{ cash_count_details : "count_id"
+  day_openings ||--o{ cash_count_drafts : "day_opening_id"
+  users ||--o{ cash_count_drafts : "user_id"
   cash_counts |o--o{ cash_counts : "replaced_by_id"
   users ||--o{ cash_counts : "created_by"
   day_openings ||--o{ cash_counts : "day_opening_id"
@@ -173,6 +197,9 @@ erDiagram
   day_openings ||--o{ cash_warehouse_transfers : "day_opening_id"
   users |o--o{ cash_warehouse_transfers : "voided_by"
   warehouse_cash_movements ||--o| cash_warehouse_transfers : "warehouse_movement_id"
+  warehouse_cash_counts ||--o{ warehouse_cash_count_details : "count_id"
+  users ||--o{ warehouse_cash_counts : "created_by"
+  day_openings ||--o{ warehouse_cash_counts : "day_opening_id"
   warehouse_cash_movements ||--o{ warehouse_cash_movement_details : "movement_id"
   users ||--o{ warehouse_cash_movements : "created_by"
   day_openings |o--o{ warehouse_cash_movements : "day_opening_id"
@@ -194,7 +221,7 @@ erDiagram
 3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/database/migrations`](../../../comercial-jhoel-api/src/database/migrations), [`docs/codebase-study/05_DATABASE_REFERENCE.md`](../../../docs/codebase-study/05_DATABASE_REFERENCE.md)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
 5. **¿Qué decisiones toma el sistema?** No aplica (estructura)
-6. **¿Dónde se almacenan los datos?** cash_count_details, cash_counts, cash_cut_bank_reconciliations, cash_cut_count_details, cash_cut_counts, cash_cut_events, cash_cut_periods, cash_cut_schedule_changes, cash_movement_details, cash_operational_days, cash_warehouse_transfers, warehouse_cash_movement_details, warehouse_cash_movements, warehouse_cash_withdrawals
+6. **¿Dónde se almacenan los datos?** cash_count_details, cash_count_drafts, cash_counts, cash_cut_bank_reconciliations, cash_cut_count_details, cash_cut_counts, cash_cut_events, cash_cut_periods, cash_cut_schedule_changes, cash_movement_details, cash_operational_days, cash_warehouse_transfers, warehouse_cash_count_details, warehouse_cash_counts, warehouse_cash_movement_details, warehouse_cash_movements, warehouse_cash_withdrawals
 7. **¿Cómo termina el proceso?** No aplica
 8. **¿Qué sucede cuando ocurre un error?** Las restricciones CHECK/UNIQUE/FK rechazan filas inválidas (ver la referencia de la tabla)
 

@@ -1,0 +1,36 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="school-reason-title">
+      <div class="modal__header">
+        <h2 class="modal__title modal__title--out" id="school-reason-title"><app-icon name="alert-triangle" [size]="20" /> {{ title }}</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="busy" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <p class="modal__hint">{{ message }}</p>
+
+      <div class="modal__grid">
+        <div class="field field--wide">
+          <label for="school-reason">Motivo *</label>
+          <textarea id="school-reason" rows="3" maxlength="500" placeholder="Mínimo 5 caracteres" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea>
+        </div>
+        @if (refundAmount > 0) {
+          <div class="field">
+            <label for="school-refund-method">Devolución de {{ formatCurrency(refundAmount) }} por</label>
+            <select id="school-refund-method" [ngModel]="refundMethod()" (ngModelChange)="refundMethod.set($event)">
+              @for (m of methods; track m) { <option [value]="m">{{ methodLabel[m] }}</option> }
+            </select>
+          </div>
+          <div class="field">
+            <label for="school-refund-ref">Referencia <span class="field__optional">(opcional)</span></label>
+            <input id="school-refund-ref" type="text" maxlength="60" [ngModel]="reference()" (ngModelChange)="reference.set($event)" />
+          </div>
+        }
+      </div>
+
+      @if (error) { <p class="modal__error" role="alert">{{ error }}</p> }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="busy" (click)="closed.emit()">Volver</app-button>
+        <app-button variant="danger" [disabled]="busy || !valid()" (click)="submit()">{{ busy ? 'Procesando…' : confirmText }}</app-button>
+      </div>
+    </div>
+  </div>
+}

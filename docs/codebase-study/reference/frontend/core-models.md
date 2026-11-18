@@ -41,7 +41,7 @@
 | [ice-cream-purchase.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-purchase-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `calculateIceCreamPurchaseItemTotal`, `calculateIceCreamPurchaseTotal`, `IceCreamPurchaseItem`, `IceCreamPurchase`, `IceCreamPurchaseDraftItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [ice-cream-sale.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-sale-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `calculateIceCreamSaleItemTotal`, `calculateIceCreamSaleTotal`, `IceCreamSaleItem`, `IceCreamSale`, `IceCreamSaleDraftItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [ice-cream.model.ts](#f-comercial-jhoel-app-src-app-core-models-ice-cream-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `getIceCreamStockStatus`, `IceCream`, `IceCreamInput`, `IceCreamStockStatus`, `ICE_CREAM_LOW_STOCK_THRESHOLD` (sin comentario de documentación en el código). | 1 internas | 1 | Baja (1 consumidores) |
-| [index.ts](#f-comercial-jhoel-app-src-app-core-models-index-ts) | .ts | Barrel (re-exportación) | Core (servicios, modelos, guards) | Barrel (re-exportación) (sin comentario de documentación en el código). | 66 internas | 415 | Alta (415 consumidores) |
+| [index.ts](#f-comercial-jhoel-app-src-app-core-models-index-ts) | .ts | Barrel (re-exportación) | Core (servicios, modelos, guards) | Barrel (re-exportación) (sin comentario de documentación en el código). | 67 internas | 431 | Alta (431 consumidores) |
 | [inventory.model.ts](#f-comercial-jhoel-app-src-app-core-models-inventory-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | An extensible stock location (Bodega, Vitrina, ...) — adding a new one is a backend admin action, never a frontend code change. | 0 internas | 1 | Baja (1 consumidores) |
 | [kardex.model.ts](#f-comercial-jhoel-app-src-app-core-models-kardex-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `KardexMovement`, `KardexStatement`, `RegisterKardexMovementInput`, `KardexStatementFilters`, `ActiveBalanceSummary` (sin comentario de documentación en el código). | 0 internas; ext.: rxjs | 3 | Media (3 consumidores) |
 | [keyboard-shortcut.model.ts](#f-comercial-jhoel-app-src-app-core-models-keyboard-shortcut-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | A global keyboard shortcut → dashboard route mapping, backed by `GET/POST/PATCH/DELETE /keyboard-shortcuts` — configurable from "Sistema → Atajos de Teclado". | 0 internas | 1 | Baja (1 consumidores) |
@@ -64,6 +64,7 @@
 | [sale.model.ts](#f-comercial-jhoel-app-src-app-core-models-sale-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `SaleItem`, `Sale`, `CreateSaleItemInput`, `CreateSaleInput`, `SalesDailyStat` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [sales-cash-box.model.ts](#f-comercial-jhoel-app-src-app-core-models-sales-cash-box-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | One negocio's accumulated (all-time, never reset) balance — mirrors `SalesCashBoxBalanceOutput`. | 0 internas | 1 | Baja (1 consumidores) |
 | [sales-register.model.ts](#f-comercial-jhoel-app-src-app-core-models-sales-register-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Mirrors `SalesRegisterProductOutput` — one product's totals within one negocio, for one business day. | 0 internas | 1 | Baja (1 consumidores) |
+| [school-list.model.ts](#f-comercial-jhoel-app-src-app-core-models-school-list-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000). | 0 internas | 1 | Baja (1 consumidores) |
 | [service-item.model.ts](#f-comercial-jhoel-app-src-app-core-models-service-item-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `ServiceItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [stat-item.model.ts](#f-comercial-jhoel-app-src-app-core-models-stat-item-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `StatItem` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
 | [supplier.model.ts](#f-comercial-jhoel-app-src-app-core-models-supplier-model-ts) | .ts | Modelo / tipos | Core (servicios, modelos, guards) | Modelo / tipos: declara `Supplier`, `SupplierInput` (sin comentario de documentación en el código). | 0 internas | 1 | Baja (1 consumidores) |
@@ -417,7 +418,7 @@
 
 ### cash-custody.model.ts
 
-- **Ruta:** [cash-custody.model.ts](../../../../comercial-jhoel-app/src/app/core/models/cash-custody.model.ts) (`comercial-jhoel-app/src/app/core/models/cash-custody.model.ts`, 182 líneas)
+- **Ruta:** [cash-custody.model.ts](../../../../comercial-jhoel-app/src/app/core/models/cash-custody.model.ts) (`comercial-jhoel-app/src/app/core/models/cash-custody.model.ts`, 294 líneas)
 - **Tipo:** Modelo / tipos · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
 - **Responsabilidad:** Control de Efectivo → "Arqueo de Caja" and "Bodega" (cash under custody).
 - **Descripción del autor (comentario del archivo):** Control de Efectivo → "Arqueo de Caja" and "Bodega" (cash under custody). Caja and Bodega balances come from their own Kardex in the backend; the UI never computes them.
@@ -436,13 +437,33 @@
 - `interface CashCountFilters` (L147): sin documentación — miembros: `dateFrom`, `dateTo`, `businessDate`, `userId`, `result`, `page`, `limit`
 - `interface RegisterCashCountInput` (L157): sin documentación — miembros: `details`, `observations`, `warehouseCounted`, `clientRequestId`
 - `interface RegisterWarehouseTransferInput` (L164): sin documentación — miembros: `amount`, `details`, `deliveredBy`, `receivedBy`, `voucherReference`, `observations`, `clientRequestId`
+- `interface LocationInventory` (L192): Inventory of one location as the backend derives it: the latest physical count (anchor) plus later movements with denominations. — miembros: `location`, `hasAnchor`, `anchorKind`, `anchorId`, `anchorNumber`, `anchorAt`, `anchorByUsername`, `balance`, `knownTotal`, `unbroken`, `lines`
+- `interface CashInventory` (L206): sin documentación — miembros: `cash`, `warehouse`
+- `interface WarehouseCashCount` (L220): Audited per-denomination count of Bodega (its total equals the Bodega balance). — miembros: `id`, `number`, `countedAt`, `businessDate`, `warehouseBalance`, `totalCounted`, `observations`, `createdByUsername`, `details`
+- `interface RegisterWarehouseCashCountInput` (L232): sin documentación — miembros: `details`, `observations`, `clientRequestId`
+- `interface CashCountDraftPayload` (L239): What the Arqueo de Caja form had typed — persisted server side per user and bank day. — miembros: `details`, `observations`, `countWarehouse`, `warehouseCounted`
+- `interface CashCountDraft` (L246): sin documentación — miembros: `businessDate`, `payload`, `version`, `updatedAt`
+- `interface CustodyTransfer` (L262): One caja ↔ Bodega transfer with its breakdown (unified history). — miembros: `id`, `kind`, `referenceNumber`, `origin`, `destination`, `bankName`, `amount`, `status`, `deliveredBy`, `receivedBy`, `voucherReference`, `observations`, `hasBreakdown`, `businessDate`, `createdById`, `createdByUsername`, `createdAt`, `voidedAt`, `voidReason`, `details`
+- `interface CustodyTransferFilters` (L285): sin documentación — miembros: `kind`, `userId`, `dateFrom`, `dateTo`, `status`, `page`, `limit`
 - `type CashCountResult` (L7) = `'CUADRADO' \| 'FALTANTE' \| 'SOBRANTE'` — Control de Efectivo → "Arqueo de Caja" and "Bodega" (cash under custody).
 - `type WarehouseWithdrawalDestination` (L23) = `'CAJA' \| 'BANCO'`
+- `type CashLocation` (L185) = `'CAJA' \| 'BODEGA'`
+- `type CustodyTransferKind` (L253) = `'CAJA_A_BODEGA' \| 'BODEGA_A_CAJA' \| 'BODEGA_A_BANCO'`
 
 **Constantes exportadas:**
 
 - `CASH_COUNT_RESULT_LABEL` (L174) = `{ CUADRADO: 'Cuadrado', FALTANTE: 'Faltante', SOBRANTE: 'Sobrante', }`
 - `CASH_CUSTODY_OPERATOR_ROLES` (L181): Roles that may view/register counts and deliveries (UX only — the backend re-checks). = `['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO']`
+- `CUSTODY_TRANSFER_KIND_LABEL` (L255) = `{ CAJA_A_BODEGA: 'Retiro de caja → Bodega', BODEGA_A_CAJA: 'Envío de Bodega → caja', BODEGA_A_BANCO: 'Depósito`
+#### Función `availableByDenomination` (L212–217)
+
+- **Tipo:** función exportada
+- **Firma:** `availableByDenomination(inventory: LocationInventory \| null): Record<string, number> \| null` — [cash-custody.model.ts](../../../../comercial-jhoel-app/src/app/core/models/cash-custody.model.ts#L212)
+- **Propósito / descripción:** Available quantity per denomination (`String(denomination)` key, same as the breakdown table).
+- **Dependencias:** `Object.fromEntries`, `inventory.lines.map`, `String`, `Math.max`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
 <a id="f-comercial-jhoel-app-src-app-core-models-catalog-bank-model-ts"></a>
 
 ### catalog-bank.model.ts
@@ -953,11 +974,11 @@
 
 ### index.ts
 
-- **Ruta:** [index.ts](../../../../comercial-jhoel-app/src/app/core/models/index.ts) (`comercial-jhoel-app/src/app/core/models/index.ts`, 67 líneas)
+- **Ruta:** [index.ts](../../../../comercial-jhoel-app/src/app/core/models/index.ts) (`comercial-jhoel-app/src/app/core/models/index.ts`, 68 líneas)
 - **Tipo:** Barrel (re-exportación) · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
 - **Responsabilidad:** Barrel (re-exportación) (sin comentario de documentación en el código).
-- **Depende de (archivos del proyecto):** [nav-link.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-nav-link-model-ts), [service-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-service-item-model-ts), [stat-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-stat-item-model-ts), [catalog-category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-catalog-category-model-ts), [bank-operation.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-bank-operation-model-ts), [contact-channel.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-contact-channel-model-ts), [dashboard-nav-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-nav-item-model-ts), [keyboard-shortcut.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-keyboard-shortcut-model-ts), [dashboard-summary-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-summary-item-model-ts), [product.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-product-model-ts), [inventory.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-inventory-model-ts), [category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-category-model-ts), [business.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-business-model-ts), [sale.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sale-model-ts), [sales-register.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sales-register-model-ts) y 51 más
-- **Consumidores:** [bank-operations.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-bank-operations-data-ts), [catalog-categories.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-catalog-categories-data-ts), [dashboard-nav.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-nav-data-ts), [dashboard-summary.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-summary-data-ts), [nav-links.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-nav-links-data-ts), [services.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-services-data-ts), [stats.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-stats-data-ts), [account-receivable-payment.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-payment-service-ts), [account-receivable.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-service-ts), [account-type.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-type-service-ts), [alert-settings.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alert-settings-service-ts), [alerts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alerts-service-ts), [asset.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-asset-service-ts), [assets-receivables-report-state.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-assets-receivables-report-state-service-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) y 400 más
+- **Depende de (archivos del proyecto):** [nav-link.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-nav-link-model-ts), [service-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-service-item-model-ts), [stat-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-stat-item-model-ts), [catalog-category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-catalog-category-model-ts), [bank-operation.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-bank-operation-model-ts), [contact-channel.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-contact-channel-model-ts), [dashboard-nav-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-nav-item-model-ts), [keyboard-shortcut.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-keyboard-shortcut-model-ts), [dashboard-summary-item.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-dashboard-summary-item-model-ts), [product.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-product-model-ts), [inventory.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-inventory-model-ts), [category.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-category-model-ts), [business.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-business-model-ts), [sale.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sale-model-ts), [sales-register.model.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-sales-register-model-ts) y 52 más
+- **Consumidores:** [bank-operations.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-bank-operations-data-ts), [catalog-categories.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-catalog-categories-data-ts), [dashboard-nav.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-nav-data-ts), [dashboard-summary.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-dashboard-summary-data-ts), [nav-links.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-nav-links-data-ts), [services.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-services-data-ts), [stats.data.ts](core-data.md#f-comercial-jhoel-app-src-app-core-data-stats-data-ts), [account-receivable-payment.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-payment-service-ts), [account-receivable.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-receivable-service-ts), [account-type.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-account-type-service-ts), [alert-settings.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alert-settings-service-ts), [alerts.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-alerts-service-ts), [asset.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-asset-service-ts), [assets-receivables-report-state.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-assets-receivables-report-state-service-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts) y 416 más
 <a id="f-comercial-jhoel-app-src-app-core-models-inventory-model-ts"></a>
 
 ### inventory.model.ts
@@ -1531,6 +1552,110 @@
 - `interface SalesRegisterProduct` (L2): Mirrors `SalesRegisterProductOutput` — one product's totals within one negocio, for one business day. — miembros: `productId`, `productName`, `sku`, `quantitySold`, `totalRevenue`
 - `interface SalesRegisterBusiness` (L11): Mirrors `SalesRegisterBusinessOutput` — one negocio's totals for one business day, plus its own product breakdown. — miembros: `businessId`, `businessName`, `totalAmount`, `salesCount`, `productsCount`, `topProduct`, `products`
 - `interface SalesRegisterSummary` (L23): `GET /sales-register/summary`'s response shape — "Gestión de Caja de Ventas". — miembros: `date`, `totalAmount`, `salesCount`, `productsCount`, `businessesActive`, `businesses`
+<a id="f-comercial-jhoel-app-src-app-core-models-school-list-model-ts"></a>
+
+### school-list.model.ts
+
+- **Ruta:** [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts) (`comercial-jhoel-app/src/app/core/models/school-list.model.ts`, 385 líneas)
+- **Tipo:** Modelo / tipos · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-models`
+- **Responsabilidad:** Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000).
+- **Descripción del autor (comentario del archivo):** Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000). The backend computes and validates every amount; these types only mirror its responses.
+- **Consumidores:** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts)
+
+**Interfaces, tipos y enums:**
+
+- `interface SchoolTemplateItem` (L114): sin documentación — miembros: `id`, `lineNo`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `subtotal`, `observations`, `inventoryPrice`
+- `interface SchoolTemplateSummary` (L127): sin documentación — miembros: `id`, `name`, `grade`, `description`, `isActive`, `sortOrder`, `version`, `itemCount`, `total`, `updatedAt`, `updatedByUsername`
+- `interface SchoolTemplate` (L141) extends SchoolTemplateSummary: sin documentación — miembros: `items`
+- `interface SchoolTemplateItemInput` (L145): sin documentación — miembros: `productId`, `productName`, `description`, `quantity`, `unitPrice`, `observations`
+- `interface SaveSchoolTemplateInput` (L154): sin documentación — miembros: `name`, `grade`, `description`, `isActive`, `items`, `version`
+- `interface SchoolQuotationItem` (L164): sin documentación — miembros: `id`, `lineNo`, `source`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `subtotal`, `observations`
+- `interface SchoolPayment` (L179): sin documentación — miembros: `id`, `quotationId`, `receiptNumber`, `kind`, `amount`, `effect`, `runningBalance`, `paymentMethod`, `bankId`, `bankName`, `reference`, `observations`, `status`, `reversalOfId`, `receivedAt`, `receivedByUsername`, `voidedAt`, `voidedByUsername`, `voidReason`
+- `interface SchoolHistoryEntry` (L201): sin documentación — miembros: `id`, `action`, `fromStatus`, `toStatus`, `details`, `createdAt`, `createdByUsername`
+- `interface SchoolAccount` (L211): sin documentación — miembros: `total`, `advances`, `installments`, `refunds`, `paid`, `balance`
+- `interface SchoolQuotationSummary` (L220): sin documentación — miembros: `id`, `quotationNumber`, `quotationDate`, `deliveryDate`, `customerName`, `customerPhone`, `studentName`, `grade`, `templateId`, `templateName`, `total`, `paid`, `balance`, `status`, `accountStatus`, `version`, `createdAt`, `createdByUsername`
+- `interface SchoolQuotation` (L241) extends SchoolQuotationSummary: sin documentación — miembros: `subtotal`, `discount`, `observations`, `updatedAt`, `deliveredAt`, `deliveredByUsername`, `cancelledAt`, `cancelledByUsername`, `cancelReason`, `items`, `payments`, `history`, `account`
+- `interface SchoolQuotationItemInput` (L257): sin documentación — miembros: `itemId`, `templateItemId`, `productId`, `productName`, `description`, `quantity`, `unitPrice`, `discount`, `observations`
+- `interface SchoolPaymentInput` (L269): sin documentación — miembros: `amount`, `paymentMethod`, `bankId`, `reference`, `observations`
+- `interface SchoolQuotationInput` (L277): sin documentación — miembros: `customerName`, `customerPhone`, `studentName`, `quotationDate`, `deliveryDate`, `observations`, `items`
+- `interface CreateSchoolQuotationInput` (L287) extends SchoolQuotationInput: sin documentación — miembros: `templateId`, `grade`, `asDraft`, `advance`, `clientRequestId`
+- `interface SchoolCancelInput` (L295): sin documentación — miembros: `reason`, `refundMethod`, `bankId`, `reference`, `clientRequestId`
+- `interface SchoolQuotationFilters` (L303): sin documentación — miembros: `search`, `phone`, `number`, `grade`, `status`, `dateFrom`, `dateTo`, `page`, `limit`
+- `interface SchoolQuotationPage` (L315): sin documentación — miembros: `items`, `total`, `page`, `limit`
+- `interface SchoolDashboard` (L322): sin documentación — miembros: `dateFrom`, `dateTo`, `totalQuotations`, `pendingQuotations`, `paidQuotations`, `totalQuoted`, `totalReceived`, `pendingBalance`, `byGrade`, `byStatus`, `incomeByDay`
+- `type SchoolQuotationStatus` (L8) = `\| 'BORRADOR' \| 'COTIZADA' \| 'ANTICIPO_RECIBIDO' \| 'PAGO_PARCIAL' \| 'PAGADA' \| 'EN_PREPARACION' \| 'ENTREGADA' \| 'CANCELADA'` — Listas Escolares — official templates per grade, customer quotations and their account statement (API `/school-lists`, migration 1760007900000).
+- `type SchoolAccountStatus` (L18) = `'PENDIENTE' \| 'PARCIAL' \| 'PAGADA' \| 'CERRADA'`
+- `type SchoolPaymentMethod` (L19) = `'EFECTIVO' \| 'TRANSFERENCIA' \| 'DEPOSITO' \| 'TARJETA' \| 'OTRO'`
+- `type SchoolPaymentKind` (L20) = `'ANTICIPO' \| 'ABONO' \| 'DEVOLUCION' \| 'ANULACION'`
+- `type SchoolStatusAction` (L21) = `'CONFIRMAR' \| 'PREPARAR' \| 'ENTREGAR'`
+- `type SchoolLineSource` (L22) = `'PLANTILLA' \| 'INVENTARIO' \| 'MANUAL'`
+- `type SchoolListPermission` (L24) = `\| 'school_lists.view' \| 'school_lists.templates.manage' \| 'school_lists.quotations.create' \| 'school_lists.quotations.edit' \| 'school_lists.prices.override' \| 'school_lists.payments.register' \| 'schoo`
+
+**Constantes exportadas:**
+
+- `SCHOOL_STATUS_LABEL` (L36) = `{ BORRADOR: 'Borrador', COTIZADA: 'Cotizada', ANTICIPO_RECIBIDO: 'Anticipo recibido', PAGO_PARCIAL: 'Pago parc`
+- `SCHOOL_STATUS_TONE` (L47) = `{ BORRADOR: 'neutral-light', COTIZADA: 'danger', ANTICIPO_RECIBIDO: 'gold', PAGO_PARCIAL: 'gold', PAGADA: 'suc`
+- `SCHOOL_STATUSES` (L61) = `Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[]`
+- `SCHOOL_PAYMENT_METHOD_LABEL` (L63) = `{ EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', DEPOSITO: 'Depósito bancario', TARJETA: 'Tarjeta', OTR`
+- `SCHOOL_PAYMENT_METHODS` (L71) = `Object.keys(SCHOOL_PAYMENT_METHOD_LABEL) as SchoolPaymentMethod[]`
+- `SCHOOL_PAYMENT_KIND_LABEL` (L73) = `{ ANTICIPO: 'Anticipo', ABONO: 'Abono', DEVOLUCION: 'Devolución', ANULACION: 'Anulación', }`
+- `SCHOOL_LINE_SOURCE_LABEL` (L80) = `{ PLANTILLA: 'Plantilla', INVENTARIO: 'Inventario', MANUAL: 'Agregado', }`
+- `SCHOOL_ACCOUNT_TONE` (L87): Green = paid, yellow = partial, red = pending; cancelled is neutral. = `{ PAGADA: 'success', PARCIAL: 'gold', PENDIENTE: 'danger', CERRADA: 'neutral-light', }`
+- `SCHOOL_ACCOUNT_LABEL` (L94) = `{ PAGADA: 'Pagada', PARCIAL: 'Pago parcial', PENDIENTE: 'Saldo pendiente', CERRADA: 'Cerrada', }`
+- `SCHOOL_BANK_METHODS` (L102): Methods that may name the bank account the money arrived to. = `['TRANSFERENCIA', 'DEPOSITO']`
+- `SCHOOL_HISTORY_LABEL` (L336) = `{ CREADA: 'Cotización creada', EDITADA: 'Cotización modificada', OBSERVACIONES: 'Observaciones actualizadas', `
+#### Función `isSchoolQuotationEditable` (L105–107)
+
+- **Tipo:** función exportada
+- **Firma:** `isSchoolQuotationEditable(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L105)
+- **Propósito / descripción:** States in which lines, customer data and observations may still change.
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `canReceiveSchoolPayment` (L109–111)
+
+- **Tipo:** función exportada
+- **Firma:** `canReceiveSchoolPayment(status: SchoolQuotationStatus): boolean` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L109)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `roundMoney` (L349–351)
+
+- **Tipo:** función exportada
+- **Firma:** `roundMoney(value: number): number` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L349)
+- **Propósito / descripción:** Rounds to cents the same way the backend does (display/live totals only).
+- **Dependencias:** `Math.round`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `formatSchoolDate` (L354–360)
+
+- **Tipo:** función exportada
+- **Firma:** `formatSchoolDate(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L354)
+- **Propósito / descripción:** `yyyy-MM-dd` → `dd/mm/yyyy` without a `Date` round-trip.
+- **Dependencias:** `iso.slice(0, 10).split`, `iso.slice`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `formatSchoolDateTime` (L362–374)
+
+- **Tipo:** función exportada
+- **Firma:** `formatSchoolDateTime(iso: string \| null \| undefined): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L362)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `new Date(iso).toLocaleString`, `new Date`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
+#### Función `guatemalaToday` (L377–384)
+
+- **Tipo:** función exportada
+- **Firma:** `guatemalaToday(now?): string` — [school-list.model.ts](../../../../comercial-jhoel-app/src/app/core/models/school-list.model.ts#L377)
+- **Propósito / descripción:** Today in Guatemala as `yyyy-MM-dd`.
+- **Dependencias:** `new Intl.DateTimeFormat`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** sin llamadas detectadas desde otros archivos
+
 <a id="f-comercial-jhoel-app-src-app-core-models-service-item-model-ts"></a>
 
 ### service-item.model.ts

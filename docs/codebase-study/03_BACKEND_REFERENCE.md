@@ -6,9 +6,9 @@ Cada enlace abre la referencia generada del módulo: endpoints con su recorrido 
 |---|---|---|---|---|---|
 | Configuración del backend | 1 | 0 | 0 | — | [abrir](reference/backend/config.md) |
 | Base de datos: data-source y seeds | 2 | 0 | 0 | — | [abrir](reference/backend/database.md) |
-| Pruebas E2E del backend | 8 | 0 | 0 | — | [abrir](reference/backend/e2e.md) |
+| Pruebas E2E del backend | 10 | 0 | 0 | — | [abrir](reference/backend/e2e.md) |
 | Health check | 2 | 2 | 1 | 1 | [abrir](reference/backend/health.md) |
-| Migraciones TypeORM (esquema de base de datos) | 112 | 112 | 230 | — | [abrir](reference/backend/migrations.md) |
+| Migraciones TypeORM (esquema de base de datos) | 114 | 114 | 234 | — | [abrir](reference/backend/migrations.md) |
 | Raíz del backend (main, AppModule) | 2 | 1 | 0 | — | [abrir](reference/backend/root.md) |
 | Código transversal del backend (shared) | 14 | 7 | 8 | — | [abrir](reference/backend/shared.md) |
 | Scripts y pruebas SQL | 0 | 0 | 0 | — | [abrir](reference/backend/sql.md) |
@@ -21,7 +21,7 @@ Cada enlace abre la referencia generada del módulo: endpoints con su recorrido 
 | Módulo backend `bank-deposits` | 54 | 59 | 72 | 9 | [abrir](reference/backend/bank-deposits.md) |
 | Módulo backend `banks` | 108 | 120 | 158 | 24 | [abrir](reference/backend/banks.md) |
 | Módulo backend `businesses` | 19 | 17 | 26 | 5 | [abrir](reference/backend/businesses.md) |
-| Módulo backend `cash-control` | 22 | 64 | 123 | 36 | [abrir](reference/backend/cash-control.md) |
+| Módulo backend `cash-control` | 23 | 76 | 147 | 43 | [abrir](reference/backend/cash-control.md) |
 | Módulo backend `catalog` | 61 | 56 | 113 | 21 | [abrir](reference/backend/catalog.md) |
 | Módulo backend `catalog-banks` | 30 | 28 | 49 | 12 | [abrir](reference/backend/catalog-banks.md) |
 | Módulo backend `categories` | 19 | 17 | 26 | 5 | [abrir](reference/backend/categories.md) |
@@ -51,6 +51,7 @@ Cada enlace abre la referencia generada del módulo: endpoints con su recorrido 
 | Módulo backend `sales` | 49 | 52 | 69 | 13 | [abrir](reference/backend/sales.md) |
 | Módulo backend `sales-cash-box` | 22 | 20 | 32 | 5 | [abrir](reference/backend/sales-cash-box.md) |
 | Módulo backend `sales-register` | 8 | 6 | 3 | 1 | [abrir](reference/backend/sales-register.md) |
+| Módulo backend `school-lists` | 12 | 41 | 58 | 19 | [abrir](reference/backend/school-lists.md) |
 | Módulo backend `site-visits` | 7 | 6 | 6 | 2 | [abrir](reference/backend/site-visits.md) |
 | Módulo backend `suppliers` | 19 | 17 | 28 | 5 | [abrir](reference/backend/suppliers.md) |
 | Módulo backend `tickets` | 31 | 30 | 43 | 5 | [abrir](reference/backend/tickets.md) |

@@ -20,9 +20,10 @@ flowchart LR
   n9[("banks")]
   n10["Transaccionar (operaciones bancarias)<br/><small>api/bank-deposits</small>"]
   n11["Control de Efectivo (Kardex, cortes, arqueos, Bodega)<br/><small>api/cash-control</small>"]
-  n12[("day_audit_logs")]
-  n13[("day_openings")]
-  n14["Reportería<br/><small>api/reports</small>"]
+  n12["school-lists<br/><small>api/school-lists</small>"]
+  n13[("day_audit_logs")]
+  n14[("day_openings")]
+  n15["Reportería<br/><small>api/reports</small>"]
   n2 -->|escribe vía close_agent_day_with_cash_breakdown()| n1
   n2 -->|escribe vía close_agent_day_with_cash_breakdown()| n3
   n2 -->|consulta · entidad ORM …| n4
@@ -37,11 +38,12 @@ flowchart LR
   n2 -->|consulta · entidad ORM| n9
   n11 -->|consulta| n9
   n5 -->|consulta| n9
-  n2 -->|consulta · entidad ORM …| n12
+  n12 -->|consulta| n9
   n2 -->|consulta · entidad ORM …| n13
-  n11 -->|consulta| n13
-  n5 -->|consulta| n13
-  n14 -->|consulta| n13
+  n2 -->|consulta · entidad ORM …| n14
+  n11 -->|consulta| n14
+  n5 -->|consulta| n14
+  n15 -->|consulta| n14
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -52,5 +54,5 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n1,n3,n4,n6,n8,n9,n12,n13 db
-  class n2,n5,n7,n10,n11,n14 app
+  class n1,n3,n4,n6,n8,n9,n13,n14 db
+  class n2,n5,n7,n10,n11,n12,n15 app

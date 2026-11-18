@@ -7,28 +7,33 @@
 | Archivo | Ext. | Tipo | Capa | Responsabilidad | Dependencias internas | Consumidores | Importancia |
 |---|---|---|---|---|---|---|---|
 | [cash-control-page.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `day`, `position` (sin comentario de documentación en el código). | 3 internas; ext.: @angular/common, @angular/core, @angular/router, rxjs | 0 | Soporte (pruebas) |
-| [cash-control-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | Finance → Control de Efectivo. | 23 internas; ext.: @angular/core, @angular/common, @angular/forms, @angular/router | 2 | Baja (2 consumidores) |
+| [cash-control-page.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) | .ts | Componente Angular | Feature (pantalla) | Finance → Control de Efectivo. | 25 internas; ext.: @angular/core, @angular/common, @angular/forms, @angular/router | 2 | Baja (2 consumidores) |
 | [cash-control.util.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria (sin comentario de documentación en el código). | 2 internas | 0 | Soporte (pruebas) |
-| [cash-control.util.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts) | .ts | Utilidad | Feature (pantalla) | `HH:mm` of a server instant in America/Guatemala (never the browser's zone). | 2 internas | 15 | Alta (15 consumidores) |
+| [cash-control.util.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts) | .ts | Utilidad | Feature (pantalla) | `HH:mm` of a server instant in America/Guatemala (never the browser's zone). | 2 internas | 18 | Alta (18 consumidores) |
 | [bank-day-card.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-card-bank-day-card-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Acumulados del día operativo": daily indicators that restart at every Agentes Bancarios opening (the physical balance never does), with the selector to consult a past bank day. | 3 internas; ext.: @angular/core, @angular/forms | 2 | Baja (2 consumidores) |
 | [bank-day-history.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-history-bank-day-history-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Historial por día operativo": the original indicators of each bank day (read only). | 3 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [cash-bank-deposit-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
 | [cash-bank-deposit-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Depósito bancario": cash leaves the caja and is deposited into one of the registered bank accounts. | 10 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
-| [cash-count-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `custody` (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
+| [cash-count-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `custody` (sin comentario de documentación en el código). | 5 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
 | [cash-count-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Arqueo de Caja": count the bills and coins physically in the caja and compare them with the theoretical caja balance. | 10 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
 | [cash-counts-panel.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Historial de arqueos": every count exactly as recorded (theoretical photograph, counted total, difference, result, denominations). | 6 internas; ext.: @angular/core, @angular/forms | 2 | Baja (2 consumidores) |
+| [cash-inventory-panel.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Inventario de efectivo": bills and coins available in CAJA and in BODEGA, as the backend derives them (latest physical count of each location + later movements with denominations). | 6 internas; ext.: @angular/core | 2 | Baja (2 consumidores) |
 | [cash-movement-form-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Manual cash movement registered in Control de Efectivo: Entrada/Salida (cut managers) or Ajuste/Saldo inicial (admin). | 8 internas; ext.: @angular/core, @angular/common, @angular/forms | 2 | Baja (2 consumidores) |
+| [custody-transfers-panel.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
+| [custody-transfers-panel.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Historial de traslados": every caja ↔ Bodega movement (retiro de caja → Bodega, envío de Bodega → caja, depósito de Bodega → banco) in one list, with filters by type, user, dates and status, and a detail panel with the exact bills and coins of each movement. | 7 internas; ext.: @angular/core, @angular/forms | 3 | Media (3 consumidores) |
 | [cut-control-panel.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Configuración y control de cortes": opening of the operational day (inherited cash, never invented), the two cuts with scheduled vs actual times, start/finish/reopen actions and the final close of the day. | 11 internas; ext.: @angular/core, @angular/common, @angular/forms, rxjs | 2 | Baja (2 consumidores) |
 | [cut-detail-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-detail-modal-cut-detail-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Read-only detail of one cut (`GET /cash-control/cuts/:id`): the stored snapshot (never recomputed), current and superseded arqueos, bank reconciliation, audit trail (started/finished/reopened), schedule changes and the Kardex movements of its range. | 4 internas; ext.: @angular/core | 4 | Media (4 consumidores) |
 | [cut-finish-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Finalizar corte": arqueo by denomination (Q200 … Q0.05) compared live against the system cash of the Kardex, plus verification of every active bank account. | 10 internas; ext.: @angular/core, @angular/common, @angular/forms | 2 | Baja (2 consumidores) |
 | [cut-history.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts) | .ts | Componente Angular | Feature (pantalla) | Historial de Cortes — one block per operational day with its two cuts (scheduled/actual times, responsible users, status, opening/closing cash, difference of each cut, bank reconciliation). | 6 internas; ext.: @angular/core, @angular/forms, rxjs | 2 | Baja (2 consumidores) |
 | [reason-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-reason-modal-reason-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | Small "reason required" prompt shared by Control de Efectivo's audited actions (void a movement, reopen a cut, change a schedule). | 1 internas; ext.: @angular/core, @angular/forms | 6 | Media (6 consumidores) |
+| [warehouse-count-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `bodega` (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
+| [warehouse-count-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Conteo de Bodega por denominación" (administrators): the audited reference of the Bodega inventory. | 9 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
 | [warehouse-panel.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts) | .ts | Componente Angular | Feature (pantalla) | Bodega: its balance (own Kardex), the deliveries received from the caja (each linked to its caja movement: both Kardex sequence numbers are shown) and the Bodega Kardex. | 9 internas; ext.: @angular/core, @angular/common, @angular/forms | 2 | Baja (2 consumidores) |
-| [warehouse-transfer-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `custody` (sin comentario de documentación en el código). | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
-| [warehouse-transfer-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Entrega de Efectivo a Bodega": an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense. | 11 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
-| [warehouse-withdrawal-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Prueba unitaria: declara `custody` (sin comentario de documentación en el código). | 5 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
+| [warehouse-transfer-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Inventory as the backend returns it: 12 denominations, only those given non-zero. | 4 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
+| [warehouse-transfer-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense. | 11 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
+| [warehouse-withdrawal-modal.component.spec.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts) | .ts | Prueba unitaria | Feature (pantalla) | Inventory as the backend returns it: 12 denominations, only those given non-zero. | 5 internas; ext.: @angular/common, @angular/core, rxjs | 0 | Soporte (pruebas) |
 | [warehouse-withdrawal-modal.component.ts](#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts) | .ts | Componente Angular | Feature (pantalla) | "Retiro de Bodega": cash leaves Bodega and either goes back to the caja (internal transfer, total custody unchanged) or is deposited into a registered bank account (Bodega down, bank up). | 12 internas; ext.: @angular/core, @angular/common, @angular/forms | 3 | Media (3 consumidores) |
-| [cash-control-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-control-page.component.ts`; usa 17 componentes hijos: `app-page-header`, `app-icon`, `app-card`, `app-button`, `app-cash-bank-day-card`, `app-cash-bank-day-history`. | — | — | Media |
+| [cash-control-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-control-page.component.ts`; usa 19 componentes hijos: `app-page-header`, `app-icon`, `app-card`, `app-button`, `app-cash-bank-day-card`, `app-cash-bank-day-history`. | — | — | Media |
 | [cash-control-page.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [bank-day-card.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/bank-day-card/bank-day-card.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `bank-day-card.component.ts`; usa 1 componentes hijos: `app-card`. | — | — | Media |
 | [bank-day-card.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/bank-day-card/bank-day-card.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
@@ -39,8 +44,12 @@
 | [cash-count-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-count-modal.component.ts`; usa 3 componentes hijos: `app-icon`, `app-button`, `app-cash-breakdown-table`. | — | — | Media |
 | [cash-count-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [cash-counts-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-counts-panel.component.ts`; usa 3 componentes hijos: `app-icon`, `app-button`, `app-report-pagination`. | — | — | Media |
+| [cash-inventory-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-inventory-panel.component.ts`; usa 3 componentes hijos: `app-icon`, `app-button`, `app-warehouse-count-modal`. | — | — | Media |
+| [cash-inventory-panel.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [cash-movement-form-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-movement-form-modal/cash-movement-form-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cash-movement-form-modal.component.ts`; usa 2 componentes hijos: `app-icon`, `app-button`. | — | — | Media |
 | [cash-movement-form-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-movement-form-modal/cash-movement-form-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
+| [custody-transfers-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `custody-transfers-panel.component.ts`; usa 3 componentes hijos: `app-icon`, `app-button`, `app-report-pagination`. | — | — | Media |
+| [custody-transfers-panel.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [cut-control-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cut-control-panel.component.ts`; usa 6 componentes hijos: `app-icon`, `app-card`, `app-button`, `app-cash-cut-finish-modal`, `app-cash-cut-detail-modal`, `app-cash-reason-modal`. | — | — | Media |
 | [cut-control-panel.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-control-panel/cut-control-panel.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [cut-detail-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-detail-modal/cut-detail-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cut-detail-modal.component.ts`; usa 1 componentes hijos: `app-icon`. | — | — | Media |
@@ -50,6 +59,7 @@
 | [cut-history.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-history/cut-history.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `cut-history.component.ts`; usa 5 componentes hijos: `app-card`, `app-icon`, `app-button`, `app-report-pagination`, `app-cash-cut-detail-modal`. | — | — | Media |
 | [cut-history.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cut-history/cut-history.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [reason-modal.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/reason-modal/reason-modal.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
+| [warehouse-count-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `warehouse-count-modal.component.ts`; usa 3 componentes hijos: `app-icon`, `app-cash-breakdown-table`, `app-button`. | — | — | Media |
 | [warehouse-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `warehouse-panel.component.ts`; usa 4 componentes hijos: `app-icon`, `app-button`, `app-report-pagination`, `app-cash-reason-modal`. | — | — | Media |
 | [warehouse-panel.component.scss](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.scss) | .scss | Estilos SCSS | Feature (pantalla) | Estilos del componente del mismo nombre. | — | — | Baja |
 | [warehouse-transfer-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.html) | .html | Plantilla HTML | Feature (pantalla) | Plantilla de `warehouse-transfer-modal.component.ts`; usa 3 componentes hijos: `app-icon`, `app-cash-breakdown-table`, `app-button`. | — | — | Media |
@@ -88,20 +98,20 @@
 
 ### cash-control-page.component.ts
 
-- **Ruta:** [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts`, 427 líneas)
+- **Ruta:** [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts`, 433 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
 - **Responsabilidad:** Finance → Control de Efectivo.
-- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [refetch-on-tab-visible.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-refetch-on-tab-visible-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts) y 8 más
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [refetch-on-tab-visible.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-refetch-on-tab-visible-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts) y 10 más
 - **Paquetes externos:** `@angular/core`, `@angular/common`, `@angular/forms`, `@angular/router`, `rxjs`
 - **Consumidores:** [app.routes.ts](root.md#f-comercial-jhoel-app-src-app-app-routes-ts), [cash-control-page.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-spec-ts)
-- **Plantilla:** [cash-control-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.html) · **Usa componentes:** [page-header.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-page-header-page-header-component-ts), [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [card.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-card-card-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [bank-day-card.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-card-bank-day-card-component-ts), [bank-day-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-history-bank-day-history-component-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [reason-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-reason-modal-reason-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts) y 2 más
-- **Eventos enlazados en la plantilla:** `(click)="setTab('efectivo')"`, `(click)="setTab('cortes')"`, `(click)="setTab('historial')"`, `(click)="setTab('arqueos')"`, `(click)="setTab('bodega')"`, `(click)="refresh()"`, `(click)="formMode.set('ENTRADA_MANUAL')"`, `(click)="formMode.set('SALIDA_MANUAL')"`, `(click)="depositOpen.set(true)"`, `(click)="openCount()"`, `(click)="openTransfer()"`, `(click)="openWithdrawal()"`, `(click)="formMode.set('AJUSTE')"`, `(click)="formMode.set('SALDO_INICIAL')"`, `(select)="selectBankDate($event)"`
+- **Plantilla:** [cash-control-page.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.html) · **Usa componentes:** [page-header.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-page-header-page-header-component-ts), [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [card.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-card-card-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [bank-day-card.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-card-bank-day-card-component-ts), [bank-day-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-history-bank-day-history-component-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [reason-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-reason-modal-reason-modal-component-ts) y 4 más
+- **Eventos enlazados en la plantilla:** `(click)="setTab('efectivo')"`, `(click)="setTab('cortes')"`, `(click)="setTab('historial')"`, `(click)="setTab('arqueos')"`, `(click)="setTab('bodega')"`, `(click)="setTab('inventario')"`, `(click)="refresh()"`, `(click)="formMode.set('ENTRADA_MANUAL')"`, `(click)="formMode.set('SALIDA_MANUAL')"`, `(click)="depositOpen.set(true)"`, `(click)="openCount()"`, `(click)="openTransfer()"`, `(click)="openWithdrawal()"`, `(click)="formMode.set('AJUSTE')"`, `(click)="formMode.set('SALDO_INICIAL')"`
 
 **Interfaces, tipos y enums:**
 
-- `type CashTab` (L57) = `'efectivo' \| 'cortes' \| 'historial' \| 'arqueos' \| 'bodega'`
+- `type CashTab` (L59) = `'efectivo' \| 'cortes' \| 'historial' \| 'arqueos' \| 'bodega' \| 'inventario'`
 
-#### Clase `CashControlPageComponent` (L68–426)
+#### Clase `CashControlPageComponent` (L70–432)
 
 - **Decoradores:** `@Component({ selector: 'app-cash-control-page', standalone: true, imports: [ FormsModule, ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, Rep`
 - **Propósito:** Finance → Control de Efectivo. Shows the official physical cash (backend Kardex), today's totals by operation type, the Kardex itself with filters, the two daily cuts and their history. It updates in real time through `onCashChanged` (writes in this tab, other tabs, and polling for other users) and never computes a balance on its own.
@@ -110,38 +120,38 @@
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `setTab` | método public | 187–190 | `tab: CashTab` | `void` |
-| `refresh` | método public | 192–197 | — | `void` |
-| `loadCustody` | método public | 199–207 | — | `void` |
-| `openCount` | método public | 209–213 | `correction?: CashCountRecord \| null` | `void` |
-| `onCountSaved` | método public | 215–217 | — | `void` |
-| `closeCount` | método public | 219–222 | — | `void` |
-| `openTransfer` | método public | 224–227 | — | `void` |
-| `onTransferSaved` | método public | 229–234 | `result: { custody: CashCustody }` | `void` |
-| `openWithdrawal` | método public | 236–239 | — | `void` |
-| `onWithdrawalSaved` | método public | 241–246 | `result: { custody: CashCustody }` | `void` |
-| `onCustodyChanged` | método public | 248–251 | — | `void` |
-| `loadBankDays` | método public | 253–258 | — | `void` |
-| `selectBankDate` | método public | 264–284 | `date: string` | `void` |
-| `loadPosition` | método public | 286–298 | — | `void` |
-| `setPosition` | método public | 300–310 | `position: CashPosition` | `void` |
-| `loadMovements` | método public | 312–327 | — | `void` |
-| `setDraft` | método public | 329–334 | `patch: Partial<CashMovementFilters>` | `void` |
-| `setSingleDate` | método public | 337–339 | `date: string` | `void` |
-| `applyFilters` | método public | 341–345 | — | `void` |
-| `clearFilters` | método public | 347–350 | — | `void` |
-| `onPageChange` | método public | 352–355 | `page: number` | `void` |
-| `signedLabel` | método public | 357–362 | `movement: CashMovement` | `string` |
-| `onDepositSaved` | método public | 364–367 | — | `void` |
-| `showBreakdown` | método public | 369–383 | `movement: CashMovement` | `void` |
-| `voidMessage` | método public | 385–395 | — | `string` |
-| `onMovementSaved` | método public | 397–400 | — | `void` |
-| `voidMovement` | método public | 402–420 | `reason: string` | `void` |
-| `initialTab` | método private | 422–425 | — | `CashTab` |
+| `setTab` | método public | 191–194 | `tab: CashTab` | `void` |
+| `refresh` | método public | 196–201 | — | `void` |
+| `loadCustody` | método public | 203–211 | — | `void` |
+| `openCount` | método public | 213–217 | `correction?: CashCountRecord \| null` | `void` |
+| `onCountSaved` | método public | 219–221 | — | `void` |
+| `closeCount` | método public | 223–226 | — | `void` |
+| `openTransfer` | método public | 228–231 | — | `void` |
+| `onTransferSaved` | método public | 233–238 | `result: { custody: CashCustody }` | `void` |
+| `openWithdrawal` | método public | 240–243 | — | `void` |
+| `onWithdrawalSaved` | método public | 245–250 | `result: { custody: CashCustody }` | `void` |
+| `onCustodyChanged` | método public | 252–255 | — | `void` |
+| `loadBankDays` | método public | 257–262 | — | `void` |
+| `selectBankDate` | método public | 268–288 | `date: string` | `void` |
+| `loadPosition` | método public | 290–302 | — | `void` |
+| `setPosition` | método public | 304–314 | `position: CashPosition` | `void` |
+| `loadMovements` | método public | 316–331 | — | `void` |
+| `setDraft` | método public | 333–338 | `patch: Partial<CashMovementFilters>` | `void` |
+| `setSingleDate` | método public | 341–343 | `date: string` | `void` |
+| `applyFilters` | método public | 345–349 | — | `void` |
+| `clearFilters` | método public | 351–354 | — | `void` |
+| `onPageChange` | método public | 356–359 | `page: number` | `void` |
+| `signedLabel` | método public | 361–366 | `movement: CashMovement` | `string` |
+| `onDepositSaved` | método public | 368–371 | — | `void` |
+| `showBreakdown` | método public | 373–387 | `movement: CashMovement` | `void` |
+| `voidMessage` | método public | 389–399 | — | `string` |
+| `onMovementSaved` | método public | 401–404 | — | `void` |
+| `voidMovement` | método public | 406–424 | `reason: string` | `void` |
+| `initialTab` | método private | 426–431 | — | `CashTab` |
 
 ##### `CashControlPageComponent.setTab`
 
-- **Firma:** `setTab(tab: CashTab): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L187) (L187–190)
+- **Firma:** `setTab(tab: CashTab): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L191) (L191–194)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.tab.set`, `this.router.navigate`
 - **Efectos secundarios:** Actualiza estado (signals): `this.tab.set`
@@ -149,7 +159,7 @@
 
 ##### `CashControlPageComponent.refresh`
 
-- **Firma:** `refresh(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L192) (L192–197)
+- **Firma:** `refresh(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L196) (L196–201)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.loadPosition`, `this.loadMovements`, `this.loadBankDays`, `this.loadCustody`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -157,7 +167,7 @@
 
 ##### `CashControlPageComponent.loadCustody`
 
-- **Firma:** `loadCustody(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L199) (L199–207)
+- **Firma:** `loadCustody(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L203) (L203–211)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.canCustody`, `this.custodyService.getCustody().pipe(catchError(() => of(null))).subscribe`, `this.custodyService.getCustody().pipe`, `this.custodyService.getCustody`, `catchError`, `of`, `this.custody.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.custody.set`
@@ -165,7 +175,7 @@
 
 ##### `CashControlPageComponent.openCount`
 
-- **Firma:** `openCount(correction?: CashCountRecord \| null): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L209) (L209–213)
+- **Firma:** `openCount(correction?: CashCountRecord \| null): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L213) (L213–217)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.countCorrection.set`, `this.countOpen.set`, `this.loadCustody`
 - **Efectos secundarios:** Actualiza estado (signals): `this.countCorrection.set`, `this.countOpen.set`
@@ -173,7 +183,7 @@
 
 ##### `CashControlPageComponent.onCountSaved`
 
-- **Firma:** `onCountSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L215) (L215–217)
+- **Firma:** `onCountSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L219) (L219–221)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.custodyRefresh.update`
 - **Efectos secundarios:** Actualiza estado (signals): `this.custodyRefresh.update`
@@ -181,7 +191,7 @@
 
 ##### `CashControlPageComponent.closeCount`
 
-- **Firma:** `closeCount(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L219) (L219–222)
+- **Firma:** `closeCount(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L223) (L223–226)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.countOpen.set`, `this.countCorrection.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.countOpen.set`, `this.countCorrection.set`
@@ -189,7 +199,7 @@
 
 ##### `CashControlPageComponent.openTransfer`
 
-- **Firma:** `openTransfer(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L224) (L224–227)
+- **Firma:** `openTransfer(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L228) (L228–231)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.loadCustody`, `this.transferOpen.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.transferOpen.set`
@@ -197,7 +207,7 @@
 
 ##### `CashControlPageComponent.onTransferSaved`
 
-- **Firma:** `onTransferSaved(result: { custody: CashCustody }): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L229) (L229–234)
+- **Firma:** `onTransferSaved(result: { custody: CashCustody }): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L233) (L233–238)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.transferOpen.set`, `this.custody.set`, `this.custodyRefresh.update`, `this.refresh`
 - **Efectos secundarios:** Actualiza estado (signals): `this.transferOpen.set`, `this.custody.set`, `this.custodyRefresh.update`
@@ -205,7 +215,7 @@
 
 ##### `CashControlPageComponent.openWithdrawal`
 
-- **Firma:** `openWithdrawal(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L236) (L236–239)
+- **Firma:** `openWithdrawal(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L240) (L240–243)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.loadCustody`, `this.withdrawalOpen.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.withdrawalOpen.set`
@@ -213,7 +223,7 @@
 
 ##### `CashControlPageComponent.onWithdrawalSaved`
 
-- **Firma:** `onWithdrawalSaved(result: { custody: CashCustody }): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L241) (L241–246)
+- **Firma:** `onWithdrawalSaved(result: { custody: CashCustody }): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L245) (L245–250)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.withdrawalOpen.set`, `this.custody.set`, `this.custodyRefresh.update`, `this.refresh`
 - **Efectos secundarios:** Actualiza estado (signals): `this.withdrawalOpen.set`, `this.custody.set`, `this.custodyRefresh.update`
@@ -221,7 +231,7 @@
 
 ##### `CashControlPageComponent.onCustodyChanged`
 
-- **Firma:** `onCustodyChanged(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L248) (L248–251)
+- **Firma:** `onCustodyChanged(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L252) (L252–255)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.custodyRefresh.update`, `this.refresh`
 - **Efectos secundarios:** Actualiza estado (signals): `this.custodyRefresh.update`
@@ -229,7 +239,7 @@
 
 ##### `CashControlPageComponent.loadBankDays`
 
-- **Firma:** `loadBankDays(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L253) (L253–258)
+- **Firma:** `loadBankDays(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L257) (L257–262)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.service.getBankDays(60).pipe(catchError(() => of([]))).subscribe`, `this.service.getBankDays(60).pipe`, `this.service.getBankDays`, `catchError`, `of`, `this.bankDays.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.bankDays.set`
@@ -237,7 +247,7 @@
 
 ##### `CashControlPageComponent.selectBankDate`
 
-- **Firma:** `selectBankDate(date: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L264) (L264–284)
+- **Firma:** `selectBankDate(date: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L268) (L268–288)
 - **Propósito / descripción:** Day selector: '' = current bank day (live); a date = that day's original indicators (read only). The Kardex below switches to the same bank day.
 - **Dependencias (llamadas en su cuerpo):** `this.position`, `this.selectedBankDate.set`, `this.pastDay.set`, `this.service.getBankDay(target).subscribe`, `this.service.getBankDay`, `this.notifications.error`, `extractErrorMessage`, `this.draft.set`, `this.applyFilters`
 - **Efectos secundarios:** Actualiza estado (signals): `this.selectedBankDate.set`, `this.pastDay.set`, `this.draft.set`
@@ -245,7 +255,7 @@
 
 ##### `CashControlPageComponent.loadPosition`
 
-- **Firma:** `loadPosition(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L286) (L286–298)
+- **Firma:** `loadPosition(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L290) (L290–302)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.position`, `this.loadingPosition.set`, `this.positionFailed.set`, `this.service.getPosition().subscribe`, `this.service.getPosition`, `this.setPosition`
 - **Efectos secundarios:** Actualiza estado (signals): `this.loadingPosition.set`, `this.positionFailed.set`
@@ -253,7 +263,7 @@
 
 ##### `CashControlPageComponent.setPosition`
 
-- **Firma:** `setPosition(position: CashPosition): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L300) (L300–310)
+- **Firma:** `setPosition(position: CashPosition): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L304) (L304–314)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.position`, `this.position.set`, `this.loadingPosition.set`, `this.lastRefresh.set`, `new Date().toISOString`, `new Date`, `this.selectedBankDate`, `this.draft.set`, `this.applyFilters`
 - **Efectos secundarios:** Actualiza estado (signals): `this.position.set`, `this.loadingPosition.set`, `this.lastRefresh.set`, `this.draft.set`
@@ -261,7 +271,7 @@
 
 ##### `CashControlPageComponent.loadMovements`
 
-- **Firma:** `loadMovements(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L312) (L312–327)
+- **Firma:** `loadMovements(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L316) (L316–331)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.loadingMovements.set`, `this.movements`, `this.movementsFailed.set`, `this.service.getMovements`, `this.page`, `this.movements.set`, `this.totalMovements.set`, `this.pageTotals.set`
 - **Efectos secundarios:** Actualiza estado (signals): `this.loadingMovements.set`, `this.movementsFailed.set`, `this.movements.set`, `this.totalMovements.set`, `this.pageTotals.set`
@@ -269,7 +279,7 @@
 
 ##### `CashControlPageComponent.setDraft`
 
-- **Firma:** `setDraft(patch: Partial<CashMovementFilters>): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L329) (L329–334)
+- **Firma:** `setDraft(patch: Partial<CashMovementFilters>): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L333) (L333–338)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.update`
 - **Efectos secundarios:** Actualiza estado (signals): `this.draft.update`
@@ -277,7 +287,7 @@
 
 ##### `CashControlPageComponent.setSingleDate`
 
-- **Firma:** `setSingleDate(date: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L337) (L337–339)
+- **Firma:** `setSingleDate(date: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L341) (L341–343)
 - **Propósito / descripción:** "Fecha" shortcut: a single day = same from/to.
 - **Dependencias (llamadas en su cuerpo):** `this.setDraft`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -285,7 +295,7 @@
 
 ##### `CashControlPageComponent.applyFilters`
 
-- **Firma:** `applyFilters(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L341) (L341–345)
+- **Firma:** `applyFilters(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L345) (L345–349)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft`, `this.page.set`, `this.loadMovements`
 - **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
@@ -293,7 +303,7 @@
 
 ##### `CashControlPageComponent.clearFilters`
 
-- **Firma:** `clearFilters(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L347) (L347–350)
+- **Firma:** `clearFilters(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L351) (L351–354)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.draft.set`, `this.applyFilters`
 - **Efectos secundarios:** Actualiza estado (signals): `this.draft.set`
@@ -301,7 +311,7 @@
 
 ##### `CashControlPageComponent.onPageChange`
 
-- **Firma:** `onPageChange(page: number): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L352) (L352–355)
+- **Firma:** `onPageChange(page: number): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L356) (L356–359)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.loadMovements`
 - **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
@@ -309,14 +319,14 @@
 
 ##### `CashControlPageComponent.signedLabel`
 
-- **Firma:** `signedLabel(movement: CashMovement): string` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L357) (L357–362)
+- **Firma:** `signedLabel(movement: CashMovement): string` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L361) (L361–366)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** `cash-control-page.component.html` (plantilla)
 
 ##### `CashControlPageComponent.onDepositSaved`
 
-- **Firma:** `onDepositSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L364) (L364–367)
+- **Firma:** `onDepositSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L368) (L368–371)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.depositOpen.set`, `this.refresh`
 - **Efectos secundarios:** Actualiza estado (signals): `this.depositOpen.set`
@@ -324,7 +334,7 @@
 
 ##### `CashControlPageComponent.showBreakdown`
 
-- **Firma:** `showBreakdown(movement: CashMovement): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L369) (L369–383)
+- **Firma:** `showBreakdown(movement: CashMovement): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L373) (L373–387)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.loadingBreakdown.set`, `this.breakdown.set`, `this.service.getMovement(movement.id).subscribe`, `this.service.getMovement`, `this.notifications.error`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.loadingBreakdown.set`, `this.breakdown.set`
@@ -332,7 +342,7 @@
 
 ##### `CashControlPageComponent.voidMessage`
 
-- **Firma:** `voidMessage(): string` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L385) (L385–395)
+- **Firma:** `voidMessage(): string` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L389) (L389–399)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.voidTarget`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -340,7 +350,7 @@
 
 ##### `CashControlPageComponent.onMovementSaved`
 
-- **Firma:** `onMovementSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L397) (L397–400)
+- **Firma:** `onMovementSaved(): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L401) (L401–404)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.formMode.set`, `this.refresh`
 - **Efectos secundarios:** Actualiza estado (signals): `this.formMode.set`
@@ -348,7 +358,7 @@
 
 ##### `CashControlPageComponent.voidMovement`
 
-- **Firma:** `voidMovement(reason: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L402) (L402–420)
+- **Firma:** `voidMovement(reason: string): void` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L406) (L406–424)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.voidTarget`, `this.voiding.set`, `this.service.voidMovement(target.id, reason).subscribe`, `this.service.voidMovement`, `this.voidTarget.set`, `this.notifications.success`, `formatCurrency`, `this.refresh`, `this.notifications.error`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.voiding.set`, `this.voidTarget.set`
@@ -356,7 +366,7 @@
 
 ##### `CashControlPageComponent.initialTab`
 
-- **Firma:** `initialTab(): CashTab` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L422) (L422–425)
+- **Firma:** `initialTab(): CashTab` — [cash-control-page.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts#L426) (L426–431)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.route.snapshot.queryParamMap.get`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
@@ -379,7 +389,7 @@
 - **Tipo:** Utilidad · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
 - **Responsabilidad:** `HH:mm` of a server instant in America/Guatemala (never the browser's zone).
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [guayacan-cash.util.ts](dashboard-guayacan-cash-box.md#f-comercial-jhoel-app-src-app-features-dashboard-guayacan-cash-box-guayacan-cash-util-ts)
-- **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-control.util.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-spec-ts), [bank-day-card.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-card-bank-day-card-component-ts), [bank-day-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-history-bank-day-history-component-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-detail-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-detail-modal-cut-detail-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts), [warehouse-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts)
+- **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-control.util.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-spec-ts), [bank-day-card.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-card-bank-day-card-component-ts), [bank-day-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-bank-day-history-bank-day-history-component-ts), [cash-bank-deposit-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-bank-deposit-modal-cash-bank-deposit-modal-component-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts), [cash-counts-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts), [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [cash-movement-form-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts), [cut-control-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts), [cut-detail-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-detail-modal-cut-detail-modal-component-ts), [cut-finish-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-finish-modal-cut-finish-modal-component-ts), [cut-history.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-history-cut-history-component-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts) y 3 más
 
 **Interfaces, tipos y enums:**
 
@@ -564,61 +574,187 @@
 
 ### cash-count-modal.component.spec.ts
 
-- **Ruta:** [cash-count-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.spec.ts`, 101 líneas)
+- **Ruta:** [cash-count-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.spec.ts`, 214 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
 - **Responsabilidad:** Prueba unitaria: declara `custody` (sin comentario de documentación en el código).
-- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts)
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [cash-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
 - **Consumidores:** —
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-ts"></a>
 
 ### cash-count-modal.component.ts
 
-- **Ruta:** [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts`, 154 líneas)
+- **Ruta:** [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts`, 425 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
 - **Responsabilidad:** "Arqueo de Caja": count the bills and coins physically in the caja and compare them with the theoretical caja balance.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [decimal-input.directive.ts](shared-directives.md#f-comercial-jhoel-app-src-app-shared-directives-decimal-input-directive-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts)
 - **Paquetes externos:** `@angular/core`, `@angular/common`, `@angular/forms`
 - **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-count-modal-cash-count-modal-component-spec-ts), [cash-control-page.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) (plantilla)
 - **Plantilla:** [cash-count-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts)
-- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(quantityChange)="onQuantityChange($event)"`, `(ngModelChange)="countWarehouse.set($event)"`, `(ngModelChange)="warehouseCounted.set($event)"`, `(ngModelChange)="observations.set($event)"`, `(ngModelChange)="reason.set($event)"`, `(click)="save()"`
+- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(click)="resetDraft()"`, `(quantityChange)="onQuantityChange($event)"`, `(ngModelChange)="setCountWarehouse($event)"`, `(ngModelChange)="setWarehouseCounted($event)"`, `(ngModelChange)="setObservations($event)"`, `(ngModelChange)="reason.set($event)"`, `(click)="save()"`
 
-#### Clase `CashCountModalComponent` (L29–153)
+#### Clase `CashCountModalComponent` (L56–424)
 
 - **Decoradores:** `@Component({ selector: 'app-cash-count-modal', standalone: true, imports: [FormsModule, ButtonComponent, IconComponent, DecimalInputDirective, CashBreakdownTable`
 - **Herencia / contratos:** implements OnChanges
-- **Propósito:** "Arqueo de Caja": count the bills and coins physically in the caja and compare them with the theoretical caja balance. The live difference is a preview; on save the backend reads the theoretical balance under its lock, stores the photograph and returns the official result (cuadrado / faltante / sobrante). It never adjusts the caja nor writes a Kardex movement. Bodega cash is shown separately and is never part of the caja count; it may be counted optionally for the consolidated view. With `correctionOf` it is the audited correction of an earlier count (admin): same photograph (theoretical values of that moment), new quantities and a mandatory reason; the original stays as "reemplazado".
-- **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `confirmDialog = inject(ConfirmDialogService)`, `auth = inject(AuthService)`
-- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Input correctionOf = null`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<CashCountRecord>()`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `observations = signal('')`, `countWarehouse = signal(false)`, `warehouseCounted = signal<number \| null>(null)`, `reason = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `result = signal<CashCountRecord \| null>(null)`, `openedAt = signal(new Date().toISOString())`, `theoreticalSignal = signal(0)`, `warehouseSignal = signal(0)`, `username = computed(() => this.auth.currentUser()?.username ?`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `previewDifference = computed(() => round2(this.totalCounted() - this.t`, `previewStatus = computed<CuadreStatus>(() => { const diff = this.p`, `theoretical = computed(() => this.theoreticalSignal())`, `warehouseTheoretical = computed(() => this.warehouseSignal())`, `canSave = computed( () => !this.isSaving() && (!this.correct`
+- **Propósito:** "Arqueo de Caja": count the bills and coins physically in the caja and compare them with the theoretical caja balance. The live difference is a preview; on save the backend reads the theoretical balance under its lock, stores the photograph and returns the official result (cuadrado / faltante / sobrante). It never adjusts the caja nor writes a Kardex movement. Bodega cash is shown separately and is never part of the caja count; it may be counted optionally for the consolidated view. With `correctionOf` it is the audited correction of an earlier count (admin): same photograph (theoretical values of that moment), new quantities and a mandatory reason; the original stays as "reemplazado". Draft persistence (new counts only): every change is written at once to a local copy (`localStorage`, keyed by user and bank day) and autosaved to the backend (`PUT /cash-control/counts/draft`, debounced) 
+- **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `confirmDialog = inject(ConfirmDialogService)`, `auth = inject(AuthService)`, `destroyRef = inject(DestroyRef)`
+- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Input correctionOf = null`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<CashCountRecord>()`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `observations = signal('')`, `countWarehouse = signal(false)`, `warehouseCounted = signal<number \| null>(null)`, `reason = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `result = signal<CashCountRecord \| null>(null)`, `openedAt = signal(new Date().toISOString())`, `theoreticalSignal = signal(0)`, `warehouseSignal = signal(0)`, `draftStatus = signal<'idle' \| 'loading' \| 'saving' \| 'saved' \| '`, `draftSavedAt = signal<string \| null>(null)`, `draftError = signal<string \| null>(null)`, `draftRestored = signal(false)`, `username = computed(() => this.auth.currentUser()?.username ?`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `previewDifference = computed(() => round2(this.totalCounted() - this.t`, `previewStatus = computed<CuadreStatus>(() => { const diff = this.p`, `theoretical = computed(() => this.theoreticalSignal())`, `warehouseTheoretical = computed(() => this.warehouseSignal())`, `canSave = computed( () => !this.isSaving() && (!this.correct`, `hasInput = computed( () => Object.values(this.cashCounts()).s`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `ngOnChanges` | método public | 87–107 | — | `void` |
-| `onQuantityChange` | método public | 109–112 | `change: { denomination: number; quantity: number }` | `void` |
-| `save` | método public async | 114–152 | — | `Promise<void>` |
+| `ngOnChanges` | método public | 138–165 | — | `void` |
+| `onQuantityChange` | método public | 167–171 | `change: { denomination: number; quantity: number }` | `void` |
+| `setObservations` | método public | 173–176 | `value: string` | `void` |
+| `setCountWarehouse` | método public | 178–181 | `value: boolean` | `void` |
+| `setWarehouseCounted` | método public | 183–186 | `value: number \| null` | `void` |
+| `resetDraft` | método public async | 197–224 | — | `Promise<void>` |
+| `draftKey` | método private | 228–232 | — | `string \| null` |
+| `payload` | método private | 234–241 | — | `CashCountDraftPayload` |
+| `applyPayload` | método private | 243–251 | `payload: CashCountDraftPayload` | `void` |
+| `readLocalDraft` | método private | 253–264 | — | `{ payload: CashCountDraftPayload; savedAt: string } \| null` |
+| `writeLocalDraft` | método private | 266–276 | — | `void` |
+| `clearLocalDraft` | método private | 278–288 | — | `void` |
+| `restoreDraft` | método private | 291–328 | — | `void` |
+| `scheduleDraftSave` | método private | 330–343 | — | `void` |
+| `cancelPendingSave` | método private | 345–350 | — | `void` |
+| `pushDraft` | método private | 352–375 | — | `void` |
+| `save` | método public async | 377–423 | — | `Promise<void>` |
 
 ##### `CashCountModalComponent.ngOnChanges`
 
-- **Firma:** `ngOnChanges(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L87) (L87–107)
+- **Firma:** `ngOnChanges(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L138) (L138–165)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.theoreticalSignal.set`, `this.warehouseSignal.set`, `this.cashCounts.set`, `emptyCashCounts`, `Object.fromEntries`, `original.details.map`, `String`, `this.observations.set`, `this.countWarehouse.set`, `this.warehouseCounted.set`, `this.reason.set`, `this.errorMessage.set`, `this.result.set`, `this.openedAt.set`, `new Date().toISOString`, `new Date`, `crypto.randomUUID`
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.theoreticalSignal.set`, `this.warehouseSignal.set`, `this.cashCounts.set`, `emptyCashCounts`, `Object.fromEntries`, `original.details.map`, `String`, `this.observations.set`, `this.countWarehouse.set`, `this.warehouseCounted.set`, `this.reason.set`, `this.errorMessage.set`, `this.result.set`, `this.openedAt.set`, `new Date().toISOString`, `new Date`, `crypto.randomUUID`…
 - **Efectos secundarios:** Actualiza estado (signals): `this.theoreticalSignal.set`, `this.warehouseSignal.set`, `this.cashCounts.set`, `this.observations.set`, `this.countWarehouse.set`, `this.warehouseCounted.set`
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
 ##### `CashCountModalComponent.onQuantityChange`
 
-- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L109) (L109–112)
+- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L167) (L167–171)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `Math.max`, `Math.trunc`, `Number`, `this.cashCounts.update`, `String`
+- **Dependencias (llamadas en su cuerpo):** `Math.max`, `Math.trunc`, `Number`, `this.cashCounts.update`, `String`, `this.scheduleDraftSave`
 - **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.update`
 - **Consumidores:** `cash-count-modal.component.html` (plantilla)
 
+##### `CashCountModalComponent.setObservations`
+
+- **Firma:** `setObservations(value: string): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L173) (L173–176)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.observations.set`, `this.scheduleDraftSave`
+- **Efectos secundarios:** Actualiza estado (signals): `this.observations.set`
+- **Consumidores:** `cash-count-modal.component.html` (plantilla)
+
+##### `CashCountModalComponent.setCountWarehouse`
+
+- **Firma:** `setCountWarehouse(value: boolean): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L178) (L178–181)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.countWarehouse.set`, `this.scheduleDraftSave`
+- **Efectos secundarios:** Actualiza estado (signals): `this.countWarehouse.set`
+- **Consumidores:** `cash-count-modal.component.html` (plantilla)
+
+##### `CashCountModalComponent.setWarehouseCounted`
+
+- **Firma:** `setWarehouseCounted(value: number \| null): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L183) (L183–186)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.warehouseCounted.set`, `this.scheduleDraftSave`
+- **Efectos secundarios:** Actualiza estado (signals): `this.warehouseCounted.set`
+- **Consumidores:** `cash-count-modal.component.html` (plantilla)
+
+##### `CashCountModalComponent.resetDraft`
+
+- **Firma:** `resetDraft(): Promise<void>` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L197) (L197–224)
+- **Propósito / descripción:** "Reiniciar arqueo": explicit, confirmed reset — discards the draft (server and local).
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.confirmDialog.confirm`, `this.cancelPendingSave`, `this.applyPayload`, `this.clearLocalDraft`, `this.draftRestored.set`, `this.service.discardCountDraft().subscribe`, `this.service.discardCountDraft`, `this.draftStatus.set`, `this.draftSavedAt.set`, `this.draftError.set`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.draftRestored.set`, `this.draftStatus.set`, `this.draftSavedAt.set`, `this.draftError.set`
+- **Consumidores:** `cash-count-modal.component.html` (plantilla)
+
+##### `CashCountModalComponent.draftKey`
+
+- **Firma:** `draftKey(): string \| null` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L228) (L228–232)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.auth.currentUser`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.payload`
+
+- **Firma:** `payload(): CashCountDraftPayload` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L234) (L234–241)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `cashCountsToDetails`, `this.cashCounts`, `this.observations().trim`, `this.observations`, `this.countWarehouse`, `this.warehouseCounted`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.applyPayload`
+
+- **Firma:** `applyPayload(payload: CashCountDraftPayload): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L243) (L243–251)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.cashCounts.set`, `emptyCashCounts`, `Object.fromEntries`, `payload.details.map`, `String`, `this.observations.set`, `this.countWarehouse.set`, `this.warehouseCounted.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.set`, `this.observations.set`, `this.countWarehouse.set`, `this.warehouseCounted.set`
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.readLocalDraft`
+
+- **Firma:** `readLocalDraft(): { payload: CashCountDraftPayload; savedAt: string } \| null` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L253) (L253–264)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.draftKey`, `localStorage.getItem`, `JSON.parse`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.writeLocalDraft`
+
+- **Firma:** `writeLocalDraft(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L266) (L266–276)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.draftKey`, `localStorage.setItem`, `JSON.stringify`, `this.payload`, `new Date().toISOString`, `new Date`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.clearLocalDraft`
+
+- **Firma:** `clearLocalDraft(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L278) (L278–288)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.draftKey`, `localStorage.removeItem`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.restoreDraft`
+
+- **Firma:** `restoreDraft(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L291) (L291–328)
+- **Propósito / descripción:** On open: show the local copy at once, then reconcile with the server draft (newest wins).
+- **Dependencias (llamadas en su cuerpo):** `this.readLocalDraft`, `this.applyPayload`, `this.draftRestored.set`, `this.draftStatus.set`, `this.service.getCountDraft().subscribe`, `this.service.getCountDraft`, `new Date`, `this.writeLocalDraft`, `this.draftSavedAt.set`, `this.pushDraft`, `this.draftError.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.draftRestored.set`, `this.draftStatus.set`, `this.draftSavedAt.set`, `this.draftError.set`
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.scheduleDraftSave`
+
+- **Firma:** `scheduleDraftSave(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L330) (L330–343)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.writeLocalDraft`, `this.draftStatus.set`, `clearTimeout`, `setTimeout`, `this.pushDraft`
+- **Efectos secundarios:** Actualiza estado (signals): `this.draftStatus.set`
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.cancelPendingSave`
+
+- **Firma:** `cancelPendingSave(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L345) (L345–350)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `clearTimeout`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** (mismo archivo)
+
+##### `CashCountModalComponent.pushDraft`
+
+- **Firma:** `pushDraft(): void` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L352) (L352–375)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.scheduleDraftSave`, `this.draftStatus.set`, `this.service.saveCountDraft(this.payload()).subscribe`, `this.service.saveCountDraft`, `this.payload`, `this.draftSavedAt.set`, `this.draftError.set`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.draftStatus.set`, `this.draftSavedAt.set`, `this.draftError.set`
+- **Consumidores:** (mismo archivo)
+
 ##### `CashCountModalComponent.save`
 
-- **Firma:** `save(): Promise<void>` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L114) (L114–152)
+- **Firma:** `save(): Promise<void>` — [cash-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts#L377) (L377–423)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.previewDifference`, `this.confirmDialog.confirm`, `formatCurrency`, `this.totalCounted`, `this.theoretical`, `cashCountsToDetails`, `this.cashCounts`, `this.observations().trim`, `this.observations`, `this.countWarehouse`, `this.warehouseCounted`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.correctCount`, `this.reason().trim`, `this.reason`, `this.service.registerCount`…
-- **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`, `this.result.set`; Emite eventos: `this.saved.emit`
+- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.previewDifference`, `this.confirmDialog.confirm`, `formatCurrency`, `this.totalCounted`, `this.theoretical`, `this.cancelPendingSave`, `cashCountsToDetails`, `this.cashCounts`, `this.observations().trim`, `this.observations`, `this.countWarehouse`, `this.warehouseCounted`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.correctCount`, `this.reason().trim`, `this.reason`…
+- **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`, `this.result.set`, `this.draftStatus.set`, `this.draftSavedAt.set`; Emite eventos: `this.saved.emit`
 - **Consumidores:** `cash-count-modal.component.html` (plantilla)
 
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-counts-panel-cash-counts-panel-component-ts"></a>
@@ -690,6 +826,75 @@
 - **Efectos secundarios:** Actualiza estado (signals): `this.loading.set`, `this.failed.set`, `this.counts.set`, `this.total.set`
 - **Consumidores:** `cash-counts-panel.component.html` (plantilla), (mismo archivo)
 
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts"></a>
+
+### cash-inventory-panel.component.ts
+
+- **Ruta:** [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts`, 91 líneas)
+- **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
+- **Responsabilidad:** "Inventario de efectivo": bills and coins available in CAJA and in BODEGA, as the backend derives them (latest physical count of each location + later movements with denominations).
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts)
+- **Paquetes externos:** `@angular/core`
+- **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-control-page.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) (plantilla)
+- **Plantilla:** [cash-inventory-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts)
+- **Eventos enlazados en la plantilla:** `(click)="countOpen.set(true)"`, `(closed)="countOpen.set(false)"`, `(saved)="onCountSaved()"`
+
+#### Clase `CashInventoryPanelComponent` (L19–90)
+
+- **Decoradores:** `@Component({ selector: 'app-cash-inventory-panel', standalone: true, imports: [ButtonComponent, IconComponent, WarehouseCountModalComponent], templateUrl: './cas`
+- **Herencia / contratos:** implements OnChanges
+- **Propósito:** "Inventario de efectivo": bills and coins available in CAJA and in BODEGA, as the backend derives them (latest physical count of each location + later movements with denominations). Shows each location's anchor (which count it starts from), the total known by denomination, the cash that moved without breakdown and the official balance. Administrators register the Bodega per-denomination count here. Nothing is computed in this component; it reloads on every cash change (`onCashChanged`) and when `refreshKey` moves.
+- **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`
+- **Datos / estado que administra:** `@Input refreshKey = 0`, `@Input isAdmin = false`, `@Output changed = new EventEmitter<void>()`, `inventory = signal<CashInventory \| null>(null)`, `counts = signal<WarehouseCashCount[]>([])`, `failed = signal(false)`, `countOpen = signal(false)`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `ngOnChanges` | método public | 47–49 | — | `void` |
+| `load` | método public | 51–63 | — | `void` |
+| `anchorLabel` | método public | 66–79 | `inv: LocationInventory` | `string` |
+| `denominationLabel` | método public | 81–83 | `value: number` | `string` |
+| `onCountSaved` | método public | 85–89 | — | `void` |
+
+##### `CashInventoryPanelComponent.ngOnChanges`
+
+- **Firma:** `ngOnChanges(): void` — [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts#L47) (L47–49)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.load`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CashInventoryPanelComponent.load`
+
+- **Firma:** `load(): void` — [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts#L51) (L51–63)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.service.getInventory().subscribe`, `this.service.getInventory`, `this.inventory.set`, `this.failed.set`, `this.service.getWarehouseCounts(1, 5).subscribe`, `this.service.getWarehouseCounts`, `this.counts.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.inventory.set`, `this.failed.set`, `this.counts.set`
+- **Consumidores:** (mismo archivo)
+
+##### `CashInventoryPanelComponent.anchorLabel`
+
+- **Firma:** `anchorLabel(inv: LocationInventory): string` — [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts#L66) (L66–79)
+- **Propósito / descripción:** "Arqueo #12 · 16/11/2026 18:05 · ana" — where the inventory of a location starts.
+- **Dependencias (llamadas en su cuerpo):** `CASH_CUT_NAME[(inv.anchorNumber as 1 \| 2) ?? 1].toLowerCase`, `this.formatDateTime`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `cash-inventory-panel.component.html` (plantilla)
+
+##### `CashInventoryPanelComponent.denominationLabel`
+
+- **Firma:** `denominationLabel(value: number): string` — [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts#L81) (L81–83)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `value.toLocaleString`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `cash-inventory-panel.component.html` (plantilla)
+
+##### `CashInventoryPanelComponent.onCountSaved`
+
+- **Firma:** `onCountSaved(): void` — [cash-inventory-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts#L85) (L85–89)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.countOpen.set`, `this.load`, `this.changed.emit`
+- **Efectos secundarios:** Actualiza estado (signals): `this.countOpen.set`; Emite eventos: `this.changed.emit`
+- **Consumidores:** `cash-inventory-panel.component.html` (plantilla)
+
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-movement-form-modal-cash-movement-form-modal-component-ts"></a>
 
 ### cash-movement-form-modal.component.ts
@@ -731,6 +936,103 @@
 - **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.amount`, `this.confirmDialog.confirm`, `this.typeLabel[this.mode].toLowerCase`, `this.isOutflow`, `formatCurrency`, `this.previewBalance`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerMovement`, `this.adjustmentDirection`, `this.description().trim`, `this.description`, `this.reason().trim`, `this.reason`, `this.notifications.success`, `this.saved.emit`, `extractErrorMessage`
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`; Emite eventos: `this.saved.emit`
 - **Consumidores:** `cash-movement-form-modal.component.html` (plantilla)
+
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-spec-ts"></a>
+
+### custody-transfers-panel.component.spec.ts
+
+- **Ruta:** [custody-transfers-panel.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.spec.ts`, 33 líneas)
+- **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
+- **Responsabilidad:** Prueba unitaria (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [custody-transfers-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts)
+- **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
+- **Consumidores:** —
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-ts"></a>
+
+### custody-transfers-panel.component.ts
+
+- **Ruta:** [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts`, 115 líneas)
+- **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
+- **Responsabilidad:** "Historial de traslados": every caja ↔ Bodega movement (retiro de caja → Bodega, envío de Bodega → caja, depósito de Bodega → banco) in one list, with filters by type, user, dates and status, and a detail panel with the exact bills and coins of each movement.
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts)
+- **Paquetes externos:** `@angular/core`, `@angular/forms`
+- **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [custody-transfers-panel.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-custody-transfers-panel-custody-transfers-panel-component-spec-ts), [cash-control-page.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) (plantilla)
+- **Plantilla:** [custody-transfers-panel.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts), [report-pagination.component.ts](dashboard-reports.md#f-comercial-jhoel-app-src-app-features-dashboard-reports-components-report-pagination-report-pagination-component-ts)
+- **Eventos enlazados en la plantilla:** `(ngModelChange)="kind.set($event)"`, `(ngModelChange)="userId.set($event)"`, `(ngModelChange)="dateFrom.set($event)"`, `(ngModelChange)="dateTo.set($event)"`, `(ngModelChange)="status.set($event)"`, `(click)="applyFilters()"`, `(click)="clearFilters()"`, `(click)="selected.set(t)"`, `(pageChange)="onPageChange($event)"`, `(click)="selected.set(null)"`
+
+#### Clase `CustodyTransfersPanelComponent` (L25–114)
+
+- **Decoradores:** `@Component({ selector: 'app-custody-transfers-panel', standalone: true, imports: [FormsModule, ButtonComponent, IconComponent, ReportPaginationComponent], templa`
+- **Herencia / contratos:** implements OnChanges
+- **Propósito:** "Historial de traslados": every caja ↔ Bodega movement (retiro de caja → Bodega, envío de Bodega → caja, depósito de Bodega → banco) in one list, with filters by type, user, dates and status, and a detail panel with the exact bills and coins of each movement. Read-only: movements are never edited or deleted; corrections are audited voids in the Bodega panel.
+- **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `cashService = inject(CashControlService)`
+- **Datos / estado que administra:** `@Input refreshKey = 0`, `kind = signal<CustodyTransferKind \| ''>('')`, `userId = signal('')`, `dateFrom = signal('')`, `dateTo = signal('')`, `status = signal<'APLICADO' \| 'ANULADO' \| ''>('')`, `page = signal(1)`, `items = signal<CustodyTransfer[]>([])`, `total = signal(0)`, `failed = signal(false)`, `users = signal<{ id: string; username: string }[]>([])`, `selected = signal<CustodyTransfer \| null>(null)`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `ngOnChanges` | método public | 63–65 | — | `void` |
+| `applyFilters` | método public | 67–70 | — | `void` |
+| `clearFilters` | método public | 72–79 | — | `void` |
+| `onPageChange` | método public | 81–84 | `page: number` | `void` |
+| `load` | método public | 86–104 | — | `void` |
+| `denominationLabel` | método public | 106–108 | `value: number` | `string` |
+| `route` | método public | 110–113 | `t: CustodyTransfer` | `string` |
+
+##### `CustodyTransfersPanelComponent.ngOnChanges`
+
+- **Firma:** `ngOnChanges(): void` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L63) (L63–65)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.load`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `CustodyTransfersPanelComponent.applyFilters`
+
+- **Firma:** `applyFilters(): void` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L67) (L67–70)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
+- **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
+- **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), `custody-transfers-panel.component.html` (plantilla), (mismo archivo)
+
+##### `CustodyTransfersPanelComponent.clearFilters`
+
+- **Firma:** `clearFilters(): void` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L72) (L72–79)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.kind.set`, `this.userId.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.status.set`, `this.applyFilters`
+- **Efectos secundarios:** Actualiza estado (signals): `this.kind.set`, `this.userId.set`, `this.dateFrom.set`, `this.dateTo.set`, `this.status.set`
+- **Consumidores:** `custody-transfers-panel.component.html` (plantilla)
+
+##### `CustodyTransfersPanelComponent.onPageChange`
+
+- **Firma:** `onPageChange(page: number): void` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L81) (L81–84)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.page.set`, `this.load`
+- **Efectos secundarios:** Actualiza estado (signals): `this.page.set`
+- **Consumidores:** `custody-transfers-panel.component.html` (plantilla)
+
+##### `CustodyTransfersPanelComponent.load`
+
+- **Firma:** `load(): void` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L86) (L86–104)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.kind`, `this.userId`, `this.dateFrom`, `this.dateTo`, `this.status`, `this.page`, `this.service.getCustodyTransfers(filters).subscribe`, `this.service.getCustodyTransfers`, `this.items.set`, `this.total.set`, `this.failed.set`
+- **Efectos secundarios:** Actualiza estado (signals): `this.items.set`, `this.total.set`, `this.failed.set`
+- **Consumidores:** (mismo archivo)
+
+##### `CustodyTransfersPanelComponent.denominationLabel`
+
+- **Firma:** `denominationLabel(value: number): string` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L106) (L106–108)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `value.toLocaleString`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `custody-transfers-panel.component.html` (plantilla)
+
+##### `CustodyTransfersPanelComponent.route`
+
+- **Firma:** `route(t: CustodyTransfer): string` — [custody-transfers-panel.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts#L110) (L110–113)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `name`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** `custody-transfers-panel.component.html` (plantilla)
 
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cut-control-panel-cut-control-panel-component-ts"></a>
 
@@ -1135,6 +1437,76 @@
 - **Efectos secundarios:** Actualiza estado (signals): `this.reason.set`
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts"></a>
+
+### warehouse-count-modal.component.spec.ts
+
+- **Ruta:** [warehouse-count-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.spec.ts`, 60 líneas)
+- **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
+- **Responsabilidad:** Prueba unitaria: declara `bodega` (sin comentario de documentación en el código).
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [warehouse-count-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts)
+- **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
+- **Consumidores:** —
+#### Función `bodega` (L11–15)
+
+- **Tipo:** función local del archivo
+- **Firma:** `bodega(hasAnchor: boolean, balance: number, lines?: Array<[number, number]>): LocationInventory` — [warehouse-count-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.spec.ts#L11)
+- **Propósito / descripción:** Sin JSDoc en el código.
+- **Dependencias:** `lines.map`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
+<a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-ts"></a>
+
+### warehouse-count-modal.component.ts
+
+- **Ruta:** [warehouse-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts`, 109 líneas)
+- **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
+- **Responsabilidad:** "Conteo de Bodega por denominación" (administrators): the audited reference of the Bodega inventory.
+- **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts)
+- **Paquetes externos:** `@angular/core`, `@angular/common`, `@angular/forms`
+- **Consumidores:** [cash-inventory-panel.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts), [warehouse-count-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-count-modal-warehouse-count-modal-component-spec-ts), [cash-inventory-panel.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-cash-inventory-panel-cash-inventory-panel-component-ts) (plantilla)
+- **Plantilla:** [warehouse-count-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts)
+- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(quantityChange)="onQuantityChange($event)"`, `(ngModelChange)="observations.set($event)"`, `(click)="save()"`
+
+#### Clase `WarehouseCountModalComponent` (L22–108)
+
+- **Decoradores:** `@Component({ selector: 'app-warehouse-count-modal', standalone: true, imports: [FormsModule, ButtonComponent, IconComponent, CashBreakdownTableComponent], templa`
+- **Herencia / contratos:** implements OnChanges
+- **Propósito:** "Conteo de Bodega por denominación" (administrators): the audited reference of the Bodega inventory. The bills and coins counted must add up to the Bodega balance (the backend re-checks it under the Bodega lock); it never moves cash. Pre-filled with the current inventory when Bodega already has one. One `clientRequestId` per opening (idempotent).
+- **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `confirmDialog = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`
+- **Datos / estado que administra:** `@Input open = false`, `@Input inventory = null`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<WarehouseCashCount>()`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `observations = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `balance = computed(() => this.inventory?.balance ?? 0)`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `difference = computed(() => round2(this.totalCounted() - this.b`, `status = computed<CuadreStatus>(() => (this.difference() ==`, `canSave = computed(() => !this.isSaving() && this.difference`
+
+| Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
+|---|---|---|---|---|
+| `ngOnChanges` | método public | 55–67 | — | `void` |
+| `onQuantityChange` | método public | 69–72 | `change: { denomination: number; quantity: number }` | `void` |
+| `save` | método public async | 74–107 | — | `Promise<void>` |
+
+##### `WarehouseCountModalComponent.ngOnChanges`
+
+- **Firma:** `ngOnChanges(): void` — [warehouse-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts#L55) (L55–67)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.cashCounts.set`, `emptyCashCounts`, `Object.fromEntries`, `known.filter((l) => l.quantity > 0).map`, `known.filter`, `String`, `this.observations.set`, `this.errorMessage.set`, `crypto.randomUUID`
+- **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.set`, `this.observations.set`, `this.errorMessage.set`
+- **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
+
+##### `WarehouseCountModalComponent.onQuantityChange`
+
+- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [warehouse-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts#L69) (L69–72)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `Math.max`, `Math.trunc`, `Number`, `this.cashCounts.update`, `String`
+- **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.update`
+- **Consumidores:** `warehouse-count-modal.component.html` (plantilla)
+
+##### `WarehouseCountModalComponent.save`
+
+- **Firma:** `save(): Promise<void>` — [warehouse-count-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts#L74) (L74–107)
+- **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
+- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.confirmDialog.confirm`, `formatCurrency`, `this.totalCounted`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerWarehouseCount`, `cashCountsToDetails`, `this.cashCounts`, `this.observations().trim`, `this.observations`, `this.notifications.success`, `this.saved.emit`, `extractErrorMessage`
+- **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`; Emite eventos: `this.saved.emit`
+- **Consumidores:** `warehouse-count-modal.component.html` (plantilla)
+
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-panel-warehouse-panel-component-ts"></a>
 
 ### warehouse-panel.component.ts
@@ -1253,51 +1625,60 @@
 
 ### warehouse-transfer-modal.component.spec.ts
 
-- **Ruta:** [warehouse-transfer-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.spec.ts`, 108 líneas)
+- **Ruta:** [warehouse-transfer-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.spec.ts`, 140 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
-- **Responsabilidad:** Prueba unitaria: declara `custody` (sin comentario de documentación en el código).
+- **Responsabilidad:** Inventory as the backend returns it: 12 denominations, only those given non-zero.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [warehouse-transfer-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
 - **Consumidores:** —
+#### Función `inventoryOf` (L25–34)
+
+- **Tipo:** función local del archivo
+- **Firma:** `inventoryOf(location: 'CAJA' \| 'BODEGA', quantities: Record<number, number>, hasAnchor?): LocationInventory` — [warehouse-transfer-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.spec.ts#L25)
+- **Propósito / descripción:** Inventory as the backend returns it: 12 denominations, only those given non-zero.
+- **Dependencias:** `denoms.map`, `lines.reduce`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-ts"></a>
 
 ### warehouse-transfer-modal.component.ts
 
-- **Ruta:** [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts`, 151 líneas)
+- **Ruta:** [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts`, 170 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
-- **Responsabilidad:** "Entrega de Efectivo a Bodega": an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense.
+- **Responsabilidad:** "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [decimal-input.directive.ts](shared-directives.md#f-comercial-jhoel-app-src-app-shared-directives-decimal-input-directive-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts)
 - **Paquetes externos:** `@angular/core`, `@angular/common`, `@angular/forms`
 - **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [warehouse-transfer-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-transfer-modal-warehouse-transfer-modal-component-spec-ts), [cash-control-page.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) (plantilla)
 - **Plantilla:** [warehouse-transfer-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts)
-- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(ngModelChange)="amount.set($event)"`, `(ngModelChange)="voucher.set($event)"`, `(ngModelChange)="deliveredBy.set($event)"`, `(ngModelChange)="receivedBy.set($event)"`, `(ngModelChange)="observations.set($event)"`, `(ngModelChange)="withBreakdown.set($event)"`, `(click)="useCountedAsAmount()"`, `(quantityChange)="onQuantityChange($event)"`, `(click)="save()"`
+- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(ngModelChange)="amount.set($event)"`, `(ngModelChange)="voucher.set($event)"`, `(ngModelChange)="deliveredBy.set($event)"`, `(ngModelChange)="receivedBy.set($event)"`, `(ngModelChange)="observations.set($event)"`, `(click)="useCountedAsAmount()"`, `(quantityChange)="onQuantityChange($event)"`, `(click)="save()"`
 
-#### Clase `WarehouseTransferModalComponent` (L26–150)
+#### Clase `WarehouseTransferModalComponent` (L32–169)
 
 - **Decoradores:** `@Component({ selector: 'app-warehouse-transfer-modal', standalone: true, imports: [FormsModule, ButtonComponent, IconComponent, DecimalInputDirective, CashBreakd`
 - **Herencia / contratos:** implements OnChanges
-- **Propósito:** "Entrega de Efectivo a Bodega": an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense. The breakdown is the default; registering only a total is allowed to administrators (business policy) and is flagged as such. The "después" figures are a preview: the backend checks the caja balance under its lock and applies both Kardex in one transaction. One `clientRequestId` per opening makes a double click harmless.
+- **Propósito:** "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): an internal transfer — caja goes down, Bodega goes up by the same amount, total custody unchanged; never an expense. The breakdown is mandatory (per-denomination inventory, migration 1760007800000) and each row shows how many bills/coins the caja has; the backend re-checks balance and denominations under its lock and applies both Kardex in one transaction. One `clientRequestId` per opening makes a double click harmless.
 - **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `confirmDialog = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`, `auth = inject(AuthService)`
-- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Input canSkipBreakdown = false`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<{ transfer: WarehouseTransfer; cu`, `amount = signal<number \| null>(null)`, `withBreakdown = signal(true)`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `deliveredBy = signal('')`, `receivedBy = signal('')`, `voucher = signal('')`, `observations = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `breakdownStatus = computed<CuadreStatus>(() => { const total = this.`, `cashBalance = computed(() => this.custody?.cashBalance ?? 0)`, `cashAfter = computed(() => round2(this.cashBalance() - (this.a`, `warehouseAfter = computed(() => round2((this.custody?.warehouseBala`, `insufficientCash = computed(() => (this.amount() ?? 0) > this.cashBal`, `dayOpen = computed(() => !!this.custody?.currentDay?.isOpen)`, `peopleValid = computed(() => this.deliveredBy().trim().length >=`, `canSave = computed( () => !this.isSaving() && this.dayOpen()`
+- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<{ transfer: WarehouseTransfer; cu`, `amount = signal<number \| null>(null)`, `inventory = signal<LocationInventory \| null>(null)`, `available = computed(() => availableByDenomination(this.invent`, `overStock = computed(() => { const available = this.available(`, `needsCount = computed(() => !!this.inventory() && !this.invento`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `deliveredBy = signal('')`, `receivedBy = signal('')`, `voucher = signal('')`, `observations = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `breakdownStatus = computed<CuadreStatus>(() => { const total = this.`, `cashBalance = computed(() => this.custody?.cashBalance ?? 0)`, `cashAfter = computed(() => round2(this.cashBalance() - (this.a`, `warehouseAfter = computed(() => round2((this.custody?.warehouseBala`, `insufficientCash = computed(() => (this.amount() ?? 0) > this.cashBal`, `dayOpen = computed(() => !!this.custody?.currentDay?.isOpen)`, `peopleValid = computed(() => this.deliveredBy().trim().length >=`, `canSave = computed( () => !this.isSaving() && this.dayOpen()`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `ngOnChanges` | método public | 85–97 | — | `void` |
-| `onQuantityChange` | método public | 99–101 | `change: { denomination: number; quantity: number }` | `void` |
-| `useCountedAsAmount` | método public | 103–105 | — | `void` |
-| `save` | método public async | 107–149 | — | `Promise<void>` |
+| `ngOnChanges` | método public | 100–116 | — | `void` |
+| `onQuantityChange` | método public | 118–120 | `change: { denomination: number; quantity: number }` | `void` |
+| `useCountedAsAmount` | método public | 122–124 | — | `void` |
+| `save` | método public async | 126–168 | — | `Promise<void>` |
 
 ##### `WarehouseTransferModalComponent.ngOnChanges`
 
-- **Firma:** `ngOnChanges(): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L85) (L85–97)
+- **Firma:** `ngOnChanges(): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L100) (L100–116)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.amount.set`, `this.withBreakdown.set`, `this.cashCounts.set`, `emptyCashCounts`, `this.deliveredBy.set`, `this.auth.currentUser`, `this.receivedBy.set`, `this.voucher.set`, `this.observations.set`, `this.errorMessage.set`, `crypto.randomUUID`
-- **Efectos secundarios:** Actualiza estado (signals): `this.amount.set`, `this.withBreakdown.set`, `this.cashCounts.set`, `this.deliveredBy.set`, `this.receivedBy.set`, `this.voucher.set`
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.amount.set`, `this.cashCounts.set`, `emptyCashCounts`, `this.inventory.set`, `this.service.getInventory().subscribe`, `this.service.getInventory`, `this.deliveredBy.set`, `this.auth.currentUser`, `this.receivedBy.set`, `this.voucher.set`, `this.observations.set`, `this.errorMessage.set`, `crypto.randomUUID`
+- **Efectos secundarios:** Actualiza estado (signals): `this.amount.set`, `this.cashCounts.set`, `this.inventory.set`, `this.deliveredBy.set`, `this.receivedBy.set`, `this.voucher.set`
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
 ##### `WarehouseTransferModalComponent.onQuantityChange`
 
-- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L99) (L99–101)
+- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L118) (L118–120)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.cashCounts.update`, `String`
 - **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.update`
@@ -1305,7 +1686,7 @@
 
 ##### `WarehouseTransferModalComponent.useCountedAsAmount`
 
-- **Firma:** `useCountedAsAmount(): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L103) (L103–105)
+- **Firma:** `useCountedAsAmount(): void` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L122) (L122–124)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.amount.set`, `this.totalCounted`
 - **Efectos secundarios:** Actualiza estado (signals): `this.amount.set`
@@ -1313,9 +1694,9 @@
 
 ##### `WarehouseTransferModalComponent.save`
 
-- **Firma:** `save(): Promise<void>` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L107) (L107–149)
+- **Firma:** `save(): Promise<void>` — [warehouse-transfer-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts#L126) (L126–168)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.amount`, `this.confirmDialog.confirm`, `formatCurrency`, `this.deliveredBy().trim`, `this.deliveredBy`, `this.receivedBy().trim`, `this.receivedBy`, `this.withBreakdown`, `this.cashAfter`, `this.warehouseAfter`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerTransfer`, `cashCountsToDetails`, `this.cashCounts`, `this.voucher().trim`, `this.voucher`…
+- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.amount`, `this.confirmDialog.confirm`, `formatCurrency`, `this.deliveredBy().trim`, `this.deliveredBy`, `this.receivedBy().trim`, `this.receivedBy`, `this.cashAfter`, `this.warehouseAfter`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerTransfer`, `cashCountsToDetails`, `this.cashCounts`, `this.voucher().trim`, `this.voucher`, `this.observations().trim`…
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`; Emite eventos: `this.saved.emit`
 - **Consumidores:** `warehouse-transfer-modal.component.html` (plantilla)
 
@@ -1323,51 +1704,60 @@
 
 ### warehouse-withdrawal-modal.component.spec.ts
 
-- **Ruta:** [warehouse-withdrawal-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.spec.ts`, 102 líneas)
+- **Ruta:** [warehouse-withdrawal-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.spec.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.spec.ts`, 129 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
-- **Responsabilidad:** Prueba unitaria: declara `custody` (sin comentario de documentación en el código).
+- **Responsabilidad:** Inventory as the backend returns it: 12 denominations, only those given non-zero.
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [warehouse-withdrawal-modal.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
 - **Consumidores:** —
+#### Función `inventoryOf` (L26–35)
+
+- **Tipo:** función local del archivo
+- **Firma:** `inventoryOf(location: 'CAJA' \| 'BODEGA', quantities: Record<number, number>, hasAnchor?): LocationInventory` — [warehouse-withdrawal-modal.component.spec.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.spec.ts#L26)
+- **Propósito / descripción:** Inventory as the backend returns it: 12 denominations, only those given non-zero.
+- **Dependencias:** `denoms.map`, `lines.reduce`
+- **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
+- **Consumidores:** uso interno del archivo
+
 <a id="f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-ts"></a>
 
 ### warehouse-withdrawal-modal.component.ts
 
-- **Ruta:** [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts`, 172 líneas)
+- **Ruta:** [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts) (`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts`, 188 líneas)
 - **Tipo:** Componente Angular · **Capa:** Feature (pantalla) · **Módulo:** Frontend `dashboard-cash-control`
 - **Responsabilidad:** "Retiro de Bodega": cash leaves Bodega and either goes back to the caja (internal transfer, total custody unchanged) or is deposited into a registered bank account (Bodega down, bank up).
 - **Depende de (archivos del proyecto):** [index.ts](core-models.md#f-comercial-jhoel-app-src-app-core-models-index-ts), [bank-deposit-draft.store.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-bank-deposit-draft-store-ts), [auth.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-auth-service-ts), [cash-control.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-service-ts), [cash-custody.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-custody-service-ts), [confirm-dialog.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-confirm-dialog-service-ts), [notification.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-notification-service-ts), [extract-error-message.ts](core-utils.md#f-comercial-jhoel-app-src-app-core-utils-extract-error-message-ts), [decimal-input.directive.ts](shared-directives.md#f-comercial-jhoel-app-src-app-shared-directives-decimal-input-directive-ts), [index.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-index-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [cash-control.util.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-util-ts)
 - **Paquetes externos:** `@angular/core`, `@angular/common`, `@angular/forms`
 - **Consumidores:** [cash-control-page.component.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts), [warehouse-withdrawal-modal.component.spec.ts](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-components-warehouse-withdrawal-modal-warehouse-withdrawal-modal-component-spec-ts), [cash-control-page.component.ts (plantilla)](dashboard-cash-control.md#f-comercial-jhoel-app-src-app-features-dashboard-cash-control-cash-control-page-component-ts) (plantilla)
 - **Plantilla:** [warehouse-withdrawal-modal.component.html](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.html) · **Usa componentes:** [icon.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-icon-icon-component-ts), [cash-breakdown-table.component.ts](dashboard-transaccionar.md#f-comercial-jhoel-app-src-app-features-dashboard-transaccionar-components-cash-breakdown-table-cash-breakdown-table-component-ts), [button.component.ts](shared-ui.md#f-comercial-jhoel-app-src-app-shared-ui-button-button-component-ts)
-- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(click)="destination.set('CAJA')"`, `(click)="destination.set('BANCO')"`, `(ngModelChange)="bankId.set($event)"`, `(ngModelChange)="amount.set($event)"`, `(ngModelChange)="voucher.set($event)"`, `(ngModelChange)="deliveredBy.set($event)"`, `(ngModelChange)="receivedBy.set($event)"`, `(ngModelChange)="observations.set($event)"`, `(ngModelChange)="withBreakdown.set($event)"`, `(click)="useCountedAsAmount()"`, `(quantityChange)="onQuantityChange($event)"`, `(click)="save()"`
+- **Eventos enlazados en la plantilla:** `(click)="closed.emit()"`, `(click)="destination.set('CAJA')"`, `(click)="destination.set('BANCO')"`, `(ngModelChange)="bankId.set($event)"`, `(ngModelChange)="amount.set($event)"`, `(ngModelChange)="voucher.set($event)"`, `(ngModelChange)="deliveredBy.set($event)"`, `(ngModelChange)="receivedBy.set($event)"`, `(ngModelChange)="observations.set($event)"`, `(click)="useCountedAsAmount()"`, `(quantityChange)="onQuantityChange($event)"`, `(click)="save()"`
 
-#### Clase `WarehouseWithdrawalModalComponent` (L32–171)
+#### Clase `WarehouseWithdrawalModalComponent` (L36–187)
 
 - **Decoradores:** `@Component({ selector: 'app-warehouse-withdrawal-modal', standalone: true, imports: [FormsModule, ButtonComponent, IconComponent, DecimalInputDirective, CashBrea`
 - **Herencia / contratos:** implements OnChanges
-- **Propósito:** "Retiro de Bodega": cash leaves Bodega and either goes back to the caja (internal transfer, total custody unchanged) or is deposited into a registered bank account (Bodega down, bank up). Breakdown by default; without it only administrators (business policy). Previews only — the backend checks the Bodega balance under its lock and applies both sides in one transaction. One `clientRequestId` per opening (idempotent).
+- **Propósito:** "Retiro de Bodega": cash leaves Bodega and either goes back to the caja (internal transfer, total custody unchanged) or is deposited into a registered bank account (Bodega down, bank up). The breakdown is mandatory (per-denomination inventory, migration 1760007800000) and each row shows how many bills/coins Bodega has; Bodega needs its initial count first. Previews only — the backend checks balance and denominations under its lock and applies both sides in one transaction. One `clientRequestId` per opening (idempotent).
 - **Servicios inyectados con `inject()`:** `service = inject(CashCustodyService)`, `cashService = inject(CashControlService)`, `confirmDialog = inject(ConfirmDialogService)`, `notifications = inject(NotificationService)`, `auth = inject(AuthService)`
-- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Input canSkipBreakdown = false`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<{ withdrawal: WarehouseWithdrawal`, `destination = signal<WarehouseWithdrawalDestination>('CAJA')`, `banks = signal<CashBankBalance[]>([])`, `bankId = signal('')`, `amount = signal<number \| null>(null)`, `withBreakdown = signal(true)`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `deliveredBy = signal('')`, `receivedBy = signal('')`, `voucher = signal('')`, `observations = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `selectedBank = computed(() => this.banks().find((bank) => bank.ba`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `breakdownStatus = computed<CuadreStatus>(() => { const total = this.`, `warehouseBalance = computed(() => this.custody?.warehouseBalance ?? 0`, `warehouseAfter = computed(() => round2(this.warehouseBalance() - (t`, `targetBefore = computed(() => this.destination() === 'CAJA' ? (th`, `targetAfter = computed(() => round2(this.targetBefore() + (this.`, `insufficient = computed(() => (this.amount() ?? 0) > this.warehou`, `dayOpen = computed(() => !!this.custody?.currentDay?.isOpen)`, `canSave = computed( () => !this.isSaving() && this.dayOpen()`
+- **Datos / estado que administra:** `@Input open = false`, `@Input custody = null`, `@Output closed = new EventEmitter<void>()`, `@Output saved = new EventEmitter<{ withdrawal: WarehouseWithdrawal`, `destination = signal<WarehouseWithdrawalDestination>('CAJA')`, `banks = signal<CashBankBalance[]>([])`, `bankId = signal('')`, `amount = signal<number \| null>(null)`, `inventory = signal<LocationInventory \| null>(null)`, `available = computed(() => availableByDenomination(this.invent`, `overStock = computed(() => { const available = this.available(`, `needsCount = computed(() => !!this.inventory() && !this.invento`, `cashCounts = signal<Record<string, number>>(emptyCashCounts())`, `deliveredBy = signal('')`, `receivedBy = signal('')`, `voucher = signal('')`, `observations = signal('')`, `isSaving = signal(false)`, `errorMessage = signal<string \| null>(null)`, `selectedBank = computed(() => this.banks().find((bank) => bank.ba`, `totalCounted = computed(() => cashCountsTotal(this.cashCounts()))`, `breakdownStatus = computed<CuadreStatus>(() => { const total = this.`, `warehouseBalance = computed(() => this.custody?.warehouseBalance ?? 0`, `warehouseAfter = computed(() => round2(this.warehouseBalance() - (t`, `targetBefore = computed(() => this.destination() === 'CAJA' ? (th`, `targetAfter = computed(() => round2(this.targetBefore() + (this.`, `insufficient = computed(() => (this.amount() ?? 0) > this.warehou`, `dayOpen = computed(() => !!this.custody?.currentDay?.isOpen)`, `canSave = computed( () => !this.isSaving() && this.dayOpen()`
 
 | Método | Tipo | Líneas | Parámetros (tipo de entrada) | Retorno |
 |---|---|---|---|---|
-| `ngOnChanges` | método public | 99–117 | — | `void` |
-| `onQuantityChange` | método public | 119–121 | `change: { denomination: number; quantity: number }` | `void` |
-| `useCountedAsAmount` | método public | 123–125 | — | `void` |
-| `save` | método public async | 127–170 | — | `Promise<void>` |
+| `ngOnChanges` | método public | 111–133 | — | `void` |
+| `onQuantityChange` | método public | 135–137 | `change: { denomination: number; quantity: number }` | `void` |
+| `useCountedAsAmount` | método public | 139–141 | — | `void` |
+| `save` | método public async | 143–186 | — | `Promise<void>` |
 
 ##### `WarehouseWithdrawalModalComponent.ngOnChanges`
 
-- **Firma:** `ngOnChanges(): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L99) (L99–117)
+- **Firma:** `ngOnChanges(): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L111) (L111–133)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.destination.set`, `this.bankId.set`, `this.amount.set`, `this.withBreakdown.set`, `this.cashCounts.set`, `emptyCashCounts`, `this.deliveredBy.set`, `this.receivedBy.set`, `this.auth.currentUser`, `this.voucher.set`, `this.observations.set`, `this.errorMessage.set`, `crypto.randomUUID`, `this.cashService.getBankBalances().subscribe`, `this.cashService.getBankBalances`, `this.banks.set`, `banks.filter`
-- **Efectos secundarios:** Actualiza estado (signals): `this.destination.set`, `this.bankId.set`, `this.amount.set`, `this.withBreakdown.set`, `this.cashCounts.set`, `this.deliveredBy.set`
+- **Dependencias (llamadas en su cuerpo):** `this.isSaving`, `this.destination.set`, `this.bankId.set`, `this.amount.set`, `this.cashCounts.set`, `emptyCashCounts`, `this.inventory.set`, `this.service.getInventory().subscribe`, `this.service.getInventory`, `this.deliveredBy.set`, `this.receivedBy.set`, `this.auth.currentUser`, `this.voucher.set`, `this.observations.set`, `this.errorMessage.set`, `crypto.randomUUID`, `this.cashService.getBankBalances().subscribe`, `this.cashService.getBankBalances`…
+- **Efectos secundarios:** Actualiza estado (signals): `this.destination.set`, `this.bankId.set`, `this.amount.set`, `this.cashCounts.set`, `this.inventory.set`, `this.deliveredBy.set`
 - **Consumidores:** no se detectaron llamadas directas (puede invocarse por Nest/Angular: rutas, ciclo de vida, plantilla o inyección).
 
 ##### `WarehouseWithdrawalModalComponent.onQuantityChange`
 
-- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L119) (L119–121)
+- **Firma:** `onQuantityChange(change: { denomination: number; quantity: number }): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L135) (L135–137)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.cashCounts.update`, `String`
 - **Efectos secundarios:** Actualiza estado (signals): `this.cashCounts.update`
@@ -1375,7 +1765,7 @@
 
 ##### `WarehouseWithdrawalModalComponent.useCountedAsAmount`
 
-- **Firma:** `useCountedAsAmount(): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L123) (L123–125)
+- **Firma:** `useCountedAsAmount(): void` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L139) (L139–141)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
 - **Dependencias (llamadas en su cuerpo):** `this.amount.set`, `this.totalCounted`
 - **Efectos secundarios:** Actualiza estado (signals): `this.amount.set`
@@ -1383,9 +1773,9 @@
 
 ##### `WarehouseWithdrawalModalComponent.save`
 
-- **Firma:** `save(): Promise<void>` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L127) (L127–170)
+- **Firma:** `save(): Promise<void>` — [warehouse-withdrawal-modal.component.ts](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts#L143) (L143–186)
 - **Propósito / descripción:** Sin JSDoc en el código; su comportamiento se deduce de las llamadas listadas.
-- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.amount`, `this.destination`, `this.confirmDialog.confirm`, `formatCurrency`, `this.warehouseAfter`, `this.targetAfter`, `this.selectedBank`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerWithdrawal`, `this.withBreakdown`, `cashCountsToDetails`, `this.cashCounts`, `this.bankId`, `this.deliveredBy().trim`, `this.deliveredBy`, `this.receivedBy().trim`…
+- **Dependencias (llamadas en su cuerpo):** `this.canSave`, `this.amount`, `this.destination`, `this.confirmDialog.confirm`, `formatCurrency`, `this.warehouseAfter`, `this.targetAfter`, `this.selectedBank`, `this.isSaving.set`, `this.errorMessage.set`, `this.service.registerWithdrawal`, `cashCountsToDetails`, `this.cashCounts`, `this.bankId`, `this.deliveredBy().trim`, `this.deliveredBy`, `this.receivedBy().trim`, `this.receivedBy`…
 - **Efectos secundarios:** Actualiza estado (signals): `this.isSaving.set`, `this.errorMessage.set`; Emite eventos: `this.saved.emit`
 - **Consumidores:** `warehouse-withdrawal-modal.component.html` (plantilla)
 

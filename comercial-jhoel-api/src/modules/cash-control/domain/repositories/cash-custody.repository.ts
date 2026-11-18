@@ -232,6 +232,106 @@ export interface LatestCashCountLookup {
   referenceBusinessDate: string | null;
 }
 
+// ── Inventario de efectivo por denominación (migración 1760007800000) ──
+
+export const CASH_LOCATIONS = ['CAJA', 'BODEGA'] as const;
+export type CashLocation = (typeof CASH_LOCATIONS)[number];
+
+/**
+ * Inventory of one location, derived by `cash_location_inventory` from its
+ * anchor (latest physical count) plus the later movements with
+ * denominations. `unbroken` = balance − knownTotal: cash that moved without
+ * breakdown (or the anchor count's difference against the system).
+ */
+export interface LocationInventory {
+  location: CashLocation;
+  hasAnchor: boolean;
+  /** ARQUEO_CAJA / CORTE_CAJA (caja) or CONTEO_BODEGA (Bodega). */
+  anchorKind: 'ARQUEO_CAJA' | 'CORTE_CAJA' | 'CONTEO_BODEGA' | null;
+  anchorId: string | null;
+  /** Arqueo number, cut number (1/2) or Bodega count number. */
+  anchorNumber: number | null;
+  anchorAt: Date | null;
+  anchorByUsername: string | null;
+  balance: number;
+  knownTotal: number;
+  unbroken: number;
+  lines: DenominationRow[];
+}
+
+/** Audited per-denomination count of Bodega (must equal its balance). */
+export interface WarehouseCashCountRow {
+  id: string;
+  number: number;
+  countedAt: Date;
+  businessDate: string;
+  warehouseBalance: number;
+  totalCounted: number;
+  observations: string | null;
+  createdByUsername: string;
+  details: DenominationRow[];
+}
+
+export interface RegisterWarehouseCashCountData {
+  details: Array<{ denomination: number; quantity: number }>;
+  observations?: string | null;
+  userId: string;
+  idempotencyKey: string;
+}
+
+/** What the Arqueo de Caja form had typed (autosaved). */
+export interface CashCountDraftPayload {
+  details: Array<{ denomination: number; quantity: number }>;
+  observations: string | null;
+  countWarehouse: boolean;
+  warehouseCounted: number | null;
+}
+
+/** The user's in-progress Arqueo de Caja for the current bank day. */
+export interface CashCountDraft {
+  businessDate: string;
+  payload: CashCountDraftPayload;
+  version: number;
+  updatedAt: Date;
+}
+
+export type CustodyTransferKind =
+  'CAJA_A_BODEGA' | 'BODEGA_A_CAJA' | 'BODEGA_A_BANCO';
+
+/** One caja ↔ Bodega transfer (or Bodega → bank deposit) with its breakdown. */
+export interface CustodyTransferRow {
+  id: string;
+  kind: CustodyTransferKind;
+  referenceNumber: string;
+  origin: 'CAJA' | 'BODEGA';
+  destination: 'CAJA' | 'BODEGA' | 'BANCO';
+  bankName: string | null;
+  amount: number;
+  status: 'APLICADO' | 'ANULADO';
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference: string | null;
+  observations: string | null;
+  hasBreakdown: boolean;
+  businessDate: string;
+  createdById: string;
+  createdByUsername: string;
+  createdAt: Date;
+  voidedAt: Date | null;
+  voidReason: string | null;
+  details: DenominationRow[];
+}
+
+export interface FindCustodyTransfersOptions {
+  kind?: CustodyTransferKind;
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  status?: 'APLICADO' | 'ANULADO';
+  page: number;
+  limit: number;
+}
+
 export interface CashCustodyRepository {
   getCustody(): Promise<CashCustodySnapshot>;
   registerTransfer(data: RegisterTransferData): Promise<string>;
@@ -268,4 +368,24 @@ export interface CashCustodyRepository {
   findLatestValidCount(
     preferredBusinessDate: string | null,
   ): Promise<LatestCashCountLookup>;
+  /** Per-denomination inventory of a location (derived in SQL, never stored). */
+  getInventory(location: CashLocation): Promise<LocationInventory>;
+  registerWarehouseCount(data: RegisterWarehouseCashCountData): Promise<string>;
+  findWarehouseCounts(
+    page: number,
+    limit: number,
+  ): Promise<Paginated<WarehouseCashCountRow>>;
+  findWarehouseCountById(id: string): Promise<WarehouseCashCountRow | null>;
+  /** Draft of `userId` for the current bank day, or null (also when no day is open). */
+  getCountDraft(userId: string): Promise<CashCountDraft | null>;
+  /** Upsert for the current bank day; null when no bank day is open. */
+  saveCountDraft(
+    userId: string,
+    payload: CashCountDraftPayload,
+  ): Promise<CashCountDraft | null>;
+  /** Removes the draft of `userId` for the current bank day (no-op if none). */
+  deleteCountDraft(userId: string): Promise<void>;
+  findCustodyTransfers(
+    options: FindCustodyTransfersOptions,
+  ): Promise<Paginated<CustodyTransferRow>>;
 }

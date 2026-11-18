@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Out
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
-import { CashCustody, WarehouseTransfer, formatCurrency } from '../../../../../core/models';
+import {
+  CashCustody,
+  LocationInventory,
+  WarehouseTransfer,
+  availableByDenomination,
+  formatCurrency,
+} from '../../../../../core/models';
 import { CuadreStatus } from '../../../../../core/services/bank-deposit-draft.store';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
@@ -15,13 +21,13 @@ import { CashBreakdownTableComponent } from '../../../transaccionar/components/c
 import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatIsoDate, round2 } from '../../cash-control.util';
 
 /**
- * "Entrega de Efectivo a Bodega": an internal transfer — caja goes down,
- * Bodega goes up by the same amount, total custody unchanged; never an
- * expense. The breakdown is the default; registering only a total is
- * allowed to administrators (business policy) and is flagged as such. The
- * "después" figures are a preview: the backend checks the caja balance
- * under its lock and applies both Kardex in one transaction. One
- * `clientRequestId` per opening makes a double click harmless.
+ * "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): an internal
+ * transfer — caja goes down, Bodega goes up by the same amount, total custody
+ * unchanged; never an expense. The breakdown is mandatory (per-denomination
+ * inventory, migration 1760007800000) and each row shows how many bills/coins
+ * the caja has; the backend re-checks balance and denominations under its
+ * lock and applies both Kardex in one transaction. One `clientRequestId` per
+ * opening makes a double click harmless.
  */
 @Component({
   selector: 'app-warehouse-transfer-modal',
@@ -34,8 +40,6 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatIsoDate, r
 export class WarehouseTransferModalComponent implements OnChanges {
   @Input() open = false;
   @Input() custody: CashCustody | null = null;
-  /** Administrators may register a total without breakdown. */
-  @Input() canSkipBreakdown = false;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<{ transfer: WarehouseTransfer; custody: CashCustody }>();
@@ -49,7 +53,16 @@ export class WarehouseTransferModalComponent implements OnChanges {
   readonly formatIsoDate = formatIsoDate;
 
   readonly amount = signal<number | null>(null);
-  readonly withBreakdown = signal(true);
+  /** Caja inventory by denomination (loaded on open) — what can be sent. */
+  readonly inventory = signal<LocationInventory | null>(null);
+  readonly available = computed(() => availableByDenomination(this.inventory()));
+  /** Some quantity is above what the caja has (UX; the backend decides). */
+  readonly overStock = computed(() => {
+    const available = this.available();
+    return !!available && Object.entries(this.cashCounts()).some(([d, q]) => (q || 0) > (available[d] ?? 0));
+  });
+  /** The caja has no count yet: its inventory is unknown, the backend would reject. */
+  readonly needsCount = computed(() => !!this.inventory() && !this.inventory()!.hasAnchor);
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
   readonly deliveredBy = signal('');
   readonly receivedBy = signal('');
@@ -79,14 +92,20 @@ export class WarehouseTransferModalComponent implements OnChanges {
       (this.amount() ?? 0) > 0 &&
       !this.insufficientCash() &&
       this.peopleValid() &&
-      (this.withBreakdown() ? this.breakdownStatus() === 'green' : this.canSkipBreakdown),
+      this.breakdownStatus() === 'green' &&
+      !this.overStock() &&
+      !this.needsCount(),
   );
 
   ngOnChanges(): void {
     if (this.open && !this.isSaving()) {
       this.amount.set(null);
-      this.withBreakdown.set(true);
       this.cashCounts.set(emptyCashCounts());
+      this.inventory.set(null);
+      this.service.getInventory().subscribe({
+        next: (inv) => this.inventory.set(inv.cash),
+        error: () => this.inventory.set(null),
+      });
       this.deliveredBy.set(this.auth.currentUser()?.username ?? '');
       this.receivedBy.set('');
       this.voucher.set('');
@@ -114,7 +133,7 @@ export class WarehouseTransferModalComponent implements OnChanges {
       title: 'Confirmar entrega a Bodega',
       message:
         `Transferencia interna de ${formatCurrency(amount)}: entrega ${this.deliveredBy().trim()}, recibe ${this.receivedBy().trim()}` +
-        `${this.withBreakdown() ? '' : ' (sin desglose de denominaciones)'}. ` +
+        `. ` +
         `Caja después: aprox. ${formatCurrency(this.cashAfter())}; Bodega después: aprox. ${formatCurrency(this.warehouseAfter())}. ` +
         'El total bajo custodia no cambia. No es un gasto ni un ingreso.',
     });
@@ -126,7 +145,7 @@ export class WarehouseTransferModalComponent implements OnChanges {
     this.service
       .registerTransfer({
         amount,
-        details: this.withBreakdown() ? cashCountsToDetails(this.cashCounts(), { keepZero: false }) : undefined,
+        details: cashCountsToDetails(this.cashCounts(), { keepZero: false }),
         deliveredBy: this.deliveredBy().trim(),
         receivedBy: this.receivedBy().trim(),
         voucherReference: this.voucher().trim() || undefined,

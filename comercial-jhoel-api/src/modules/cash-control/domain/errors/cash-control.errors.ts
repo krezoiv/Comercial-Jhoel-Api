@@ -200,6 +200,64 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
       'Solo un administrador puede autorizar un saldo de apertura distinto del heredado.',
     status: 403,
   },
+  // ── Inventario por denominación (migración 1760007800000) ──
+  CASH_CUSTODY_BREAKDOWN_REQUIRED: {
+    message:
+      'Indica el desglose de billetes y monedas: todo traslado entre caja y Bodega lo requiere.',
+  },
+  CASH_COUNT_REQUIRED: {
+    message:
+      'No hay un arqueo de caja que sirva de punto de partida del inventario por denominación. Registra un arqueo de caja (o finaliza un corte) y vuelve a intentar.',
+    status: 409,
+  },
+  WAREHOUSE_COUNT_REQUIRED: {
+    message:
+      'Bodega aún no tiene su conteo inicial por denominación. Un administrador debe registrar el conteo de Bodega antes de retirar efectivo.',
+    status: 409,
+  },
+  CASH_DENOMINATION_NOT_AVAILABLE: {
+    message:
+      'No hay suficientes billetes o monedas de esa denominación en caja.',
+    status: 409,
+  },
+  WAREHOUSE_DENOMINATION_NOT_AVAILABLE: {
+    message:
+      'No hay suficientes billetes o monedas de esa denominación en Bodega.',
+    status: 409,
+  },
+  WAREHOUSE_COUNT_MISMATCH: {
+    message: 'El conteo de Bodega no coincide con su saldo.',
+    status: 409,
+  },
+  CASH_INVALID_LOCATION: { message: 'La ubicación de efectivo no es válida.' },
+  CASH_COUNT_DRAFT_INVALID: {
+    message: 'El borrador del arqueo no es válido.',
+  },
+};
+
+const money = (value: string): string =>
+  `Q${Number(value).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const bill = (value: string): string =>
+  `Q${Number(value).toLocaleString('es-GT', { minimumFractionDigits: Number(value) < 1 ? 2 : 0 })}`;
+
+/**
+ * Messages that include the detail carried by the SQL code
+ * (`CODE:denomination:available:requested` / `CODE:counted:balance`).
+ */
+const DETAILED: Record<string, (parts: string[]) => string | null> = {
+  CASH_DENOMINATION_NOT_AVAILABLE: ([d, available, requested]) =>
+    d
+      ? `No hay suficientes billetes o monedas de ${bill(d)} en caja: disponibles ${available}, solicitados ${requested}. ` +
+        'El inventario de caja parte del último arqueo; si recibiste ese efectivo sin desglose, registra un arqueo para actualizarlo.'
+      : null,
+  WAREHOUSE_DENOMINATION_NOT_AVAILABLE: ([d, available, requested]) =>
+    d
+      ? `No hay suficientes billetes o monedas de ${bill(d)} en Bodega: disponibles ${available}, solicitados ${requested}.`
+      : null,
+  WAREHOUSE_COUNT_MISMATCH: ([counted, balance]) =>
+    counted
+      ? `El conteo de Bodega (${money(counted)}) no coincide con su saldo (${money(balance)}). Revisa las cantidades.`
+      : null,
 };
 
 /** Builds the domain error for a known rule code. */
@@ -214,6 +272,12 @@ export function cashControlError(code: string): CashControlRuleError {
 export function cashControlErrorFromMessage(
   message: string,
 ): CashControlRuleError | null {
-  const [code] = message.split(':');
-  return MESSAGES[code] ? cashControlError(code) : null;
+  const [code, ...parts] = message.split(':');
+  if (!MESSAGES[code]) {
+    return null;
+  }
+  const detailed = DETAILED[code]?.(parts);
+  return detailed
+    ? new CashControlRuleError(code, detailed, MESSAGES[code].status ?? 400)
+    : cashControlError(code);
 }

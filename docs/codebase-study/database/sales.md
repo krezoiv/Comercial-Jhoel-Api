@@ -102,7 +102,7 @@ erDiagram
 
 - **Entidad TypeORM:** [SaleOrmEntity](../reference/backend/sales.md#f-comercial-jhoel-api-src-modules-sales-infrastructure-persistence-sale-orm-entity-ts)
 - **Creada en:** migración no identificada por el análisis (creada con TypeORM `Table` o `createTable`)
-- **Archivos TypeScript que la usan:** [sale.orm-entity.ts](../reference/backend/sales.md#f-comercial-jhoel-api-src-modules-sales-infrastructure-persistence-sale-orm-entity-ts), [typeorm-sales-cash-box.repository.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-typeorm-sales-cash-box-repository-ts)
+- **Archivos TypeScript que la usan:** [sale.orm-entity.ts](../reference/backend/sales.md#f-comercial-jhoel-api-src-modules-sales-infrastructure-persistence-sale-orm-entity-ts), [typeorm-sales-cash-box.repository.ts](../reference/backend/sales-cash-box.md#f-comercial-jhoel-api-src-modules-sales-cash-box-infrastructure-persistence-typeorm-sales-cash-box-repository-ts), [school-lists.e2e-spec.ts](../reference/backend/e2e.md#f-comercial-jhoel-api-test-school-lists-e2e-spec-ts)
 - **Funciones SQL que la escriben:** `adjust_sale_item`, `cancel_open_sale`, `configure_open_sale`, `confirm_open_sale`, `confirm_sale`, `confirm_sale`, `void_sale`
 
 | Columna | Tipo | Nulo | Default |

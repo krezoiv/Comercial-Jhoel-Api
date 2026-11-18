@@ -1815,3 +1815,29 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - El botón carga SOLO el "Segundo corte · final del día" (lo elige el backend; `CORTE_CAJA` + `cutNumber`); el aviso
   usa `CASH_CUT_NAME` y, si no hay corte 2 finalizado, `NO_SECOND_CUT_MESSAGE` (conteo manual).
 
+## Control de Efectivo — inventario por denominación y borradores del arqueo
+
+- **Pestaña "Inventario y traslados"**:
+  - `CashInventoryPanelComponent`: caja y Bodega por denominación, punto de partida, "sin desglosar" y "Registrar conteo de Bodega" para administradores (`WarehouseCountModalComponent`).
+  - `CustodyTransfersPanelComponent`: historial con filtros por tipo, usuario, fechas y estado, y un modal con el desglose.
+- **Modales de entrega y retiro de Bodega**: sin la opción "sin desglose"; cargan `getInventory()` y pasan `[available]` a `CashBreakdownTableComponent`. Ese input es opcional, y sin él la tabla se ve igual en los demás formularios.
+- **`CashCountModalComponent`**:
+  - Borrador real: copia local inmediata (`cj_cash_count_draft:<userId>:<día>`) y autoguardado en el servidor con espera de 800 ms (`PUT /cash-control/counts/draft`).
+  - Al abrir gana la copia más reciente, y se resincroniza si la local es más nueva.
+  - Indicador "Guardando…" / "Guardado correctamente" / "Error al guardar". Solo se limpia al confirmar o con "Reiniciar arqueo".
+  - `cashMutationInterceptor` excluye `/cash-control/counts/draft` de la difusión de cambios de efectivo.
+
+## Listas Escolares (`features/dashboard/school-lists/`, `/dashboard/listas-escolares`)
+
+- Bajo "Ventas y Compras". `SchoolListService` (`/school-lists`) carga `GET permissions` y expone `can()`; cada botón se muestra según el permiso del rol (el backend y SQL lo vuelven a validar).
+- Pestañas (`?tab=`): Tablero (`SchoolDashboardComponent`), Cotizaciones (`SchoolQuotationsListComponent`), Nueva cotización (`SchoolQuotationEditorComponent`) y Plantillas (`SchoolTemplatesComponent`).
+- Rutas `cotizaciones/:id` (detalle con pestañas `?vista=` detalle/cuenta/historial) y `cotizaciones/:id/editar`.
+- **Editor**:
+  - Tarjetas por grado; la plantilla solo se lee y las líneas son una copia (`EditorLine` con `referencePrice`).
+  - "Cambiar producto" usa el `QuotationProductSearchComponent` de Cotizaciones, reutilizado.
+  - Envía un `clientRequestId` que se repite en los reintentos.
+  - Los totales en vivo son vista previa; el backend recalcula.
+- **Gotcha corregido**: `@Input() quotation` del editor y del modal de abono se leen dentro de `computed()`, así que son setters respaldados por un signal. Un `@Input()` simple nunca invalida un `computed()`.
+- Modales: `SchoolPaymentModalComponent` (abono) y `SchoolReasonModalComponent` (anular pago o cancelar con devolución). Reutilizan `_guayacan-modal.scss`; los estilos de la sección están en `_school-lists.scss`.
+- Documentos (`school-documents.service.ts`): descargar o imprimir (`core/utils/print-blob.ts`) la cotización y los comprobantes. Ícono nuevo: `printer`.
+

@@ -6,152 +6,210 @@ Módulo: **Control de Efectivo (Kardex, cortes, arqueos, Bodega) (cash-control)*
 flowchart LR
   subgraph s1["Frontend"]
   n2["CashCustodyService<br/><small>app/core/services/cash-custody.service.ts</small>"]
-  n3["WarehousePanelComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts</small>"]
-  n4["WarehouseWithdrawalModalComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts</small>"]
-  n5["CashControlPageComponent<br/><small>app/features/dashboard/cash-control/cash-control-page.component.ts</small>"]
-  n6["CashCountsPanelComponent<br/><small>app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts</small>"]
-  n7["CuadreAgentesPageComponent<br/><small>app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts</small>"]
+  n3["CashInventoryPanelComponent<br/><small>app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts</small>"]
+  n4["WarehouseTransferModalComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts</small>"]
+  n5["WarehouseWithdrawalModalComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts</small>"]
+  n6["WarehouseCountModalComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts</small>"]
+  n7["CustodyTransfersPanelComponent<br/><small>app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts</small>"]
   n8["CashCountModalComponent<br/><small>app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts</small>"]
-  n9["WarehouseTransferModalComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts</small>"]
+  n9["WarehousePanelComponent<br/><small>app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts</small>"]
+  n10["CashControlPageComponent<br/><small>app/features/dashboard/cash-control/cash-control-page.component.ts</small>"]
+  n11["CashCountsPanelComponent<br/><small>app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts</small>"]
+  n12["CuadreAgentesPageComponent<br/><small>app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts</small>"]
   end
-  subgraph s10["CashCustodyController (api/cash-control/presentation/controllers/cash-custody.controller.ts)"]
-  n11["GET /api/cash-control/warehouse/withdrawals<br/><small>withdrawals()</small>"]
-  n12["GET /api/cash-control/warehouse/withdrawals/:id<br/><small>withdrawal()</small>"]
-  n13["POST /api/cash-control/warehouse/withdrawals<br/><small>createWithdrawal()</small>"]
-  n14["POST /api/cash-control/warehouse/withdrawals/:id/void<br/><small>voidWarehouseWithdrawal()</small>"]
-  n15["GET /api/cash-control/custody<br/><small>custody()</small>"]
-  n16["GET /api/cash-control/counts<br/><small>counts()</small>"]
-  n17["GET /api/cash-control/counts/latest<br/><small>latestCount()</small>"]
-  n18["GET /api/cash-control/counts/:id<br/><small>count()</small>"]
-  n19["POST /api/cash-control/counts<br/><small>createCount()</small>"]
-  n20["POST /api/cash-control/counts/:id/corrections<br/><small>correctCount()</small>"]
-  n21["GET /api/cash-control/warehouse/movements<br/><small>warehouseMovements()</small>"]
-  n22["POST /api/cash-control/warehouse/initial-balance<br/><small>warehouseInitialBalance()</small>"]
-  n23["GET /api/cash-control/warehouse/transfers<br/><small>transfers()</small>"]
-  n24["GET /api/cash-control/warehouse/transfers/:id<br/><small>transfer()</small>"]
-  n25["POST /api/cash-control/warehouse/transfers<br/><small>createTransfer()</small>"]
-  n26["POST /api/cash-control/warehouse/transfers/:id/void<br/><small>voidWarehouseTransfer()</small>"]
+  subgraph s13["CashCustodyController (api/cash-control/presentation/controllers/cash-custody.controller.ts)"]
+  n14["GET /api/cash-control/inventory<br/><small>inventory()</small>"]
+  n15["GET /api/cash-control/warehouse/counts<br/><small>warehouseCounts()</small>"]
+  n16["POST /api/cash-control/warehouse/counts<br/><small>createWarehouseCount()</small>"]
+  n17["GET /api/cash-control/custody/transfers<br/><small>custodyTransfers()</small>"]
+  n18["GET /api/cash-control/counts/draft<br/><small>countDraft()</small>"]
+  n19["PUT /api/cash-control/counts/draft<br/><small>saveCountDraft()</small>"]
+  n20["DELETE /api/cash-control/counts/draft<br/><small>discardCountDraft()</small>"]
+  n21["GET /api/cash-control/warehouse/withdrawals<br/><small>withdrawals()</small>"]
+  n22["GET /api/cash-control/warehouse/withdrawals/:id<br/><small>withdrawal()</small>"]
+  n23["POST /api/cash-control/warehouse/withdrawals<br/><small>createWithdrawal()</small>"]
+  n24["POST /api/cash-control/warehouse/withdrawals/:id/void<br/><small>voidWarehouseWithdrawal()</small>"]
+  n25["GET /api/cash-control/custody<br/><small>custody()</small>"]
+  n26["GET /api/cash-control/counts<br/><small>counts()</small>"]
+  n27["GET /api/cash-control/counts/latest<br/><small>latestCount()</small>"]
+  n28["GET /api/cash-control/counts/:id<br/><small>count()</small>"]
+  n29["POST /api/cash-control/counts<br/><small>createCount()</small>"]
+  n30["POST /api/cash-control/counts/:id/corrections<br/><small>correctCount()</small>"]
+  n31["GET /api/cash-control/warehouse/movements<br/><small>warehouseMovements()</small>"]
+  n32["POST /api/cash-control/warehouse/initial-balance<br/><small>warehouseInitialBalance()</small>"]
+  n33["GET /api/cash-control/warehouse/transfers<br/><small>transfers()</small>"]
+  n34["GET /api/cash-control/warehouse/transfers/:id<br/><small>transfer()</small>"]
+  n35["POST /api/cash-control/warehouse/transfers<br/><small>createTransfer()</small>"]
+  n36["POST /api/cash-control/warehouse/transfers/:id/void<br/><small>voidWarehouseTransfer()</small>"]
   end
-  subgraph s27["Aplicación"]
-  n28["ListWarehouseWithdrawalsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n29["GetWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n30["RegisterWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n31["VoidWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n32["GetCashCustodyUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n33["ListCashCountsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n34["GetLatestCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n35["GetCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n36["RegisterCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n37["ListWarehouseMovementsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n38["RegisterWarehouseInitialBalanceUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n39["ListWarehouseTransfersUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n40["GetWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n41["RegisterWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n42["VoidWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  subgraph s37["Aplicación"]
+  n38["GetCashInventoryUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n39["ListWarehouseCashCountsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n40["RegisterWarehouseCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n41["ListCustodyTransfersUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n42["GetCashCountDraftUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n43["SaveCashCountDraftUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n44["DiscardCashCountDraftUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n45["ListWarehouseWithdrawalsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n46["GetWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n47["RegisterWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n48["VoidWarehouseWithdrawalUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n49["GetCashCustodyUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n50["ListCashCountsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n51["GetLatestCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n52["GetCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n53["RegisterCashCountUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n54["ListWarehouseMovementsUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n55["RegisterWarehouseInitialBalanceUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n56["ListWarehouseTransfersUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n57["GetWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n58["RegisterWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
+  n59["VoidWarehouseTransferUseCase<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
   end
-  subgraph s43["Dominio · Infraestructura · PostgreSQL"]
-  n44["CashCustodyRepository"]
-  n45["TypeOrmCashCustodyRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts</small>"]
-  n46[("warehouse_cash_withdrawals")]
-  n47[["cash_balance()"]]
-  n48[["cash_current_bank_day()"]]
-  n49[("warehouse_cash_movements")]
-  n50[["register_warehouse_withdrawal()"]]
-  n51[("warehouse_cash_movement_details")]
-  n52[["void_warehouse_withdrawal()"]]
-  n53[("cash_counts")]
-  n54[["cash_latest_count_candidate()"]]
-  n55[["register_cash_count()"]]
-  n56[("cash_count_details")]
-  n57[("users")]
-  n58[("cash_warehouse_transfers")]
-  n59[["register_warehouse_initial_balance()"]]
-  n60[["register_cash_warehouse_transfer()"]]
-  n61[("cash_movement_details")]
-  n62[["void_cash_warehouse_transfer()"]]
+  subgraph s60["Dominio · Infraestructura · PostgreSQL"]
+  n61["CashCustodyRepository"]
+  n62["TypeOrmCashCustodyRepository<br/><small>api/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts</small>"]
+  n63[["cash_location_inventory_summary()"]]
+  n64[["cash_location_inventory()"]]
+  n65[("users")]
+  n66[("warehouse_cash_counts")]
+  n67[["register_warehouse_cash_count()"]]
+  n68[("warehouse_cash_count_details")]
+  n69[("cash_count_drafts")]
+  n70[["cash_current_bank_day()"]]
+  n71[("warehouse_cash_withdrawals")]
+  n72[["cash_balance()"]]
+  n73[("warehouse_cash_movements")]
+  n74[["register_warehouse_withdrawal()"]]
+  n75[("warehouse_cash_movement_details")]
+  n76[["void_warehouse_withdrawal()"]]
+  n77[("cash_counts")]
+  n78[["cash_latest_count_candidate()"]]
+  n79[["register_cash_count()"]]
+  n80[("cash_count_details")]
+  n81[("cash_warehouse_transfers")]
+  n82[["register_warehouse_initial_balance()"]]
+  n83[["register_cash_warehouse_transfer()"]]
+  n84[("cash_movement_details")]
+  n85[["void_cash_warehouse_transfer()"]]
   end
-  n3 -->|loadWithdrawals→getWithdrawals, confirmVoidWithdrawal→voidWithdrawal, loadMovements→getWarehouseMovements …| n2
-  n4 -->|save→registerWithdrawal| n2
-  n5 -->|loadCustody→getCustody| n2
-  n6 -->|load→getCounts| n2
-  n7 -->|loadLatestCount→getLatestCount| n2
-  n8 -->|save→registerCount, save→correctCount| n2
-  n9 -->|save→registerTransfer| n2
-  n2 -->|getWithdrawals| n11
-  n2 -->|registerWithdrawal| n13
-  n2 -->|voidWithdrawal| n14
-  n2 -->|getCustody| n15
-  n2 -->|getCounts| n16
-  n2 -->|getLatestCount| n17
-  n2 -->|getCount| n18
-  n2 -->|registerCount| n19
-  n2 -->|correctCount| n20
-  n2 -->|getWarehouseMovements| n21
-  n2 -->|registerWarehouseInitialBalance| n22
-  n2 -->|getTransfers| n23
-  n2 -->|registerTransfer| n25
-  n2 -->|voidTransfer| n26
-  n11 --> n28
-  n12 --> n29
-  n13 --> n30
-  n14 --> n31
-  n15 --> n32
-  n16 --> n33
-  n17 --> n34
-  n18 --> n35
-  n19 --> n36
-  n20 --> n36
-  n21 --> n37
-  n22 --> n38
-  n23 --> n39
-  n24 --> n40
-  n25 --> n41
-  n26 --> n42
-  n28 -->|findWithdrawals| n44
-  n44 -->|implementa| n45
-  n45 -->|findWithdrawals| n46
-  n29 -->|findWithdrawalById| n44
-  n30 -->|registerWithdrawal, findWithdrawalById, getCustody| n44
-  n45 -->|getCustody| n47
-  n45 -->|getCustody| n48
-  n45 -->|getCustody| n49
-  n45 -->|getCustody| n46
-  n45 -->|registerWithdrawal| n50
-  n50 -->|escribe| n51
-  n50 -->|escribe| n46
-  n31 -->|voidWithdrawal, findWithdrawalById, getCustody| n44
-  n45 -->|voidWithdrawal| n52
-  n52 -->|escribe| n49
-  n52 -->|escribe| n46
-  n32 -->|getCustody| n44
-  n33 -->|findCounts| n44
-  n45 -->|findCounts| n53
-  n34 -->|findLatestValidCount| n44
-  n45 -->|findLatestValidCount| n48
-  n45 -->|findLatestValidCount| n54
-  n35 -->|findCountById| n44
-  n36 -->|registerCount, findCountById| n44
-  n45 -->|registerCount| n55
-  n55 -->|escribe| n56
-  n55 -->|escribe| n53
-  n37 -->|findWarehouseMovements| n44
-  n45 -->|findWarehouseMovements| n49
-  n45 -->|findWarehouseMovements| n57
-  n45 -->|findWarehouseMovements| n58
-  n45 -->|findWarehouseMovements| n46
-  n38 -->|registerWarehouseInitialBalance, getCustody| n44
-  n45 -->|registerWarehouseInitialBalance| n59
-  n39 -->|findTransfers| n44
-  n45 -->|findTransfers| n58
-  n40 -->|findTransferById| n44
-  n41 -->|registerTransfer, findTransferById, getCustody| n44
-  n45 -->|registerTransfer| n60
-  n60 -->|escribe| n61
-  n60 -->|escribe| n58
-  n42 -->|voidTransfer, findTransferById, getCustody| n44
-  n45 -->|voidTransfer| n62
-  n62 -->|escribe| n58
-  n62 -->|escribe| n49
+  n3 -->|load→getInventory, load→getWarehouseCounts| n2
+  n4 -->|ngOnChanges→getInventory, save→registerTransfer| n2
+  n5 -->|ngOnChanges→getInventory, save→registerWithdrawal| n2
+  n6 -->|save→registerWarehouseCount| n2
+  n7 -->|load→getCustodyTransfers| n2
+  n8 -->|restoreDraft→getCountDraft, pushDraft→saveCountDraft, resetDraft→discardCountDraft …| n2
+  n9 -->|loadWithdrawals→getWithdrawals, confirmVoidWithdrawal→voidWithdrawal, loadMovements→getWarehouseMovements …| n2
+  n10 -->|loadCustody→getCustody| n2
+  n11 -->|load→getCounts| n2
+  n12 -->|loadLatestCount→getLatestCount| n2
+  n2 -->|getInventory| n14
+  n2 -->|getWarehouseCounts| n15
+  n2 -->|registerWarehouseCount| n16
+  n2 -->|getCustodyTransfers| n17
+  n2 -->|getCountDraft| n18
+  n2 -->|saveCountDraft| n19
+  n2 -->|discardCountDraft| n20
+  n2 -->|getWithdrawals| n21
+  n2 -->|registerWithdrawal| n23
+  n2 -->|voidWithdrawal| n24
+  n2 -->|getCustody| n25
+  n2 -->|getCounts| n26
+  n2 -->|getLatestCount| n27
+  n2 -->|getCount| n28
+  n2 -->|registerCount| n29
+  n2 -->|correctCount| n30
+  n2 -->|getWarehouseMovements| n31
+  n2 -->|registerWarehouseInitialBalance| n32
+  n2 -->|getTransfers| n33
+  n2 -->|registerTransfer| n35
+  n2 -->|voidTransfer| n36
+  n14 --> n38
+  n15 --> n39
+  n16 --> n40
+  n17 --> n41
+  n18 --> n42
+  n19 --> n43
+  n20 --> n44
+  n21 --> n45
+  n22 --> n46
+  n23 --> n47
+  n24 --> n48
+  n25 --> n49
+  n26 --> n50
+  n27 --> n51
+  n28 --> n52
+  n29 --> n53
+  n30 --> n53
+  n31 --> n54
+  n32 --> n55
+  n33 --> n56
+  n34 --> n57
+  n35 --> n58
+  n36 --> n59
+  n38 -->|getInventory| n61
+  n61 -->|implementa| n62
+  n62 -->|getInventory| n63
+  n62 -->|getInventory| n64
+  n62 -->|getInventory| n65
+  n39 -->|findWarehouseCounts| n61
+  n62 -->|findWarehouseCounts| n66
+  n40 -->|registerWarehouseCount, findWarehouseCountById, getInventory| n61
+  n62 -->|registerWarehouseCount| n67
+  n67 -->|escribe| n68
+  n67 -->|escribe| n66
+  n41 -->|findCustodyTransfers| n61
+  n62 -->|findCustodyTransfers| n65
+  n42 -->|getCountDraft| n61
+  n62 -->|getCountDraft| n69
+  n43 -->|saveCountDraft| n61
+  n62 -->|saveCountDraft| n70
+  n44 -->|deleteCountDraft| n61
+  n62 -->|deleteCountDraft| n69
+  n45 -->|findWithdrawals| n61
+  n62 -->|findWithdrawals| n71
+  n46 -->|findWithdrawalById| n61
+  n47 -->|registerWithdrawal, findWithdrawalById, getCustody| n61
+  n62 -->|getCustody| n72
+  n62 -->|getCustody| n70
+  n62 -->|getCustody| n73
+  n62 -->|getCustody| n71
+  n62 -->|registerWithdrawal| n74
+  n74 -->|escribe| n75
+  n74 -->|escribe| n71
+  n48 -->|voidWithdrawal, findWithdrawalById, getCustody| n61
+  n62 -->|voidWithdrawal| n76
+  n76 -->|escribe| n73
+  n76 -->|escribe| n71
+  n49 -->|getCustody| n61
+  n50 -->|findCounts| n61
+  n62 -->|findCounts| n77
+  n51 -->|findLatestValidCount| n61
+  n62 -->|findLatestValidCount| n70
+  n62 -->|findLatestValidCount| n78
+  n52 -->|findCountById| n61
+  n53 -->|registerCount, findCountById, deleteCountDraft| n61
+  n62 -->|registerCount| n79
+  n79 -->|escribe| n80
+  n79 -->|escribe| n77
+  n54 -->|findWarehouseMovements| n61
+  n62 -->|findWarehouseMovements| n73
+  n62 -->|findWarehouseMovements| n65
+  n62 -->|findWarehouseMovements| n81
+  n62 -->|findWarehouseMovements| n71
+  n55 -->|registerWarehouseInitialBalance, getCustody| n61
+  n62 -->|registerWarehouseInitialBalance| n82
+  n56 -->|findTransfers| n61
+  n62 -->|findTransfers| n81
+  n57 -->|findTransferById| n61
+  n58 -->|registerTransfer, findTransferById, getCustody| n61
+  n62 -->|registerTransfer| n83
+  n83 -->|escribe| n84
+  n83 -->|escribe| n81
+  n59 -->|voidTransfer, findTransferById, getCustody| n61
+  n62 -->|voidTransfer| n85
+  n85 -->|escribe| n81
+  n85 -->|escribe| n73
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -162,22 +220,22 @@ flowchart LR
   classDef dec fill:#fffde7,stroke:#f57f17,color:#3e2723
   classDef err fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ok fill:#e8f5e9,stroke:#1b5e20,color:#1b5e20
-  class n2,n3,n4,n5,n6,n7,n8,n9 fe
-  class n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26 api
-  class n28,n29,n30,n31,n32,n33,n34,n35,n36,n37,n38,n39,n40,n41,n42 app
-  class n44 dom
-  class n45 infra
-  class n46,n47,n48,n49,n50,n51,n52,n53,n54,n55,n56,n57,n58,n59,n60,n61,n62 db
+  class n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12 fe
+  class n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31,n32,n33,n34,n35,n36 api
+  class n38,n39,n40,n41,n42,n43,n44,n45,n46,n47,n48,n49,n50,n51,n52,n53,n54,n55,n56,n57,n58,n59 app
+  class n61 dom
+  class n62 infra
+  class n63,n64,n65,n66,n67,n68,n69,n70,n71,n72,n73,n74,n75,n76,n77,n78,n79,n80,n81,n82,n83,n84,n85 db
 ```
 
 ## Explicación
 
-1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a CashCustodyController, sus 16 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
+1. **¿Qué proceso representa?** Relación real entre archivos: componentes y servicios Angular que llaman a CashCustodyController, sus 23 rutas, los casos de uso que ejecutan, los puertos de repositorio, sus implementaciones, las funciones SQL y las tablas.
 2. **¿Dónde comienza?** Componentes Angular (izquierda) o cualquier cliente HTTP
-3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts), [`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
+3. **¿Qué archivos intervienen?** [`comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/presentation/controllers/cash-custody.controller.ts), [`comercial-jhoel-app/src/app/core/services/cash-custody.service.ts`](../../../../comercial-jhoel-app/src/app/core/services/cash-custody.service.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-inventory-panel/cash-inventory-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-transfer-modal/warehouse-transfer-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-count-modal/warehouse-count-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/custody-transfers-panel/custody-transfers-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-count-modal/cash-count-modal.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/warehouse-panel/warehouse-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/cash-control-page.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/cash-control/components/cash-counts-panel/cash-counts-panel.component.ts), [`comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts`](../../../../comercial-jhoel-app/src/app/features/dashboard/bank-agents/cuadre-agentes-page.component.ts), [`comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/application/use-cases/cash-custody.use-cases.ts), [`comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts`](../../../../comercial-jhoel-api/src/modules/cash-control/infrastructure/persistence/typeorm-cash-custody.repository.ts)
 4. **¿Qué función ejecuta cada archivo?** Cada nodo muestra la clase y el método (`Clase.metodo`) y, debajo, la ruta del archivo. El color indica la capa: azul = frontend, morado = controlador, verde azulado = caso de uso, amarillo = dominio/puerto, lila = infraestructura, gris = PostgreSQL, amarillo claro = decisión, rojo = error.
 5. **¿Qué decisiones toma el sistema?** Ver los flujos de decisiones de cada comando en business-processes/cash-control/
-6. **¿Dónde se almacenan los datos?** warehouse_cash_withdrawals, warehouse_cash_movements, warehouse_cash_movement_details, cash_counts, cash_count_details, users, cash_warehouse_transfers, cash_movement_details
+6. **¿Dónde se almacenan los datos?** users, warehouse_cash_counts, warehouse_cash_count_details, cash_count_drafts, warehouse_cash_withdrawals, warehouse_cash_movements, warehouse_cash_movement_details, cash_counts, cash_count_details, cash_warehouse_transfers, cash_movement_details
 7. **¿Cómo termina el proceso?** Las flechas terminan en las tablas de PostgreSQL
 8. **¿Qué sucede cuando ocurre un error?** Los errores siguen el patrón de 07-error-handling.mmd
 

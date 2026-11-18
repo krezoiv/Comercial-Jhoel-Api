@@ -1,0 +1,111 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+@use '../../school-lists';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.tpl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-light-muted);
+
+  header,
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  footer {
+    justify-content: flex-start;
+    margin-top: auto;
+  }
+
+  h3 {
+    font-size: var(--fs-md);
+    color: var(--color-text-on-light);
+  }
+}
+
+.tpl--off {
+  opacity: 0.65;
+}
+
+.tpl__figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  strong {
+    font-size: var(--fs-lg);
+  }
+}
+
+.modal--xl {
+  max-width: 64rem;
+}
+
+.editor-lines {
+  margin-top: var(--space-5);
+
+  input {
+    width: 100%;
+    min-width: 7rem;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+  }
+
+  .small {
+    width: 5.5rem;
+    min-width: 0;
+    text-align: right;
+  }
+}
+
+.line-actions {
+  display: flex;
+}
+
+.add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.add__search {
+  flex: 1 1 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

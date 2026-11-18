@@ -9,6 +9,10 @@ interface CashRow {
   denomination: number;
   quantity: number;
   subtotal: number;
+  /** Available at the origin (only when `available` is given). */
+  available: number | null;
+  /** More than available — UX hint only; the backend is the authority. */
+  over: boolean;
 }
 
 /** "Efectivo" — the fixed 11-row denomination breakdown; quantity per row is the only editable value, subtotal and the running total are always derived, never entered directly. */
@@ -28,6 +32,13 @@ export class CashBreakdownTableComponent {
   @Input() disabled = false;
   /** Texto cuando aún no hay monto contra el cual cuadrar — Transaccionar usa el de siempre; otras pantallas (Caja Guayacán) pasan el suyo. */
   @Input() emptyAmountText = 'Ingresa el monto total a depositar';
+  /**
+   * Optional stock per denomination (`String(denomination)` key) of the cash
+   * origin — caja for a delivery to Bodega, Bodega for a withdrawal. When
+   * given, each row shows "disp. N" and flags quantities above it. Other
+   * forms (Transaccionar, arqueos) do not pass it and render as before.
+   */
+  @Input() available: Record<string, number> | null = null;
 
   @Output() quantityChange = new EventEmitter<{ denomination: number; quantity: number }>();
 
@@ -37,7 +48,8 @@ export class CashBreakdownTableComponent {
   get rows(): CashRow[] {
     return this.denominations.map((denomination) => {
       const quantity = this.cashCounts[String(denomination)] || 0;
-      return { denomination, quantity, subtotal: denomination * quantity };
+      const available = this.available ? (this.available[String(denomination)] ?? 0) : null;
+      return { denomination, quantity, subtotal: denomination * quantity, available, over: available !== null && quantity > available };
     });
   }
 

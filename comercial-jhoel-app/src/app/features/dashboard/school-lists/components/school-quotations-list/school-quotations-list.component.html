@@ -1,0 +1,110 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="file-check" [size]="18" /> Cotizaciones de listas escolares</h2>
+    @if (service.can('school_lists.quotations.create')) {
+      <app-button variant="primary" size="sm" (click)="createNew.emit()"><app-icon name="plus" [size]="16" /> Nueva cotización</app-button>
+    }
+  </div>
+
+  <form class="filters" (ngSubmit)="applyFilters()">
+    <label class="field"><span class="field__label">Cliente o estudiante</span>
+      <input name="search" type="search" placeholder="Nombre…" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </label>
+    <label class="field"><span class="field__label">Teléfono</span>
+      <input name="phone" type="search" inputmode="tel" placeholder="5555-1234" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+    </label>
+    <label class="field"><span class="field__label">No. de cotización</span>
+      <input name="number" type="search" placeholder="LE-000001" [ngModel]="number()" (ngModelChange)="number.set($event)" />
+    </label>
+    <label class="field"><span class="field__label">Grado</span>
+      <select name="grade" [ngModel]="grade()" (ngModelChange)="grade.set($event)">
+        <option value="">Todos</option>
+        @for (g of grades(); track g) { <option [value]="g">{{ g }}</option> }
+      </select>
+    </label>
+    <label class="field"><span class="field__label">Estado</span>
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="">Todos</option>
+        @for (s of statuses; track s) { <option [value]="s">{{ statusLabel[s] }}</option> }
+      </select>
+    </label>
+    <label class="field"><span class="field__label">Desde</span>
+      <input name="dateFrom" type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
+    </label>
+    <label class="field"><span class="field__label">Hasta</span>
+      <input name="dateTo" type="date" [min]="dateFrom()" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" />
+    </label>
+    <div class="filters__actions">
+      <app-button type="submit" variant="primary" size="sm"><app-icon name="filter" [size]="14" /> Aplicar</app-button>
+      <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
+    </div>
+  </form>
+
+  @if (failed()) {
+    <p class="state state--error" role="alert">No se pudieron cargar las cotizaciones.</p>
+  } @else if (!loading() && items().length === 0) {
+    <p class="state">No hay cotizaciones para los filtros seleccionados.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th>Estudiante</th>
+            <th>Grado</th>
+            <th class="num">Total</th>
+            <th class="num">Pagado</th>
+            <th class="num">Saldo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of items(); track q.id) {
+            <tr>
+              <td><button type="button" class="link" (click)="open(q)">{{ q.quotationNumber }}</button></td>
+              <td>{{ formatDate(q.quotationDate) }}</td>
+              <td>{{ q.customerName }}</td>
+              <td>{{ q.customerPhone }}</td>
+              <td>{{ q.studentName || '—' }}</td>
+              <td>{{ q.grade }}</td>
+              <td class="num">{{ formatCurrency(q.total) }}</td>
+              <td class="num">{{ formatCurrency(q.paid) }}</td>
+              <td class="num">
+                <span [class]="'dot dot--' + accountTone[q.accountStatus]" [attr.title]="accountLabel[q.accountStatus]"></span>
+                {{ formatCurrency(q.balance) }}
+              </td>
+              <td><app-badge [tone]="statusTone[q.status]">{{ statusLabel[q.status] }}</app-badge></td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="icon-btn" title="Ver detalle" aria-label="Ver detalle" (click)="open(q)"><app-icon name="eye" [size]="16" /></button>
+                  @if (service.can('school_lists.quotations.edit')) {
+                    <button type="button" class="icon-btn" title="Editar cotización" aria-label="Editar cotización" [disabled]="!isEditable(q.status)" (click)="edit(q)"><app-icon name="edit-2" [size]="16" /></button>
+                  }
+                  @if (service.can('school_lists.payments.register')) {
+                    <button type="button" class="icon-btn" title="Registrar abono" aria-label="Registrar abono" [disabled]="!canPay(q.status) || q.balance <= 0" (click)="paying.set(q)"><app-icon name="wallet" [size]="16" /></button>
+                  }
+                  <button type="button" class="icon-btn" title="Estado de cuenta" aria-label="Estado de cuenta" (click)="open(q, 'cuenta')"><app-icon name="receipt" [size]="16" /></button>
+                  @if (service.can('school_lists.documents.generate')) {
+                    <button type="button" class="icon-btn" title="Descargar PDF" aria-label="Descargar PDF" [disabled]="documents.busy() === q.id" (click)="documents.quotation(q.id, q.quotationNumber, 'download')"><app-icon name="download" [size]="16" /></button>
+                    <button type="button" class="icon-btn" title="Imprimir" aria-label="Imprimir" [disabled]="documents.busy() === q.id"  (click)="documents.quotation(q.id, q.quotationNumber, 'print')"><app-icon name="printer" [size]="16" /></button>
+                  }
+                  @if (service.can('school_lists.quotations.edit')) {
+                    <button type="button" class="icon-btn" title="Registrar entrega" aria-label="Registrar entrega" [disabled]="!canDeliver(q) || delivering() === q.id" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
+                  }
+                  <button type="button" class="icon-btn" title="Historial" aria-label="Historial" (click)="open(q, 'historial')"><app-icon name="clock" [size]="16" /></button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="total()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+  }
+</section>
+
+<app-school-payment-modal [quotation]="paying()" (closed)="paying.set(null)" (paid)="onPaid()" />

@@ -179,3 +179,115 @@ export const CASH_COUNT_RESULT_LABEL: Record<CashCountResult, string> = {
 
 /** Roles that may view/register counts and deliveries (UX only — the backend re-checks). */
 export const CASH_CUSTODY_OPERATOR_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR_DE_TURNO'];
+
+// ── Inventario de efectivo por denominación (migración 1760007800000) ──
+
+export type CashLocation = 'CAJA' | 'BODEGA';
+
+/**
+ * Inventory of one location as the backend derives it: the latest physical
+ * count (anchor) plus later movements with denominations. `unbroken` is cash
+ * that moved without breakdown (balance − knownTotal); never computed here.
+ */
+export interface LocationInventory {
+  location: CashLocation;
+  hasAnchor: boolean;
+  anchorKind: 'ARQUEO_CAJA' | 'CORTE_CAJA' | 'CONTEO_BODEGA' | null;
+  anchorId: string | null;
+  anchorNumber: number | null;
+  anchorAt: string | null;
+  anchorByUsername: string | null;
+  balance: number;
+  knownTotal: number;
+  unbroken: number;
+  lines: CashDenominationRow[];
+}
+
+export interface CashInventory {
+  cash: LocationInventory;
+  warehouse: LocationInventory;
+}
+
+/** Available quantity per denomination (`String(denomination)` key, same as the breakdown table). */
+export function availableByDenomination(inventory: LocationInventory | null): Record<string, number> | null {
+  if (!inventory) {
+    return null;
+  }
+  return Object.fromEntries(inventory.lines.map((l) => [String(l.denomination), Math.max(0, l.quantity)]));
+}
+
+/** Audited per-denomination count of Bodega (its total equals the Bodega balance). */
+export interface WarehouseCashCount {
+  id: string;
+  number: number;
+  countedAt: string;
+  businessDate: string;
+  warehouseBalance: number;
+  totalCounted: number;
+  observations: string | null;
+  createdByUsername: string;
+  details: CashDenominationRow[];
+}
+
+export interface RegisterWarehouseCashCountInput {
+  details: Array<{ denomination: number; quantity: number }>;
+  observations?: string;
+  clientRequestId: string;
+}
+
+/** What the Arqueo de Caja form had typed — persisted server side per user and bank day. */
+export interface CashCountDraftPayload {
+  details: Array<{ denomination: number; quantity: number }>;
+  observations: string | null;
+  countWarehouse: boolean;
+  warehouseCounted: number | null;
+}
+
+export interface CashCountDraft {
+  businessDate: string;
+  payload: CashCountDraftPayload;
+  version: number;
+  updatedAt: string;
+}
+
+export type CustodyTransferKind = 'CAJA_A_BODEGA' | 'BODEGA_A_CAJA' | 'BODEGA_A_BANCO';
+
+export const CUSTODY_TRANSFER_KIND_LABEL: Record<CustodyTransferKind, string> = {
+  CAJA_A_BODEGA: 'Retiro de caja → Bodega',
+  BODEGA_A_CAJA: 'Envío de Bodega → caja',
+  BODEGA_A_BANCO: 'Depósito de Bodega → banco',
+};
+
+/** One caja ↔ Bodega transfer with its breakdown (unified history). */
+export interface CustodyTransfer {
+  id: string;
+  kind: CustodyTransferKind;
+  referenceNumber: string;
+  origin: 'CAJA' | 'BODEGA';
+  destination: 'CAJA' | 'BODEGA' | 'BANCO';
+  bankName: string | null;
+  amount: number;
+  status: 'APLICADO' | 'ANULADO';
+  deliveredBy: string;
+  receivedBy: string;
+  voucherReference: string | null;
+  observations: string | null;
+  hasBreakdown: boolean;
+  businessDate: string;
+  createdById: string;
+  createdByUsername: string;
+  createdAt: string;
+  voidedAt: string | null;
+  voidReason: string | null;
+  details: CashDenominationRow[];
+}
+
+export interface CustodyTransferFilters {
+  kind?: CustodyTransferKind;
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  status?: 'APLICADO' | 'ANULADO';
+  page?: number;
+  limit?: number;
+}

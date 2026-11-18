@@ -1,0 +1,109 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="arrow-left-right" [size]="18" /> Historial de traslados entre caja y Bodega</h2>
+  </div>
+
+  <div class="filters">
+    <label>Tipo
+      <select [ngModel]="kind()" (ngModelChange)="kind.set($event)">
+        <option value="">Todos</option>
+        @for (k of kinds; track k) { <option [value]="k">{{ kindLabel[k] }}</option> }
+      </select>
+    </label>
+    <label>Usuario
+      <select [ngModel]="userId()" (ngModelChange)="userId.set($event)">
+        <option value="">Todos</option>
+        @for (u of users(); track u.id) { <option [value]="u.id">{{ u.username }}</option> }
+      </select>
+    </label>
+    <label>Desde <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" /></label>
+    <label>Hasta <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" /></label>
+    <label>Estado
+      <select [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="">Todos</option>
+        <option value="APLICADO">Aplicado</option>
+        <option value="ANULADO">Anulado</option>
+      </select>
+    </label>
+    <div class="filters__actions">
+      <app-button variant="primary" size="sm" (click)="applyFilters()">Aplicar</app-button>
+      <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
+    </div>
+  </div>
+
+  @if (failed()) {
+    <p class="state state--error">No se pudo cargar el historial de traslados.</p>
+  } @else if (items().length === 0) {
+    <p class="state">Sin traslados para los filtros seleccionados.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Tipo</th>
+            <th>Origen → destino</th>
+            <th>Fecha y hora</th>
+            <th class="num">Monto</th>
+            <th>Registró</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of items(); track t.id) {
+            <tr [class.transfers__voided]="t.status === 'ANULADO'">
+              <td>{{ t.referenceNumber }}</td>
+              <td>{{ kindLabel[t.kind] }}</td>
+              <td>{{ route(t) }}</td>
+              <td>{{ formatDateTime(t.createdAt) }}</td>
+              <td class="num">{{ formatCurrency(t.amount) }}</td>
+              <td>{{ t.createdByUsername }}</td>
+              <td>{{ t.status === 'APLICADO' ? 'Aplicado' : 'Anulado' }}</td>
+              <td>
+                <button type="button" class="transfers__view" [attr.aria-label]="'Ver desglose de ' + t.referenceNumber" (click)="selected.set(t)">
+                  <app-icon name="eye" [size]="16" /> Desglose
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-report-pagination [total]="total()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+  }
+</section>
+
+@if (selected(); as t) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="detail" role="dialog" aria-modal="true" aria-labelledby="transfer-detail-title">
+      <div class="detail__header">
+        <h2 id="transfer-detail-title"><app-icon name="layers" [size]="18" /> {{ t.referenceNumber }} · {{ kindLabel[t.kind] }}</h2>
+        <button type="button" class="detail__close" aria-label="Cerrar" (click)="selected.set(null)"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <dl class="detail__facts">
+        <div><dt>Origen → destino</dt><dd>{{ route(t) }}</dd></div>
+        <div><dt>Fecha y hora</dt><dd>{{ formatDateTime(t.createdAt) }}</dd></div>
+        <div><dt>Día operativo</dt><dd>{{ formatIsoDate(t.businessDate) }}</dd></div>
+        <div><dt>Registró</dt><dd>{{ t.createdByUsername }}</dd></div>
+        <div><dt>Entrega / recibe</dt><dd>{{ t.deliveredBy }} / {{ t.receivedBy }}</dd></div>
+        <div><dt>Estado</dt><dd>{{ t.status === 'APLICADO' ? 'Aplicado' : 'Anulado' + (t.voidReason ? ' — ' + t.voidReason : '') }}</dd></div>
+        @if (t.voucherReference) { <div><dt>Comprobante</dt><dd>{{ t.voucherReference }}</dd></div> }
+        @if (t.observations) { <div><dt>Observaciones</dt><dd>{{ t.observations }}</dd></div> }
+      </dl>
+      @if (t.details.length) {
+        <table class="table table--compact">
+          <thead><tr><th>Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr></thead>
+          <tbody>
+            @for (d of t.details; track d.denomination) {
+              <tr><td>{{ denominationLabel(d.denomination) }}</td><td class="num">{{ d.quantity }}</td><td class="num">{{ formatCurrency(d.subtotal) }}</td></tr>
+            }
+          </tbody>
+          <tfoot><tr><td colspan="2">Total</td><td class="num">{{ formatCurrency(t.amount) }}</td></tr></tfoot>
+        </table>
+      } @else {
+        <p class="state">Movimiento histórico registrado sin desglose de denominaciones.</p>
+      }
+    </div>
+  </div>
+}

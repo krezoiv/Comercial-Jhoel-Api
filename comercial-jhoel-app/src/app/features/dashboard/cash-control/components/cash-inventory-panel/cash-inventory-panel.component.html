@@ -1,0 +1,91 @@
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title"><app-icon name="layers" [size]="18" /> Inventario de efectivo por denominación</h2>
+    @if (isAdmin) {
+      <div class="panel__buttons">
+        <app-button variant="secondary" size="sm" (click)="countOpen.set(true)">
+          <app-icon name="check-check" [size]="14" /> Registrar conteo de Bodega
+        </app-button>
+      </div>
+    }
+  </div>
+  <p class="muted">
+    Cada ubicación parte de su último conteo físico (arqueo de caja o de corte; conteo de Bodega) y suma o resta los traslados con
+    desglose. El efectivo que entró o salió sin desglose (Transaccionar, CxC, movimientos manuales) aparece como "sin desglosar".
+  </p>
+
+  @if (failed()) {
+    <p class="state state--error">No se pudo cargar el inventario de efectivo.</p>
+  }
+
+  @if (inventory(); as inv) {
+    <div class="inventory">
+      @for (loc of [inv.cash, inv.warehouse]; track loc.location) {
+        <article class="inventory__card" [class.inventory__card--pending]="!loc.hasAnchor">
+          <header class="inventory__head">
+            <h3><app-icon [name]="loc.location === 'CAJA' ? 'wallet' : 'package'" [size]="16" /> {{ loc.location === 'CAJA' ? 'Caja' : 'Bodega' }}</h3>
+            <strong>{{ formatCurrency(loc.balance) }}</strong>
+          </header>
+          <p class="inventory__anchor">{{ anchorLabel(loc) }}</p>
+          <div class="table-wrapper">
+            <table class="table table--compact">
+              <thead>
+                <tr><th>Denominación</th><th class="num">Cantidad disponible</th><th class="num">Total</th></tr>
+              </thead>
+              <tbody>
+                @for (line of loc.lines; track line.denomination) {
+                  <tr [class.inventory__zero]="line.quantity === 0" [class.inventory__negative]="line.quantity < 0">
+                    <td>{{ denominationLabel(line.denomination) }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ formatCurrency(line.subtotal) }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr><td colspan="2">Total por denominación</td><td class="num">{{ formatCurrency(loc.knownTotal) }}</td></tr>
+                <tr [class.inventory__unbroken]="loc.unbroken !== 0">
+                  <td colspan="2">Sin desglosar <small>(saldo − total por denominación)</small></td>
+                  <td class="num">{{ formatCurrency(loc.unbroken) }}</td>
+                </tr>
+                <tr class="inventory__total"><td colspan="2">Saldo oficial (Kardex)</td><td class="num">{{ formatCurrency(loc.balance) }}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (counts().length) {
+    <h3 class="panel__subtitle">Últimos conteos de Bodega</h3>
+    <div class="table-wrapper">
+      <table class="table table--compact">
+        <thead>
+          <tr><th>#</th><th>Fecha y hora</th><th class="num">Total contado</th><th>Registró</th><th>Desglose</th></tr>
+        </thead>
+        <tbody>
+          @for (c of counts(); track c.id) {
+            <tr>
+              <td>{{ c.number }}</td>
+              <td>{{ formatDateTime(c.countedAt) }}</td>
+              <td class="num">{{ formatCurrency(c.totalCounted) }}</td>
+              <td>{{ c.createdByUsername }}</td>
+              <td class="inventory__details">
+                @for (d of c.details; track d.denomination) {
+                  @if (d.quantity > 0) { <span>{{ denominationLabel(d.denomination) }} × {{ d.quantity }}</span> }
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<app-warehouse-count-modal
+  [open]="countOpen()"
+  [inventory]="inventory()?.warehouse ?? null"
+  (closed)="countOpen.set(false)"
+  (saved)="onCountSaved()"
+/>

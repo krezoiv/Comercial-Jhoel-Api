@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 import {
   CashBankBalance,
   CashCustody,
+  LocationInventory,
   WarehouseWithdrawal,
+  availableByDenomination,
   WarehouseWithdrawalDestination,
   formatCurrency,
 } from '../../../../../core/models';
@@ -24,10 +26,12 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, round2 } from '.
 /**
  * "Retiro de Bodega": cash leaves Bodega and either goes back to the caja
  * (internal transfer, total custody unchanged) or is deposited into a
- * registered bank account (Bodega down, bank up). Breakdown by default;
- * without it only administrators (business policy). Previews only — the
- * backend checks the Bodega balance under its lock and applies both sides in
- * one transaction. One `clientRequestId` per opening (idempotent).
+ * registered bank account (Bodega down, bank up). The breakdown is mandatory
+ * (per-denomination inventory, migration 1760007800000) and each row shows
+ * how many bills/coins Bodega has; Bodega needs its initial count first.
+ * Previews only — the backend checks balance and denominations under its lock
+ * and applies both sides in one transaction. One `clientRequestId` per
+ * opening (idempotent).
  */
 @Component({
   selector: 'app-warehouse-withdrawal-modal',
@@ -40,8 +44,6 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, round2 } from '.
 export class WarehouseWithdrawalModalComponent implements OnChanges {
   @Input() open = false;
   @Input() custody: CashCustody | null = null;
-  /** Administrators may register a total without breakdown. */
-  @Input() canSkipBreakdown = false;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<{ withdrawal: WarehouseWithdrawal; custody: CashCustody }>();
@@ -58,7 +60,15 @@ export class WarehouseWithdrawalModalComponent implements OnChanges {
   readonly banks = signal<CashBankBalance[]>([]);
   readonly bankId = signal('');
   readonly amount = signal<number | null>(null);
-  readonly withBreakdown = signal(true);
+  /** Bodega inventory by denomination (loaded on open) — what can be withdrawn. */
+  readonly inventory = signal<LocationInventory | null>(null);
+  readonly available = computed(() => availableByDenomination(this.inventory()));
+  readonly overStock = computed(() => {
+    const available = this.available();
+    return !!available && Object.entries(this.cashCounts()).some(([d, q]) => (q || 0) > (available[d] ?? 0));
+  });
+  /** Bodega has no initial count yet: withdrawals are rejected until an admin registers it. */
+  readonly needsCount = computed(() => !!this.inventory() && !this.inventory()!.hasAnchor);
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
   readonly deliveredBy = signal('');
   readonly receivedBy = signal('');
@@ -93,7 +103,9 @@ export class WarehouseWithdrawalModalComponent implements OnChanges {
       this.deliveredBy().trim().length >= 3 &&
       this.receivedBy().trim().length >= 3 &&
       (this.destination() === 'CAJA' || !!this.selectedBank()) &&
-      (this.withBreakdown() ? this.breakdownStatus() === 'green' : this.canSkipBreakdown),
+      this.breakdownStatus() === 'green' &&
+      !this.overStock() &&
+      !this.needsCount(),
   );
 
   ngOnChanges(): void {
@@ -101,8 +113,12 @@ export class WarehouseWithdrawalModalComponent implements OnChanges {
       this.destination.set('CAJA');
       this.bankId.set('');
       this.amount.set(null);
-      this.withBreakdown.set(true);
       this.cashCounts.set(emptyCashCounts());
+      this.inventory.set(null);
+      this.service.getInventory().subscribe({
+        next: (inv) => this.inventory.set(inv.warehouse),
+        error: () => this.inventory.set(null),
+      });
       this.deliveredBy.set('');
       this.receivedBy.set(this.auth.currentUser()?.username ?? '');
       this.voucher.set('');
@@ -146,7 +162,7 @@ export class WarehouseWithdrawalModalComponent implements OnChanges {
       .registerWithdrawal({
         destination: this.destination(),
         amount,
-        details: this.withBreakdown() ? cashCountsToDetails(this.cashCounts(), { keepZero: false }) : undefined,
+        details: cashCountsToDetails(this.cashCounts(), { keepZero: false }),
         bankId: toCash ? undefined : this.bankId(),
         deliveredBy: this.deliveredBy().trim(),
         receivedBy: this.receivedBy().trim(),

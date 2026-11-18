@@ -1572,6 +1572,54 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   `close-agent-day.use-case.spec.ts`, `cash-denominations.spec.ts`, casos en `cash-custody.use-cases.spec.ts`,
   `test/cuadre-cash-breakdown.e2e-spec.ts`.
 
+### Inventario por denominación, traslados con desglose y borradores del arqueo (migración `1760007800000`)
+
+- **Inventario derivado (nunca existencias editables)**:
+  - `cash_location_inventory('CAJA'|'BODEGA')` parte del ancla (`cash_location_anchor`) y suma o resta los movimientos posteriores con desglose.
+    - **CAJA**: el ancla es el arqueo `VIGENTE` (`last_cash_sequence`) o el arqueo vigente de un corte `FINALIZADO` (`closing_sequence`), el más tardío en el Kardex.
+    - **BODEGA**: el ancla es el último `warehouse_cash_counts`.
+  - Detalles de cada movimiento:
+    - Caja: los de `cash_movement_details`, o los del lado de Bodega en un retiro hacia caja.
+    - Bodega: los de `warehouse_cash_movement_details`, o los del movimiento de caja en una entrega.
+    - Las anulaciones aplican el desglose del original con su propia dirección.
+  - "Sin desglosar" = saldo − Σ(denominación × cantidad), en `cash_location_inventory_summary`.
+- **Conteo de Bodega** `register_warehouse_cash_count`:
+  - Solo `authorize`, con día abierto.
+  - Debe ser igual al saldo (`WAREHOUSE_COUNT_MISMATCH:contado:saldo`).
+  - Inmutable e idempotente (`WHC:`).
+- **Traslados**:
+  - `register_cash_warehouse_transfer` y `register_warehouse_withdrawal` (parche con anclas) ya no aceptan registro sin desglose (`CASH_CUSTODY_BREAKDOWN_REQUIRED`, ni para administradores).
+  - Bajo sus mismos bloqueos llaman `cash_assert_denominations_available`, que rechaza con `CASH_COUNT_REQUIRED` / `WAREHOUSE_COUNT_REQUIRED` o `*_DENOMINATION_NOT_AVAILABLE:den:disp:sol`; el mapper arma un mensaje con el detalle.
+- **Borradores del Arqueo de Caja** `cash_count_drafts`:
+  - Un borrador por usuario y día bancario (`UNIQUE (user_id, day_opening_id)`); se actualiza y se borra porque no es financiero.
+  - Rutas `GET`, `PUT` y `DELETE` en `counts/draft`, declaradas antes de `counts/:id`.
+  - `RegisterCashCountUseCase` lo borra al confirmar un arqueo nuevo (no una corrección).
+- **Otras rutas nuevas**: `GET inventory`, `GET/POST warehouse/counts`, `GET custody/transfers` (historial unificado con desglose; filtros `kind`, `userId`, fechas, `status`).
+- **No cambia**: el depósito de caja a banco no valida por denominación (no se pidió). Transaccionar, CxC, Activos y los movimientos manuales siguen sin desglose y aparecen como "sin desglosar".
+- **Pruebas**: `sql/tests/cash-denomination-inventory.test.sql` (31), concurrencia de Bodega por denominación en `cash-control-concurrency.sh`, `test/cash-inventory.e2e-spec.ts`, specs de casos de uso y de errores. Documento técnico: `docs/cash-control/inventario-por-denominacion-y-borradores.md`.
+
+### Listas Escolares (`modules/school-lists/`, migración `1760007900000`)
+
+- **Módulo independiente de Cotizaciones**: no toca `quotations`, ventas, inventario, Caja de ventas, Control de Efectivo ni bancos. Los pagos viven **solo** en el estado de cuenta (`school_quotation_payments`); la entrega solo cambia el estado (exige saldo 0) y **no** crea una venta. Las tres decisiones las tomó el dueño.
+- **Tablas**:
+  - `school_list_templates` y `_items`: configuración; las líneas se reemplazan al editar.
+  - `school_quotations` y `school_quotation_items`: copia propia de cada línea (origen PLANTILLA/INVENTARIO/MANUAL, `subtotal` generado).
+  - `school_quotation_payments`: ANTICIPO/ABONO/DEVOLUCION/ANULACION; inmutables (solo APLICADO → ANULADO) e idempotentes.
+  - `school_list_history`: solo inserción.
+  - Ni las cotizaciones ni las plantillas se borran (triggers).
+- **Escrituras solo por funciones plpgsql**:
+  - Comprueban el rol con `school_list_assert_permission`, que repite el mapa `SCHOOL_LIST_PERMISSION_ROLES` del API.
+  - Bloquean la cotización con `FOR UPDATE`.
+  - Usan `version` en las ediciones (`SCHOOL_VERSION_CONFLICT`) e `idempotency_key` (prefijos `SLQ:`, `SLP:`, `SLV:`, `SLC:`).
+  - Lanzan errores `SCHOOL_*[:detalle]`, que `schoolListErrorFromMessage` traduce.
+- **Precios**: una línea de plantilla o inventario conserva su precio de referencia; cambiarlo o descontar requiere `school_lists.prices.override` (supervisor o admin). Las líneas a mano tienen precio libre.
+- **Estados de pago**: `school_quotation_refresh_status` los recalcula (COTIZADA → ANTICIPO_RECIBIDO → PAGO_PARCIAL → PAGADA). BORRADOR, EN_PREPARACION, ENTREGADA y CANCELADA son manuales. Cancelar con dinero recibido registra una DEVOLUCION por lo pagado.
+- **Rutas**:
+  - Estáticas: `GET permissions`, `GET quotations/dashboard`, `GET quotations/:id/pdf` (declaradas antes de `:id`).
+  - Comprobante: `GET payments/:id/receipt` (A5).
+- **Siembra**: Primero, Segundo y Tercero Básico, **vacías**. El `down` solo elimina las tablas si no hay cotizaciones.
+- **Pruebas**: `sql/tests/school-lists.test.sql` (62), `sql/tests/school-lists-concurrency.sh`, `test/school-lists.e2e-spec.ts`, specs de casos de uso y errores. Documento: `docs/school-lists/listas-escolares.md`.
+
 ### Cuentas por Cobrar — cancelación en efectivo o depósito, individual y múltiple (migración `1760007000000`)
 
 - **Modelo**: `account_receivable_payment_operations` (operación consolidada: cliente, `payment_method`

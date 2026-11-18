@@ -70,6 +70,9 @@ BEGIN
     pg_temp.err(format('SELECT register_warehouse_initial_balance(5, %L, %L, %L)', v_super, 'Otro saldo', 'WH-INIT-2')),
     'WAREHOUSE_INITIAL_BALANCE_EXISTS');
 
+  -- Inventario por denominación de la caja (migración 1760007800000): parte de un arqueo.
+  PERFORM register_cash_count(pg_temp.breakdown(200, 500), 'Inventario de partida', NULL, v_super, 'A-0', NULL, NULL);
+
   -- ── Validaciones de la entrega ────────────────────────────────────────────────────
   PERFORM pg_temp.expect('V1 monto mayor que cero',
     pg_temp.err(format('SELECT register_cash_warehouse_transfer(0, NULL, %L, %L, NULL, NULL, %L, %L)', 'Juan Caja', 'Ana Bodega', v_super, 'T-V1')),
@@ -82,7 +85,8 @@ BEGIN
       pg_temp.breakdown(200, 2), 'Juan Caja', 'Ana Bodega', v_super, 'T-V3')),
     'CASH_BREAKDOWN_MISMATCH');
   PERFORM pg_temp.expect('V4 no se entrega más del efectivo en caja',
-    pg_temp.err(format('SELECT register_cash_warehouse_transfer(100000.01, NULL, %L, %L, NULL, NULL, %L, %L)', 'Juan Caja', 'Ana Bodega', v_super, 'T-V4')),
+    pg_temp.err(format('SELECT register_cash_warehouse_transfer(100000.01, %L, %L, %L, NULL, NULL, %L, %L)',
+      pg_temp.breakdown(200, 500, 0.01, 1), 'Juan Caja', 'Ana Bodega', v_super, 'T-V4')),
     'CASH_INSUFFICIENT_BALANCE');
   IF v_user IS NOT NULL THEN
     PERFORM pg_temp.expect('V5 un cajero no registra entregas (RBAC en la base)',

@@ -44,7 +44,7 @@
 
 ### cash-mutation.interceptor.spec.ts
 
-- **Ruta:** [cash-mutation.interceptor.spec.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.spec.ts) (`comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.spec.ts`, 48 líneas)
+- **Ruta:** [cash-mutation.interceptor.spec.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.spec.ts) (`comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.spec.ts`, 53 líneas)
 - **Tipo:** Prueba unitaria · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-interceptors`
 - **Responsabilidad:** Prueba unitaria (sin comentario de documentación en el código).
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts), [cash-mutation.interceptor.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-ts)
@@ -54,25 +54,25 @@
 
 ### cash-mutation.interceptor.ts
 
-- **Ruta:** [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts) (`comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts`, 50 líneas)
+- **Ruta:** [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts) (`comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts`, 52 líneas)
 - **Tipo:** Interceptor · **Capa:** Core (servicios, modelos, guards) · **Módulo:** Frontend `core-interceptors`
 - **Responsabilidad:** True for a successful-write candidate on a cash-moving resource of our own API.
 - **Depende de (archivos del proyecto):** [environment.ts](environments.md#f-comercial-jhoel-app-src-environments-environment-ts), [cash-control-sync.service.ts](core-services.md#f-comercial-jhoel-app-src-app-core-services-cash-control-sync-service-ts)
 - **Paquetes externos:** `@angular/common`, `@angular/core`, `rxjs`
 - **Consumidores:** [app.config.ts](root.md#f-comercial-jhoel-app-src-app-app-config-ts), [cash-mutation.interceptor.spec.ts](core-interceptors.md#f-comercial-jhoel-app-src-app-core-interceptors-cash-mutation-interceptor-spec-ts)
-#### Función `isCashMutation` (L21–29)
+#### Función `isCashMutation` (L23–31)
 
 - **Tipo:** función exportada
-- **Firma:** `isCashMutation(method: string, url: string): boolean` — [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts#L21)
+- **Firma:** `isCashMutation(method: string, url: string): boolean` — [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts#L23)
 - **Propósito / descripción:** True for a successful-write candidate on a cash-moving resource of our own API.
 - **Dependencias:** `url.startsWith`, `CASH_RESOURCES.test`, `READ_ONLY_POSTS.test`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).
 - **Consumidores:** sin llamadas detectadas desde otros archivos
 
-#### Función `cashMutationInterceptor` (L37–49)
+#### Función `cashMutationInterceptor` (L39–51)
 
 - **Tipo:** función exportada
-- **Firma:** `cashMutationInterceptor(req, next)` — [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts#L37)
+- **Firma:** `cashMutationInterceptor(req, next)` — [cash-mutation.interceptor.ts](../../../../comercial-jhoel-app/src/app/core/interceptors/cash-mutation.interceptor.ts#L39)
 - **Propósito / descripción:** Real-time update of every screen that shows cash (Control de Efectivo, Transaccionar's "Últimas transacciones"): after a successful write to a cash-moving resource, tells `CashControlSyncService` so they re-read the backend. Centralized here so no feature has to remember to notify.
 - **Dependencias:** `isCashMutation`, `next`, `inject`, `next(req).pipe`, `tap`, `sync.notifyChanged`
 - **Efectos secundarios:** Sin efectos externos detectados (lógica en memoria o delega).

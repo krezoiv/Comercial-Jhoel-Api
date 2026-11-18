@@ -22,12 +22,12 @@ flowchart TD
   end
   subgraph s15["Aplicación — caso de uso"]
   n16["RegisterWarehouseWithdrawalUseCase.execute<br/><small>api/cash-control/application/use-cases/cash-custody.use-cases.ts</small>"]
-  n17["assertCashCustodyPermission()<br/><small>llamada en L424</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
+  n17["assertCashCustodyPermission()<br/><small>llamada en L450</small><br/><small>api/cash-control/domain/policies/cash-control.policy.ts</small>"]
   n18{"¿!(CASH_CUSTODY_PERMISSION_ROLES[permission] as readonly string[]).includes( role ?? '', )?<br/><small>L32</small>"}
   n19(["cashControlError('CASH_CUSTODY_FORBIDDEN')"])
-  n20{"¿input.destination === 'BANCO' #amp;#amp; !input.bankId?<br/><small>L429</small>"}
+  n20{"¿input.destination === 'BANCO' #amp;#amp; !input.bankId?<br/><small>L452</small>"}
   n21(["cashControlError('WAREHOUSE_WITHDRAWAL_BANK_REQUIRED')"])
-  n22{"¿!withdrawal?<br/><small>L448</small>"}
+  n22{"¿!withdrawal?<br/><small>L471</small>"}
   n23(["cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND')"])
   end
   subgraph s24["Dominio → Infraestructura"]
@@ -59,16 +59,17 @@ flowchart TD
   n48(["RAISE WAREHOUSE_WITHDRAWAL_INVALID_DESTINATION<br/>(rollback)"])
   n49{"¿v_total #lt;#gt; p_amount?"}
   n50(["RAISE CASH_BREAKDOWN_MISMATCH<br/>(rollback)"])
-  n51["Otros RAISE de register_warehouse_withdrawal (condición no extraída):<br/>CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE"]
+  n51["Otros RAISE de register_warehouse_withdrawal (condición no extraída):<br/>CASH_CUSTODY_BREAKDOWN_REQUIRED, CASH_INVALID_DENOMINATION, WAREHOUSE_INSUFFICIENT_BALANCE"]
   n52[["apply_bank_account_movement()"]]
   n53[["apply_cash_movement()"]]
   n54[["apply_warehouse_cash_movement()"]]
-  n55[["cash_custody_assert_role()"]]
-  n56[("Escribe:<br/>warehouse_cash_movement_details<br/>warehouse_cash_withdrawals")]
+  n55[["cash_assert_denominations_available()"]]
+  n56[["cash_custody_assert_role()"]]
+  n57[("Escribe:<br/>warehouse_cash_movement_details<br/>warehouse_cash_withdrawals")]
   end
-  n57[("findWithdrawalById: TypeORM Repository")]
+  n58[("findWithdrawalById: TypeORM Repository")]
   end
-  n58(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.notifications.success<br/>this.saved.emit"])
+  n59(["Fin: la interfaz se actualiza<br/>this.isSaving.set<br/>this.errorMessage.set<br/>this.notifications.success<br/>this.saved.emit"])
   n2 --> n3
   n1 -->|acción del usuario| n6
   n6 --> n5
@@ -131,11 +132,12 @@ flowchart TD
   n49 -->|no · llama| n53
   n49 -->|no · llama| n54
   n49 -->|no · llama| n55
-  n49 -->|no| n56
-  n56 -->|COMMIT| n8
-  n26 --> n57
-  n57 --> n8
-  n8 --> n58
+  n49 -->|no · llama| n56
+  n49 -->|no| n57
+  n57 -->|COMMIT| n8
+  n26 --> n58
+  n58 --> n8
+  n8 --> n59
   classDef start fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef fe fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
   classDef api fill:#ede7f6,stroke:#4527a0,color:#311b92
@@ -149,13 +151,13 @@ flowchart TD
   class n1 start
   class n2,n3,n11,n13,n19,n21,n23,n34,n36,n38,n40,n42,n44,n46,n48,n50,n51 err
   class n5,n6,n7 fe
-  class n8,n58 ok
+  class n8,n59 ok
   class n10,n12,n18,n20,n22,n33,n35,n37,n39,n41,n43,n45,n47,n49 dec
   class n14 api
   class n16 app
   class n17,n25 dom
   class n26 infra
-  class n28,n30,n32,n52,n53,n54,n55,n56,n57 db
+  class n28,n30,n32,n52,n53,n54,n55,n56,n57,n58 db
 ```
 
 ## Explicación

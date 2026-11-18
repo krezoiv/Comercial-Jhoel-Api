@@ -1,0 +1,56 @@
+<div class="dash">
+  <div class="dash__range">
+    <label class="field">
+      <span>Desde</span>
+      <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
+    </label>
+    <label class="field">
+      <span>Hasta</span>
+      <input type="date" [ngModel]="dateTo()" [min]="dateFrom()" (ngModelChange)="dateTo.set($event)" />
+    </label>
+    <app-button variant="primary" size="sm" [disabled]="loading()" (click)="load()">Actualizar</app-button>
+    <app-button variant="ghost" size="sm" (click)="openList.emit()">Ver cotizaciones</app-button>
+  </div>
+
+  @if (failed()) {
+    <p class="dash__error" role="alert">No se pudo cargar el tablero de Listas Escolares.</p>
+  }
+
+  @if (data(); as d) {
+    <div class="dash__tiles">
+      <app-summary-tile icon="file-check" title="Total de cotizaciones" [value]="formatQuantity(d.totalQuotations)" description="En el período seleccionado" />
+      <app-summary-tile icon="clock" title="Cotizaciones pendientes" tone="danger" [value]="formatQuantity(d.pendingQuotations)" description="Con saldo por cobrar" />
+      <app-summary-tile icon="check-circle" title="Cotizaciones pagadas" tone="success" [value]="formatQuantity(d.paidQuotations)" description="Pagadas o entregadas" />
+      <app-summary-tile icon="receipt" title="Total cotizado" [value]="formatCurrency(d.totalQuoted)" description="Sin borradores ni canceladas" />
+      <app-summary-tile icon="wallet" title="Anticipos y abonos recibidos" tone="gold" [value]="formatCurrency(d.totalReceived)" description="Neto de devoluciones" />
+      <app-summary-tile icon="alert-circle" title="Saldo pendiente por cobrar" tone="danger" [value]="formatCurrency(d.pendingBalance)" description="Cotizaciones abiertas" />
+    </div>
+
+    <div class="dash__charts">
+      <app-donut-chart
+        title="Cotizaciones por grado"
+        subtitle="Cantidad de cotizaciones (sin canceladas)"
+        icon="book-open"
+        centerLabel="Cotizaciones"
+        [segments]="gradeSegments()"
+        [formatValue]="formatCount"
+        [loading]="loading()"
+        emptyTitle="Sin cotizaciones en el período"
+        emptyDescription="Aquí verás el reparto por grado en cuanto registres cotizaciones."
+      />
+      <app-line-chart
+        title="Ingresos recibidos por período"
+        subtitle="Anticipos y abonos, neto de devoluciones y anulaciones"
+        icon="trending-up"
+        valueLabel="recibido"
+        [points]="incomePoints()"
+        [formatValue]="formatMoney"
+        [loading]="loading()"
+        emptyTitle="Sin pagos en el período"
+        emptyDescription="Aquí verás los ingresos en cuanto se registren anticipos o abonos."
+      />
+    </div>
+  } @else if (loading()) {
+    <p class="dash__loading">Cargando tablero…</p>
+  }
+</div>

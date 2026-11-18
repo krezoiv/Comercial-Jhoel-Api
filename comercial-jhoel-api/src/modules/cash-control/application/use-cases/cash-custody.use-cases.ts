@@ -5,6 +5,11 @@ import type {
   CashCountRow,
   CashCustodyRepository,
   CashCustodySnapshot,
+  CashCountDraft,
+  CustodyTransferKind,
+  CustodyTransferRow,
+  LocationInventory,
+  WarehouseCashCountRow,
   LatestCashCountCandidate,
   Paginated,
   WarehouseMovementRow,
@@ -47,6 +52,23 @@ function nonZero(
   return (details ?? []).filter((row) => row.quantity > 0);
 }
 
+/**
+ * Every caja ↔ Bodega transfer carries its bills/coins (per-denomination
+ * inventory): non-zero rows only, at least one, whole quantities.
+ */
+function requireBreakdown(
+  details: DenominationInput[] | undefined,
+): DenominationInput[] {
+  const rows = nonZero(details);
+  if (rows.length === 0) {
+    throw cashControlError('CASH_CUSTODY_BREAKDOWN_REQUIRED');
+  }
+  if (rows.some((r) => !Number.isInteger(r.quantity) || r.quantity < 0)) {
+    throw cashControlError('CASH_INVALID_DENOMINATION');
+  }
+  return rows;
+}
+
 /** "Efectivo en caja / en Bodega / total bajo custodia" — official balances from both Kardex. */
 @Injectable()
 export class GetCashCustodyUseCase {
@@ -62,9 +84,11 @@ export class GetCashCustodyUseCase {
 }
 
 /**
- * "Entrega de Efectivo a Bodega": one atomic SQL call moves the cash from the
- * caja Kardex to the Bodega Kardex (same amount, same reference). Without a
- * breakdown it requires `cash_custody.authorize` (business policy).
+ * "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): one atomic SQL
+ * call moves the cash from the caja Kardex to the Bodega Kardex (same amount,
+ * same reference). Since migration 1760007800000 the breakdown is mandatory
+ * and every denomination must be available in the caja inventory (checked by
+ * the SQL function under the caja lock).
  */
 @Injectable()
 export class RegisterWarehouseTransferUseCase {
@@ -85,10 +109,7 @@ export class RegisterWarehouseTransferUseCase {
     } & CustodyActor,
   ): Promise<{ transfer: WarehouseTransferRow; custody: CashCustodySnapshot }> {
     assertCashCustodyPermission(input.role, 'cash_custody.operate');
-    const details = nonZero(input.details);
-    if (details.length === 0) {
-      assertCashCustodyPermission(input.role, 'cash_custody.authorize');
-    }
+    const details = requireBreakdown(input.details);
     const id = await this.repository.registerTransfer({
       amount: input.amount,
       details,
@@ -288,6 +309,11 @@ export class RegisterCashCountUseCase {
     if (!count) {
       throw cashControlError('CASH_COUNT_NOT_FOUND');
     }
+    // The confirmed count replaces the user's in-progress draft of this bank
+    // day. A correction (admin) is not typed in the draft form, so it keeps it.
+    if (!input.replacesId) {
+      await this.repository.deleteCountDraft(input.userId);
+    }
     return count;
   }
 }
@@ -422,10 +448,7 @@ export class RegisterWarehouseWithdrawalUseCase {
     custody: CashCustodySnapshot;
   }> {
     assertCashCustodyPermission(input.role, 'cash_custody.operate');
-    const details = nonZero(input.details);
-    if (details.length === 0) {
-      assertCashCustodyPermission(input.role, 'cash_custody.authorize');
-    }
+    const details = requireBreakdown(input.details);
     if (input.destination === 'BANCO' && !input.bankId) {
       throw cashControlError('WAREHOUSE_WITHDRAWAL_BANK_REQUIRED');
     }
@@ -532,5 +555,202 @@ export class GetWarehouseWithdrawalUseCase {
       throw cashControlError('WAREHOUSE_WITHDRAWAL_NOT_FOUND');
     }
     return withdrawal;
+  }
+}
+
+// ── Inventario por denominación, conteo de Bodega, borradores e historial ──
+
+/** Caja and Bodega inventories by denomination (derived in SQL from counts + movements). */
+@Injectable()
+export class GetCashInventoryUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(actor: {
+    role: string;
+  }): Promise<{ cash: LocationInventory; warehouse: LocationInventory }> {
+    assertCashCustodyPermission(actor.role, 'cash_custody.view');
+    const [cash, warehouse] = await Promise.all([
+      this.repository.getInventory('CAJA'),
+      this.repository.getInventory('BODEGA'),
+    ]);
+    return { cash, warehouse };
+  }
+}
+
+/**
+ * "Conteo de Bodega por denominación": the audited reference of the Bodega
+ * inventory. Administrators only (`cash_custody.authorize`); the SQL function
+ * requires the counted total to equal the Bodega balance and never moves cash.
+ */
+@Injectable()
+export class RegisterWarehouseCashCountUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(
+    input: {
+      details: DenominationInput[];
+      observations?: string;
+      clientRequestId: string;
+    } & CustodyActor,
+  ): Promise<{ count: WarehouseCashCountRow; inventory: LocationInventory }> {
+    assertCashCustodyPermission(input.role, 'cash_custody.authorize');
+    if (!input.details?.length) {
+      throw cashControlError('CASH_CUSTODY_BREAKDOWN_REQUIRED');
+    }
+    const id = await this.repository.registerWarehouseCount({
+      details: input.details,
+      observations: input.observations?.trim() || null,
+      userId: input.userId,
+      idempotencyKey: `WHC:${input.clientRequestId}`,
+    });
+    const [count, inventory] = await Promise.all([
+      this.repository.findWarehouseCountById(id),
+      this.repository.getInventory('BODEGA'),
+    ]);
+    if (!count) {
+      throw cashControlError('CASH_COUNT_NOT_FOUND');
+    }
+    return { count, inventory };
+  }
+}
+
+/** History of Bodega counts. */
+@Injectable()
+export class ListWarehouseCashCountsUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    page?: number;
+    limit?: number;
+    role: string;
+  }): Promise<Paginated<WarehouseCashCountRow>> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    return this.repository.findWarehouseCounts(
+      page(input.page),
+      limit(input.limit),
+    );
+  }
+}
+
+/** The caller's own in-progress Arqueo de Caja for the current bank day (never another user's). */
+@Injectable()
+export class GetCashCountDraftUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(actor: CustodyActor): Promise<CashCountDraft | null> {
+    assertCashCustodyPermission(actor.role, 'cash_custody.operate');
+    return this.repository.getCountDraft(actor.userId);
+  }
+}
+
+/**
+ * Autosave of the Arqueo de Caja form. Keyed by the JWT user and the current
+ * bank day, so a user can only ever write their own draft. Requires an open
+ * bank day (same rule as registering the count).
+ */
+@Injectable()
+export class SaveCashCountDraftUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(
+    input: {
+      details: DenominationInput[];
+      observations?: string;
+      countWarehouse?: boolean;
+      warehouseCounted?: number | null;
+    } & CustodyActor,
+  ): Promise<CashCountDraft> {
+    assertCashCustodyPermission(input.role, 'cash_custody.operate');
+    const seen = new Set<number>();
+    for (const row of input.details ?? []) {
+      const key = Math.round(row.denomination * 100);
+      if (
+        !Number.isInteger(row.quantity) ||
+        row.quantity < 0 ||
+        seen.has(key)
+      ) {
+        throw cashControlError('CASH_COUNT_DRAFT_INVALID');
+      }
+      seen.add(key);
+    }
+    const draft = await this.repository.saveCountDraft(input.userId, {
+      details: (input.details ?? []).map((d) => ({
+        denomination: d.denomination,
+        quantity: d.quantity,
+      })),
+      observations: input.observations?.slice(0, 500) ?? null,
+      countWarehouse: input.countWarehouse === true,
+      warehouseCounted: input.countWarehouse
+        ? (input.warehouseCounted ?? null)
+        : null,
+    });
+    if (!draft) {
+      throw cashControlError('CASH_CUSTODY_DAY_NOT_OPEN');
+    }
+    return draft;
+  }
+}
+
+/** Explicit "Reiniciar arqueo": discards the caller's draft of the current bank day. */
+@Injectable()
+export class DiscardCashCountDraftUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(actor: CustodyActor): Promise<{ discarded: true }> {
+    assertCashCustodyPermission(actor.role, 'cash_custody.operate');
+    await this.repository.deleteCountDraft(actor.userId);
+    return { discarded: true };
+  }
+}
+
+/** Unified history of caja ↔ Bodega transfers, filterable by kind, user, date and status. */
+@Injectable()
+export class ListCustodyTransfersUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    kind?: CustodyTransferKind;
+    userId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    status?: 'APLICADO' | 'ANULADO';
+    page?: number;
+    limit?: number;
+    role: string;
+  }): Promise<Paginated<CustodyTransferRow>> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    if (input.dateFrom && input.dateTo && input.dateFrom > input.dateTo) {
+      throw cashControlError('CASH_INVALID_DATE_RANGE');
+    }
+    return this.repository.findCustodyTransfers({
+      kind: input.kind,
+      userId: input.userId,
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+      status: input.status,
+      page: page(input.page),
+      limit: limit(input.limit),
+    });
   }
 }

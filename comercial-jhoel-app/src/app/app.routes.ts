@@ -383,6 +383,28 @@ export const routes: Routes = [
         title: 'Tickets — Sistema',
       },
       {
+        path: 'listas-escolares',
+        loadComponent: () =>
+          import('./features/dashboard/school-lists/school-lists-page.component').then((m) => m.SchoolListsPageComponent),
+        title: 'Listas Escolares — Sistema',
+      },
+      {
+        path: 'listas-escolares/cotizaciones/:id',
+        loadComponent: () =>
+          import('./features/dashboard/school-lists/school-quotation-detail-page.component').then(
+            (m) => m.SchoolQuotationDetailPageComponent,
+          ),
+        title: 'Cotización escolar — Sistema',
+      },
+      {
+        path: 'listas-escolares/cotizaciones/:id/editar',
+        loadComponent: () =>
+          import('./features/dashboard/school-lists/school-quotation-edit-page.component').then(
+            (m) => m.SchoolQuotationEditPageComponent,
+          ),
+        title: 'Editar cotización escolar — Sistema',
+      },
+      {
         path: 'cotizaciones',
         loadComponent: () =>
           import('./features/dashboard/quotations/quotations-page.component').then((m) => m.QuotationsPageComponent),
