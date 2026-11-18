@@ -12,13 +12,15 @@ export type SchoolQuotationStatus =
   | 'PAGO_PARCIAL'
   | 'PAGADA'
   | 'EN_PREPARACION'
+  | 'TERMINADA'
   | 'ENTREGADA'
   | 'CANCELADA';
 
 export type SchoolAccountStatus = 'PENDIENTE' | 'PARCIAL' | 'PAGADA' | 'CERRADA';
 export type SchoolPaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'DEPOSITO' | 'TARJETA' | 'OTRO';
 export type SchoolPaymentKind = 'ANTICIPO' | 'ABONO' | 'DEVOLUCION' | 'ANULACION';
-export type SchoolStatusAction = 'CONFIRMAR' | 'PREPARAR' | 'ENTREGAR';
+/** TERMINAR = the list is packed and dispatched, ready to hand over. */
+export type SchoolStatusAction = 'CONFIRMAR' | 'PREPARAR' | 'TERMINAR' | 'ENTREGAR';
 export type SchoolLineSource = 'PLANTILLA' | 'INVENTARIO' | 'MANUAL';
 
 export type SchoolListPermission =
@@ -40,6 +42,7 @@ export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   PAGO_PARCIAL: 'Pago parcial',
   PAGADA: 'Pagada',
   EN_PREPARACION: 'En preparación',
+  TERMINADA: 'Terminada',
   ENTREGADA: 'Entregada',
   CANCELADA: 'Cancelada',
 };
@@ -54,8 +57,9 @@ export const SCHOOL_STATUS_TONE: Record<
   PAGO_PARCIAL: 'gold',
   PAGADA: 'success',
   EN_PREPARACION: 'brand',
+  TERMINADA: 'neutral-dark',
   ENTREGADA: 'success',
-  CANCELADA: 'neutral-dark',
+  CANCELADA: 'neutral-light',
 };
 
 export const SCHOOL_STATUSES = Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[];
@@ -243,6 +247,8 @@ export interface SchoolQuotation extends SchoolQuotationSummary {
   discount: number;
   observations: string | null;
   updatedAt: string;
+  finishedAt: string | null;
+  finishedByUsername: string | null;
   deliveredAt: string | null;
   deliveredByUsername: string | null;
   cancelledAt: string | null;
@@ -341,6 +347,7 @@ export const SCHOOL_HISTORY_LABEL: Record<string, string> = {
   PAGO_ANULADO: 'Pago anulado',
   CONFIRMAR: 'Borrador confirmado',
   PREPARAR: 'En preparación',
+  TERMINAR: 'Terminada · despachada, lista para entregar',
   ENTREGAR: 'Entregada al cliente',
   CANCELADA: 'Cotización cancelada',
 };

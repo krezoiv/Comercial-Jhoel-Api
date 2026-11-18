@@ -7,6 +7,7 @@ export const SCHOOL_QUOTATION_STATUSES = [
   'PAGO_PARCIAL',
   'PAGADA',
   'EN_PREPARACION',
+  'TERMINADA',
   'ENTREGADA',
   'CANCELADA',
 ] as const;
@@ -24,6 +25,7 @@ export type SchoolPaymentMethod = (typeof SCHOOL_PAYMENT_METHODS)[number];
 export const SCHOOL_STATUS_ACTIONS = [
   'CONFIRMAR',
   'PREPARAR',
+  'TERMINAR',
   'ENTREGAR',
 ] as const;
 export type SchoolStatusAction = (typeof SCHOOL_STATUS_ACTIONS)[number];
@@ -213,6 +215,9 @@ export interface QuotationDetailRow extends QuotationSummaryRow {
   discount: number;
   observations: string | null;
   updatedAt: string;
+  /** When the list was packed and dispatched (status TERMINADA). */
+  finishedAt: string | null;
+  finishedByUsername: string | null;
   deliveredAt: string | null;
   deliveredByUsername: string | null;
   cancelledAt: string | null;

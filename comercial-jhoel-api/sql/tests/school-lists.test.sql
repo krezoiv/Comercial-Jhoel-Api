@@ -62,6 +62,7 @@ DECLARE
   v_q UUID;
   v_q2 UUID;
   v_q3 UUID;
+  v_q4 UUID;
   v_p1 UUID;
   v_p2 UUID;
   v_p3 UUID;
@@ -312,6 +313,31 @@ BEGIN
   PERFORM pg_temp.expect('T14 una cancelada no recibe pagos',
     pg_temp.err(format($f$SELECT register_school_quotation_payment(%L, 1, 'EFECTIVO', NULL, NULL, NULL, %L, 'K-Q3-AFTER')$f$, v_q3, v_user)),
     'SCHOOL_QUOTE_CLOSED');
+
+  -- ── Terminada: despachada y lista para entregar (migración 1760008000000) ──
+  v_q4 := create_school_quotation(pg_temp.quote(NULL, '[{"productName":"Paquete completo","quantity":1,"unitPrice":100}]', '{"grade":"Tercero Básico"}'), v_user, 'K-FIN-QUOTE-01');
+  PERFORM register_school_quotation_payment(v_q4, 40, 'EFECTIVO', NULL, NULL, NULL, v_user, 'K-FIN-PAY-001');
+  PERFORM pg_temp.expect('T16 un borrador no se termina',
+    pg_temp.err(format($f$SELECT change_school_quotation_status(%L, 'TERMINAR', %L, NULL)$f$,
+      create_school_quotation(pg_temp.quote(NULL, '[{"productName":"Regla","quantity":1,"unitPrice":5}]', '{"grade":"Tercero Básico","asDraft":true}'), v_user, 'K-FIN-DRAFT-1'), v_user)),
+    'SCHOOL_QUOTE_INVALID_TRANSITION');
+  PERFORM change_school_quotation_status(v_q4, 'TERMINAR', v_user, NULL);
+  PERFORM pg_temp.expect('T16 terminada con saldo pendiente, se registra quién y cuándo',
+    pg_temp.state(v_q4) || ' ' || (SELECT (finished_by = v_user AND finished_at IS NOT NULL)::TEXT FROM school_quotations WHERE id = v_q4),
+    'TERMINADA 40.00 60.00 true');
+  PERFORM pg_temp.expect('T16 terminar dos veces', pg_temp.err(format($f$SELECT change_school_quotation_status(%L, 'TERMINAR', %L, NULL)$f$, v_q4, v_user)),
+    'SCHOOL_QUOTE_INVALID_TRANSITION');
+  PERFORM pg_temp.expect('T16 terminada con saldo no se entrega',
+    pg_temp.errfull(format($f$SELECT change_school_quotation_status(%L, 'ENTREGAR', %L, NULL)$f$, v_q4, v_user)),
+    'SCHOOL_QUOTE_NOT_PAID:60.00');
+  PERFORM register_school_quotation_payment(v_q4, 60, 'EFECTIVO', NULL, NULL, NULL, v_user, 'K-FIN-PAY-002');
+  PERFORM pg_temp.expect('T16 al pagar todo sigue terminada', pg_temp.state(v_q4), 'TERMINADA 100.00 0.00');
+  PERFORM change_school_quotation_status(v_q4, 'ENTREGAR', v_user, NULL);
+  PERFORM pg_temp.expect('T16 terminada → entregada, historial completo',
+    pg_temp.state(v_q4) || ' ' || (SELECT string_agg(action, ',' ORDER BY id) FROM school_list_history WHERE entity_id = v_q4),
+    'ENTREGADA 100.00 0.00 CREADA,PAGO,TERMINAR,PAGO,ENTREGAR');
+  PERFORM pg_temp.expect('T16 una pagada también puede pasar a terminada',
+    change_school_quotation_status(v_q2, 'TERMINAR', v_admin, NULL), 'TERMINADA');
 
   -- ── Sin impacto en inventario ni ventas ─────────────────────────────────
   PERFORM pg_temp.expect('T15 inventario y ventas intactos',

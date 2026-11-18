@@ -353,6 +353,11 @@ describe('Listas Escolares (e2e)', () => {
     const paid = data(await pay(20).expect(201));
     expect(paid.quotation.status).toBe('EN_PREPARACION');
     expect(paid.quotation.accountStatus).toBe('PAGADA');
+    // Packed and dispatched: TERMINADA, ready for the customer.
+    const finished = data(await status('TERMINAR').expect(200));
+    expect(finished.status).toBe('TERMINADA');
+    expect(finished.finishedAt).toBeTruthy();
+    await status('TERMINAR').expect(409);
     const delivered = data(await status('ENTREGAR').expect(200));
     expect(delivered.status).toBe('ENTREGADA');
     await pay(1).expect(409);
@@ -366,6 +371,7 @@ describe('Listas Escolares (e2e)', () => {
       'PAGO_ANULADO',
       'PREPARAR',
       'PAGO',
+      'TERMINAR',
       'ENTREGAR',
     ]);
 

@@ -142,7 +142,37 @@ export class SchoolQuotationsListComponent {
   }
 
   canDeliver(q: SchoolQuotationSummary): boolean {
-    return (q.status === 'PAGADA' || q.status === 'EN_PREPARACION') && q.balance <= 0;
+    return ['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0;
+  }
+
+  /** The list can be marked as packed/dispatched until it is finished, delivered or cancelled. */
+  canFinish(q: SchoolQuotationSummary): boolean {
+    return ['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status);
+  }
+
+  async finish(q: SchoolQuotationSummary): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'UPDATE',
+      title: 'Marcar como terminada',
+      message: `La lista de ${q.quotationNumber} (${q.customerName}) queda despachada y lista para ser entregada.` +
+        (q.balance > 0 ? ` Saldo pendiente: ${formatCurrency(q.balance)}; la entrega lo exige completo.` : ''),
+      confirmText: 'Marcar como terminada',
+    });
+    if (!ok) {
+      return;
+    }
+    this.delivering.set(q.id);
+    this.service.changeStatus(q.id, 'TERMINAR', q.version).subscribe({
+      next: () => {
+        this.delivering.set(null);
+        this.notifications.success(`${q.quotationNumber} terminada: lista para entregar.`);
+        this.load();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.delivering.set(null);
+        this.notifications.error(extractErrorMessage(error, 'No se pudo marcar como terminada.'));
+      },
+    });
   }
 
   onPaid(): void {

@@ -46,6 +46,11 @@ const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; 
     message: 'La cotización quedará "En preparación". Puede seguir recibiendo abonos hasta cancelar el saldo.',
     done: 'Cotización en preparación.',
   },
+  TERMINAR: {
+    title: 'Marcar como terminada',
+    message: 'La lista queda despachada y lista para ser entregada. Puede seguir recibiendo abonos; la entrega exige el saldo completo.',
+    done: 'Cotización terminada: lista para entregar.',
+  },
   ENTREGAR: {
     title: 'Registrar entrega',
     message: 'Se registrará la entrega de los útiles y la cotización quedará cerrada. No descuenta inventario ni registra una venta.',
@@ -95,6 +100,13 @@ export class SchoolQuotationDetailPageComponent {
   readonly methodLabel = SCHOOL_PAYMENT_METHOD_LABEL;
   readonly sourceLabel = SCHOOL_LINE_SOURCE_LABEL;
   readonly historyLabel = SCHOOL_HISTORY_LABEL;
+  readonly actionIcon: Record<SchoolStatusAction, string> = { CONFIRMAR: 'check', PREPARAR: 'package', TERMINAR: 'check-check', ENTREGAR: 'truck' };
+  readonly actionLabel: Record<SchoolStatusAction, string> = {
+    CONFIRMAR: 'Confirmar',
+    PREPARAR: 'En preparación',
+    TERMINAR: 'Marcar como terminada',
+    ENTREGAR: 'Registrar entrega',
+  };
 
   readonly quotation = signal<SchoolQuotation | null>(null);
   readonly failed = signal<string | null>(null);
@@ -128,7 +140,8 @@ export class SchoolQuotationDetailPageComponent {
     const actions: SchoolStatusAction[] = [];
     if (q.status === 'BORRADOR') actions.push('CONFIRMAR');
     if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA'].includes(q.status)) actions.push('PREPARAR');
-    if ((q.status === 'PAGADA' || q.status === 'EN_PREPARACION') && q.balance <= 0) actions.push('ENTREGAR');
+    if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status)) actions.push('TERMINAR');
+    if (['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0) actions.push('ENTREGAR');
     return actions;
   });
 

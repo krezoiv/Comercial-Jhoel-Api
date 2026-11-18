@@ -12,6 +12,7 @@ export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   PAGO_PARCIAL: 'Pago parcial',
   PAGADA: 'Pagada',
   EN_PREPARACION: 'En preparación',
+  TERMINADA: 'Terminada',
   ENTREGADA: 'Entregada',
   CANCELADA: 'Cancelada',
 };

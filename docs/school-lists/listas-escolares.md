@@ -1,6 +1,6 @@
 # Listas Escolares — plantillas, cotizaciones y estado de cuenta
 
-Migración `1760007900000-SchoolLists`. El código está documentado en inglés en sus propios archivos; este documento resume el módulo para el equipo.
+Migraciones `1760007900000-SchoolLists` y `1760008000000-SchoolQuotationFinishedStatus` (estado Terminada). El código está documentado en inglés en sus propios archivos; este documento resume el módulo para el equipo.
 
 ## 1. Análisis previo y decisiones
 
@@ -82,7 +82,8 @@ El backend es la autoridad: totales, saldos y estados se calculan en SQL. El fro
 | PAGO PARCIAL | Tiene abonos y saldo pendiente. |
 | PAGADA | Saldo cero. |
 | EN PREPARACIÓN | Manual. Sigue recibiendo abonos. |
-| ENTREGADA | Manual. Exige saldo cero. Cierra la cotización. |
+| TERMINADA | Manual: la lista ya está despachada y lista para entregar. Se registra quién y cuándo (`finished_at`, `finished_by`). Sigue recibiendo abonos y aún se puede editar o cancelar. Se puede marcar desde Cotizada, Anticipo recibido, Pago parcial, Pagada o En preparación. |
+| ENTREGADA | Manual. Exige saldo cero (desde Pagada, En preparación o Terminada). Cierra la cotización. |
 | CANCELADA | Con motivo. Devuelve lo pagado y cierra la cotización. |
 
    Los estados de pago se recalculan con cada pago, anulación o edición.
@@ -103,7 +104,7 @@ El backend es la autoridad: totales, saldos y estados se calculan en SQL. El fro
 | `POST quotations` (con `clientRequestId` y anticipo opcional) | quotations.create (+ payments.register si trae anticipo) |
 | `GET quotations/:id` (detalle, líneas, pagos con saldo corrido, historial, resumen) | view + statements.view |
 | `PUT quotations/:id` (con `version`) · `PATCH quotations/:id/observations` | quotations.edit |
-| `POST quotations/:id/status` (CONFIRMAR/PREPARAR/ENTREGAR) | quotations.edit |
+| `POST quotations/:id/status` (CONFIRMAR/PREPARAR/TERMINAR/ENTREGAR) | quotations.edit |
 | `POST quotations/:id/cancel` | quotations.cancel |
 | `POST quotations/:id/payments` | payments.register |
 | `POST payments/:paymentId/void` | payments.void |
@@ -196,7 +197,7 @@ Esta tabla es una propuesta razonable; se ajusta editando `SCHOOL_LIST_PERMISSIO
 
 | Prueba | Resultado |
 |---|---|
-| `sql/tests/school-lists.test.sql` (nueva) | **62/62** |
+| `sql/tests/school-lists.test.sql` (nueva) | **69/69** (incluye 7 casos del estado Terminada) |
 | `sql/tests/school-lists-concurrency.sh` (nueva) | **OK**: dos abonos de Q60 a la vez sobre Q100 → entra uno; un abono enviado dos veces → un registro; lo pagado nunca supera el total |
 | Jest `school-list.use-cases.spec.ts` y `school-list.errors.spec.ts` (nuevas) | **16/16** |
 | `test/school-lists.e2e-spec.ts` (nueva, sobre copia temporal de la base) | **2/2**. Cubre plantillas (versión, duplicar, desactivar), cotización personalizada con anticipo, doble clic, plantilla intacta, abonos, saldo corrido, anulación, entrega, PDF, filtros, tablero, borrador, edición con versión, cancelación con devolución, RBAC e inventario, ventas y caja intactos |

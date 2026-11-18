@@ -17,6 +17,7 @@ import {
   UpdateSchoolQuotationUseCase,
   VoidSchoolPaymentUseCase,
   CancelSchoolQuotationUseCase,
+  ChangeSchoolQuotationStatusUseCase,
 } from './school-list.use-cases';
 import { SchoolListRuleError } from '../../domain/errors/school-list.errors';
 
@@ -48,6 +49,8 @@ const detail: QuotationDetailRow = {
   discount: 0,
   observations: 'Recoge el viernes',
   updatedAt: '2099-01-10T15:00:00.000Z',
+  finishedAt: null,
+  finishedByUsername: null,
   deliveredAt: null,
   deliveredByUsername: null,
   cancelledAt: null,
@@ -309,6 +312,21 @@ describe('Listas Escolares — use cases', () => {
       'u-sup',
       `SLC:${REQUEST_ID}`,
     );
+  });
+
+  it('marks a quotation as TERMINADA (dispatched) with the edit permission', async () => {
+    const repo = repository();
+    const useCase = new ChangeSchoolQuotationStatusUseCase(repo);
+    await useCase.execute(cashier, 'q1', 'TERMINAR', 2);
+    expect(repo.changeStatus).toHaveBeenCalledWith(
+      'q1',
+      'TERMINAR',
+      'u-user',
+      2,
+    );
+    await expect(
+      useCase.execute({ userId: 'x', role: 'GUEST' }, 'q1', 'TERMINAR', 2),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
   });
 
   it('dashboard defaults to the current year and rejects inverted ranges', async () => {

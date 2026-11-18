@@ -1613,7 +1613,7 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   - Usan `version` en las ediciones (`SCHOOL_VERSION_CONFLICT`) e `idempotency_key` (prefijos `SLQ:`, `SLP:`, `SLV:`, `SLC:`).
   - Lanzan errores `SCHOOL_*[:detalle]`, que `schoolListErrorFromMessage` traduce.
 - **Precios**: una línea de plantilla o inventario conserva su precio de referencia; cambiarlo o descontar requiere `school_lists.prices.override` (supervisor o admin). Las líneas a mano tienen precio libre.
-- **Estados de pago**: `school_quotation_refresh_status` los recalcula (COTIZADA → ANTICIPO_RECIBIDO → PAGO_PARCIAL → PAGADA). BORRADOR, EN_PREPARACION, ENTREGADA y CANCELADA son manuales. Cancelar con dinero recibido registra una DEVOLUCION por lo pagado.
+- **Estados de pago**: `school_quotation_refresh_status` los recalcula (COTIZADA → ANTICIPO_RECIBIDO → PAGO_PARCIAL → PAGADA). BORRADOR, EN_PREPARACION, TERMINADA, ENTREGADA y CANCELADA son manuales. TERMINADA (migración `1760008000000`, acción `TERMINAR`) = lista despachada y lista para entregar: guarda `finished_at`/`finished_by`, sigue recibiendo abonos y ENTREGAR la acepta con saldo 0. Cancelar con dinero recibido registra una DEVOLUCION por lo pagado.
 - **Rutas**:
   - Estáticas: `GET permissions`, `GET quotations/dashboard`, `GET quotations/:id/pdf` (declaradas antes de `:id`).
   - Comprobante: `GET payments/:id/receipt` (A5).

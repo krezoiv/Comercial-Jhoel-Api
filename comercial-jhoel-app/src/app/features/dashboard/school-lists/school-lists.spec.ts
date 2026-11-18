@@ -75,6 +75,8 @@ const quotation = (over: Partial<SchoolQuotation> = {}): SchoolQuotation => ({
   discount: 0,
   observations: null,
   updatedAt: '2099-01-10T15:00:00Z',
+  finishedAt: null,
+  finishedByUsername: null,
   deliveredAt: null,
   deliveredByUsername: null,
   cancelledAt: null,
@@ -324,6 +326,24 @@ describe('Listas Escolares — role-based actions', () => {
     expect(html.querySelector('[aria-label="Registrar abono"]')).toBeNull();
     expect(html.querySelector('[aria-label="Editar cotización"]')).toBeNull();
     expect(html.querySelector('[aria-label="Ver detalle"]')).not.toBeNull();
+  });
+
+  it('marks a quotation as TERMINADA from the list and only offers delivery once paid', async () => {
+    const service = setup(CASHIER);
+    spyOn(service, 'getQuotations').and.returnValue(of({ items: [quotation()], total: 1, page: 1, limit: 20 }));
+    const change = spyOn(service, 'changeStatus').and.returnValue(of(quotation({ status: 'TERMINADA' })));
+    const fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    const list = fixture.componentInstance;
+    const html = fixture.nativeElement as HTMLElement;
+    const finishBtn = html.querySelector<HTMLButtonElement>('[aria-label="Marcar como terminada"]')!;
+    expect(finishBtn.disabled).toBeFalse();
+    expect(list.canDeliver(quotation({ status: 'TERMINADA', balance: 400 }))).toBeFalse();
+    expect(list.canDeliver(quotation({ status: 'TERMINADA', balance: 0 }))).toBeTrue();
+    expect(list.canFinish(quotation({ status: 'TERMINADA' }))).toBeFalse();
+    expect(list.canFinish(quotation({ status: 'BORRADOR' }))).toBeFalse();
+    await list.finish(quotation());
+    expect(change).toHaveBeenCalledWith('q1', 'TERMINAR', 3);
   });
 
   it('the dashboard renders the backend figures', () => {

@@ -20,8 +20,7 @@
         }
         @for (a of nextActions(); track a) {
           <app-button variant="secondary" size="sm" [disabled]="busy()" (click)="runAction(a)">
-            <app-icon [name]="a === 'ENTREGAR' ? 'truck' : a === 'PREPARAR' ? 'package' : 'check'" [size]="15" />
-            {{ a === 'ENTREGAR' ? 'Registrar entrega' : a === 'PREPARAR' ? 'En preparación' : 'Confirmar' }}
+            <app-icon [name]="actionIcon[a]" [size]="15" /> {{ actionLabel[a] }}
           </app-button>
         }
         @if (editable()) {
@@ -64,6 +63,7 @@
               <div><dt>Fecha de cotización</dt><dd>{{ formatDate(q.quotationDate) }}</dd></div>
               <div><dt>Fecha de entrega</dt><dd>{{ q.deliveryDate ? formatDate(q.deliveryDate) : 'Por definir' }}</dd></div>
               <div><dt>Registró</dt><dd>{{ q.createdByUsername }} · {{ formatDateTime(q.createdAt) }}</dd></div>
+              @if (q.finishedAt) { <div><dt>Terminada (despachada)</dt><dd>{{ formatDateTime(q.finishedAt) }} · {{ q.finishedByUsername }}</dd></div> }
               @if (q.deliveredAt) { <div><dt>Entregada</dt><dd>{{ formatDateTime(q.deliveredAt) }} · {{ q.deliveredByUsername }}</dd></div> }
               @if (q.cancelledAt) { <div><dt>Cancelada</dt><dd>{{ formatDateTime(q.cancelledAt) }} · {{ q.cancelledByUsername }} — {{ q.cancelReason }}</dd></div> }
             </dl>

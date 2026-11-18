@@ -93,6 +93,7 @@
                     <button type="button" class="icon-btn" title="Imprimir" aria-label="Imprimir" [disabled]="documents.busy() === q.id"  (click)="documents.quotation(q.id, q.quotationNumber, 'print')"><app-icon name="printer" [size]="16" /></button>
                   }
                   @if (service.can('school_lists.quotations.edit')) {
+                    <button type="button" class="icon-btn" title="Marcar como terminada (lista para entregar)" aria-label="Marcar como terminada" [disabled]="!canFinish(q) || delivering() === q.id" (click)="finish(q)"><app-icon name="check-check" [size]="16" /></button>
                     <button type="button" class="icon-btn" title="Registrar entrega" aria-label="Registrar entrega" [disabled]="!canDeliver(q) || delivering() === q.id" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
                   }
                   <button type="button" class="icon-btn" title="Historial" aria-label="Historial" (click)="open(q, 'historial')"><app-icon name="clock" [size]="16" /></button>

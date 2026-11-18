@@ -87,13 +87,14 @@ const QUOTATION_SELECT = `
   SELECT q.id, q.quotation_number, q.quotation_date::text AS quotation_date,
          q.delivery_date::text AS delivery_date, q.customer_name, q.customer_phone, q.student_name,
          q.grade, q.template_id, q.template_name, q.subtotal, q.discount, q.total, q.status,
-         q.version, q.observations, q.created_at, q.updated_at, q.delivered_at, q.cancelled_at,
+         q.version, q.observations, q.created_at, q.updated_at, q.finished_at, q.delivered_at, q.cancelled_at,
          q.cancel_reason, cu.username AS created_by_username, du.username AS delivered_by_username,
-         xu.username AS cancelled_by_username, ${PAID_SQL} AS paid
+         xu.username AS cancelled_by_username, tu.username AS finished_by_username, ${PAID_SQL} AS paid
     FROM school_quotations q
     JOIN users cu ON cu.id = q.created_by
     LEFT JOIN users du ON du.id = q.delivered_by
-    LEFT JOIN users xu ON xu.id = q.cancelled_by`;
+    LEFT JOIN users xu ON xu.id = q.cancelled_by
+    LEFT JOIN users tu ON tu.id = q.finished_by`;
 
 /** Movement effect on the amount paid (see `school_quotation_paid`). */
 const PAYMENT_SELECT = `
@@ -373,6 +374,8 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       discount: num(row.discount),
       observations: textOrNull(row.observations),
       updatedAt: text(row.updated_at),
+      finishedAt: textOrNull(row.finished_at),
+      finishedByUsername: textOrNull(row.finished_by_username),
       deliveredAt: textOrNull(row.delivered_at),
       deliveredByUsername: textOrNull(row.delivered_by_username),
       cancelledAt: textOrNull(row.cancelled_at),
@@ -523,10 +526,10 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
           WHERE q.quotation_date BETWEEN $1::date AND $2::date
        )
        SELECT count(*) AS total_quotations,
-              count(*) FILTER (WHERE status IN ('COTIZADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION')
+              count(*) FILTER (WHERE status IN ('COTIZADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION','TERMINADA')
                                  AND total > paid) AS pending_quotations,
               count(*) FILTER (WHERE status IN ('PAGADA','ENTREGADA')
-                                 OR (status = 'EN_PREPARACION' AND total <= paid)) AS paid_quotations,
+                                 OR (status IN ('EN_PREPARACION','TERMINADA') AND total <= paid)) AS paid_quotations,
               COALESCE(SUM(total) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR')), 0) AS total_quoted,
               COALESCE(SUM(paid) FILTER (WHERE status <> 'CANCELADA'), 0) AS total_received,
               COALESCE(SUM(total - paid) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR','ENTREGADA')), 0) AS pending_balance
