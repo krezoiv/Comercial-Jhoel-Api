@@ -7,6 +7,7 @@
 
 export type SchoolQuotationStatus =
   | 'BORRADOR'
+  | 'ACEPTADA'
   | 'COTIZADA'
   | 'ANTICIPO_RECIBIDO'
   | 'PAGO_PARCIAL'
@@ -22,6 +23,13 @@ export type SchoolPaymentKind = 'ANTICIPO' | 'ABONO' | 'DEVOLUCION' | 'ANULACION
 /** TERMINAR = the list is packed and dispatched, ready to hand over. */
 export type SchoolStatusAction = 'CONFIRMAR' | 'PREPARAR' | 'TERMINAR' | 'ENTREGAR';
 export type SchoolLineSource = 'PLANTILLA' | 'INVENTARIO' | 'MANUAL';
+/**
+ * How a list reaches inventory (migration 1760008400000):
+ * CONFIRMACION = lists saved before the requirements flow (Bodega discounted
+ * at confirmation); PREPARACION = lines are school requirements, products are
+ * assigned while preparing and discounted once at "Finalizar preparación".
+ */
+export type SchoolFulfillmentMode = 'CONFIRMACION' | 'PREPARACION';
 
 export type SchoolListPermission =
   | 'school_lists.view'
@@ -38,6 +46,7 @@ export type SchoolListPermission =
 
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'Borrador',
+  ACEPTADA: 'Aceptada',
   COTIZADA: 'Cotizada',
   ANTICIPO_RECIBIDO: 'Anticipo recibido',
   PAGO_PARCIAL: 'Pago parcial',
@@ -53,6 +62,7 @@ export const SCHOOL_STATUS_TONE: Record<
   'brand' | 'gold' | 'success' | 'danger' | 'neutral-dark' | 'neutral-light'
 > = {
   BORRADOR: 'neutral-light',
+  ACEPTADA: 'brand',
   COTIZADA: 'danger',
   ANTICIPO_RECIBIDO: 'gold',
   PAGO_PARCIAL: 'gold',
@@ -72,6 +82,7 @@ export const SCHOOL_STATUSES = Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotati
  */
 export const SCHOOL_STATUS_COLOR: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'gray',
+  ACEPTADA: 'blue',
   COTIZADA: 'blue',
   ANTICIPO_RECIBIDO: 'purple',
   PAGO_PARCIAL: 'orange',
@@ -281,9 +292,16 @@ export const SCHOOL_ACCOUNT_LABEL: Record<SchoolAccountStatus, string> = {
 /** Methods that may name the bank account the money arrived to. */
 export const SCHOOL_BANK_METHODS: readonly SchoolPaymentMethod[] = ['TRANSFERENCIA', 'DEPOSITO'];
 
-/** States in which lines, customer data and observations may still change. */
-export function isSchoolQuotationEditable(status: SchoolQuotationStatus): boolean {
-  return status !== 'ENTREGADA' && status !== 'CANCELADA';
+/**
+ * States in which lines, customer data and observations may still change. A
+ * list of the requirements flow is frozen once its preparation is finished
+ * (TERMINADA already took its stock).
+ */
+export function isSchoolQuotationEditable(
+  status: SchoolQuotationStatus,
+  mode: SchoolFulfillmentMode = 'CONFIRMACION',
+): boolean {
+  return status !== 'ENTREGADA' && status !== 'CANCELADA' && !(mode === 'PREPARACION' && status === 'TERMINADA');
 }
 
 export function canReceiveSchoolPayment(status: SchoolQuotationStatus): boolean {
@@ -364,6 +382,35 @@ export interface SchoolQuotationItem {
   /** Category from the product's real relation in the database (null for free-text lines). */
   categoryId: string | null;
   categoryName: string | null;
+  /** Inventory products chosen in preparation to fulfil this requirement (internal). */
+  assignments: SchoolItemAssignment[];
+}
+
+/**
+ * Inventory product assigned to a requirement while preparing the order. It
+ * never replaces the requirement text nor its quoted price.
+ */
+export interface SchoolItemAssignment {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku: string | null;
+  categoryName: string | null;
+  quantity: number;
+  /** Current public price (reference only; the quoted price stays). */
+  referencePrice: number;
+  bodegaStock: number;
+  productActive: boolean;
+  createdAt: string;
+  createdByUsername: string;
+  updatedAt: string | null;
+  updatedByUsername: string | null;
+}
+
+export interface SchoolPreparationAssignmentInput {
+  itemId: string;
+  productId: string;
+  quantity: number;
 }
 
 export interface SchoolPayment {
@@ -447,6 +494,7 @@ export interface SchoolQuotationSummary {
   paid: number;
   balance: number;
   status: SchoolQuotationStatus;
+  fulfillmentMode: SchoolFulfillmentMode;
   accountStatus: SchoolAccountStatus;
   supplyStatus: SchoolSupplyStatus;
   version: number;
@@ -549,7 +597,7 @@ export interface SchoolDashboard {
   dateFrom: string;
   dateTo: string;
   totalQuotations: number;
-  /** BORRADOR or COTIZADA: still waiting for the customer. */
+  /** BORRADOR, COTIZADA or ACEPTADA: not being prepared yet. */
   awaitingQuotations: number;
   /** Active quotations with a balance still to collect. */
   pendingQuotations: number;
@@ -570,6 +618,7 @@ export const SCHOOL_HISTORY_LABEL: Record<string, string> = {
   PAGO_ANULADO: 'Pago anulado',
   CONFIRMAR: 'Borrador confirmado',
   PREPARAR: 'En preparación',
+  PREPARACION: 'Productos de inventario asignados',
   TERMINAR: 'Terminada · despachada, lista para entregar',
   ENTREGAR: 'Entregada al cliente',
   CANCELADA: 'Lista anulada',

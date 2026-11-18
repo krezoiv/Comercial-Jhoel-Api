@@ -40,7 +40,7 @@ const PHONE = /^[+0-9 ()-]{8,20}$/;
 // ── Templates ─────────────────────────────────────────────────────────────
 export class TemplateItemRequestDto {
   @IsOptional() @IsUUID() productId?: string | null;
-  @IsString() @MinLength(2) @MaxLength(150) productName: string;
+  @IsString() @MinLength(2) @MaxLength(300) productName: string;
   @IsOptional() @IsString() @MaxLength(255) description?: string | null;
   @IsInt() @Min(1) @Max(9999) quantity: number;
   @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_MONEY) unitPrice: number;
@@ -84,7 +84,7 @@ export class QuotationItemRequestDto {
   @IsOptional() @IsUUID() itemId?: string | null;
   @IsOptional() @IsUUID() templateItemId?: string | null;
   @IsOptional() @IsUUID() productId?: string | null;
-  @IsString() @MinLength(2) @MaxLength(150) productName: string;
+  @IsString() @MinLength(2) @MaxLength(300) productName: string;
   @IsOptional() @IsString() @MaxLength(255) description?: string | null;
   @IsInt() @Min(1) @Max(9999) quantity: number;
   @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_MONEY) unitPrice: number;
@@ -141,6 +141,23 @@ export class CreateQuotationRequestDto extends QuotationBodyDto {
 
 export class UpdateQuotationRequestDto extends QuotationBodyDto {
   @IsInt() @Min(1) version: number;
+}
+
+// ── Preparation (requirements → inventory products) ──────────────────────
+export class PreparationAssignmentRequestDto {
+  @IsUUID() itemId: string;
+  @IsUUID() productId: string;
+  @IsInt() @Min(1) @Max(9999) quantity: number;
+}
+
+export class SavePreparationRequestDto {
+  @IsInt() @Min(1) version: number;
+
+  @IsArray()
+  @ArrayMaxSize(1000)
+  @ValidateNested({ each: true })
+  @Type(() => PreparationAssignmentRequestDto)
+  assignments: PreparationAssignmentRequestDto[];
 }
 
 export class ObservationsRequestDto {

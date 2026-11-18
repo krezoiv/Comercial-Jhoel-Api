@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 
 import {
-  Product,
   SchoolTemplate,
   SchoolTemplateSummary,
   formatCurrency,
@@ -15,11 +14,10 @@ import { NotificationService } from '../../../../../core/services/notification.s
 import { SchoolListService } from '../../../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { BadgeComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
-import { QuotationProductSearchComponent } from '../../../quotations/components/quotation-product-search/quotation-product-search.component';
 
 interface TemplateLine {
   key: number;
-  productId: string | null;
+  /** Requirement text (the school's own wording; never an inventory product). */
   productName: string;
   description: string;
   quantity: number;
@@ -37,16 +35,27 @@ interface TemplateDraft {
   lines: TemplateLine[];
 }
 
+/** Line total in cents-exact arithmetic: quantity × unit price. */
+export function requirementTotal(quantity: number, unitPrice: number): number {
+  return Math.round((quantity || 0) * Math.round((unitPrice || 0) * 100)) / 100;
+}
+
 /**
  * "Plantillas de Listas Escolares": the official list of each grade.
  * Everybody can consult them; only administrators create, edit, duplicate or
  * (de)activate (backend + SQL enforce it). Editing a template never changes a
  * quotation already generated — quotations keep their own copy.
+ *
+ * Each line is a SCHOOL REQUIREMENT typed by hand (migration 1760008400000):
+ * description, quantity, quoted unit price, total and observations. Inventory
+ * is never consulted here — the real product is chosen when the order is
+ * prepared — so a requirement may name an item the store does not stock.
+ * Requirements of another grade's template can be copied in.
  */
 @Component({
   selector: 'app-school-templates',
   standalone: true,
-  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, QuotationProductSearchComponent],
+  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent],
   templateUrl: './school-templates.component.html',
   styleUrl: './school-templates.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,6 +67,7 @@ export class SchoolTemplatesComponent {
 
   readonly formatCurrency = formatCurrency;
   readonly formatDateTime = formatSchoolDateTime;
+  readonly requirementTotal = requirementTotal;
 
   readonly templates = signal<SchoolTemplateSummary[]>([]);
   readonly failed = signal(false);
@@ -68,12 +78,17 @@ export class SchoolTemplatesComponent {
   readonly copyGrade = signal('');
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  /** Template whose requirements are copied into the one being edited. */
+  readonly copyFrom = signal('');
+  readonly copying = signal(false);
   private seq = 0;
 
   readonly canManage = computed(() => this.service.can('school_lists.templates.manage'));
   readonly draftTotal = computed(() =>
-    roundMoney((this.draft()?.lines ?? []).reduce((sum, l) => sum + (l.quantity || 0) * (l.unitPrice || 0), 0)),
+    roundMoney((this.draft()?.lines ?? []).reduce((sum, l) => sum + requirementTotal(l.quantity, l.unitPrice), 0)),
   );
+  /** Other templates whose requirements can be copied in. */
+  readonly copySources = computed(() => this.templates().filter((t) => t.id !== this.draft()?.id && t.itemCount > 0));
   readonly draftProblem = computed(() => {
     const d = this.draft();
     if (!d) return null;
@@ -88,7 +103,8 @@ export class SchoolTemplatesComponent {
         !(l.unitPrice >= 0) ||
         roundMoney(l.unitPrice) !== l.unitPrice,
     );
-    return bad ? `Revise "${bad.productName || 'producto sin nombre'}": nombre, cantidad entera y precio válido.` : null;
+    if (d.lines.some((l) => l.productName.trim().length > 300)) return 'Cada requerimiento admite hasta 300 caracteres.';
+    return bad ? `Revise "${bad.productName || 'requerimiento sin descripción'}": descripción, cantidad entera y precio válido.` : null;
   });
 
   constructor() {
@@ -135,7 +151,6 @@ export class SchoolTemplatesComponent {
           isActive: template.isActive,
           lines: template.items.map((item) => ({
             key: ++this.seq,
-            productId: item.productId,
             productName: item.productName,
             description: item.description ?? '',
             quantity: item.quantity,
@@ -160,26 +175,54 @@ export class SchoolTemplatesComponent {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  addLine(product?: Product): void {
+  addLine(): void {
     this.draft.update((d) =>
       d
         ? {
             ...d,
             lines: [
               ...d.lines,
-              {
-                key: ++this.seq,
-                productId: product?.id ?? null,
-                productName: product?.name ?? '',
-                description: '',
-                quantity: 1,
-                unitPrice: product?.publicPrice ?? 0,
-                observations: '',
-              },
+              { key: ++this.seq, productName: '', description: '', quantity: 1, unitPrice: 0, observations: '' },
             ],
           }
         : d,
     );
+  }
+
+  /** Appends the requirements of another template (e.g. another grade) to the one being edited. */
+  copyRequirements(): void {
+    const sourceId = this.copyFrom();
+    if (!sourceId || this.copying()) return;
+    this.copying.set(true);
+    this.service.getTemplate(sourceId).subscribe({
+      next: (source) => {
+        this.copying.set(false);
+        this.copyFrom.set('');
+        this.draft.update((d) =>
+          d
+            ? {
+                ...d,
+                lines: [
+                  ...d.lines,
+                  ...source.items.map((item) => ({
+                    key: ++this.seq,
+                    productName: item.productName,
+                    description: item.description ?? '',
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    observations: item.observations ?? '',
+                  })),
+                ],
+              }
+            : d,
+        );
+        this.notifications.success(`Se copiaron ${source.items.length} requerimiento(s) de "${source.name}".`);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.copying.set(false);
+        this.notifications.error(extractErrorMessage(error, 'No se pudo copiar la plantilla.'));
+      },
+    });
   }
 
   removeLine(key: number): void {
@@ -205,7 +248,7 @@ export class SchoolTemplatesComponent {
     const ok = await this.confirm.confirm({
       type: d.id ? 'UPDATE' : 'SAVE',
       title: d.id ? 'Guardar cambios de la plantilla' : 'Crear plantilla',
-      message: `${d.name.trim()} · ${d.lines.length} producto(s), total ${formatCurrency(this.draftTotal())}. Las cotizaciones ya generadas no cambian.`,
+      message: `${d.name.trim()} · ${d.lines.length} requerimiento(s), total ${formatCurrency(this.draftTotal())}. Las cotizaciones ya generadas no cambian.`,
     });
     if (!ok) {
       return;
@@ -219,8 +262,9 @@ export class SchoolTemplatesComponent {
         description: d.description.trim() || null,
         isActive: d.isActive,
         version: d.version ?? undefined,
+        // Requirements only: no inventory product is sent (a link saved before this change is dropped).
         items: d.lines.map((l) => ({
-          productId: l.productId,
+          productId: null,
           productName: l.productName.trim(),
           description: l.description.trim() || null,
           quantity: l.quantity,

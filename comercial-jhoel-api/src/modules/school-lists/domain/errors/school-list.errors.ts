@@ -202,6 +202,39 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message: 'No existe la ubicación de inventario "Bodega".',
     status: 500,
   },
+  SCHOOL_REQUIREMENT_WITH_PRODUCT: {
+    message:
+      'Los requerimientos de la lista son texto libre; el producto de inventario se elige al preparar el pedido.',
+  },
+  SCHOOL_PREPARATION_NOT_APPLICABLE: {
+    message:
+      'Esta lista usa el flujo anterior (descontó inventario al confirmarse); no tiene preparación por requerimientos.',
+    status: 409,
+  },
+  SCHOOL_PREPARATION_NOT_OPEN: {
+    message:
+      'La preparación solo se puede modificar mientras la lista está "En preparación".',
+    status: 409,
+  },
+  SCHOOL_PREPARATION_NOT_FINISHED: {
+    message: 'Finalice la preparación de la lista antes de entregarla.',
+    status: 409,
+  },
+  SCHOOL_PREPARATION_INCOMPLETE: {
+    message:
+      'Hay requerimientos sin cubrir; asigne los productos de inventario antes de finalizar.',
+    status: 409,
+  },
+  SCHOOL_INVALID_ASSIGNMENTS: {
+    message: 'Las asignaciones de productos no son válidas.',
+  },
+  SCHOOL_DUPLICATE_ASSIGNMENT: {
+    message: 'Un producto está asignado dos veces al mismo requerimiento.',
+  },
+  SCHOOL_ASSIGNMENT_EXCEEDS: {
+    message:
+      'Se asignaron más unidades de las solicitadas en un requerimiento.',
+  },
   SCHOOL_REFUND_METHOD_REQUIRED: {
     message: 'Indique cómo se devuelve al cliente el dinero recibido.',
   },
@@ -210,6 +243,7 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
 const STATUS_LABEL: Record<string, string> = {
   ENTREGADA: 'entregada',
   CANCELADA: 'cancelada',
+  TERMINADA: 'terminada (ya descontó inventario)',
 };
 
 const money = (value: string | undefined) =>
@@ -271,6 +305,26 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
   SCHOOL_INSUFFICIENT_STOCK: ([available, requested, ...name]) =>
     name.length
       ? `No hay existencias suficientes de "${name.join(':')}" en Bodega: disponibles ${available}, se necesitan ${requested}.`
+      : null,
+  // SCHOOL_PREPARATION_INCOMPLETE:<assigned>:<requested>:<requirement>
+  SCHOOL_PREPARATION_INCOMPLETE: ([assigned, requested, ...name]) =>
+    name.length
+      ? `El requerimiento "${name.join(':')}" tiene ${assigned} de ${requested} unidad(es) asignadas; cúbralo antes de finalizar la preparación.`
+      : null,
+  // SCHOOL_ASSIGNMENT_EXCEEDS:<assigned>:<requested>:<requirement>
+  SCHOOL_ASSIGNMENT_EXCEEDS: ([assigned, requested, ...name]) =>
+    name.length
+      ? `Al requerimiento "${name.join(':')}" se asignaron ${assigned} unidad(es) y solo pide ${requested}.`
+      : null,
+  SCHOOL_DUPLICATE_ASSIGNMENT: (parts) =>
+    withName(
+      parts,
+      (name) =>
+        `El mismo producto aparece dos veces en el requerimiento "${name}"; sume las cantidades en una sola asignación.`,
+    ),
+  SCHOOL_PREPARATION_NOT_OPEN: ([status]) =>
+    status
+      ? `La lista no está "En preparación" (estado actual: ${status.toLowerCase().replace(/_/g, ' ')}).`
       : null,
   SCHOOL_PRODUCT_INACTIVE: (parts) =>
     withName(

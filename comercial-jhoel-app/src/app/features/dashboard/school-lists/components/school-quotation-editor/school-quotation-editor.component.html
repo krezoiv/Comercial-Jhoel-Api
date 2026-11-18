@@ -63,7 +63,7 @@
           <table class="table lines">
             <thead>
               <tr>
-                <th>Producto</th>
+                <th>{{ requirementMode() ? 'Requerimiento escolar' : 'Producto' }}</th>
                 <th class="num">Cantidad</th>
                 <th class="num">Precio unitario</th>
                 <th class="num">Descuento</th>
@@ -76,16 +76,18 @@
                 <tr [class.lines__bad]="touched() && lineError(line)">
                   <td class="lines__product" data-label="Producto">
                     <div class="lines__name">
-                      <input type="text" maxlength="150" placeholder="Nombre del producto" [attr.aria-label]="'Producto ' + ($index + 1)" [ngModel]="line.productName" (ngModelChange)="update(line.key, { productName: $event })" />
+                      <input type="text" [attr.maxlength]="requirementMode() ? 300 : 150" [placeholder]="requirementMode() ? 'Requerimiento (ej.: cuaderno cuadrícula 80 hojas grapado)' : 'Nombre del producto'" [attr.aria-label]="'Producto ' + ($index + 1)" [ngModel]="line.productName" (ngModelChange)="update(line.key, { productName: $event })" />
                     </div>
                     <div class="lines__meta">
-                      <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ sourceLabel[line.source] }}</app-badge>
-                      @if (line.categoryName) {
-                        <span class="cat-badge" [title]="'Categoría: ' + line.categoryName"><app-icon name="tag" [size]="12" /> {{ line.categoryName }}</span>
-                      } @else {
-                        <span class="cat-badge cat-badge--none">Sin categoría</span>
+                      <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ requirementMode() && line.source === 'MANUAL' ? 'Adicional' : sourceLabel[line.source] }}</app-badge>
+                      @if (!requirementMode()) {
+                        @if (line.categoryName) {
+                          <span class="cat-badge" [title]="'Categoría: ' + line.categoryName"><app-icon name="tag" [size]="12" /> {{ line.categoryName }}</span>
+                        } @else {
+                          <span class="cat-badge cat-badge--none">Sin categoría</span>
+                        }
+                        <span class="lines__sku">{{ line.sku ? 'SKU ' + line.sku : line.productId ? 'Sin SKU' : 'Producto escrito a mano' }}</span>
                       }
-                      <span class="lines__sku">{{ line.sku ? 'SKU ' + line.sku : line.productId ? 'Sin SKU' : 'Producto escrito a mano' }}</span>
                     </div>
                     @if (line.observations || openNotes().has(line.key)) {
                       <input class="lines__note" type="text" maxlength="255" placeholder="Observación del producto (opcional)" [attr.aria-label]="'Observación ' + ($index + 1)" [ngModel]="line.observations" (ngModelChange)="update(line.key, { observations: $event })" />
@@ -113,27 +115,34 @@
                   <td class="num" data-label="Subtotal"><strong>{{ formatCurrency(lineSubtotal(line)) }}</strong></td>
                   <td class="lines__actions">
                     <div class="row-actions">
-                      <button type="button" class="icon-btn icon-btn--brand" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="replacingKey.set(line.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                      @if (!requirementMode()) {
+                        <button type="button" class="icon-btn icon-btn--brand" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="replacingKey.set(line.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                      }
                       <button type="button" class="icon-btn" title="Agregar observación" aria-label="Agregar observación" [disabled]="!!line.observations" (click)="toggleNote(line.key)"><app-icon name="message-square" [size]="15" /></button>
-                      <button type="button" class="icon-btn icon-btn--danger" title="Eliminar producto" aria-label="Eliminar producto" (click)="remove(line.key)"><app-icon name="trash-2" [size]="15" /></button>
+                      <button type="button" class="icon-btn icon-btn--danger" [title]="requirementMode() ? 'Eliminar requerimiento' : 'Eliminar producto'" [attr.aria-label]="requirementMode() ? 'Eliminar requerimiento' : 'Eliminar producto'" (click)="remove(line.key)"><app-icon name="trash-2" [size]="15" /></button>
                     </div>
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="6" class="state">La lista está vacía. Agregue productos del inventario o escritos a mano.</td></tr>
+                <tr><td colspan="6" class="state">{{ requirementMode() ? 'La lista está vacía. Agregue los requerimientos que solicita el establecimiento.' : 'La lista está vacía. Agregue productos del inventario o escritos a mano.' }}</td></tr>
               }
             </tbody>
           </table>
         </div>
         <div class="add">
-          <div class="add__search">
-            <span class="muted">Agregar del inventario</span>
-            <app-quotation-product-search (productSelected)="addProduct($event)" />
-          </div>
-          <app-button variant="ghost" size="sm" (click)="addManual()"><app-icon name="plus" [size]="14" /> Producto adicional escrito a mano</app-button>
+          @if (!requirementMode()) {
+            <div class="add__search">
+              <span class="muted">Agregar del inventario</span>
+              <app-quotation-product-search (productSelected)="addProduct($event)" />
+            </div>
+          }
+          <app-button variant="ghost" size="sm" (click)="addManual()"><app-icon name="plus" [size]="14" /> {{ requirementMode() ? 'Agregar requerimiento' : 'Producto adicional escrito a mano' }}</app-button>
         </div>
+        @if (requirementMode()) {
+          <p class="panel__hint">Los requerimientos no consultan ni descuentan inventario; el producto real se elige al pasar la lista a "En preparación".</p>
+        }
         @if (!canOverride()) {
-          <p class="panel__hint">Su rol mantiene los precios de la plantilla y del inventario; los descuentos los aplica un supervisor o administrador.</p>
+          <p class="panel__hint">Su rol mantiene los precios de la plantilla{{ requirementMode() ? '' : ' y del inventario' }}; los descuentos los aplica un supervisor o administrador.</p>
         }
       }
     </section>
@@ -189,7 +198,7 @@
     <h3><app-icon name="receipt" [size]="18" /> Resumen</h3>
     <dl>
       <div><dt>Grado</dt><dd>{{ gradeLabel() || '—' }}</dd></div>
-      <div><dt>Productos</dt><dd>{{ lines().length }} línea(s) · {{ itemCount() }} unidad(es)</dd></div>
+      <div><dt>{{ requirementMode() ? 'Requerimientos' : 'Productos' }}</dt><dd>{{ lines().length }} línea(s) · {{ itemCount() }} unidad(es)</dd></div>
       <div><dt>Subtotal</dt><dd>{{ formatCurrency(subtotal()) }}</dd></div>
       @if (discount() > 0) { <div><dt>Descuentos</dt><dd class="money-out">−{{ formatCurrency(discount()) }}</dd></div> }
       <div class="summary__total"><dt>Total de la lista</dt><dd>{{ formatCurrency(total()) }}</dd></div>
@@ -217,7 +226,9 @@
       <app-button variant="ghost" fullWidth [disabled]="saving()" (click)="cancelled.emit()">Cancelar</app-button>
     }
     <p class="muted">
-      @if (movesStock()) {
+      @if (requirementMode()) {
+        {{ isEdit() ? 'Editar' : 'Guardar' }} no mueve inventario. Bodega se descuenta una sola vez al finalizar la preparación.
+      } @else if (movesStock()) {
         Al guardar se descuentan de Bodega {{ inventoryUnits() }} unidad(es) de los productos del inventario. Anular la lista las devuelve.
       } @else {
         Un borrador no descuenta inventario hasta que se confirme.

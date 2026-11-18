@@ -15,6 +15,7 @@ import {
   SchoolDashboard,
   SchoolListPermission,
   SchoolPaymentInput,
+  SchoolPreparationAssignmentInput,
   SchoolQuotation,
   SchoolQuotationFilters,
   SchoolQuotationInput,
@@ -141,6 +142,21 @@ export class SchoolListService {
   changeStatus(id: string, action: SchoolStatusAction, version: number): Observable<SchoolQuotation> {
     return this.http
       .post<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/status`, { action, version })
+      .pipe(map((r) => r.data));
+  }
+
+  /**
+   * "Guardar preparación": inventory products assigned to each requirement of a
+   * list in EN_PREPARACION. Moves no stock; "Finalizar preparación" is the
+   * TERMINAR status action.
+   */
+  savePreparation(
+    id: string,
+    assignments: SchoolPreparationAssignmentInput[],
+    version: number,
+  ): Observable<SchoolQuotation> {
+    return this.http
+      .put<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/preparation`, { assignments, version })
       .pipe(map((r) => r.data));
   }
 

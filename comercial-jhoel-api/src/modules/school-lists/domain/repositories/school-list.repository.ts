@@ -2,6 +2,7 @@ export const SCHOOL_LIST_REPOSITORY = Symbol('SCHOOL_LIST_REPOSITORY');
 
 export const SCHOOL_QUOTATION_STATUSES = [
   'BORRADOR',
+  'ACEPTADA',
   'COTIZADA',
   'ANTICIPO_RECIBIDO',
   'PAGO_PARCIAL',
@@ -29,6 +30,15 @@ export const SCHOOL_STATUS_ACTIONS = [
   'ENTREGAR',
 ] as const;
 export type SchoolStatusAction = (typeof SCHOOL_STATUS_ACTIONS)[number];
+
+/**
+ * How a list reaches inventory (migration 1760008400000):
+ *  - CONFIRMACION: lists saved before the requirements flow; inventory lines
+ *    are discounted from Bodega when the list is confirmed (FIFO supply).
+ *  - PREPARACION: lines are school requirements; inventory products are
+ *    assigned while preparing and discounted once at "Finalizar preparación".
+ */
+export type SchoolFulfillmentMode = 'CONFIRMACION' | 'PREPARACION';
 
 export type SchoolPaymentKind =
   'ANTICIPO' | 'ABONO' | 'DEVOLUCION' | 'ANULACION';
@@ -165,6 +175,7 @@ export interface QuotationSummaryRow {
   paid: number;
   balance: number;
   status: SchoolQuotationStatus;
+  fulfillmentMode: SchoolFulfillmentMode;
   accountStatus: SchoolAccountStatus;
   supplyStatus: SchoolSupplyStatus;
   version: number;
@@ -190,6 +201,36 @@ export interface QuotationItemRow {
   /** Category of the linked inventory product, read from `products.category_id` (null for free-text lines). */
   categoryId: string | null;
   categoryName: string | null;
+  /** Inventory products chosen in preparation to fulfil this requirement (new flow). */
+  assignments: ItemAssignmentRow[];
+}
+
+/**
+ * Inventory product assigned to a requirement. Internal, operational data:
+ * it never replaces the requirement text nor its quoted price.
+ */
+export interface ItemAssignmentRow {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku: string | null;
+  categoryName: string | null;
+  quantity: number;
+  /** Current public price of the product (reference only; the quoted price stays). */
+  referencePrice: number;
+  /** Current Bodega stock of the product. */
+  bodegaStock: number;
+  productActive: boolean;
+  createdAt: string;
+  createdByUsername: string;
+  updatedAt: string | null;
+  updatedByUsername: string | null;
+}
+
+export interface PreparationAssignmentInput {
+  itemId: string;
+  productId: string;
+  quantity: number;
 }
 
 export interface PaymentRow {
@@ -416,7 +457,7 @@ export type QuotationSortField = (typeof QUOTATION_SORT_FIELDS)[number];
 
 export interface DashboardRow {
   totalQuotations: number;
-  /** BORRADOR or COTIZADA: still waiting for the customer (no anticipo yet). */
+  /** BORRADOR, COTIZADA or ACEPTADA: not being prepared yet. */
   awaitingQuotations: number;
   pendingQuotations: number;
   paidQuotations: number;
@@ -487,6 +528,13 @@ export interface SchoolListRepository {
     action: SchoolStatusAction,
     userId: string,
     expectedVersion: number | null,
+  ): Promise<string>;
+  /** Replaces the inventory assignments of a list in EN_PREPARACION (moves no stock). */
+  savePreparation(
+    id: string,
+    assignments: PreparationAssignmentInput[],
+    userId: string,
+    expectedVersion: number,
   ): Promise<string>;
   cancelQuotation(
     id: string,

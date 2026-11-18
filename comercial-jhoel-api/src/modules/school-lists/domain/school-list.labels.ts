@@ -7,6 +7,7 @@ import type {
 /** Spanish labels printed on documents (the app keeps its own copy for the UI). */
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'Borrador',
+  ACEPTADA: 'Aceptada',
   COTIZADA: 'Cotizada',
   ANTICIPO_RECIBIDO: 'Anticipo recibido',
   PAGO_PARCIAL: 'Pago parcial',

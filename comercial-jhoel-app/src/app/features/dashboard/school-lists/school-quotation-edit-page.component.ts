@@ -26,7 +26,9 @@ import { SchoolQuotationEditorComponent } from './components/school-quotation-ed
         @if (editable()) {
           <app-school-quotation-editor [quotation]="q" [swapItemId]="swapItemId" (saved)="back()" (cancelled)="back()" />
         } @else {
-          <p class="state">La cotización está {{ q.status === 'ENTREGADA' ? 'entregada' : 'cancelada' }} y ya no se puede modificar.</p>
+          <p class="state">
+            La cotización está {{ q.status === 'ENTREGADA' ? 'entregada' : q.status === 'TERMINADA' ? 'terminada (ya descontó inventario)' : 'cancelada' }} y ya no se puede modificar.
+          </p>
         }
       } @else if (failed()) {
         <p class="state state--error" role="alert">{{ failed() }}</p>
@@ -61,7 +63,7 @@ export class SchoolQuotationEditPageComponent {
     const load = () =>
       this.service.getQuotation(this.id).subscribe({
         next: (q) => {
-          this.editable.set(isSchoolQuotationEditable(q.status) && this.service.can('school_lists.quotations.edit'));
+          this.editable.set(isSchoolQuotationEditable(q.status, q.fulfillmentMode) && this.service.can('school_lists.quotations.edit'));
           this.quotation.set(q);
         },
         error: (error: HttpErrorResponse) => this.failed.set(extractErrorMessage(error, 'No se pudo cargar la cotización.')),

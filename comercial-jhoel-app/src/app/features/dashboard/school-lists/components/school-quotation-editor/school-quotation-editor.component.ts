@@ -54,6 +54,12 @@ const PHONE = /^[+0-9 ()-]{8,20}$/;
  * customization, 3) financial summary and anticipo. The template is only read:
  * every change lives in the quotation's own copy of the lines. Live totals are
  * a preview; the backend recomputes and validates them when saving.
+ *
+ * Requirement mode (every new list, migration 1760008400000): lines are the
+ * school's requirements — text, quantity and quoted price — with no inventory
+ * product, no stock lookup and no stock movement; products are chosen later in
+ * "Preparación". Lists saved with the previous flow (`CONFIRMACION`) keep the
+ * inventory editor (product search, "Cambiar producto", Bodega stock).
  */
 @Component({
   selector: 'app-school-quotation-editor',
@@ -128,6 +134,8 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   private lineSeq = 0;
 
   readonly isEdit = computed(() => this.quotation !== null);
+  /** Lines are school requirements (no inventory): every new list and lists of the new flow. */
+  readonly requirementMode = computed(() => (this.quotation?.fulfillmentMode ?? 'PREPARACION') === 'PREPARACION');
   readonly canOverride = computed(() => this.service.can('school_lists.prices.override'));
   readonly canAdvance = computed(() => !this.isEdit() && this.service.can('school_lists.payments.register'));
   readonly gradeLabel = computed(() => this.quotation?.grade ?? this.template()?.grade ?? '');
@@ -141,9 +149,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly balance = computed(() => roundMoney(this.total() - this.paid()));
   readonly usesBank = computed(() => SCHOOL_BANK_METHODS.includes(this.advanceMethod()));
 
-  /** Whether saving will (re)discount inventory: not for a draft. */
-  readonly movesStock = computed(() =>
-    this.quotation ? schoolListHoldsStock(this.quotation.status) : !this.asDraft(),
+  /** Whether saving will (re)discount inventory: only lists of the previous flow, never a draft. */
+  readonly movesStock = computed(
+    () => !this.requirementMode() && (this.quotation ? schoolListHoldsStock(this.quotation.status) : !this.asDraft()),
   );
   /** Units per inventory product requested by the list. */
   readonly needs = computed(() => {
@@ -180,7 +188,7 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       issues.push('El teléfono es obligatorio (mínimo 8 dígitos).');
     }
     if (!this.isEdit() && !this.template()) issues.push('Seleccione el grado escolar.');
-    if (!this.lines().length) issues.push('Agregue al menos un producto.');
+    if (!this.lines().length) issues.push(this.requirementMode() ? 'Agregue al menos un requerimiento.' : 'Agregue al menos un producto.');
     if (this.lines().some((l) => lineError(l))) issues.push('Revise las líneas marcadas en rojo.');
     if (this.lines().length && this.total() <= 0) issues.push('El total debe ser mayor que cero.');
     if (this.deliveryDate() && this.deliveryDate() < this.quotationDate()) {
@@ -292,11 +300,12 @@ export class SchoolQuotationEditorComponent implements OnChanges {
             key: this.nextKey(),
             itemId: null,
             templateItemId: item.id,
-            productId: item.productId,
+            // Requirements only: a template line once linked to a product is copied as text.
+            productId: null,
             productName: item.productName,
-            sku: item.productSku,
-            categoryId: item.categoryId,
-            categoryName: item.categoryName,
+            sku: null,
+            categoryId: null,
+            categoryName: null,
             description: item.description ?? '',
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -455,7 +464,7 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     return this.lines().map((line) => ({
       itemId: line.itemId,
       templateItemId: line.templateItemId,
-      productId: line.productId,
+      productId: this.requirementMode() ? null : line.productId,
       productName: line.productName.trim(),
       description: line.description.trim() || null,
       quantity: line.quantity,
@@ -473,10 +482,13 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     const number = this.quotation?.quotationNumber ?? 'número nuevo (se asigna al guardar)';
     const summary =
       `Lista ${number} · ${this.customerName().trim()} · ${this.gradeLabel()}: ` +
-      `${this.lines().length} producto(s), ${this.itemCount()} artículo(s), total ${formatCurrency(this.total())}` +
+      `${this.lines().length} ${this.requirementMode() ? 'requerimiento(s)' : 'producto(s)'}, ${this.itemCount()} artículo(s), total ${formatCurrency(this.total())}` +
       (this.advance() > 0 ? `, anticipo ${formatCurrency(this.advance())}, saldo ${formatCurrency(this.balance())}` : '') +
       '. ';
-    const inventory = !this.movesStock()
+    const inventory = this.requirementMode()
+      ? (this.isEdit() ? '' : this.asDraft() ? 'Queda como borrador; al confirmarlo pasa a "Aceptada". ' : 'La cotización se guarda como "Aceptada". ') +
+        'No se consulta ni descuenta inventario: los productos se eligen al preparar el pedido.'
+      : !this.movesStock()
       ? 'El borrador no descuenta inventario hasta que se confirme.'
       : this.isEdit()
         ? 'Se ajustará el inventario de Bodega solo por la diferencia con lo ya descontado.'
@@ -496,8 +508,10 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       message: summary + inventory + shortage,
       confirmText: this.isEdit()
         ? 'Guardar cambios'
-        : !this.movesStock()
+        : this.asDraft()
           ? 'Guardar borrador'
+          : this.requirementMode()
+            ? 'Guardar cotización'
           : this.inventoryUnits() > 0
             ? 'Guardar y descontar inventario'
             : 'Guardar lista',

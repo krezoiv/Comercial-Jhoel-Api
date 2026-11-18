@@ -20,7 +20,12 @@
         }
         @for (a of nextActions(); track a) {
           <app-button variant="secondary" size="sm" [disabled]="busy()" (click)="runAction(a)">
-            <app-icon [name]="actionIcon[a]" [size]="15" /> {{ actionLabel[a] }}
+            <app-icon [name]="actionIcon[a]" [size]="15" /> {{ requirementMode() && a === 'PREPARAR' ? 'Iniciar preparación' : actionLabel[a] }}
+          </app-button>
+        }
+        @if (hasPreparation()) {
+          <app-button [variant]="q.status === 'EN_PREPARACION' ? 'primary' : 'secondary'" size="sm" (click)="openPreparation()">
+            <app-icon name="package" [size]="15" /> {{ q.status === 'EN_PREPARACION' ? 'Preparar pedido' : 'Ver preparación' }}
           </app-button>
         }
         @if (editable()) {
@@ -46,7 +51,7 @@
 
     <div class="tabs" role="tablist">
       <button type="button" role="tab" [class.tabs__on]="view() === 'detalle'" [attr.aria-selected]="view() === 'detalle'" (click)="setView('detalle')"><app-icon name="layers" [size]="15" /> Detalle</button>
-      <button type="button" role="tab" [class.tabs__on]="view() === 'abastecimiento'" [attr.aria-selected]="view() === 'abastecimiento'" (click)="setView('abastecimiento')"><app-icon name="package" [size]="15" /> Abastecimiento</button>
+      <button type="button" role="tab" [class.tabs__on]="view() === 'abastecimiento'" [attr.aria-selected]="view() === 'abastecimiento'" (click)="setView('abastecimiento')"><app-icon name="package" [size]="15" /> {{ requirementMode() ? 'Entrega' : 'Abastecimiento' }}</button>
       <button type="button" role="tab" [class.tabs__on]="view() === 'cuenta'" [attr.aria-selected]="view() === 'cuenta'" (click)="setView('cuenta')"><app-icon name="receipt" [size]="15" /> Estado de cuenta ({{ q.payments.length }})</button>
       <button type="button" role="tab" [class.tabs__on]="view() === 'historial'" [attr.aria-selected]="view() === 'historial'" (click)="setView('historial')"><app-icon name="clock" [size]="15" /> Historial</button>
     </div>
@@ -64,7 +69,7 @@
               <div><dt>Fecha de cotización</dt><dd>{{ formatDate(q.quotationDate) }}</dd></div>
               <div><dt>Fecha de entrega</dt><dd>{{ q.deliveryDate ? formatDate(q.deliveryDate) : 'Por definir' }}</dd></div>
               <div><dt>Registró</dt><dd>{{ q.createdByUsername }} · {{ formatDateTime(q.createdAt) }}</dd></div>
-              @if (q.finishedAt) { <div><dt>Terminada (despachada)</dt><dd>{{ formatDateTime(q.finishedAt) }} · {{ q.finishedByUsername }}</dd></div> }
+              @if (q.finishedAt) { <div><dt>{{ requirementMode() ? 'Preparación finalizada' : 'Terminada (despachada)' }}</dt><dd>{{ formatDateTime(q.finishedAt) }} · {{ q.finishedByUsername }}</dd></div> }
               @if (q.deliveredAt) { <div><dt>Entregada</dt><dd>{{ formatDateTime(q.deliveredAt) }} · {{ q.deliveredByUsername }}</dd></div> }
               @if (q.cancelledAt) { <div><dt>Cancelada</dt><dd>{{ formatDateTime(q.cancelledAt) }} · {{ q.cancelledByUsername }} — {{ q.cancelReason }}</dd></div> }
             </dl>
@@ -92,9 +97,11 @@
         </div>
 
         <section class="panel">
-          <h2 class="panel__title"><app-icon name="book-open" [size]="18" /> Productos de la lista</h2>
+          <h2 class="panel__title"><app-icon name="book-open" [size]="18" /> {{ requirementMode() ? 'Requerimientos de la lista' : 'Productos de la lista' }}</h2>
           <p class="panel__hint">
-            @if (heldUnits() > 0) {
+            @if (requirementMode()) {
+              Lo que solicita el establecimiento, con el precio cotizado. Los productos de inventario se eligen en la preparación (información interna, no aparece en el documento del cliente){{ heldUnits() > 0 ? '; Bodega ya descontó ' + heldUnits() + ' unidad(es)' : '' }}.
+            } @else if (heldUnits() > 0) {
               Esta lista tiene descontadas {{ heldUnits() }} unidad(es) de Bodega.
             } @else if (q.status === 'BORRADOR') {
               Borrador: aún no descuenta inventario.
@@ -104,7 +111,7 @@
           </p>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Producto</th><th>SKU</th><th>Categoría</th><th>Origen</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Descuento</th><th class="num">Subtotal</th>@if (editable()) { <th aria-label="Acciones"></th> }</tr></thead>
+              <thead><tr>@if (requirementMode()) { <th>Requerimiento escolar</th><th colspan="2">Producto(s) de inventario</th> } @else { <th>Producto</th><th>SKU</th><th>Categoría</th> }<th>Origen</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Descuento</th><th class="num">Subtotal</th>@if (editable()) { <th aria-label="Acciones"></th> }</tr></thead>
               <tbody>
                 @for (i of q.items; track i.id) {
                   <tr>
@@ -112,6 +119,9 @@
                       {{ i.productName }}
                       @if (i.description || i.observations) { <div class="muted">{{ i.description }}{{ i.description && i.observations ? ' · ' : '' }}{{ i.observations }}</div> }
                     </td>
+                    @if (requirementMode()) {
+                      <td colspan="2"><span class="muted">{{ assignedText(i) || 'Sin seleccionar' }}</span></td>
+                    } @else {
                     <td><span class="muted">{{ i.productSku || '—' }}</span></td>
                     <td>
                       @if (i.categoryName) {
@@ -120,6 +130,7 @@
                         <span class="cat-badge cat-badge--none">Sin categoría</span>
                       }
                     </td>
+                    }
                     <td><span class="muted">{{ sourceLabel[i.source] }}</span></td>
                     <td class="num">{{ i.quantity }}</td>
                     <td class="num">{{ formatCurrency(i.unitPrice) }}</td>
@@ -128,7 +139,9 @@
                     @if (editable()) {
                       <td>
                         <div class="row-actions">
-                          <button type="button" class="icon-btn" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="swapItem(i.id)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                          @if (!requirementMode()) {
+                            <button type="button" class="icon-btn" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="swapItem(i.id)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                          }
                           <button type="button" class="icon-btn" title="Modificar cantidad, precio u observación" aria-label="Modificar línea" (click)="edit()"><app-icon name="edit-2" [size]="15" /></button>
                         </div>
                       </td>

@@ -62,6 +62,12 @@ describe('Listas Escolares (e2e)', () => {
     );
     await app.init();
     dataSource = app.get(DataSource);
+    // These flows cover lists saved BEFORE the requirements flow (migration
+    // 1760008400000): on this disposable clone new lists take the previous
+    // mode, so the historical behavior keeps being verified.
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'CONFIRMACION'`,
+    );
     const jwt = app.get(JwtService);
     const users = (await dataSource.query(`
       SELECT u.id, u.username, r.name AS role FROM users u JOIN roles r ON r.id = u.role_id WHERE u.is_active ORDER BY u.created_at
@@ -107,6 +113,9 @@ describe('Listas Escolares (e2e)', () => {
     );
 
   afterAll(async () => {
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'PREPARACION'`,
+    );
     await app.close();
   });
 
@@ -377,12 +386,10 @@ describe('Listas Escolares (e2e)', () => {
     await status('PREPARAR').expect(200);
     const dispatch = () =>
       as(userToken)(
-        api()
-          .post(`/api/school-lists/quotations/${created.id}/dispatch`)
-          .send({
-            observations: 'Entregada en mostrador',
-            clientRequestId: randomUUID(),
-          }),
+        api().post(`/api/school-lists/quotations/${created.id}/dispatch`).send({
+          observations: 'Entregada en mostrador',
+          clientRequestId: randomUUID(),
+        }),
       );
     // Delivery is the dispatch (migration 1760008300000); the old action is redirected.
     expect(message(await status('ENTREGAR').expect(409))).toContain(

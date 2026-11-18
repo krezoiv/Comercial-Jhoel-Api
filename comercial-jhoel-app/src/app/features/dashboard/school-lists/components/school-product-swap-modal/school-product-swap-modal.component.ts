@@ -50,8 +50,14 @@ const PAGE_SIZE = 12;
  * Like every dashboard modal it does not close on a backdrop click.
  *
  * Inputs: `line` (null = closed), `lines` (for the duplicate check),
- * `canOverride` (role may change prices). Outputs: `swapped`, `manual`
- * (turn the line into free text), `closed`.
+ * `canOverride` (role may change prices), `mode`. Outputs: `swapped`,
+ * `manual` (turn the line into free text), `closed`.
+ *
+ * `mode = 'assign'` is the same catalog used by "Preparación del pedido"
+ * ("Seleccionar producto de inventario"): `line` is the school requirement
+ * (its text, the units to assign and its quoted price) and `lines` the
+ * products already assigned to it. No price is edited there — the quoted
+ * price never follows the product — and nothing moves in inventory.
  */
 @Component({
   selector: 'app-school-product-swap-modal',
@@ -69,6 +75,8 @@ export class SchoolProductSwapModalComponent implements OnChanges {
     this.allLines.set(value);
   }
   @Input() canOverride = false;
+  /** `swap`: change a quotation line's product; `assign`: pick the product that fulfils a requirement. */
+  @Input() mode: 'swap' | 'assign' = 'swap';
 
   @Output() swapped = new EventEmitter<ProductSwapResult>();
   @Output() manual = new EventEmitter<void>();
@@ -112,7 +120,9 @@ export class SchoolProductSwapModalComponent implements OnChanges {
     const price = this.price();
     return price >= 0 && roundMoney(price) === price ? null : 'Precio no válido.';
   });
-  readonly canConfirm = computed(() => !!this.selected() && !this.sameProduct() && !this.quantityError() && !this.priceError());
+  readonly canConfirm = computed(
+    () => !!this.selected() && !this.sameProduct() && !this.quantityError() && (this.mode === 'assign' || !this.priceError()),
+  );
 
   private readonly query$ = new Subject<{ query: CatalogQuery; debounce: boolean }>();
 
@@ -209,7 +219,11 @@ export class SchoolProductSwapModalComponent implements OnChanges {
       return;
     }
     this.swapped.emit({
-      request: { product, quantity: this.quantity(), unitPrice: this.canOverride ? this.price() : product.publicPrice },
+      request: {
+        product,
+        quantity: this.quantity(),
+        unitPrice: this.canOverride && this.mode === 'swap' ? this.price() : product.publicPrice,
+      },
       consolidateWith: this.duplicate()?.key ?? null,
     });
   }

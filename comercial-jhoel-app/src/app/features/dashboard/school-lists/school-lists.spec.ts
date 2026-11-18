@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -35,6 +35,23 @@ import { SchoolSupplyComponent } from './components/school-supply/school-supply.
 import { ProductSwapResult, SchoolProductSwapModalComponent } from './components/school-product-swap-modal/school-product-swap-modal.component';
 import { CategoryService } from '../../../core/services/category.service';
 import { consolidateLines, findDuplicateLine, swapLineProduct } from './school-line-rules';
+import { requirementTotal } from './components/school-templates/school-templates.component';
+import { SchoolQuotationPreparationPageComponent } from './school-quotation-preparation-page.component';
+import {
+  RequirementDraft,
+  assignProduct,
+  finishProblems,
+  preparationSignature,
+  preparationSummary,
+  removeAssignment,
+  replaceAssignment,
+  requirementState,
+  saveProblems,
+  setAssignmentQuantity,
+  toPreparationPayload,
+  unitsByProduct,
+} from './school-preparation-rules';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 const summary: SchoolTemplateSummary = {
   id: 't1',
@@ -74,6 +91,8 @@ const quotation = (over: Partial<SchoolQuotation> = {}): SchoolQuotation => ({
   paid: 300,
   balance: 550,
   status: 'ANTICIPO_RECIBIDO',
+  // Lists of the previous flow (inventory lines); requirement-flow tests override it.
+  fulfillmentMode: 'CONFIRMACION',
   accountStatus: 'PARCIAL',
   supplyStatus: 'PARCIAL',
   version: 3,
@@ -174,6 +193,11 @@ describe('Listas Escolares — helpers', () => {
   it('edit and payment rules by status', () => {
     expect(isSchoolQuotationEditable('PAGADA')).toBeTrue();
     expect(isSchoolQuotationEditable('ENTREGADA')).toBeFalse();
+    // A finished preparation already took its stock: the requirements are frozen.
+    expect(isSchoolQuotationEditable('TERMINADA')).toBeTrue();
+    expect(isSchoolQuotationEditable('TERMINADA', 'PREPARACION')).toBeFalse();
+    expect(isSchoolQuotationEditable('EN_PREPARACION', 'PREPARACION')).toBeTrue();
+    expect(canReceiveSchoolPayment('ACEPTADA')).toBeTrue();
     expect(canReceiveSchoolPayment('BORRADOR')).toBeFalse();
     expect(canReceiveSchoolPayment('EN_PREPARACION')).toBeTrue();
     expect(canReceiveSchoolPayment('CANCELADA')).toBeFalse();
@@ -216,25 +240,35 @@ describe('SchoolListService', () => {
 });
 
 describe('SchoolQuotationEditorComponent', () => {
-  it('loads the grade template, customizes the copy and sends it with the anticipo', async () => {
+  it('builds a new list from the template requirements (no inventory) and sends it with the anticipo', async () => {
     const service = setup(CASHIER);
-    const create = spyOn(service, 'createQuotation').and.returnValue(of(quotation()));
-    const editor = TestBed.createComponent(SchoolQuotationEditorComponent).componentInstance;
+    const confirm = spyOn(TestBed.inject(ConfirmDialogService), 'confirm').and.returnValue(Promise.resolve(true));
+    const create = spyOn(service, 'createQuotation').and.returnValue(of(quotation({ status: 'ACEPTADA', fulfillmentMode: 'PREPARACION' })));
+    // A template line linked to a product before the change is copied as plain text.
+    (service.getTemplate as jasmine.Spy).and.returnValue(
+      of({ ...template, items: [{ ...template.items[0], productId: 'p0', productSku: 'CU-M', categoryId: 'c1', categoryName: 'Cuadernos' }, template.items[1]] }),
+    );
+    const fixture = TestBed.createComponent(SchoolQuotationEditorComponent);
+    const editor = fixture.componentInstance;
 
     await editor.selectTemplate(summary);
-    expect(editor.lines().map((l) => l.source)).toEqual(['PLANTILLA', 'PLANTILLA']);
+    fixture.detectChanges();
+    expect(editor.requirementMode()).toBeTrue();
+    expect(editor.lines().map((l) => [l.source, l.productId])).toEqual([['PLANTILLA', null], ['PLANTILLA', null]]);
     expect(editor.total()).toBe(55);
+    const html = fixture.nativeElement as HTMLElement;
+    // No inventory search, no "Cambiar producto", no Bodega lookup.
+    expect(html.querySelector('app-quotation-product-search')).toBeNull();
+    expect(html.querySelector('[aria-label="Cambiar producto"]')).toBeNull();
+    expect(service.bodegaStock).not.toHaveBeenCalled();
 
-    // "Cuaderno mediano" → inventory "Cuaderno grande" (keeps the quantity); the template object is untouched.
-    editor.onSwapped(editor.lines()[0].key, { request: { product: catalogProduct(), quantity: 3, unitPrice: 25 }, consolidateWith: null });
-    expect(editor.lines()[0]).toEqual(jasmine.objectContaining({ categoryName: 'Cuadernos y libretas', sku: 'CU-G', source: 'INVENTARIO' }));
     editor.addManual();
     const manual = editor.lines()[2];
-    editor.update(manual.key, { productName: 'Juego geométrico' });
-    editor.setNumber(manual.key, 'unitPrice', '18');
+    editor.update(manual.key, { productName: 'Juego de geometría' });
+    editor.setNumber(manual.key, 'unitPrice', '18.35');
     expect(template.items[0].productName).toBe('Cuaderno mediano');
-    expect(editor.total()).toBe(3 * 25 + 10 + 18);
-    // A cashier cannot change reference prices; free-text lines are priced freely.
+    expect(editor.total()).toBe(73.35);
+    // A cashier keeps the template price; extra requirements are priced freely.
     expect(editor.priceEditable(editor.lines()[1])).toBeFalse();
     expect(editor.priceEditable(manual)).toBeTrue();
 
@@ -242,14 +276,17 @@ describe('SchoolQuotationEditorComponent', () => {
     editor.customerPhone.set('5555-1234');
     editor.toggleAdvance(true);
     editor.advanceAmount.set(50);
-    expect(editor.balance()).toBe(103 - 50);
+    expect(editor.balance()).toBe(23.35);
     expect(editor.problems()).toEqual([]);
 
     await editor.save();
+    const message = confirm.calls.mostRecent().args[0].message!;
+    expect(message).toContain('"Aceptada"');
+    expect(message).toContain('No se consulta ni descuenta inventario');
     const input = create.calls.mostRecent().args[0];
     expect(input.templateId).toBe('t1');
-    expect(input.items[0]).toEqual(jasmine.objectContaining({ productId: 'p1', templateItemId: null, quantity: 3, unitPrice: 25 }));
-    expect(input.items[1].templateItemId).toBe('ti2');
+    expect(input.items.map((i) => i.productId)).toEqual([null, null, null]);
+    expect(input.items[0]).toEqual(jasmine.objectContaining({ templateItemId: 'ti1', productName: 'Cuaderno mediano', quantity: 3, unitPrice: 15 }));
     expect(input.advance).toEqual(jasmine.objectContaining({ amount: 50, paymentMethod: 'EFECTIVO' }));
     expect(input.clientRequestId).toBeTruthy();
   });
@@ -278,7 +315,7 @@ describe('SchoolQuotationEditorComponent', () => {
       jasmine.arrayContaining([jasmine.stringContaining('teléfono'), jasmine.stringContaining('grado')]),
     );
     fixture.componentRef.setInput('quotation', quotation({
-      items: [{ id: 'i1', lineNo: 1, source: 'MANUAL', templateItemId: null, productId: null, productName: 'Paquete', description: null, quantity: 1, unitPrice: 850, discount: 0, subtotal: 850, observations: null, productSku: null, categoryId: null, categoryName: null }],
+      items: [{ id: 'i1', lineNo: 1, source: 'MANUAL', templateItemId: null, productId: null, productName: 'Paquete', description: null, quantity: 1, unitPrice: 850, discount: 0, subtotal: 850, observations: null, productSku: null, categoryId: null, categoryName: null, assignments: [] }],
     }));
     editor.ngOnChanges({ quotation: {} as never });
     editor.setNumber(editor.lines()[0].key, 'unitPrice', 100);
@@ -287,51 +324,60 @@ describe('SchoolQuotationEditorComponent', () => {
   });
 });
 
-describe('SchoolQuotationEditorComponent — inventario de Bodega', () => {
-  async function editorWithProduct(quantity: number, asDraft = false) {
+describe('SchoolQuotationEditorComponent — inventario de Bodega (listas del flujo anterior)', () => {
+  /** Editing a list saved before the requirements flow: inventory lines and Bodega stock as before. */
+  async function legacyEditor(quantity: number) {
     const service = setup(CASHIER);
     const confirm = TestBed.inject(ConfirmDialogService);
     const confirmSpy = spyOn(confirm, 'confirm').and.returnValue(Promise.resolve(true));
-    const create = spyOn(service, 'createQuotation').and.returnValue(of(quotation()));
+    const update = spyOn(service, 'updateQuotation').and.returnValue(of(quotation()));
     const fixture = TestBed.createComponent(SchoolQuotationEditorComponent);
+    fixture.componentRef.setInput('quotation', quotation({
+      status: 'COTIZADA',
+      paid: 0,
+      account: { total: 850, advances: 0, installments: 0, refunds: 0, paid: 0, balance: 850 },
+      items: [{ id: 'i1', lineNo: 1, source: 'MANUAL', templateItemId: null, productId: null, productName: 'Paquete', description: null, quantity: 1, unitPrice: 850, discount: 0, subtotal: 850, observations: null, productSku: null, categoryId: null, categoryName: null, assignments: [] }],
+    }));
     const editor = fixture.componentInstance;
-    await editor.selectTemplate(summary);
+    fixture.detectChanges(); // ngOnChanges loads the saved lines
     editor.addProduct(product);
-    editor.setNumber(editor.lines()[2].key, 'quantity', quantity);
-    editor.customerName.set('María López');
-    editor.customerPhone.set('5555-1234');
-    editor.asDraft.set(asDraft);
+    editor.setNumber(editor.lines()[1].key, 'quantity', quantity);
     fixture.detectChanges(); // runs the effect that loads Bodega stock
-    return { editor, create, confirmSpy, fixture };
+    return { editor, update, confirmSpy, fixture };
   }
 
-  it('shows Bodega stock and warns, but never blocks, when it is not enough', async () => {
-    const { editor, create, confirmSpy, fixture } = await editorWithProduct(3);
+  it('keeps the inventory editor, shows Bodega stock and warns, but never blocks, when it is not enough', async () => {
+    const { editor, update, confirmSpy, fixture } = await legacyEditor(3);
+    expect(editor.requirementMode()).toBeFalse();
     expect(editor.available('p1')).toBe(2);
     expect(editor.shortProducts()).toEqual(['Cuaderno grande']);
     expect(editor.problems()).toEqual([]);
-    expect((fixture.nativeElement as HTMLElement).querySelector('.stock--short')?.textContent).toContain('Bodega: 2');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('.summary__info')?.textContent).toContain('Cuaderno grande');
-    await editor.save();
-    expect(confirmSpy.calls.mostRecent().args[0].message!).toContain('podrán generar existencias negativas');
-    expect(create).toHaveBeenCalled();
-  });
-
-  it('warns that inventory will be discounted (or not, for a draft) before saving', async () => {
-    const { editor, confirmSpy } = await editorWithProduct(2);
-    expect(editor.problems()).toEqual([]);
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('.stock--short')?.textContent).toContain('Bodega: 2');
+    expect(html.querySelector('app-quotation-product-search')).not.toBeNull();
     await editor.save();
     const message = confirmSpy.calls.mostRecent().args[0].message!;
-    expect(message).toContain('3 producto(s)');
-    expect(message).toContain('se descontarán 2 unidad(es) de Bodega');
+    expect(message).toContain('solo por la diferencia');
+    expect(message).toContain('podrán generar existencias negativas');
+    expect(update.calls.mostRecent().args[1].items[1]).toEqual(jasmine.objectContaining({ productId: 'p1', quantity: 3 }));
   });
 
-  it('a draft does not take stock yet, so it is not blocked by Bodega', async () => {
-    const draft = await editorWithProduct(5, true);
-    expect(draft.editor.problems()).toEqual([]); // a draft does not take stock yet
-    await draft.editor.save();
-    expect(draft.confirmSpy.calls.mostRecent().args[0].message!).toContain('no descuenta inventario');
+  it('a new draft of the requirements flow never consults or discounts inventory', async () => {
+    const service = setup(CASHIER);
+    const confirmSpy = spyOn(TestBed.inject(ConfirmDialogService), 'confirm').and.returnValue(Promise.resolve(true));
+    spyOn(service, 'createQuotation').and.returnValue(of(quotation({ status: 'BORRADOR', fulfillmentMode: 'PREPARACION' })));
+    const editor = TestBed.createComponent(SchoolQuotationEditorComponent).componentInstance;
+    await editor.selectTemplate(summary);
+    editor.customerName.set('María López');
+    editor.customerPhone.set('5555-1234');
+    editor.asDraft.set(true);
+    expect(editor.movesStock()).toBeFalse();
+    await editor.save();
+    const message = confirmSpy.calls.mostRecent().args[0].message!;
+    expect(message).toContain('al confirmarlo pasa a "Aceptada"');
+    expect(confirmSpy.calls.mostRecent().args[0].confirmText).toBe('Guardar borrador');
+    expect(service.bodegaStock).not.toHaveBeenCalled();
   });
 });
 
@@ -471,7 +517,7 @@ describe('Listas Escolares — role-based actions', () => {
     fixture.detectChanges();
     const list = fixture.componentInstance;
     const html = fixture.nativeElement as HTMLElement;
-    const finishBtn = html.querySelector<HTMLButtonElement>('[aria-label="Marcar como terminada"]')!;
+    const finishBtn = html.querySelector<HTMLButtonElement>('[aria-label^="Marcar como terminada"]')!;
     expect(finishBtn.disabled).toBeFalse();
     expect(list.canDeliver(quotation({ status: 'TERMINADA', balance: 400 }))).toBeFalse();
     expect(list.canDeliver(quotation({ status: 'TERMINADA', balance: 0 }))).toBeFalse(); // still PARCIAL
@@ -480,6 +526,18 @@ describe('Listas Escolares — role-based actions', () => {
     expect(list.canFinish(quotation({ status: 'BORRADOR' }))).toBeFalse();
     await list.finish(quotation());
     expect(change).toHaveBeenCalledWith('q1', 'TERMINAR', 3);
+
+    // Requirements flow: finishing happens in "Preparación"; delivery only once finished and paid.
+    const prep = quotation({ fulfillmentMode: 'PREPARACION', status: 'EN_PREPARACION', supplyStatus: 'NO_APLICA' });
+    expect(list.canFinish(prep)).toBeTrue();
+    expect(list.canFinish({ ...prep, status: 'ACEPTADA' })).toBeFalse();
+    expect(list.canDeliver({ ...prep, status: 'TERMINADA', balance: 0 })).toBeTrue();
+    expect(list.canDeliver({ ...prep, status: 'EN_PREPARACION', balance: 0 })).toBeFalse();
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    change.calls.reset();
+    await list.finish(prep);
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/listas-escolares/cotizaciones', 'q1', 'preparacion']);
+    expect(change).not.toHaveBeenCalled();
   });
 
   it('the dashboard renders the backend figures', () => {
@@ -679,8 +737,8 @@ describe('SchoolQuotationEditorComponent — categorías y cambio de producto', 
       'quotation',
       quotation({
         items: [
-          { id: 'i1', lineNo: 1, source: 'INVENTARIO', templateItemId: null, productId: 'p0', productName: 'Cuaderno mediano', description: null, quantity: 5, unitPrice: 12, discount: 0, subtotal: 60, observations: null, productSku: 'CU-M', categoryId: 'c1', categoryName: 'Cuadernos y libretas' },
-          { id: 'i2', lineNo: 2, source: 'MANUAL', templateItemId: null, productId: null, productName: 'Forro', description: null, quantity: 2, unitPrice: 1.5, discount: 0, subtotal: 3, observations: null, productSku: null, categoryId: null, categoryName: null },
+          { id: 'i1', lineNo: 1, source: 'INVENTARIO', templateItemId: null, productId: 'p0', productName: 'Cuaderno mediano', description: null, quantity: 5, unitPrice: 12, discount: 0, subtotal: 60, observations: null, productSku: 'CU-M', categoryId: 'c1', categoryName: 'Cuadernos y libretas', assignments: [] },
+          { id: 'i2', lineNo: 2, source: 'MANUAL', templateItemId: null, productId: null, productName: 'Forro', description: null, quantity: 2, unitPrice: 1.5, discount: 0, subtotal: 3, observations: null, productSku: null, categoryId: null, categoryName: null, assignments: [] },
         ],
       }),
     );
@@ -762,5 +820,231 @@ describe('SchoolQuotationsListComponent — resumen y orden', () => {
     list.sort('customer');
     expect(get.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ sortBy: 'customer', sortDirection: 'asc' }));
     expect(list.ariaSort('customer')).toBe('ascending');
+  });
+});
+
+// ── Requirements flow (migration 1760008400000) ────────────────────────────
+const requirementItem = (id: string, lineNo: number, name: string, quantity: number, unitPrice: number) => ({
+  id,
+  lineNo,
+  source: 'PLANTILLA' as const,
+  templateItemId: null,
+  productId: null,
+  productName: name,
+  description: null,
+  quantity,
+  unitPrice,
+  discount: 0,
+  subtotal: quantity * unitPrice,
+  observations: null,
+  productSku: null,
+  categoryId: null,
+  categoryName: null,
+  assignments: [],
+});
+
+const preparing = (over: Partial<SchoolQuotation> = {}): SchoolQuotation =>
+  quotation({
+    status: 'EN_PREPARACION',
+    fulfillmentMode: 'PREPARACION',
+    supplyStatus: 'NO_APLICA',
+    total: 160,
+    items: [
+      requirementItem('r1', 1, 'Cuaderno cuadrícula 80 hojas grapado', 5, 25),
+      requirementItem('r2', 2, 'Juego de geometría', 1, 35),
+    ],
+    ...over,
+  });
+
+const cosido = catalogProduct({ id: 'pc', name: 'Cuaderno cuadrícula 80 h cosido', sku: 'CC-80', publicPrice: 22 });
+const espiral = catalogProduct({ id: 'pe', name: 'Cuaderno cuadrícula 80 h espiral', sku: 'CE-80', publicPrice: 27 });
+const geometria = catalogProduct({ id: 'pg', name: 'Set geometría Maped', sku: 'GEO', categoryId: 'c2', categoryName: 'Útiles', publicPrice: 30 });
+
+describe('Listas Escolares — reglas de preparación', () => {
+  const base = (): RequirementDraft[] => [
+    { itemId: 'r1', lineNo: 1, description: 'Cuaderno cuadrícula 80 hojas grapado', detail: null, quantity: 5, unitPrice: 25, subtotal: 125, assignments: [] },
+    { itemId: 'r2', lineNo: 2, description: 'Juego de geometría', detail: null, quantity: 1, unitPrice: 35, subtotal: 35, assignments: [] },
+  ];
+
+  it('template requirement totals are cent-exact', () => {
+    expect(requirementTotal(5, 12.35)).toBe(61.75);
+    expect(requirementTotal(3, 0.1)).toBe(0.3);
+    expect(requirementTotal(7, 19.99)).toBe(139.93);
+  });
+
+  it('splits a requirement among products, merges a repeated product and never touches the quoted price', () => {
+    let reqs = assignProduct(base(), 'r1', cosido, 3);
+    reqs = assignProduct(reqs, 'r1', espiral, 2);
+    expect(reqs[0].assignments.map((a) => [a.productId, a.quantity])).toEqual([['pc', 3], ['pe', 2]]);
+    expect(reqs[0].unitPrice).toBe(25);
+    expect(reqs[0].description).toBe('Cuaderno cuadrícula 80 hojas grapado');
+    // Same product again on the same requirement: one assignment, more units.
+    const merged = assignProduct(reqs, 'r1', cosido, 1);
+    expect(merged[0].assignments.length).toBe(2);
+    expect(merged[0].assignments[0].quantity).toBe(4);
+    expect(saveProblems(merged)).toEqual([jasmine.stringContaining('solo pide 5')]);
+    // Change the product of an assignment.
+    const changed = replaceAssignment(reqs, 'r1', 'pe', geometria, 2);
+    expect(changed[0].assignments.map((a) => a.productId)).toEqual(['pc', 'pg']);
+    expect(changed[0].unitPrice).toBe(25);
+    // Payload for the backend.
+    expect(toPreparationPayload(reqs)).toEqual([
+      { itemId: 'r1', productId: 'pc', quantity: 3 },
+      { itemId: 'r1', productId: 'pe', quantity: 2 },
+    ]);
+    expect(preparationSignature(removeAssignment(reqs, 'r1', 'pe'))).not.toBe(preparationSignature(reqs));
+  });
+
+  it('states, summary and finish blockers: incomplete, insufficient stock, covered', () => {
+    let reqs = assignProduct(base(), 'r1', cosido, 3);
+    const stock = { pc: 10, pg: 0 };
+    let units = unitsByProduct(reqs);
+    expect(requirementState(reqs[0], units, stock)).toBe('INCOMPLETO');
+    expect(requirementState(reqs[1], units, stock)).toBe('PENDIENTE');
+    reqs = setAssignmentQuantity(reqs, 'r1', 'pc', 5);
+    reqs = assignProduct(reqs, 'r2', geometria, 1);
+    units = unitsByProduct(reqs);
+    expect(requirementState(reqs[0], units, stock)).toBe('ASIGNADO');
+    expect(requirementState(reqs[1], units, stock)).toBe('SIN_STOCK');
+    expect(finishProblems(reqs, stock)).toEqual([jasmine.stringContaining('Bodega tiene 0')]);
+    expect(finishProblems(reqs, { ...stock, pg: 4 })).toEqual([]);
+    expect(preparationSummary(reqs)).toEqual({ requirements: 2, assigned: 2, pending: 0, products: 2, units: 6, progress: 100 });
+    expect(requirementState(reqs[1], units, stock, true)).toBe('PREPARADO');
+    const partial = preparationSummary(assignProduct(base(), 'r1', cosido, 3));
+    expect(partial).toEqual(jasmine.objectContaining({ assigned: 0, pending: 2, progress: 50 }));
+  });
+});
+
+describe('SchoolTemplatesComponent — requerimientos manuales', () => {
+  it('saves requirements without inventory and copies those of another grade', () => {
+    const service = setup(['school_lists.view', 'school_lists.templates.manage']);
+    const other = { ...summary, id: 't2', name: 'Tercero Básico', grade: 'Tercero Básico' };
+    (service.getTemplates as jasmine.Spy).and.returnValue(of([summary, other]));
+    (service.getTemplate as jasmine.Spy).and.callFake((id: string) =>
+      of(id === 't2' ? { ...template, ...other, items: [{ ...template.items[0], id: 'x1', productName: 'Calculadora científica', quantity: 1, unitPrice: 85 }] } : { ...template, items: [{ ...template.items[0], productId: 'p0' }] }),
+    );
+    const save = spyOn(service, 'saveTemplate').and.returnValue(of(template));
+    const fixture = TestBed.createComponent(SchoolTemplatesComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    component.edit(summary);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-quotation-product-search')).toBeNull();
+    expect(component.copySources().map((t) => t.id)).toEqual(['t2']);
+    component.copyFrom.set('t2');
+    component.copyRequirements();
+    component.addLine();
+    const added = component.draft()!.lines[2];
+    component.patchLine(added.key, { productName: 'Cuaderno de cuadrícula grande, 8 mm, espiral de 80 hojas', quantity: 5, unitPrice: 12.35 });
+    expect(component.draft()!.lines.map((l) => l.productName)).toEqual([
+      'Cuaderno mediano',
+      'Calculadora científica',
+      'Cuaderno de cuadrícula grande, 8 mm, espiral de 80 hojas',
+    ]);
+    expect(component.draftTotal()).toBe(45 + 85 + 61.75);
+    expect(component.draftProblem()).toBeNull();
+    return component.saveDraft().then(() => {
+      const input = save.calls.mostRecent().args[1];
+      expect(input.items.map((i) => i.productId)).toEqual([null, null, null]);
+      expect(input.items[2]).toEqual(jasmine.objectContaining({ quantity: 5, unitPrice: 12.35 }));
+    });
+  });
+});
+
+describe('SchoolProductSwapModalComponent — modo asignación', () => {
+  it('picks the product of a requirement: no price field, reference price only, merge notice', () => {
+    TestBed.overrideProvider(CategoryService, { useValue: { getCategories: () => of([]) } });
+    const service = setup(CASHIER);
+    spyOn(service, 'catalogProducts').and.returnValue(of({ items: [cosido, espiral], total: 2, page: 1, limit: 12 }));
+    const fixture = TestBed.createComponent(SchoolProductSwapModalComponent);
+    const modal = fixture.componentInstance;
+    fixture.componentRef.setInput('mode', 'assign');
+    fixture.componentRef.setInput('line', {
+      key: 'req:r1', itemId: null, templateItemId: null, productId: null, productName: 'Cuaderno cuadrícula 80 hojas grapado',
+      sku: null, categoryId: null, categoryName: null, description: '', quantity: 2, unitPrice: 25, discount: 0, observations: '', source: 'MANUAL', referencePrice: null,
+    } as EditorLine);
+    fixture.componentRef.setInput('lines', [{ key: 'pc', productId: 'pc', quantity: 3 } as EditorLine]);
+    modal.ngOnChanges({ line: {} as never });
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('Seleccionar producto de inventario');
+    expect(html.textContent).toContain('Precio cotizado');
+    modal.select(cosido);
+    fixture.detectChanges();
+    expect(html.querySelector('#swap-price')).toBeNull();
+    expect(html.querySelector('.swap__notice')?.textContent).toContain('ya está asignado');
+    expect(modal.quantity()).toBe(2);
+    const emitted: ProductSwapResult[] = [];
+    modal.swapped.subscribe((r) => emitted.push(r));
+    modal.confirm();
+    expect(emitted[0].request).toEqual(jasmine.objectContaining({ quantity: 2, unitPrice: 22 }));
+    expect(emitted[0].request.product.id).toBe('pc');
+  });
+});
+
+describe('SchoolQuotationPreparationPageComponent', () => {
+  function page(q: SchoolQuotation) {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: q.id }), queryParamMap: convertToParamMap({}) } } }],
+    });
+    TestBed.overrideProvider(CategoryService, { useValue: { getCategories: () => of([]) } });
+    const service = setup(CASHIER);
+    spyOn(service, 'permissionsLoaded').and.returnValue(true);
+    spyOn(service, 'getQuotation').and.returnValue(of(q));
+    (service.bodegaStock as jasmine.Spy).and.callFake((ids: string[]) => of(ids.map((productId) => ({ productId, quantity: productId === 'pg' ? 0 : 20 }))));
+    const fixture = TestBed.createComponent(SchoolQuotationPreparationPageComponent);
+    fixture.detectChanges();
+    return { service, fixture, component: fixture.componentInstance, html: fixture.nativeElement as HTMLElement };
+  }
+
+  it('one card per requirement; saving sends only the assignments (no stock, same quoted price)', async () => {
+    const { service, fixture, component, html } = page(preparing());
+    expect(html.querySelectorAll('.req').length).toBe(2);
+    expect(html.textContent).toContain('Sin seleccionar');
+    expect(html.textContent).toContain('Pendiente de asignar producto');
+    const save = spyOn(service, 'savePreparation').and.returnValue(of(preparing({ version: 4 })));
+    const change = spyOn(service, 'changeStatus');
+
+    component.pick('r1', null);
+    component.onPicked({ request: { product: cosido, quantity: 3, unitPrice: 22 }, consolidateWith: null });
+    component.pick('r1', null);
+    component.onPicked({ request: { product: espiral, quantity: 2, unitPrice: 27 }, consolidateWith: null });
+    fixture.detectChanges();
+    expect(component.dirty()).toBeTrue();
+    expect(component.summary()).toEqual(jasmine.objectContaining({ assigned: 1, pending: 1, units: 5, progress: 83 }));
+    expect(component.finishIssues()).toEqual([jasmine.stringContaining('Juego de geometría')]);
+    expect(html.querySelector<HTMLButtonElement>('.actions__buttons app-button:last-child button')?.disabled).toBeTrue();
+    expect(html.textContent).toContain('25.00'); // quoted price stays
+
+    await component.save();
+    expect(save).toHaveBeenCalledWith('q1', [
+      { itemId: 'r1', productId: 'pc', quantity: 3 },
+      { itemId: 'r1', productId: 'pe', quantity: 2 },
+    ], 3);
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('blocks finishing on insufficient stock; finishing saves pending changes and then runs TERMINAR once', async () => {
+    const { service, component } = page(preparing());
+    component.onPicked({ request: { product: cosido, quantity: 5, unitPrice: 22 }, consolidateWith: null }); // no picker open: ignored
+    component.pick('r1', null);
+    component.onPicked({ request: { product: cosido, quantity: 5, unitPrice: 22 }, consolidateWith: null });
+    component.pick('r2', null);
+    component.onPicked({ request: { product: geometria, quantity: 1, unitPrice: 30 }, consolidateWith: null });
+    expect(component.stateOf(component.requirements()[1])).toBe('SIN_STOCK');
+    expect(component.finishIssues()).toEqual([jasmine.stringContaining('Bodega tiene 0')]);
+
+    component.pick('r2', 'pg');
+    component.onPicked({ request: { product: espiral, quantity: 1, unitPrice: 27 }, consolidateWith: null });
+    expect(component.finishIssues()).toEqual([]);
+    const saved = preparing({ version: 4 });
+    const save = spyOn(service, 'savePreparation').and.returnValue(of(saved));
+    const change = spyOn(service, 'changeStatus').and.returnValue(of(preparing({ status: 'TERMINADA', version: 5 })));
+    await component.finish();
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(change).toHaveBeenCalledOnceWith('q1', 'TERMINAR', 4);
+    expect(component.finished()).toBeTrue();
+    expect(component.editable()).toBeFalse();
   });
 });

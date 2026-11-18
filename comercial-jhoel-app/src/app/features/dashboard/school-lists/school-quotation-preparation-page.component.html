@@ -1,0 +1,158 @@
+<div class="prep">
+  <a class="back" [routerLink]="['/dashboard/listas-escolares/cotizaciones', id]"><app-icon name="chevron-left" [size]="16" /> Volver al detalle</a>
+
+  @if (quotation(); as q) {
+    <header class="hero">
+      <span class="hero__icon"><app-icon name="package" [size]="24" /></span>
+      <div class="hero__text">
+        <p class="hero__eyebrow">Preparación del pedido</p>
+        <h1>{{ q.quotationNumber }} · {{ q.customerName }}</h1>
+        <p class="hero__meta">
+          <span [class]="'status-pill status-pill--' + statusColor[q.status]">{{ statusLabel[q.status] }}</span>
+          <span>{{ q.grade }}{{ q.studentName ? ' · ' + q.studentName : '' }}</span>
+          <span>Total cotizado {{ formatCurrency(q.total) }}</span>
+        </p>
+      </div>
+    </header>
+
+    @if (q.fulfillmentMode === 'CONFIRMACION') {
+      <p class="state">Esta lista se registró con el flujo anterior: descontó inventario al confirmarse y se abastece desde "Abastecimiento".</p>
+    } @else {
+      <section class="kpis" aria-label="Resumen de la preparación">
+        @for (card of cards(); track card.label) {
+          <article [class]="'kpi kpi--' + card.color">
+            <span class="kpi__icon"><app-icon [name]="card.icon" [size]="20" /></span>
+            <div class="kpi__body">
+              <span class="kpi__label">{{ card.label }}</span>
+              <strong class="kpi__value">{{ card.value }}</strong>
+              <span class="kpi__hint">{{ card.hint }}</span>
+            </div>
+          </article>
+        }
+        <article class="kpi kpi--sky">
+          <span class="kpi__icon"><app-icon name="check-check" [size]="20" /></span>
+          <div class="kpi__body progress">
+            <span class="kpi__label">Avance de preparación</span>
+            <strong class="kpi__value">{{ summary().progress }}%</strong>
+            <span class="bar" role="progressbar" aria-label="Avance de preparación" [attr.aria-valuenow]="summary().progress" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="summary().progress"></span></span>
+          </div>
+        </article>
+      </section>
+
+      @if (q.status === 'ACEPTADA') {
+        <section class="panel notice">
+          <p>La cotización está <strong>Aceptada</strong>. Inicie la preparación para elegir los productos reales de inventario de cada requerimiento.</p>
+          @if (canStart()) {
+            <app-button variant="primary" size="sm" [disabled]="busy()" (click)="start()"><app-icon name="package" [size]="15" /> Iniciar preparación</app-button>
+          }
+        </section>
+      } @else if (finished()) {
+        <p class="panel__hint">Preparación finalizada: el inventario asignado ya se descontó de Bodega una sola vez. Los productos quedan como referencia interna.</p>
+      } @else if (q.status !== 'EN_PREPARACION') {
+        <p class="panel__hint">La lista está {{ statusLabel[q.status].toLowerCase() }}: la preparación es solo de consulta.</p>
+      }
+
+      <div class="reqs">
+        @for (r of requirements(); track r.itemId) {
+          <article class="req" [attr.aria-label]="'Requerimiento ' + r.lineNo">
+            <header class="req__head">
+              <span class="req__no">{{ r.lineNo }}</span>
+              <div class="req__title">
+                <span class="req__eyebrow">Requerimiento escolar</span>
+                <h3>{{ r.description }}</h3>
+                @if (r.detail) { <p class="muted">{{ r.detail }}</p> }
+              </div>
+              <span [class]="'status-pill status-pill--' + stateColor[stateOf(r)]">{{ stateLabel[stateOf(r)] }}</span>
+            </header>
+
+            <dl class="req__facts">
+              <div><dt>Cantidad solicitada</dt><dd>{{ r.quantity }}</dd></div>
+              <div><dt>Precio cotizado</dt><dd>{{ formatCurrency(r.unitPrice) }}</dd></div>
+              <div><dt>Total cotizado</dt><dd>{{ formatCurrency(r.subtotal) }}</dd></div>
+              <div><dt>Asignado</dt><dd>{{ assignedUnits(r) }} / {{ r.quantity }}</dd></div>
+            </dl>
+            <span class="bar" aria-hidden="true"><span [style.width.%]="coverage(r)"></span></span>
+
+            @if (r.assignments.length) {
+              <ul class="asg" aria-label="Productos de inventario asignados">
+                @for (a of r.assignments; track a.key) {
+                  <li class="asg__row" [class.asg__row--short]="isShort(a.productId)">
+                    <div class="asg__info">
+                      <strong>{{ a.productName }}</strong>
+                      <span class="muted">
+                        {{ a.sku ? 'SKU ' + a.sku : 'Sin SKU' }}{{ a.categoryName ? ' · ' + a.categoryName : '' }} · Ref. {{ formatCurrency(a.referencePrice) }}
+                      </span>
+                    </div>
+                    <div class="asg__qty">
+                      @if (editable()) {
+                        <input type="number" min="1" max="9999" step="1" [attr.aria-label]="'Cantidad asignada de ' + a.productName" [ngModel]="a.quantity" (ngModelChange)="setQuantity(r.itemId, a.key, $event)" />
+                      } @else {
+                        <strong>{{ a.quantity }}</strong>
+                      }
+                      @if (!finished() && stockOf(a.productId) !== null) {
+                        <small [class.short]="isShort(a.productId)">Bodega: {{ stockOf(a.productId) }}</small>
+                      }
+                    </div>
+                    @if (editable()) {
+                      <div class="row-actions">
+                        <button type="button" class="icon-btn" title="Cambiar producto" aria-label="Cambiar producto" (click)="pick(r.itemId, a.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                        <button type="button" class="icon-btn icon-btn--danger" title="Quitar asignación" aria-label="Quitar asignación" (click)="remove(r.itemId, a.key)"><app-icon name="trash-2" [size]="15" /></button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="req__empty">Producto de inventario seleccionado: <strong>Sin seleccionar</strong></p>
+            }
+
+            @if (editable()) {
+              <app-button variant="ghost" size="sm" (click)="pick(r.itemId, null)">
+                <app-icon name="plus" [size]="14" /> {{ r.assignments.length ? 'Agregar otro producto' : 'Seleccionar producto de inventario' }}
+              </app-button>
+            }
+          </article>
+        } @empty {
+          <p class="state">La lista no tiene requerimientos.</p>
+        }
+      </div>
+
+      @if (editable()) {
+        <footer class="actions" aria-label="Acciones de la preparación">
+          @if (finishIssues().length) {
+            <details class="actions__issues">
+              <summary><app-icon name="alert-circle" [size]="14" /> {{ finishIssues().length }} pendiente(s) para finalizar</summary>
+              <ul>@for (p of finishIssues(); track p) { <li>{{ p }}</li> }</ul>
+            </details>
+          } @else {
+            <span class="actions__ok"><app-icon name="check-circle" [size]="14" /> Todos los requerimientos están cubiertos.</span>
+          }
+          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+          <div class="actions__buttons">
+            <app-button variant="ghost" [disabled]="busy() || !dirty()" (click)="discard()">Descartar cambios</app-button>
+            <app-button variant="secondary" [disabled]="busy() || !dirty() || saveIssues().length > 0" (click)="save()">
+              <app-icon name="check" [size]="15" /> {{ busy() ? 'Guardando…' : 'Guardar preparación' }}
+            </app-button>
+            <app-button variant="primary" [disabled]="busy() || finishIssues().length > 0" (click)="finish()">
+              <app-icon name="check-check" [size]="15" /> Finalizar preparación
+            </app-button>
+          </div>
+        </footer>
+      } @else if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+    }
+  } @else if (failed()) {
+    <p class="state state--error" role="alert">{{ failed() }}</p>
+  } @else {
+    <p class="state">Cargando preparación…</p>
+  }
+</div>
+
+<app-school-product-swap-modal
+  mode="assign"
+  [line]="pickerLine()"
+  [lines]="pickerLines()"
+  (swapped)="onPicked($event)"
+  (closed)="picking.set(null)"
+/>

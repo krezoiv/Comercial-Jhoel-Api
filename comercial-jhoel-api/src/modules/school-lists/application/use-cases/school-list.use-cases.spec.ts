@@ -19,6 +19,7 @@ import {
   CancelSchoolQuotationUseCase,
   ChangeSchoolQuotationStatusUseCase,
   GetSchoolBodegaStockUseCase,
+  SaveSchoolPreparationUseCase,
 } from './school-list.use-cases';
 import {
   AllocateSupplyManualUseCase,
@@ -50,6 +51,7 @@ const detail: QuotationDetailRow = {
   paid: 300,
   balance: 550,
   status: 'ANTICIPO_RECIBIDO',
+  fulfillmentMode: 'CONFIRMACION',
   accountStatus: 'PARCIAL',
   supplyStatus: 'NO_APLICA',
   version: 2,
@@ -83,6 +85,7 @@ const detail: QuotationDetailRow = {
       discount: 0,
       subtotal: 25,
       observations: null,
+      assignments: [],
     },
   ],
   payments: [
@@ -141,6 +144,7 @@ function repository(): jest.Mocked<SchoolListRepository> {
     updateQuotation: jest.fn().mockResolvedValue('q1'),
     setObservations: jest.fn().mockResolvedValue('q1'),
     changeStatus: jest.fn().mockResolvedValue('q1'),
+    savePreparation: jest.fn().mockResolvedValue('q1'),
     cancelQuotation: jest.fn().mockResolvedValue('q1'),
     registerPayment: jest.fn().mockResolvedValue('p2'),
     voidPayment: jest.fn().mockResolvedValue('p3'),
@@ -369,6 +373,34 @@ describe('Listas Escolares — use cases', () => {
     await expect(
       useCase.execute({ userId: 'x', role: 'GUEST' }, 'q1', 'TERMINAR', 2),
     ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+  });
+
+  it('saves the preparation assignments with the edit permission and rejects a repeated product', async () => {
+    const repo = repository();
+    const useCase = new SaveSchoolPreparationUseCase(repo);
+    const assignments = [
+      { itemId: 'i1', productId: 'p1', quantity: 3 },
+      { itemId: 'i1', productId: 'p2', quantity: 2 },
+    ];
+    await useCase.execute(cashier, 'q1', assignments, 4);
+    expect(repo.savePreparation).toHaveBeenCalledWith(
+      'q1',
+      assignments,
+      'u-user',
+      4,
+    );
+    await expect(
+      useCase.execute(
+        cashier,
+        'q1',
+        [assignments[0], { ...assignments[0], quantity: 1 }],
+        4,
+      ),
+    ).rejects.toMatchObject({ code: 'SCHOOL_DUPLICATE_ASSIGNMENT' });
+    await expect(
+      useCase.execute({ userId: 'x', role: 'GUEST' }, 'q1', assignments, 4),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    expect(repo.savePreparation).toHaveBeenCalledTimes(1);
   });
 
   it('reads Bodega stock for the editor (deduplicated) with the view permission', async () => {

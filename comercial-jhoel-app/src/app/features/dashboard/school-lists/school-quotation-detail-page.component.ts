@@ -62,6 +62,21 @@ const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; 
   },
 };
 
+/** Copy of the requirements flow (migration 1760008400000) where it differs. */
+const REQUIREMENT_ACTION_COPY: Partial<Record<SchoolStatusAction, { title: string; message: string; done: string }>> = {
+  CONFIRMAR: {
+    title: 'Confirmar cotización',
+    message: 'El borrador pasará a "Aceptada" y podrá recibir anticipos y abonos. No se descuenta inventario.',
+    done: 'Cotización aceptada.',
+  },
+  PREPARAR: {
+    title: 'Iniciar preparación',
+    message:
+      'La lista pasará a "En preparación" para elegir los productos de inventario de cada requerimiento. No se descuenta inventario hasta finalizar la preparación.',
+    done: 'Lista en preparación: asigne los productos de inventario.',
+  },
+};
+
 /**
  * Detail of a school quotation: customer, grade, lines, financial cards,
  * account statement (with receipts and audited reversals), observations and
@@ -146,7 +161,14 @@ export class SchoolQuotationDetailPageComponent {
 
   readonly editable = computed(() => {
     const q = this.quotation();
-    return !!q && isSchoolQuotationEditable(q.status) && this.service.can('school_lists.quotations.edit');
+    return !!q && isSchoolQuotationEditable(q.status, q.fulfillmentMode) && this.service.can('school_lists.quotations.edit');
+  });
+  /** Requirements flow: lines are school requirements; products are assigned in "Preparación". */
+  readonly requirementMode = computed(() => this.quotation()?.fulfillmentMode === 'PREPARACION');
+  /** "Preparación del pedido" is reachable once the list is being (or was) prepared. */
+  readonly hasPreparation = computed(() => {
+    const q = this.quotation();
+    return !!q && q.fulfillmentMode === 'PREPARACION' && ['EN_PREPARACION', 'TERMINADA', 'ENTREGADA'].includes(q.status);
   });
   readonly canPay = computed(() => {
     const q = this.quotation();
@@ -161,6 +183,12 @@ export class SchoolQuotationDetailPageComponent {
     if (!q || !this.service.can('school_lists.quotations.edit')) return [];
     const actions: SchoolStatusAction[] = [];
     if (q.status === 'BORRADOR') actions.push('CONFIRMAR');
+    if (q.fulfillmentMode === 'PREPARACION') {
+      // ACEPTADA → preparation; finishing happens on the preparation screen; delivery once finished and paid.
+      if (q.status === 'ACEPTADA') actions.push('PREPARAR');
+      if (q.status === 'TERMINADA' && q.balance <= 0 && !q.supply.dispatch) actions.push('ENTREGAR');
+      return actions;
+    }
     if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA'].includes(q.status)) actions.push('PREPARAR');
     if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status)) actions.push('TERMINAR');
     // Delivery = dispatch: only when paid and fully supplied (the dialog reviews the products).
@@ -210,6 +238,16 @@ export class SchoolQuotationDetailPageComponent {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'editar']);
   }
 
+  /** "Preparación del pedido": assign inventory products to each requirement. */
+  openPreparation(): void {
+    void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'preparacion']);
+  }
+
+  /** Assigned products of a requirement, as one line of internal text. */
+  assignedText(item: SchoolQuotation['items'][number]): string {
+    return item.assignments.map((a) => `${a.productName} × ${a.quantity}`).join(' · ');
+  }
+
   /** Opens the editor with the "Cambiar producto" modal already on this line (`?cambiar=`). */
   swapItem(itemId: string): void {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'editar'], {
@@ -249,7 +287,7 @@ export class SchoolQuotationDetailPageComponent {
       queueMicrotask(() => this.openDispatch.set(true));
       return;
     }
-    const copy = ACTION_COPY[action];
+    const copy = q.fulfillmentMode === 'PREPARACION' ? { ...ACTION_COPY[action], ...REQUIREMENT_ACTION_COPY[action] } : ACTION_COPY[action];
     const ok = await this.confirm.confirm({ type: 'UPDATE', title: copy.title, message: `${q.quotationNumber}: ${copy.message}`, confirmText: copy.title });
     if (!ok) return;
     this.busy.set(true);
@@ -258,6 +296,9 @@ export class SchoolQuotationDetailPageComponent {
         this.busy.set(false);
         this.apply(updated);
         this.notifications.success(copy.done);
+        if (updated.fulfillmentMode === 'PREPARACION' && updated.status === 'EN_PREPARACION') {
+          this.openPreparation();
+        }
       },
       error: (error: HttpErrorResponse) => {
         this.busy.set(false);

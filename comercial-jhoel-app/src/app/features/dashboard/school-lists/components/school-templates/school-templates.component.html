@@ -5,7 +5,10 @@
       <app-button variant="primary" size="sm" (click)="create()"><app-icon name="plus" [size]="16" /> Nueva plantilla</app-button>
     }
   </div>
-  <p class="panel__hint">Cada plantilla es la lista oficial solicitada por el instituto. Cambiarla no modifica cotizaciones ya generadas.</p>
+  <p class="panel__hint">
+    Cada plantilla es la lista oficial solicitada por el establecimiento: requerimientos escritos tal como los pide, con su cantidad y precio.
+    No depende del inventario; el producto real se elige al preparar cada pedido. Cambiarla no modifica cotizaciones ya generadas.
+  </p>
 
   @if (failed()) {
     <p class="state state--error" role="alert">No se pudieron cargar las plantillas.</p>
@@ -22,7 +25,7 @@
           <app-badge [tone]="t.isActive ? 'success' : 'neutral-light'">{{ t.isActive ? 'Activa' : 'Inactiva' }}</app-badge>
         </header>
         <div class="tpl__figures">
-          <div><span>Productos</span><strong>{{ t.itemCount }}</strong></div>
+          <div><span>Requerimientos</span><strong>{{ t.itemCount }}</strong></div>
           <div><span>Total de la lista</span><strong>{{ formatCurrency(t.total) }}</strong></div>
         </div>
         <p class="muted">Actualizada {{ formatDateTime(t.updatedAt) }}{{ t.updatedByUsername ? ' por ' + t.updatedByUsername : '' }}</p>
@@ -52,12 +55,12 @@
     @if (tpl.items.length) {
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Producto</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Subtotal</th><th>Observaciones</th></tr></thead>
+          <thead><tr><th class="num">No.</th><th>Requerimiento escolar</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Total</th><th>Observaciones</th></tr></thead>
           <tbody>
             @for (i of tpl.items; track i.id) {
               <tr>
-                <td>{{ i.productName }} @if (i.productId) { <app-badge tone="success">Inventario</app-badge> }</td>
-                <td>{{ i.description || '—' }}</td>
+                <td class="num">{{ i.lineNo }}</td>
+                <td>{{ i.productName }}@if (i.description) { <div class="muted">{{ i.description }}</div> }</td>
                 <td class="num">{{ i.quantity }}</td>
                 <td class="num">{{ formatCurrency(i.unitPrice) }}</td>
                 <td class="num">{{ formatCurrency(i.subtotal) }}</td>
@@ -69,7 +72,7 @@
         </table>
       </div>
     } @else {
-      <p class="state">Esta plantilla aún no tiene productos{{ canManage() ? '. Use "Editar" para configurarla.' : '.' }}</p>
+      <p class="state">Esta plantilla aún no tiene requerimientos{{ canManage() ? '. Use "Editar" para configurarla.' : '.' }}</p>
     }
   </section>
 }
@@ -92,35 +95,45 @@
 
       <div class="table-wrap editor-lines">
         <table class="table">
-          <thead><tr><th>Producto</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Subtotal</th><th>Observaciones</th><th></th></tr></thead>
+          <thead><tr><th class="num">No.</th><th>Requerimiento escolar</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Total</th><th>Observaciones</th><th></th></tr></thead>
           <tbody>
             @for (l of d.lines; track l.key; let idx = $index) {
               <tr>
-                <td><input type="text" maxlength="150" [attr.aria-label]="'Producto ' + (idx + 1)" [ngModel]="l.productName" (ngModelChange)="patchLine(l.key, { productName: $event })" /></td>
-                <td><input type="text" maxlength="255" [attr.aria-label]="'Descripción ' + (idx + 1)" [ngModel]="l.description" (ngModelChange)="patchLine(l.key, { description: $event })" /></td>
+                <td class="num">{{ idx + 1 }}</td>
+                <td><textarea rows="2" maxlength="300" placeholder="Ej.: Cuaderno de cuadrícula grande, 8 mm, espiral de 80 hojas" [attr.aria-label]="'Requerimiento ' + (idx + 1)" [ngModel]="l.productName" (ngModelChange)="patchLine(l.key, { productName: $event })"></textarea></td>
                 <td class="num"><input class="small" type="number" min="1" step="1" [attr.aria-label]="'Cantidad ' + (idx + 1)" [ngModel]="l.quantity" (ngModelChange)="patchLine(l.key, { quantity: num($event) })" /></td>
                 <td class="num"><input class="small" type="number" min="0" step="0.01" [attr.aria-label]="'Precio ' + (idx + 1)" [ngModel]="l.unitPrice" (ngModelChange)="patchLine(l.key, { unitPrice: num($event) })" /></td>
-                <td class="num">{{ formatCurrency(l.quantity * l.unitPrice) }}</td>
+                <td class="num">{{ formatCurrency(requirementTotal(l.quantity, l.unitPrice)) }}</td>
                 <td><input type="text" maxlength="255" [attr.aria-label]="'Observaciones ' + (idx + 1)" [ngModel]="l.observations" (ngModelChange)="patchLine(l.key, { observations: $event })" /></td>
                 <td>
                   <div class="line-actions">
                     <button type="button" class="icon-btn" aria-label="Subir" [disabled]="idx === 0" (click)="moveLine(idx, -1)"><app-icon name="chevron-up" [size]="14" /></button>
                     <button type="button" class="icon-btn" aria-label="Bajar" [disabled]="idx === d.lines.length - 1" (click)="moveLine(idx, 1)"><app-icon name="chevron-down" [size]="14" /></button>
-                    <button type="button" class="icon-btn icon-btn--danger" aria-label="Eliminar producto" (click)="removeLine(l.key)"><app-icon name="trash-2" [size]="14" /></button>
+                    <button type="button" class="icon-btn icon-btn--danger" aria-label="Eliminar requerimiento" title="Eliminar requerimiento" (click)="removeLine(l.key)"><app-icon name="trash-2" [size]="14" /></button>
                   </div>
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="7" class="state">Agregue los productos de la lista oficial.</td></tr>
+              <tr><td colspan="7" class="state">Agregue los requerimientos de la lista oficial o cópielos de otra plantilla.</td></tr>
             }
           </tbody>
           <tfoot><tr><td colspan="4">Total de la lista</td><td class="num">{{ formatCurrency(draftTotal()) }}</td><td colspan="2"></td></tr></tfoot>
         </table>
       </div>
       <div class="add">
-        <div class="add__search"><span class="muted">Agregar del inventario</span><app-quotation-product-search (productSelected)="addLine($event)" /></div>
-        <app-button variant="ghost" size="sm" (click)="addLine()"><app-icon name="plus" [size]="14" /> Producto escrito a mano</app-button>
+        <app-button variant="ghost" size="sm" (click)="addLine()"><app-icon name="plus" [size]="14" /> Agregar requerimiento</app-button>
+        @if (copySources().length) {
+          <div class="add__search">
+            <label class="muted" for="tpl-copy">Copiar requerimientos de</label>
+            <select id="tpl-copy" [ngModel]="copyFrom()" (ngModelChange)="copyFrom.set($event)">
+              <option value="">Seleccione una plantilla</option>
+              @for (t of copySources(); track t.id) { <option [value]="t.id">{{ t.name }} · {{ t.grade }} ({{ t.itemCount }})</option> }
+            </select>
+            <app-button variant="ghost" size="sm" [disabled]="!copyFrom() || copying()" (click)="copyRequirements()"><app-icon name="copy" [size]="14" /> Copiar</app-button>
+          </div>
+        }
       </div>
+      <p class="modal__hint">Los requerimientos no consultan el inventario: puede registrar artículos que la tienda no tenga hoy.</p>
 
       @if (draftProblem()) { <p class="modal__hint">{{ draftProblem() }}</p> }
       @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
@@ -145,7 +158,7 @@
         <div class="field"><label for="dup-grade">Grado escolar</label>
           <input id="dup-grade" type="text" maxlength="60" [ngModel]="copyGrade()" (ngModelChange)="copyGrade.set($event)" /></div>
       </div>
-      <p class="modal__hint">Se copian todos los productos, cantidades y precios; después puede editarla sin afectar la original.</p>
+      <p class="modal__hint">Se copian todos los requerimientos, cantidades y precios; después puede editarla sin afectar la original.</p>
       @if (error()) { <p class="modal__error" role="alert">{{ error() }}</p> }
       <div class="modal__actions">
         <app-button variant="ghost" [disabled]="saving()" (click)="duplicating.set(null)">Cancelar</app-button>

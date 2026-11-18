@@ -90,6 +90,11 @@ export class SchoolQuotationSupplyComponent implements OnChanges {
     const q = this.current();
     if (!q) return 'Cargando…';
     if (q.supply.dispatch) return 'La lista ya fue despachada.';
+    // Requirements flow: Bodega was discounted once, when the preparation was finished.
+    if (q.fulfillmentMode === 'PREPARACION') {
+      if (q.status !== 'TERMINADA') return 'Finalice la preparación del pedido antes de entregarlo.';
+      return q.balance > 0 ? `Falta cobrar ${formatCurrency(q.balance)} antes de entregar.` : null;
+    }
     if (!['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) || q.balance > 0) {
       return q.balance > 0
         ? `Falta cobrar ${formatCurrency(q.balance)} antes de entregar.`

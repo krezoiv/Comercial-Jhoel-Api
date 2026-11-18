@@ -7,7 +7,9 @@ import {
   DashboardRow,
   FindQuotationsOptions,
   HistoryRow,
+  ItemAssignmentRow,
   ListInventoryMovementRow,
+  PreparationAssignmentInput,
   DispatchRow,
   FindSupplyProductsOptions,
   QuotationSupplyRow,
@@ -139,7 +141,7 @@ function lineProduct(row: SqlRow): {
 const QUOTATION_SELECT = `
   SELECT q.id, q.quotation_number, q.quotation_date::text AS quotation_date,
          q.delivery_date::text AS delivery_date, q.customer_name, q.customer_phone, q.student_name,
-         q.grade, q.template_id, q.template_name, q.subtotal, q.discount, q.total, q.status,
+         q.grade, q.template_id, q.template_name, q.subtotal, q.discount, q.total, q.status, q.fulfillment_mode,
          q.version, q.observations, q.created_at, q.updated_at, q.finished_at, q.delivered_at, q.cancelled_at,
          q.cancel_reason, cu.username AS created_by_username, du.username AS delivered_by_username,
          xu.username AS cancelled_by_username, tu.username AS finished_by_username,
@@ -183,6 +185,9 @@ function toSummary(row: SqlRow): QuotationSummaryRow {
     paid,
     balance,
     status,
+    fulfillmentMode: text(
+      row.fulfillment_mode,
+    ) as QuotationSummaryRow['fulfillmentMode'],
     accountStatus: accountStatus(status, paid, balance),
     supplyStatus: text(
       row.supply_status,
@@ -391,37 +396,78 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     if (!row) {
       return null;
     }
-    const [items, payments, history, inventory, supply] = await Promise.all([
-      this.dataSource.query<SqlRow[]>(
-        `SELECT i.*, ${LINE_PRODUCT_COLUMNS}
+    const [items, assignments, payments, history, inventory, supply] =
+      await Promise.all([
+        this.dataSource.query<SqlRow[]>(
+          `SELECT i.*, ${LINE_PRODUCT_COLUMNS}
            FROM school_quotation_items i ${LINE_PRODUCT_JOIN}
           WHERE i.quotation_id = $1 ORDER BY i.line_no`,
-        [id],
-      ),
-      this.dataSource.query<SqlRow[]>(
-        `${PAYMENT_SELECT} WHERE p.quotation_id = $1 ORDER BY p.received_at, p.receipt_number`,
-        [id],
-      ),
-      this.dataSource.query<SqlRow[]>(
-        `SELECT h.*, u.username AS created_by_username
+          [id],
+        ),
+        // Inventory products assigned in preparation, with their live Bodega stock.
+        this.dataSource.query<SqlRow[]>(
+          `SELECT a.*, p.name AS product_name, p.sku AS product_sku, c.name AS category_name,
+                p.public_price, p.is_active AS product_active, COALESCE(s.quantity, 0) AS bodega_stock,
+                cu.username AS created_by_username, uu.username AS updated_by_username
+           FROM school_quotation_item_assignments a
+           JOIN products p ON p.id = a.product_id
+           LEFT JOIN categories c ON c.id = p.category_id
+           LEFT JOIN inventory_locations l ON l.name = 'Bodega'
+           LEFT JOIN inventory_stock s ON s.product_id = p.id AND s.location_id = l.id
+           JOIN users cu ON cu.id = a.created_by
+           LEFT JOIN users uu ON uu.id = a.updated_by
+          WHERE a.quotation_id = $1
+          ORDER BY a.created_at, p.name`,
+          [id],
+        ),
+        this.dataSource.query<SqlRow[]>(
+          `${PAYMENT_SELECT} WHERE p.quotation_id = $1 ORDER BY p.received_at, p.receipt_number`,
+          [id],
+        ),
+        this.dataSource.query<SqlRow[]>(
+          `SELECT h.*, u.username AS created_by_username
            FROM school_list_history h JOIN users u ON u.id = h.created_by
           WHERE h.entity_type = 'QUOTATION' AND h.entity_id = $1 ORDER BY h.id DESC`,
-        [id],
-      ),
-      this.dataSource.query<SqlRow[]>(
-        `SELECT m.id, m.product_id, p.name AS product_name, m.movement_type,
+          [id],
+        ),
+        this.dataSource.query<SqlRow[]>(
+          `SELECT m.id, m.product_id, p.name AS product_name, m.movement_type,
                 m.quantity_base_units, m.reason, m.created_at, u.username
            FROM inventory_movements m
            JOIN products p ON p.id = m.product_id
            JOIN users u ON u.id = m.user_id
           WHERE m.reference_type = 'SCHOOL_LIST' AND m.reference_id = $1
           ORDER BY m.created_at, m.id`,
-        [id],
-      ),
-      this.supplyOf(id, text(row.supply_status), textOrNull(row.confirmed_at)),
-    ]);
+          [id],
+        ),
+        this.supplyOf(
+          id,
+          text(row.supply_status),
+          textOrNull(row.confirmed_at),
+        ),
+      ]);
 
     const summary = toSummary(row);
+    const assignmentsByItem = new Map<string, ItemAssignmentRow[]>();
+    for (const a of assignments) {
+      const list = assignmentsByItem.get(text(a.item_id)) ?? [];
+      list.push({
+        id: text(a.id),
+        productId: text(a.product_id),
+        productName: text(a.product_name),
+        productSku: textOrNull(a.product_sku),
+        categoryName: textOrNull(a.category_name),
+        quantity: num(a.quantity),
+        referencePrice: num(a.public_price),
+        bodegaStock: num(a.bodega_stock),
+        productActive: a.product_active === true,
+        createdAt: text(a.created_at),
+        createdByUsername: text(a.created_by_username),
+        updatedAt: textOrNull(a.updated_at),
+        updatedByUsername: textOrNull(a.updated_by_username),
+      });
+      assignmentsByItem.set(text(a.item_id), list);
+    }
     let paidSoFar = 0;
     const account: AccountSummary = {
       total: summary.total,
@@ -474,6 +520,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
         subtotal: num(item.subtotal),
         observations: textOrNull(item.observations),
         ...lineProduct(item),
+        assignments: assignmentsByItem.get(text(item.id)) ?? [],
       })),
       payments: paymentRows,
       history: history.map((entry): HistoryRow => ({
@@ -910,6 +957,18 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     );
   }
 
+  async savePreparation(
+    id: string,
+    assignments: PreparationAssignmentInput[],
+    userId: string,
+    expectedVersion: number,
+  ): Promise<string> {
+    return this.scalar(
+      `SELECT save_school_quotation_preparation($1, $2::jsonb, $3, $4) AS id`,
+      [id, JSON.stringify(assignments), userId, expectedVersion],
+    );
+  }
+
   async cancelQuotation(
     id: string,
     input: CancelInput,
@@ -980,11 +1039,11 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
           WHERE q.quotation_date BETWEEN $1::date AND $2::date
        )
        SELECT count(*) AS total_quotations,
-              count(*) FILTER (WHERE status IN ('BORRADOR','COTIZADA')) AS awaiting_quotations,
-              count(*) FILTER (WHERE status IN ('COTIZADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION','TERMINADA')
+              count(*) FILTER (WHERE status IN ('BORRADOR','COTIZADA','ACEPTADA')) AS awaiting_quotations,
+              count(*) FILTER (WHERE status IN ('COTIZADA','ACEPTADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION','TERMINADA')
                                  AND total > paid) AS pending_quotations,
               count(*) FILTER (WHERE status IN ('PAGADA','ENTREGADA')
-                                 OR (status IN ('EN_PREPARACION','TERMINADA') AND total <= paid)) AS paid_quotations,
+                                 OR (status IN ('ACEPTADA','EN_PREPARACION','TERMINADA') AND total <= paid)) AS paid_quotations,
               COALESCE(SUM(total) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR')), 0) AS total_quoted,
               COALESCE(SUM(paid) FILTER (WHERE status <> 'CANCELADA'), 0) AS total_received,
               COALESCE(SUM(total - paid) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR','ENTREGADA')), 0) AS pending_balance

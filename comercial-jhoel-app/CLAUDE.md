@@ -1874,3 +1874,17 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - `SchoolProductSwapModalComponent`: abre en la categoría de la línea, catálogo paginado `SchoolListService.catalogProducts()` (`GET /products`), búsqueda con `timer(250)` dentro de `switchMap` (no `debounceTime` sobre `of()`: emite al completar). Un producto ya listado se consolida. `?cambiar=<itemId>` en la página de edición abre el modal en esa línea.
 - `_school-ui.scss` son mixins (`cat-badge`, `status-pills`, `kpis`): incluye solo lo que el componente usa. El editor está en 11.89 kB de 12 kB: no agregar estilos ahí sin quitar otros.
 - Colores de estado: `SCHOOL_STATUS_COLOR` → `.status-pill--<color>`. Documento: `docs/school-lists/categorias-y-cambio-de-producto.md`.
+
+### Listas Escolares — requerimientos y preparación (migración `1760008400000`)
+
+- **`fulfillmentMode`**:
+  - `PREPARACION` (listas nuevas): plantillas y cotizaciones son requerimientos a mano, sin inventario. El editor muestra `requirementMode()` y oculta la búsqueda de inventario y "Cambiar producto".
+  - `CONFIRMACION` (listas históricas): conserva el editor de inventario.
+- **Preparación**:
+  - Página `school-quotation-preparation-page` (`…/cotizaciones/:id/preparacion`). Las reglas puras están en `school-preparation-rules.ts`.
+  - El selector es `SchoolProductSwapModalComponent` con `mode="assign"`: sin precio; una asignación por producto y requerimiento, el mismo producto se fusiona.
+  - "Finalizar" guarda primero si hay cambios y luego hace TERMINAR.
+- **Estados**:
+  - `isSchoolQuotationEditable(status, mode)` congela TERMINADA en el flujo nuevo.
+  - La entrega en el flujo nuevo exige TERMINADA y saldo cero. ACEPTADA usa la pastilla azul.
+- **Documento**: `docs/school-lists/requerimientos-y-preparacion.md`.

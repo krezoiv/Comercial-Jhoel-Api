@@ -88,6 +88,12 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
     );
     await app.init();
     dataSource = app.get(DataSource);
+    // These flows cover lists saved BEFORE the requirements flow (migration
+    // 1760008400000): on this disposable clone new lists take the previous
+    // mode, so the historical behavior keeps being verified.
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'CONFIRMACION'`,
+    );
     const jwt = app.get(JwtService);
     const users = (await dataSource.query(`
       SELECT u.id, u.username, r.name AS role FROM users u JOIN roles r ON r.id = u.role_id WHERE u.is_active ORDER BY u.created_at
@@ -117,6 +123,9 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'PREPARACION'`,
+    );
     await app.close();
   });
 
@@ -279,12 +288,10 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
     );
     const dispatched = data(
       await as(userToken)(
-        api()
-          .post(`/api/school-lists/quotations/${created.id}/dispatch`)
-          .send({
-            observations: 'Entregada completa',
-            clientRequestId: randomUUID(),
-          }),
+        api().post(`/api/school-lists/quotations/${created.id}/dispatch`).send({
+          observations: 'Entregada completa',
+          clientRequestId: randomUUID(),
+        }),
       ).expect(200),
     );
     expect(dispatched.status).toBe('ENTREGADA');
@@ -304,13 +311,11 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
     ).toBe(movementsBefore);
     // A dispatched list cannot be annulled.
     await as(adminToken)(
-      api()
-        .post(`/api/school-lists/quotations/${created.id}/cancel`)
-        .send({
-          reason: 'Intento de anular',
-          refundMethod: 'EFECTIVO',
-          clientRequestId: randomUUID(),
-        }),
+      api().post(`/api/school-lists/quotations/${created.id}/cancel`).send({
+        reason: 'Intento de anular',
+        refundMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
     ).expect(409);
   });
 
@@ -343,12 +348,10 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
     );
     const cancelled = data(
       await as(adminToken)(
-        api()
-          .post(`/api/school-lists/quotations/${list.id}/cancel`)
-          .send({
-            reason: 'El cliente desiste',
-            clientRequestId: randomUUID(),
-          }),
+        api().post(`/api/school-lists/quotations/${list.id}/cancel`).send({
+          reason: 'El cliente desiste',
+          clientRequestId: randomUUID(),
+        }),
       ).expect(200),
     );
     expect(await stock(p.id, 'Bodega')).toBe(6);

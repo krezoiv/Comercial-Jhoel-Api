@@ -97,6 +97,12 @@ describe('Listas Escolares — categorías y cambio de producto (e2e)', () => {
     );
     await app.init();
     dataSource = app.get(DataSource);
+    // These flows cover lists saved BEFORE the requirements flow (migration
+    // 1760008400000): on this disposable clone new lists take the previous
+    // mode, so the historical behavior keeps being verified.
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'CONFIRMACION'`,
+    );
     const jwt = app.get(JwtService);
     const users = (await dataSource.query(`
       SELECT u.id, u.username, r.name AS role FROM users u JOIN roles r ON r.id = u.role_id WHERE u.is_active ORDER BY u.created_at
@@ -129,6 +135,9 @@ describe('Listas Escolares — categorías y cambio de producto (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'PREPARACION'`,
+    );
     await app.close();
   });
 

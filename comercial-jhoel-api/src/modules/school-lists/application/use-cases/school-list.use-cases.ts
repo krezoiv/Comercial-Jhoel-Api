@@ -6,6 +6,7 @@ import {
   FindQuotationsOptions,
   Paginated,
   PaymentInput,
+  PreparationAssignmentInput,
   QuotationDetailRow,
   QuotationInput,
   QuotationSummaryRow,
@@ -277,6 +278,38 @@ export class ChangeSchoolQuotationStatusUseCase extends SchoolListUseCase {
   ): Promise<QuotationDetailRow> {
     this.can(actor, 'school_lists.quotations.edit');
     await this.repository.changeStatus(id, action, actor.userId, version);
+    return this.detail(id);
+  }
+}
+
+@Injectable()
+export class SaveSchoolPreparationUseCase extends SchoolListUseCase {
+  /**
+   * "Guardar preparación": which inventory products fulfil each requirement.
+   * Moves no stock and never changes the requirement or its quoted price;
+   * Bodega is discounted only by "Finalizar preparación" (TERMINAR).
+   */
+  async execute(
+    actor: Actor,
+    id: string,
+    assignments: PreparationAssignmentInput[],
+    version: number,
+  ): Promise<QuotationDetailRow> {
+    this.can(actor, 'school_lists.quotations.edit');
+    const seen = new Set<string>();
+    for (const a of assignments) {
+      const key = `${a.itemId}:${a.productId}`;
+      if (seen.has(key)) {
+        throw schoolListError('SCHOOL_DUPLICATE_ASSIGNMENT');
+      }
+      seen.add(key);
+    }
+    await this.repository.savePreparation(
+      id,
+      assignments,
+      actor.userId,
+      version,
+    );
     return this.detail(id);
   }
 }

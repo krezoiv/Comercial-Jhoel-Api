@@ -1,5 +1,7 @@
 # Cotizaciones de Listas Escolares — categorías, "Cambiar producto" y rediseño
 
+> Actualización (migración `1760008400000`): las listas nuevas son requerimientos sin inventario y "Cambiar producto" solo aplica al editar listas del flujo anterior. Los productos de las listas nuevas se eligen en la preparación (ver `requerimientos-y-preparacion.md`).
+
 Sin migración: la relación `products.category_id → categories` ya existía y se reutiliza. Endpoints de productos y categorías existentes, sin duplicados. El código nuevo está documentado en inglés.
 
 ## 1. Diagnóstico

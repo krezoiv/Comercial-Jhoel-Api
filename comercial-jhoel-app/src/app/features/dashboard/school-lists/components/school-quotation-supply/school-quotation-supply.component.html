@@ -3,7 +3,9 @@
     <div class="panel__head">
       <h2 class="panel__title"><app-icon name="package" [size]="18" /> Estado de abastecimiento</h2>
       <div class="head">
-        <app-badge [tone]="supplyTone[s.status]">{{ supplyLabel[s.status] }}</app-badge>
+        @if (quotation.fulfillmentMode === 'CONFIRMACION') {
+          <app-badge [tone]="supplyTone[s.status]">{{ supplyLabel[s.status] }}</app-badge>
+        }
         @if (!s.dispatch && service.can('school_lists.quotations.edit')) {
           <app-button variant="primary" size="sm" [disabled]="!canDispatch()" [attr.title]="blocker()" (click)="open()">
             <app-icon name="truck" [size]="15" /> Preparar y despachar lista
@@ -15,7 +17,12 @@
       <p class="panel__hint">{{ blocker() }}</p>
     }
 
-    @if (s.lines.length) {
+    @if (quotation.fulfillmentMode === 'PREPARACION') {
+      <p class="panel__hint">
+        Los productos de inventario se eligen en la preparación del pedido y se descuentan de Bodega una sola vez al finalizarla;
+        despachar no vuelve a descontarlos.
+      </p>
+    } @else if (s.lines.length) {
       <div class="table-wrap">
         <table class="table">
           <thead><tr><th>Producto</th><th class="num">Solicitado</th><th class="num">Abastecido (reservado)</th><th class="num">Pendiente</th><th class="num">Entregado</th></tr></thead>
@@ -36,13 +43,15 @@
     } @else {
       <p class="state">La lista no tiene productos del inventario.</p>
     }
-    @if (s.uncontrolledLines > 0) {
-      <p class="panel__hint">{{ s.uncontrolledLines }} producto(s) escrito(s) a mano: sin control de inventario, no bloquean el despacho.</p>
+    @if (quotation.fulfillmentMode === 'CONFIRMACION') {
+      @if (s.uncontrolledLines > 0) {
+        <p class="panel__hint">{{ s.uncontrolledLines }} producto(s) escrito(s) a mano: sin control de inventario, no bloquean el despacho.</p>
+      }
+      <p class="panel__hint">
+        Las cantidades se descontaron de Bodega al confirmar la lista{{ s.confirmedAt ? ' (' + formatDateTime(s.confirmedAt) + ')' : '' }};
+        reservar o despachar no vuelve a descontarlas.
+      </p>
     }
-    <p class="panel__hint">
-      Las cantidades se descontaron de Bodega al confirmar la lista{{ s.confirmedAt ? ' (' + formatDateTime(s.confirmedAt) + ')' : '' }};
-      reservar o despachar no vuelve a descontarlas.
-    </p>
 
     @if (s.allocations.length) {
       <h3 class="sub">Reservas para esta lista</h3>

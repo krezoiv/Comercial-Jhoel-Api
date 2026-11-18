@@ -33,6 +33,7 @@ import {
   ListSchoolQuotationsUseCase,
   ListSchoolTemplatesUseCase,
   RegisterSchoolPaymentUseCase,
+  SaveSchoolPreparationUseCase,
   SaveSchoolTemplateUseCase,
   SetSchoolTemplateActiveUseCase,
   UpdateSchoolQuotationObservationsUseCase,
@@ -64,6 +65,7 @@ import {
   ObservationsRequestDto,
   QuotationsQueryDto,
   RegisterPaymentRequestDto,
+  SavePreparationRequestDto,
   SaveTemplateRequestDto,
   StockQueryDto,
   StatusActionRequestDto,
@@ -109,6 +111,7 @@ export class SchoolListsController {
     private readonly updateQuotation: UpdateSchoolQuotationUseCase,
     private readonly updateObservations: UpdateSchoolQuotationObservationsUseCase,
     private readonly changeStatus: ChangeSchoolQuotationStatusUseCase,
+    private readonly savePreparation: SaveSchoolPreparationUseCase,
     private readonly cancelQuotation: CancelSchoolQuotationUseCase,
     private readonly registerPayment: RegisterSchoolPaymentUseCase,
     private readonly voidPayment: VoidSchoolPaymentUseCase,
@@ -367,6 +370,25 @@ export class SchoolListsController {
       id,
       dto.action,
       dto.version ?? null,
+    );
+  }
+
+  /**
+   * "Guardar preparación": inventory products assigned to each requirement of
+   * a list in EN_PREPARACION. No stock moves here; "Finalizar preparación" is
+   * the TERMINAR status action.
+   */
+  @Put('quotations/:id/preparation')
+  preparation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SavePreparationRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.savePreparation.execute(
+      actor(user),
+      id,
+      dto.assignments,
+      dto.version,
     );
   }
 

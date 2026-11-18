@@ -147,7 +147,7 @@ export class SchoolQuotationsListComponent {
     const period = `${formatSchoolDate(d.dateFrom)} – ${formatSchoolDate(d.dateTo)}`;
     return [
       { label: 'Total de cotizaciones', value: String(d.totalQuotations), hint: period, icon: 'file-check', color: 'blue' },
-      { label: 'Pendientes', value: String(d.awaitingQuotations), hint: 'Borrador o cotizada, sin anticipo', icon: 'clock', color: 'sky' },
+      { label: 'Pendientes', value: String(d.awaitingQuotations), hint: 'Borrador, cotizada o aceptada sin preparar', icon: 'clock', color: 'sky' },
       { label: 'Pagadas', value: String(d.paidQuotations), hint: 'Saldo cubierto o entregadas', icon: 'check-circle', color: 'green' },
       { label: 'Con saldo pendiente', value: String(d.pendingQuotations), hint: `Por cobrar ${formatCurrency(d.pendingBalance)}`, icon: 'wallet', color: 'orange' },
       { label: 'Total cotizado', value: formatCurrency(d.totalQuoted), hint: `Recibido ${formatCurrency(d.totalReceived)}`, icon: 'receipt', color: 'purple' },
@@ -222,17 +222,38 @@ export class SchoolQuotationsListComponent {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', q.id, 'editar']);
   }
 
-  /** "Preparar y despachar" (= entrega): fully paid and fully supplied. */
+  /**
+   * "Preparar y despachar" (= entrega): fully paid and fully supplied; a list of
+   * the requirements flow, once its preparation is finished (TERMINADA).
+   */
   canDeliver(q: SchoolQuotationSummary): boolean {
+    if (q.fulfillmentMode === 'PREPARACION') {
+      return q.status === 'TERMINADA' && q.balance <= 0;
+    }
     return ['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0 && q.supplyStatus === 'DISPONIBLE';
   }
 
-  /** The list can be marked as packed/dispatched until it is finished, delivered or cancelled. */
+  /**
+   * Previous flow: the list can be marked as packed/dispatched until it is
+   * finished. Requirements flow: the button opens "Preparación del pedido"
+   * (products are assigned there and "Finalizar preparación" discounts Bodega).
+   */
   canFinish(q: SchoolQuotationSummary): boolean {
+    if (q.fulfillmentMode === 'PREPARACION') {
+      return q.status === 'EN_PREPARACION';
+    }
     return ['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status);
   }
 
+  finishTitle(q: SchoolQuotationSummary): string {
+    return q.fulfillmentMode === 'PREPARACION' ? 'Preparar pedido (asignar productos de inventario)' : 'Marcar como terminada (lista para entregar)';
+  }
+
   async finish(q: SchoolQuotationSummary): Promise<void> {
+    if (q.fulfillmentMode === 'PREPARACION') {
+      void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', q.id, 'preparacion']);
+      return;
+    }
     const ok = await this.confirm.confirm({
       type: 'UPDATE',
       title: 'Marcar como terminada',

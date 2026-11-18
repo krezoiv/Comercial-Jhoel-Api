@@ -397,6 +397,14 @@ export const routes: Routes = [
         title: 'Cotización escolar — Sistema',
       },
       {
+        path: 'listas-escolares/cotizaciones/:id/preparacion',
+        loadComponent: () =>
+          import('./features/dashboard/school-lists/school-quotation-preparation-page.component').then(
+            (m) => m.SchoolQuotationPreparationPageComponent,
+          ),
+        title: 'Preparación de lista escolar — Sistema',
+      },
+      {
         path: 'listas-escolares/cotizaciones/:id/editar',
         loadComponent: () =>
           import('./features/dashboard/school-lists/school-quotation-edit-page.component').then(

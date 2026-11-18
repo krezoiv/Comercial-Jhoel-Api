@@ -1613,6 +1613,20 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Permiso** `school_lists.supply.manage` (supervisor/admin).
 - **Pruebas**: `sql/tests/school-supply.test.sql`, `test/school-supply.e2e-spec.ts`. Documento: `docs/school-lists/abastecimiento-y-despacho.md`.
 
+### Listas Escolares — requerimientos y preparación (migración `1760008400000`)
+
+- **Dos flujos** por `school_quotations.fulfillment_mode`:
+  - `CONFIRMACION`: listas anteriores, sin cambios (descuentan al confirmar, Abastecimiento FIFO).
+  - `PREPARACION`: valor por defecto, toda lista nueva.
+- **Flujo nuevo**:
+  - Las líneas son requerimientos sin `product_id`; `school_quotation_assert_requirements` lo exige.
+  - La lista nace ACEPTADA. Es un estado fijo: los pagos no lo cambian.
+  - PREPARAR → EN_PREPARACION. Las asignaciones van en `school_quotation_item_assignments` (`save_school_quotation_preparation`, `PUT /quotations/:id/preparation`); no mueven inventario.
+  - TERMINAR exige cobertura exacta (`school_quotation_assert_prepared`). El sync descuenta las asignaciones una sola vez y bloquea si falta existencia (`SCHOOL_INSUFFICIENT_STOCK`; nunca negativo).
+  - El despacho exige TERMINADA.
+- **Edición**: la FK de la asignación a la línea es DEFERRABLE; `update_school_quotation` reapunta las asignaciones por posición/`itemId`. Una lista TERMINADA del flujo nuevo no se edita.
+- **Pruebas e2e**: las suites anteriores fijan el default `CONFIRMACION` en su clon para seguir probando el flujo histórico. Pruebas: `test/school-lists-requirements.e2e-spec.ts`. Documento: `docs/school-lists/requerimientos-y-preparacion.md`.
+
 ### Listas Escolares — categoría por línea, orden y tarjetas (sin migración)
 
 - Líneas de plantilla y cotización traen `productSku`/`categoryId`/`categoryName` vía LEFT JOIN `products → categories` (`LINE_PRODUCT_JOIN`); null en líneas a mano.

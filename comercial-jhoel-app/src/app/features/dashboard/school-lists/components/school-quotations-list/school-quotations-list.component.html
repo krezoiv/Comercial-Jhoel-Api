@@ -109,7 +109,7 @@
                 <div class="actions">
                   <button type="button" class="icon-btn" title="Ver detalle" aria-label="Ver detalle" (click)="open(q)"><app-icon name="eye" [size]="16" /></button>
                   @if (service.can('school_lists.quotations.edit')) {
-                    <button type="button" class="icon-btn" title="Editar cotización" aria-label="Editar cotización" [disabled]="!isEditable(q.status)" (click)="edit(q)"><app-icon name="edit-2" [size]="16" /></button>
+                    <button type="button" class="icon-btn" title="Editar cotización" aria-label="Editar cotización" [disabled]="!isEditable(q.status, q.fulfillmentMode)" (click)="edit(q)"><app-icon name="edit-2" [size]="16" /></button>
                   }
                   @if (service.can('school_lists.payments.register')) {
                     <button type="button" class="icon-btn" title="Registrar abono" aria-label="Registrar abono" [disabled]="!canPay(q.status) || q.balance <= 0" (click)="paying.set(q)"><app-icon name="wallet" [size]="16" /></button>
@@ -120,7 +120,7 @@
                     <button type="button" class="icon-btn" title="Imprimir" aria-label="Imprimir" [disabled]="documents.busy() === q.id"  (click)="documents.quotation(q.id, q.quotationNumber, 'print')"><app-icon name="printer" [size]="16" /></button>
                   }
                   @if (service.can('school_lists.quotations.edit')) {
-                    <button type="button" class="icon-btn" title="Marcar como terminada (lista para entregar)" aria-label="Marcar como terminada" [disabled]="!canFinish(q) || delivering() === q.id" (click)="finish(q)"><app-icon name="check-check" [size]="16" /></button>
+                    <button type="button" class="icon-btn" [title]="finishTitle(q)" [attr.aria-label]="finishTitle(q)" [disabled]="!canFinish(q) || delivering() === q.id" (click)="finish(q)"><app-icon name="check-check" [size]="16" /></button>
                     <button type="button" class="icon-btn" title="Preparar y despachar lista" aria-label="Preparar y despachar lista" [disabled]="!canDeliver(q)" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
                   }
                   <button type="button" class="icon-btn" title="Historial" aria-label="Historial" (click)="open(q, 'historial')"><app-icon name="clock" [size]="16" /></button>
