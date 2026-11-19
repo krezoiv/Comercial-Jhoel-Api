@@ -9,7 +9,8 @@ import { AppModule } from './../src/app.module';
 
 /**
  * Listas Escolares — "Borrar todas las cotizaciones" (migration
- * 1760008500000), end to end over HTTP:
+ * 1760008500000) and "Eliminar cotización" (one list, migration
+ * 1760008600000), end to end over HTTP:
  *
  * - only SUPER_ADMIN, only with the phrase "BORRAR TODO";
  * - the preview tells what goes away and what returns to Bodega;
@@ -17,13 +18,16 @@ import { AppModule } from './../src/app.module';
  *   history, supply, dispatches, SCHOOL_LIST movements) and returns to Bodega
  *   exactly what the lists had discounted (both flows);
  * - templates and numbering stay, one PURGA audit row is written, and the
- *   append-only guards keep protecting the records afterwards.
+ *   append-only guards keep protecting the records afterwards;
+ * - deleting ONE list (typing its number) returns only its units, leaves the
+ *   other lists untouched and hands its released reservations FIFO to the
+ *   next pending list.
  *
  * WRITES DATA: run it only through
  * `test/run-cash-control-e2e.sh test/school-lists-purge.e2e-spec.ts`
  * (temporary `<db>_e2e` clone, dropped afterwards).
  */
-describe('Listas Escolares — borrar todas las cotizaciones (e2e)', () => {
+describe('Listas Escolares — borrar cotizaciones (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
   let rootToken: string;
@@ -39,6 +43,12 @@ describe('Listas Escolares — borrar todas las cotizaciones (e2e)', () => {
     (response.body as { data: Body }).data;
   const one = async (sql: string, params: unknown[] = []): Promise<Body> =>
     ((await dataSource.query(sql, params)) as Body[])[0];
+  const get = async (id: string): Promise<Body> =>
+    data(
+      await as(rootToken)(
+        api().get(`/api/school-lists/quotations/${id}`),
+      ).expect(200),
+    );
   const bodega = async (productId: string): Promise<number> =>
     Number(
       (
@@ -280,5 +290,128 @@ describe('Listas Escolares — borrar todas las cotizaciones (e2e)', () => {
         next.id,
       ]),
     ).rejects.toThrow('SCHOOL_RECORD_IMMUTABLE');
+  });
+
+  it('eliminar una sola cotización: confirma con su número, devuelve solo lo suyo y reasigna FIFO', async () => {
+    const other = await one(
+      `SELECT id, name, public_price::float AS price FROM products
+          WHERE is_active AND id <> $1 ORDER BY name LIMIT 1`,
+      [product.id],
+    );
+    await setBodega(other.id, 2);
+    // Two lists of the previous flow on the same product: X (5) gets the 2 units, Y (3) waits.
+    await dataSource.query(
+      `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'CONFIRMACION'`,
+    );
+    const legacy = async (name: string, quantity: number) =>
+      data(
+        await as(userToken)(
+          api()
+            .post('/api/school-lists/quotations')
+            .send({
+              customerName: name,
+              customerPhone: '5555-9393',
+              grade: 'Primero Básico',
+              items: [
+                {
+                  productId: other.id,
+                  productName: other.name,
+                  quantity,
+                  unitPrice: other.price,
+                },
+              ],
+              advance: { amount: 1, paymentMethod: 'EFECTIVO' },
+              clientRequestId: randomUUID(),
+            }),
+        ).expect(201),
+      );
+    let x: Body;
+    let y: Body;
+    try {
+      x = await legacy('Familia X', 5);
+      y = await legacy('Familia Y', 3);
+    } finally {
+      await dataSource.query(
+        `ALTER TABLE school_quotations ALTER COLUMN fulfillment_mode SET DEFAULT 'PREPARACION'`,
+      );
+    }
+    const allocated = async (quotationId: string) =>
+      Number(
+        (
+          await one(
+            `SELECT COALESCE(SUM(quantity), 0)::int AS n FROM school_supply_allocations
+              WHERE quotation_id = $1 AND status = 'ASIGNADA'`,
+            [quotationId],
+          )
+        ).n,
+      );
+    expect(await bodega(other.id)).toBe(-6);
+    expect(await allocated(x.id)).toBe(2);
+    expect(await allocated(y.id)).toBe(0);
+
+    // Roles and confirmation.
+    await as(adminToken)(
+      api()
+        .post(`/api/school-lists/quotations/${x.id}/delete`)
+        .send({ confirmation: x.quotationNumber }),
+    ).expect(403);
+    const wrong = await as(rootToken)(
+      api()
+        .post(`/api/school-lists/quotations/${x.id}/delete`)
+        .send({ confirmation: y.quotationNumber }),
+    ).expect(400);
+    expect(JSON.stringify(wrong.body)).toContain(x.quotationNumber);
+
+    const preview = data(
+      await as(rootToken)(
+        api().get(`/api/school-lists/quotations/${x.id}/delete-preview`),
+      ).expect(200),
+    );
+    expect(preview).toEqual(
+      expect.objectContaining({ quotations: 1, payments: 1, returnedUnits: 5 }),
+    );
+
+    const removed = data(
+      await as(rootToken)(
+        api()
+          .post(`/api/school-lists/quotations/${x.id}/delete`)
+          .send({ confirmation: x.quotationNumber }),
+      ).expect(200),
+    );
+    expect(removed.returnedUnits).toBe(5);
+    // X's 5 units are back (-6 → -1); its 2 reserved units now go to Y.
+    expect(await bodega(other.id)).toBe(-1);
+    expect(await allocated(y.id)).toBe(2);
+    const left = await one(
+      `SELECT (SELECT count(*) FROM school_quotations WHERE id = $1)::int AS quotation,
+              (SELECT count(*) FROM school_quotation_items WHERE quotation_id = $1)::int AS items,
+              (SELECT count(*) FROM school_quotation_payments WHERE quotation_id = $1)::int AS payments,
+              (SELECT count(*) FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST' AND reference_id = $1)::int AS movements,
+              (SELECT count(*) FROM school_supply_allocations WHERE quotation_id = $1)::int AS allocations,
+              (SELECT count(*) FROM school_list_history WHERE entity_type = 'QUOTATION' AND entity_id = $1)::int AS history,
+              (SELECT count(*) FROM school_list_history WHERE entity_type = 'PURGA' AND entity_id = $1)::int AS audit,
+              (SELECT count(*) FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST' AND reference_id = $2)::int AS other`,
+      [x.id, y.id],
+    );
+    expect(left).toEqual({
+      quotation: 0,
+      items: 0,
+      payments: 0,
+      movements: 0,
+      allocations: 0,
+      history: 0,
+      audit: 1,
+      other: 1,
+    });
+    // Y is intact and still protected by the guards.
+    expect((await get(y.id)).status).toBe('ANTICIPO_RECIBIDO');
+    await expect(
+      dataSource.query(`DELETE FROM school_quotations WHERE id = $1`, [y.id]),
+    ).rejects.toThrow('SCHOOL_RECORD_IMMUTABLE');
+    await as(rootToken)(
+      api()
+        .post(`/api/school-lists/quotations/${x.id}/delete`)
+        .send({ confirmation: x.quotationNumber }),
+    ).expect(404);
   });
 });

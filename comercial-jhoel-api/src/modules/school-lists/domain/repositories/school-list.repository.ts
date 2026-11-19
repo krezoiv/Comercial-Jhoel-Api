@@ -573,8 +573,17 @@ export interface SchoolListRepository {
 
   dashboard(dateFrom: string, dateTo: string): Promise<DashboardRow>;
 
-  /** Counts of what a purge would delete and return to Bodega (read only). */
-  purgePreview(): Promise<PurgeSummary>;
+  /**
+   * Counts of what a purge would delete and return to Bodega (read only):
+   * every quotation, or only `quotationId` (null when it does not exist).
+   */
+  purgePreview(quotationId?: string | null): Promise<PurgeSummary>;
+  /** HARD delete of one quotation (`delete_school_quotation`); returns what was removed. */
+  deleteQuotation(
+    quotationId: string,
+    userId: string,
+    confirmation: string,
+  ): Promise<PurgeSummary>;
   /** HARD delete of every quotation (`purge_school_quotations`); returns what was removed. */
   purgeQuotations(userId: string, confirmation: string): Promise<PurgeSummary>;
 

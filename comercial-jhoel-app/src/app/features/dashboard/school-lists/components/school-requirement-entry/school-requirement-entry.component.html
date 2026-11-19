@@ -1,0 +1,49 @@
+<form class="entry" novalidate (ngSubmit)="submit()" aria-label="Agregar requerimiento escolar">
+  <div class="entry__field entry__field--desc">
+    <label for="re-desc">Descripción del requerimiento</label>
+    <div class="ctl" [class.ctl--bad]="attempted() && problem()?.field === 'desc'">
+      <app-icon name="book-open" [size]="16" />
+      <input
+        #desc
+        id="re-desc"
+        name="description"
+        type="text"
+        maxlength="300"
+        autocomplete="off"
+        placeholder="Ej.: Cuaderno de cuadrícula grande, 80 hojas, grapado"
+        [ngModel]="description()"
+        (ngModelChange)="description.set($event)"
+      />
+    </div>
+  </div>
+
+  <div class="entry__field">
+    <label for="re-qty">Cantidad</label>
+    <div class="stepper" [class.ctl--bad]="attempted() && problem()?.field === 'qty'">
+      <button type="button" aria-label="Restar uno" (click)="step(-1)"><app-icon name="minus" [size]="14" /></button>
+      <input id="re-qty" name="quantity" type="text" inputmode="numeric" [appDecimalInput]="0" [ngModel]="quantity()" (ngModelChange)="quantity.set($event)" />
+      <button type="button" aria-label="Sumar uno" (click)="step(1)"><app-icon name="plus" [size]="14" /></button>
+    </div>
+  </div>
+
+  <div class="entry__field">
+    <label for="re-price">Precio unitario</label>
+    <div class="ctl ctl--money" [class.ctl--bad]="attempted() && problem()?.field === 'price'">
+      <span aria-hidden="true">Q</span>
+      <input id="re-price" name="unitPrice" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00" [ngModel]="unitPrice()" (ngModelChange)="unitPrice.set($event)" />
+    </div>
+  </div>
+
+  <div class="entry__total" aria-live="polite">
+    <span>Total</span>
+    <strong>{{ formatCurrency(total()) }}</strong>
+  </div>
+
+  <button type="submit" class="entry__add"><app-icon name="plus" [size]="18" /> Agregar requerimiento</button>
+
+  @if (attempted() && problem(); as p) {
+    <p class="entry__error" role="alert"><app-icon name="alert-circle" [size]="14" /> {{ p.message }}</p>
+  } @else {
+    <p class="entry__hint">Presione <kbd>Enter</kbd> para agregar y seguir escribiendo.</p>
+  }
+</form>

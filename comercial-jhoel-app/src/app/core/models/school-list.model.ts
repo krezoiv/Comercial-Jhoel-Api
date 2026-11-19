@@ -43,7 +43,8 @@ export type SchoolListPermission =
   | 'school_lists.quotations.cancel'
   | 'school_lists.supply.manage'
   | 'school_lists.documents.generate'
-  | 'school_lists.quotations.purge';
+  | 'school_lists.quotations.purge'
+  | 'school_lists.quotations.delete';
 
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'Borrador',

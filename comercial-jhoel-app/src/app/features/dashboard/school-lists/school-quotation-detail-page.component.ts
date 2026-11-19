@@ -17,6 +17,7 @@ import {
   SCHOOL_STATUS_TONE,
   SchoolHistoryEntry,
   SchoolPayment,
+  SchoolPurgeSummary,
   SchoolQuotation,
   SchoolStatusAction,
   canReceiveSchoolPayment,
@@ -32,6 +33,7 @@ import { SchoolListService } from '../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { BadgeComponent, ButtonComponent, IconComponent, SummaryTileComponent } from '../../../shared/ui';
 import { SchoolPaymentModalComponent } from './components/school-payment-modal/school-payment-modal.component';
+import { SchoolPurgeModalComponent } from './components/school-purge-modal/school-purge-modal.component';
 import { SchoolQuotationSupplyComponent } from './components/school-quotation-supply/school-quotation-supply.component';
 import { SchoolReasonModalComponent, SchoolReasonResult } from './components/school-reason-modal/school-reason-modal.component';
 import { SchoolDocumentsService } from './school-documents.service';
@@ -95,6 +97,7 @@ const REQUIREMENT_ACTION_COPY: Partial<Record<SchoolStatusAction, { title: strin
     SchoolPaymentModalComponent,
     SchoolReasonModalComponent,
     SchoolQuotationSupplyComponent,
+    SchoolPurgeModalComponent,
   ],
   templateUrl: './school-quotation-detail-page.component.html',
   styleUrl: './school-quotation-detail-page.component.scss',
@@ -155,6 +158,8 @@ export class SchoolQuotationDetailPageComponent {
 
   readonly voiding = signal<SchoolPayment | null>(null);
   readonly cancelling = signal(false);
+  /** "Eliminar cotización" (hard delete, super administrators only). */
+  readonly deleting = signal(false);
   readonly reasonBusy = signal(false);
   readonly reasonError = signal<string | null>(null);
   private reasonRequestId = crypto.randomUUID();
@@ -253,6 +258,16 @@ export class SchoolQuotationDetailPageComponent {
     void this.router.navigate(['/dashboard/listas-escolares/cotizaciones', this.id, 'editar'], {
       queryParams: { cambiar: itemId },
     });
+  }
+
+  /** After a hard delete the quotation no longer exists: back to the list. */
+  onDeleted(result: SchoolPurgeSummary): void {
+    const q = this.quotation();
+    this.deleting.set(false);
+    this.notifications.success(
+      `Cotización ${q?.quotationNumber ?? ''} eliminada; regresaron ${result.returnedUnits} unidad(es) a Bodega.`,
+    );
+    void this.router.navigate(['/dashboard/listas-escolares'], { queryParams: { tab: 'cotizaciones' } });
   }
 
   pdf(mode: 'download' | 'print'): void {

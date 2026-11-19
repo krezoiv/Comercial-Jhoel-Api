@@ -175,6 +175,20 @@ export class SchoolListService {
       .pipe(map((r) => r.data));
   }
 
+  /** What deleting one quotation would remove and return to Bodega (super administrators). */
+  deletePreview(id: string): Observable<SchoolPurgeSummary> {
+    return this.http
+      .get<ApiSuccessResponse<SchoolPurgeSummary>>(`${BASE_URL}/quotations/${id}/delete-preview`)
+      .pipe(map((r) => r.data));
+  }
+
+  /** HARD delete of one quotation; `confirmation` is its number (e.g. "LE-000193"). */
+  deleteQuotation(id: string, confirmation: string): Observable<SchoolPurgeSummary> {
+    return this.http
+      .post<ApiSuccessResponse<SchoolPurgeSummary>>(`${BASE_URL}/quotations/${id}/delete`, { confirmation })
+      .pipe(map((r) => r.data));
+  }
+
   cancelQuotation(id: string, input: SchoolCancelInput): Observable<SchoolQuotation> {
     return this.http
       .post<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/cancel`, input)

@@ -11,7 +11,7 @@
         <button type="button" class="hero__secondary" (click)="selectTab('abastecimiento')"><app-icon name="package" [size]="16" /> Abastecimiento</button>
         <button type="button" class="hero__secondary" (click)="selectTab('plantillas')"><app-icon name="book-open" [size]="16" /> Plantillas</button>
         @if (service.can('school_lists.quotations.create')) {
-          <button type="button" class="hero__primary" (click)="selectTab('nueva')"><app-icon name="plus" [size]="18" /> Nueva cotización</button>
+          <button type="button" class="hero__primary" (click)="openNew()"><app-icon name="plus" [size]="18" /> Nueva cotización</button>
         }
       </div>
     }
@@ -24,7 +24,7 @@
       <p class="school__error" role="alert">Su rol no tiene acceso a Listas Escolares.</p>
     } @else {
       <div class="tabs" role="tablist" aria-label="Secciones de Listas Escolares">
-        @for (tab of tabs(); track tab.id) {
+        @for (tab of tabs; track tab.id) {
           <button
             type="button"
             role="tab"
@@ -42,10 +42,7 @@
           <app-school-dashboard (openList)="selectTab('cotizaciones')" />
         }
         @case ('cotizaciones') {
-          <app-school-quotations-list (createNew)="selectTab('nueva')" />
-        }
-        @case ('nueva') {
-          <app-school-quotation-editor (saved)="onCreated($event)" />
+          <app-school-quotations-list (createNew)="openNew()" />
         }
         @case ('abastecimiento') {
           <app-school-supply [purchaseId]="purchaseId" />
@@ -59,3 +56,7 @@
     <p class="school__loading">Cargando…</p>
   }
 </div>
+
+@if (creating() && service.permissionsLoaded() && service.can('school_lists.quotations.create')) {
+  <app-school-quotation-workspace (saved)="onCreated($event)" (closed)="creating.set(false)" />
+}

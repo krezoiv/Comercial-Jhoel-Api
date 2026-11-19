@@ -238,6 +238,11 @@
   --z-navbar: 100;
   --z-overlay: 200;
   --z-modal: 300;
+  // Fullscreen work windows (Listas Escolares → Nueva cotización): above the
+  // app shell and its modals (the mobile sidebar drawer is --z-modal).
+  --z-workspace: 310;
+  // Global confirmation dialog: always above any modal or work window.
+  --z-dialog: 350;
   --z-toast: 400;
   --z-loading-screen: 500;
 

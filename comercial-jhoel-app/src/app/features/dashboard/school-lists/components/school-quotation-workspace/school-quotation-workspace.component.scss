@@ -1,0 +1,411 @@
+@use 'mixins' as *;
+@use '../../school-ui' as ui;
+
+@include ui.status-pills;
+
+// Fullscreen POS window. The host lives at the end of <body> (see the
+// component); `--z-workspace` puts it above the app shell (sidebar and top
+// bar included) and below the global confirmation dialog and the toasts.
+.ws {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-workspace);
+  display: flex;
+  padding: var(--space-3);
+  background: rgba(8, 15, 30, 0.42);
+  backdrop-filter: blur(8px) saturate(1.1);
+  animation: ws-fade var(--duration-base) var(--ease-out) both;
+
+  @media (min-width: 1024px) {
+    padding: var(--space-4);
+  }
+
+  @media (min-width: 1536px) {
+    padding: var(--space-6);
+  }
+
+  @media (max-width: 639px) {
+    padding: 0;
+  }
+}
+
+.ws__window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1720px;
+  min-height: 0;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  border-radius: 1.25rem;
+  background: var(--color-page-bg);
+  box-shadow: 0 30px 80px -20px rgba(8, 15, 30, 0.55);
+  outline: none;
+  animation: ws-in 0.38s var(--ease-out) both;
+
+  @media (max-width: 639px) {
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+.ws--leaving {
+  animation: ws-fade-out 0.2s ease-in forwards;
+
+  .ws__window {
+    animation: ws-out 0.2s ease-in forwards;
+  }
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+.ws__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-surface-light);
+
+  @media (min-width: 768px) {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    flex-wrap: nowrap;
+  }
+}
+
+.ws__logo {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--color-primary-400, #4f9cf0), var(--color-primary-600));
+  color: var(--color-white);
+  box-shadow: 0 10px 22px -12px var(--color-primary-500);
+}
+
+.ws__titles {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-on-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.ws__chips {
+  order: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  @media (min-width: 1024px) {
+    order: 0;
+    width: auto;
+    overflow: visible;
+  }
+}
+
+.chip,
+.save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold, 600);
+  white-space: nowrap;
+}
+
+.chip--number {
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-light-muted);
+  color: var(--color-text-on-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.save {
+  color: var(--color-text-on-light-muted);
+}
+
+.save--dirty {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.save--busy {
+  background: color-mix(in srgb, var(--color-primary-500) 12%, transparent);
+  color: var(--color-primary-600);
+}
+
+.save--done {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.spin {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.ws__close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: var(--color-text-on-light-muted);
+  transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    transform: rotate(90deg);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+// ── Body and action bar ───────────────────────────────────────────────────
+.ws__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.ws__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-surface-light);
+  box-shadow: 0 -10px 24px -18px rgba(8, 15, 30, 0.35);
+
+  @media (min-width: 768px) {
+    padding: var(--space-3) var(--space-6);
+  }
+}
+
+.ws__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+
+  strong {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ws__count {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.ws__total strong {
+  color: var(--color-primary-600);
+  font-size: var(--fs-md);
+}
+
+.ws__balance strong {
+  color: #b45309;
+}
+
+.ws__problems {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold, 600);
+  @include focus-ring;
+}
+
+.ws__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-left: auto;
+
+  // Phones: three equal secondary buttons, then "Guardar" across the bar.
+  @media (max-width: 639px) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+
+    app-button {
+      display: flex;
+    }
+
+    app-button:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.wide-only {
+  @media (max-width: 639px) {
+    display: none;
+  }
+}
+
+.narrow-only {
+  @media (min-width: 640px) {
+    display: none;
+  }
+}
+
+// ── "Cambios sin guardar" ─────────────────────────────────────────────────
+.ask {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(8, 15, 30, 0.45);
+  backdrop-filter: blur(3px);
+  animation: ws-fade var(--duration-fast) var(--ease-out);
+}
+
+.ask__box {
+  width: 100%;
+  max-width: 30rem;
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-light);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: ws-in 0.25s var(--ease-out);
+
+  h3 {
+    margin-top: var(--space-3);
+    font-size: var(--fs-lg);
+    color: var(--color-text-on-light);
+  }
+
+  p {
+    margin: var(--space-2) 0 var(--space-5);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.ask__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: rgba(217, 119, 6, 0.14);
+  color: #d97706;
+}
+
+.ask__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+@keyframes ws-fade {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes ws-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ws-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.975);
+  }
+}
+
+@keyframes ws-out {
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws,
+  .ws__window,
+  .ask,
+  .ask__box,
+  .dot {
+    animation: none;
+  }
+
+  .ws__close:hover:not(:disabled) {
+    transform: none;
+  }
+}

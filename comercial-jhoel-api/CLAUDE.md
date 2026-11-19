@@ -1621,7 +1621,12 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   - Conserva plantillas y numeración, y deja una fila de auditoría `school_list_history.entity_type = 'PURGA'`.
 - Las guardas de solo-inserción dejan pasar un DELETE únicamente con la bandera de transacción `cj.school_purge = 'on'`, que solo esta función activa. No la uses en otro lado.
 - Rutas: `GET /school-lists/quotations/purge-preview`, `POST /school-lists/quotations/purge` `{ confirmation }`, declaradas antes de `quotations/:id`.
-- Pruebas: `test/school-lists-purge.e2e-spec.ts`.
+- **Una sola cotización** (migración `1760008600000`): `delete_school_quotation(id, user, número)`.
+  - Solo SUPER_ADMIN (`school_lists.quotations.delete`); la confirmación es el número de la cotización (`SCHOOL_DELETE_CONFIRMATION:<número>`).
+  - Bloquea la fila y los productos, devuelve a Bodega solo lo de esa lista y borra todo lo suyo.
+  - En modo FIFO_AUTO entrega a las siguientes listas pendientes las reservas liberadas. Deja una fila de auditoría PURGA con acción `BORRADO_COTIZACION`.
+  - Rutas: `GET /quotations/:id/delete-preview` y `POST /quotations/:id/delete`.
+- Pruebas: `test/school-lists-purge.e2e-spec.ts` (borrado total e individual).
 
 ### Listas Escolares — requerimientos y preparación (migración `1760008400000`)
 

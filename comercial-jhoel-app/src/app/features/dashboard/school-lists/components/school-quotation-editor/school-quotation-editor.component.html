@@ -1,239 +1,231 @@
-<div class="editor">
-  <div class="editor__main">
-    <!-- 1. Cliente -->
-    <section class="panel">
-      <div class="panel__head">
-        <h2 class="panel__title"><span class="step">1</span> Información del cliente</h2>
-      </div>
-      <div class="modal__grid">
-        <div class="field">
-          <label for="se-name">Cliente o encargado *</label>
-          <input id="se-name" type="text" maxlength="150" autocomplete="name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" />
+<div class="pos">
+  <div class="pos__main">
+    <!-- Cliente y alumno -->
+    <section class="card card--customer" aria-labelledby="pos-customer-title">
+      <header class="card__head">
+        <h3 class="card__title" id="pos-customer-title"><span class="card__icon"><app-icon name="user" [size]="18" /></span> Cliente y alumno</h3>
+        <span class="card__hint">¿A quién pertenece la lista escolar?</span>
+      </header>
+      <div class="fields">
+        <div class="fld fld--name">
+          <label for="se-name">Cliente o encargado <span class="mark">*</span></label>
+          <app-school-customer-field inputId="se-name" [(name)]="customerName" [invalid]="touched() && nameInvalid()" (picked)="pickCustomer($event)" />
+          @if (touched() && nameInvalid()) { <small class="fld__error">Escriba el nombre del padre, madre o encargado.</small> }
         </div>
-        <div class="field">
-          <label for="se-phone">Teléfono *</label>
-          <input id="se-phone" type="tel" maxlength="20" placeholder="5555-1234" [ngModel]="customerPhone()" (ngModelChange)="customerPhone.set($event)" />
+        <div class="fld">
+          <label for="se-phone">Teléfono <span class="mark">*</span></label>
+          <div class="ctl" [class.ctl--bad]="touched() && phoneInvalid()">
+            <app-icon name="phone" [size]="16" />
+            <input id="se-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="5555-1234" [attr.aria-invalid]="touched() && phoneInvalid()" [ngModel]="customerPhone()" (ngModelChange)="customerPhone.set($event)" />
+          </div>
+          @if (touched() && phoneInvalid()) { <small class="fld__error">Mínimo 8 dígitos.</small> }
         </div>
-        <div class="field">
-          <label for="se-student">Estudiante <span class="field__optional">(opcional)</span></label>
-          <input id="se-student" type="text" maxlength="150" [ngModel]="studentName()" (ngModelChange)="studentName.set($event)" />
+        <div class="fld">
+          <label for="se-student">Alumno <span class="opt">(opcional)</span></label>
+          <div class="ctl">
+            <app-icon name="graduation-cap" [size]="16" />
+            <input id="se-student" type="text" maxlength="150" placeholder="Nombre del estudiante" [ngModel]="studentName()" (ngModelChange)="studentName.set($event)" />
+          </div>
         </div>
-        <div class="field">
-          <label for="se-grade">Grado escolar</label>
-          <input id="se-grade" type="text" readonly [value]="gradeLabel() || 'Seleccione un grado abajo'" />
+        <div class="fld">
+          <label for="se-grade">Grado</label>
+          <div class="ctl ctl--ro" [class.ctl--bad]="touched() && !isEdit() && !template()">
+            <app-icon name="book-open" [size]="16" />
+            <input id="se-grade" type="text" readonly [value]="gradeLabel() || 'Elija la plantilla escolar'" />
+          </div>
         </div>
-        <div class="field">
+        <div class="fld">
           <label for="se-date">Fecha de cotización</label>
-          <input id="se-date" type="date" [ngModel]="quotationDate()" (ngModelChange)="quotationDate.set($event)" />
+          <div class="ctl">
+            <app-icon name="calendar" [size]="16" />
+            <input id="se-date" type="date" [ngModel]="quotationDate()" (ngModelChange)="quotationDate.set($event)" />
+          </div>
         </div>
-        <div class="field">
-          <label for="se-delivery">Fecha de entrega <span class="field__optional">(opcional)</span></label>
-          <input id="se-delivery" type="date" [min]="quotationDate()" [ngModel]="deliveryDate()" (ngModelChange)="deliveryDate.set($event)" />
+        <div class="fld">
+          <label for="se-delivery">Fecha de entrega <span class="opt">(opcional)</span></label>
+          <div class="ctl">
+            <app-icon name="calendar" [size]="16" />
+            <input id="se-delivery" type="date" [min]="quotationDate()" [ngModel]="deliveryDate()" (ngModelChange)="deliveryDate.set($event)" />
+          </div>
+        </div>
+        <div class="fld fld--full">
+          <label for="se-notes">Observaciones <span class="opt">(opcional)</span></label>
+          <div class="ctl ctl--area">
+            <app-icon name="message-square" [size]="16" />
+            <textarea id="se-notes" rows="1" maxlength="1000" placeholder="Ej.: El cliente recogerá los útiles el viernes." [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 2. Grado y útiles -->
-    <section class="panel">
-      <div class="panel__head">
-        <h2 class="panel__title"><span class="step">2</span> Grado y lista de útiles</h2>
-        <span class="panel__hint">Los cambios solo afectan esta cotización; la plantilla oficial no se modifica.</span>
-      </div>
-
-      @if (!isEdit()) {
+    <!-- Plantilla escolar (grado) -->
+    @if (!isEdit()) {
+      <section class="card" aria-labelledby="pos-grade-title">
+        <header class="card__head">
+          <h3 class="card__title" id="pos-grade-title"><span class="card__icon"><app-icon name="graduation-cap" [size]="18" /></span> Plantilla escolar</h3>
+          @if (templates().length > 6) {
+            <div class="ctl ctl--sm">
+              <app-icon name="search" [size]="14" />
+              <input type="search" aria-label="Buscar grado" placeholder="Buscar grado…" [ngModel]="templateFilter()" (ngModelChange)="templateFilter.set($event)" />
+            </div>
+          } @else {
+            <span class="card__hint">Carga los requerimientos oficiales del grado.</span>
+          }
+        </header>
         @if (templatesFailed()) {
           <p class="state state--error">No se pudieron cargar las plantillas.</p>
         } @else if (!templates().length) {
           <p class="state">No hay plantillas activas. Un administrador puede crearlas en "Plantillas de Listas Escolares".</p>
         }
-        <div class="grades">
-          @for (t of templates(); track t.id) {
-            <button type="button" class="grade" [class.grade--on]="template()?.id === t.id" [disabled]="loadingTemplate()" (click)="selectTemplate(t)">
-              <app-icon name="book-open" [size]="22" />
+        <div class="grades" aria-label="Grado escolar">
+          @for (t of filteredTemplates(); track t.id) {
+            <button type="button" class="grade" [class.grade--on]="template()?.id === t.id" [attr.aria-pressed]="template()?.id === t.id" [disabled]="loadingTemplate()" (click)="selectTemplate(t)">
+              <span class="grade__check" aria-hidden="true"><app-icon name="check" [size]="12" /></span>
               <strong>{{ t.grade }}</strong>
               <span>{{ t.name === t.grade ? 'Lista oficial' : t.name }}</span>
-              <small>{{ t.itemCount }} producto(s) · {{ formatCurrency(t.total) }}</small>
+              <small>{{ t.itemCount }} req. · {{ formatCurrency(t.total) }}</small>
             </button>
+          } @empty {
+            @if (templates().length) { <p class="state">Ningún grado coincide con "{{ templateFilter() }}".</p> }
           }
         </div>
-      }
+      </section>
+    }
 
-      @if (lines().length || template() || isEdit()) {
-        <div class="table-wrap lines-wrap">
-          <table class="table lines">
-            <thead>
-              <tr>
-                <th>{{ requirementMode() ? 'Requerimiento escolar' : 'Producto' }}</th>
-                <th class="num">Cantidad</th>
-                <th class="num">Precio unitario</th>
-                <th class="num">Descuento</th>
-                <th class="num">Subtotal</th>
-                <th class="lines__actions-head" aria-label="Acciones"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (line of lines(); track line.key) {
-                <tr [class.lines__bad]="touched() && lineError(line)">
-                  <td class="lines__product" data-label="Producto">
-                    <div class="lines__name">
-                      <input type="text" [attr.maxlength]="requirementMode() ? 300 : 150" [placeholder]="requirementMode() ? 'Requerimiento (ej.: cuaderno cuadrícula 80 hojas grapado)' : 'Nombre del producto'" [attr.aria-label]="'Producto ' + ($index + 1)" [ngModel]="line.productName" (ngModelChange)="update(line.key, { productName: $event })" />
-                    </div>
-                    <div class="lines__meta">
-                      <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ requirementMode() && line.source === 'MANUAL' ? 'Adicional' : sourceLabel[line.source] }}</app-badge>
-                      @if (!requirementMode()) {
-                        @if (line.categoryName) {
-                          <span class="cat-badge" [title]="'Categoría: ' + line.categoryName"><app-icon name="tag" [size]="12" /> {{ line.categoryName }}</span>
-                        } @else {
-                          <span class="cat-badge cat-badge--none">Sin categoría</span>
-                        }
-                        <span class="lines__sku">{{ line.sku ? 'SKU ' + line.sku : line.productId ? 'Sin SKU' : 'Producto escrito a mano' }}</span>
-                      }
-                    </div>
-                    @if (line.observations || openNotes().has(line.key)) {
-                      <input class="lines__note" type="text" maxlength="255" placeholder="Observación del producto (opcional)" [attr.aria-label]="'Observación ' + ($index + 1)" [ngModel]="line.observations" (ngModelChange)="update(line.key, { observations: $event })" />
-                    }
-                    @if (touched() && lineError(line)) {
-                      <span class="lines__error">{{ lineError(line) }}</span>
-                    }
-                  </td>
-                  <td class="num" data-label="Cantidad">
-                    <div class="qty">
-                      <button type="button" title="Restar uno" aria-label="Restar uno" (click)="step(line, -1)"><app-icon name="minus" [size]="14" /></button>
-                      <input type="number" min="1" max="9999" step="1" [attr.aria-label]="'Cantidad ' + ($index + 1)" [ngModel]="line.quantity" (ngModelChange)="setNumber(line.key, 'quantity', $event)" />
-                      <button type="button" title="Sumar uno" aria-label="Sumar uno" (click)="step(line, 1)"><app-icon name="plus" [size]="14" /></button>
-                    </div>
-                    @if (line.productId && available(line.productId) !== null) {
-                      <small class="stock" [class.stock--short]="movesStock() && isShort(line.productId)">Bodega: {{ available(line.productId) }}</small>
-                    }
-                  </td>
-                  <td class="num" data-label="Precio">
-                    <input class="money" type="number" min="0" step="0.01" [readonly]="!priceEditable(line)" [title]="priceEditable(line) ? 'Modificar precio' : 'Su rol no puede cambiar este precio'" [attr.aria-label]="'Precio ' + ($index + 1)" [ngModel]="line.unitPrice" (ngModelChange)="setNumber(line.key, 'unitPrice', $event)" />
-                  </td>
-                  <td class="num" data-label="Descuento">
-                    <input class="money" type="number" min="0" step="0.01" [readonly]="!canOverride()" [attr.aria-label]="'Descuento ' + ($index + 1)" [ngModel]="line.discount" (ngModelChange)="setNumber(line.key, 'discount', $event)" />
-                  </td>
-                  <td class="num" data-label="Subtotal"><strong>{{ formatCurrency(lineSubtotal(line)) }}</strong></td>
-                  <td class="lines__actions">
-                    <div class="row-actions">
-                      @if (!requirementMode()) {
-                        <button type="button" class="icon-btn icon-btn--brand" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="replacingKey.set(line.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
-                      }
-                      <button type="button" class="icon-btn" title="Agregar observación" aria-label="Agregar observación" [disabled]="!!line.observations" (click)="toggleNote(line.key)"><app-icon name="message-square" [size]="15" /></button>
-                      <button type="button" class="icon-btn icon-btn--danger" [title]="requirementMode() ? 'Eliminar requerimiento' : 'Eliminar producto'" [attr.aria-label]="requirementMode() ? 'Eliminar requerimiento' : 'Eliminar producto'" (click)="remove(line.key)"><app-icon name="trash-2" [size]="15" /></button>
-                    </div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="6" class="state">{{ requirementMode() ? 'La lista está vacía. Agregue los requerimientos que solicita el establecimiento.' : 'La lista está vacía. Agregue productos del inventario o escritos a mano.' }}</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
+    <!-- Requerimientos -->
+    <section class="card card--reqs" aria-labelledby="pos-req-title">
+      <header class="card__head">
+        <h3 class="card__title" id="pos-req-title">
+          <span class="card__icon"><app-icon name="receipt" [size]="18" /></span>
+          {{ requirementMode() ? 'Requerimientos escolares' : 'Productos de la lista' }}
+          <span class="count">{{ lines().length }}</span>
+        </h3>
+        @if (loadingTemplate()) {
+          <span class="card__hint">Cargando plantilla…</span>
+        } @else if (requirementMode()) {
+          <span class="legend" aria-hidden="true"><i class="legend__dot legend__dot--tpl"></i> De la plantilla <i class="legend__dot legend__dot--add"></i> Adicional</span>
+        }
+      </header>
+
+      @if (requirementMode()) {
+        <app-school-requirement-entry (added)="addRequirement($event)" />
+      } @else {
         <div class="add">
-          @if (!requirementMode()) {
-            <div class="add__search">
-              <span class="muted">Agregar del inventario</span>
-              <app-quotation-product-search (productSelected)="addProduct($event)" />
+          <div class="add__search">
+            <span class="muted">Agregar del inventario</span>
+            <app-quotation-product-search (productSelected)="addProduct($event)" />
+          </div>
+          <app-button variant="ghost" size="sm" (click)="addManual()"><app-icon name="plus" [size]="14" /> Producto adicional escrito a mano</app-button>
+        </div>
+      }
+
+      @if (lines().length) {
+        <div class="reqs" [class.reqs--disc]="showDiscount()" role="list" [attr.aria-label]="requirementMode() ? 'Requerimientos de la cotización' : 'Productos de la cotización'">
+          <div class="req-head" aria-hidden="true">
+            <span>No.</span>
+            <span>{{ requirementMode() ? 'Requerimiento' : 'Producto' }}</span>
+            <span class="num">Cantidad</span>
+            <span class="num">Precio</span>
+            @if (showDiscount()) { <span class="num">Desc.</span> }
+            <span class="num">Total</span>
+            <span></span>
+          </div>
+          @for (line of lines(); track line.key) {
+            <div class="req" role="listitem" [class.req--bad]="touched() && lineError(line)" [class.req--out]="leaving().has(line.key)" [style.--i]="$index">
+              <span
+                class="req__no"
+                [class.req__no--tpl]="line.source === 'PLANTILLA'"
+                [class.req__no--add]="requirementMode() && line.source !== 'PLANTILLA'"
+                [title]="line.source === 'PLANTILLA' ? 'Requerimiento de la plantilla' : requirementMode() ? 'Requerimiento adicional' : ''"
+              >{{ $index + 1 }}</span>
+              <div class="req__name">
+                <input
+                  type="text"
+                  class="req__input"
+                  [attr.maxlength]="requirementMode() ? 300 : 150"
+                  [placeholder]="requirementMode() ? 'Requerimiento (ej.: cuaderno cuadrícula 80 hojas grapado)' : 'Nombre del producto'"
+                  [attr.aria-label]="(requirementMode() ? 'Requerimiento ' : 'Producto ') + ($index + 1)"
+                  [title]="line.productName"
+                  [ngModel]="line.productName"
+                  (ngModelChange)="update(line.key, { productName: $event })"
+                />
+                @if (requirementMode()) {
+                  <span class="visually-hidden">{{ line.source === 'PLANTILLA' ? 'De la plantilla' : 'Adicional' }}</span>
+                } @else {
+                <div class="req__meta">
+                  <app-badge [tone]="line.source === 'PLANTILLA' ? 'brand' : line.source === 'INVENTARIO' ? 'success' : 'gold'">{{ sourceLabel[line.source] }}</app-badge>
+                    @if (line.categoryName) {
+                      <span class="cat-badge" [title]="'Categoría: ' + line.categoryName"><app-icon name="tag" [size]="12" /> {{ line.categoryName }}</span>
+                    } @else {
+                      <span class="cat-badge cat-badge--none">Sin categoría</span>
+                    }
+                    <span class="req__sku">{{ line.sku ? 'SKU ' + line.sku : line.productId ? 'Sin SKU' : 'Producto escrito a mano' }}</span>
+                </div>
+                }
+                @if (line.observations || openNotes().has(line.key)) {
+                  <input class="req__note" type="text" maxlength="255" placeholder="Observación (opcional)" [attr.aria-label]="'Observación ' + ($index + 1)" [ngModel]="line.observations" (ngModelChange)="update(line.key, { observations: $event })" />
+                }
+                @if (touched() && lineError(line)) {
+                  <span class="req__error">{{ lineError(line) }}</span>
+                }
+              </div>
+              <div class="req__qty" data-label="Cantidad">
+                <div class="qty">
+                  <button type="button" title="Restar uno" aria-label="Restar uno" (click)="step(line, -1)"><app-icon name="minus" [size]="14" /></button>
+                  <input type="text" inputmode="numeric" [appDecimalInput]="0" [attr.aria-label]="'Cantidad ' + ($index + 1)" [ngModel]="line.quantity" (ngModelChange)="setNumber(line.key, 'quantity', $event)" (blur)="settleEmpty($any($event.target), line, 'quantity')" />
+                  <button type="button" title="Sumar uno" aria-label="Sumar uno" (click)="step(line, 1)"><app-icon name="plus" [size]="14" /></button>
+                </div>
+                @if (line.productId && available(line.productId) !== null) {
+                  <small class="stock" [class.stock--short]="movesStock() && isShort(line.productId)">Bodega: {{ available(line.productId) }}</small>
+                }
+              </div>
+              <div class="req__price" data-label="Precio">
+                <div class="money" [class.money--ro]="!priceEditable(line)">
+                  <span aria-hidden="true">Q</span>
+                  <input type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00" [readonly]="!priceEditable(line)" [title]="priceEditable(line) ? 'Modificar precio' : 'Su rol no puede cambiar este precio'" [attr.aria-label]="'Precio ' + ($index + 1)" [ngModel]="line.unitPrice" (ngModelChange)="setNumber(line.key, 'unitPrice', $event)" (blur)="settleEmpty($any($event.target), line, 'unitPrice')" />
+                </div>
+              </div>
+              @if (showDiscount()) {
+                <div class="req__disc" data-label="Descuento">
+                  <div class="money" [class.money--ro]="!canOverride()">
+                    <span aria-hidden="true">Q</span>
+                    <input type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00" [readonly]="!canOverride()" [attr.aria-label]="'Descuento ' + ($index + 1)" [ngModel]="line.discount" (ngModelChange)="setNumber(line.key, 'discount', $event)" (blur)="settleEmpty($any($event.target), line, 'discount')" />
+                  </div>
+                </div>
+              }
+              <div class="req__total" data-label="Total"><strong>{{ formatCurrency(lineSubtotal(line)) }}</strong></div>
+              <div class="req__actions">
+                @if (!requirementMode()) {
+                  <button type="button" class="icon-btn icon-btn--brand" title="Cambiar producto (misma categoría)" aria-label="Cambiar producto" (click)="replacingKey.set(line.key)"><app-icon name="arrow-left-right" [size]="15" /></button>
+                } @else {
+                  <button type="button" class="icon-btn" title="Duplicar requerimiento" [attr.aria-label]="'Duplicar requerimiento ' + ($index + 1)" (click)="duplicate(line.key)"><app-icon name="copy" [size]="15" /></button>
+                }
+                <button type="button" class="icon-btn" title="Agregar observación" aria-label="Agregar observación" [disabled]="!!line.observations" (click)="toggleNote(line.key)"><app-icon name="message-square" [size]="15" /></button>
+                <button type="button" class="icon-btn icon-btn--danger" [title]="requirementMode() ? 'Eliminar requerimiento' : 'Eliminar producto'" [attr.aria-label]="(requirementMode() ? 'Eliminar requerimiento ' : 'Eliminar producto ') + ($index + 1)" (click)="removeAnimated(line.key)"><app-icon name="trash-2" [size]="15" /></button>
+              </div>
             </div>
           }
-          <app-button variant="ghost" size="sm" (click)="addManual()"><app-icon name="plus" [size]="14" /> {{ requirementMode() ? 'Agregar requerimiento' : 'Producto adicional escrito a mano' }}</app-button>
         </div>
-        @if (requirementMode()) {
-          <p class="panel__hint">Los requerimientos no consultan ni descuentan inventario; el producto real se elige al pasar la lista a "En preparación".</p>
-        }
-        @if (!canOverride()) {
-          <p class="panel__hint">Su rol mantiene los precios de la plantilla{{ requirementMode() ? '' : ' y del inventario' }}; los descuentos los aplica un supervisor o administrador.</p>
-        }
-      }
-    </section>
-
-    <!-- 3. Resumen financiero -->
-    <section class="panel">
-      <div class="panel__head">
-        <h2 class="panel__title"><span class="step">3</span> Resumen financiero{{ isEdit() ? '' : ' y anticipo' }}</h2>
-      </div>
-      @if (canAdvance()) {
-        <div class="options">
-          <label class="check"><input type="checkbox" [ngModel]="withAdvance()" [disabled]="asDraft()" (ngModelChange)="toggleAdvance($event)" /> Registrar anticipo ahora</label>
-          <label class="check"><input type="checkbox" [ngModel]="asDraft()" (ngModelChange)="asDraft.set($event)" /> Guardar como borrador (sin pagos hasta confirmarla)</label>
+      } @else {
+        <div class="empty">
+          <span class="empty__icon" aria-hidden="true"><app-icon name="book-open" [size]="26" /></span>
+          <strong>La lista está vacía</strong>
+          <p>
+            {{ requirementMode()
+              ? isEdit() ? 'Agregue los requerimientos con la barra de arriba.' : 'Elija la plantilla escolar o escriba los requerimientos con la barra de arriba.'
+              : 'Agregue productos del inventario o escritos a mano.' }}
+          </p>
         </div>
-        @if (withAdvance() && !asDraft()) {
-          <div class="modal__grid advance">
-            <div class="field">
-              <label for="se-adv">Monto del anticipo</label>
-              <input id="se-adv" type="number" min="0.01" step="0.01" [ngModel]="advanceAmount()" (ngModelChange)="advanceAmount.set($event === '' || $event === null ? null : +$event)" />
-            </div>
-            <div class="field">
-              <label for="se-method">Método de pago</label>
-              <select id="se-method" [ngModel]="advanceMethod()" (ngModelChange)="advanceMethod.set($event)">
-                @for (m of methods; track m) { <option [value]="m">{{ methodLabel[m] }}</option> }
-              </select>
-            </div>
-            @if (usesBank()) {
-              <div class="field">
-                <label for="se-bank">Cuenta bancaria <span class="field__optional">(opcional)</span></label>
-                <select id="se-bank" [ngModel]="advanceBankId()" (ngModelChange)="advanceBankId.set($event)">
-                  <option value="">Sin especificar</option>
-                  @for (b of bankList(); track b.id) { <option [value]="b.id">{{ b.name }} · {{ b.accountNumber }}</option> }
-                </select>
-              </div>
-            }
-            <div class="field">
-              <label for="se-ref">Referencia <span class="field__optional">(opcional)</span></label>
-              <input id="se-ref" type="text" maxlength="60" [ngModel]="advanceReference()" (ngModelChange)="advanceReference.set($event)" />
-            </div>
-          </div>
-        }
-      } @else if (isEdit()) {
-        <p class="panel__hint">Los pagos se registran desde el estado de cuenta de la cotización; editar no modifica pagos.</p>
       }
-      <div class="field">
-        <label for="se-notes">Observaciones generales <span class="field__optional">(opcional)</span></label>
-        <textarea id="se-notes" rows="3" maxlength="1000" placeholder="Ej.: El cliente recogerá los útiles el viernes." [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
-      </div>
+      @if (!canOverride()) {
+        <p class="card__hint">Su rol mantiene los precios de la plantilla{{ requirementMode() ? '' : ' y del inventario' }}; los descuentos los aplica un supervisor o administrador.</p>
+      }
     </section>
   </div>
 
-  <aside class="summary" aria-label="Resumen de la cotización">
-    <h3><app-icon name="receipt" [size]="18" /> Resumen</h3>
-    <dl>
-      <div><dt>Grado</dt><dd>{{ gradeLabel() || '—' }}</dd></div>
-      <div><dt>{{ requirementMode() ? 'Requerimientos' : 'Productos' }}</dt><dd>{{ lines().length }} línea(s) · {{ itemCount() }} unidad(es)</dd></div>
-      <div><dt>Subtotal</dt><dd>{{ formatCurrency(subtotal()) }}</dd></div>
-      @if (discount() > 0) { <div><dt>Descuentos</dt><dd class="money-out">−{{ formatCurrency(discount()) }}</dd></div> }
-      <div class="summary__total"><dt>Total de la lista</dt><dd>{{ formatCurrency(total()) }}</dd></div>
-      <div><dt>{{ isEdit() ? 'Pagado' : 'Anticipo' }}</dt><dd class="money-in">{{ formatCurrency(paid()) }}</dd></div>
-      <div class="summary__balance"><dt>Saldo pendiente</dt><dd>{{ formatCurrency(balance()) }}</dd></div>
-    </dl>
-    @if (movesStock() && shortProducts().length) {
-      <p class="summary__info">
-        <app-icon name="alert-circle" [size]="14" />
-        Sin existencias suficientes: {{ shortProducts().join(', ') }}. Se puede confirmar; quedarán pendientes de abastecimiento.
-      </p>
-    }
-    @if (touched() && problems().length) {
-      <ul class="summary__problems" role="alert">
-        @for (p of problems(); track p) { <li>{{ p }}</li> }
-      </ul>
-    }
-    @if (error()) {
-      <p class="modal__error" role="alert">{{ error() }}</p>
-    }
-    <app-button variant="primary" fullWidth [disabled]="saving()" (click)="save()">
-      {{ saving() ? 'Guardando…' : isEdit() ? 'Guardar cambios' : asDraft() ? 'Guardar borrador' : 'Guardar cotización' }}
-    </app-button>
-    @if (isEdit()) {
-      <app-button variant="ghost" fullWidth [disabled]="saving()" (click)="cancelled.emit()">Cancelar</app-button>
-    }
-    <p class="muted">
-      @if (requirementMode()) {
-        {{ isEdit() ? 'Editar' : 'Guardar' }} no mueve inventario. Bodega se descuenta una sola vez al finalizar la preparación.
-      } @else if (movesStock()) {
-        Al guardar se descuentan de Bodega {{ inventoryUnits() }} unidad(es) de los productos del inventario. Anular la lista las devuelve.
-      } @else {
-        Un borrador no descuenta inventario hasta que se confirme.
-      }
-    </p>
+  <!-- Resumen y pagos -->
+  <aside class="pos__side" aria-label="Resumen y pagos de la cotización">
+    <app-school-quotation-summary-panel />
   </aside>
 </div>
 

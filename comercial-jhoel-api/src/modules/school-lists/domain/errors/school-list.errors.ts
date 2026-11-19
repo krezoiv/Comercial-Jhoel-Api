@@ -238,6 +238,9 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   SCHOOL_PURGE_CONFIRMATION: {
     message: 'Escriba exactamente "BORRAR TODO" para confirmar el borrado.',
   },
+  SCHOOL_DELETE_CONFIRMATION: {
+    message: 'Escriba el número de la cotización para confirmar el borrado.',
+  },
   SCHOOL_REFUND_METHOD_REQUIRED: {
     message: 'Indique cómo se devuelve al cliente el dinero recibido.',
   },
@@ -328,6 +331,10 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
   SCHOOL_PREPARATION_NOT_OPEN: ([status]) =>
     status
       ? `La lista no está "En preparación" (estado actual: ${status.toLowerCase().replace(/_/g, ' ')}).`
+      : null,
+  SCHOOL_DELETE_CONFIRMATION: ([number]) =>
+    number
+      ? `Escriba exactamente "${number}" para confirmar el borrado.`
       : null,
   SCHOOL_PRODUCT_INACTIVE: (parts) =>
     withName(

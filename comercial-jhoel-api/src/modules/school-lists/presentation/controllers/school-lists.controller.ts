@@ -34,6 +34,8 @@ import {
   ListSchoolTemplatesUseCase,
   PreviewSchoolQuotationPurgeUseCase,
   PurgeSchoolQuotationsUseCase,
+  PreviewSchoolQuotationDeleteUseCase,
+  DeleteSchoolQuotationUseCase,
   RegisterSchoolPaymentUseCase,
   SaveSchoolPreparationUseCase,
   SaveSchoolTemplateUseCase,
@@ -117,6 +119,8 @@ export class SchoolListsController {
     private readonly savePreparation: SaveSchoolPreparationUseCase,
     private readonly purgePreviewUseCase: PreviewSchoolQuotationPurgeUseCase,
     private readonly purgeUseCase: PurgeSchoolQuotationsUseCase,
+    private readonly deletePreviewUseCase: PreviewSchoolQuotationDeleteUseCase,
+    private readonly deleteUseCase: DeleteSchoolQuotationUseCase,
     private readonly cancelQuotation: CancelSchoolQuotationUseCase,
     private readonly registerPayment: RegisterSchoolPaymentUseCase,
     private readonly voidPayment: VoidSchoolPaymentUseCase,
@@ -336,6 +340,26 @@ export class SchoolListsController {
   ) {
     const { clientRequestId, ...input } = dto;
     return this.createQuotation.execute(actor(user), input, clientRequestId);
+  }
+
+  /** What deleting this quotation would remove and return to Bodega (super administrators). */
+  @Get('quotations/:id/delete-preview')
+  deletePreview(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.deletePreviewUseCase.execute(actor(user), id);
+  }
+
+  /** HARD delete of one quotation; `confirmation` must be its number (e.g. "LE-000193"). */
+  @Post('quotations/:id/delete')
+  @HttpCode(HttpStatus.OK)
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PurgeQuotationsRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.deleteUseCase.execute(actor(user), id, dto.confirmation);
   }
 
   @Get('quotations/:id/pdf')

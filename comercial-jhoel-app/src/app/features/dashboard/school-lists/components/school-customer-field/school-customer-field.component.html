@@ -1,0 +1,44 @@
+<div class="ctl" [class.ctl--bad]="invalid">
+  <app-icon name="user" [size]="16" />
+  <input
+    [id]="inputId"
+    type="text"
+    maxlength="150"
+    autocomplete="off"
+    placeholder="Nombre del padre, madre o encargado"
+    role="combobox"
+    aria-autocomplete="list"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="inputId + '-list'"
+    [attr.aria-activedescendant]="active() >= 0 ? inputId + '-opt-' + active() : null"
+    [attr.aria-invalid]="invalid"
+    data-autofocus
+    [ngModel]="name()"
+    (ngModelChange)="onInput($event)"
+    (keydown)="onKeydown($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+  />
+  <app-icon class="ctl__search" name="search" [size]="14" />
+</div>
+@if (open()) {
+  <ul class="suggest" role="listbox" [id]="inputId + '-list'" aria-label="Clientes encontrados">
+    @for (s of suggestions(); track s.name + s.phone; let i = $index) {
+      <!-- mousedown keeps the input focused, so blur does not close the list before the click. -->
+      <li
+        role="option"
+        [id]="inputId + '-opt-' + i"
+        [attr.aria-selected]="active() === i"
+        [class.suggest--on]="active() === i"
+        (mousedown)="$event.preventDefault()"
+        (click)="pick(s)"
+      >
+        <span class="suggest__avatar" aria-hidden="true">{{ s.name.charAt(0) }}</span>
+        <span class="suggest__text">
+          <strong>{{ s.name }}</strong>
+          <small>{{ s.phone }}{{ s.detail ? ' · ' + s.detail : '' }}</small>
+        </span>
+      </li>
+    }
+  </ul>
+}

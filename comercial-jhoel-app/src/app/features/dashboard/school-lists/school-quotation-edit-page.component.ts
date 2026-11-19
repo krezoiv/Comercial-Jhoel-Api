@@ -6,25 +6,27 @@ import { SchoolQuotation, isSchoolQuotationEditable } from '../../../core/models
 import { SchoolListService } from '../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { IconComponent, PageHeaderComponent } from '../../../shared/ui';
-import { SchoolQuotationEditorComponent } from './components/school-quotation-editor/school-quotation-editor.component';
+import { SchoolQuotationWorkspaceComponent } from './components/school-quotation-workspace/school-quotation-workspace.component';
 
 /**
- * "Editar cotización": the same editor as "Nueva cotización", loaded with the
- * quotation's own lines and its `version` (a concurrent edit is rejected by
- * the backend with a clear message). Delivered or cancelled quotations are
- * read-only.
+ * "Editar cotización": opens the same fullscreen POS window as "Nueva
+ * cotización", loaded with the quotation's own lines and its `version` (a
+ * concurrent edit is rejected by the backend with a clear message). Closing or
+ * saving returns to the quotation detail. Delivered or cancelled quotations
+ * are read-only and show a message instead of the window.
  */
 @Component({
   selector: 'app-school-quotation-edit-page',
   standalone: true,
-  imports: [RouterLink, IconComponent, PageHeaderComponent, SchoolQuotationEditorComponent],
+  imports: [RouterLink, IconComponent, PageHeaderComponent, SchoolQuotationWorkspaceComponent],
   template: `
     <div class="edit">
       <a class="back" [routerLink]="['/dashboard/listas-escolares/cotizaciones', id]"><app-icon name="chevron-left" [size]="16" /> Volver al detalle</a>
       @if (quotation(); as q) {
         <app-page-header icon="edit-2" [title]="'Editar ' + q.quotationNumber" [subtitle]="q.customerName + ' · ' + q.grade" />
         @if (editable()) {
-          <app-school-quotation-editor [quotation]="q" [swapItemId]="swapItemId" (saved)="back()" (cancelled)="back()" />
+          <p class="state">Editando en la ventana de cotización…</p>
+          <app-school-quotation-workspace [quotation]="q" [swapItemId]="swapItemId" (saved)="back()" (closed)="back()" />
         } @else {
           <p class="state">
             La cotización está {{ q.status === 'ENTREGADA' ? 'entregada' : q.status === 'TERMINADA' ? 'terminada (ya descontó inventario)' : 'cancelada' }} y ya no se puede modificar.

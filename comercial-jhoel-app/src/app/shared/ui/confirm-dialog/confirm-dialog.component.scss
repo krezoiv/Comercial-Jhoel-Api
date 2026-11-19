@@ -1,7 +1,8 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal);
+  // Above every modal and work window, whatever their DOM order (--z-dialog).
+  z-index: var(--z-dialog);
   display: flex;
   align-items: center;
   justify-content: center;

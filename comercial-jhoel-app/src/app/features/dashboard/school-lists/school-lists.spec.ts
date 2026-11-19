@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -53,6 +55,13 @@ import {
   unitsByProduct,
 } from './school-preparation-rules';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { FocusTrapDirective } from '../../../shared/directives/focus-trap.directive';
+import { SchoolDocumentsService } from './school-documents.service';
+import { SchoolListsPageComponent } from './school-lists-page.component';
+import { SchoolCustomerFieldComponent, customerSuggestions } from './components/school-customer-field/school-customer-field.component';
+import { QuotationPreviewData, SchoolQuotationPreviewComponent } from './components/school-quotation-preview/school-quotation-preview.component';
+import { SchoolQuotationWorkspaceComponent } from './components/school-quotation-workspace/school-quotation-workspace.component';
+import { SchoolRequirementEntryComponent } from './components/school-requirement-entry/school-requirement-entry.component';
 
 const summary: SchoolTemplateSummary = {
   id: 't1',
@@ -137,7 +146,7 @@ function setup(permissions: SchoolListPermission[]): SchoolListService {
       provideHttpClient(),
       provideHttpClientTesting(),
       provideRouter([]),
-      { provide: ConfirmDialogService, useValue: { confirm: () => Promise.resolve(true) } },
+      { provide: ConfirmDialogService, useValue: { confirm: () => Promise.resolve(true), pending: () => null } },
       { provide: BankService, useValue: { getBanks: () => of([]) } },
     ],
   });
@@ -747,7 +756,7 @@ describe('SchoolQuotationEditorComponent — categorías y cambio de producto', 
     editor.ngOnChanges({ quotation: {} as never });
     fixture.detectChanges();
     const html = fixture.nativeElement as HTMLElement;
-    const badges = [...html.querySelectorAll('.lines .cat-badge')].map((b) => b.textContent!.trim());
+    const badges = [...html.querySelectorAll('.reqs .cat-badge')].map((b) => b.textContent!.trim());
     expect(badges).toEqual(['Cuadernos y libretas', 'Sin categoría']);
     // ?cambiar=i1 opened the modal on that line.
     expect(editor.replacing()?.itemId).toBe('i1');
@@ -760,8 +769,8 @@ describe('SchoolQuotationEditorComponent — categorías y cambio de producto', 
     // Nothing is sent (and nothing moves in Bodega) until the user saves.
     expect(create).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
-    // Every row carries labels for the phone card layout.
-    expect(html.querySelectorAll('.lines td[data-label="Producto"]').length).toBe(2);
+    // Every row carries captions for the narrow card layout.
+    expect(html.querySelectorAll('.reqs .req__qty[data-label="Cantidad"]').length).toBe(2);
   });
 
   it('consolidates into the existing line when the product is already listed', () => {
@@ -1102,5 +1111,426 @@ describe('Borrar todas las cotizaciones', () => {
     fixture.componentInstance.typed.set('BORRAR TODO');
     expect(fixture.componentInstance.canPurge()).toBeFalse();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No hay cotizaciones');
+  });
+});
+
+describe('Eliminar una cotización', () => {
+  const one = {
+    quotations: 1,
+    payments: 1,
+    movements: 2,
+    allocations: 0,
+    dispatches: 0,
+    returnedUnits: 5,
+    returned: [{ productId: 'p1', product: 'Cuaderno grande', units: 5 }],
+  };
+
+  it('each row offers "Eliminar" only to a super administrator', () => {
+    const rows = of({ items: [quotation()], total: 1, page: 1, limit: 20 });
+    let service = setup(CASHIER);
+    spyOn(service, 'getQuotations').and.returnValue(rows);
+    let fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Eliminar cotización LE-000001"]')).toBeNull();
+
+    TestBed.resetTestingModule();
+    service = setup([...CASHIER, 'school_lists.quotations.delete']);
+    spyOn(service, 'getQuotations').and.returnValue(rows);
+    spyOn(service, 'deletePreview').and.returnValue(of(one));
+    fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[aria-label="Eliminar cotización LE-000001"]');
+    expect(button).not.toBeNull();
+    button!.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.deleting()?.id).toBe('q1');
+    expect(service.deletePreview).toHaveBeenCalledWith('q1');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Eliminar cotización LE-000001');
+  });
+
+  it('asks for the quotation number (not "BORRAR TODO") and deletes only that one', () => {
+    const service = setup([...CASHIER, 'school_lists.quotations.delete']);
+    spyOn(service, 'deletePreview').and.returnValue(of(one));
+    const remove = spyOn(service, 'deleteQuotation').and.returnValue(of(one));
+    const purgeAll = spyOn(service, 'purgeQuotations');
+    const fixture = TestBed.createComponent(SchoolPurgeModalComponent);
+    const modal = fixture.componentInstance;
+    fixture.componentRef.setInput('quotation', quotation());
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('María López');
+    expect(html.textContent).toContain('Las demás cotizaciones no cambian');
+    expect(modal.phrase).toBe('LE-000001');
+    modal.typed.set('BORRAR TODO');
+    expect(modal.canPurge()).toBeFalse();
+    modal.typed.set(' LE-000001 ');
+    expect(modal.canPurge()).toBeTrue();
+    modal.purge();
+    expect(remove).toHaveBeenCalledOnceWith('q1', 'LE-000001');
+    expect(purgeAll).not.toHaveBeenCalled();
+  });
+});
+
+describe('Ventana POS — Nueva cotización', () => {
+  function workspace(input: SchoolQuotation | null = null) {
+    const fixture = TestBed.createComponent(SchoolQuotationWorkspaceComponent);
+    fixture.componentRef.setInput('quotation', input);
+    fixture.detectChanges();
+    const ws = fixture.componentInstance;
+    return { fixture, ws, editor: ws.editor(), host: fixture.nativeElement as HTMLElement };
+  }
+
+  const pressEscape = () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+
+  it('"Nueva cotización" opens the fullscreen window over the current tab, never as a tab', () => {
+    const service = setup(CASHIER);
+    spyOn(service, 'loadPermissions').and.returnValue(of(CASHIER));
+    spyOn(service, 'permissionsLoaded').and.returnValue(true);
+    const fixture = TestBed.createComponent(SchoolListsPageComponent);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    const tabs = [...html.querySelectorAll('[role="tab"]')].map((t) => t.textContent!.trim());
+    expect(tabs).not.toContain('Nueva cotización');
+    expect(document.querySelector('app-school-quotation-workspace')).toBeNull();
+
+    html.querySelector<HTMLButtonElement>('.hero__primary')!.click();
+    fixture.detectChanges();
+    const window = document.querySelector('app-school-quotation-workspace')!;
+    // Rendered at the end of <body>, above the whole app shell, with the page behind it locked.
+    expect(window.parentElement).toBe(document.body);
+    expect(window.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(fixture.componentInstance.activeTab()).toBe('tablero');
+
+    fixture.destroy();
+    expect(document.querySelector('app-school-quotation-workspace')).toBeNull();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('the old ?tab=nueva link opens the window over "Cotizaciones"', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({ tab: 'nueva' }) } },
+    });
+    const service = setup(CASHIER);
+    spyOn(service, 'loadPermissions').and.returnValue(of(CASHIER));
+    spyOn(service, 'permissionsLoaded').and.returnValue(true);
+    spyOn(service, 'getQuotations').and.returnValue(of({ items: [], total: 0, page: 1, limit: 20 }));
+    const fixture = TestBed.createComponent(SchoolListsPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activeTab()).toBe('cotizaciones');
+    expect(fixture.componentInstance.creating()).toBeTrue();
+    expect(document.querySelector('app-school-quotation-workspace')).not.toBeNull();
+  });
+
+  it('closes at once when nothing changed; with changes it asks to keep editing, discard or save', fakeAsync(() => {
+    setup(CASHIER);
+    const pristine = workspace().ws;
+    const closedPristine = jasmine.createSpy('closed');
+    pristine.closed.subscribe(closedPristine);
+    expect(pristine.saveState().text).toBe('Sin datos todavía');
+    pristine.requestClose();
+    tick(250);
+    expect(closedPristine).toHaveBeenCalledTimes(1);
+
+    const { fixture, ws, editor, host } = workspace();
+    const closed = jasmine.createSpy('closed');
+    ws.closed.subscribe(closed);
+    editor.customerName.set('Ana Pérez');
+    fixture.detectChanges();
+    expect(editor.dirty()).toBeTrue();
+    expect(ws.saveState()).toEqual({ tone: 'dirty', text: 'Cambios sin guardar' });
+    ws.requestClose();
+    fixture.detectChanges();
+    const ask = host.querySelector('[role="alertdialog"]')!;
+    expect([...ask.querySelectorAll('button')].map((b) => b.textContent!.trim())).toEqual(['Seguir editando', 'Descartar cambios', 'Guardar y salir']);
+    tick(250);
+    expect(closed).not.toHaveBeenCalled();
+
+    // Escape answers "keep editing"; a second Escape asks again (never closes silently).
+    pressEscape();
+    fixture.detectChanges();
+    expect(ws.askClose()).toBeFalse();
+    pressEscape();
+    expect(ws.askClose()).toBeTrue();
+
+    ws.discard();
+    tick(250);
+    expect(closed).toHaveBeenCalledTimes(1);
+  }));
+
+  it('Escape closes the preview first and is ignored while the save confirmation is open', () => {
+    setup(CASHIER);
+    const confirm = TestBed.inject(ConfirmDialogService) as unknown as { pending: () => unknown };
+    const { fixture, ws, editor, host } = workspace();
+    editor.customerName.set('Ana Pérez');
+    ws.previewing.set(true);
+    fixture.detectChanges();
+    expect(host.querySelector('app-school-quotation-preview')).not.toBeNull();
+    pressEscape();
+    fixture.detectChanges();
+    expect(ws.previewing()).toBeFalse();
+    expect(ws.askClose()).toBeFalse();
+
+    confirm.pending = () => ({});
+    pressEscape();
+    expect(ws.askClose()).toBeFalse();
+  });
+
+  it('"Guardar y generar PDF" saves with the existing endpoint and downloads the saved quotation', async () => {
+    const service = setup(CASHIER);
+    const saved = quotation({ id: 'q9', quotationNumber: 'LE-000009', status: 'ACEPTADA', fulfillmentMode: 'PREPARACION' });
+    const create = spyOn(service, 'createQuotation').and.returnValue(of(saved));
+    const pdf = spyOn(TestBed.inject(SchoolDocumentsService), 'quotation');
+    const { ws, editor } = workspace();
+    const emitted = jasmine.createSpy('saved');
+    ws.saved.subscribe(emitted);
+
+    await editor.selectTemplate(summary);
+    editor.customerName.set('María López');
+    editor.customerPhone.set('5555-1234');
+    await ws.save(true);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.calls.mostRecent().args[0].items.every((i) => i.productId === null)).toBeTrue();
+    expect(pdf).toHaveBeenCalledOnceWith('q9', 'LE-000009', 'download');
+    expect(emitted).toHaveBeenCalledOnceWith(saved);
+    expect(ws.saveState()).toEqual({ tone: 'done', text: 'Guardada como LE-000009' });
+  });
+
+  it('does not save (nor download) while data is missing, and lists what to fix', async () => {
+    const service = setup(CASHIER);
+    const create = spyOn(service, 'createQuotation');
+    const pdf = spyOn(TestBed.inject(SchoolDocumentsService), 'quotation');
+    const { fixture, ws, host } = workspace();
+    await ws.save(true);
+    fixture.detectChanges();
+    expect(create).not.toHaveBeenCalled();
+    expect(pdf).not.toHaveBeenCalled();
+    expect(host.querySelector('.ws__problems')?.textContent).toContain('datos por revisar');
+    expect(host.querySelector('#pos-problems')?.textContent).toContain('teléfono');
+  });
+
+  it('editing opens the same window with the quotation number and its status', () => {
+    setup(CASHIER);
+    const { fixture, ws, editor, host } = workspace(
+      quotation({
+        status: 'ACEPTADA',
+        fulfillmentMode: 'PREPARACION',
+        items: [{ id: 'i1', lineNo: 1, source: 'PLANTILLA', templateItemId: 'ti1', productId: null, productName: 'Cuaderno mediano', description: null, quantity: 3, unitPrice: 15, discount: 0, subtotal: 45, observations: null, productSku: null, categoryId: null, categoryName: null, assignments: [] }],
+      }),
+    );
+    fixture.detectChanges();
+    expect(host.querySelector('#ws-title')?.textContent).toContain('Editar cotización LE-000001');
+    expect(host.textContent).toContain('Aceptada');
+    expect(editor.dirty()).toBeFalse();
+    expect(ws.saveState().text).toBe('Sin cambios');
+    // No template picker when editing; the requirement entry bar is there.
+    expect(host.querySelector('.grades')).toBeNull();
+    expect(host.querySelector('app-school-requirement-entry')).not.toBeNull();
+  });
+});
+
+describe('Ventana POS — requerimientos, resumen y pagos', () => {
+  it('adds requirements from the entry bar (Enter), validates them and clears the bar for the next one', () => {
+    setup(CASHIER);
+    const fixture = TestBed.createComponent(SchoolQuotationEditorComponent);
+    fixture.detectChanges();
+    const editor = fixture.componentInstance;
+    const entry = fixture.debugElement.query(By.directive(SchoolRequirementEntryComponent)).componentInstance as SchoolRequirementEntryComponent;
+    expect(editor.dirty()).toBeFalse();
+
+    entry.submit();
+    expect(editor.lines().length).toBe(0);
+    expect(entry.problem()?.field).toBe('desc');
+
+    entry.description.set('  Juego de geometría  ');
+    entry.quantity.set(2);
+    entry.unitPrice.set(17.5);
+    expect(entry.total()).toBe(35);
+    entry.submit();
+    expect(editor.lines().map((l) => [l.source, l.productId, l.productName, l.quantity, l.unitPrice])).toEqual([['MANUAL', null, 'Juego de geometría', 2, 17.5]]);
+    expect(editor.total()).toBe(35);
+    expect(editor.dirty()).toBeTrue();
+    expect([entry.description(), entry.quantity(), entry.unitPrice()]).toEqual(['', 1, null]);
+
+    entry.description.set('Calculadora');
+    entry.unitPrice.set(1.005);
+    entry.submit();
+    expect(entry.problem()?.field).toBe('price');
+    expect(editor.lines().length).toBe(1);
+  });
+
+  it('duplicates a requirement right below it and removes lines after the exit animation', fakeAsync(() => {
+    setup(CASHIER);
+    const fixture = TestBed.createComponent(SchoolQuotationEditorComponent);
+    const editor = fixture.componentInstance;
+    editor.selectTemplate(summary);
+    tick();
+    const [first] = editor.lines();
+    editor.duplicate(first.key);
+    expect(editor.lines().map((l) => [l.productName, l.source, l.templateItemId])).toEqual([
+      ['Cuaderno mediano', 'PLANTILLA', 'ti1'],
+      ['Cuaderno mediano', 'MANUAL', null],
+      ['Lápiz', 'PLANTILLA', 'ti2'],
+    ]);
+    expect(editor.total()).toBe(100);
+
+    editor.removeAnimated(editor.lines()[1].key);
+    fixture.detectChanges();
+    expect(editor.leaving().size).toBe(1);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.req--out')).not.toBeNull();
+    tick(200);
+    expect(editor.lines().length).toBe(2);
+    expect(editor.leaving().size).toBe(0);
+  }));
+
+  it('the side panel shows the summary and the initial payment from the editor state', async () => {
+    setup(CASHIER);
+    const fixture = TestBed.createComponent(SchoolQuotationEditorComponent);
+    const editor = fixture.componentInstance;
+    await editor.selectTemplate(summary);
+    editor.toggleAdvance(true);
+    fixture.detectChanges();
+    const panel = (fixture.nativeElement as HTMLElement).querySelector('app-school-quotation-summary-panel')!;
+    expect(panel.querySelector('.big--total')?.textContent).toContain(editor.formatCurrency(55));
+    expect(panel.querySelectorAll('[role="radio"]').length).toBe(5);
+
+    [...panel.querySelectorAll<HTMLButtonElement>('.quick button')].find((b) => b.textContent!.trim() === 'Total')!.click();
+    fixture.detectChanges();
+    expect(editor.advanceAmount()).toBe(55);
+    expect(editor.balance()).toBe(0);
+    expect(panel.querySelector('.big--balance')?.textContent).toContain(editor.formatCurrency(0));
+
+    [...panel.querySelectorAll<HTMLButtonElement>('[role="radio"]')].find((b) => b.textContent!.includes('Transferencia'))!.click();
+    fixture.detectChanges();
+    expect(editor.advanceMethod()).toBe('TRANSFERENCIA');
+    expect(panel.querySelector('#se-bank')).not.toBeNull();
+  });
+
+  it('the preview shows the requirements and totals as the customer document, without saving', async () => {
+    const service = setup(CASHIER);
+    const create = spyOn(service, 'createQuotation');
+    const editor = TestBed.createComponent(SchoolQuotationEditorComponent).componentInstance;
+    await editor.selectTemplate(summary);
+    editor.customerName.set('María López');
+    const fixture = TestBed.createComponent(SchoolQuotationPreviewComponent);
+    fixture.componentRef.setInput('data', editor.previewData() satisfies QuotationPreviewData);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(text).toContain('Se asigna al guardar');
+    expect(text).toContain('María López');
+    expect(text).toContain('Cuaderno mediano');
+    expect(text).toContain(editor.formatCurrency(55));
+    expect(text).toContain('Aceptada');
+    expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('Ventana POS — búsqueda de clientes', () => {
+  const found = (name: string, phone: string, over: Partial<SchoolQuotation> = {}) => quotation({ customerName: name, customerPhone: phone, ...over });
+
+  it('lists each earlier customer once (same name and phone digits), most recent first', () => {
+    const list = customerSuggestions([
+      found('María López', '5555-1234', { studentName: 'Ana', grade: 'Primero' }),
+      found('maría lópez ', '5555 1234'),
+      found('María López', '4444-0000'),
+    ]);
+    expect(list).toEqual([
+      { name: 'María López', phone: '5555-1234', detail: 'Ana · Primero' },
+      { name: 'María López', phone: '4444-0000', detail: 'Primero Básico' },
+    ]);
+  });
+
+  it('searches after typing 3 letters and fills name and phone with the keyboard', fakeAsync(() => {
+    const service = setup(CASHIER);
+    const get = spyOn(service, 'getQuotations').and.returnValue(of({ items: [found('María López', '5555-1234')], total: 1, page: 1, limit: 20 }));
+    const fixture = TestBed.createComponent(SchoolCustomerFieldComponent);
+    fixture.detectChanges();
+    const field = fixture.componentInstance;
+    const picked = jasmine.createSpy('picked');
+    field.picked.subscribe(picked);
+
+    field.onInput('Ma');
+    tick(300);
+    expect(get).not.toHaveBeenCalled();
+    field.onInput('Mar');
+    tick(300);
+    expect(get).toHaveBeenCalledOnceWith(jasmine.objectContaining({ search: 'Mar' }));
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('[role="option"]').length).toBe(1);
+
+    const key = (k: string) => {
+      const event = new KeyboardEvent('keydown', { key: k, cancelable: true });
+      field.onKeydown(event);
+      return event;
+    };
+    key('ArrowDown');
+    key('Enter');
+    expect(picked).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'María López', phone: '5555-1234' }));
+    expect(field.name()).toBe('María López');
+    expect(field.open()).toBeFalse();
+
+    // Escape closes the list and is marked handled, so the window behind stays open.
+    field.onInput('Marí');
+    tick(300);
+    expect(field.open()).toBeTrue();
+    expect(key('Escape').defaultPrevented).toBeTrue();
+    expect(field.open()).toBeFalse();
+  }));
+
+  it('the editor fills name and phone from the picked customer (the student stays as typed)', () => {
+    setup(CASHIER);
+    const editor = TestBed.createComponent(SchoolQuotationEditorComponent).componentInstance;
+    editor.studentName.set('Luis');
+    editor.pickCustomer({ name: 'María López', phone: '5555-1234', detail: 'Ana' });
+    expect([editor.customerName(), editor.customerPhone(), editor.studentName()]).toEqual(['María López', '5555-1234', 'Luis']);
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [FocusTrapDirective],
+  template: `
+    <button id="opener">Abrir</button>
+    @if (open) {
+      <div appFocusTrap tabindex="-1">
+        <button id="first">Uno</button>
+        <input id="middle" data-autofocus />
+        <button id="last">Dos</button>
+      </div>
+    }
+  `,
+})
+class FocusTrapHostComponent {
+  open = false;
+}
+
+describe('FocusTrapDirective', () => {
+  it('focuses the marked field, keeps Tab inside and returns focus to the opener', async () => {
+    TestBed.configureTestingModule({});
+    const fixture = TestBed.createComponent(FocusTrapHostComponent);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    html.querySelector<HTMLButtonElement>('#opener')!.focus();
+    fixture.componentInstance.open = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement?.id).toBe('middle');
+
+    const tab = (shiftKey = false) => {
+      const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true });
+      document.activeElement!.dispatchEvent(event);
+      return event;
+    };
+    html.querySelector<HTMLButtonElement>('#last')!.focus();
+    expect(tab().defaultPrevented).toBeTrue();
+    expect(document.activeElement?.id).toBe('first');
+    tab(true);
+    expect(document.activeElement?.id).toBe('last');
+
+    fixture.componentInstance.open = false;
+    fixture.detectChanges();
+    expect(document.activeElement?.id).toBe('opener');
   });
 });

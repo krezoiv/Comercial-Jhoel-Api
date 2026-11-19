@@ -283,12 +283,18 @@ export class SchoolQuotationsListComponent {
 
   /** "Borrar todas las cotizaciones" open (super administrators only). */
   readonly purging = signal(false);
+  /** Quotation open in "Eliminar cotización" (super administrators only). */
+  readonly deleting = signal<SchoolQuotationSummary | null>(null);
 
   onPurged(result: SchoolPurgeSummary): void {
+    const one = this.deleting();
     this.purging.set(false);
+    this.deleting.set(null);
     this.notifications.success(
-      `Se borraron ${result.quotations} cotización(es) y ${result.payments} pago(s); ` +
-        `regresaron ${result.returnedUnits} unidad(es) a Bodega.`,
+      (one
+        ? `Cotización ${one.quotationNumber} eliminada (${result.payments} pago(s))`
+        : `Se borraron ${result.quotations} cotización(es) y ${result.payments} pago(s)`) +
+        `; regresaron ${result.returnedUnits} unidad(es) a Bodega.`,
     );
     this.page.set(1);
     this.load();

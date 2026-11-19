@@ -1,0 +1,81 @@
+<!-- No (click) on the backdrop: the window only closes from its own controls. -->
+<div class="ws" [class.ws--leaving]="leaving()" role="presentation">
+  <div class="ws__window" role="dialog" aria-modal="true" aria-labelledby="ws-title" aria-describedby="ws-subtitle" tabindex="-1" appFocusTrap>
+    <header class="ws__head">
+      <span class="ws__logo" aria-hidden="true"><app-icon name="graduation-cap" [size]="24" /></span>
+      <div class="ws__titles">
+        <h2 id="ws-title">{{ title() }}</h2>
+        <p id="ws-subtitle">Comercial Jhoel · Temporada escolar · Preparación de lista escolar</p>
+      </div>
+      <div class="ws__chips">
+        <span class="chip chip--number" [title]="quotation ? 'Número de cotización' : 'El número se asigna al guardar'">
+          <app-icon name="file-check" [size]="14" /> {{ savedNumber() ?? quotation?.quotationNumber ?? 'Número al guardar' }}
+        </span>
+        <span class="status-pill" [class]="'status-pill status-pill--' + statusColor()">
+          {{ quotation ? editor().statusLabel() : 'Se guarda como ' + editor().statusLabel() }}
+        </span>
+        <span class="save" [class]="'save save--' + saveState().tone" role="status" aria-live="polite">
+          @switch (saveState().tone) {
+            @case ('busy') { <span class="spin" aria-hidden="true"></span> }
+            @case ('done') { <app-icon name="check-circle" [size]="14" /> }
+            @case ('dirty') { <span class="dot" aria-hidden="true"></span> }
+            @default { <app-icon name="check" [size]="14" /> }
+          }
+          {{ saveState().text }}
+        </span>
+      </div>
+      <button type="button" class="ws__close" aria-label="Cerrar ventana de cotización" title="Cerrar (Esc)" [disabled]="editor().saving()" (click)="requestClose()">
+        <app-icon name="close" [size]="20" />
+      </button>
+    </header>
+
+    <div class="ws__body">
+      <app-school-quotation-editor [quotation]="quotation" [swapItemId]="swapItemId" (saved)="onSaved($event)" />
+    </div>
+
+    <footer class="ws__foot">
+      <div class="ws__info">
+        @if (editor().touched() && editor().problems().length) {
+          <button type="button" class="ws__problems" (click)="showProblems()">
+            <app-icon name="alert-circle" [size]="16" /> {{ editor().problems().length }} {{ editor().problems().length === 1 ? 'dato por revisar' : 'datos por revisar' }}
+          </button>
+        } @else {
+          <span class="ws__count">{{ editor().lines().length }} {{ editor().requirementMode() ? 'requerimiento(s)' : 'producto(s)' }} · {{ editor().itemCount() }} artículo(s)</span>
+        }
+        <span class="ws__total">Total <strong>{{ formatCurrency(editor().total()) }}</strong></span>
+        <span class="ws__balance">Saldo <strong>{{ formatCurrency(editor().balance()) }}</strong></span>
+      </div>
+      <div class="ws__actions">
+        <app-button variant="ghost" fullWidth [disabled]="editor().saving()" (click)="requestClose()">Cancelar</app-button>
+        <app-button variant="ghost" fullWidth [disabled]="editor().saving()" (click)="previewing.set(true)"><app-icon name="eye" [size]="16" /><span class="wide-only">Vista previa</span><span class="narrow-only">Previa</span></app-button>
+        <app-button variant="ghost" fullWidth [disabled]="editor().saving()" (click)="save(true)">
+          <app-icon name="download" [size]="16" />
+          @if (editor().saving() && pendingAction() === 'pdf') { Guardando… } @else { <span class="wide-only">Guardar y generar PDF</span><span class="narrow-only">PDF</span> }
+        </app-button>
+        <app-button variant="primary" size="lg" fullWidth [disabled]="editor().saving()" (click)="save(false)">
+          <app-icon name="file-check" [size]="18" />
+          {{ editor().saving() && pendingAction() !== 'pdf' ? 'Guardando…' : quotation ? 'Guardar cambios' : editor().asDraft() ? 'Guardar borrador' : 'Guardar cotización' }}
+        </app-button>
+      </div>
+    </footer>
+
+    @if (previewing()) {
+      <app-school-quotation-preview [data]="editor().previewData()" (closed)="previewing.set(false)" />
+    }
+
+    @if (askClose()) {
+      <div class="ask" role="presentation">
+        <div class="ask__box" role="alertdialog" aria-modal="true" aria-labelledby="ws-ask-title" aria-describedby="ws-ask-text" appFocusTrap>
+          <span class="ask__icon" aria-hidden="true"><app-icon name="alert-triangle" [size]="24" /></span>
+          <h3 id="ws-ask-title">Tiene cambios sin guardar</h3>
+          <p id="ws-ask-text">Si cierra ahora, se pierden los datos de esta cotización. ¿Qué desea hacer?</p>
+          <div class="ask__actions">
+            <app-button variant="ghost" (click)="askClose.set(false)">Seguir editando</app-button>
+            <app-button variant="ghost-danger" (click)="discard()">Descartar cambios</app-button>
+            <app-button variant="primary" (click)="saveAndExit()">Guardar y salir</app-button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

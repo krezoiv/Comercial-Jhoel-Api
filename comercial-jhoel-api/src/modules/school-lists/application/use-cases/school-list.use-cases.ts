@@ -421,6 +421,40 @@ export class PurgeSchoolQuotationsUseCase extends SchoolListUseCase {
   }
 }
 
+@Injectable()
+export class PreviewSchoolQuotationDeleteUseCase extends SchoolListUseCase {
+  /** What deleting one quotation would remove and return to Bodega. */
+  async execute(actor: Actor, id: string): Promise<PurgeSummary> {
+    this.can(actor, 'school_lists.quotations.delete');
+    const preview = await this.repository.purgePreview(id);
+    if (preview.quotations === 0) {
+      throw schoolListError('SCHOOL_QUOTE_NOT_FOUND');
+    }
+    return preview;
+  }
+}
+
+@Injectable()
+export class DeleteSchoolQuotationUseCase extends SchoolListUseCase {
+  /**
+   * HARD delete of ONE quotation (lines, payments, history, assignments,
+   * supply, dispatch and inventory movements); the units it still had
+   * discounted go back to Bodega. The user confirms by typing the quotation
+   * number, which the SQL function compares under lock.
+   */
+  async execute(
+    actor: Actor,
+    id: string,
+    confirmation: string,
+  ): Promise<PurgeSummary> {
+    this.can(actor, 'school_lists.quotations.delete');
+    if (!confirmation?.trim()) {
+      throw schoolListError('SCHOOL_DELETE_CONFIRMATION');
+    }
+    return this.repository.deleteQuotation(id, actor.userId, confirmation);
+  }
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────
 @Injectable()
 export class GetSchoolListDashboardUseCase extends SchoolListUseCase {

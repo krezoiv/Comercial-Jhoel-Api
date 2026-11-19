@@ -127,6 +127,9 @@
                     <button type="button" class="icon-btn" title="Preparar y despachar lista" aria-label="Preparar y despachar lista" [disabled]="!canDeliver(q)" (click)="deliver(q)"><app-icon name="truck" [size]="16" /></button>
                   }
                   <button type="button" class="icon-btn" title="Historial" aria-label="Historial" (click)="open(q, 'historial')"><app-icon name="clock" [size]="16" /></button>
+                  @if (service.can('school_lists.quotations.delete')) {
+                    <button type="button" class="icon-btn icon-btn--danger" title="Eliminar cotización definitivamente" [attr.aria-label]="'Eliminar cotización ' + q.quotationNumber" (click)="deleting.set(q)"><app-icon name="trash-2" [size]="16" /></button>
+                  }
                 </div>
               </td>
             </tr>
@@ -139,4 +142,4 @@
 </section>
 
 <app-school-payment-modal [quotation]="paying()" (closed)="paying.set(null)" (paid)="onPaid()" />
-<app-school-purge-modal [open]="purging()" (closed)="purging.set(false)" (purged)="onPurged($event)" />
+<app-school-purge-modal [open]="purging() || !!deleting()" [quotation]="deleting()" (closed)="purging.set(false); deleting.set(null)" (purged)="onPurged($event)" />

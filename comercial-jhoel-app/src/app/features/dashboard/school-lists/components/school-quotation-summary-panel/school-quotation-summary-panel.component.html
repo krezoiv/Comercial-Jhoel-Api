@@ -1,0 +1,113 @@
+<section class="side">
+  <h4 class="side__title"><app-icon name="receipt" [size]="16" /> Resumen de cotización</h4>
+  <dl class="rows">
+    <div><dt>Grado</dt><dd>{{ e.gradeLabel() || '—' }}</dd></div>
+    <div><dt>{{ e.requirementMode() ? 'Requerimientos' : 'Productos' }}</dt><dd>{{ e.lines().length }}</dd></div>
+    <div><dt>Total de artículos</dt><dd>{{ e.itemCount() }}</dd></div>
+    <div><dt>Subtotal</dt><dd>{{ e.formatCurrency(e.subtotal()) }}</dd></div>
+    <div><dt>Descuento</dt><dd [class.out]="e.discount() > 0">{{ e.discount() > 0 ? '−' : '' }}{{ e.formatCurrency(e.discount()) }}</dd></div>
+  </dl>
+  <div class="big big--total">
+    <span>Total</span>
+    @for (v of [e.total()]; track v) { <strong class="bump">{{ e.formatCurrency(v) }}</strong> }
+  </div>
+</section>
+
+<section class="side" aria-labelledby="pos-pay-title">
+  <h4 class="side__title" id="pos-pay-title"><app-icon name="wallet" [size]="16" /> Pagos</h4>
+  @if (e.canAdvance()) {
+    <label class="switch">
+      <input type="checkbox" role="switch" [ngModel]="e.withAdvance()" [disabled]="e.asDraft()" (ngModelChange)="e.toggleAdvance($event)" />
+      <span class="switch__track" aria-hidden="true"></span>
+      Registrar pago inicial (anticipo)
+    </label>
+    @if (e.withAdvance() && !e.asDraft()) {
+      <div class="pay">
+        <div class="fld">
+          <label for="se-adv">Monto del anticipo</label>
+          <div class="ctl ctl--money" [class.ctl--bad]="e.touched() && (e.advanceAmount() ?? 0) <= 0">
+            <span aria-hidden="true">Q</span>
+            <input id="se-adv" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00" [ngModel]="e.advanceAmount()" (ngModelChange)="e.advanceAmount.set($event)" />
+          </div>
+          <div class="quick">
+            <button type="button" [disabled]="e.total() <= 0" (click)="e.setAdvanceShare(0.5)">50 %</button>
+            <button type="button" [disabled]="e.total() <= 0" (click)="e.setAdvanceShare(1)">Total</button>
+          </div>
+        </div>
+        <div class="fld">
+          <span class="fld__label" id="se-method-label">Método de pago</span>
+          <div class="methods" role="radiogroup" aria-labelledby="se-method-label">
+            @for (m of e.methods; track m) {
+              <button type="button" role="radio" class="method" [class.method--on]="e.advanceMethod() === m" [attr.aria-checked]="e.advanceMethod() === m" (click)="e.advanceMethod.set(m)">
+                <app-icon [name]="e.methodIcon[m]" [size]="16" /> {{ e.methodLabel[m] }}
+              </button>
+            }
+          </div>
+        </div>
+        @if (e.usesBank()) {
+          <div class="fld">
+            <label for="se-bank">Cuenta bancaria <span class="opt">(opcional)</span></label>
+            <select id="se-bank" class="select" [ngModel]="e.advanceBankId()" (ngModelChange)="e.advanceBankId.set($event)">
+              <option value="">Sin especificar</option>
+              @for (b of e.bankList(); track b.id) { <option [value]="b.id">{{ b.name }} · {{ b.accountNumber }}</option> }
+            </select>
+          </div>
+        }
+        <div class="fld">
+          <label for="se-ref">Referencia <span class="opt">(opcional)</span></label>
+          <div class="ctl"><input id="se-ref" type="text" maxlength="60" placeholder="No. de boleta o autorización" [ngModel]="e.advanceReference()" (ngModelChange)="e.advanceReference.set($event)" /></div>
+        </div>
+      </div>
+    }
+  } @else if (e.isEdit()) {
+    <p class="side__hint">Editar no modifica pagos: los abonos se registran desde el estado de cuenta de la cotización.</p>
+  } @else {
+    <p class="side__hint">Su rol no registra pagos; el anticipo lo registra un cajero autorizado.</p>
+  }
+  <dl class="rows">
+    <div><dt>{{ e.isEdit() ? 'Total abonado' : 'Pago inicial' }}</dt><dd class="in">{{ e.formatCurrency(e.paid()) }}</dd></div>
+  </dl>
+  <div class="big big--balance">
+    <span>Saldo pendiente</span>
+    @for (v of [e.balance()]; track v) { <strong class="bump">{{ e.formatCurrency(v) }}</strong> }
+  </div>
+  @if (!e.isEdit()) {
+    <p class="side__hint">Los abonos posteriores se registran desde el estado de cuenta.</p>
+  }
+</section>
+
+@if (e.canAdvance()) {
+  <section class="side">
+    <label class="switch">
+      <input type="checkbox" role="switch" [ngModel]="e.asDraft()" (ngModelChange)="e.asDraft.set($event)" />
+      <span class="switch__track" aria-hidden="true"></span>
+      Guardar como borrador
+    </label>
+    <p class="side__hint">Sin pagos hasta confirmarla{{ e.requirementMode() ? '; al confirmarla pasa a "Aceptada"' : '' }}.</p>
+  </section>
+}
+
+@if (e.movesStock() && e.shortProducts().length) {
+  <p class="notice">
+    <app-icon name="alert-circle" [size]="14" />
+    Sin existencias suficientes: {{ e.shortProducts().join(', ') }}. Se puede confirmar; quedarán pendientes de abastecimiento.
+  </p>
+}
+@if (e.touched() && e.problems().length) {
+  <ul class="problems" id="pos-problems" role="alert">
+    @for (p of e.problems(); track p) { <li>{{ p }}</li> }
+  </ul>
+}
+@if (e.error()) {
+  <p class="problems problems--error" role="alert">{{ e.error() }}</p>
+}
+<p class="side__hint side__foot">
+  @if (e.requirementMode()) {
+    {{ e.isEdit() ? 'Editar' : 'Guardar' }} no mueve inventario. Bodega se descuenta una sola vez al finalizar la preparación.
+  } @else if (e.movesStock()) {
+    Al guardar se descuentan de Bodega {{ e.inventoryUnits() }} unidad(es) de los productos del inventario. Anular la lista las devuelve.
+  } @else {
+    Un borrador no descuenta inventario hasta que se confirme.
+  }
+</p>
+

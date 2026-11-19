@@ -1,0 +1,337 @@
+@use 'mixins' as *;
+
+// Side panel of the POS quotation window (summary, payments, draft option,
+// validation). Field styles mirror the editor's so both columns look alike.
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-light);
+  box-shadow: var(--shadow-sm);
+
+  @media (min-width: 768px) {
+    padding: var(--space-5);
+  }
+}
+
+.side__hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  label,
+  .fld__label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.opt {
+  font-weight: var(--fw-regular, 400);
+  color: var(--color-text-on-light-subtle);
+}
+
+.ctl,
+.select {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-light);
+  color: var(--color-text-on-light-subtle);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+
+  &:focus-within {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.6rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-on-light);
+    font: inherit;
+    font-size: var(--fs-sm);
+    outline: none;
+  }
+}
+
+.select {
+  width: 100%;
+  color: var(--color-text-on-light);
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.ctl--money input {
+  text-align: right;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold, 600);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctl--bad {
+  border-color: var(--color-danger);
+}
+
+.side__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold, 700);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-on-light-muted);
+}
+
+.rows {
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 6px 0;
+    font-size: var(--fs-sm);
+  }
+
+  dt {
+    color: var(--color-text-on-light-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: var(--fw-medium);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .out {
+    color: var(--color-danger);
+  }
+
+  .in {
+    color: var(--color-success);
+  }
+}
+
+.big {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+
+  span {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold, 700);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    margin-left: auto;
+    font-size: clamp(1.35rem, 0.9rem + 1vw, 1.75rem);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+}
+
+.big--total {
+  background: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  color: var(--color-primary-600);
+}
+
+.big--balance {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.bump {
+  display: inline-block;
+  animation: bump 0.35s var(--ease-out);
+}
+
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-on-light);
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  input:focus-visible + .switch__track {
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+
+  input:checked + .switch__track {
+    background: var(--color-primary-500);
+
+    &::after {
+      transform: translateX(1.1rem);
+    }
+  }
+
+  input:disabled + .switch__track {
+    opacity: 0.45;
+  }
+}
+
+.switch__track {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: var(--color-border-light);
+  transition: background var(--duration-fast);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+}
+
+.pay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: pay-in 0.25s var(--ease-out);
+}
+
+.quick {
+  display: flex;
+  gap: var(--space-2);
+
+  button {
+    flex: 1;
+    padding: 4px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    color: var(--color-primary-600);
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-primary-500);
+    }
+  }
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light);
+  text-align: left;
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--color-primary-500);
+  }
+}
+
+.method--on {
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  color: var(--color-primary-600);
+  font-weight: var(--fw-semibold, 600);
+}
+
+.notice,
+.problems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-xs);
+}
+
+.notice {
+  flex-direction: row;
+  background: var(--color-gold-soft);
+  color: var(--color-text-on-light);
+}
+
+.problems {
+  padding-left: var(--space-6);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.problems--error {
+  padding-left: var(--space-3);
+}
+
+.side__foot {
+  text-align: center;
+}
+
+@keyframes pay-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes bump {
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pay,
+  .bump {
+    animation: none;
+  }
+}

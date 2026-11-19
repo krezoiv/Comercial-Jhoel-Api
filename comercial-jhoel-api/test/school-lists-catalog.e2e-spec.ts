@@ -382,7 +382,7 @@ describe('Listas Escolares — categorías y cambio de producto (e2e)', () => {
     );
     const [{ n }] = (await dataSource.query(
       `SELECT count(*)::int AS n FROM school_quotations
-        WHERE status IN ('BORRADOR','COTIZADA') AND quotation_date BETWEEN '2000-01-01' AND '2099-12-31'`,
+        WHERE status IN ('BORRADOR','COTIZADA','ACEPTADA') AND quotation_date BETWEEN '2000-01-01' AND '2099-12-31'`,
     )) as Body[];
     expect(dashboard.awaitingQuotations).toBe(n);
   });

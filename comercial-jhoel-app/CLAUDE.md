@@ -1872,7 +1872,7 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 
 - Reglas de líneas puras en `school-lists/school-line-rules.ts` (`swapLineProduct`, `consolidateLines`, `findDuplicateLine`, `lineError`, `lineSubtotal`); el editor re-exporta `EditorLine`/`lineError`/`lineSubtotal`.
 - `SchoolProductSwapModalComponent`: abre en la categoría de la línea, catálogo paginado `SchoolListService.catalogProducts()` (`GET /products`), búsqueda con `timer(250)` dentro de `switchMap` (no `debounceTime` sobre `of()`: emite al completar). Un producto ya listado se consolida. `?cambiar=<itemId>` en la página de edición abre el modal en esa línea.
-- `_school-ui.scss` son mixins (`cat-badge`, `status-pills`, `kpis`): incluye solo lo que el componente usa. El editor está en 11.89 kB de 12 kB: no agregar estilos ahí sin quitar otros.
+- `_school-ui.scss` son mixins (`cat-badge`, `status-pills`, `kpis`): incluye solo lo que el componente usa. El editor está en ~11.4 kB de 12 kB (el panel lateral ya se separó, ver "ventana POS"): no agregar estilos ahí sin quitar otros.
 - Colores de estado: `SCHOOL_STATUS_COLOR` → `.status-pill--<color>`. Documento: `docs/school-lists/categorias-y-cambio-de-producto.md`.
 
 ### Listas Escolares — requerimientos y preparación (migración `1760008400000`)
@@ -1896,3 +1896,30 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   - Muestra una vista previa con conteos y las unidades que regresan a Bodega.
   - Exige escribir `SCHOOL_PURGE_CONFIRMATION` ("BORRAR TODO").
   - No se cierra al hacer clic fuera y deshabilita el botón mientras borra.
+- **Eliminar una cotización** (migración `1760008600000`, permiso `school_lists.quotations.delete`):
+  - El mismo `SchoolPurgeModalComponent` con `[quotation]`; la frase es el número de la cotización.
+  - Botón de basurero por fila en el listado y "Eliminar" en el detalle (al terminar vuelve al listado).
+
+### Listas Escolares — ventana POS de "Nueva cotización" / "Editar cotización" (solo frontend)
+
+- **`SchoolQuotationWorkspaceComponent`** (`components/school-quotation-workspace/`): ventana de pantalla completa. Ya no hay pestaña "nueva".
+  - Entradas: el botón del encabezado y `?tab=nueva` (enlace antiguo) la abren sobre la pestaña actual ("Cotizaciones" para el enlace).
+  - `/cotizaciones/:id/editar` la abre con la cotización; cerrar o guardar vuelve al detalle.
+  - Mueve su host a `<body>` (portal) y bloquea el scroll de la página con un contador de ventanas abiertas.
+  - Capa `--z-workspace` (310): encima del sidebar y del shell (`--z-modal`). El diálogo global de confirmación usa ahora `--z-dialog` (350): queda sobre cualquier modal o ventana. Los toasts siguen en 400.
+  - Nunca se cierra con clic fuera. Con cambios (`editor.dirty()`), ✕ / Cancelar / Esc preguntan "Seguir editando / Descartar cambios / Guardar y salir". Esc cierra primero la vista previa y se ignora mientras está abierto el diálogo global. Avisa en `beforeunload`.
+  - "Guardar y generar PDF" guarda por el editor y descarga el PDF del backend (`SchoolDocumentsService`).
+- **`SchoolQuotationEditorComponent`** sigue siendo el único cerebro: datos, líneas, totales de vista previa, validaciones y `save()` con los endpoints de siempre.
+  - Añade: `dirty`/`signature`, `previewData`, `addRequirement`, `duplicate`, `removeAnimated`, `pickCustomer`, `setAdvanceShare` y `settleEmpty`.
+  - `setNumber` ignora una celda vacía mientras se escribe, para que el campo no se rellene bajo el cursor. Al salir, una celda de precio o descuento vacía pasa a 0.00 y la cantidad vuelve a su valor.
+  - Columnas por container queries (`customer`, `reqs`), no por viewport, porque el panel lateral cambia el ancho.
+- **Piezas nuevas**:
+  - `SchoolRequirementEntryComponent`: barra "Agregar requerimiento". Se agrega con Enter o el botón, y el foco vuelve a la descripción.
+  - `SchoolQuotationSummaryPanelComponent`: resumen y pagos. No tiene estado propio: lee el editor por el token `SCHOOL_QUOTATION_EDITOR` (import solo de tipo, sin ciclo). Existe aparte por el presupuesto de 12 kB.
+  - `SchoolCustomerFieldComponent`: busca clientes en cotizaciones anteriores (`GET /school-lists/quotations?search=`) y rellena nombre y teléfono.
+  - `SchoolQuotationPreviewComponent`: vista previa del documento, solo lectura.
+- **`FocusTrapDirective`** (`shared/directives/focus-trap.directive.ts`, reutilizable):
+  - Enfoca `[data-autofocus]` y encierra Tab y Shift+Tab dentro del diálogo.
+  - Al cerrarse devuelve el foco a quien lo abrió. Admite trampas anidadas.
+- **Campos**: solo los que ya existen en el backend (decisión del usuario): cliente/encargado, teléfono, alumno, grado de la plantilla, fechas y observaciones. No hay establecimiento ni sección.
+- Documento: `docs/school-lists/ventana-pos-cotizacion.md`.

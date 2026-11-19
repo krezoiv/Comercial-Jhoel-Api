@@ -9,6 +9,7 @@ import {
   SimpleChanges,
   computed,
   effect,
+  forwardRef,
   inject,
   signal,
   untracked,
@@ -22,6 +23,7 @@ import {
   SCHOOL_LINE_SOURCE_LABEL,
   SCHOOL_PAYMENT_METHOD_LABEL,
   SCHOOL_PAYMENT_METHODS,
+  SCHOOL_STATUS_LABEL,
   SchoolLineSource,
   SchoolPaymentMethod,
   SchoolQuotation,
@@ -38,10 +40,15 @@ import { ConfirmDialogService } from '../../../../../core/services/confirm-dialo
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { SchoolListService } from '../../../../../core/services/school-list.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
+import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 import { BadgeComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { QuotationProductSearchComponent } from '../../../quotations/components/quotation-product-search/quotation-product-search.component';
 import { EditorLine, consolidateLines, lineError, lineSubtotal, swapLineProduct } from '../../school-line-rules';
+import { CustomerSuggestion, SchoolCustomerFieldComponent } from '../school-customer-field/school-customer-field.component';
 import { ProductSwapResult, SchoolProductSwapModalComponent } from '../school-product-swap-modal/school-product-swap-modal.component';
+import { QuotationPreviewData } from '../school-quotation-preview/school-quotation-preview.component';
+import { SCHOOL_QUOTATION_EDITOR, SchoolQuotationSummaryPanelComponent } from '../school-quotation-summary-panel/school-quotation-summary-panel.component';
+import { RequirementEntry, SchoolRequirementEntryComponent } from '../school-requirement-entry/school-requirement-entry.component';
 
 // Line rules live in school-line-rules.ts (shared with the change-product modal and the tests).
 export type { EditorLine } from '../../school-line-rules';
@@ -49,11 +56,34 @@ export { lineError, lineSubtotal } from '../../school-line-rules';
 
 const PHONE = /^[+0-9 ()-]{8,20}$/;
 
+/** Icon of each payment method in the POS method picker. */
+const METHOD_ICON: Record<SchoolPaymentMethod, string> = {
+  EFECTIVO: 'wallet',
+  TARJETA: 'credit-card',
+  TRANSFERENCIA: 'arrow-left-right',
+  DEPOSITO: 'bank',
+  OTRO: 'receipt',
+};
+
+/** Duration of the "remove line" exit animation (kept in sync with the SCSS). */
+const LEAVE_MS = 180;
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /**
- * "Nueva cotización" / "Editar cotización": 1) customer, 2) grade + list
- * customization, 3) financial summary and anticipo. The template is only read:
- * every change lives in the quotation's own copy of the lines. Live totals are
- * a preview; the backend recomputes and validates them when saving.
+ * Body of the POS quotation window ("Nueva cotización" / "Editar cotización",
+ * hosted by `SchoolQuotationWorkspaceComponent`): customer and student, the
+ * school template (grade), the requirement entry bar and list, and a side
+ * panel with the summary, the initial payment and the pending balance. The
+ * window's header and action bar read this component's state (`dirty`,
+ * `saving`, `problems`, `previewData`) and call `save()`.
+ *
+ * The template is only read: every change lives in the quotation's own copy
+ * of the lines. Live totals are a preview; the backend recomputes and
+ * validates them when saving. Saving never discounts inventory for a list of
+ * the requirements flow.
  *
  * Requirement mode (every new list, migration 1760008400000): lines are the
  * school's requirements — text, quantity and quoted price — with no inventory
@@ -64,7 +94,20 @@ const PHONE = /^[+0-9 ()-]{8,20}$/;
 @Component({
   selector: 'app-school-quotation-editor',
   standalone: true,
-  imports: [FormsModule, BadgeComponent, ButtonComponent, IconComponent, QuotationProductSearchComponent, SchoolProductSwapModalComponent],
+  imports: [
+    FormsModule,
+    BadgeComponent,
+    ButtonComponent,
+    IconComponent,
+    DecimalInputDirective,
+    QuotationProductSearchComponent,
+    SchoolProductSwapModalComponent,
+    SchoolCustomerFieldComponent,
+    SchoolRequirementEntryComponent,
+    SchoolQuotationSummaryPanelComponent,
+  ],
+  // The side panel reads and updates this editor's state.
+  providers: [{ provide: SCHOOL_QUOTATION_EDITOR, useExisting: forwardRef(() => SchoolQuotationEditorComponent) }],
   templateUrl: './school-quotation-editor.component.html',
   styleUrl: './school-quotation-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,7 +124,6 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   /** Saved line (item id) whose "Cambiar producto" modal opens as soon as the lines load. */
   @Input() swapItemId: string | null = null;
   @Output() saved = new EventEmitter<SchoolQuotation>();
-  @Output() cancelled = new EventEmitter<void>();
 
   readonly service = inject(SchoolListService);
   private readonly banks = inject(BankService);
@@ -92,6 +134,7 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly sourceLabel = SCHOOL_LINE_SOURCE_LABEL;
   readonly methods = SCHOOL_PAYMENT_METHODS;
   readonly methodLabel = SCHOOL_PAYMENT_METHOD_LABEL;
+  readonly methodIcon = METHOD_ICON;
   readonly lineSubtotal = lineSubtotal;
   readonly lineError = lineError;
 
@@ -106,6 +149,14 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   // Grade and lines.
   readonly templates = signal<SchoolTemplateSummary[]>([]);
   readonly templatesFailed = signal(false);
+  /** Filter of the grade picker (shown when there are many templates). */
+  readonly templateFilter = signal('');
+  readonly filteredTemplates = computed(() => {
+    const term = this.templateFilter().trim().toLowerCase();
+    return term
+      ? this.templates().filter((t) => `${t.grade} ${t.name}`.toLowerCase().includes(term))
+      : this.templates();
+  });
   readonly template = signal<SchoolTemplate | null>(null);
   readonly loadingTemplate = signal(false);
   readonly lines = signal<EditorLine[]>([]);
@@ -114,6 +165,8 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly replacing = computed(() => this.lines().find((l) => l.key === this.replacingKey()) ?? null);
   /** Lines whose observation field was opened with the note action. */
   readonly openNotes = signal<ReadonlySet<string>>(new Set());
+  /** Lines playing their exit animation before being removed. */
+  readonly leaving = signal<ReadonlySet<string>>(new Set());
 
   // Anticipo.
   readonly withAdvance = signal(false);
@@ -207,7 +260,77 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     return issues;
   });
 
+  readonly nameInvalid = computed(() => this.customerName().trim().length < 3);
+  readonly phoneInvalid = computed(
+    () => !PHONE.test(this.customerPhone().trim()) || this.customerPhone().replace(/\D/g, '').length < 8,
+  );
+  /** Discount column only for roles that may discount, or when a line already has one. */
+  readonly showDiscount = computed(() => this.canOverride() || this.discount() > 0);
+  /** Status the quotation has (edit) or will have once saved (new). */
+  readonly statusLabel = computed(() =>
+    this.quotation
+      ? SCHOOL_STATUS_LABEL[this.quotation.status]
+      : this.asDraft()
+        ? SCHOOL_STATUS_LABEL.BORRADOR
+        : this.requirementMode()
+          ? SCHOOL_STATUS_LABEL.ACEPTADA
+          : SCHOOL_STATUS_LABEL.COTIZADA,
+  );
+
+  /**
+   * Everything the user can change, serialized; compared with the state as
+   * loaded to know whether closing the window would lose work.
+   */
+  private readonly signature = computed(() =>
+    JSON.stringify([
+      this.customerName(),
+      this.customerPhone(),
+      this.studentName(),
+      this.quotationDate(),
+      this.deliveryDate(),
+      this.observations(),
+      this.template()?.id ?? null,
+      this.lines().map((l) => [l.itemId, l.templateItemId, l.productId, l.productName, l.description, l.quantity, l.unitPrice, l.discount, l.observations]),
+      this.withAdvance(),
+      this.advanceAmount(),
+      this.advanceMethod(),
+      this.advanceBankId(),
+      this.advanceReference(),
+      this.asDraft(),
+    ]),
+  );
+  private readonly baseline = signal('');
+  /** True when there are changes that saving would keep and closing would lose. */
+  readonly dirty = computed(() => this.signature() !== this.baseline());
+
+  /** The quotation as the customer document would show it (for "Vista previa"). */
+  readonly previewData = computed<QuotationPreviewData>(() => ({
+    number: this.quotation?.quotationNumber ?? null,
+    statusLabel: this.statusLabel(),
+    date: this.quotationDate(),
+    deliveryDate: this.deliveryDate() || null,
+    customerName: this.customerName().trim(),
+    customerPhone: this.customerPhone().trim(),
+    studentName: this.studentName().trim() || null,
+    grade: this.gradeLabel(),
+    observations: this.observations().trim() || null,
+    lines: this.lines().map((l) => ({
+      name: l.productName.trim(),
+      quantity: l.quantity || 0,
+      unitPrice: l.unitPrice || 0,
+      discount: l.discount || 0,
+      subtotal: lineSubtotal(l),
+    })),
+    subtotal: this.subtotal(),
+    discount: this.discount(),
+    total: this.total(),
+    paid: this.paid(),
+    paidLabel: this.isEdit() ? 'Pagado' : 'Anticipo',
+    balance: this.balance(),
+  }));
+
   constructor() {
+    this.baseline.set(this.signature());
     this.service.getTemplates().subscribe({
       next: (templates) => this.templates.set(templates),
       error: () => this.templatesFailed.set(true),
@@ -267,6 +390,7 @@ export class SchoolQuotationEditorComponent implements OnChanges {
           referencePrice: item.unitPrice,
         })),
       );
+      this.baseline.set(untracked(this.signature));
       const target = this.swapItemId ? this.lines().find((l) => l.itemId === this.swapItemId) : undefined;
       if (target) {
         this.replacingKey.set(target.key);
@@ -332,9 +456,30 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     this.lines.update((lines) => lines.map((line) => (line.key === key ? { ...line, ...patch } : line)));
   }
 
+  /**
+   * A number typed in a line cell. An emptied cell keeps the previous value
+   * while the user is still typing (so the field is not refilled under the
+   * cursor); `settleEmpty` decides what an empty cell means when it loses focus.
+   */
   setNumber(key: string, field: 'quantity' | 'unitPrice' | 'discount', value: unknown): void {
-    const parsed = value === '' || value === null ? 0 : Number(value);
+    if (value === '' || value === null || value === undefined) {
+      return;
+    }
+    const parsed = Number(value);
     this.update(key, { [field]: Number.isFinite(parsed) ? parsed : 0 } as Partial<EditorLine>);
+  }
+
+  /** A cell left empty: a price or discount becomes Q0.00; a quantity shows its last value again. */
+  settleEmpty(input: HTMLInputElement, line: EditorLine, field: 'quantity' | 'unitPrice' | 'discount'): void {
+    if (input.value.trim() !== '') {
+      return;
+    }
+    if (field === 'quantity') {
+      input.value = String(line.quantity);
+      return;
+    }
+    this.update(line.key, { [field]: 0 } as Partial<EditorLine>);
+    input.value = '0.00';
   }
 
   step(line: EditorLine, delta: number): void {
@@ -345,27 +490,85 @@ export class SchoolQuotationEditorComponent implements OnChanges {
     this.lines.update((lines) => lines.filter((line) => line.key !== key));
   }
 
-  addManual(): void {
+  /** Removes a line after its exit animation (immediately with reduced motion). */
+  removeAnimated(key: string): void {
+    if (prefersReducedMotion()) {
+      this.remove(key);
+      return;
+    }
+    this.leaving.update((set) => new Set(set).add(key));
+    setTimeout(() => {
+      this.leaving.update((set) => {
+        const next = new Set(set);
+        next.delete(key);
+        return next;
+      });
+      this.remove(key);
+    }, LEAVE_MS);
+  }
+
+  /** Adds a requirement typed in the entry bar (an extra line, priced freely). */
+  addRequirement(entry: RequirementEntry): void {
     this.lines.update((lines) => [
       ...lines,
-      {
-        key: this.nextKey(),
-        itemId: null,
-        templateItemId: null,
-        productId: null,
-        productName: '',
-        sku: null,
-        categoryId: null,
-        categoryName: null,
-        description: '',
-        quantity: 1,
-        unitPrice: 0,
-        discount: 0,
-        observations: '',
-        source: 'MANUAL',
-        referencePrice: null,
-      },
+      { ...this.blankLine(), productName: entry.productName, quantity: entry.quantity, unitPrice: entry.unitPrice },
     ]);
+  }
+
+  /** Copies a requirement right below it as an extra line (never a second template line). */
+  duplicate(key: string): void {
+    this.lines.update((lines) => {
+      const index = lines.findIndex((l) => l.key === key);
+      if (index === -1) {
+        return lines;
+      }
+      const source = lines[index];
+      const copy: EditorLine = {
+        ...this.blankLine(),
+        productName: source.productName,
+        description: source.description,
+        quantity: source.quantity,
+        unitPrice: source.unitPrice,
+        observations: source.observations,
+      };
+      return [...lines.slice(0, index + 1), copy, ...lines.slice(index + 1)];
+    });
+  }
+
+  /** A customer picked from the search: name and phone (the student stays as typed). */
+  pickCustomer(customer: CustomerSuggestion): void {
+    this.customerName.set(customer.name);
+    this.customerPhone.set(customer.phone);
+  }
+
+  /** Quick amounts of the initial payment: the whole total or half of it. */
+  setAdvanceShare(share: 1 | 0.5): void {
+    this.advanceAmount.set(roundMoney(this.total() * share));
+  }
+
+  addManual(): void {
+    this.lines.update((lines) => [...lines, this.blankLine()]);
+  }
+
+  /** An empty extra line typed by hand (no template line, no inventory product). */
+  private blankLine(): EditorLine {
+    return {
+      key: this.nextKey(),
+      itemId: null,
+      templateItemId: null,
+      productId: null,
+      productName: '',
+      sku: null,
+      categoryId: null,
+      categoryName: null,
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      discount: 0,
+      observations: '',
+      source: 'MANUAL',
+      referencePrice: null,
+    };
   }
 
   /** Adds an inventory product (or one more unit if it is already a plain inventory line). */

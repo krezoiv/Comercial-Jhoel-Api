@@ -38,6 +38,9 @@
         @if (canCancel()) {
           <app-button variant="danger" size="sm" (click)="startCancel()"><app-icon name="x-circle" [size]="15" /> Anular lista</app-button>
         }
+        @if (service.can('school_lists.quotations.delete')) {
+          <app-button variant="danger" size="sm" (click)="deleting.set(true)"><app-icon name="trash-2" [size]="15" /> Eliminar</app-button>
+        }
       </div>
     </header>
 
@@ -260,6 +263,7 @@
     }
 
     <app-school-payment-modal [quotation]="paying() ? q : null" (closed)="paying.set(false)" (paid)="onPaid($event)" />
+    <app-school-purge-modal [open]="deleting()" [quotation]="q" (closed)="deleting.set(false)" (purged)="onDeleted($event)" />
     <app-school-reason-modal
       [open]="!!voiding() || cancelling()"
       [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : 'Anular lista ' + q.quotationNumber"

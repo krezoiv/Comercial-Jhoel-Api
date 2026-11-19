@@ -22,6 +22,8 @@ import {
   SaveSchoolPreparationUseCase,
   PreviewSchoolQuotationPurgeUseCase,
   PurgeSchoolQuotationsUseCase,
+  PreviewSchoolQuotationDeleteUseCase,
+  DeleteSchoolQuotationUseCase,
 } from './school-list.use-cases';
 import {
   AllocateSupplyManualUseCase,
@@ -159,6 +161,9 @@ function repository(): jest.Mocked<SchoolListRepository> {
     savePreparation: jest.fn().mockResolvedValue('q1'),
     purgePreview: jest.fn().mockResolvedValue(purgeSummary),
     purgeQuotations: jest.fn().mockResolvedValue(purgeSummary),
+    deleteQuotation: jest
+      .fn()
+      .mockResolvedValue({ ...purgeSummary, quotations: 1 }),
     cancelQuotation: jest.fn().mockResolvedValue('q1'),
     registerPayment: jest.fn().mockResolvedValue('p2'),
     voidPayment: jest.fn().mockResolvedValue('p3'),
@@ -439,6 +444,34 @@ describe('Listas Escolares — use cases', () => {
       purgeSummary,
     );
     expect(repo.purgeQuotations).toHaveBeenCalledWith('u-root', 'BORRAR TODO');
+  });
+
+  it('only a super administrator deletes one quotation, typing its number', async () => {
+    const repo = repository();
+    const superAdmin = { userId: 'u-root', role: 'SUPER_ADMIN' };
+    const remove = new DeleteSchoolQuotationUseCase(repo);
+    const preview = new PreviewSchoolQuotationDeleteUseCase(repo);
+    await expect(
+      remove.execute({ userId: 'x', role: 'ADMIN' }, 'q1', 'LE-000001'),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    await expect(remove.execute(superAdmin, 'q1', '  ')).rejects.toMatchObject({
+      code: 'SCHOOL_DELETE_CONFIRMATION',
+    });
+    expect(repo.deleteQuotation).not.toHaveBeenCalled();
+    await remove.execute(superAdmin, 'q1', 'LE-000001');
+    expect(repo.deleteQuotation).toHaveBeenCalledWith(
+      'q1',
+      'u-root',
+      'LE-000001',
+    );
+    await expect(preview.execute(superAdmin, 'q1')).resolves.toEqual(
+      purgeSummary,
+    );
+    expect(repo.purgePreview).toHaveBeenCalledWith('q1');
+    repo.purgePreview.mockResolvedValueOnce({ ...purgeSummary, quotations: 0 });
+    await expect(preview.execute(superAdmin, 'nope')).rejects.toMatchObject({
+      code: 'SCHOOL_QUOTE_NOT_FOUND',
+    });
   });
 
   it('reads Bodega stock for the editor (deduplicated) with the view permission', async () => {

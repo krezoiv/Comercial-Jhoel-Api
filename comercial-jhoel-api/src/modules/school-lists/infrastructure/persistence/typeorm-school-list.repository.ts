@@ -1117,7 +1117,7 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
   }
 
   // ── Purge ────────────────────────────────────────────────────────────────
-  async purgePreview(): Promise<PurgeSummary> {
+  async purgePreview(quotationId: string | null = null): Promise<PurgeSummary> {
     const [row] = await this.dataSource.query<SqlRow[]>(
       `WITH b AS (SELECT id FROM inventory_locations WHERE name = 'Bodega'),
             r AS (
@@ -1125,21 +1125,35 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
                      SUM(CASE WHEN m.location_from_id = b.id THEN m.quantity_base_units
                               WHEN m.location_to_id = b.id THEN -m.quantity_base_units ELSE 0 END)::int AS units
                 FROM inventory_movements m CROSS JOIN b
-               WHERE m.reference_type = 'SCHOOL_LIST'
+               WHERE m.reference_type = 'SCHOOL_LIST' AND ($1::uuid IS NULL OR m.reference_id = $1)
                GROUP BY m.product_id)
        SELECT jsonb_build_object(
-                'quotations', (SELECT count(*) FROM school_quotations),
-                'payments', (SELECT count(*) FROM school_quotation_payments),
-                'movements', (SELECT count(*) FROM inventory_movements WHERE reference_type = 'SCHOOL_LIST'),
-                'allocations', (SELECT count(*) FROM school_supply_allocations),
-                'dispatches', (SELECT count(*) FROM school_dispatches),
+                'quotations', (SELECT count(*) FROM school_quotations WHERE $1::uuid IS NULL OR id = $1),
+                'payments', (SELECT count(*) FROM school_quotation_payments WHERE $1::uuid IS NULL OR quotation_id = $1),
+                'movements', (SELECT count(*) FROM inventory_movements
+                               WHERE reference_type = 'SCHOOL_LIST' AND ($1::uuid IS NULL OR reference_id = $1)),
+                'allocations', (SELECT count(*) FROM school_supply_allocations WHERE $1::uuid IS NULL OR quotation_id = $1),
+                'dispatches', (SELECT count(*) FROM school_dispatches WHERE $1::uuid IS NULL OR quotation_id = $1),
                 'returnedUnits', COALESCE((SELECT SUM(units) FROM r WHERE units <> 0), 0),
                 'returned', COALESCE((SELECT jsonb_agg(jsonb_build_object('productId', r.product_id, 'product', p.name,
                                                                           'units', r.units) ORDER BY p.name)
                                         FROM r JOIN products p ON p.id = r.product_id WHERE r.units <> 0), '[]'::jsonb)
               ) AS summary`,
+      [quotationId],
     );
     return toPurgeSummary(row.summary);
+  }
+
+  async deleteQuotation(
+    quotationId: string,
+    userId: string,
+    confirmation: string,
+  ): Promise<PurgeSummary> {
+    const summary = await this.scalar(
+      `SELECT delete_school_quotation($1, $2, $3)::text AS id`,
+      [quotationId, userId, confirmation],
+    );
+    return toPurgeSummary(JSON.parse(summary));
   }
 
   async purgeQuotations(

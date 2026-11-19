@@ -34,6 +34,8 @@ export const SCHOOL_LIST_PERMISSION_ROLES = {
   'school_lists.statements.view': ALL_OPERATORS,
   /** Asignar a mano unidades a listas, ejecutar FIFO y asignar compras. */
   'school_lists.supply.manage': MANAGERS,
+  /** Borrar definitivamente UNA cotización (devuelve a Bodega lo que descontó). */
+  'school_lists.quotations.delete': SUPER_ADMINS,
   /** Borrar definitivamente TODAS las cotizaciones (devuelve a Bodega lo descontado). */
   'school_lists.quotations.purge': SUPER_ADMINS,
   /** Cancelar cotizaciones (con devolución de lo pagado). */
