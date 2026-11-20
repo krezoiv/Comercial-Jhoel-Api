@@ -88,6 +88,8 @@ function period(overrides: Partial<CashCutPeriodRow> = {}): CashCutPeriodRow {
     inheritedDifference: null,
     closingSystemCash: null,
     closingPhysicalCash: null,
+    closingWarehouseBalance: null,
+    closingCustodyTotal: null,
     cashDifference: null,
     totalIn: null,
     totalOut: null,

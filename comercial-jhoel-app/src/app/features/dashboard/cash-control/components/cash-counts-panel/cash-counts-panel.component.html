@@ -43,8 +43,8 @@
             <th class="num">Contado</th>
             <th class="num">Diferencia</th>
             <th>Resultado</th>
-            <th class="num">Bodega</th>
-            <th class="num">Total custodia</th>
+            <th class="num">Bodega registrada</th>
+            <th class="num">Total bajo resguardo</th>
             <th></th>
           </tr>
         </thead>
@@ -64,8 +64,10 @@
                 @if (c.replacesId) { <span class="badge badge--muted">Corrección</span> }
               </td>
               <td class="num">
-                {{ formatCurrency(c.warehouseCounted ?? c.warehouseBalance) }}
-                <small class="muted block">{{ c.warehouseCounted !== null ? 'contado' : 'teórico, no verificado' }}</small>
+                {{ formatCurrency(c.warehouseBalance) }}
+                @if (c.warehouseCounted !== null) {
+                  <small class="muted block">registro anterior: contado {{ formatCurrency(c.warehouseCounted) }}</small>
+                }
               </td>
               <td class="num">{{ formatCurrency(c.custodyCounted) }}</td>
               <td class="actions">
@@ -88,13 +90,13 @@
                     <dl class="detail__facts">
                       <div><dt>Caja teórica / contada</dt><dd>{{ formatCurrency(c.systemCash) }} / {{ formatCurrency(c.totalCounted) }}</dd></div>
                       <div>
-                        <dt>Bodega</dt>
+                        <dt>Bodega (saldo registrado, no entra en la diferencia)</dt>
                         <dd>
-                          Teórico {{ formatCurrency(c.warehouseBalance) }}
-                          @if (c.warehouseCounted !== null) { · contado {{ formatCurrency(c.warehouseCounted) }} (dif. {{ formatCurrency(c.warehouseDifference ?? 0) }}) } @else { · sin conteo físico }
+                          {{ formatCurrency(c.warehouseBalance) }}
+                          @if (c.warehouseCounted !== null) { · arqueo anterior con Bodega contada a mano: {{ formatCurrency(c.warehouseCounted) }} (dif. {{ formatCurrency(c.warehouseDifference ?? 0) }}) }
                         </dd>
                       </div>
-                      <div><dt>Custodia teórica / contada</dt><dd>{{ formatCurrency(c.custodyTheoretical) }} / {{ formatCurrency(c.custodyCounted) }}</dd></div>
+                      <div><dt>Bajo resguardo teórico / Caja contada + Bodega</dt><dd>{{ formatCurrency(c.custodyTheoretical) }} / {{ formatCurrency(c.custodyCounted) }}</dd></div>
                       @if (c.custodyDifference !== null) {
                         <div><dt>Diferencia consolidada</dt><dd>{{ formatCurrency(c.custodyDifference) }}</dd></div>
                       }

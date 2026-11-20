@@ -1,3 +1,4 @@
+import type { CuadreCashCountSnapshot } from '../../domain/repositories/agent-reconciliation.repository';
 import { ClosedDayStatus } from '../../domain/repositories/day-opening.repository';
 import { BankBalanceView } from '../../domain/entities/bank-balance-view.entity';
 import { AgentReconciliationOutput } from './agent-reconciliation-output';
@@ -19,12 +20,10 @@ export interface DayAuditLogOutput {
  * `AgentReconciliationRepository.findLatestByDate`), never duplicates
  * them.
  *
- * Does NOT include a cash-denomination breakdown: this app never had a
- * cash-count table — `agent_reconciliations.total_cash` is and always was
- * the only cash figure the backend knows (see `CloseAgentDayUseCase`,
- * "the cash count has no source of truth on the server"). Inventing a
- * per-denomination breakdown here would be showing data the database
- * never had.
+ * `cashCount` is the "Arqueo de Caja" saved with the current
+ * reconciliation (caja and, since migration 1760008800000, Bodega counts with
+ * their theoretical balances and differences). Null when the cuadre was saved
+ * without a breakdown (before migration 1760007600000): nothing is invented.
  */
 export interface DayDetailOutput {
   date: string;
@@ -42,5 +41,6 @@ export interface DayDetailOutput {
   cancelReason: string | null;
   banks: BankBalanceView[];
   reconciliation: AgentReconciliationOutput | null;
+  cashCount: CuadreCashCountSnapshot | null;
   auditLog: DayAuditLogOutput[];
 }

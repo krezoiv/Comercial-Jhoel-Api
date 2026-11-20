@@ -34,10 +34,12 @@
           <div><dt>Diferencia heredada</dt><dd>{{ d.period.inheritedDifference === null ? '—' : formatDifference(d.period.inheritedDifference) }}</dd></div>
           <div><dt>Entradas / salidas</dt><dd><span class="in">{{ formatCurrency(d.period.totalIn ?? 0) }}</span> / <span class="out">{{ formatCurrency(d.period.totalOut ?? 0) }}</span></dd></div>
           <div><dt>Movimientos</dt><dd>{{ d.period.movementCount ?? '—' }}</dd></div>
-          <div><dt>Efectivo final (contado)</dt><dd>{{ d.period.closingPhysicalCash === null ? '—' : formatCurrency(d.period.closingPhysicalCash) }}</dd></div>
-          <div><dt>Efectivo final (sistema)</dt><dd>{{ d.period.closingSystemCash === null ? '—' : formatCurrency(d.period.closingSystemCash) }}</dd></div>
+          <div><dt>Caja final (contado)</dt><dd>{{ d.period.closingPhysicalCash === null ? '—' : formatCurrency(d.period.closingPhysicalCash) }}</dd></div>
+          <div><dt>Caja final (sistema)</dt><dd>{{ d.period.closingSystemCash === null ? '—' : formatCurrency(d.period.closingSystemCash) }}</dd></div>
+          <div><dt>Bodega (saldo registrado)</dt><dd>{{ d.period.closingWarehouseBalance == null ? (d.period.status === 'FINALIZADO' ? 'No registrado' : '—') : formatCurrency(d.period.closingWarehouseBalance) }}</dd></div>
+          <div><dt>Total bajo resguardo</dt><dd>{{ d.period.closingCustodyTotal == null ? '—' : formatCurrency(d.period.closingCustodyTotal) }}</dd></div>
           <div>
-            <dt>Diferencia del corte</dt>
+            <dt>Diferencia de Caja</dt>
             <dd [class.in]="(d.period.cashDifference ?? 0) > 0" [class.out]="(d.period.cashDifference ?? 0) < 0">
               {{ d.period.cashDifference === null ? '—' : formatDifference(d.period.cashDifference) }}
             </dd>

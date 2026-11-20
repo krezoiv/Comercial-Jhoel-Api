@@ -87,12 +87,14 @@ export class GetCuadreAgentesSummaryUseCase {
       receivablesSummary,
       totalWarehouseCash,
       totalSchoolListPending,
+      theoreticalCash,
     ] = await Promise.all([
       this.bankRepository.findAll({ activeOnly: true }),
       this.assetRepository.getReportSummary({ isActive: true }),
       this.accountReceivableRepository.getReportSummary({ isActive: true }),
       this.warehouseCashReader.getBalance(),
       this.schoolListPendingReader.getPendingTotal(),
+      this.warehouseCashReader.getCashBoxBalance(),
     ]);
 
     // BI Club Empresarial (migraciones `BiClubCreditLine` /
@@ -141,6 +143,7 @@ export class GetCuadreAgentesSummaryUseCase {
       totalAccountsReceivable: receivablesSummary.totalAmount,
       totalWarehouseCash,
       totalSchoolListPending,
+      theoreticalCash,
     };
   }
 }

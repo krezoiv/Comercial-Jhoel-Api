@@ -239,111 +239,12 @@
   }
 }
 
-// Deliberately narrow and dense — a teller's cash-count slip, not a
-// full-width app table. Header/total rows reuse the same dark-navy
-// (`#1e3a5f`) this system's own PDF statements already use for a table
-// header (see `report-pdf.builder.ts`), so the on-screen ledger reads as
-// the same "official financial document" style the printed ones do.
-
 .cuadre-agentes__cash-card {
   display: block;
 }
 
-.cash-table-wrapper {
-  overflow-x: auto;
-  max-width: 26rem;
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-}
-
-.cash-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 22rem;
-  font-variant-numeric: tabular-nums;
-
-  th,
-  td {
-    padding: var(--space-2) var(--space-3);
-    text-align: left;
-    font-size: var(--fs-xs);
-    line-height: 1.3;
-  }
-
-  thead {
-    background: #1e3a5f;
-  }
-
-  thead th {
-    font-size: 0.65rem;
-    font-weight: var(--fw-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: rgba(255, 255, 255, 0.85);
-    padding-block: var(--space-2);
-  }
-
-  tbody tr {
-    border-bottom: 1px solid var(--color-border-light);
-
-    &:nth-child(even) {
-      background: var(--color-bg-light-muted);
-    }
-  }
-
-  tfoot tr {
-    border-top: 2px solid #1e3a5f;
-  }
-
-  td {
-    color: var(--color-text-on-light-muted);
-  }
-}
-
 .align-right {
   text-align: right;
-}
-
-.cash-table__denomination {
-  color: var(--color-text-on-light);
-  font-weight: var(--fw-medium);
-}
-
-.cash-table__row-total {
-  color: var(--color-text-on-light);
-  font-weight: var(--fw-semibold);
-}
-
-.cash-table td input {
-  width: 4rem;
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  color: var(--color-text-on-light);
-  font-size: var(--fs-xs);
-  font-family: var(--font-body);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  @include focus-ring;
-
-  &:focus {
-    border-color: var(--color-primary-500);
-  }
-}
-
-.cash-table__total-row td {
-  padding-block: var(--space-3);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--color-text-on-light);
-  background: var(--color-bg-light-muted);
-
-  &.align-right {
-    font-size: var(--fs-md);
-    color: #1e3a5f;
-  }
 }
 
 // ---- Sección 4: Resumen del Cuadre -------------------------------------------
@@ -496,3 +397,120 @@
   color: var(--color-success);
   white-space: nowrap;
 }
+
+// ── Arqueo de Caja (Caja + Bodega) ──────────────────────────────────────────
+.arqueo__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  .section-title {
+    margin-bottom: 0;
+  }
+}
+
+.arqueo__table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.arqueo__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-sm);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  thead th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+    background: var(--color-bg-light-muted);
+  }
+
+  tbody tr {
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  tfoot tr {
+    border-top: 2px solid var(--color-border-light);
+    background: color-mix(in srgb, #4f46e5 7%, transparent);
+
+    th,
+    td {
+      font-weight: var(--fw-bold);
+      color: #4f46e5;
+    }
+  }
+
+  .align-right {
+    text-align: right;
+  }
+}
+
+.arqueo__row--caja th {
+  color: #0d9488;
+}
+
+.arqueo__row--bodega th {
+  color: #b45309;
+}
+
+.arqueo__table .arqueo__diff {
+  font-weight: var(--fw-bold);
+  color: #16a34a;
+
+  &--short {
+    color: #dc2626;
+  }
+
+  &--over {
+    color: #d97706;
+  }
+}
+
+.arqueo__source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.arqueo__empty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-light);
+  border-radius: var(--radius-md);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+
+  app-icon {
+    flex-shrink: 0;
+    color: #d97706;
+  }
+}
+
+.result-pending {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+}
+

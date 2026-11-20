@@ -161,7 +161,7 @@ const PERIOD_COLUMNS = `
   p.period_number, p.status, p.scheduled_start_at, p.scheduled_end_at, p.actual_started_at,
   p.actual_finished_at, p.start_sequence, p.closing_sequence, p.opening_system_cash,
   p.opening_physical_cash, p.inherited_difference, p.closing_system_cash, p.closing_physical_cash,
-  p.cash_difference, p.total_in, p.total_out, p.movement_count, p.opening_bank_balances,
+  p.closing_warehouse_balance, p.cash_difference, p.total_in, p.total_out, p.movement_count, p.opening_bank_balances,
   pou.username AS opened_by_username, pcu.username AS closed_by_username, p.observations,
   p.reopened_count, br.bank_difference_total, br.bank_reconciled_count
 `;
@@ -209,6 +209,16 @@ function toPeriod(row: SqlRow): CashCutPeriodRow {
     inheritedDifference: numOrNull(row.inherited_difference),
     closingSystemCash: numOrNull(row.closing_system_cash),
     closingPhysicalCash: numOrNull(row.closing_physical_cash),
+    closingWarehouseBalance: numOrNull(row.closing_warehouse_balance),
+    closingCustodyTotal:
+      row.closing_physical_cash === null ||
+      row.closing_warehouse_balance === null
+        ? null
+        : Math.round(
+            (num(row.closing_physical_cash) +
+              num(row.closing_warehouse_balance)) *
+              100,
+          ) / 100,
     cashDifference: numOrNull(row.cash_difference),
     totalIn: numOrNull(row.total_in),
     totalOut: numOrNull(row.total_out),
@@ -764,7 +774,7 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
     }
     const countRows = await this.dataSource.query<SqlRow[]>(
       `SELECT c.id, c.total_counted, c.system_cash, c.difference, c.observations, c.is_current,
-              u.username AS created_by_username, c.created_at
+              c.warehouse_balance, u.username AS created_by_username, c.created_at
        FROM cash_cut_counts c JOIN users u ON u.id = c.created_by
        WHERE c.cut_period_id = $1 ORDER BY c.created_at DESC`,
       [periodId],
@@ -781,6 +791,7 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
       totalCounted: num(row.total_counted),
       systemCash: num(row.system_cash),
       difference: num(row.difference),
+      warehouseBalance: numOrNull(row.warehouse_balance),
       observations: str(row.observations),
       isCurrent: Boolean(row.is_current),
       createdByUsername: text(row.created_by_username),

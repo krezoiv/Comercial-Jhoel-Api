@@ -239,6 +239,10 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
         replacesId: null,
       }),
     );
+    // Only the caja is counted: no Bodega amount ever reaches the database.
+    expect(repo.registerCount.mock.calls[0][0]).not.toHaveProperty(
+      'warehouseCounted',
+    );
     await expectCode(
       new RegisterCashCountUseCase(repo).execute({
         details: [],
@@ -547,8 +551,6 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
           { denomination: 0.01, quantity: 0 },
         ],
         observations: 'Medio conteo',
-        countWarehouse: false,
-        warehouseCounted: 999,
         ...SUPERVISOR,
       });
       expect(repo.saveCountDraft).toHaveBeenCalledWith('u-sup', {
@@ -557,8 +559,6 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
           { denomination: 0.01, quantity: 0 },
         ],
         observations: 'Medio conteo',
-        countWarehouse: false,
-        warehouseCounted: null,
       });
       expect(saved.version).toBe(1);
     });

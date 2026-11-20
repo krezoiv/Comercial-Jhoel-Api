@@ -35,6 +35,56 @@
         </dl>
       </section>
 
+      <!-- Caja y Bodega -->
+      <section class="block" aria-label="Efectivo bajo resguardo">
+        <h3 class="block__title">
+          Efectivo bajo resguardo
+          <span>Bodega no se cuenta en el corte: se toma su saldo oficial.</span>
+        </h3>
+        <div class="custody">
+          <div class="custody__item custody__item--caja">
+            <span>Efectivo físico en Caja</span>
+            <strong>{{ formatCurrency(totalCounted()) }}</strong>
+            <small>Contado en este corte</small>
+          </div>
+          <div class="custody__item custody__item--bodega">
+            <span>Efectivo resguardado en Bodega</span>
+            <strong>{{ formatCurrency(warehouseBalance()) }}</strong>
+            <small>Saldo registrado</small>
+          </div>
+          <div class="custody__item custody__item--total">
+            <span>Total bajo resguardo</span>
+            <strong>{{ formatCurrency(custodyTotal()) }}</strong>
+            <small>Caja + Bodega</small>
+          </div>
+        </div>
+        <dl class="reconcile">
+          <div><dt>Saldo teórico de Caja</dt><dd>{{ formatCurrency(period.liveSystemCash ?? 0) }}</dd></div>
+          <div><dt>Efectivo contado en Caja</dt><dd>{{ formatCurrency(totalCounted()) }}</dd></div>
+          <div><dt>Diferencia de Caja</dt><dd [class.in]="difference() > 0" [class.out]="difference() < 0">{{ formatDifference(difference()) }}</dd></div>
+          <div><dt>Saldo registrado en Bodega</dt><dd>{{ formatCurrency(warehouseBalance()) }}</dd></div>
+          <div><dt>Total físico / resguardado</dt><dd>{{ formatCurrency(custodyTotal()) }}</dd></div>
+        </dl>
+        @if (totalCounted() > 0 && difference() < 0 && warehouseBalance() > 0) {
+          <p class="custody__note" role="note">
+            <app-icon name="alert-triangle" [size]="14" />
+            El faltante de Caja sigue registrado: no se compensa con el dinero de Bodega.
+          </p>
+        }
+        @if (reference; as first) {
+          <div class="reference">
+            <h4>Primer corte · referencia ({{ formatTime(first.actualFinishedAt) }})</h4>
+            <dl>
+              <div><dt>Caja contada</dt><dd>{{ formatCurrency(first.closingPhysicalCash ?? 0) }}</dd></div>
+              <div><dt>Diferencia de Caja</dt><dd [class.in]="(first.cashDifference ?? 0) > 0" [class.out]="(first.cashDifference ?? 0) < 0">{{ formatDifference(first.cashDifference ?? 0) }}</dd></div>
+              <div><dt>Bodega registrada</dt><dd>{{ first.closingWarehouseBalance == null ? 'No registrado' : formatCurrency(first.closingWarehouseBalance) }}</dd></div>
+              <div><dt>Total bajo resguardo</dt><dd>{{ first.closingCustodyTotal == null ? '—' : formatCurrency(first.closingCustodyTotal) }}</dd></div>
+            </dl>
+            <p>Se conserva tal como se finalizó; este corte refleja los movimientos posteriores.</p>
+          </div>
+        }
+      </section>
+
       <!-- Efectivo -->
       <section class="block" aria-label="Arqueo de efectivo">
         <h3 class="block__title">Efectivo</h3>

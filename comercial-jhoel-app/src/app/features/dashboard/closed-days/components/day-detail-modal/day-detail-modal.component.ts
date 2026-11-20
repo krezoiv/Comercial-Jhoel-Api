@@ -22,6 +22,7 @@ import { ClosedDaysService } from '../../../../../core/services/closed-days.serv
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import { CuadreCashCountViewComponent } from '../cuadre-cash-count-view/cuadre-cash-count-view.component';
 
 const STATUS_ICON: Record<string, string> = {
   CLOSED: 'lock',
@@ -35,14 +36,14 @@ const STATUS_ICON: Record<string, string> = {
  * across openings: always reflects the most recent state, even if the
  * user just reopened/re-closed/cancelled that same day moments earlier.
  *
- * Doesn't show a cash-denomination breakdown — deliberate, see
- * `ClosedDayDetail` (the model): this app never had that table, only the
- * total.
+ * Shows the "Arqueo de Caja" saved with the cuadre (Caja and Bodega by
+ * denomination, theoretical balances and differences) when it exists; older
+ * cuadres saved without a breakdown show only their total.
  */
 @Component({
   selector: 'app-day-detail-modal',
   standalone: true,
-  imports: [DatePipe, ButtonComponent, IconComponent],
+  imports: [DatePipe, ButtonComponent, IconComponent, CuadreCashCountViewComponent],
   templateUrl: './day-detail-modal.component.html',
   styleUrl: './day-detail-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

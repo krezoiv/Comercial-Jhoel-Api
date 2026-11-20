@@ -1,8 +1,8 @@
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { LatestCashCountResponse } from '../../../core/models';
+import { CuadreAgentesSummary, LatestCashCountResponse } from '../../../core/models';
 import { CashCustodyService } from '../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
@@ -15,6 +15,7 @@ import {
   NO_SECOND_CUT_MESSAGE,
   REPLACE_WITH_COUNT_MESSAGE,
 } from './cuadre-agentes-page.component';
+import { parseQuantity } from './components/custody-count-modal/custody-count-modal.component';
 
 const ACCEPTANCE: Array<[number, number]> = [
   [200, 10], [100, 20], [50, 10], [20, 10], [10, 10], [5, 10],
@@ -75,20 +76,23 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
     TestBed.overrideComponent(CuadreAgentesPageComponent, { set: { template: '', imports: [] } });
     component = TestBed.createComponent(CuadreAgentesPageComponent).componentInstance;
     state = TestBed.inject(CuadreAgentesStateService);
-    state.clear();
+    state.reset();
   });
+
+  /** Caja edit as the modal emits it (whole quantity ≥ 0). */
+  const typeCash = (denomination: 200 | 100 | 50 | 20 | 10 | 5 | 1 | 0.5 | 0.25 | 0.1 | 0.05 | 0.01, value: string) =>
+    component.onCashQuantity({ denomination, quantity: parseQuantity(value) });
 
   it('loads every quantity of the latest arqueo (incl. 100 × Q0.01) and recalculates the total', async () => {
     await component.loadLatestCount();
     expect(confirm.confirm).not.toHaveBeenCalled();
     expect(state.cashCounts()[0.01]).toBe(100);
-    expect(component.rowTotal(0.01)).toBe(1);
     expect(component.totalCash()).toBe(4882.5);
     expect(state.origin().loadedCount?.id).toBe('count-1');
   });
 
   it('asks before replacing hand-typed quantities and keeps them on "Cancelar"', async () => {
-    component.onQuantityInput(200, '3');
+    typeCash(200, '3');
     confirm.confirm.and.resolveTo(false);
     await component.loadLatestCount();
     expect(confirm.confirm.calls.mostRecent().args[0].message).toBe(REPLACE_WITH_COUNT_MESSAGE);
@@ -98,7 +102,7 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
   });
 
   it('replaces them after confirming', async () => {
-    component.onQuantityInput(200, '3');
+    typeCash(200, '3');
     confirm.confirm.and.resolveTo(true);
     await component.loadLatestCount();
     expect(state.cashCounts()[200]).toBe(10);
@@ -106,7 +110,7 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
 
   it('marks the breakdown as modified when edited after loading and sends the breakdown used', async () => {
     await component.loadLatestCount();
-    component.onQuantityInput(0.01, '150');
+    typeCash(0.01, '150');
     expect(component.totalCash()).toBe(4883);
     expect(state.origin().modifiedAfterLoad).toBeTrue();
     const input = component.buildReconciliationInput();
@@ -134,8 +138,8 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
   });
 
   it('a manual count sends MANUAL without a source; quantities are whole and never negative', () => {
-    component.onQuantityInput(1, '2.7');
-    component.onQuantityInput(5, '-4');
+    typeCash(1, '2.7');
+    typeCash(5, '-4');
     expect(state.cashCounts()[1]).toBe(2);
     expect(state.cashCounts()[5]).toBe(0);
     const input = component.buildReconciliationInput();
@@ -170,5 +174,107 @@ describe('CuadreAgentesPageComponent — Conteo de Efectivo', () => {
     await component.loadLatestCount();
     expect(state.cashCounts()[200]).toBe(80);
     expect(component.totalCash()).toBe(21250);
+  });
+
+  describe('Arqueo de Caja: Caja y Bodega', () => {
+    const summary = {
+      banks: [],
+      totalBanks: 2000,
+      totalPositiveAccounts: 2000,
+      totalCreditLines: 0,
+      totalAssets: 100,
+      totalAccountsReceivable: 300,
+      totalWarehouseCash: 3000,
+      theoreticalCash: 5000,
+      totalSchoolListPending: 0,
+    } as CuadreAgentesSummary;
+
+    beforeEach(() => {
+      cuadre.getSummary.and.returnValue(of(summary));
+      component.summary.set(summary);
+    });
+
+    it('keeps two independent counts: the caja count never changes Bodega and vice versa', () => {
+      typeCash(200, '24');
+      typeCash(100, '1');
+      component.onWarehouseQuantity({ denomination: 200, quantity: 15 });
+      component.onWarehouseQuantity({ denomination: 100, quantity: 1 });
+      expect(component.totalCash()).toBe(4900);
+      expect(component.totalWarehouse()).toBe(3100);
+      component.clearWarehouseCount();
+      expect(component.totalWarehouse()).toBe(0);
+      expect(component.totalCash()).toBe(4900);
+      component.onWarehouseQuantity({ denomination: 50, quantity: 2 });
+      component.clearCount();
+      expect(component.totalCash()).toBe(0);
+      expect(component.totalWarehouse()).toBe(100);
+    });
+
+    it('shows each individual difference and the consolidated one (a caja shortage is never hidden)', () => {
+      typeCash(200, '24');
+      typeCash(100, '1');
+      component.onWarehouseQuantity({ denomination: 200, quantity: 15 });
+      component.onWarehouseQuantity({ denomination: 100, quantity: 1 });
+      expect(component.cashDiff()).toBe(-100);
+      expect(component.warehouseDiff()).toBe(100);
+      expect(component.consolidatedDiff()).toBe(0);
+    });
+
+    it('the result uses the COUNTED Bodega, not its registered balance', () => {
+      typeCash(200, '25');
+      component.onWarehouseQuantity({ denomination: 200, quantity: 14 });
+      // 5000 caja + 2800 Bodega contada + 2000 bancos + 300 CxC − 100 activos.
+      expect(component.resultCuadre()).toBe(10000);
+    });
+
+    it('"Guardar Cuadre" stays disabled until the arqueo is confirmed', () => {
+      component.bankBalancesValidation.set({ date: '2026-11-11', canReconcile: true, totalActiveBanks: 1, banksWithBalance: 1, missingBanks: [] });
+      component.isValidatingBankBalances.set(false);
+      (TestBed.inject(DayStatusService).status as unknown as WritableSignal<unknown>).set({ isOpened: true, isClosed: false });
+      expect(component.canSaveCuadre()).toBeFalse();
+      component.openArqueo();
+      expect(component.isArqueoOpen()).toBeTrue();
+      component.confirmArqueo();
+      expect(component.isArqueoOpen()).toBeFalse();
+      expect(component.canSaveCuadre()).toBeTrue();
+    });
+
+    it('"Cancelar" restores the counts that existed before opening the arqueo', () => {
+      typeCash(200, '1');
+      component.openArqueo();
+      typeCash(200, '9');
+      component.onWarehouseQuantity({ denomination: 100, quantity: 4 });
+      component.setArqueoObservations('borrador');
+      component.cancelArqueo();
+      expect(state.cashCounts()[200]).toBe(1);
+      expect(component.totalWarehouse()).toBe(0);
+      expect(component.arqueoObservations()).toBe('');
+      expect(component.arqueoConfirmed()).toBeFalse();
+    });
+
+    it('sends every denomination of both counts, separately, with the observations', () => {
+      typeCash(200, '24');
+      component.onWarehouseQuantity({ denomination: 200, quantity: 15 });
+      component.onWarehouseQuantity({ denomination: 0.01, quantity: 3 });
+      component.setArqueoObservations('  Cierre del día  ');
+      const input = component.buildReconciliationInput();
+      expect(input.cashDetails?.length).toBe(12);
+      expect(input.warehouseDetails?.length).toBe(12);
+      expect(input.cashDetails?.find((d) => d.denomination === 200)?.quantity).toBe(24);
+      expect(input.warehouseDetails?.find((d) => d.denomination === 200)?.quantity).toBe(15);
+      expect(input.warehouseDetails?.find((d) => d.denomination === 0.01)?.quantity).toBe(3);
+      expect(input.cashDetails?.find((d) => d.denomination === 0.01)?.quantity).toBe(0);
+      expect(input.observations).toBe('Cierre del día');
+    });
+
+    it('after saving, the arqueo starts empty again', () => {
+      typeCash(200, '1');
+      component.onWarehouseQuantity({ denomination: 200, quantity: 1 });
+      component.confirmArqueo();
+      state.reset();
+      expect(component.totalCash()).toBe(0);
+      expect(component.totalWarehouse()).toBe(0);
+      expect(component.arqueoConfirmed()).toBeFalse();
+    });
   });
 });

@@ -1959,3 +1959,19 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - **Pagos** (`school-cash-payments`): todos los pagos con su destino de dinero.
 - **Pruebas**: `school-cash-box.spec.ts` (19).
 
+### Caja y Bodega como ubicaciones independientes (2026-11-20)
+
+- **Control de Efectivo → Arqueo de Caja** (`cash-count-modal`): solo se cuenta Caja. Ya no existe la casilla "También conté
+  Bodega"; se muestra el saldo registrado de Bodega y el total bajo resguardo, que nunca entran en la diferencia.
+- **Cortes**: tarjetas, historial, detalle y "Finalizar corte" muestran Caja contada, Bodega (saldo registrado al finalizar,
+  `closingWarehouseBalance`) y el total bajo resguardo. Al finalizar el segundo corte se ve el primero como referencia
+  (`CashCutFinishModalComponent.reference`, lo pasa `cut-control-panel.firstCutOf`).
+- **Cuadre de Agentes → Arqueo de Caja**: `CustodyCountModalComponent` (`bank-agents/components/custody-count-modal`).
+  - Es presentacional: los conteos viven en `CuadreAgentesStateService` (`cashCounts`, `warehouseCounts`, `observations`,
+    `confirmed`). La página guarda un snapshot al abrir y lo restaura con "Cancelar".
+  - "Guardar Cuadre" exige el arqueo confirmado; el resultado usa la Bodega contada y se envía `warehouseDetails`.
+  - Colores: Caja `#0d9488`, Bodega `#b45309`, consolidado `#4f46e5`. Las diferencias individuales siempre se muestran
+    junto a la consolidada, con un aviso cuando se compensan entre sí.
+- **Gestión de Días Cerrados**: `CuadreCashCountViewComponent` muestra el arqueo guardado (Caja, Bodega, consolidado y
+  denominaciones). Los cuadres anteriores muestran solo lo que tienen.
+

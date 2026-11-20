@@ -45,6 +45,22 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
     [0.05, 10],
     [0.01, 100],
   ];
+  /** Bodega physically counted as empty (the e2e clone starts with Bodega in Q0). */
+  const EMPTY_WAREHOUSE = [{ denomination: 200, quantity: 0 }];
+
+  /** Greedy breakdown of an amount (exact in centavos) over Q200 … Q0.01. */
+  const toBreakdown = (amount: number) => {
+    let cents = Math.round(amount * 100);
+    return [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01].map(
+      (denomination) => {
+        const unit = Math.round(denomination * 100);
+        const quantity = Math.floor(cents / unit);
+        cents -= quantity * unit;
+        return { denomination, quantity };
+      },
+    );
+  };
+
   const details = (centavos: number) =>
     ACCEPTANCE.map(([denomination, quantity]) => ({
       denomination,
@@ -174,6 +190,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
           cashDetails: details(150),
           cashBreakdownSource: 'ARQUEO_CAJA',
           sourceCashCountId: count.id,
+          warehouseDetails: EMPTY_WAREHOUSE,
         }),
     ).expect(400);
     // A cashier cannot base a cuadre on an arqueo.
@@ -186,6 +203,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
           cashDetails: details(150),
           cashBreakdownSource: 'ARQUEO_CAJA',
           sourceCashCountId: count.id,
+          warehouseDetails: EMPTY_WAREHOUSE,
         }),
     ).expect(403);
 
@@ -200,6 +218,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
             cashDetails: details(150),
             cashBreakdownSource: 'ARQUEO_CAJA',
             sourceCashCountId: count.id,
+            warehouseDetails: EMPTY_WAREHOUSE,
           }),
       ).expect(201),
     );
@@ -260,6 +279,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
               { denomination: 0.01, quantity: 3 },
             ],
             cashBreakdownSource: 'MANUAL',
+            warehouseDetails: EMPTY_WAREHOUSE,
           }),
       ).expect(201),
     );
@@ -343,6 +363,19 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
     ]);
     expect(Number(latest.count.totalCounted)).toBe(21250);
 
+    // Each cut photographs the official Bodega balance; its difference is caja only.
+    const [{ wh }] = await run(`SELECT warehouse_cash_balance() AS wh`, []);
+    const cutDetail = data(
+      await as(adminToken)(
+        api().get(`/api/cash-control/cuts/${periods[1].id}`),
+      ).expect(200),
+    );
+    expect(cutDetail.period.closingWarehouseBalance).toBe(Number(wh));
+    expect(cutDetail.period.closingCustodyTotal).toBe(
+      Math.round((21250 + Number(wh)) * 100) / 100,
+    );
+    expect(cutDetail.counts[0].warehouseBalance).toBe(Number(wh));
+
     const before = await fingerprint();
     const saved = data(
       await as(adminToken)(
@@ -357,6 +390,7 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
             })),
             cashBreakdownSource: 'CORTE_CAJA',
             sourceCashCountId: latest.count.id,
+            warehouseDetails: EMPTY_WAREHOUSE,
           }),
       ).expect(201),
     );
@@ -372,6 +406,106 @@ describe('Cuadre de Agentes — desglose desde el último arqueo (e2e)', () => {
       source_cut_number: 2,
       modified_after_load: false,
     });
+    expect(await fingerprint()).toBe(before);
+  });
+
+  it('Arqueo de Caja del cuadre: Caja y Bodega contadas por separado, diferencias individuales y consolidada', async () => {
+    await openDay('2099-09-04');
+
+    // The Arqueo de Caja is mandatory: neither count may be missing.
+    const missing = await as(adminToken)(
+      api()
+        .post('/api/agent-reconciliations')
+        .send({
+          totalCash: 0.33,
+          date: '2099-09-04',
+          cashDetails: [{ denomination: 0.01, quantity: 33 }],
+          cashBreakdownSource: 'MANUAL',
+        }),
+    ).expect(400);
+    expect((missing.body as Body).message).toContain('Arqueo de Caja');
+    await as(adminToken)(
+      api()
+        .post('/api/agent-reconciliations')
+        .send({ totalCash: 0, date: '2099-09-04' }),
+    ).expect(400);
+
+    // The normal Arqueo de Caja never accepts a Bodega amount anymore.
+    await as(adminToken)(
+      api()
+        .post('/api/cash-control/counts')
+        .send({
+          details: [{ denomination: 200, quantity: 1 }],
+          warehouseCounted: 100,
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(400);
+
+    const summary = data(
+      await as(adminToken)(api().get('/api/banks/cuadre-agentes-summary')),
+    );
+    const cashTheoretical = Number(summary.theoreticalCash);
+    const warehouseTheoretical = Number(summary.totalWarehouseCash);
+
+    // Caja Q100 short, Bodega Q100 over: consolidated 0, both differences visible.
+    const cashCounted = Math.max(0, cashTheoretical - 100);
+    const warehouseCounted = warehouseTheoretical + 100;
+    const before = await fingerprint();
+    const saved = data(
+      await as(adminToken)(
+        api()
+          .post('/api/agent-reconciliations')
+          .send({
+            totalCash: cashCounted,
+            date: '2099-09-04',
+            cashDetails: toBreakdown(cashCounted),
+            cashBreakdownSource: 'MANUAL',
+            warehouseDetails: toBreakdown(warehouseCounted),
+            observations: 'Arqueo general de cierre',
+          }),
+      ).expect(201),
+    );
+    // The result uses the COUNTED Bodega.
+    expect(Number(saved.totalWarehouseCash)).toBe(warehouseCounted);
+
+    const detail = data(
+      await as(adminToken)(api().get('/api/closed-days/2099-09-04')).expect(
+        200,
+      ),
+    );
+    const cashCount = detail.cashCount as Body;
+    expect(cashCount).toMatchObject({
+      reconciliationId: saved.id,
+      source: 'MANUAL',
+      cashCounted,
+      cashTheoretical,
+      cashDifference: Math.round((cashCounted - cashTheoretical) * 100) / 100,
+      warehouseTheoretical,
+      warehouseCounted,
+      warehouseDifference: 100,
+      observations: 'Arqueo general de cierre',
+    });
+    expect(cashCount.consolidatedDifference).toBe(
+      Math.round((cashCount.cashDifference + 100) * 100) / 100,
+    );
+    expect(cashCount.theoreticalTotal).toBe(
+      Math.round((cashTheoretical + warehouseTheoretical) * 100) / 100,
+    );
+    expect(cashCount.countedTotal).toBe(
+      Math.round((cashCounted + warehouseCounted) * 100) / 100,
+    );
+    // Each location keeps its own denominations (12 rows each, Bodega not copied from caja).
+    expect(cashCount.cashDetails).toHaveLength(12);
+    expect(cashCount.warehouseDetails).toHaveLength(12);
+    expect(
+      cashCount.warehouseDetails.reduce(
+        (sum: number, row: Body) => sum + Number(row.subtotal),
+        0,
+      ),
+    ).toBeCloseTo(warehouseCounted, 2);
+    expect(cashCount.createdByUsername).toBeTruthy();
+
+    // Nothing was adjusted: Kardexes, arqueos and banks are exactly as before.
     expect(await fingerprint()).toBe(before);
   });
 });

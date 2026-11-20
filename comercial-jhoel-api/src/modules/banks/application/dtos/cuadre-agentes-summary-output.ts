@@ -29,6 +29,12 @@ export interface CuadreAgentesSummaryOutput {
    */
   totalWarehouseCash: number;
   /**
+   * Theoretical caja (Control de Efectivo Kardex, `cash_balance()`). Not part
+   * of the result — the result uses the PHYSICAL caja count — but the
+   * "Arqueo de Caja" shows the caja difference against it.
+   */
+  theoreticalCash: number;
+  /**
    * School-list money still in the banks (Caja de Listas, "pendiente de
    * trasladar"). It is already inside `totalBanks` and the result subtracts
    * it, so list payments never move the agents' cuadre (owner decision).

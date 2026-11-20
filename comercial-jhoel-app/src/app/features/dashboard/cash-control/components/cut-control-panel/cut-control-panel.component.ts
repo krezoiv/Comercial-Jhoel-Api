@@ -225,6 +225,18 @@ export class CashCutControlPanelComponent implements OnChanges {
     }
   }
 
+  /** Finishing the second cut: the first one of the same day, shown as a historical reference. */
+  firstCutOf(period: CashCutPeriod | null): CashCutPeriod | null {
+    if (!period || period.periodNumber !== 2) {
+      return null;
+    }
+    return (
+      this.position.periods.find(
+        (row) => row.periodNumber === 1 && row.operationalDayId === period.operationalDayId && row.status === 'FINALIZADO',
+      ) ?? null
+    );
+  }
+
   onFinished(position: CashPosition): void {
     this.finishPeriod.set(null);
     this.changed.emit(position);

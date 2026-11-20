@@ -12,6 +12,8 @@ import { guatemalaIsoDate } from '../../domain/policies/cash-control.policy';
 /** A cut as shown on screen: an open cut carries its LIVE totals/system cash (read from the Kardex, never computed client-side). */
 export interface CashCutPeriodView extends CashCutPeriodRow {
   liveSystemCash: number | null;
+  /** Open cut only: the official Bodega balance right now (shown next to the caja, never counted). */
+  liveWarehouseBalance: number | null;
   liveTotalIn: number | null;
   liveTotalOut: number | null;
   liveMovementCount: number | null;
@@ -104,11 +106,15 @@ export class GetCashPositionUseCase {
       ? await this.repository.findPeriodsByDay(day.id)
       : [];
     const periods = await Promise.all(
-      periodRows.map((row) => this.toView(row, balance.balance)),
+      periodRows.map((row) =>
+        this.toView(row, balance.balance, warehouseBalance),
+      ),
     );
     const openPeriod =
       periods.find((period) => period.status === 'ABIERTO') ??
-      (openRow ? await this.toView(openRow, balance.balance) : null);
+      (openRow
+        ? await this.toView(openRow, balance.balance, warehouseBalance)
+        : null);
 
     return {
       date,
@@ -147,11 +153,13 @@ export class GetCashPositionUseCase {
   private async toView(
     row: CashCutPeriodRow,
     balance: number,
+    warehouseBalance: number,
   ): Promise<CashCutPeriodView> {
     if (row.status !== 'ABIERTO' || row.startSequence === null) {
       return {
         ...row,
         liveSystemCash: null,
+        liveWarehouseBalance: null,
         liveTotalIn: null,
         liveTotalOut: null,
         liveMovementCount: null,
@@ -164,6 +172,7 @@ export class GetCashPositionUseCase {
     return {
       ...row,
       liveSystemCash: balance,
+      liveWarehouseBalance: warehouseBalance,
       liveTotalIn: totals.totalIn,
       liveTotalOut: totals.totalOut,
       liveMovementCount: totals.movementCount,

@@ -3,6 +3,7 @@ import { AGENT_RECONCILIATION_REPOSITORY } from '../../domain/repositories/agent
 import type {
   AgentReconciliationRepository,
   CuadreCashBreakdownData,
+  CuadreDenominationRow,
 } from '../../domain/repositories/agent-reconciliation.repository';
 import { CuadreCashBreakdownError } from '../../domain/errors/cuadre-cash-breakdown.error';
 import {
@@ -29,8 +30,35 @@ export interface CloseAgentDayInput {
   userId: string;
   /** JWT role — needed only when the breakdown comes from an Arqueo de Caja. */
   role?: string;
-  /** Denomination breakdown behind `totalCash` (optional; the UI always sends it). */
+  /** Denomination breakdown behind `totalCash` — the caja count of the "Arqueo de Caja". */
   cashBreakdown?: CuadreCashBreakdownData | null;
+  /** Physical Bodega count of the "Arqueo de Caja" (independent from the caja count). */
+  warehouseDetails?: CuadreDenominationRow[] | null;
+  observations?: string | null;
+}
+
+/**
+ * Same row rules as the caja breakdown (known denomination, whole quantity
+ * ≥ 0, one row per denomination) for the physical Bodega count. Returns its
+ * total, which is the Bodega that enters the result.
+ */
+export function assertCuadreWarehouseBreakdown(
+  details: CuadreDenominationRow[],
+): number {
+  const seen = new Set<number>();
+  for (const row of details) {
+    const cents = toCents(row.denomination);
+    if (
+      !isValidDenomination(row.denomination) ||
+      !Number.isInteger(row.quantity) ||
+      row.quantity < 0 ||
+      seen.has(cents)
+    ) {
+      throw new CuadreCashBreakdownError('CUADRE_WAREHOUSE_BREAKDOWN_INVALID');
+    }
+    seen.add(cents);
+  }
+  return toCents(breakdownTotal(details)) / 100;
 }
 
 /**
@@ -89,9 +117,16 @@ export function assertCuadreCashBreakdown(
  * case; the SQL function is the real guarantee against a race between two
  * near-simultaneous saves for the same date.
  *
- * Optional cash breakdown (denominations + origin MANUAL/ARQUEO_CAJA): it
- * must add up exactly to `totalCash` and is saved as an independent
- * photograph; the source arqueo is only read, never modified.
+ * "Arqueo de Caja" (required since migration 1760008800000, owner
+ * decision): two independent physical counts — the caja breakdown (origin
+ * MANUAL / CORTE_CAJA / ARQUEO_CAJA, must add up exactly to `totalCash`)
+ * and the Bodega breakdown. Both are saved as a photograph together with
+ * the theoretical balance of each location and every difference (caja,
+ * Bodega and consolidated — individual differences are never netted). The
+ * source arqueo, the Kardexes and the balances are only read.
+ *
+ * Result = caja contada + Bodega CONTADA + bancos + CxC − activos − listas
+ * por trasladar (owner decision: a Bodega shortage must show in the result).
  *
  * `totalCash` remains the only value accepted from the client —
  * `totalBanks`/`totalAssets`/`totalAccountsReceivable`/`result` are always
@@ -110,13 +145,13 @@ export class CloseAgentDayUseCase {
   ) {}
 
   async execute(input: CloseAgentDayInput): Promise<AgentReconciliationOutput> {
-    if (input.cashBreakdown) {
-      assertCuadreCashBreakdown(
-        input.totalCash,
-        input.cashBreakdown,
-        input.role,
-      );
+    if (!input.cashBreakdown || !input.warehouseDetails) {
+      throw new CuadreCashBreakdownError('CUADRE_CUSTODY_COUNT_REQUIRED');
     }
+    assertCuadreCashBreakdown(input.totalCash, input.cashBreakdown, input.role);
+    const warehouseCounted = assertCuadreWarehouseBreakdown(
+      input.warehouseDetails,
+    );
 
     const dayOpening = await this.dayOpeningRepository.findByDate(input.date);
     if (!dayOpening) {
@@ -135,28 +170,33 @@ export class CloseAgentDayUseCase {
 
     const summary = await this.getCuadreAgentesSummaryUseCase.execute();
 
-    // Consolidated cuadre: the caja count + the cash under Bodega custody,
+    // Consolidated cuadre: the caja count + the PHYSICAL Bodega count,
     // minus the school-list money that is in the banks but belongs to the
     // Caja de Listas (stored apart so the result can be recomputed).
     const result =
-      input.totalCash +
-      summary.totalWarehouseCash +
-      summary.totalBanks +
-      summary.totalAccountsReceivable -
-      summary.totalAssets -
-      summary.totalSchoolListPending;
+      Math.round(
+        (input.totalCash +
+          warehouseCounted +
+          summary.totalBanks +
+          summary.totalAccountsReceivable -
+          summary.totalAssets -
+          summary.totalSchoolListPending) *
+          100,
+      ) / 100;
 
     const record = await this.repository.closeDayWithReconciliation({
       date: input.date,
       totalCash: input.totalCash,
-      totalWarehouseCash: summary.totalWarehouseCash,
+      totalWarehouseCash: warehouseCounted,
       totalSchoolListPending: summary.totalSchoolListPending,
       totalBanks: summary.totalBanks,
       totalAssets: summary.totalAssets,
       totalAccountsReceivable: summary.totalAccountsReceivable,
       result,
       userId: input.userId,
-      cashBreakdown: input.cashBreakdown ?? null,
+      cashBreakdown: input.cashBreakdown,
+      warehouseDetails: input.warehouseDetails,
+      observations: input.observations?.trim() || null,
     });
 
     return toAgentReconciliationOutput(record);

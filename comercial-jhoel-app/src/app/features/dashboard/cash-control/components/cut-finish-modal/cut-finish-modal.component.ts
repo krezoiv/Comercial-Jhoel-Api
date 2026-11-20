@@ -26,12 +26,15 @@ interface BankRow extends CashBankBalance {
 }
 
 /**
- * "Finalizar corte": arqueo by denomination (Q200 … Q0.05) compared live
+ * "Finalizar corte": arqueo by denomination (Q200 … Q0.01) compared live
  * against the system cash of the Kardex, plus verification of every active
- * bank account. Difference = counted − system. All previews here are UX
- * only: the backend recomputes the system cash and every difference under
- * its lock and stores the permanent snapshot; nothing is "adjusted" to hide
- * a difference.
+ * bank account. Difference = counted − system (caja only). Bodega is shown
+ * apart with its official balance and the "total bajo resguardo" (caja +
+ * Bodega); it is never counted here and never offsets a caja difference.
+ * Finishing the second cut shows the first one as a reference. All previews
+ * here are UX only: the backend recomputes the system cash, photographs the
+ * Bodega balance and every difference under its locks and stores the
+ * permanent snapshot; nothing is "adjusted" to hide a difference.
  */
 @Component({
   selector: 'app-cash-cut-finish-modal',
@@ -44,6 +47,8 @@ interface BankRow extends CashBankBalance {
 export class CashCutFinishModalComponent implements OnChanges {
   @Input() open = false;
   @Input() period: CashCutPeriod | null = null;
+  /** Finishing the second cut: the first cut of the day (historical reference, never modified). */
+  @Input() reference: CashCutPeriod | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<CashPosition>();
@@ -79,6 +84,10 @@ export class CashCutFinishModalComponent implements OnChanges {
   });
   readonly totalCounted = computed(() => cashCountsTotal(this.cashCounts()));
   readonly difference = computed(() => round2(this.totalCounted() - this.systemCash()));
+  /** Official Bodega balance (its own Kardex): never counted in a cut, never part of the difference. */
+  readonly warehouseBalance = computed(() => this.periodSignal()?.liveWarehouseBalance ?? 0);
+  /** Total bajo resguardo = caja contada + Bodega registrada (reference, not a reconciliation shortcut). */
+  readonly custodyTotal = computed(() => round2(this.totalCounted() + this.warehouseBalance()));
   /** Same colour code as the Guayacán arqueo: green = cuadra, yellow = sobrante, red = faltante. */
   readonly status = computed<CuadreStatus>(() => {
     const difference = this.difference();

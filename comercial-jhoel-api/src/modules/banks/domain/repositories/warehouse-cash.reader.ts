@@ -9,4 +9,10 @@ export const WAREHOUSE_CASH_READER = Symbol('WAREHOUSE_CASH_READER');
 export interface WarehouseCashReader {
   /** Official Bodega balance right now (`warehouse_cash_balance()`). */
   getBalance(): Promise<number>;
+  /**
+   * Official (theoretical) caja balance right now (`cash_balance()`, the
+   * Control de Efectivo Kardex) — what the caja count of the cuadre's
+   * "Arqueo de Caja" is compared against.
+   */
+  getCashBoxBalance(): Promise<number>;
 }

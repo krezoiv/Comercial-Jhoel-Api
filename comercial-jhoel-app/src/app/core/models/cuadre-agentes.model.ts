@@ -30,8 +30,10 @@ export interface CuadreAgentesSummary {
   totalCreditLines: number;
   totalAssets: number;
   totalAccountsReceivable: number;
-  /** Cash under Bodega custody — the cuadre is consolidated (caja count + Bodega). */
+  /** Official (theoretical) Bodega balance — what the physical Bodega count is compared against. */
   totalWarehouseCash: number;
+  /** Official (theoretical) caja balance of Control de Efectivo — what the physical caja count is compared against. */
+  theoreticalCash?: number;
   /**
    * School-list money still in the banks (Caja de Listas, "pendiente de
    * trasladar"). It is inside `totalBanks` and the result subtracts it, so
@@ -170,6 +172,43 @@ export interface RegisterAgentReconciliationInput {
   cashBreakdownSource?: CuadreCashBreakdownSource;
   /** With `ARQUEO_CAJA` / `CORTE_CAJA`: the id of the exact count record the breakdown was loaded from. */
   sourceCashCountId?: string;
+  /** Physical Bodega count of the "Arqueo de Caja" (all denominations) — required by the backend. */
+  warehouseDetails?: Array<{ denomination: number; quantity: number }>;
+  observations?: string;
+}
+
+/**
+ * The "Arqueo de Caja" saved with a cuadre (`GET /closed-days/:date` →
+ * `cashCount`). The custody fields are null on cuadres saved before Bodega
+ * was counted: those only have the caja breakdown.
+ */
+export interface CuadreCashCount {
+  reconciliationId: string;
+  source: CuadreCashBreakdownSource;
+  sourceCountNumber: number | null;
+  sourceCutNumber: number | null;
+  sourceCountedAt: string | null;
+  sourceBusinessDate: string | null;
+  modifiedAfterLoad: boolean;
+  cashCounted: number;
+  cashTheoretical: number | null;
+  cashDifference: number | null;
+  warehouseTheoretical: number | null;
+  warehouseCounted: number | null;
+  warehouseDifference: number | null;
+  theoreticalTotal: number | null;
+  countedTotal: number | null;
+  consolidatedDifference: number | null;
+  observations: string | null;
+  createdByUsername: string;
+  createdAt: string;
+  cashDetails: Array<{ denomination: number; quantity: number; subtotal: number }>;
+  warehouseDetails: Array<{ denomination: number; quantity: number; subtotal: number }>;
+}
+
+/** Difference of a location, exact to the centavo (counted − theoretical). */
+export function cashDifference(counted: number, theoretical: number): number {
+  return Math.round((counted - theoretical) * 100) / 100;
 }
 
 /** Cuadre result = Cash + Banks + AccountsReceivable − Assets. Red if <0, green if =0, yellow if >0. */
@@ -185,10 +224,10 @@ export function getCuadreResultStatus(result: number): CuadreResultStatus {
   return 'zero';
 }
 
-/** `Cash + Banks + AccountsReceivable − Assets` — the same formula the backend recomputes and never trusts from the client on save. */
 /**
- * Consolidated cuadre (same formula as the backend): caja count + Bodega +
- * banks + CxC − assets − school-list money still in banks (Caja de Listas).
+ * Consolidated cuadre (same formula as the backend): caja count + Bodega
+ * COUNT + banks + CxC − assets − school-list money still in banks (Caja de
+ * Listas). Preview only — the backend recomputes it on save.
  */
 export function calculateCuadreResult(
   totalCash: number,

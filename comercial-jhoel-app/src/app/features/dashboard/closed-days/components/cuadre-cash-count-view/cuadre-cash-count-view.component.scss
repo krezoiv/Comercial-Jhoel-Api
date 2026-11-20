@@ -1,0 +1,127 @@
+@use 'mixins' as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+[data-tone='ok'] {
+  color: #16a34a;
+}
+
+[data-tone='short'] {
+  color: #dc2626;
+}
+
+[data-tone='over'] {
+  color: #d97706;
+}
+
+.scroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-sm);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  thead th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+    background: var(--color-bg-light-muted);
+  }
+
+  tbody tr {
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .num {
+    text-align: right;
+  }
+}
+
+.locations {
+  .caja th {
+    color: #0d9488;
+  }
+
+  .bodega th {
+    color: #b45309;
+  }
+
+  tfoot tr {
+    border-top: 2px solid var(--color-border-light);
+    background: color-mix(in srgb, #4f46e5 7%, transparent);
+
+    th,
+    td {
+      font-weight: var(--fw-bold);
+      color: #4f46e5;
+    }
+  }
+
+  .diff {
+    font-weight: var(--fw-bold);
+  }
+}
+
+.legacy,
+.meta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+.meta {
+  display: block;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: #4f46e5;
+  @include focus-ring;
+}
+
+.breakdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-3);
+}
+
+.mini {
+  caption {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    text-align: left;
+  }
+
+  th,
+  td {
+    font-size: var(--fs-xs);
+  }
+
+  tfoot th {
+    font-weight: var(--fw-bold);
+    background: var(--color-bg-light-muted);
+  }
+}

@@ -14,9 +14,19 @@
 
       <dl class="modal__summary">
         <div class="modal__summary-row">
-          <dt>Total Efectivo</dt>
+          <dt>Efectivo en Caja (contado)</dt>
           <dd>{{ formatCurrency(totalCash) }}</dd>
         </div>
+        <div class="modal__summary-row">
+          <dt>Efectivo en Bodega (contado)</dt>
+          <dd>{{ formatCurrency(totalWarehouseCash) }}</dd>
+        </div>
+        @if (cashDifference || warehouseDifference) {
+          <p class="modal__note">
+            Diferencias del arqueo — Caja: {{ formatDifference(cashDifference) }} · Bodega:
+            {{ formatDifference(warehouseDifference) }}. Quedan registradas con el cuadre.
+          </p>
+        }
         <div class="modal__summary-row">
           <dt>Total Bancos</dt>
           <dd>{{ formatCurrency(totalBanks) }}</dd>

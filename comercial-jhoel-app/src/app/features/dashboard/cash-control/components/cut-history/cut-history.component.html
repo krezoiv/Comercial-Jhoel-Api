@@ -57,6 +57,8 @@
             <th scope="col" class="num">Efectivo inicial</th>
             <th scope="col" class="num">Efectivo final</th>
             <th scope="col" class="num">Diferencia</th>
+            <th scope="col" class="num">Bodega</th>
+            <th scope="col" class="num">Caja + Bodega</th>
             <th scope="col" class="num">Bancos (dif.)</th>
             <th scope="col"><span class="sr-only">Detalle</span></th>
           </tr>
@@ -82,6 +84,8 @@
                   <td class="num" [class.in]="(period.cashDifference ?? 0) > 0" [class.out]="(period.cashDifference ?? 0) < 0">
                     {{ period.cashDifference === null ? '—' : formatDifference(period.cashDifference) }}
                   </td>
+                  <td class="num">{{ period.closingWarehouseBalance == null ? '—' : formatCurrency(period.closingWarehouseBalance) }}</td>
+                  <td class="num">{{ period.closingCustodyTotal == null ? '—' : formatCurrency(period.closingCustodyTotal) }}</td>
                   <td class="num">{{ period.bankDifferenceTotal === null ? '—' : formatDifference(period.bankDifferenceTotal) }}</td>
                   <td>
                     @if (period.status !== 'PROGRAMADO') {

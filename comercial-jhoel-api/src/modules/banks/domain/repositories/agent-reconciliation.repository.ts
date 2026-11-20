@@ -24,7 +24,46 @@ export interface CuadreCashBreakdownData {
   source: CuadreCashBreakdownSource;
   /** `cash_counts.id` (ARQUEO_CAJA) or `cash_cut_counts.id` (CORTE_CAJA); null for MANUAL. */
   sourceCashCountId: string | null;
-  details: Array<{ denomination: number; quantity: number }>;
+  details: CuadreDenominationRow[];
+}
+
+/** One denomination row of a count (whole quantity ≥ 0). */
+export interface CuadreDenominationRow {
+  denomination: number;
+  quantity: number;
+}
+
+/**
+ * The cuadre's "Arqueo de Caja" as saved (`agent_reconciliation_cash_breakdowns`
+ * + caja and Bodega details). The custody fields (theoretical balances,
+ * Bodega count, differences) are null on cuadres saved before Bodega was
+ * counted (migration 1760008800000): those only have the caja breakdown.
+ */
+export interface CuadreCashCountSnapshot {
+  reconciliationId: string;
+  source: CuadreCashBreakdownSource;
+  sourceCountNumber: number | null;
+  sourceCutNumber: number | null;
+  sourceCountedAt: Date | null;
+  sourceBusinessDate: string | null;
+  modifiedAfterLoad: boolean;
+  /** Physical caja count. */
+  cashCounted: number;
+  cashTheoretical: number | null;
+  cashDifference: number | null;
+  warehouseTheoretical: number | null;
+  warehouseCounted: number | null;
+  warehouseDifference: number | null;
+  /** cashTheoretical + warehouseTheoretical. */
+  theoreticalTotal: number | null;
+  /** cashCounted + warehouseCounted. */
+  countedTotal: number | null;
+  consolidatedDifference: number | null;
+  observations: string | null;
+  createdByUsername: string;
+  createdAt: Date;
+  cashDetails: Array<CuadreDenominationRow & { subtotal: number }>;
+  warehouseDetails: Array<CuadreDenominationRow & { subtotal: number }>;
 }
 
 export interface CloseAgentDayData {
@@ -41,6 +80,12 @@ export interface CloseAgentDayData {
   userId: string;
   /** Optional for backwards compatibility: callers that send only `totalCash` keep the original path. */
   cashBreakdown?: CuadreCashBreakdownData | null;
+  /**
+   * Physical Bodega count of the "Arqueo de Caja" (independent from the caja
+   * one). Its total is `totalWarehouseCash`. Only with `cashBreakdown`.
+   */
+  warehouseDetails?: CuadreDenominationRow[] | null;
+  observations?: string | null;
 }
 
 export interface AgentReconciliationRepository {
@@ -58,4 +103,8 @@ export interface AgentReconciliationRepository {
   existsForDate(date: string): Promise<boolean>;
   /** The CURRENT reconciliation for a date — there can be more than one historical row if the day was reopened and closed again; this is always the most recent one. Used by "Gestión de Días Cerrados" for the detail view. */
   findLatestByDate(date: string): Promise<AgentReconciliation | null>;
+  /** The "Arqueo de Caja" saved with a reconciliation, or null when it was saved with no breakdown. */
+  findCashCount(
+    reconciliationId: string,
+  ): Promise<CuadreCashCountSnapshot | null>;
 }

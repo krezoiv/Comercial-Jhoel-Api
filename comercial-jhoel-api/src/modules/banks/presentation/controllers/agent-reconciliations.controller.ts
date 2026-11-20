@@ -48,6 +48,12 @@ export class AgentReconciliationsController {
               })),
             }
           : null,
+      warehouseDetails:
+        dto.warehouseDetails?.map((row) => ({
+          denomination: row.denomination,
+          quantity: row.quantity,
+        })) ?? null,
+      observations: dto.observations ?? null,
     });
   }
 }

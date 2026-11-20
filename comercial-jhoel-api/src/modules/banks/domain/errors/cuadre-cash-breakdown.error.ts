@@ -16,6 +16,21 @@ const MESSAGES: Record<string, { message: string; status: number }> = {
       'El arqueo cargado ya no es válido (fue reemplazado, el corte se reabrió o no existe). Vuelva a cargar el último arqueo o ingrese el conteo manualmente.',
     status: 409,
   },
+  CUADRE_CUSTODY_COUNT_REQUIRED: {
+    message:
+      'Antes de guardar el cuadre haga el Arqueo de Caja: cuente el efectivo de Caja y el de Bodega.',
+    status: 400,
+  },
+  CUADRE_WAREHOUSE_BREAKDOWN_INVALID: {
+    message:
+      'El conteo de Bodega no es válido: use solo denominaciones de Q200 a Q0.01, cantidades enteras no negativas y una fila por denominación.',
+    status: 400,
+  },
+  CUADRE_WAREHOUSE_BREAKDOWN_MISMATCH: {
+    message:
+      'El total de Bodega no coincide con la suma de su desglose de denominaciones.',
+    status: 400,
+  },
   CUADRE_SOURCE_COUNT_FORBIDDEN: {
     message: 'No tiene permiso para usar arqueos de Caja en el cuadre.',
     status: 403,

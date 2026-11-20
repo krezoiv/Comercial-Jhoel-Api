@@ -2,7 +2,6 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
-  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
@@ -39,7 +38,12 @@ export class DenominationRequestDto {
   quantity: number;
 }
 
-/** "Arqueo de Caja" (or its audited correction). */
+/**
+ * "Arqueo de Caja" (or its audited correction): ONLY the cash physically in
+ * the caja. Bodega is never counted here (migration 1760008800000, owner
+ * request): its official balance is photographed by the backend, and
+ * `forbidNonWhitelisted` rejects a `warehouseCounted` sent by an old client.
+ */
 export class RegisterCashCountRequestDto {
   @IsArray()
   @ArrayMaxSize(DENOMINATIONS.length)
@@ -48,13 +52,6 @@ export class RegisterCashCountRequestDto {
   details: DenominationRequestDto[];
 
   @IsOptional() @IsString() @MaxLength(500) observations?: string;
-
-  /** Optional physical count of Bodega for the consolidated view. */
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(MAX_AMOUNT)
-  warehouseCounted?: number;
 
   /** One per form opening: a double click or retry returns the same count. */
   @IsUUID() clientRequestId: string;
@@ -189,14 +186,6 @@ export class SaveCashCountDraftRequestDto {
   details: DraftDenominationRequestDto[];
 
   @IsOptional() @IsString() @MaxLength(500) observations?: string;
-
-  @IsOptional() @IsBoolean() countWarehouse?: boolean;
-
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(MAX_AMOUNT)
-  warehouseCounted?: number | null;
 }
 
 export class DraftDenominationRequestDto {

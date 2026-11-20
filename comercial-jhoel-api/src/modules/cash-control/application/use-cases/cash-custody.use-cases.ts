@@ -264,10 +264,14 @@ export class ListWarehouseMovementsUseCase {
 }
 
 /**
- * "Arqueo de Caja": stores the count as a photograph (theoretical caja and
- * Bodega read under their locks). It never touches the Kardex; a difference
- * stays recorded as FALTANTE/SOBRANTE. With `replacesId` it is an audited
- * correction (admin + reason) that keeps the original photograph.
+ * "Arqueo de Caja": stores the count of the cash physically in the CAJA as a
+ * photograph (theoretical caja and the official Bodega balance read under
+ * their locks). Bodega is never counted here and never enters the
+ * difference (counted caja − theoretical caja); it is only shown as the
+ * official balance next to it (total bajo resguardo). It never touches the
+ * Kardex; a difference stays recorded as FALTANTE/SOBRANTE. With `replacesId`
+ * it is an audited correction (admin + reason) that keeps the original
+ * photograph.
  */
 @Injectable()
 export class RegisterCashCountUseCase {
@@ -280,7 +284,6 @@ export class RegisterCashCountUseCase {
     input: {
       details: DenominationInput[];
       observations?: string;
-      warehouseCounted?: number | null;
       clientRequestId: string;
       replacesId?: string;
       correctionReason?: string;
@@ -299,7 +302,6 @@ export class RegisterCashCountUseCase {
     const id = await this.repository.registerCount({
       details: input.details,
       observations: input.observations?.trim() || null,
-      warehouseCounted: input.warehouseCounted ?? null,
       userId: input.userId,
       idempotencyKey: `ARQ:${input.clientRequestId}`,
       replacesId: input.replacesId ?? null,
@@ -671,8 +673,6 @@ export class SaveCashCountDraftUseCase {
     input: {
       details: DenominationInput[];
       observations?: string;
-      countWarehouse?: boolean;
-      warehouseCounted?: number | null;
     } & CustodyActor,
   ): Promise<CashCountDraft> {
     assertCashCustodyPermission(input.role, 'cash_custody.operate');
@@ -694,10 +694,6 @@ export class SaveCashCountDraftUseCase {
         quantity: d.quantity,
       })),
       observations: input.observations?.slice(0, 500) ?? null,
-      countWarehouse: input.countWarehouse === true,
-      warehouseCounted: input.countWarehouse
-        ? (input.warehouseCounted ?? null)
-        : null,
     });
     if (!draft) {
       throw cashControlError('CASH_CUSTODY_DAY_NOT_OPEN');

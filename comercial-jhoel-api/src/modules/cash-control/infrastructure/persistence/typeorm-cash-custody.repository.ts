@@ -428,7 +428,8 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       [
         JSON.stringify(data.details),
         data.observations ?? null,
-        data.warehouseCounted ?? null,
+        // Bodega is never counted in an Arqueo de Caja (migration 1760008800000).
+        null,
         data.userId,
         data.idempotencyKey,
         data.replacesId ?? null,
@@ -729,9 +730,8 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
               quantity: num(d.quantity),
             }))
           : [],
+        // Older drafts may still carry a Bodega count: it is ignored.
         observations: p.observations ?? null,
-        countWarehouse: p.countWarehouse === true,
-        warehouseCounted: p.warehouseCounted ?? null,
       },
       version: num(row.version),
       updatedAt: row.updated_at as Date,

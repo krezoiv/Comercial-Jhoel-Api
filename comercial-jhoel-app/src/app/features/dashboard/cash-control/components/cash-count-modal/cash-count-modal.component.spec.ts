@@ -70,7 +70,9 @@ describe('CashCountModalComponent (arqueo de caja)', () => {
     expect(modal.totalCounted()).toBe(84500);
     expect(modal.theoretical()).toBe(85000);
     expect(modal.previewDifference()).toBe(-500);
+    // Bodega is its official balance: shown in the total bajo resguardo, never in the difference.
     expect(modal.warehouseTheoretical()).toBe(35000);
+    expect(modal.custodyTotal()).toBe(119500);
   });
 
   it('accepts only whole, non-negative quantities', () => {
@@ -116,7 +118,7 @@ describe('CashCountModalComponent (arqueo de caja)', () => {
   describe('borrador del arqueo (persistencia real)', () => {
     const serverDraft: CashCountDraft = {
       businessDate: '2026-11-11',
-      payload: { details: [{ denomination: 200, quantity: 40 }, { denomination: 0.01, quantity: 7 }], observations: 'A medias', countWarehouse: true, warehouseCounted: 35000 },
+      payload: { details: [{ denomination: 200, quantity: 40 }, { denomination: 0.01, quantity: 7 }], observations: 'A medias' },
       version: 3,
       updatedAt: '2026-11-11T16:00:00Z',
     };
@@ -127,8 +129,6 @@ describe('CashCountModalComponent (arqueo de caja)', () => {
       expect(modal.cashCounts()['200']).toBe(40);
       expect(modal.cashCounts()['0.01']).toBe(7);
       expect(modal.observations()).toBe('A medias');
-      expect(modal.countWarehouse()).toBeTrue();
-      expect(modal.warehouseCounted()).toBe(35000);
       expect(modal.totalCounted()).toBe(8000.07);
       expect(modal.draftRestored()).toBeTrue();
       expect(modal.draftStatus()).toBe('saved');
@@ -163,7 +163,7 @@ describe('CashCountModalComponent (arqueo de caja)', () => {
 
     it('a local copy newer than the server one wins and is re-synced (autosave interrupted by a reload)', () => {
       localStorage.setItem(LOCAL_KEY, JSON.stringify({
-        payload: { details: [{ denomination: 20, quantity: 11 }], observations: null, countWarehouse: false, warehouseCounted: null },
+        payload: { details: [{ denomination: 20, quantity: 11 }], observations: null },
         savedAt: '2026-11-11T17:00:00Z',
       }));
       getDraftSpy.and.returnValue(of(serverDraft)); // older (16:00)

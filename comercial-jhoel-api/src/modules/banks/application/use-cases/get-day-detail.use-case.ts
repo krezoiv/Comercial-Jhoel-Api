@@ -49,6 +49,11 @@ export class GetDayDetailUseCase {
       : dayOpening.isClosed
         ? 'CLOSED'
         : 'REOPENED';
+    const cashCount = reconciliation
+      ? await this.agentReconciliationRepository.findCashCount(
+          reconciliation.id,
+        )
+      : null;
 
     return {
       date: dayOpening.date,
@@ -74,6 +79,7 @@ export class GetDayDetailUseCase {
       reconciliation: reconciliation
         ? toAgentReconciliationOutput(reconciliation)
         : null,
+      cashCount,
       auditLog: auditLog.map((entry) => ({
         id: entry.id,
         action: entry.action,

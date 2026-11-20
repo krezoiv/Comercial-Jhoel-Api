@@ -1,0 +1,74 @@
+@let c = count();
+@if (hasCustody()) {
+  <div class="scroll">
+    <table class="locations">
+      <thead>
+        <tr><th>Ubicación</th><th class="num">Teórico</th><th class="num">Físico</th><th class="num">Diferencia</th></tr>
+      </thead>
+      <tbody>
+        <tr class="caja">
+          <th scope="row">Caja</th>
+          <td class="num">{{ formatCurrency(c.cashTheoretical ?? 0) }}</td>
+          <td class="num">{{ formatCurrency(c.cashCounted) }}</td>
+          <td class="num diff" [attr.data-tone]="tone(c.cashDifference)">{{ formatDifference(c.cashDifference) }}</td>
+        </tr>
+        <tr class="bodega">
+          <th scope="row">Bodega</th>
+          <td class="num">{{ formatCurrency(c.warehouseTheoretical ?? 0) }}</td>
+          <td class="num">{{ formatCurrency(c.warehouseCounted ?? 0) }}</td>
+          <td class="num diff" [attr.data-tone]="tone(c.warehouseDifference)">{{ formatDifference(c.warehouseDifference) }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row">Consolidado</th>
+          <td class="num">{{ formatCurrency(c.theoreticalTotal ?? 0) }}</td>
+          <td class="num">{{ formatCurrency(c.countedTotal ?? 0) }}</td>
+          <td class="num diff" [attr.data-tone]="tone(c.consolidatedDifference)">{{ formatDifference(c.consolidatedDifference) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+} @else {
+  <p class="legacy">
+    <app-icon name="alert-circle" [size]="14" />
+    Cuadre guardado antes de contar Bodega en el arqueo: solo tiene el desglose de Caja
+    ({{ formatCurrency(c.cashCounted) }}).
+  </p>
+}
+
+<p class="meta">
+  {{ sourceLabel() }} · {{ c.createdByUsername }} · {{ c.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+  @if (c.observations) {
+    <br />Observaciones: {{ c.observations }}
+  }
+</p>
+
+<button type="button" class="toggle" [attr.aria-expanded]="showDetails()" (click)="showDetails.set(!showDetails())">
+  <app-icon [name]="showDetails() ? 'chevron-up' : 'chevron-down'" [size]="14" />
+  {{ showDetails() ? 'Ocultar denominaciones' : 'Ver denominaciones' }}
+</button>
+
+@if (showDetails()) {
+  <div class="breakdowns">
+    <ng-container *ngTemplateOutlet="breakdown; context: { title: 'Caja', rows: c.cashDetails, total: c.cashCounted }" />
+    @if (hasCustody()) {
+      <ng-container *ngTemplateOutlet="breakdown; context: { title: 'Bodega', rows: c.warehouseDetails, total: c.warehouseCounted }" />
+    }
+  </div>
+}
+
+<ng-template #breakdown let-title="title" let-rows="rows" let-total="total">
+  <div class="scroll">
+    <table class="mini">
+      <caption>{{ title }}</caption>
+      <thead><tr><th>Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr></thead>
+      <tbody>
+        @for (row of rows; track row.denomination) {
+          <tr><td>{{ formatCurrency(row.denomination) }}</td><td class="num">{{ row.quantity }}</td><td class="num">{{ formatCurrency(row.subtotal) }}</td></tr>
+        }
+      </tbody>
+      <tfoot><tr><th colspan="2">Total {{ title }}</th><th class="num">{{ formatCurrency(total) }}</th></tr></tfoot>
+    </table>
+  </div>
+</ng-template>

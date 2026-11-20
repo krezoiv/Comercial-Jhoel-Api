@@ -5,7 +5,24 @@ import { AgentReconciliation } from '../../domain/entities/agent-reconciliation.
 import {
   AgentReconciliationRepository,
   CloseAgentDayData,
+  CuadreCashBreakdownSource,
+  CuadreCashCountSnapshot,
 } from '../../domain/repositories/agent-reconciliation.repository';
+
+type SqlRow = Record<string, unknown>;
+
+const numOrNull = (value: unknown): number | null =>
+  value === null || value === undefined ? null : Number(value);
+
+function toDetailRows(
+  rows: SqlRow[],
+): Array<{ denomination: number; quantity: number; subtotal: number }> {
+  return rows.map((row) => ({
+    denomination: Number(row.denomination),
+    quantity: Number(row.quantity),
+    subtotal: Number(row.subtotal),
+  }));
+}
 import { DayNotOpenedError } from '../../domain/errors/day-not-opened.error';
 import { DayAlreadyClosedError } from '../../domain/errors/day-already-closed.error';
 import { BankBalancesNotRegisteredError } from '../../domain/errors/bank-balances-not-registered.error';
@@ -44,15 +61,20 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
         data.totalWarehouseCash,
       ];
       if (data.cashBreakdown) {
-        // Same close + the breakdown photograph, in one SQL transaction.
+        // Same close + the "Arqueo de Caja" photograph (caja and Bodega
+        // counts, theoretical balances, differences), in one SQL transaction.
         const rows = await this.repository.manager.query<{ id: string }[]>(
-          'SELECT close_agent_day_with_cash_breakdown($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12) AS id',
+          'SELECT close_agent_day_with_cash_breakdown($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13::jsonb, $14) AS id',
           [
             ...params,
             JSON.stringify(data.cashBreakdown.details),
             data.cashBreakdown.source,
             data.cashBreakdown.sourceCashCountId,
             data.totalSchoolListPending,
+            data.warehouseDetails
+              ? JSON.stringify(data.warehouseDetails)
+              : null,
+            data.observations ?? null,
           ],
         );
         reconciliationId = rows[0].id;
@@ -86,6 +108,70 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
       order: { createdAt: 'DESC' },
     });
     return orm ? AgentReconciliationMapper.toDomain(orm) : null;
+  }
+
+  async findCashCount(
+    reconciliationId: string,
+  ): Promise<CuadreCashCountSnapshot | null> {
+    const manager = this.repository.manager;
+    const [row] = await manager.query<SqlRow[]>(
+      `SELECT b.*, to_char(b.source_business_date, 'YYYY-MM-DD') AS source_business_date_text,
+              u.username AS created_by_username
+       FROM agent_reconciliation_cash_breakdowns b
+       JOIN users u ON u.id = b.created_by
+       WHERE b.reconciliation_id = $1`,
+      [reconciliationId],
+    );
+    if (!row) {
+      return null;
+    }
+    const [cashRows, warehouseRows] = await Promise.all([
+      manager.query<SqlRow[]>(
+        `SELECT denomination, quantity, subtotal FROM agent_reconciliation_cash_details
+         WHERE reconciliation_id = $1 ORDER BY denomination DESC`,
+        [reconciliationId],
+      ),
+      manager.query<SqlRow[]>(
+        `SELECT denomination, quantity, subtotal FROM agent_reconciliation_warehouse_details
+         WHERE reconciliation_id = $1 ORDER BY denomination DESC`,
+        [reconciliationId],
+      ),
+    ]);
+    const cashCounted = Number(row.total_cash);
+    const cashTheoretical = numOrNull(row.cash_theoretical);
+    const warehouseTheoretical = numOrNull(row.warehouse_theoretical);
+    const warehouseCounted = numOrNull(row.warehouse_counted);
+    const cents = (value: number) => Math.round(value * 100) / 100;
+    return {
+      reconciliationId,
+      source: row.source as CuadreCashBreakdownSource,
+      sourceCountNumber: numOrNull(row.source_count_number),
+      sourceCutNumber: numOrNull(row.source_cut_number),
+      sourceCountedAt: (row.source_counted_at as Date | null) ?? null,
+      sourceBusinessDate:
+        (row.source_business_date_text as string | null) ?? null,
+      modifiedAfterLoad: row.modified_after_load === true,
+      cashCounted,
+      cashTheoretical,
+      cashDifference: numOrNull(row.cash_difference),
+      warehouseTheoretical,
+      warehouseCounted,
+      warehouseDifference: numOrNull(row.warehouse_difference),
+      theoreticalTotal:
+        cashTheoretical !== null && warehouseTheoretical !== null
+          ? cents(cashTheoretical + warehouseTheoretical)
+          : null,
+      countedTotal:
+        warehouseCounted !== null
+          ? cents(cashCounted + warehouseCounted)
+          : null,
+      consolidatedDifference: numOrNull(row.consolidated_difference),
+      observations: (row.observations as string | null) ?? null,
+      createdByUsername: String(row.created_by_username),
+      createdAt: row.created_at as Date,
+      cashDetails: toDetailRows(cashRows),
+      warehouseDetails: toDetailRows(warehouseRows),
+    };
   }
 
   /** Same `RAISE EXCEPTION '<CODE>:<extra>'` → domain-error translation pattern as `TypeOrmSaleRepository.translateSaleError` — see that method's own doc comment for why this parsing exists. */

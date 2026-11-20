@@ -137,11 +137,13 @@ export interface CashCountRow {
   totalCounted: number;
   difference: number;
   result: CashCountResult;
+  /** Official Bodega balance photographed with the arqueo (never counted here). */
   warehouseBalance: number;
+  /** Only on arqueos before migration 1760008800000 (optional Bodega total typed by hand). */
   warehouseCounted: number | null;
   warehouseDifference: number | null;
   custodyTheoretical: number;
-  /** caja contada + Bodega (contada si se contó, si no teórica). */
+  /** Total bajo resguardo: caja contada + Bodega registrada (or the old hand-typed Bodega). */
   custodyCounted: number;
   /** Consolidated difference, only when Bodega was physically counted. */
   custodyDifference: number | null;
@@ -194,7 +196,6 @@ export interface RegisterTransferData {
 export interface RegisterCashCountData {
   details: Array<{ denomination: number; quantity: number }>;
   observations?: string | null;
-  warehouseCounted?: number | null;
   userId: string;
   idempotencyKey: string;
   replacesId?: string | null;
@@ -283,8 +284,6 @@ export interface RegisterWarehouseCashCountData {
 export interface CashCountDraftPayload {
   details: Array<{ denomination: number; quantity: number }>;
   observations: string | null;
-  countWarehouse: boolean;
-  warehouseCounted: number | null;
 }
 
 /** The user's in-progress Arqueo de Caja for the current bank day. */

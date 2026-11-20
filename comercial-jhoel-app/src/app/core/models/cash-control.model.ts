@@ -217,6 +217,14 @@ export interface CashCutPeriod {
   inheritedDifference: number | null;
   closingSystemCash: number | null;
   closingPhysicalCash: number | null;
+  /**
+   * Official Bodega balance when the cut was finished — Bodega is never
+   * counted in a cut nor part of its difference. Null on cuts finished before
+   * this was recorded (and on cuts not finished).
+   */
+  closingWarehouseBalance?: number | null;
+  /** Total bajo resguardo = counted caja + Bodega balance (null when Bodega was not recorded). */
+  closingCustodyTotal?: number | null;
   cashDifference: number | null;
   totalIn: number | null;
   totalOut: number | null;
@@ -230,6 +238,8 @@ export interface CashCutPeriod {
   bankReconciledCount: number | null;
   /** Only in `position`: live values of an OPEN cut, read from the Kardex. */
   liveSystemCash?: number | null;
+  /** Only in `position`, OPEN cut: the official Bodega balance right now. */
+  liveWarehouseBalance?: number | null;
   liveTotalIn?: number | null;
   liveTotalOut?: number | null;
   liveMovementCount?: number | null;
@@ -325,6 +335,8 @@ export interface CashCutCount {
   totalCounted: number;
   systemCash: number;
   difference: number;
+  /** Official Bodega balance photographed with this arqueo (null on older cuts). */
+  warehouseBalance?: number | null;
   observations: string | null;
   isCurrent: boolean;
   createdByUsername: string;

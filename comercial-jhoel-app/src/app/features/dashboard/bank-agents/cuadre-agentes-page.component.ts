@@ -5,21 +5,19 @@ import { RouterLink } from '@angular/router';
 
 import {
   BankBalancesValidation,
-  CASH_DENOMINATIONS,
-  CashDenomination,
   CuadreAgentesSummary,
   CuadreResultStatus,
   RegisterAgentReconciliationInput,
   calculateCuadreResult,
   calculateTotalCash,
   cashCountFromRows,
-  denominationSubtotal,
+  cashDifference,
   formatCurrency,
   formatQuantity,
   getCuadreResultStatus,
 } from '../../../core/models';
 import { CuadreAgentesService } from '../../../core/services/cuadre-agentes.service';
-import { CuadreAgentesStateService } from '../../../core/services/cuadre-agentes-state.service';
+import { CuadreAgentesStateService, CuadreArqueoSnapshot } from '../../../core/services/cuadre-agentes-state.service';
 import { CashCustodyService } from '../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { DayStatusService } from '../../../core/services/day-status.service';
@@ -28,9 +26,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { formatSignedBankBalance } from '../../../core/utils/bank-balance.util';
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { ButtonComponent, CardComponent, IconComponent, PageHeaderComponent, SummaryTileComponent } from '../../../shared/ui';
-import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import { AgentReconciliationConfirmModalComponent } from './components/agent-reconciliation-confirm-modal/agent-reconciliation-confirm-modal.component';
-import { CuadreCashSourceComponent } from './components/cuadre-cash-source/cuadre-cash-source.component';
+import {
+  CustodyCountModalComponent,
+  CustodyQuantityChange,
+  formatSignedDifference,
+} from './components/custody-count-modal/custody-count-modal.component';
 
 /** Shown when no "Segundo corte · final del día" has been finished yet. */
 export const NO_SECOND_CUT_MESSAGE =
@@ -98,9 +99,8 @@ function todayIsoDate(): string {
     IconComponent,
     SummaryTileComponent,
     ButtonComponent,
-    DecimalInputDirective,
     AgentReconciliationConfirmModalComponent,
-    CuadreCashSourceComponent,
+    CustodyCountModalComponent,
     RouterLink,
   ],
   templateUrl: './cuadre-agentes-page.component.html',
@@ -120,8 +120,14 @@ export class CuadreAgentesPageComponent {
   /** Whether the shared operation date (set from Bancos) is today — drives the "not working on today" warning banner. */
   readonly isTodayOperationDate = computed(() => this.draft.operationDate() === this.maxSelectableDate);
 
-  readonly denominations = CASH_DENOMINATIONS;
   readonly cashCounts = this.state.cashCounts;
+  /** Physical Bodega count of the "Arqueo de Caja" (independent from the caja count). */
+  readonly warehouseCounts = this.state.warehouseCounts;
+  readonly arqueoObservations = this.state.observations;
+  /** "Confirmar Arqueo" was pressed — required to save the cuadre. */
+  readonly arqueoConfirmed = this.state.confirmed;
+  readonly isArqueoOpen = signal(false);
+  private arqueoSnapshot: CuadreArqueoSnapshot | null = null;
   /** Origin of the breakdown being edited (manual / loaded arqueo / modified after loading). */
   readonly cashOrigin = this.state.origin;
   readonly hasQuantities = this.state.hasQuantities;
@@ -153,8 +159,28 @@ export class CuadreAgentesPageComponent {
 
   /** `denomination × count`, summed across every row — recomputes on its own, no button needed, every time `cashCounts` changes. */
   readonly totalCash = computed(() => calculateTotalCash(this.cashCounts()));
+  /** Physical Bodega total — what enters the result (owner decision). */
+  readonly totalWarehouse = computed(() => calculateTotalCash(this.warehouseCounts()));
 
-  /** Cash + Banks + AccountsReceivable − Assets — live, no button needed, same as Recargas' own preview. */
+  /** Official balances the counts are compared with (the backend reads them again on save). */
+  readonly cashTheoretical = computed(() => this.summary()?.theoreticalCash ?? null);
+  readonly warehouseTheoretical = computed(() => this.summary()?.totalWarehouseCash ?? null);
+  readonly cashDiff = computed(() => {
+    const theoretical = this.cashTheoretical();
+    return theoretical === null ? null : cashDifference(this.totalCash(), theoretical);
+  });
+  readonly warehouseDiff = computed(() => {
+    const theoretical = this.warehouseTheoretical();
+    return theoretical === null ? null : cashDifference(this.totalWarehouse(), theoretical);
+  });
+  /** Consolidated difference — always shown WITH the individual ones, never instead of them. */
+  readonly consolidatedDiff = computed(() => {
+    const cash = this.cashDiff();
+    const warehouse = this.warehouseDiff();
+    return cash === null || warehouse === null ? null : cashDifference(cash + warehouse, 0);
+  });
+
+  /** Caja contada + Bodega contada + Banks + AccountsReceivable − Assets − listas — live preview; the backend recomputes it. */
   readonly resultCuadre = computed(() => {
     const summary = this.summary();
     if (!summary) {
@@ -165,7 +191,7 @@ export class CuadreAgentesPageComponent {
       summary.totalBanks,
       summary.totalAccountsReceivable,
       summary.totalAssets,
-      summary.totalWarehouseCash ?? 0,
+      this.totalWarehouse(),
       summary.totalSchoolListPending ?? 0,
     );
   });
@@ -175,6 +201,7 @@ export class CuadreAgentesPageComponent {
   readonly resultText = computed(() => STATUS_TEXT[this.resultStatus()]);
 
   formatCurrency = formatCurrency;
+  formatDifference = formatSignedDifference;
   formatSigned = formatSignedBankBalance;
   formatQuantity = formatQuantity;
 
@@ -257,8 +284,48 @@ export class CuadreAgentesPageComponent {
     });
   }
 
-  rowTotal(denomination: CashDenomination): number {
-    return denominationSubtotal(denomination, this.cashCounts()[denomination]);
+  /**
+   * "Arqueo de Caja": opens the general count of Caja and Bodega. The counts
+   * are edited live in the shared state; a snapshot taken here is restored
+   * on "Cancelar". The official balances are re-read so the differences are
+   * shown against the current figures.
+   */
+  openArqueo(): void {
+    this.arqueoSnapshot = this.state.snapshot();
+    this.isArqueoOpen.set(true);
+    this.refreshBankSummary();
+  }
+
+  cancelArqueo(): void {
+    if (this.arqueoSnapshot) {
+      this.state.restore(this.arqueoSnapshot);
+    }
+    this.arqueoSnapshot = null;
+    this.isArqueoOpen.set(false);
+  }
+
+  /** "Confirmar Arqueo": both counts are now part of the cuadre (nothing is saved until "Guardar Cuadre"). */
+  confirmArqueo(): void {
+    this.state.confirmed.set(true);
+    this.arqueoSnapshot = null;
+    this.isArqueoOpen.set(false);
+    this.notificationService.success('Arqueo confirmado. Revise el resumen y guarde el cuadre.');
+  }
+
+  onCashQuantity(change: CustodyQuantityChange): void {
+    this.state.setCount(change.denomination, change.quantity);
+  }
+
+  onWarehouseQuantity(change: CustodyQuantityChange): void {
+    this.state.setWarehouseCount(change.denomination, change.quantity);
+  }
+
+  clearWarehouseCount(): void {
+    this.state.clearWarehouse();
+  }
+
+  setArqueoObservations(value: string): void {
+    this.state.observations.set(value);
   }
 
   /**
@@ -329,25 +396,6 @@ export class CuadreAgentesPageComponent {
     this.state.clear();
   }
 
-  /**
-   * Whole quantities only (the `appDecimalInput` directive already blocks
-   * decimals at the keystroke level); empty, negative or invalid → 0. After
-   * loading an arqueo, any change marks the breakdown as modified.
-   */
-  onQuantityInput(denomination: CashDenomination, value: string): void {
-    const trimmed = value.trim();
-    if (trimmed === '') {
-      this.state.setCount(denomination, 0);
-      return;
-    }
-    const parsed = Number(trimmed);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      this.state.setCount(denomination, 0);
-      return;
-    }
-    this.state.setCount(denomination, Math.trunc(parsed));
-  }
-
   /** Never opens the confirmation modal if the backend's pre-check hasn't yet confirmed this date can be reconciled — see `canSaveCuadre`. */
   openConfirmModal(): void {
     if (!this.canSaveCuadre()) {
@@ -372,7 +420,8 @@ export class CuadreAgentesPageComponent {
       !this.dayStatusService.loading() &&
       this.dayOpened() &&
       !this.dayClosed() &&
-      this.bankBalancesValidation()?.canReconcile === true,
+      this.bankBalancesValidation()?.canReconcile === true &&
+      this.arqueoConfirmed(),
   );
 
   /** The whole page enabled — same conditions as `canSaveCuadre` minus `isSaving`/`isRefreshingBanks`, which don't prevent VIEWING the content, only saving it. */
@@ -405,17 +454,21 @@ export class CuadreAgentesPageComponent {
   }
 
   /**
-   * The cuadre request: the total plus the exact breakdown used and its
-   * origin (the backend re-checks the sum and stores it as a photograph).
+   * The cuadre request: the caja total plus the exact breakdown used and its
+   * origin, and the independent Bodega count (the backend re-checks every
+   * sum, reads both theoretical balances and stores the photograph).
    */
   buildReconciliationInput(): RegisterAgentReconciliationInput {
     const loaded = this.cashOrigin().loadedCount;
+    const observations = this.arqueoObservations().trim();
     return {
       totalCash: this.totalCash(),
       date: this.draft.operationDate(),
       cashDetails: this.state.details(),
       cashBreakdownSource: loaded ? loaded.source : 'MANUAL',
       ...(loaded ? { sourceCashCountId: loaded.id } : {}),
+      warehouseDetails: this.state.warehouseDetails(),
+      ...(observations ? { observations } : {}),
     };
   }
 

@@ -128,7 +128,6 @@ describe('Control de Efectivo — inventario por denominación y borradores (e2e
         { denomination: 0.01, quantity: 0 },
       ],
       observations: 'Conteo a medias',
-      countWarehouse: false,
     };
     const saved = data(
       await as(superToken)(

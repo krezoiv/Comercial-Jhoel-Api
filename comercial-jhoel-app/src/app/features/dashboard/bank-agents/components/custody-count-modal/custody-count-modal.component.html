@@ -1,0 +1,173 @@
+@if (open()) {
+  <div class="backdrop" role="presentation">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="custody-count-title">
+      <header class="sheet__header">
+        <span class="sheet__icon"><app-icon name="check-check" [size]="22" /></span>
+        <div>
+          <h2 class="sheet__title" id="custody-count-title">Arqueo General de Efectivo</h2>
+          <p class="sheet__subtitle">Conciliación física de efectivo en Caja y Bodega.</p>
+        </div>
+        <button type="button" class="sheet__close" aria-label="Cerrar" (click)="cancelled.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </header>
+
+      <div class="sheet__body">
+        <!-- Resumen -->
+        <section class="cards" aria-label="Resumen del arqueo">
+          <div class="card card--caja">
+            <span>Saldo teórico Caja</span>
+            <strong>{{ cashTheoretical() === null ? '—' : formatCurrency(cashTheoretical()!) }}</strong>
+          </div>
+          <div class="card card--bodega">
+            <span>Saldo teórico Bodega</span>
+            <strong>{{ warehouseTheoretical() === null ? '—' : formatCurrency(warehouseTheoretical()!) }}</strong>
+          </div>
+          <div class="card card--total">
+            <span>Total teórico</span>
+            <strong>{{ theoreticalTotal() === null ? '—' : formatCurrency(theoreticalTotal()!) }}</strong>
+          </div>
+          <div class="card card--total">
+            <span>Total físico contado</span>
+            <strong>{{ formatCurrency(countedTotal()) }}</strong>
+          </div>
+          <div class="card card--diff" [attr.data-tone]="tone(consolidatedDiff())">
+            <span>Diferencia consolidada</span>
+            <strong>{{ formatDifference(consolidatedDiff()) }}</strong>
+            <small>{{ toneLabel(consolidatedDiff()) }}</small>
+          </div>
+        </section>
+
+        <!-- Dos conteos independientes -->
+        <div class="panels">
+          <section class="panel panel--caja" aria-labelledby="custody-caja-title">
+            <header class="panel__header">
+              <h3 id="custody-caja-title"><app-icon name="wallet" [size]="18" /> Efectivo en Caja</h3>
+              <span class="chip" [attr.data-tone]="tone(cashDiff())">{{ toneLabel(cashDiff()) }} {{ formatDifference(cashDiff()) }}</span>
+            </header>
+            <app-cuadre-cash-source
+              [origin]="origin()"
+              [hasQuantities]="hasCashQuantities()"
+              [loading]="loadingCount()"
+              (loadLatest)="loadLatest.emit()"
+              (clear)="clearCash.emit()"
+            />
+            <ng-container
+              *ngTemplateOutlet="countTable; context: { counts: cashCounts(), location: 'CAJA', total: cashTotal(), label: 'Total contado en Caja' }"
+            />
+          </section>
+
+          <section class="panel panel--bodega" aria-labelledby="custody-bodega-title">
+            <header class="panel__header">
+              <h3 id="custody-bodega-title"><app-icon name="package" [size]="18" /> Efectivo en Bodega</h3>
+              <span class="chip" [attr.data-tone]="tone(warehouseDiff())">{{ toneLabel(warehouseDiff()) }} {{ formatDifference(warehouseDiff()) }}</span>
+            </header>
+            <div class="panel__tools">
+              <p>Conteo físico del efectivo resguardado en Bodega, independiente del de Caja.</p>
+              <app-button variant="ghost" size="sm" (click)="clearWarehouse.emit()">
+                <app-icon name="rotate-ccw" [size]="14" /> Limpiar
+              </app-button>
+            </div>
+            <ng-container
+              *ngTemplateOutlet="countTable; context: { counts: warehouseCounts(), location: 'BODEGA', total: warehouseTotal(), label: 'Total contado en Bodega' }"
+            />
+          </section>
+        </div>
+
+        <!-- Consolidado -->
+        <section class="consolidated" aria-label="Diferencias por ubicación" aria-live="polite">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>Ubicación</th><th class="num">Teórico</th><th class="num">Físico</th><th class="num">Diferencia</th></tr>
+              </thead>
+              <tbody>
+                @for (row of rows(); track row.label) {
+                  <tr [class]="'row--' + row.tone">
+                    <th scope="row">{{ row.label }}</th>
+                    <td class="num">{{ row.theoretical === null ? '—' : formatCurrency(row.theoretical) }}</td>
+                    <td class="num">{{ formatCurrency(row.counted) }}</td>
+                    <td class="num diff" [attr.data-tone]="tone(row.difference)">{{ formatDifference(row.difference) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (offsetWarning(); as warning) {
+            <p class="warning" role="status"><app-icon name="alert-triangle" [size]="16" /> {{ warning }}</p>
+          }
+          <p class="hint">
+            Las diferencias quedan registradas tal cual: el arqueo nunca ajusta los saldos. El resultado del cuadre usa lo
+            contado en Caja y en Bodega.
+          </p>
+        </section>
+
+        <div class="field">
+          <label for="custody-observations">Observaciones <span>(opcional)</span></label>
+          <textarea
+            id="custody-observations"
+            rows="2"
+            maxlength="500"
+            [value]="observations()"
+            (input)="onObservations($any($event.target).value)"
+          ></textarea>
+        </div>
+      </div>
+
+      <footer class="sheet__footer">
+        <dl class="totals">
+          <div><dt>Total Caja</dt><dd>{{ formatCurrency(cashTotal()) }}</dd></div>
+          <div><dt>Total Bodega</dt><dd>{{ formatCurrency(warehouseTotal()) }}</dd></div>
+          <div><dt>Total consolidado</dt><dd>{{ formatCurrency(countedTotal()) }}</dd></div>
+          <div>
+            <dt>Diferencias</dt>
+            <dd>
+              <span [attr.data-tone]="tone(cashDiff())">Caja {{ formatDifference(cashDiff()) }}</span> ·
+              <span [attr.data-tone]="tone(warehouseDiff())">Bodega {{ formatDifference(warehouseDiff()) }}</span>
+            </dd>
+          </div>
+        </dl>
+        <div class="actions">
+          <app-button variant="ghost" (click)="cancelled.emit()">Cancelar</app-button>
+          <app-button variant="primary" (click)="confirmed.emit()">
+            <app-icon name="check" [size]="16" /> Confirmar Arqueo
+          </app-button>
+        </div>
+      </footer>
+    </div>
+  </div>
+}
+
+<ng-template #countTable let-counts="counts" let-location="location" let-total="total" let-label="label">
+  <div class="table-scroll">
+    <table class="count">
+      <thead>
+        <tr><th>Denominación</th><th class="num">Cantidad</th><th class="num">Subtotal</th></tr>
+      </thead>
+      <tbody>
+        @for (denomination of denominations; track denomination) {
+          <tr>
+            <td class="count__denomination">{{ formatCurrency(denomination) }}</td>
+            <td class="num">
+              <input
+                type="text"
+                inputmode="numeric"
+                [appDecimalInput]="0"
+                [value]="counts[denomination]"
+                (input)="onQuantity(location, denomination, $any($event.target).value)"
+                [attr.aria-label]="'Cantidad de ' + formatCurrency(denomination) + (location === 'CAJA' ? ' en Caja' : ' en Bodega')"
+              />
+            </td>
+            <td class="num">{{ formatCurrency(subtotal(counts, denomination)) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">{{ label }}</th>
+          <th class="num">{{ formatCurrency(total) }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</ng-template>

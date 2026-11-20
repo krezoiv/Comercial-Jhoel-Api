@@ -1,4 +1,4 @@
-import { DayWorkStatus } from './cuadre-agentes.model';
+import { CuadreCashCount, DayWorkStatus } from './cuadre-agentes.model';
 
 /** Only the three terminal/managed states — a day still in progress (NOT_OPENED/OPENED/BANK_BALANCES_SAVED) isn't this module's concern. */
 export type ClosedDayStatus = Extract<DayWorkStatus, 'CLOSED' | 'REOPENED' | 'CANCELLED'>;
@@ -58,6 +58,9 @@ export interface ClosedDayReconciliation {
   id: string;
   date: string;
   totalCash: number;
+  /** Bodega that entered the result (counted since the Arqueo de Caja counts it; 0 on old cuadres). */
+  totalWarehouseCash?: number;
+  totalSchoolListPending?: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;
@@ -67,10 +70,10 @@ export interface ClosedDayReconciliation {
 }
 
 /**
- * "Ver Detalle" — never includes a cash-denomination breakdown: this app
- * never had a per-denomination count table, `reconciliation.totalCash`
- * is the only cash figure the backend knows for an already-closed day
- * (see the backend's own `DayDetailOutput`).
+ * "Ver Detalle". `cashCount` is the "Arqueo de Caja" saved with the cuadre:
+ * caja (and, on recent cuadres, Bodega) by denomination with theoretical
+ * balances and differences. Null when the cuadre was saved without a
+ * breakdown (older cuadres): only `reconciliation.totalCash` exists then.
  */
 export interface ClosedDayDetail {
   date: string;
@@ -88,6 +91,7 @@ export interface ClosedDayDetail {
   cancelReason: string | null;
   banks: ClosedDayBankRow[];
   reconciliation: ClosedDayReconciliation | null;
+  cashCount?: CuadreCashCount | null;
   auditLog: DayAuditLogEntry[];
 }
 

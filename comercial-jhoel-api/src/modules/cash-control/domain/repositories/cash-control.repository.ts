@@ -189,6 +189,14 @@ export interface CashCutPeriodRow {
   inheritedDifference: number | null;
   closingSystemCash: number | null;
   closingPhysicalCash: number | null;
+  /**
+   * Official Bodega balance when the cut was finished (migration
+   * 1760008800000). Bodega is never counted in a cut nor part of its
+   * difference; null on older cuts and on cuts not finished.
+   */
+  closingWarehouseBalance: number | null;
+  /** Total bajo resguardo = counted caja + Bodega balance (null when Bodega was not photographed). */
+  closingCustodyTotal: number | null;
   cashDifference: number | null;
   totalIn: number | null;
   totalOut: number | null;
@@ -214,6 +222,8 @@ export interface CashCountRow {
   totalCounted: number;
   systemCash: number;
   difference: number;
+  /** Official Bodega balance photographed with this cut arqueo (null before migration 1760008800000). */
+  warehouseBalance: number | null;
   observations: string | null;
   isCurrent: boolean;
   createdByUsername: string;

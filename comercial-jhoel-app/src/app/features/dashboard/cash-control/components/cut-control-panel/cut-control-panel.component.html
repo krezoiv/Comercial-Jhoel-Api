@@ -110,6 +110,7 @@
             @if (period.status === 'ABIERTO') {
               <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(period.openingPhysicalCash ?? 0) }}</dd></div>
               <div><dt>Efectivo actual (sistema)</dt><dd><strong>{{ formatCurrency(period.liveSystemCash ?? 0) }}</strong></dd></div>
+              <div><dt>Bodega (saldo registrado)</dt><dd>{{ formatCurrency(period.liveWarehouseBalance ?? 0) }}</dd></div>
               <div><dt>Entradas</dt><dd class="in">{{ formatCurrency(period.liveTotalIn ?? 0) }}</dd></div>
               <div><dt>Salidas</dt><dd class="out">{{ formatCurrency(period.liveTotalOut ?? 0) }}</dd></div>
               <div><dt>Movimientos</dt><dd>{{ period.liveMovementCount ?? 0 }}</dd></div>
@@ -117,9 +118,11 @@
             }
             @if (period.status === 'FINALIZADO') {
               <div><dt>Efectivo inicial (físico)</dt><dd>{{ formatCurrency(period.openingPhysicalCash ?? 0) }}</dd></div>
-              <div><dt>Efectivo final (contado)</dt><dd><strong>{{ formatCurrency(period.closingPhysicalCash ?? 0) }}</strong></dd></div>
+              <div><dt>Caja (contado)</dt><dd><strong>{{ formatCurrency(period.closingPhysicalCash ?? 0) }}</strong></dd></div>
               <div><dt>Sistema al finalizar</dt><dd>{{ formatCurrency(period.closingSystemCash ?? 0) }}</dd></div>
-              <div><dt>Diferencia</dt><dd [class.in]="(period.cashDifference ?? 0) > 0" [class.out]="(period.cashDifference ?? 0) < 0">{{ formatDifference(period.cashDifference ?? 0) }}</dd></div>
+              <div><dt>Diferencia de Caja</dt><dd [class.in]="(period.cashDifference ?? 0) > 0" [class.out]="(period.cashDifference ?? 0) < 0">{{ formatDifference(period.cashDifference ?? 0) }}</dd></div>
+              <div><dt>Bodega (saldo registrado)</dt><dd>{{ period.closingWarehouseBalance == null ? 'No registrado' : formatCurrency(period.closingWarehouseBalance) }}</dd></div>
+              <div><dt>Total bajo resguardo</dt><dd>{{ period.closingCustodyTotal == null ? '—' : formatCurrency(period.closingCustodyTotal) }}</dd></div>
               <div><dt>Bancos (dif. total)</dt><dd>{{ formatDifference(period.bankDifferenceTotal ?? 0) }}</dd></div>
               <div><dt>Responsables</dt><dd>{{ period.openedByUsername }} / {{ period.closedByUsername }}</dd></div>
             }
@@ -184,7 +187,13 @@
   }
 </section>
 
-<app-cash-cut-finish-modal [open]="finishPeriod() !== null" [period]="finishPeriod()" (closed)="finishPeriod.set(null)" (saved)="onFinished($event)" />
+<app-cash-cut-finish-modal
+  [open]="finishPeriod() !== null"
+  [period]="finishPeriod()"
+  [reference]="firstCutOf(finishPeriod())"
+  (closed)="finishPeriod.set(null)"
+  (saved)="onFinished($event)"
+/>
 <app-cash-cut-detail-modal [periodId]="detailPeriodId()" (closed)="detailPeriodId.set(null)" />
 <app-cash-reason-modal
   [open]="reasonAction() !== null"

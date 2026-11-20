@@ -96,14 +96,17 @@
           <section class="detail-section">
             <h3 class="detail-section__title">
               <app-icon name="briefcase" [size]="16" />
-              Cuadre de Efectivo
+              Arqueo de Caja (Caja y Bodega)
             </h3>
             @if (d.reconciliation) {
-              <p class="cash-total">Total Efectivo: <strong>{{ formatCurrency(d.reconciliation.totalCash) }}</strong></p>
-              <p class="cash-note">
-                Esta aplicación no almacena el desglose por denominación — solo el total de efectivo ingresado al
-                momento del cuadre.
-              </p>
+              @if (d.cashCount) {
+                <app-cuadre-cash-count-view [count]="d.cashCount" />
+              } @else {
+                <p class="cash-total">Total Efectivo: <strong>{{ formatCurrency(d.reconciliation.totalCash) }}</strong></p>
+                <p class="cash-note">
+                  Este cuadre se guardó sin desglose por denominación: solo se conoce el total de efectivo.
+                </p>
+              }
             } @else {
               <p class="empty-note">Aún no existe un cuadre guardado para esta fecha.</p>
             }
@@ -121,9 +124,21 @@
                   <dd>{{ formatCurrency(d.reconciliation.totalBanks) }}</dd>
                 </div>
                 <div class="summary-grid__item">
-                  <dt>Total Efectivo</dt>
+                  <dt>Efectivo en Caja</dt>
                   <dd>{{ formatCurrency(d.reconciliation.totalCash) }}</dd>
                 </div>
+                @if (d.reconciliation.totalWarehouseCash) {
+                  <div class="summary-grid__item">
+                    <dt>Efectivo en Bodega</dt>
+                    <dd>{{ formatCurrency(d.reconciliation.totalWarehouseCash) }}</dd>
+                  </div>
+                }
+                @if (d.reconciliation.totalSchoolListPending) {
+                  <div class="summary-grid__item">
+                    <dt>Listas por trasladar (−)</dt>
+                    <dd>− {{ formatCurrency(d.reconciliation.totalSchoolListPending) }}</dd>
+                  </div>
+                }
                 <div class="summary-grid__item">
                   <dt>Total Cuentas por Cobrar</dt>
                   <dd>{{ formatCurrency(d.reconciliation.totalAccountsReceivable) }}</dd>

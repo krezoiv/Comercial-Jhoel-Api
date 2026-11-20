@@ -1510,11 +1510,12 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
   renglón de caja desde el Kardex enruta a la misma anulación (`void_manual_cash_movement`).
 - **Arqueo de Caja** (`register_cash_count`, `cash_counts` + `cash_count_details`): foto histórica (teórico de caja y de
   Bodega leídos bajo sus locks, contado, diferencia, CUADRADO/FALTANTE/SOBRANTE). Nunca escribe en el Kardex ni ajusta
-  saldos. Conteo físico de Bodega opcional (vista consolidada). Corrección (admin, motivo) = arqueo nuevo con la MISMA foto,
+  saldos. Bodega ya no se cuenta en el arqueo (migración `1760008800000`): solo su saldo oficial fotografiado. Corrección (admin, motivo) = arqueo nuevo con la MISMA foto,
   el original queda `REEMPLAZADO`. Arqueos, detalles y Kardex de Bodega inmutables (`cash_custody_status_only_guard`).
 - **Cuadre de Agentes = cuadre consolidado**: `agent_reconciliations.total_warehouse_cash` (DEFAULT 0 → históricos sin
   cambio); resultado = caja contada + Bodega + bancos + CxC − activos (`close_agent_day` recibe el 8.º parámetro; también en
-  la revisión de días). Los cortes y arqueos de caja siguen usando solo caja.
+  la revisión de días). Los cortes y arqueos de caja siguen usando solo caja. Desde la migración `1760008800000` la Bodega
+  que entra es la CONTADA en el Arqueo de Caja del cuadre (ver "Caja y Bodega como ubicaciones independientes").
 - **RBAC** (`CASH_CUSTODY_PERMISSION_ROLES` + `cash_custody_assert_role` en SQL): `cash_custody.view`/`operate` =
   SUPER_ADMIN, ADMIN, SUPERVISOR_DE_TURNO; `cash_custody.authorize` (anular, corregir, saldo inicial de Bodega, entrega sin
   desglose) = SUPER_ADMIN, ADMIN.
@@ -1597,6 +1598,35 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **Otras rutas nuevas**: `GET inventory`, `GET/POST warehouse/counts`, `GET custody/transfers` (historial unificado con desglose; filtros `kind`, `userId`, fechas, `status`).
 - **No cambia**: el depósito de caja a banco no valida por denominación (no se pidió). Transaccionar, CxC, Activos y los movimientos manuales siguen sin desglose y aparecen como "sin desglosar".
 - **Pruebas**: `sql/tests/cash-denomination-inventory.test.sql` (31), concurrencia de Bodega por denominación en `cash-control-concurrency.sh`, `test/cash-inventory.e2e-spec.ts`, specs de casos de uso y de errores. Documento técnico: `docs/cash-control/inventario-por-denominacion-y-borradores.md`.
+
+### Caja y Bodega como ubicaciones independientes (migración `1760008800000`)
+
+Pedido del dueño (2026-11-20). Ningún saldo nuevo: Caja = `cash_balance()`, Bodega = `warehouse_cash_balance()`.
+
+- **Arqueo de Caja (Control de Efectivo)**: solo cuenta la caja. `warehouseCounted` salió del DTO y del caso de uso
+  (`forbidNonWhitelisted` lo rechaza con 400); el repositorio manda `NULL` a `register_cash_count` (la función no cambió).
+  La foto sigue guardando el saldo oficial de Bodega (`warehouse_balance`) y `custodyCounted` = caja contada + Bodega
+  registrada. Los arqueos viejos con Bodega contada a mano se siguen mostrando tal cual. Los borradores ya no guardan Bodega.
+- **Cortes**: `finish_cash_cut_period` toma también el lock `warehouse_cash_main` (orden caja → Bodega) y fotografía
+  `warehouse_cash_balance()` en `cash_cut_counts.warehouse_balance` y `cash_cut_periods.closing_warehouse_balance`;
+  `reopen_cash_cut_period` lo limpia como las demás cifras de cierre. Bodega nunca se cuenta en un corte ni entra en su
+  diferencia. Salida: `closingWarehouseBalance`, `closingCustodyTotal` (caja contada + Bodega), `liveWarehouseBalance` en el
+  corte abierto y `warehouseBalance` en cada arqueo del corte. Cortes anteriores: `NULL` ("No registrado").
+- **Cuadre de Agentes → Arqueo de Caja**: conteo físico de Caja Y de Bodega, independientes y obligatorios (decisión del
+  dueño: el resultado usa Caja contada + Bodega CONTADA).
+  - `POST /agent-reconciliations` agrega `warehouseDetails` y `observations`; `CloseAgentDayUseCase` exige ambos conteos
+    (`CUADRE_CUSTODY_COUNT_REQUIRED`) y valida Bodega como la caja (`CUADRE_WAREHOUSE_BREAKDOWN_INVALID`/`_MISMATCH`).
+  - `close_agent_day_with_cash_breakdown` (nueva firma con `p_warehouse_details`, `p_observations` DEFAULT NULL; las
+    llamadas de 12 parámetros siguen igual) guarda en `agent_reconciliation_cash_breakdowns` `cash_theoretical`,
+    `cash_difference`, `warehouse_theoretical`, `warehouse_counted`, `warehouse_difference`, `consolidated_difference` y
+    `observations` (CHECK de consistencia; todo `NULL` en cuadres anteriores) y cada denominación de Bodega en
+    `agent_reconciliation_warehouse_details` (inmutable). Los teóricos se leen al guardar; nada se ajusta.
+  - `GET /banks/cuadre-agentes-summary` agrega `theoreticalCash`; `GET /closed-days/:date` agrega `cashCount`
+    (`AgentReconciliationRepository.findCashCount`).
+- **Traslados** sin cambios: Caja → Bodega y Bodega → Caja ya eran un renglón en cada Kardex, sin ingreso ni gasto.
+- **Pruebas**: `sql/tests/cash-custody-locations.test.sql` (48 casos), `close-agent-day.use-case.spec.ts`,
+  `cash-custody.use-cases.spec.ts`, `test/cuadre-cash-breakdown.e2e-spec.ts` (escenario Caja −Q100 / Bodega +Q100).
+  Down/up verificados en una copia: las funciones vuelven exactamente a su definición anterior.
 
 ### Caja de Listas Escolares (`modules/school-cash-box/`, migración `1760008700000`)
 

@@ -26,7 +26,6 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { CashBreakdownTableComponent } from '../../../transaccionar/components/cash-breakdown-table/cash-breakdown-table.component';
 import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatGuatemalaDateTime, formatIsoDate, round2 } from '../../cash-control.util';
@@ -36,9 +35,10 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatGuatemalaD
  * compare them with the theoretical caja balance. The live difference is a
  * preview; on save the backend reads the theoretical balance under its lock,
  * stores the photograph and returns the official result (cuadrado / faltante
- * / sobrante). It never adjusts the caja nor writes a Kardex movement. Bodega
- * cash is shown separately and is never part of the caja count; it may be
- * counted optionally for the consolidated view.
+ * / sobrante). It never adjusts the caja nor writes a Kardex movement. Only
+ * the cash physically in the CAJA is counted: Bodega is never counted here
+ * (its official balance comes from its own Kardex) and never enters the
+ * difference; it is shown next to it as "total bajo resguardo".
  *
  * With `correctionOf` it is the audited correction of an earlier count
  * (admin): same photograph (theoretical values of that moment), new
@@ -56,7 +56,7 @@ import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatGuatemalaD
 @Component({
   selector: 'app-cash-count-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, IconComponent, DecimalInputDirective, CashBreakdownTableComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent, CashBreakdownTableComponent],
   templateUrl: './cash-count-modal.component.html',
   styleUrl: './cash-count-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,8 +83,6 @@ export class CashCountModalComponent implements OnChanges {
 
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
   readonly observations = signal('');
-  readonly countWarehouse = signal(false);
-  readonly warehouseCounted = signal<number | null>(null);
   readonly reason = signal('');
   readonly isSaving = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -127,13 +125,11 @@ export class CashCountModalComponent implements OnChanges {
     return diff === 0 ? 'green' : diff > 0 ? 'red' : 'yellow';
   });
   readonly theoretical = computed(() => this.theoreticalSignal());
+  /** Official Bodega balance (never counted in this arqueo). */
   readonly warehouseTheoretical = computed(() => this.warehouseSignal());
-  readonly canSave = computed(
-    () =>
-      !this.isSaving() &&
-      (!this.correctionOf || this.reason().trim().length >= 5) &&
-      (!this.countWarehouse() || (this.warehouseCounted() ?? -1) >= 0),
-  );
+  /** Total bajo resguardo = caja contada + Bodega registrada (Bodega never offsets a caja difference). */
+  readonly custodyTotal = computed(() => round2(this.totalCounted() + this.warehouseSignal()));
+  readonly canSave = computed(() => !this.isSaving() && (!this.correctionOf || this.reason().trim().length >= 5));
 
   ngOnChanges(): void {
     if (!this.open || this.isSaving()) {
@@ -148,8 +144,6 @@ export class CashCountModalComponent implements OnChanges {
         : emptyCashCounts(),
     );
     this.observations.set(original?.observations ?? '');
-    this.countWarehouse.set(original?.warehouseCounted !== null && original?.warehouseCounted !== undefined);
-    this.warehouseCounted.set(original?.warehouseCounted ?? null);
     this.reason.set('');
     this.errorMessage.set(null);
     this.result.set(null);
@@ -175,22 +169,10 @@ export class CashCountModalComponent implements OnChanges {
     this.scheduleDraftSave();
   }
 
-  setCountWarehouse(value: boolean): void {
-    this.countWarehouse.set(value);
-    this.scheduleDraftSave();
-  }
-
-  setWarehouseCounted(value: number | null): void {
-    this.warehouseCounted.set(value);
-    this.scheduleDraftSave();
-  }
-
   /** Whether anything was typed (enables "Reiniciar arqueo"). */
   readonly hasInput = computed(
     () =>
-      Object.values(this.cashCounts()).some((q) => (q || 0) > 0) ||
-      this.observations().trim().length > 0 ||
-      this.countWarehouse(),
+      Object.values(this.cashCounts()).some((q) => (q || 0) > 0) || this.observations().trim().length > 0,
   );
 
   /** "Reiniciar arqueo": explicit, confirmed reset — discards the draft (server and local). */
@@ -208,7 +190,7 @@ export class CashCountModalComponent implements OnChanges {
       return;
     }
     this.cancelPendingSave();
-    this.applyPayload({ details: [], observations: null, countWarehouse: false, warehouseCounted: null });
+    this.applyPayload({ details: [], observations: null });
     this.clearLocalDraft();
     this.draftRestored.set(false);
     this.service.discardCountDraft().subscribe({
@@ -235,8 +217,6 @@ export class CashCountModalComponent implements OnChanges {
     return {
       details: cashCountsToDetails(this.cashCounts(), { keepZero: true }),
       observations: this.observations().trim() || null,
-      countWarehouse: this.countWarehouse(),
-      warehouseCounted: this.countWarehouse() ? (this.warehouseCounted() ?? null) : null,
     };
   }
 
@@ -245,9 +225,8 @@ export class CashCountModalComponent implements OnChanges {
       ...emptyCashCounts(),
       ...Object.fromEntries(payload.details.map((row) => [String(row.denomination), row.quantity])),
     });
+    // Older drafts may still carry a Bodega count: it is ignored (Bodega is never counted here).
     this.observations.set(payload.observations ?? '');
-    this.countWarehouse.set(payload.countWarehouse);
-    this.warehouseCounted.set(payload.warehouseCounted);
   }
 
   private readLocalDraft(): { payload: CashCountDraftPayload; savedAt: string } | null {
@@ -394,7 +373,6 @@ export class CashCountModalComponent implements OnChanges {
     const input = {
       details: cashCountsToDetails(this.cashCounts(), { keepZero: true }),
       observations: this.observations().trim() || undefined,
-      warehouseCounted: this.countWarehouse() ? (this.warehouseCounted() ?? 0) : undefined,
       clientRequestId: this.requestId,
     };
     this.isSaving.set(true);

@@ -77,12 +77,33 @@
   color: #b45309;
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-  font-size: var(--fs-sm);
+// Caja contada + Bodega registrada (informative: Bodega never enters the difference).
+.custody {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-light-muted);
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  strong {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.custody__total {
+  color: #4f46e5;
 }
 
 .outcome {

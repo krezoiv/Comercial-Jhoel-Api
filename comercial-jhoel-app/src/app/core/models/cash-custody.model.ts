@@ -157,7 +157,6 @@ export interface CashCountFilters {
 export interface RegisterCashCountInput {
   details: { denomination: number; quantity: number }[];
   observations?: string;
-  warehouseCounted?: number;
   clientRequestId: string;
 }
 
@@ -239,8 +238,6 @@ export interface RegisterWarehouseCashCountInput {
 export interface CashCountDraftPayload {
   details: Array<{ denomination: number; quantity: number }>;
   observations: string | null;
-  countWarehouse: boolean;
-  warehouseCounted: number | null;
 }
 
 export interface CashCountDraft {
