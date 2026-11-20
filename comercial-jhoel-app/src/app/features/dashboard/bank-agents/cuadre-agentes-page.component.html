@@ -154,6 +154,12 @@
                 <td colspan="2">Total Bancos</td>
                 <td class="align-right">{{ formatCurrency(summary()!.totalBanks) }}</td>
               </tr>
+              @if (summary()!.totalSchoolListPending) {
+                <tr class="banks-table__subtotal-row">
+                  <td colspan="2" title="Pagos de listas escolares recibidos en bancos que pertenecen a la Caja de Listas">Listas escolares por trasladar (se restan del cuadre)</td>
+                  <td class="align-right">− {{ formatCurrency(summary()!.totalSchoolListPending ?? 0) }}</td>
+                </tr>
+              }
             </tfoot>
           </table>
         </div>
@@ -252,6 +258,12 @@
             <dt>Total Bancos</dt>
             <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalBanks ?? 0) }}</dd>
           </div>
+          @if (summary()?.totalSchoolListPending) {
+            <div class="result-summary__row">
+              <dt>Listas escolares por trasladar (−)</dt>
+              <dd>− {{ formatCurrency(summary()?.totalSchoolListPending ?? 0) }}</dd>
+            </div>
+          }
           <div class="result-summary__row">
             <dt>Total Cuentas por Cobrar</dt>
             <dd>{{ loading() ? '—' : formatCurrency(summary()?.totalAccountsReceivable ?? 0) }}</dd>
@@ -287,6 +299,7 @@
   [totalBanks]="summary()?.totalBanks ?? 0"
   [totalAssets]="summary()?.totalAssets ?? 0"
   [totalAccountsReceivable]="summary()?.totalAccountsReceivable ?? 0"
+  [totalSchoolListPending]="summary()?.totalSchoolListPending ?? 0"
   [result]="resultCuadre()"
   [isSaving]="isSaving()"
   (confirmed)="confirmSaveCuadre()"

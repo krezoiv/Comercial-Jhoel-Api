@@ -28,4 +28,10 @@ export interface CuadreAgentesSummaryOutput {
    * banks + CxC − assets. A caja → Bodega delivery therefore never changes it.
    */
   totalWarehouseCash: number;
+  /**
+   * School-list money still in the banks (Caja de Listas, "pendiente de
+   * trasladar"). It is already inside `totalBanks` and the result subtracts
+   * it, so list payments never move the agents' cuadre (owner decision).
+   */
+  totalSchoolListPending: number;
 }

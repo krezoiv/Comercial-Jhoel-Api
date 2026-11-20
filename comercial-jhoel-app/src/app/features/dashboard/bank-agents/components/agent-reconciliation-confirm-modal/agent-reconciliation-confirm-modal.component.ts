@@ -18,6 +18,8 @@ export class AgentReconciliationConfirmModalComponent {
   @Input() totalBanks = 0;
   @Input() totalAssets = 0;
   @Input() totalAccountsReceivable = 0;
+  /** School-list money in banks that the result subtracts (Caja de Listas). */
+  @Input() totalSchoolListPending = 0;
   @Input() result = 0;
   @Input() isSaving = false;
 

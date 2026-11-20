@@ -21,6 +21,12 @@
           <dt>Total Bancos</dt>
           <dd>{{ formatCurrency(totalBanks) }}</dd>
         </div>
+        @if (totalSchoolListPending) {
+          <div class="modal__summary-row">
+            <dt>Listas escolares por trasladar (−)</dt>
+            <dd>− {{ formatCurrency(totalSchoolListPending) }}</dd>
+          </div>
+        }
         <div class="modal__summary-row">
           <dt>Total Cuentas por Cobrar</dt>
           <dd>{{ formatCurrency(totalAccountsReceivable) }}</dd>

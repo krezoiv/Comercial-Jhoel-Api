@@ -6,6 +6,8 @@ export interface AgentReconciliationOutput {
   totalCash: number;
   /** Bodega cash included in the result (consolidated cuadre). */
   totalWarehouseCash: number;
+  /** School-list money in banks subtracted from the result. */
+  totalSchoolListPending: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;
@@ -22,6 +24,7 @@ export function toAgentReconciliationOutput(
     date: reconciliation.date,
     totalCash: reconciliation.totalCash,
     totalWarehouseCash: reconciliation.totalWarehouseCash,
+    totalSchoolListPending: reconciliation.totalSchoolListPending,
     totalBanks: reconciliation.totalBanks,
     totalAssets: reconciliation.totalAssets,
     totalAccountsReceivable: reconciliation.totalAccountsReceivable,

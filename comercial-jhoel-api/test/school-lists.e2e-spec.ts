@@ -24,6 +24,8 @@ describe('Listas Escolares (e2e)', () => {
   let adminToken: string;
   let userToken: string;
   let product: { id: string; name: string; public_price: string };
+  /** A regular account: transfers of lists now need the receiving bank (Caja de Listas). */
+  let bankId: string;
 
   type Body = Record<string, any>;
   const api = () => request(app.getHttpServer());
@@ -80,6 +82,9 @@ describe('Listas Escolares (e2e)', () => {
       jwt.sign({ sub: u.id, username: u.username, role: u.role });
     adminToken = sign(admin);
     userToken = sign(cashier);
+    [{ id: bankId }] = (await dataSource.query(
+      `SELECT id FROM banks WHERE is_active AND special_account IS NULL ORDER BY name LIMIT 1`,
+    )) as Array<{ id: string }>;
     [product] = (await dataSource.query(
       `SELECT id, name, public_price FROM products WHERE is_active ORDER BY created_at LIMIT 1`,
     )) as (typeof product)[];
@@ -306,6 +311,7 @@ describe('Listas Escolares (e2e)', () => {
         api().post(`/api/school-lists/quotations/${created.id}/payments`).send({
           amount,
           paymentMethod: 'TRANSFERENCIA',
+          bankId,
           reference: 'TRX-1',
           clientRequestId: id,
         }),

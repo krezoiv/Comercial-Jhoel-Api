@@ -15,7 +15,12 @@ export type BankMovementType =
   | 'ACREDITACION_SALDO'
   /** Control de Efectivo → "Depósito bancario": efectivo de caja depositado a la cuenta. */
   | 'DEPOSITO_CAJA'
-  | 'COBRO_CXC';
+  | 'COBRO_CXC'
+  /** Caja de Listas Escolares: pago de lista recibido en el banco / traslado a la caja / devolución / depósito desde la caja. */
+  | 'PAGO_LISTA_ESCOLAR'
+  | 'TRASLADO_CAJA_LISTAS'
+  | 'DEVOLUCION_LISTA_ESCOLAR'
+  | 'DEPOSITO_CAJA_LISTAS';
 
 export type BankMovementOrigin =
   | 'TRANSACCIONAR'
@@ -25,7 +30,8 @@ export type BankMovementOrigin =
   | 'ANULACION'
   | 'ACREDITACION_SALDO'
   | 'CONTROL_EFECTIVO'
-  | 'CUENTAS_POR_COBRAR';
+  | 'CUENTAS_POR_COBRAR'
+  | 'LISTAS_ESCOLARES';
 
 export type BankMovementStatus = 'APLICADO' | 'ANULADO';
 
@@ -42,6 +48,10 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   ACREDITACION_SALDO: 'Acreditación de saldo',
   DEPOSITO_CAJA: 'Depósito desde caja',
   COBRO_CXC: 'Cobro cuenta por cobrar',
+  PAGO_LISTA_ESCOLAR: 'Pago de lista escolar',
+  TRASLADO_CAJA_LISTAS: 'Traslado a Caja de Listas',
+  DEVOLUCION_LISTA_ESCOLAR: 'Devolución de lista escolar',
+  DEPOSITO_CAJA_LISTAS: 'Depósito desde Caja de Listas',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };
@@ -55,6 +65,7 @@ export const BANK_MOVEMENT_ORIGIN_LABELS: Record<BankMovementOrigin, string> = {
   ACREDITACION_SALDO: 'Acreditación de saldo',
   CONTROL_EFECTIVO: 'Control de Efectivo',
   CUENTAS_POR_COBRAR: 'Cuentas por Cobrar',
+  LISTAS_ESCOLARES: 'Listas Escolares',
 };
 
 /** Datos que se envían al acreditar saldo — el backend calcula saldos y valida todo. */

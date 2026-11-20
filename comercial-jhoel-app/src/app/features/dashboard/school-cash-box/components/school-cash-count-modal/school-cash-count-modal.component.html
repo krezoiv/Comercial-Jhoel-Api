@@ -1,0 +1,46 @@
+<div class="backdrop">
+  <div class="dialog dialog--cash dialog--wide" role="dialog" aria-modal="true" aria-labelledby="scc-title" appFocusTrap tabindex="-1">
+    <header class="dialog__head">
+      <h2 id="scc-title"><app-icon name="file-check" [size]="20" /> Arqueo de la Caja de Listas</h2>
+      <button type="button" class="dialog__close" aria-label="Cerrar" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+    </header>
+    <div class="dialog__body">
+      <div class="totals">
+        <div class="totals__item">
+          <span>Saldo teórico (Kardex)</span>
+          <strong>{{ formatCurrency(theoretical) }}</strong>
+        </div>
+        <div class="totals__item">
+          <span>Efectivo contado</span>
+          <strong>{{ formatCurrency(counted()) }}</strong>
+        </div>
+        <div class="totals__item totals__item--{{ status() }}" aria-live="polite">
+          <span>Diferencia · {{ resultLabel() }}</span>
+          <strong>{{ formatCurrency(difference()) }}</strong>
+        </div>
+      </div>
+
+      <app-cash-breakdown-table
+        [cashCounts]="counts()"
+        [totalCash]="counted()"
+        [totalAmount]="theoretical"
+        [status]="status()"
+        emptyAmountText="La caja no tiene saldo teórico"
+        (quantityChange)="onQuantity($event)"
+      />
+
+      <label class="field" for="scc-obs">
+        Observaciones
+        <textarea id="scc-obs" rows="2" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)"></textarea>
+        <small>Diferencia = efectivo contado − efectivo teórico. El arqueo no ajusta el saldo: una diferencia se corrige con un ajuste autorizado.</small>
+      </label>
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+    </div>
+    <footer class="dialog__actions">
+      <app-button variant="ghost" (click)="closed.emit()">Cancelar</app-button>
+      <app-button [disabled]="busy()" (click)="save()">{{ busy() ? 'Guardando…' : 'Registrar arqueo' }}</app-button>
+    </footer>
+  </div>
+</div>

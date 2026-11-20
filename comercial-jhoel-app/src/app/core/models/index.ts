@@ -65,3 +65,4 @@ export * from './cash-control.model';
 export * from './financial-day-review.model';
 export * from './cash-custody.model';
 export * from './school-list.model';
+export * from './school-cash-box.model';

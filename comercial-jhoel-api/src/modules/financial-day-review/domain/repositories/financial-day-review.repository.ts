@@ -311,6 +311,8 @@ export interface ReconciliationRaw {
   totalCash: number;
   /** Bodega cash included in the consolidated cuadre (0 before migration 1760007400000). */
   totalWarehouseCash: number;
+  /** School-list money still in banks, subtracted from the result (0 before migration 1760008700000). */
+  totalSchoolListPending: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;

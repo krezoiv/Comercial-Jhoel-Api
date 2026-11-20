@@ -166,6 +166,7 @@ export class CuadreAgentesPageComponent {
       summary.totalAccountsReceivable,
       summary.totalAssets,
       summary.totalWarehouseCash ?? 0,
+      summary.totalSchoolListPending ?? 0,
     );
   });
 

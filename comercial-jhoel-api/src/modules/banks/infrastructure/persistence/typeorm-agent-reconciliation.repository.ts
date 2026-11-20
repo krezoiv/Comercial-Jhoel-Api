@@ -46,19 +46,23 @@ export class TypeOrmAgentReconciliationRepository implements AgentReconciliation
       if (data.cashBreakdown) {
         // Same close + the breakdown photograph, in one SQL transaction.
         const rows = await this.repository.manager.query<{ id: string }[]>(
-          'SELECT close_agent_day_with_cash_breakdown($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11) AS id',
+          'SELECT close_agent_day_with_cash_breakdown($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12) AS id',
           [
             ...params,
             JSON.stringify(data.cashBreakdown.details),
             data.cashBreakdown.source,
             data.cashBreakdown.sourceCashCountId,
+            data.totalSchoolListPending,
           ],
         );
         reconciliationId = rows[0].id;
       } else {
         const rows = await this.repository.manager.query<
           { close_agent_day: string }[]
-        >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7, $8)', params);
+        >('SELECT close_agent_day($1, $2, $3, $4, $5, $6, $7, $8, $9)', [
+          ...params,
+          data.totalSchoolListPending,
+        ]);
         reconciliationId = rows[0].close_agent_day;
       }
     } catch (error) {

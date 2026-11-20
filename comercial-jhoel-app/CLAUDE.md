@@ -1923,3 +1923,39 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
   - Al cerrarse devuelve el foco a quien lo abrió. Admite trampas anidadas.
 - **Campos**: solo los que ya existen en el backend (decisión del usuario): cliente/encargado, teléfono, alumno, grado de la plantilla, fechas y observaciones. No hay establecimiento ni sección.
 - Documento: `docs/school-lists/ventana-pos-cotizacion.md`.
+
+## Caja de Listas Escolares (`features/dashboard/school-cash-box/`, `/dashboard/caja-listas`)
+
+- **Página** `SchoolCashBoxPageComponent`: hero esmeralda con el efectivo en caja y lo pendiente en bancos, y las acciones Transferir, Arqueo y Salida según permisos. Pestañas, cada una su propio componente con `[refresh]`: Resumen, Pendiente de traslado, Movimientos, Arqueos, Salidas y ajustes, Reportes.
+- **Datos**: `SchoolCashBoxService` (`/school-cash-box`). Los permisos salen de `SchoolListService.can('school_lists.cash.*')`, el mismo endpoint de permisos de Listas. Ninguna cifra se recalcula en el cliente.
+- **Estilos**: `_school-cash.scss` es un partial de mixins (`panel`, `kpis`, `table`, `pills`, `filters`, `modal`); cada componente incluye solo los que usa (límite de 12 kB). Colores: verde = efectivo, celeste = bancos, ámbar = pendiente, teal = trasladado, índigo = recaudado, morado = ventas, rosa = saldo de clientes, rojo = faltante.
+- **Pendiente de traslado**:
+  - Se seleccionan pagos de UNA sola cuenta, con monto parcial editable (`appDecimalInput`; un campo vacío se ignora mientras se escribe y se restaura al salir).
+  - La barra fija abre `SchoolCashTransferModalComponent`, con un `clientRequestId` por apertura.
+- **Arqueo**: reutiliza `CashBreakdownTableComponent` (Transaccionar). Muestra el saldo teórico, lo contado y la diferencia; nunca ajusta.
+- **Salida y ajuste**: comparten `SchoolCashExitModalComponent`. Las anulaciones piden motivo en `SchoolCashReasonModalComponent`.
+- **Pagos de listas**:
+  - Transferencia y depósito exigen la cuenta (modal de abono, panel de pagos de la ventana POS y devolución al cancelar).
+  - La lista de cuentas se filtra con `isSchoolCashBank` (sin Génesis, BI Club, Districol ni Guayacán).
+  - Cada formulario muestra a dónde va el dinero (`schoolPaymentDestination`).
+- **Cuadre de Agentes**: muestra "Listas escolares por trasladar" y `calculateCuadreResult` lo resta (sexto parámetro).
+- **Ventana POS**: los encabezados de las tarjetas tienen color propio (cliente azul, plantilla morado, requerimientos ámbar, resumen azul, pagos verde) mediante `--accent`.
+- **Pruebas**: `school-cash-box.spec.ts`.
+
+### Caja de Listas — dashboard, clientes y estado de cuenta (2026-11-19)
+
+- **Pestañas**: Resumen, Clientes, Pagos, Traslados bancarios (alias `?tab=pendientes`), Movimientos, Arqueos, Salidas y ajustes, Reportes. Cada pestaña se filtra por su permiso.
+  - Los cajeros solo ven Clientes: no hay barra de pestañas, no se pide el resumen y el hero no muestra el saldo de caja.
+  - El menú "Caja de Listas" ya no se limita por rol; la página decide qué mostrar.
+- **Resumen** (`school-cash-summary` + `school-cash-charts`):
+  - Selector de período: toda la temporada, este mes, últimos 30 días o personalizado.
+  - Seis tarjetas principales y cuatro secundarias. Las de clientes abren Clientes con su filtro (`?vista=`).
+  - Gráficos hechos en HTML/CSS: ventas vs. recaudación, recaudación por método, evolución (día/semana/mes) y estado de cartera.
+- **Clientes** (`school-cash-customers`): búsqueda en tiempo real con debounce de 300 ms, chips de filtro rápido, filtros de estado, grado y fechas, orden; todo lo resuelve el backend. Cada fila lleva a `/dashboard/caja-listas/clientes/:key` (dígitos del teléfono).
+- **Expediente** (`customer/school-cash-customer-page`):
+  - Contenido: encabezado, tarjetas (comprado, abonado, saldo, anillo de %), listas por alumno, historial de pagos con detalle y estado de cuenta cronológico con período.
+  - "Registrar abono" reutiliza `SchoolPaymentModalComponent` y le pasa id, número, cliente, grado, total, pagado y saldo, porque el modal los lee. Con varias listas pide elegir en `CustomerListChooserComponent`.
+  - El PDF lo genera el backend y se abre en otra pestaña; si el navegador lo bloquea, se descarga.
+- **Pagos** (`school-cash-payments`): todos los pagos con su destino de dinero.
+- **Pruebas**: `school-cash-box.spec.ts` (19).
+

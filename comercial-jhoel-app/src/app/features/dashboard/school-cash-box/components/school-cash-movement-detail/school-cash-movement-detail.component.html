@@ -1,0 +1,91 @@
+<div class="backdrop">
+  <div
+    class="dialog"
+    [class.dialog--cash]="movement.direction === 'IN'"
+    [class.dialog--short]="movement.direction === 'OUT'"
+    [class.dialog--bank]="movement.direction === 'NONE'"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="scm-title"
+    appFocusTrap
+    tabindex="-1"
+  >
+    <header class="dialog__head">
+      <h2 id="scm-title"><app-icon [name]="icon[movement.movementType]" [size]="20" /> {{ label[movement.movementType] }}</h2>
+      <button type="button" class="dialog__close" aria-label="Cerrar" data-autofocus (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+    </header>
+    <div class="dialog__body">
+      <div class="total-box">
+        <span>{{ movement.movementNumber }} · {{ movement.description }}</span>
+        <strong>{{ movement.direction === 'NONE' ? formatCurrency(movement.amount) : signed(movement.cashEffect) }}</strong>
+      </div>
+      @if (movement.direction === 'NONE') {
+        <p class="hint">
+          {{ movement.bankId ? 'Dinero recibido o devuelto en el banco: no cambia el efectivo de la caja.' : 'Otro medio de pago: cuenta como recaudado, fuera de la caja.' }}
+        </p>
+      }
+      @if (movement.status === 'REVERTIDO') {
+        <p class="error" role="status">
+          Revertido el {{ formatDateTime(movement.reversedAt ?? '') }} por {{ movement.reversedByName }}: {{ movement.reverseReason }}
+        </p>
+      }
+
+      <dl class="facts">
+        <div><dt>Fecha y hora</dt><dd>{{ formatDateTime(movement.createdAt) }}</dd></div>
+        <div><dt>Día operativo</dt><dd>{{ formatDay(movement.businessDate) }}</dd></div>
+        <div><dt>Saldo antes</dt><dd>{{ formatCurrency(movement.balanceBefore) }}</dd></div>
+        <div><dt>Saldo después</dt><dd><b>{{ formatCurrency(movement.balanceAfter) }}</b></dd></div>
+        @if (movement.quotationNumber) {
+          <div>
+            <dt>Lista escolar</dt>
+            <dd>
+              <a [routerLink]="['/dashboard/listas-escolares/cotizaciones', movement.quotationId]">{{ movement.quotationNumber }}</a>
+            </dd>
+          </div>
+          <div><dt>Cliente</dt><dd>{{ movement.customerName }}</dd></div>
+        }
+        @if (movement.receiptNumber) {
+          <div><dt>Recibo</dt><dd>{{ movement.receiptNumber }}</dd></div>
+        }
+        @if (movement.paymentMethod) {
+          <div><dt>Medio de pago</dt><dd>{{ method(movement.paymentMethod) }}</dd></div>
+        }
+        @if (movement.bankName) {
+          <div><dt>Banco</dt><dd>{{ movement.bankName }}</dd></div>
+        }
+        @if (movement.transferNumber) {
+          <div><dt>Traslado</dt><dd>{{ movement.transferNumber }}</dd></div>
+        }
+        @if (movement.exitNumber) {
+          <div><dt>Salida</dt><dd>{{ movement.exitNumber }}</dd></div>
+        }
+        @if (movement.reversalOfNumber) {
+          <div><dt>Revierte a</dt><dd>{{ movement.reversalOfNumber }}</dd></div>
+        }
+        <div><dt>Referencia</dt><dd>{{ movement.reference || '—' }}</dd></div>
+        <div><dt>Usuario</dt><dd>{{ movement.userName }}</dd></div>
+        @if (movement.observations) {
+          <div class="facts__wide"><dt>Observaciones / motivo</dt><dd>{{ movement.observations }}</dd></div>
+        }
+      </dl>
+    </div>
+    <footer class="dialog__actions">
+      @if (canRevert()) {
+        <app-button variant="ghost-danger" (click)="error.set(null); asking.set(true)">Revertir ajuste</app-button>
+      }
+      <app-button variant="secondary" (click)="closed.emit()">Cerrar</app-button>
+    </footer>
+  </div>
+</div>
+
+@if (asking()) {
+  <app-school-cash-reason-modal
+    title="Revertir ajuste {{ movement.movementNumber }}"
+    message="Se registra un movimiento inverso; el ajuste original queda como revertido."
+    confirmLabel="Revertir"
+    [busy]="busy()"
+    [error]="error()"
+    (closed)="asking.set(false)"
+    (confirmed)="revert($event)"
+  />
+}

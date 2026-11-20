@@ -1,0 +1,122 @@
+<section class="panel panel--collected">
+  <header class="panel__head">
+    <h2><app-icon name="receipt" [size]="18" /> Pagos de listas escolares</h2>
+    @if (page(); as p) {
+      <div class="panel__tools totals">
+        <span><small>Recibido</small><b class="in">{{ formatCurrency(p.totals.received) }}</b></span>
+        <span><small>Devoluciones</small><b class="out">{{ formatCurrency(p.totals.refunds) }}</b></span>
+        <span><small>Anulados</small><b>{{ formatCurrency(p.totals.voided) }}</b></span>
+      </div>
+    }
+  </header>
+
+  <form class="filters" (ngSubmit)="apply()">
+    <label>Desde <input type="date" name="from" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" /></label>
+    <label>Hasta <input type="date" name="to" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" /></label>
+    <label>
+      Método
+      <select name="method" [ngModel]="method()" (ngModelChange)="method.set($event)">
+        <option value="">Todos</option>
+        <option value="EFECTIVO">Efectivo</option>
+        <option value="TRANSFERENCIA">Transferencia</option>
+        <option value="DEPOSITO">Depósito</option>
+        <option value="TARJETA">Tarjeta</option>
+        <option value="OTRO">Otro</option>
+      </select>
+    </label>
+    <label>
+      Tipo
+      <select name="kind" [ngModel]="kind()" (ngModelChange)="kind.set($event)">
+        <option value="">Todos</option>
+        <option value="ANTICIPO">Pago inicial</option>
+        <option value="ABONO">Abono / liquidación</option>
+        <option value="DEVOLUCION">Devolución</option>
+        <option value="ANULACION">Anulación</option>
+      </select>
+    </label>
+    <label>
+      Estado
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="">Todos</option>
+        <option value="APLICADO">Aplicado</option>
+        <option value="ANULADO">Anulado</option>
+      </select>
+    </label>
+    <label>
+      Buscar
+      <input type="search" name="search" placeholder="Cliente, alumno, lista, recibo, referencia" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </label>
+    <div class="filters__actions"><app-button type="submit" size="sm"><app-icon name="filter" [size]="14" /> Filtrar</app-button></div>
+  </form>
+
+  @if (loading() && !page()) {
+    <p class="empty">Cargando pagos…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!page()?.items?.length) {
+    <p class="empty">No hay pagos con esos filtros.</p>
+  } @else {
+    <div class="table-wrap" [class.is-loading]="loading()">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Cliente / lista</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Método</th>
+            <th scope="col">Destino del dinero</th>
+            <th scope="col" class="num">Monto</th>
+            <th scope="col">Usuario</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of page()!.items; track p.id) {
+            <tr class="row" [class.is-off]="p.status === 'ANULADO'" tabindex="0" (click)="toggle(p.id)" (keydown.enter)="toggle(p.id)">
+              <td data-label="Fecha">{{ formatDateTime(p.receivedAt) }}<span class="muted">{{ p.receiptNumber }}</span></td>
+              <td data-label="Cliente" class="wide">
+                <a [routerLink]="['/dashboard/caja-listas/clientes', customerKey(p)]" (click)="$event.stopPropagation()">{{ p.customerName }}</a>
+                <span class="muted">{{ p.quotationNumber }}{{ p.studentName ? ' · ' + p.studentName : '' }}</span>
+              </td>
+              <td data-label="Tipo">{{ p.typeLabel }}</td>
+              <td data-label="Método">{{ p.methodLabel }}@if (p.bankName) {<span class="muted">{{ p.bankName }}</span>}</td>
+              <td data-label="Destino">{{ destination(p) }}</td>
+              <td data-label="Monto" class="num" [class.out]="outgoing(p)"><b>{{ outgoing(p) ? '−' : '' }}{{ formatCurrency(p.amount) }}</b></td>
+              <td data-label="Usuario">{{ p.receivedByName }}</td>
+              <td data-label="Estado">{{ p.kind === 'ANULACION' || p.kind === 'DEVOLUCION' ? '—' : p.status === 'ANULADO' ? 'Anulado' : 'Aplicado' }}</td>
+            </tr>
+            @if (open() === p.id) {
+              <tr class="detail">
+                <td colspan="8" class="wide">
+                  <dl>
+                    <div><dt>Referencia</dt><dd>{{ p.reference || '—' }}</dd></div>
+                    <div><dt>Saldo de la lista después</dt><dd>{{ formatCurrency(p.balanceAfter) }}</dd></div>
+                    @if (p.reversedReceipt) {
+                      <div><dt>Revierte al pago</dt><dd>{{ p.reversedReceipt }}</dd></div>
+                    }
+                    @if (p.pendingTransfer !== null) {
+                      <div><dt>Pendiente de trasladar</dt><dd>{{ formatCurrency(p.pendingTransfer) }}</dd></div>
+                    }
+                    @if (p.observations) {
+                      <div><dt>Observaciones</dt><dd>{{ p.observations }}</dd></div>
+                    }
+                    @if (p.voidReason) {
+                      <div><dt>Anulado por {{ p.voidedByName }}</dt><dd>{{ p.voidReason }}</dd></div>
+                    }
+                  </dl>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pages() > 1) {
+      <nav class="pager" aria-label="Páginas">
+        <app-button variant="ghost" size="sm" [disabled]="pageNumber() === 1" (click)="go(pageNumber() - 1)">Anterior</app-button>
+        <span>Página {{ pageNumber() }} de {{ pages() }}</span>
+        <app-button variant="ghost" size="sm" [disabled]="pageNumber() === pages()" (click)="go(pageNumber() + 1)">Siguiente</app-button>
+      </nav>
+    }
+  }
+</section>

@@ -1,0 +1,113 @@
+<section class="panel panel--short">
+  <header class="panel__head">
+    <h2><app-icon name="log-out" [size]="18" /> Salidas de la Caja de Listas</h2>
+    <div class="panel__tools">
+      @if (lists.can('school_lists.cash.exit')) {
+        <app-button size="sm" variant="danger" (click)="create.emit('SALIDA')"><app-icon name="plus" [size]="14" /> Registrar salida</app-button>
+      }
+    </div>
+  </header>
+  @if (loading()) {
+    <p class="empty">Cargando salidas…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!exits().length) {
+    <p class="empty">No hay salidas registradas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Salida</th>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Destino</th>
+            <th scope="col">Motivo</th>
+            <th scope="col" class="num">Monto</th>
+            <th scope="col">Autorizó</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of exits(); track e.id) {
+            <tr [class.is-off]="e.status === 'ANULADO'">
+              <td data-label="Salida"><strong>{{ e.exitNumber }}</strong> @if (e.status === 'ANULADO') {<span class="muted">Anulada</span>}</td>
+              <td data-label="Fecha">{{ formatDateTime(e.createdAt) }}</td>
+              <td data-label="Destino">
+                {{ destination[e.destination] }}
+                @if (e.bankName) {<span class="muted">{{ e.bankName }}</span>}
+                @if (e.recipientName) {<span class="muted">Para: {{ e.recipientName }}</span>}
+              </td>
+              <td data-label="Motivo" class="wide">{{ e.reason }} @if (e.voidReason) {<span class="muted">Anulación: {{ e.voidReason }}</span>}</td>
+              <td data-label="Monto" class="num out"><b>{{ formatCurrency(e.amount) }}</b></td>
+              <td data-label="Autorizó">{{ e.authorizedByName }}</td>
+              <td>
+                @if (canVoid() && e.status === 'APLICADO') {
+                  <app-button variant="ghost-danger" size="sm" (click)="ask({ kind: 'exit', exit: e })">Anular</app-button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section class="panel panel--neutral">
+  <header class="panel__head">
+    <h2><app-icon name="refresh-cw" [size]="18" /> Ajustes autorizados</h2>
+    <div class="panel__tools">
+      @if (lists.can('school_lists.cash.adjust')) {
+        <app-button size="sm" variant="secondary" (click)="create.emit('AJUSTE')"><app-icon name="plus" [size]="14" /> Nuevo ajuste</app-button>
+      }
+    </div>
+  </header>
+  @if (!adjustments().length) {
+    <p class="empty">No hay ajustes. El saldo inicial de la caja se carga con un ajuste de entrada después de contar el efectivo.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Movimiento</th>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Motivo</th>
+            <th scope="col" class="num">Monto</th>
+            <th scope="col">Usuario</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of adjustments(); track a.id) {
+            <tr [class.is-off]="a.status === 'REVERTIDO'">
+              <td data-label="Movimiento"><strong>{{ a.movementNumber }}</strong> @if (a.status === 'REVERTIDO') {<span class="muted">Revertido</span>}</td>
+              <td data-label="Fecha">{{ formatDateTime(a.createdAt) }}</td>
+              <td data-label="Motivo" class="wide">{{ a.observations }}</td>
+              <td data-label="Monto" class="num" [class.in]="a.direction === 'IN'" [class.out]="a.direction === 'OUT'">
+                <b>{{ a.direction === 'IN' ? '+' : '−' }}{{ formatCurrency(a.amount) }}</b>
+              </td>
+              <td data-label="Usuario">{{ a.userName }}</td>
+              <td>
+                @if (canVoid() && a.status === 'APLICADO') {
+                  <app-button variant="ghost-danger" size="sm" (click)="ask({ kind: 'adjustment', movement: a })">Revertir</app-button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (pending(); as p) {
+  <app-school-cash-reason-modal
+    [title]="p.kind === 'exit' ? 'Anular salida ' + p.exit.exitNumber : 'Revertir ajuste ' + p.movement.movementNumber"
+    [message]="p.kind === 'exit' ? 'El efectivo vuelve a la Caja de Listas' + (p.exit.bankName ? ' y sale de ' + p.exit.bankName : '') + '.' : 'Se registra el movimiento inverso del ajuste.'"
+    [confirmLabel]="p.kind === 'exit' ? 'Anular salida' : 'Revertir ajuste'"
+    [busy]="busy()"
+    [error]="voidError()"
+    (closed)="pending.set(null)"
+    (confirmed)="confirm($event)"
+  />
+}

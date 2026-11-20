@@ -91,15 +91,42 @@
   border-color: var(--color-danger);
 }
 
+// Colored header strip per card: summary blue, payments green.
+.side {
+  --accent: #64748b;
+  --pad: var(--space-4);
+
+  @media (min-width: 768px) {
+    --pad: var(--space-5);
+  }
+}
+
+.side--sum {
+  --accent: #2563eb;
+}
+
+.side--pay {
+  --accent: #16a34a;
+}
+
 .side__title {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) 0;
+  padding: var(--space-3) var(--pad);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold, 700);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-on-light-muted);
+  color: var(--color-text-on-light);
+
+  app-icon {
+    color: var(--accent);
+  }
 }
 
 .rows {
@@ -334,4 +361,21 @@
   .bump {
     animation: none;
   }
+}
+
+// Caja de Listas: an advance by transfer/deposit must name its bank; the
+// note says where the money goes.
+.select--bad {
+  border-color: #dc2626;
+}
+
+.dest {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #16a34a 10%, transparent);
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light);
 }

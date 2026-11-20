@@ -47,6 +47,7 @@ async function run(banks: Bank[]) {
     assetRepository,
     receivableRepository,
     { getBalance: jest.fn().mockResolvedValue(0) },
+    { getPendingTotal: jest.fn().mockResolvedValue(0) },
   ).execute();
 }
 

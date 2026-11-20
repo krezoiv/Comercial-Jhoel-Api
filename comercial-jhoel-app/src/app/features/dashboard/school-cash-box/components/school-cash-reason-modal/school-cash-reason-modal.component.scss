@@ -1,0 +1,8 @@
+@use '../../school-cash' as sc;
+
+@include sc.modal;
+
+.dialog--short {
+  --tone: #dc2626;
+  max-width: 30rem;
+}

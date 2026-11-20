@@ -1598,6 +1598,75 @@ las anulaciones generan el movimiento inverso (`ANULACION`, `reversal_of_id`) y 
 - **No cambia**: el depósito de caja a banco no valida por denominación (no se pidió). Transaccionar, CxC, Activos y los movimientos manuales siguen sin desglose y aparecen como "sin desglosar".
 - **Pruebas**: `sql/tests/cash-denomination-inventory.test.sql` (31), concurrencia de Bodega por denominación en `cash-control-concurrency.sh`, `test/cash-inventory.e2e-spec.ts`, specs de casos de uso y de errores. Documento técnico: `docs/cash-control/inventario-por-denominacion-y-borradores.md`.
 
+### Caja de Listas Escolares (`modules/school-cash-box/`, migración `1760008700000`)
+
+Caja independiente para el dinero de las listas escolares (decisiones del dueño, 2026-11-19). No toca Control de Efectivo, Bodega ni Guayacán.
+
+- **Un solo libro oficial**: `school_cash_movements` (Kardex).
+  - Cada renglón tiene saldo anterior, dirección IN/OUT/NONE y saldo posterior (`CHECK` de consistencia y `balance_after >= 0`).
+  - El efectivo de la caja es `school_cash_balance()`, el último `balance_after`; no existe otro saldo guardado.
+  - Único escritor: `school_cash_apply_movement`, con advisory lock `school_cash_box`, saldo leído bajo el lock y `idempotency_key` UNIQUE.
+  - Nunca se edita ni se borra (guardas): corregir = renglón `REVERSION` + original `REVERTIDO` (`school_cash_reverse_movement`).
+- **Ruteo automático de pagos**: trigger AFTER INSERT `trg_school_cash_on_payment` sobre `school_quotation_payments`, en la misma transacción. Las funciones de pago, anulación y cancelación no se modificaron.
+  - EFECTIVO → `PAGO_EFECTIVO` (IN).
+  - TRANSFERENCIA/DEPOSITO → banco obligatorio (`SCHOOL_CASH_BANK_REQUIRED`), solo cuentas normales (`school_cash_assert_bank`: sin GENESIS, BI_CLUB, DISTRICOL ni GUAYACAN). Hace `apply_bank_account_movement` tipo `PAGO_LISTA_ESCOLAR`, origen `LISTAS_ESCOLARES`, referencia `SCHOOL_PAYMENT`, y escribe un renglón NONE `PAGO_TRANSFERENCIA`/`PAGO_DEPOSITO`: ese renglón ES el "pendiente de trasladar".
+  - TARJETA/OTRO → `PAGO_OTRO_MEDIO` NONE: cuenta como recaudado, sin caja ni banco (decisión del dueño).
+  - ANULACION → revierte el banco (`reverse_bank_account_movements`) y el renglón. Bloqueado si el pago ya tiene traslado o devolución aplicada (`SCHOOL_CASH_PAYMENT_TRANSFERRED`).
+  - DEVOLUCION en efectivo → OUT (requiere efectivo: `SCHOOL_CASH_INSUFFICIENT`).
+  - DEVOLUCION por banco → `DEVOLUCION_LISTA_ESCOLAR`; consume primero lo pendiente de ESA lista en ESA cuenta.
+  - Los pagos anteriores a la migración no tienen renglón y nunca se tocan: la caja arranca en 0 y el saldo inicial se carga con un AJUSTE.
+- **Pendientes**: vista `school_cash_pending_receipts`, donde pendiente = monto − aplicaciones vigentes (`school_cash_receipt_applications` TRASLADO/DEVOLUCION). `school_cash_pending_total()` da el total.
+- **Traslado** `register_school_cash_transfer(banco, items[{movementId, amount}], …)`:
+  - Banco − (`TRASLADO_CAJA_LISTAS`; `INSUFFICIENT_BALANCE` si no alcanza) y caja + (`TRASLADO_BANCO`).
+  - Permite traslados parciales; un pago nunca supera su pendiente (`SCHOOL_CASH_TRANSFER_EXCEEDS_PENDING`).
+  - Una sola cuenta por traslado; número `TCL-`.
+  - Orden de locks en todas las funciones: cotización → recibos (id) → banco → caja.
+  - `void_school_cash_transfer` hace banco + y caja − (necesita el efectivo).
+- **Salidas** `register_school_cash_exit` (`SCL-`): destino ENTREGA_ADMINISTRACION/DEPOSITO_BANCARIO/GASTO_AUTORIZADO/OTRO y motivo obligatorio. DEPOSITO_BANCARIO suma a la cuenta (`DEPOSITO_CAJA_LISTAS`). Nunca se registra como gasto de la empresa.
+- **Ajustes**: AJUSTE IN/OUT con motivo (admin).
+- **Arqueos** `school_cash_counts` (`ACL-`): inmutables, nunca ajustan el saldo.
+- **Borrado de listas**: `delete_school_quotation` y `purge_school_quotations` rechazan listas con renglones en la caja (`SCHOOL_DELETE_HAS_CASH`, `SCHOOL_PURGE_HAS_CASH`).
+- **Cuadre de Agentes** (decisión del dueño): `GetCuadreAgentesSummaryUseCase.totalSchoolListPending` (port `SCHOOL_LIST_PENDING_READER`).
+  - El resultado RESTA ese monto y `agent_reconciliations.total_school_list_pending` lo guarda aparte.
+  - `close_agent_day` y `close_agent_day_with_cash_breakdown` ganaron un parámetro final (se borró la firma vieja antes de recrearlas).
+  - `totalBanks` no cambia, así la Revisión de días sigue cuadrando con la foto de bancos; su fórmula recalculada también lo resta.
+- **RBAC** (`school_lists.cash.*` en `SCHOOL_LIST_PERMISSION_ROLES` + `school_list_assert_permission`):
+  - `view`/`reports`/`count`: SUPER_ADMIN, ADMIN y SUPERVISOR_DE_TURNO.
+  - `transfer`/`exit`/`adjust`/`authorize`: solo admin.
+  - Registrar pagos sigue siendo `school_lists.payments.register`.
+- **Rutas** `/school-cash-box`:
+  - `summary`, `movements` (filtros fecha/tipo/banco/usuario/búsqueda), `movements/:id`, `POST movements/:id/void` (solo AJUSTE).
+  - `receipts`, `transfers` (+`:id`, `POST`, `:id/void`), `exits` (+`POST`, `:id/void`), `POST adjustments`, `counts` (+`POST`, `:id`), `users`.
+  - `reports`, `reports/:kind` y `reports/:kind/export?format=pdf|xlsx`: 11 reportes; PDF con `buildReportPdf` horizontal y Excel con `exceljs`.
+- **Pruebas**: `sql/tests/school-cash-box.test.sql` (64 casos), `sql/tests/school-cash-box-concurrency.sh` (sesiones reales en una copia), `school-cash-box.use-cases.spec.ts`, `test/school-cash-box.e2e-spec.ts` (correr con `test/run-cash-control-e2e.sh`). `school-lists-purge.e2e-spec.ts` desactiva el trigger solo en la copia para simular pagos anteriores a la caja.
+
+### Caja de Listas — dashboard, estado de cuenta de clientes y pagos (sin migración)
+
+Ampliación del 2026-11-19. Solo lectura sobre las tablas existentes; nada nuevo guarda saldos.
+
+- **Cliente** = todas las listas no borrador con los mismos dígitos de teléfono (`regexp_replace(customer_phone, '\D', '', 'g')`, decisión del dueño). Sigue sin campo de establecimiento (el dueño lo rechazó dos veces).
+- **`CUSTOMER_CTE`** (repositorio) calcula lo comprado, lo abonado (`school_quotation_paid`) y el saldo por cliente. Las listas canceladas no cuentan.
+  - Estados: SOLVENTE (saldo 0), ABONANDO (pagó algo y debe), PENDIENTE (debe y no pagó nada), CANCELADO (solo listas canceladas).
+  - No existe estado ATRASADO: no hay vencimiento ni política de mora. La fecha de entrega se muestra solo como información.
+- **Estado de cuenta cronológico** (`domain/customer-ledger.ts`, función pura con su spec):
+  - Se reconstruye solo con registros reales: historia (`CREADA` con total, `EDITADA` con totalBefore/totalAfter, salida de BORRADOR = cargo, `CANCELADA`) y pagos (anticipo/abono = abono, `ANULACION` y `DEVOLUCION` = cargo).
+  - Su saldo final se compara con el saldo oficial; si no coincide, `consistent: false` y se avisa, nunca se inventa un movimiento.
+  - Con un rango, lo anterior al período queda como saldo inicial.
+  - Tipos para mostrar: el abono que deja la lista en 0 es "Liquidación"; un anticipo que la deja en 0, "Pago total".
+- **Resumen** `GET /school-cash-box/summary?dateFrom&dateTo&granularity=day|week|month`:
+  - El período limita las cifras de flujo: ventas (por fecha de lista), recaudado y traslados.
+  - Efectivo, pendiente de traslado, deudas, `portfolio` (listas pagadas, parciales, sin pagos y canceladas) y `customers` (con saldo, solventes, abonando, sin abonos) son siempre "a hoy".
+  - `series` agrupa los pagos por bucket; sin período usa los últimos 30 días, 12 semanas o 12 meses.
+- **Rutas nuevas**:
+  - `GET customers`: filtros `search` (nombre o alumno sin acentos con `search_normalize`, teléfono, número de lista), `view` (ALL/WITH_BALANCE/SOLVENT/NO_PAYMENTS/WITH_PAYMENTS), `status`, `grade`, fechas, `sort` y paginación; devuelve también los totales del filtro.
+  - `GET customers/:key`: cliente, listas (incluye borradores, que no cuentan), pagos con destino (CAJA/BANCO con estado de traslado/OTRO/ANTERIOR) y estado de cuenta cronológico.
+  - `GET customers/:key/statement`: PDF con `buildCustomerStatementPdf` (membrete de company-settings, listas, pagos y cronológico).
+  - `GET payments`: todos los pagos, con filtros y totales.
+  - Las rutas `customers/:key/statement` se declaran antes de `customers/:key`.
+- **RBAC**: `school_lists.customers.view` y `school_lists.customers.export` son de lectura y los tienen todos los roles, cajeros incluidos (decisión del dueño). `payments` sigue en `cash.view`. Registrar un abono sigue usando el endpoint y las reglas oficiales de pago (`school_lists.payments.register`); no hay lógica de pagos nueva.
+- **Reporte nuevo** `cartera-clientes`.
+- **Pruebas**: `customer-ledger.spec.ts` y `test/school-customers.e2e-spec.ts` (los 20 escenarios pedidos, con `test/run-cash-control-e2e.sh`).
+
 ### Listas Escolares — inventario negativo, abastecimiento FIFO y despacho (migración `1760008300000`)
 
 - **Restricciones de no negativos**: los CHECK `CHK_inventory_stock_quantity_non_negative` y `CHK_products_stock_non_negative` son ahora triggers con la misma regla y el mismo error (23514 y mismo nombre de restricción).

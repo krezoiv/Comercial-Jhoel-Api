@@ -1,0 +1,83 @@
+<section class="panel panel--cash">
+  <header class="panel__head">
+    <h2><app-icon name="file-check" [size]="18" /> Arqueos de la Caja de Listas</h2>
+    <div class="panel__tools">
+      @if (lists.can('school_lists.cash.count')) {
+        <app-button size="sm" (click)="newCount.emit()"><app-icon name="plus" [size]="14" /> Nuevo arqueo</app-button>
+      }
+    </div>
+  </header>
+
+  <form class="filters" (ngSubmit)="go(1)">
+    <label>Desde <input type="date" name="from" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" /></label>
+    <label>Hasta <input type="date" name="to" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" /></label>
+    <div class="filters__actions"><app-button type="submit" size="sm" variant="secondary">Filtrar</app-button></div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Cargando arqueos…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!items().length) {
+    <p class="empty">No hay arqueos registrados.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Arqueo</th>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col" class="num">Teórico</th>
+            <th scope="col" class="num">Contado</th>
+            <th scope="col" class="num">Diferencia</th>
+            <th scope="col">Resultado</th>
+            <th scope="col">Usuario</th>
+            <th scope="col"><span class="sr-only">Detalle</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of items(); track c.id) {
+            <tr>
+              <td data-label="Arqueo"><strong>{{ c.countNumber }}</strong></td>
+              <td data-label="Fecha">{{ formatDateTime(c.createdAt) }}</td>
+              <td data-label="Teórico" class="num">{{ formatCurrency(c.theoreticalBalance) }}</td>
+              <td data-label="Contado" class="num">{{ formatCurrency(c.countedTotal) }}</td>
+              <td data-label="Diferencia" class="num"><b class="diff diff--{{ tone(c) }}">{{ formatCurrency(c.difference) }}</b></td>
+              <td data-label="Resultado"><span class="pill pill--{{ tone(c) }}">{{ c.status === 'CUADRADO' ? 'Cuadrado' : c.status === 'FALTANTE' ? 'Faltante' : 'Sobrante' }}</span></td>
+              <td data-label="Usuario">{{ c.userName }}</td>
+              <td>
+                <button type="button" class="toggle" [attr.aria-expanded]="open() === c.id" (click)="toggle(c.id)">
+                  {{ open() === c.id ? 'Ocultar' : 'Denominaciones' }}
+                </button>
+              </td>
+            </tr>
+            @if (open() === c.id) {
+              <tr class="details">
+                <td colspan="8" class="wide">
+                  <ul>
+                    @for (d of c.details; track d.denomination) {
+                      <li><span>{{ formatCurrency(d.denomination) }} × {{ d.quantity }}</span><b>{{ formatCurrency(d.subtotal) }}</b></li>
+                    } @empty {
+                      <li>Sin efectivo contado.</li>
+                    }
+                  </ul>
+                  @if (c.observations) {
+                    <p class="muted">{{ c.observations }}</p>
+                  }
+                  <p class="muted">Último movimiento al contar: {{ c.lastMovementNumber ?? '—' }}</p>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pages() > 1) {
+      <nav class="pager" aria-label="Páginas">
+        <app-button variant="ghost" size="sm" [disabled]="page() === 1" (click)="go(page() - 1)">Anterior</app-button>
+        <span>Página {{ page() }} de {{ pages() }}</span>
+        <app-button variant="ghost" size="sm" [disabled]="page() === pages()" (click)="go(page() + 1)">Siguiente</app-button>
+      </nav>
+    }
+  }
+</section>

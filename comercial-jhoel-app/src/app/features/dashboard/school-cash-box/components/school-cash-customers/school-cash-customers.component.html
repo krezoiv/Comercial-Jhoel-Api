@@ -1,0 +1,137 @@
+<section class="panel panel--collected">
+  <header class="panel__head">
+    <h2><app-icon name="users" [size]="18" /> Estado de cuenta de clientes</h2>
+    @if (page(); as p) {
+      <div class="panel__tools totals" aria-live="polite">
+        <span><small>Clientes</small><b>{{ p.totals.customers }}</b></span>
+        <span><small>Comprado</small><b>{{ formatCurrency(p.totals.purchased) }}</b></span>
+        <span><small>Abonado</small><b class="paid">{{ formatCurrency(p.totals.paid) }}</b></span>
+        <span><small>Saldo</small><b class="owed">{{ formatCurrency(p.totals.balance) }}</b></span>
+      </div>
+    }
+  </header>
+
+  <div class="chips" role="group" aria-label="Filtro rápido">
+    @for (v of views; track v.id) {
+      <button type="button" [class.on]="activeView() === v.id" [attr.aria-pressed]="activeView() === v.id" (click)="setView(v.id)">
+        {{ v.label }}
+        @if (v.id === 'SOLVENT' && page()) {
+          <span class="chips__n">{{ page()!.totals.byStatus.SOLVENTE }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <form class="filters" (ngSubmit)="apply()">
+    <label class="filters__search">
+      Buscar
+      <span class="search">
+        <app-icon name="search" [size]="16" />
+        <input type="search" name="search" placeholder="Cliente, alumno, teléfono o número de lista" autocomplete="off" [ngModel]="search()" (ngModelChange)="typed($event)" />
+      </span>
+    </label>
+    <label>
+      Estado
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event); apply()">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="ABONANDO">Abonando</option>
+        <option value="SOLVENTE">Solvente</option>
+        <option value="CANCELADO">Cancelado</option>
+      </select>
+    </label>
+    <label>
+      Grado
+      <select name="grade" [ngModel]="grade()" (ngModelChange)="grade.set($event); apply()">
+        <option value="">Todos</option>
+        @for (g of grades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+    </label>
+    <label>Listas desde <input type="date" name="from" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); apply()" /></label>
+    <label>Hasta <input type="date" name="to" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); apply()" /></label>
+    <label>
+      Ordenar por
+      <select name="sort" [ngModel]="sort()" (ngModelChange)="sort.set($event); apply()">
+        @for (s of sorts; track s.id) {
+          <option [value]="s.id">{{ s.label }}</option>
+        }
+      </select>
+    </label>
+    <div class="filters__actions"><app-button variant="ghost" size="sm" (click)="clear()">Limpiar</app-button></div>
+  </form>
+
+  @if (loading() && !page()) {
+    <ul class="skeleton" aria-busy="true" aria-label="Cargando clientes">
+      @for (i of skeletonRows; track i) {
+        <li><span class="bone bone--round"></span><span class="bone"></span><span class="bone bone--short"></span></li>
+      }
+    </ul>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!items().length) {
+    <div class="empty">
+      <app-icon name="users" [size]="32" />
+      <p>No hay clientes con esos filtros.</p>
+    </div>
+  } @else {
+    <div class="table-wrap" [class.is-loading]="loading()">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Cliente / encargado</th>
+            <th scope="col">Alumno(s) y grado</th>
+            <th scope="col" class="num">Listas</th>
+            <th scope="col" class="num">Comprado</th>
+            <th scope="col" class="num">Abonado</th>
+            <th scope="col" class="num">Saldo</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Último pago</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of items(); track c.key) {
+            <tr class="row" tabindex="0" (click)="open(c)" (keydown.enter)="open(c)">
+              <td data-label="Cliente" class="wide">
+                <span class="who">
+                  <span class="avatar" aria-hidden="true">{{ c.name.charAt(0) }}</span>
+                  <span>
+                    <strong>{{ c.name }}</strong>
+                    <span class="muted">{{ c.phone }}</span>
+                  </span>
+                </span>
+              </td>
+              <td data-label="Alumno(s)">
+                {{ c.students.join(', ') || '—' }}
+                <span class="muted">{{ c.grades.join(' · ') }}</span>
+              </td>
+              <td data-label="Listas" class="num">{{ c.activeLists }}@if (c.lists > c.activeLists) {<span class="muted">+{{ c.lists - c.activeLists }} cancel.</span>}</td>
+              <td data-label="Comprado" class="num">{{ formatCurrency(c.purchased) }}</td>
+              <td data-label="Abonado" class="num">
+                <span class="paid">{{ formatCurrency(c.paid) }}</span>
+                <span class="meter" aria-hidden="true"><span [style.width.%]="percent(c)"></span></span>
+              </td>
+              <td data-label="Saldo" class="num"><b [class.owed]="c.balance > 0">{{ formatCurrency(c.balance) }}</b></td>
+              <td data-label="Estado"><span class="pill pill--{{ statusTone[c.status] }}">{{ statusLabel[c.status] }}</span></td>
+              <td data-label="Último pago">{{ c.lastPaymentAt ? formatDateTime(c.lastPaymentAt) : 'Sin pagos' }}</td>
+              <td class="go">
+                <button type="button" class="go__btn" [attr.aria-label]="'Ver estado de cuenta de ' + c.name" (click)="$event.stopPropagation(); open(c)">
+                  Ver <app-icon name="chevron-right" [size]="14" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pages() > 1) {
+      <nav class="pager" aria-label="Páginas">
+        <app-button variant="ghost" size="sm" [disabled]="pageNumber() === 1" (click)="go(pageNumber() - 1)">Anterior</app-button>
+        <span>Página {{ pageNumber() }} de {{ pages() }}</span>
+        <app-button variant="ghost" size="sm" [disabled]="pageNumber() === pages()" (click)="go(pageNumber() + 1)">Siguiente</app-button>
+      </nav>
+    }
+  }
+</section>

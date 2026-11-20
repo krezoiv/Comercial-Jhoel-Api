@@ -1,0 +1,51 @@
+@use '../../school-cash' as sc;
+
+@include sc.modal;
+
+.dialog--wide {
+  max-width: 46rem;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-3);
+}
+
+.totals__item {
+  --tone: #64748b;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--tone) 10%, transparent);
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  strong {
+    font-size: var(--fs-lg, 1.125rem);
+    color: var(--color-text-on-light);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--green {
+    --tone: #16a34a;
+  }
+
+  &--red {
+    --tone: #dc2626;
+  }
+
+  &--yellow {
+    --tone: #7c3aed;
+  }
+
+  &--green strong,
+  &--red strong,
+  &--yellow strong {
+    color: var(--tone);
+  }
+}

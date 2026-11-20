@@ -1,0 +1,196 @@
+<section class="panel panel--pending">
+  <header class="panel__head">
+    <h2><app-icon name="bank" [size]="18" /> Dinero pendiente de trasladar</h2>
+    <div class="panel__tools">
+      <div class="seg" role="group" aria-label="Pagos a mostrar">
+        <button type="button" [class.seg__on]="scope() === 'OPEN'" [attr.aria-pressed]="scope() === 'OPEN'" (click)="setScope('OPEN')">Pendientes</button>
+        <button type="button" [class.seg__on]="scope() === 'ALL'" [attr.aria-pressed]="scope() === 'ALL'" (click)="setScope('ALL')">Todos</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <label>
+      Banco
+      <select [ngModel]="bankFilter()" (ngModelChange)="bankFilter.set($event)">
+        <option value="">Todos los bancos</option>
+        @for (bank of banks(); track bank.id) {
+          <option [value]="bank.id">{{ bank.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Buscar
+      <input type="search" placeholder="Cliente, lista, recibo o referencia" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </label>
+    <p class="filters__total">
+      <span>Pendiente en la vista</span>
+      <strong>{{ formatCurrency(pendingTotal()) }}</strong>
+    </p>
+  </div>
+
+  @if (loading()) {
+    <p class="empty">Cargando pagos bancarios…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!visible().length) {
+    <p class="empty">{{ scope() === 'OPEN' ? 'No hay dinero de listas pendiente en bancos.' : 'No hay pagos bancarios con esos filtros.' }}</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">
+              @if (canTransfer()) {
+                <button type="button" class="link" (click)="selectAll()">Todos</button>
+              }
+            </th>
+            <th scope="col">Fecha del pago</th>
+            <th scope="col">Lista / cliente</th>
+            <th scope="col">Banco</th>
+            <th scope="col">Referencia</th>
+            <th scope="col" class="num">Recibido</th>
+            <th scope="col" class="num">Pendiente</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="num">A trasladar</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of visible(); track r.id) {
+            <tr [class.is-on]="selected()[r.id] !== undefined" [class.is-off]="r.pending === 0">
+              <td class="pick">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Seleccionar el pago ' + r.receiptNumber"
+                  [checked]="selected()[r.id] !== undefined"
+                  [disabled]="selected()[r.id] === undefined && !isSelectable(r)"
+                  [title]="selectionBank() && selectionBank() !== r.bankId ? 'Un traslado sale de una sola cuenta' : ''"
+                  (change)="toggle(r)"
+                />
+              </td>
+              <td data-label="Fecha">
+                {{ formatDateTime(r.receivedAt) }}
+                @if (r.pending > 0 && daysSince(r.receivedAt) >= 3) {
+                  <span class="age">hace {{ daysSince(r.receivedAt) }} días</span>
+                }
+              </td>
+              <td data-label="Lista" class="wide">
+                <strong>{{ r.quotationNumber }}</strong> · {{ r.customerName }}
+                <span class="muted">Recibo {{ r.receiptNumber }} · {{ r.paymentMethod === 'DEPOSITO' ? 'Depósito' : 'Transferencia' }}</span>
+              </td>
+              <td data-label="Banco">{{ r.bankName }}</td>
+              <td data-label="Referencia">{{ r.reference || '—' }}</td>
+              <td data-label="Recibido" class="num">{{ formatCurrency(r.amount) }}</td>
+              <td data-label="Pendiente" class="num"><b class="pend">{{ formatCurrency(r.pending) }}</b></td>
+              <td data-label="Estado"><span class="pill pill--{{ tone[r.transferStatus] }}">{{ statusLabel[r.transferStatus] }}</span></td>
+              <td data-label="A trasladar" class="num">
+                @if (selected()[r.id] !== undefined) {
+                  <input
+                    class="amount"
+                    appDecimalInput
+                    thousands
+                    [attr.aria-label]="'Monto a trasladar del pago ' + r.receiptNumber"
+                    [class.amount--bad]="selected()[r.id] <= 0 || selected()[r.id] > r.pending"
+                    [ngModel]="selected()[r.id]"
+                    (ngModelChange)="setAmount(r, $event)"
+                    (blur)="settleAmount($any($event.target), r)"
+                  />
+                } @else {
+                  —
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (lines().length) {
+    <div class="bar" role="region" aria-label="Pagos seleccionados">
+      <span>
+        <strong>{{ lines().length }} pago(s)</strong> de {{ bankName(selectionBank()) }} ·
+        <strong class="bar__total">{{ formatCurrency(selectionTotal()) }}</strong>
+        @if (!selectionValid()) {
+          <small class="bar__bad">Cada monto debe ser mayor a 0 y no superar lo pendiente.</small>
+        }
+      </span>
+      <app-button variant="ghost" size="sm" (click)="selected.set({})">Quitar selección</app-button>
+      <app-button size="sm" [disabled]="!selectionValid()" (click)="transferOpen.set(true)">
+        <app-icon name="arrow-down-circle" [size]="16" /> Transferir a Caja de Listas
+      </app-button>
+    </div>
+  }
+</section>
+
+<section class="panel panel--moved">
+  <header class="panel__head">
+    <h2><app-icon name="arrow-down-circle" [size]="18" /> Traslados realizados</h2>
+  </header>
+  @if (!transfers().length) {
+    <p class="empty">Todavía no hay traslados de bancos a la Caja de Listas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Traslado</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Banco</th>
+            <th scope="col">Pagos</th>
+            <th scope="col" class="num">Monto</th>
+            <th scope="col">Estado</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of transfers(); track t.id) {
+            <tr [class.is-off]="t.status === 'ANULADO'">
+              <td data-label="Traslado"><strong>{{ t.transferNumber }}</strong> <span class="muted">{{ t.userName }}</span></td>
+              <td data-label="Fecha">{{ formatDateTime(t.createdAt) }}</td>
+              <td data-label="Banco">{{ t.bankName }} @if (t.reference) {<span class="muted">Ref. {{ t.reference }}</span>}</td>
+              <td data-label="Pagos" class="wide">
+                @for (item of t.items; track item.receiptId) {
+                  <span class="muted">{{ item.quotationNumber }} · {{ item.customerName }} ({{ formatCurrency(item.amount) }})</span>
+                }
+              </td>
+              <td data-label="Monto" class="num"><b>{{ formatCurrency(t.amount) }}</b></td>
+              <td data-label="Estado">
+                <span class="pill" [class.pill--moved]="t.status === 'APLICADO'">{{ t.status === 'APLICADO' ? 'Aplicado' : 'Anulado' }}</span>
+                @if (t.voidReason) {
+                  <span class="muted">{{ t.voidReason }}</span>
+                }
+              </td>
+              <td>
+                @if (canVoid() && t.status === 'APLICADO') {
+                  <app-button variant="ghost-danger" size="sm" (click)="voidError.set(null); voiding.set(t)">Anular</app-button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (transferOpen() && selectionBank(); as bank) {
+  <app-school-cash-transfer-modal
+    [bankId]="bank"
+    [bankName]="bankName(bank)"
+    [lines]="lines()"
+    (closed)="transferOpen.set(false)"
+    (saved)="transferred()"
+  />
+}
+@if (voiding(); as t) {
+  <app-school-cash-reason-modal
+    title="Anular traslado {{ t.transferNumber }}"
+    [message]="'El dinero (' + formatCurrency(t.amount) + ') vuelve a ' + t.bankName + ' y sale de la Caja de Listas; los pagos quedan otra vez pendientes de trasladar.'"
+    confirmLabel="Anular traslado"
+    [busy]="voidBusy()"
+    [error]="voidError()"
+    (closed)="voiding.set(null)"
+    (confirmed)="confirmVoid($event)"
+  />
+}

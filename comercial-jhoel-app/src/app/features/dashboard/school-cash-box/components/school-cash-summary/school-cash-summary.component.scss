@@ -1,0 +1,342 @@
+@use 'mixins' as *;
+@use '../../school-cash' as sc;
+
+@include sc.kpis;
+@include sc.panel;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+// ── Period ────────────────────────────────────────────────────────────────
+.period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.period__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--color-text-on-light);
+}
+
+.period__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+
+  button {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+    @include focus-ring;
+  }
+
+  .on {
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.period__custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  input {
+    min-height: 2.25rem;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    @include focus-ring;
+  }
+}
+
+.period__apply {
+  min-height: 2.25rem;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: #047857;
+  color: #fff;
+  font-weight: var(--fw-semibold, 600);
+  @include focus-ring;
+}
+
+.period__note {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────
+.kpis--primary {
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.kpis--secondary {
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi__value {
+    font-size: var(--fs-lg, 1.125rem);
+  }
+}
+
+.kpis.is-loading {
+  opacity: 0.6;
+}
+
+.kpi--link {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  @include focus-ring;
+}
+
+.kpi__go {
+  align-self: center;
+  margin-left: auto;
+  color: var(--color-text-on-light-subtle);
+}
+
+.kpi--skeleton {
+  min-height: 6rem;
+  gap: var(--space-3);
+}
+
+.bone {
+  flex: 1;
+  height: 1rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-bg-light-muted), var(--color-border-light), var(--color-bg-light-muted));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite linear;
+
+  &--icon {
+    flex: 0 0 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ── Alerts ────────────────────────────────────────────────────────────────
+.alerts {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.alert {
+  --tone: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--tone) 9%, var(--color-surface-light));
+  color: var(--color-text-on-light);
+  font-size: var(--fs-sm);
+
+  &--pending {
+    --tone: #d97706;
+  }
+
+  &--short {
+    --tone: #dc2626;
+  }
+
+  > app-icon {
+    color: var(--tone);
+  }
+
+  span {
+    flex: 1 1 16rem;
+  }
+
+  button {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    @include focus-ring;
+  }
+}
+
+// ── Bottom panels ─────────────────────────────────────────────────────────
+.duo {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (min-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+}
+
+.link {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--tone);
+  @include focus-ring;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.banks,
+.recent {
+  display: grid;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+}
+
+.banks {
+  &__name {
+    flex: 1;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-on-light);
+  }
+
+  &__count {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  strong {
+    color: #b45309;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.recent {
+  li.is-off {
+    opacity: 0.55;
+  }
+
+  &__icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    color: #64748b;
+    background: color-mix(in srgb, #64748b 12%, transparent);
+
+    &--IN {
+      color: #16a34a;
+      background: color-mix(in srgb, #16a34a 12%, transparent);
+    }
+
+    &--OUT {
+      color: #dc2626;
+      background: color-mix(in srgb, #dc2626 12%, transparent);
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+
+    strong {
+      overflow: hidden;
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-medium);
+      color: var(--color-text-on-light);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      font-size: var(--fs-xs);
+      color: var(--color-text-on-light-muted);
+    }
+  }
+
+  &__amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-weight: var(--fw-semibold, 600);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: #0284c7;
+
+    &--IN {
+      color: #16a34a;
+    }
+
+    &--OUT {
+      color: #dc2626;
+    }
+
+    small {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-regular, 400);
+      color: var(--color-text-on-light-subtle);
+    }
+  }
+}
+
+.empty {
+  padding: var(--space-5);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.foot {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bone {
+    animation: none;
+  }
+}

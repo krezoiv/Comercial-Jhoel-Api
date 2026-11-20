@@ -1,0 +1,133 @@
+<div class="cashbox">
+  <header class="hero">
+    <span class="hero__icon" aria-hidden="true"><app-icon name="wallet" [size]="28" /></span>
+    <div class="hero__text">
+      <p class="hero__eyebrow">Listas Escolares · Temporada escolar</p>
+      <h1 class="hero__title">Caja de Listas Escolares</h1>
+      <p class="hero__subtitle">
+        @if (canCash()) {
+          Control financiero de la temporada: ventas, abonos, cartera por cliente, efectivo en caja, dinero en bancos,
+          traslados, arqueos y reportes.
+        } @else {
+          Estados de cuenta de los clientes de listas escolares: lo comprado, lo abonado, lo pendiente y su historial.
+        }
+      </p>
+    </div>
+    @if (canCash() && summary(); as s) {
+      <div class="hero__balance" aria-live="polite">
+        <span>Efectivo en caja</span>
+        <strong>{{ formatCurrency(s.cashBalance) }}</strong>
+        <small>{{ formatCurrency(s.pendingTransfer) }} en bancos por trasladar</small>
+      </div>
+    }
+    @if (hasAccess()) {
+      <div class="hero__actions">
+        @if (lists.can('school_lists.cash.transfer')) {
+          <button type="button" class="hero__primary" (click)="selectTab('traslados')">
+            <app-icon name="arrow-down-circle" [size]="18" /> Transferir a Caja de Listas
+          </button>
+        }
+        @if (lists.can('school_lists.customers.view')) {
+          <button type="button" [class]="canCash() ? 'hero__secondary' : 'hero__primary'" (click)="openCustomers('WITH_BALANCE')">
+            <app-icon name="users" [size]="16" /> Clientes pendientes
+          </button>
+        }
+        @if (lists.can('school_lists.cash.count')) {
+          <button type="button" class="hero__secondary" (click)="countOpen.set(true)">
+            <app-icon name="file-check" [size]="16" /> Arqueo
+          </button>
+        }
+        @if (lists.can('school_lists.cash.exit')) {
+          <button type="button" class="hero__secondary" (click)="openExit('SALIDA')">
+            <app-icon name="log-out" [size]="16" /> Salida
+          </button>
+        }
+        <a class="hero__secondary" routerLink="/dashboard/listas-escolares">
+          <app-icon name="graduation-cap" [size]="16" /> Listas
+        </a>
+      </div>
+    }
+  </header>
+
+  @if (loadError()) {
+    <p class="cashbox__note cashbox__note--error" role="alert">No se pudieron cargar sus permisos. Recargue la página.</p>
+  } @else if (!lists.permissionsLoaded()) {
+    <p class="cashbox__note">Cargando…</p>
+  } @else if (!hasAccess()) {
+    <p class="cashbox__note cashbox__note--error" role="alert">Su rol no tiene acceso a la Caja de Listas Escolares.</p>
+  } @else {
+    @if (tabs().length > 1) {
+      <div class="tabs" role="tablist" aria-label="Secciones de la Caja de Listas">
+        @for (tab of tabs(); track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.tabs__on]="activeTab() === tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            (click)="selectTab(tab.id)"
+          >
+            <app-icon [name]="tab.icon" [size]="16" /> {{ tab.label }}
+            @if (tab.id === 'traslados' && pendingBadge() > 0) {
+              <span class="tabs__badge" [attr.aria-label]="pendingBadge() + ' pagos pendientes'">{{ pendingBadge() }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+
+    @if (summaryError() && activeTab() === 'resumen') {
+      <p class="cashbox__note cashbox__note--error" role="alert">No se pudo cargar el resumen de la caja.</p>
+    }
+
+    @switch (activeTab()) {
+      @case ('resumen') {
+        <app-school-cash-summary
+          [summary]="summary()"
+          [loading]="loadingSummary()"
+          [period]="period()"
+          (periodChange)="setPeriod($event)"
+          (goTo)="selectTab($event)"
+          (customers)="openCustomers($event)"
+          (count)="countOpen.set(true)"
+        />
+      }
+      @case ('clientes') {
+        <app-school-cash-customers [view]="customerView()" [refresh]="refresh()" />
+      }
+      @case ('pagos') {
+        <app-school-cash-payments [refresh]="refresh()" />
+      }
+      @case ('traslados') {
+        <app-school-cash-pending [refresh]="refresh()" (changed)="changed()" />
+      }
+      @case ('movimientos') {
+        <app-school-cash-movements [refresh]="refresh()" (changed)="changed()" />
+      }
+      @case ('arqueos') {
+        <app-school-cash-counts [refresh]="refresh()" (newCount)="countOpen.set(true)" />
+      }
+      @case ('salidas') {
+        <app-school-cash-exits [refresh]="refresh()" (changed)="changed()" (create)="openExit($event)" />
+      }
+      @case ('reportes') {
+        <app-school-cash-reports />
+      }
+    }
+  }
+</div>
+
+@if (countOpen()) {
+  <app-school-cash-count-modal
+    [theoretical]="summary()?.cashBalance ?? 0"
+    (closed)="countOpen.set(false)"
+    (saved)="countOpen.set(false); changed()"
+  />
+}
+@if (exitMode(); as mode) {
+  <app-school-cash-exit-modal
+    [mode]="mode"
+    [available]="summary()?.cashBalance ?? 0"
+    (closed)="exitMode.set(null)"
+    (saved)="exitMode.set(null); changed()"
+  />
+}

@@ -1,0 +1,111 @@
+<section class="panel panel--collected">
+  <header class="panel__head">
+    <h2><app-icon name="layers" [size]="18" /> Movimientos de la Caja de Listas</h2>
+    <div class="panel__tools">
+      <span class="count">{{ total() }} movimiento(s)</span>
+    </div>
+  </header>
+
+  <form class="filters" (ngSubmit)="apply()">
+    <label>Desde <input type="date" name="from" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" /></label>
+    <label>Hasta <input type="date" name="to" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" /></label>
+    <label>
+      Tipo
+      <select name="type" [ngModel]="movementType()" (ngModelChange)="movementType.set($event)">
+        <option value="">Todos</option>
+        @for (type of types; track type) {
+          <option [value]="type">{{ label[type] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Banco
+      <select name="bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
+        <option value="">Todos</option>
+        @for (bank of banks(); track bank.id) {
+          <option [value]="bank.id">{{ bank.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Usuario
+      <select name="user" [ngModel]="userId()" (ngModelChange)="userId.set($event)">
+        <option value="">Todos</option>
+        @for (user of users(); track user.id) {
+          <option [value]="user.id">{{ user.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Cliente o lista
+      <input type="search" name="search" placeholder="Nombre, LE-…, recibo, referencia" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </label>
+    <div class="filters__actions">
+      <app-button type="submit" size="sm"><app-icon name="filter" [size]="14" /> Filtrar</app-button>
+      <app-button variant="ghost" size="sm" (click)="clear()">Limpiar</app-button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Cargando movimientos…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else if (!items().length) {
+    <p class="empty">No hay movimientos con esos filtros.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table table--cards">
+        <thead>
+          <tr>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Movimiento</th>
+            <th scope="col">Descripción</th>
+            <th scope="col">Banco / ref.</th>
+            <th scope="col" class="num">Entrada</th>
+            <th scope="col" class="num">Salida</th>
+            <th scope="col" class="num">Saldo</th>
+            <th scope="col">Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of items(); track m.id) {
+            <tr class="row" [class.is-off]="m.status === 'REVERTIDO'" tabindex="0" (click)="detail.set(m)" (keydown.enter)="detail.set(m)">
+              <td data-label="Fecha">{{ formatDateTime(m.createdAt) }}</td>
+              <td data-label="Movimiento">
+                <span class="type type--{{ m.direction }}"><app-icon [name]="icon[m.movementType]" [size]="14" /> {{ label[m.movementType] }}</span>
+                <span class="muted">{{ m.movementNumber }}{{ m.status === 'REVERTIDO' ? ' · revertido' : '' }}</span>
+              </td>
+              <td data-label="Descripción" class="wide">
+                {{ m.description }}
+                @if (m.receiptNumber) {
+                  <span class="muted">Recibo {{ m.receiptNumber }}</span>
+                }
+              </td>
+              <td data-label="Banco">{{ m.bankName || '—' }} @if (m.reference) {<span class="muted">{{ m.reference }}</span>}</td>
+              <td data-label="Entrada" class="num in">{{ m.direction === 'IN' ? formatCurrency(m.amount) : '' }}</td>
+              <td data-label="Salida" class="num out">{{ m.direction === 'OUT' ? formatCurrency(m.amount) : '' }}</td>
+              <td data-label="Saldo" class="num">
+                <b>{{ formatCurrency(m.balanceAfter) }}</b>
+                @if (m.direction === 'NONE') {
+                  <span class="muted">{{ formatCurrency(m.amount) }} {{ m.bankId ? 'en banco' : 'otro medio' }}</span>
+                }
+              </td>
+              <td data-label="Usuario">{{ m.userName }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pages() > 1) {
+      <nav class="pager" aria-label="Páginas">
+        <app-button variant="ghost" size="sm" [disabled]="page() === 1" (click)="go(page() - 1)">Anterior</app-button>
+        <span>Página {{ page() }} de {{ pages() }}</span>
+        <app-button variant="ghost" size="sm" [disabled]="page() === pages()" (click)="go(page() + 1)">Siguiente</app-button>
+      </nav>
+    }
+  }
+</section>
+
+@if (detail(); as m) {
+  <app-school-cash-movement-detail [movement]="m" (closed)="detail.set(null)" (reverted)="reverted()" />
+}

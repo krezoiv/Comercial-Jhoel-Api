@@ -72,7 +72,11 @@ const BANK_CATEGORY: Record<string, BankMovementCategory> = {
   DEPOSITO: 'deposits',
   DEPOSITO_CAJA: 'deposits',
   COBRO_CXC: 'deposits',
+  PAGO_LISTA_ESCOLAR: 'deposits',
+  DEPOSITO_CAJA_LISTAS: 'deposits',
   RETIRO: 'withdrawals',
+  TRASLADO_CAJA_LISTAS: 'withdrawals',
+  DEVOLUCION_LISTA_ESCOLAR: 'withdrawals',
   RETIRO_EFECTIVO: 'withdrawals',
   TRANSFERENCIA_ENTRADA: 'transfersIn',
   TRANSFERENCIA_SALIDA: 'transfersOut',
@@ -320,6 +324,7 @@ export interface ReconciliationDiagnosis {
   id: string | null;
   totalCash: number | null;
   totalWarehouseCash: number | null;
+  totalSchoolListPending: number | null;
   totalBanks: number | null;
   totalAssets: number | null;
   totalAccountsReceivable: number | null;
@@ -857,6 +862,7 @@ function buildReconciliation(
     id: rec?.id ?? null,
     totalCash: rec?.totalCash ?? null,
     totalWarehouseCash: rec?.totalWarehouseCash ?? null,
+    totalSchoolListPending: rec?.totalSchoolListPending ?? null,
     totalBanks: rec?.totalBanks ?? null,
     totalAssets: rec?.totalAssets ?? null,
     totalAccountsReceivable: rec?.totalAccountsReceivable ?? null,
@@ -867,7 +873,8 @@ function buildReconciliation(
             rec.totalWarehouseCash +
             rec.totalBanks +
             rec.totalAccountsReceivable -
-            rec.totalAssets,
+            rec.totalAssets -
+            rec.totalSchoolListPending,
         )
       : null,
     createdAt: rec?.createdAt ?? null,
@@ -1187,7 +1194,8 @@ function buildDifferences(
       module: 'CUADRE',
       account: 'Cuadre de Agentes',
       type: 'RESULTADO_MAL_CALCULADO',
-      label: 'Resultado guardado ≠ efectivo + Bodega + bancos + CxC − activos',
+      label:
+        'Resultado guardado ≠ efectivo + Bodega + bancos + CxC − activos − listas por trasladar',
       expected: reconciliation.recomputedResult ?? 0,
       registered: reconciliation.result ?? 0,
       difference:

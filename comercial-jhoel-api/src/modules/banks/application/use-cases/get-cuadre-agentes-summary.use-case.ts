@@ -7,6 +7,8 @@ import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../../accounts-receivable/doma
 import type { AccountReceivableRepository } from '../../../accounts-receivable/domain/repositories/account-receivable.repository';
 import { WAREHOUSE_CASH_READER } from '../../domain/repositories/warehouse-cash.reader';
 import type { WarehouseCashReader } from '../../domain/repositories/warehouse-cash.reader';
+import { SCHOOL_LIST_PENDING_READER } from '../../domain/repositories/school-list-pending.reader';
+import type { SchoolListPendingReader } from '../../domain/repositories/school-list-pending.reader';
 import { isOutsideAgentReconciliation } from '../../domain/entities/bank-account-movement.entity';
 import {
   BankBalanceCalculationType,
@@ -74,16 +76,24 @@ export class GetCuadreAgentesSummaryUseCase {
     private readonly accountReceivableRepository: AccountReceivableRepository,
     @Inject(WAREHOUSE_CASH_READER)
     private readonly warehouseCashReader: WarehouseCashReader,
+    @Inject(SCHOOL_LIST_PENDING_READER)
+    private readonly schoolListPendingReader: SchoolListPendingReader,
   ) {}
 
   async execute(): Promise<CuadreAgentesSummaryOutput> {
-    const [banks, assetsSummary, receivablesSummary, totalWarehouseCash] =
-      await Promise.all([
-        this.bankRepository.findAll({ activeOnly: true }),
-        this.assetRepository.getReportSummary({ isActive: true }),
-        this.accountReceivableRepository.getReportSummary({ isActive: true }),
-        this.warehouseCashReader.getBalance(),
-      ]);
+    const [
+      banks,
+      assetsSummary,
+      receivablesSummary,
+      totalWarehouseCash,
+      totalSchoolListPending,
+    ] = await Promise.all([
+      this.bankRepository.findAll({ activeOnly: true }),
+      this.assetRepository.getReportSummary({ isActive: true }),
+      this.accountReceivableRepository.getReportSummary({ isActive: true }),
+      this.warehouseCashReader.getBalance(),
+      this.schoolListPendingReader.getPendingTotal(),
+    ]);
 
     // BI Club Empresarial (migraciones `BiClubCreditLine` /
     // `BiClubCreditLineDirection`): su saldo ya ES la deuda con signo
@@ -130,6 +140,7 @@ export class GetCuadreAgentesSummaryUseCase {
       totalAssets: assetsSummary.totalAmount,
       totalAccountsReceivable: receivablesSummary.totalAmount,
       totalWarehouseCash,
+      totalSchoolListPending,
     };
   }
 }

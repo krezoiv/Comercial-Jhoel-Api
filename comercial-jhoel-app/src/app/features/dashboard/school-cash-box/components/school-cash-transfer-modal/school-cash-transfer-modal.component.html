@@ -1,0 +1,56 @@
+<div class="backdrop">
+  <div class="dialog dialog--moved" role="dialog" aria-modal="true" aria-labelledby="sct-title" appFocusTrap tabindex="-1">
+    <header class="dialog__head">
+      <h2 id="sct-title"><app-icon name="arrow-down-circle" [size]="20" /> Transferir a Caja de Listas</h2>
+      <button type="button" class="dialog__close" aria-label="Cerrar" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+    </header>
+    <div class="dialog__body">
+      <div class="route" aria-label="Movimiento interno">
+        <span class="route__node route__node--bank"><app-icon name="bank" [size]="18" /> {{ bankName }}</span>
+        <app-icon name="arrow-right" [size]="18" />
+        <span class="route__node route__node--cash"><app-icon name="wallet" [size]="18" /> Caja de Listas</span>
+      </div>
+
+      <ul class="lines">
+        @for (line of lines; track line.receipt.id) {
+          <li>
+            <span>
+              <strong>{{ line.receipt.quotationNumber }} · {{ line.receipt.customerName }}</strong>
+              <small>Recibo {{ line.receipt.receiptNumber }} · pendiente {{ formatCurrency(line.receipt.pending) }}</small>
+            </span>
+            <b>{{ formatCurrency(line.amount) }}</b>
+          </li>
+        }
+      </ul>
+
+      <div class="total-box">
+        <span>Total a trasladar</span>
+        <strong>{{ formatCurrency(total()) }}</strong>
+      </div>
+
+      <div class="grid2">
+        <label class="field" for="sct-ref">
+          Referencia o boleta
+          <input id="sct-ref" type="text" maxlength="100" data-autofocus [ngModel]="reference()" (ngModelChange)="reference.set($event)" />
+        </label>
+        <label class="field" for="sct-obs">
+          Observaciones
+          <input id="sct-obs" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+        </label>
+      </div>
+      <p class="hint">
+        Es un movimiento interno: {{ bankName }} baja {{ formatCurrency(total()) }} y la Caja de Listas sube lo mismo.
+        No es un nuevo pago de cliente y no cambia lo recaudado.
+      </p>
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+    </div>
+    <footer class="dialog__actions">
+      <app-button variant="ghost" (click)="closed.emit()">Cancelar</app-button>
+      <app-button [disabled]="busy() || total() <= 0" (click)="save()">
+        {{ busy() ? 'Trasladando…' : 'Confirmar traslado' }}
+      </app-button>
+    </footer>
+  </div>
+</div>

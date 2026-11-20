@@ -32,6 +32,12 @@ export interface CuadreAgentesSummary {
   totalAccountsReceivable: number;
   /** Cash under Bodega custody — the cuadre is consolidated (caja count + Bodega). */
   totalWarehouseCash: number;
+  /**
+   * School-list money still in the banks (Caja de Listas, "pendiente de
+   * trasladar"). It is inside `totalBanks` and the result subtracts it, so
+   * list payments never move the agents' cuadre (owner decision).
+   */
+  totalSchoolListPending?: number;
 }
 
 /** Fixed bill/coin denominations for the cash count (Q200 … Q0.01) — in display order, same list as the backend. */
@@ -145,6 +151,8 @@ export interface AgentReconciliation {
   totalCash: number;
   /** Bodega cash included in the result (0 on cuadres saved before Bodega existed). */
   totalWarehouseCash?: number;
+  /** School-list money in banks subtracted from the result (0 on older cuadres). */
+  totalSchoolListPending?: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;
@@ -178,15 +186,19 @@ export function getCuadreResultStatus(result: number): CuadreResultStatus {
 }
 
 /** `Cash + Banks + AccountsReceivable − Assets` — the same formula the backend recomputes and never trusts from the client on save. */
-/** Consolidated cuadre (same formula as the backend): caja count + Bodega + banks + CxC − assets. */
+/**
+ * Consolidated cuadre (same formula as the backend): caja count + Bodega +
+ * banks + CxC − assets − school-list money still in banks (Caja de Listas).
+ */
 export function calculateCuadreResult(
   totalCash: number,
   totalBanks: number,
   totalAccountsReceivable: number,
   totalAssets: number,
   totalWarehouseCash = 0,
+  totalSchoolListPending = 0,
 ): number {
-  return totalCash + totalWarehouseCash + totalBanks + totalAccountsReceivable - totalAssets;
+  return totalCash + totalWarehouseCash + totalBanks + totalAccountsReceivable - totalAssets - totalSchoolListPending;
 }
 
 export interface MissingBankInfo {

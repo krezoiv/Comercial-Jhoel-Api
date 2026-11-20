@@ -37,6 +37,16 @@ export class AgentReconciliationOrmEntity {
   totalWarehouseCash: number;
 
   @Column({
+    name: 'total_school_list_pending',
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    default: 0,
+    transformer: new DecimalColumnTransformer(),
+  })
+  totalSchoolListPending: number;
+
+  @Column({
     name: 'total_banks',
     type: 'numeric',
     precision: 14,

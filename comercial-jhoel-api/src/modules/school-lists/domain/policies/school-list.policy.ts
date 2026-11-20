@@ -42,6 +42,29 @@ export const SCHOOL_LIST_PERMISSION_ROLES = {
   'school_lists.quotations.cancel': MANAGERS,
   /** Generar el PDF de la cotización y los comprobantes de pago. */
   'school_lists.documents.generate': ALL_OPERATORS,
+  // ── Caja de Listas Escolares (migration 1760008700000) ──────────────────
+  /** Ver la Caja de Listas: resumen, pendientes de traslado, movimientos y arqueos. */
+  'school_lists.cash.view': MANAGERS,
+  /** Consultar y exportar los reportes de la Caja de Listas. */
+  'school_lists.cash.reports': MANAGERS,
+  /** Registrar arqueos físicos (nunca ajustan el saldo). */
+  'school_lists.cash.count': MANAGERS,
+  /** Trasladar dinero de un banco a la Caja de Listas. */
+  'school_lists.cash.transfer': ADMINS,
+  /** Registrar salidas autorizadas de la Caja de Listas. */
+  'school_lists.cash.exit': ADMINS,
+  /** Registrar ajustes autorizados (incluye la carga del saldo inicial). */
+  'school_lists.cash.adjust': ADMINS,
+  /** Anular traslados, salidas y ajustes (reversión auditada). */
+  'school_lists.cash.authorize': ADMINS,
+  /**
+   * Estado de cuenta de clientes (cartera por teléfono, historial, estado de
+   * cuenta cronológico). Read-only: registering an abono still needs
+   * `school_lists.payments.register`. Owner decision: cashiers included.
+   */
+  'school_lists.customers.view': ALL_OPERATORS,
+  /** Ver / imprimir el PDF del estado de cuenta para entregar al cliente. */
+  'school_lists.customers.export': ALL_OPERATORS,
 } as const;
 
 export type SchoolListPermission = keyof typeof SCHOOL_LIST_PERMISSION_ROLES;

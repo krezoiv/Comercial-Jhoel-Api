@@ -389,6 +389,22 @@ export const routes: Routes = [
         title: 'Listas Escolares — Sistema',
       },
       {
+        path: 'caja-listas',
+        loadComponent: () =>
+          import('./features/dashboard/school-cash-box/school-cash-box-page.component').then(
+            (m) => m.SchoolCashBoxPageComponent,
+          ),
+        title: 'Caja de Listas Escolares — Sistema',
+      },
+      {
+        path: 'caja-listas/clientes/:key',
+        loadComponent: () =>
+          import('./features/dashboard/school-cash-box/customer/school-cash-customer-page.component').then(
+            (m) => m.SchoolCashCustomerPageComponent,
+          ),
+        title: 'Estado de cuenta del cliente — Sistema',
+      },
+      {
         path: 'listas-escolares/cotizaciones/:id',
         loadComponent: () =>
           import('./features/dashboard/school-lists/school-quotation-detail-page.component').then(

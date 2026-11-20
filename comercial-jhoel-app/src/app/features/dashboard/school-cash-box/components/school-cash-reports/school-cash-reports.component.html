@@ -1,0 +1,78 @@
+<div class="picker" role="list" aria-label="Reportes de la Caja de Listas">
+  @for (r of catalog(); track r.kind) {
+    <button type="button" role="listitem" class="pick" [class.pick--on]="kind() === r.kind" [attr.aria-pressed]="kind() === r.kind" (click)="choose(r.kind)">
+      <app-icon [name]="iconOf(r.kind)" [size]="18" />
+      <span>{{ r.title }}</span>
+    </button>
+  }
+</div>
+
+<section class="panel panel--collected">
+  <header class="panel__head">
+    <h2><app-icon [name]="iconOf(kind())" [size]="18" /> {{ current()?.title ?? 'Reporte' }}</h2>
+    <div class="panel__tools">
+      <app-button size="sm" variant="secondary" [disabled]="!!exporting() || !report()" (click)="download('pdf')">
+        <app-icon name="download" [size]="14" /> {{ exporting() === 'pdf' ? 'Generando…' : 'PDF' }}
+      </app-button>
+      <app-button size="sm" variant="secondary" [disabled]="!!exporting() || !report()" (click)="download('xlsx')">
+        <app-icon name="download" [size]="14" /> {{ exporting() === 'xlsx' ? 'Generando…' : 'Excel' }}
+      </app-button>
+    </div>
+  </header>
+
+  <form class="filters" (ngSubmit)="load()">
+    <p class="filters__desc">{{ current()?.description }}</p>
+    @if (current()?.usesRange !== false) {
+      <label>Desde <input type="date" name="from" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" /></label>
+      <label>Hasta <input type="date" name="to" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" /></label>
+    }
+    <div class="filters__actions"><app-button type="submit" size="sm">Generar</app-button></div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Generando reporte…</p>
+  } @else if (error()) {
+    <p class="empty empty--error" role="alert">{{ error() }}</p>
+  } @else {
+  @if (report(); as rep) {
+    <p class="meta">
+      {{ rep.periodLabel }} · {{ rep.rows.length }} registro(s) · Saldo actual en caja <b>{{ formatCurrency(rep.cashBalance) }}</b>
+    </p>
+    @if (!rep.rows.length) {
+      <p class="empty">Sin registros en el período.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              @for (col of rep.columns; track col.key) {
+                <th scope="col" [class.num]="col.type === 'money' || col.type === 'int'">{{ col.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rep.rows; track $index) {
+              <tr>
+                @for (col of rep.columns; track col.key) {
+                  <td [class.num]="col.type === 'money' || col.type === 'int'">{{ cell(col.type, row[col.key]) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+          @if (hasTotals()) {
+            <tfoot>
+              <tr>
+                @for (col of rep.columns; track col.key; let first = $first) {
+                  <td [class.num]="col.type === 'money' || col.type === 'int'">
+                    {{ first ? 'Totales' : col.total ? cell(col.type, rep.totals[col.key]) : '' }}
+                  </td>
+                }
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  }
+  }
+</section>

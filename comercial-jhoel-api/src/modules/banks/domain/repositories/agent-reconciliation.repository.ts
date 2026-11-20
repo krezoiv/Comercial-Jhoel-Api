@@ -32,6 +32,8 @@ export interface CloseAgentDayData {
   totalCash: number;
   /** Bodega cash at close time (consolidated cuadre); 0 on every historical row. */
   totalWarehouseCash: number;
+  /** School-list money in banks subtracted from the result (0 on historical rows). */
+  totalSchoolListPending: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;

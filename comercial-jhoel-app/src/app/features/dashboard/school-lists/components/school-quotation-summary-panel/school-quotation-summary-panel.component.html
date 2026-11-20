@@ -1,4 +1,4 @@
-<section class="side">
+<section class="side side--sum">
   <h4 class="side__title"><app-icon name="receipt" [size]="16" /> Resumen de cotización</h4>
   <dl class="rows">
     <div><dt>Grado</dt><dd>{{ e.gradeLabel() || '—' }}</dd></div>
@@ -13,7 +13,7 @@
   </div>
 </section>
 
-<section class="side" aria-labelledby="pos-pay-title">
+<section class="side side--pay" aria-labelledby="pos-pay-title">
   <h4 class="side__title" id="pos-pay-title"><app-icon name="wallet" [size]="16" /> Pagos</h4>
   @if (e.canAdvance()) {
     <label class="switch">
@@ -46,13 +46,14 @@
         </div>
         @if (e.usesBank()) {
           <div class="fld">
-            <label for="se-bank">Cuenta bancaria <span class="opt">(opcional)</span></label>
-            <select id="se-bank" class="select" [ngModel]="e.advanceBankId()" (ngModelChange)="e.advanceBankId.set($event)">
-              <option value="">Sin especificar</option>
+            <label for="se-bank">Cuenta que recibió el dinero</label>
+            <select id="se-bank" class="select" [class.select--bad]="!e.advanceBankId()" [ngModel]="e.advanceBankId()" (ngModelChange)="e.advanceBankId.set($event)">
+              <option value="">Seleccione la cuenta…</option>
               @for (b of e.bankList(); track b.id) { <option [value]="b.id">{{ b.name }} · {{ b.accountNumber }}</option> }
             </select>
           </div>
         }
+        <p class="dest" role="note"><app-icon name="wallet" [size]="14" /> {{ e.advanceDestination() }}</p>
         <div class="fld">
           <label for="se-ref">Referencia <span class="opt">(opcional)</span></label>
           <div class="ctl"><input id="se-ref" type="text" maxlength="60" placeholder="No. de boleta o autorización" [ngModel]="e.advanceReference()" (ngModelChange)="e.advanceReference.set($event)" /></div>

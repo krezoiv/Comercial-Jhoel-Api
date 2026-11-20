@@ -1,0 +1,63 @@
+@use 'mixins' as *;
+@use '../../school-cash' as sc;
+
+@include sc.panel;
+@include sc.table;
+@include sc.filters;
+
+.count {
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.row {
+  cursor: pointer;
+
+  &:hover td,
+  &:focus-visible td {
+    background: var(--color-bg-light-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: -2px;
+  }
+}
+
+.table .muted {
+  display: block;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: var(--fw-medium);
+  color: #0284c7;
+
+  &--IN {
+    color: #16a34a;
+  }
+
+  &--OUT {
+    color: #dc2626;
+  }
+}
+
+.empty {
+  padding: var(--space-5);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+
+  &--error {
+    color: var(--color-danger);
+  }
+}

@@ -1,0 +1,230 @@
+<div class="file">
+  <a class="back" routerLink="/dashboard/caja-listas" [queryParams]="{ tab: 'clientes' }"><app-icon name="chevron-left" [size]="16" /> Clientes</a>
+
+  @if (!lists.permissionsLoaded() && !error()) {
+    <p class="note">Cargando…</p>
+  } @else if (lists.permissionsLoaded() && !canView()) {
+    <p class="note note--error" role="alert">Su rol no puede consultar estados de cuenta de clientes.</p>
+  } @else if (error()) {
+    <p class="note note--error" role="alert">{{ error() }}</p>
+  } @else if (loading() && !data()) {
+    <div class="skeleton" aria-busy="true" aria-label="Cargando estado de cuenta">
+      <span class="bone bone--head"></span>
+      <div class="skeleton__row"><span class="bone"></span><span class="bone"></span><span class="bone"></span><span class="bone"></span></div>
+    </div>
+  } @else {
+  @if (data(); as d) {
+    <header class="head">
+      <span class="head__avatar" aria-hidden="true">{{ d.customer.name.charAt(0) }}</span>
+      <div class="head__who">
+        <p class="head__eyebrow">Estado de cuenta · Listas escolares</p>
+        <h1>{{ d.customer.name }}</h1>
+        <p class="head__meta">
+          <span><app-icon name="phone" [size]="14" /> {{ d.customer.phone }}</span>
+          <span><app-icon name="calendar" [size]="14" /> Cliente desde {{ formatDateTime(d.customer.firstAt).slice(0, 10) }}</span>
+          @if (d.customer.lastPaymentAt) {
+            <span><app-icon name="clock" [size]="14" /> Último pago {{ formatDateTime(d.customer.lastPaymentAt) }}</span>
+          }
+        </p>
+        @if (d.customer.otherNames.length) {
+          <p class="head__aka">También registrado como: {{ d.customer.otherNames.join(', ') }}</p>
+        }
+        <div class="head__chips">
+          <span class="pill pill--{{ statusTone[d.customer.status] }}">{{ d.customer.statusLabel }}</span>
+          @for (student of d.customer.students; track student) {
+            <span class="chip"><app-icon name="graduation-cap" [size]="13" /> {{ student }}</span>
+          }
+          @for (grade of d.customer.grades; track grade) {
+            <span class="chip chip--muted">{{ grade }}</span>
+          }
+        </div>
+      </div>
+      <div class="head__actions">
+        @if (canPay() && payable().length) {
+          <app-button (click)="registerPayment()"><app-icon name="plus" [size]="16" /> Registrar abono</app-button>
+        }
+        @if (canPrint()) {
+          <app-button variant="secondary" [disabled]="printing()" (click)="print()">
+            <app-icon name="printer" [size]="16" /> {{ printing() ? 'Generando…' : 'Ver / imprimir estado de cuenta' }}
+          </app-button>
+        }
+      </div>
+    </header>
+
+    <section class="cards" aria-label="Resumen financiero del cliente">
+      <article class="card card--sales">
+        <span>Total comprado</span>
+        <strong>{{ formatCurrency(d.customer.purchased) }}</strong>
+        <small>{{ d.customer.activeLists }} lista(s) vigente(s)</small>
+      </article>
+      <article class="card card--paid">
+        <span>Total abonado</span>
+        <strong>{{ formatCurrency(d.customer.paid) }}</strong>
+        <small>Pagos reales aplicados</small>
+      </article>
+      <article class="card card--owed">
+        <span>Saldo pendiente</span>
+        <strong>{{ formatCurrency(d.customer.balance) }}</strong>
+        @if (d.customer.nextDeliveryDate) {
+          <small>Entrega programada {{ formatDay(d.customer.nextDeliveryDate) }}</small>
+        } @else {
+          <small>{{ d.customer.balance > 0 ? 'Por cobrar' : 'Sin deuda' }}</small>
+        }
+      </article>
+      <article class="card card--progress">
+        <span>Progreso de pago</span>
+        <div class="ring" [style.--p]="progress()" role="img" [attr.aria-label]="progress() + ' % pagado'">
+          <b>{{ progress() }}%</b>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel panel--sales">
+      <header class="panel__head"><h2><app-icon name="graduation-cap" [size]="18" /> Listas escolares</h2></header>
+      <div class="list-grid">
+        @for (list of d.lists; track list.id) {
+          <article class="list" [class.list--off]="list.status === 'CANCELADA' || list.status === 'BORRADOR'">
+            <header>
+              <div>
+                <strong>{{ list.studentName || 'Sin alumno' }}</strong>
+                <small>{{ list.quotationNumber }} · {{ list.grade }} · {{ formatDay(list.quotationDate) }}</small>
+              </div>
+              <span class="pill pill--{{ listTone[list.accountStatus] }}">{{ listLabel[list.accountStatus] }}</span>
+            </header>
+            <dl>
+              <div><dt>Total</dt><dd>{{ formatCurrency(list.total) }}</dd></div>
+              <div><dt>Abonado</dt><dd class="paid">{{ formatCurrency(list.status === 'CANCELADA' ? 0 : list.paid) }}</dd></div>
+              <div><dt>Saldo</dt><dd [class.owed]="list.balance > 0">{{ formatCurrency(list.balance) }}</dd></div>
+            </dl>
+            <span class="meter" aria-hidden="true"><span [style.width.%]="listPercent(list)"></span></span>
+            <footer>
+              <small>Estado de la lista: {{ list.statusLabel }} · {{ list.itemCount }} requerimiento(s)</small>
+              <span class="list__actions">
+                <a class="link" [routerLink]="['/dashboard/listas-escolares/cotizaciones', list.id]">Ver lista</a>
+                @if (canPay() && list.balance > 0 && payable().includes(list)) {
+                  <button type="button" class="link" (click)="pay(list)">Abonar</button>
+                }
+              </span>
+            </footer>
+          </article>
+        }
+      </div>
+    </section>
+
+    <section class="panel panel--collected">
+      <header class="panel__head"><h2><app-icon name="receipt" [size]="18" /> Historial de pagos</h2></header>
+      @if (!d.payments.length) {
+        <p class="empty">El cliente todavía no tiene pagos.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table table--cards">
+            <thead>
+              <tr>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Lista</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Método</th>
+                <th scope="col">Referencia</th>
+                <th scope="col" class="num">Monto</th>
+                <th scope="col">Registró</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of d.payments; track p.id) {
+                <tr class="row" [class.is-off]="p.status === 'ANULADO'" tabindex="0" (click)="togglePayment(p.id)" (keydown.enter)="togglePayment(p.id)">
+                  <td data-label="Fecha">{{ formatDateTime(p.receivedAt) }}<span class="muted">{{ p.receiptNumber }}</span></td>
+                  <td data-label="Lista">{{ p.quotationNumber }}<span class="muted">{{ p.studentName }}</span></td>
+                  <td data-label="Tipo">{{ p.typeLabel }}</td>
+                  <td data-label="Método">{{ p.methodLabel }}@if (p.bankName) {<span class="muted">{{ p.bankName }}</span>}</td>
+                  <td data-label="Referencia">{{ p.reference || '—' }}</td>
+                  <td data-label="Monto" class="num" [class.out]="p.kind === 'DEVOLUCION' || p.kind === 'ANULACION'">
+                    <b>{{ p.kind === 'DEVOLUCION' || p.kind === 'ANULACION' ? '−' : '' }}{{ formatCurrency(p.amount) }}</b>
+                  </td>
+                  <td data-label="Registró">{{ p.receivedByName }}</td>
+                  <td data-label="Estado">{{ p.kind === 'ANULACION' || p.kind === 'DEVOLUCION' ? '—' : p.status === 'ANULADO' ? 'Anulado' : 'Aplicado' }}</td>
+                </tr>
+                @if (openPayment() === p.id) {
+                  <tr class="detail">
+                    <td colspan="8" class="wide">
+                      <dl>
+                        <div><dt>Destino del dinero</dt><dd>{{ destination(p) }}</dd></div>
+                        <div><dt>Saldo de la lista después</dt><dd>{{ formatCurrency(p.balanceAfter) }}</dd></div>
+                        @if (p.reversedReceipt) {<div><dt>Revierte al pago</dt><dd>{{ p.reversedReceipt }}</dd></div>}
+                        @if (p.observations) {<div><dt>Observaciones</dt><dd>{{ p.observations }}</dd></div>}
+                        @if (p.voidReason) {<div><dt>Anulado por {{ p.voidedByName }}</dt><dd>{{ p.voidReason }}</dd></div>}
+                      </dl>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="panel panel--neutral">
+      <header class="panel__head">
+        <h2><app-icon name="layers" [size]="18" /> Estado de cuenta cronológico</h2>
+        <form class="panel__tools range" (ngSubmit)="load()">
+          <label>Desde <input type="date" name="from" [ngModel]="ledgerFrom()" (ngModelChange)="ledgerFrom.set($event)" /></label>
+          <label>Hasta <input type="date" name="to" [ngModel]="ledgerTo()" (ngModelChange)="ledgerTo.set($event)" /></label>
+          <app-button type="submit" size="sm" variant="secondary">Ver período</app-button>
+          @if (ledgerFrom() || ledgerTo()) {
+            <app-button size="sm" variant="ghost" (click)="clearLedgerRange()">Todo</app-button>
+          }
+        </form>
+      </header>
+      @if (!d.ledger.consistent) {
+        <p class="warn" role="status">
+          <app-icon name="alert-triangle" [size]="16" />
+          Los movimientos registrados no reproducen exactamente el saldo actual ({{ formatCurrency(d.ledger.officialBalance) }}).
+          El saldo oficial es el de las listas; revise la historia de la lista con el administrador.
+        </p>
+      }
+      @if (!d.ledger.rows.length) {
+        <p class="empty">Sin movimientos en el período.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table ledger">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Descripción</th>
+                <th scope="col" class="num">Cargo</th>
+                <th scope="col" class="num">Abono</th>
+                <th scope="col" class="num">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of d.ledger.rows; track $index) {
+                <tr [class.opening]="r.kind === 'SALDO_INICIAL'">
+                  <td>{{ r.kind === 'SALDO_INICIAL' ? '—' : formatDateTime(r.at) }}</td>
+                  <td>{{ r.description }}@if (r.reference) {<span class="muted">Ref. {{ r.reference }}</span>}</td>
+                  <td class="num">{{ r.charge ? formatCurrency(r.charge) : '—' }}</td>
+                  <td class="num in">{{ r.credit ? formatCurrency(r.credit) : '—' }}</td>
+                  <td class="num"><b>{{ formatCurrency(r.balance) }}</b></td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">Saldo final</td>
+                <td class="num">{{ formatCurrency(d.ledger.totalCharges) }}</td>
+                <td class="num in">{{ formatCurrency(d.ledger.totalCredits) }}</td>
+                <td class="num"><b>{{ formatCurrency(d.ledger.closing) }}</b></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+    </section>
+  }
+  }
+</div>
+
+@if (choosing() && data(); as d) {
+  <app-customer-list-chooser [lists]="payable()" [customerName]="d.customer.name" (chosen)="pay($event)" (closed)="choosing.set(false)" />
+}
+<app-school-payment-modal [quotation]="paying()" (closed)="paying.set(null)" (paid)="paid()" />

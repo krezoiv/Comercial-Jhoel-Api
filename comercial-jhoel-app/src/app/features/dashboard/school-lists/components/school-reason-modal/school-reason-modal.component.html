@@ -19,6 +19,16 @@
               @for (m of methods; track m) { <option [value]="m">{{ methodLabel[m] }}</option> }
             </select>
           </div>
+          @if (refundByBank()) {
+            <div class="field">
+              <label for="school-refund-bank">Cuenta de la que sale</label>
+              <select id="school-refund-bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
+                <option value="">Seleccione la cuenta…</option>
+                @for (b of banks(); track b.id) { <option [value]="b.id">{{ b.name }} · {{ b.accountNumber }}</option> }
+              </select>
+            </div>
+          }
+          <p class="field field--wide modal__hint">{{ refundNote() }}</p>
           <div class="field">
             <label for="school-refund-ref">Referencia <span class="field__optional">(opcional)</span></label>
             <input id="school-refund-ref" type="text" maxlength="60" [ngModel]="reference()" (ngModelChange)="reference.set($event)" />

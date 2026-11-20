@@ -225,7 +225,30 @@ describe('Listas Escolares — use cases', () => {
     expect(useCase.execute(supervisor).permissions).not.toContain(
       'school_lists.payments.void',
     );
-    expect(useCase.execute(admin).permissions).toHaveLength(11);
+    // 11 of the lists + 7 of the Caja de Listas + 2 of the customer statements.
+    expect(useCase.execute(admin).permissions).toHaveLength(20);
+    // Caja de Listas: supervisors see it and count it; only admins move money.
+    expect(useCase.execute(supervisor).permissions).toEqual(
+      expect.arrayContaining([
+        'school_lists.cash.view',
+        'school_lists.cash.count',
+      ]),
+    );
+    expect(useCase.execute(supervisor).permissions).not.toContain(
+      'school_lists.cash.transfer',
+    );
+    expect(
+      useCase
+        .execute(cashier)
+        .permissions.filter((p) => p.startsWith('school_lists.cash.')),
+    ).toEqual([]);
+    // …but cashiers do see the customer statements (owner decision).
+    expect(useCase.execute(cashier).permissions).toEqual(
+      expect.arrayContaining([
+        'school_lists.customers.view',
+        'school_lists.customers.export',
+      ]),
+    );
     expect(useCase.execute(supervisor).permissions).toContain(
       'school_lists.supply.manage',
     );

@@ -11,7 +11,9 @@ import {
   SchoolQuotation,
   SchoolQuotationSummary,
   formatCurrency,
+  isSchoolCashBank,
   roundMoney,
+  schoolPaymentDestination,
 } from '../../../../../core/models';
 import { BankService } from '../../../../../core/services/bank.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
@@ -68,6 +70,12 @@ export class SchoolPaymentModalComponent implements OnChanges {
 
   readonly balance = computed(() => this.quotation?.balance ?? 0);
   readonly usesBank = computed(() => SCHOOL_BANK_METHODS.includes(this.method()));
+  /** Where the money goes (Caja de Listas, bank pending transfer, or outside). */
+  readonly destination = computed(() =>
+    schoolPaymentDestination(this.method(), this.bankList().find((b) => b.id === this.bankId())?.name),
+  );
+  /** Transfers and deposits must name the receiving account (Caja de Listas). */
+  readonly bankMissing = computed(() => this.usesBank() && !this.bankId());
   readonly after = computed(() => roundMoney(this.balance() - (this.amount() ?? 0)));
   readonly amountError = computed(() => {
     const amount = this.amount();
@@ -82,7 +90,9 @@ export class SchoolPaymentModalComponent implements OnChanges {
     }
     return null;
   });
-  readonly canSave = computed(() => !this.saving() && this.amount() !== null && !this.amountError());
+  readonly canSave = computed(
+    () => !this.saving() && this.amount() !== null && !this.amountError() && !this.bankMissing(),
+  );
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['quotation'] && this.quotation) {
@@ -94,7 +104,10 @@ export class SchoolPaymentModalComponent implements OnChanges {
       this.error.set(null);
       this.requestId = crypto.randomUUID();
       if (!this.bankList().length) {
-        this.banks.getBanks().subscribe({ next: (list) => this.bankList.set(list), error: () => this.bankList.set([]) });
+        this.banks.getBanks().subscribe({
+          next: (list) => this.bankList.set(list.filter(isSchoolCashBank)),
+          error: () => this.bankList.set([]),
+        });
       }
     }
   }
@@ -126,7 +139,7 @@ export class SchoolPaymentModalComponent implements OnChanges {
         {
           amount,
           paymentMethod: this.method(),
-          bankId: this.usesBank() && this.bankId() ? this.bankId() : null,
+          bankId: this.usesBank() ? this.bankId() : null,
           reference: this.reference().trim() || null,
           observations: this.observations().trim() || null,
         },

@@ -799,6 +799,7 @@ export class TypeOrmFinancialDayReviewRepository implements FinancialDayReviewRe
       id: str(row.id),
       totalCash: num(row.total_cash),
       totalWarehouseCash: num(row.total_warehouse_cash),
+      totalSchoolListPending: num(row.total_school_list_pending),
       totalBanks: num(row.total_banks),
       totalAssets: num(row.total_assets),
       totalAccountsReceivable: num(row.total_accounts_receivable),

@@ -21,6 +21,10 @@ const INSUFFICIENT_BALANCE_MESSAGES: Record<string, string> = {
     'El saldo de una cuenta bancaria no puede ser negativo (solo la línea de crédito de Fundación Génesis Empresarial lo permite).',
   ANULACION:
     'No es posible anular la operación: el saldo de la cuenta quedaría negativo.',
+  TRASLADO_CAJA_LISTAS:
+    'La cuenta no tiene saldo suficiente para trasladar ese monto a la Caja de Listas.',
+  DEVOLUCION_LISTA_ESCOLAR:
+    'La cuenta no tiene saldo suficiente para devolver ese monto al cliente.',
 };
 
 export class InsufficientBankBalanceError extends DomainError {

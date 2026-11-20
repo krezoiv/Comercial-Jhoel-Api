@@ -28,15 +28,16 @@
         </div>
         @if (usesBank()) {
           <div class="field">
-            <label for="sp-bank">Cuenta bancaria <span class="field__optional">(opcional)</span></label>
-            <select id="sp-bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
-              <option value="">Sin especificar</option>
+            <label for="sp-bank">Cuenta que recibió el dinero</label>
+            <select id="sp-bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)" [attr.aria-invalid]="bankMissing()">
+              <option value="">Seleccione la cuenta…</option>
               @for (b of bankList(); track b.id) {
                 <option [value]="b.id">{{ b.name }} · {{ b.accountNumber }}</option>
               }
             </select>
           </div>
         }
+        <p class="field field--wide destination" role="note">{{ destination() }}</p>
         <div class="field">
           <label for="sp-reference">Número de referencia <span class="field__optional">(opcional)</span></label>
           <input id="sp-reference" type="text" maxlength="60" [ngModel]="reference()" (ngModelChange)="reference.set($event)" />
@@ -52,7 +53,7 @@
         <app-icon name="arrow-right" [size]="18" />
         <div><span>Saldo después</span><strong [class.balance__zero]="after() === 0">{{ formatCurrency(after()) }}</strong></div>
       </div>
-      <p class="modal__hint">El pago queda en el estado de cuenta de la cotización; no mueve la caja de ventas ni los saldos bancarios.</p>
+      <p class="modal__hint">El pago queda en el estado de cuenta de la lista y, según el método, en la Caja de Listas o en el banco elegido (Caja de Listas Escolares). No toca la caja de ventas.</p>
 
       @if (amountError()) {
         <p class="modal__error" role="alert">{{ amountError() }}</p>

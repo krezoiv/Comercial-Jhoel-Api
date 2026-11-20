@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, QueryFailedError } from 'typeorm';
 import {
@@ -1174,7 +1175,11 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       return text(row.id);
     } catch (error) {
       if (error instanceof QueryFailedError) {
-        const mapped = schoolListErrorFromMessage(error.message);
+        // Bank rules raised by the Caja de Listas routing of a payment
+        // (e.g. a refund from an account without balance) keep their message.
+        const mapped =
+          schoolListErrorFromMessage(error.message) ??
+          bankMovementErrorFromMessage(error.message);
         if (mapped) {
           throw mapped;
         }

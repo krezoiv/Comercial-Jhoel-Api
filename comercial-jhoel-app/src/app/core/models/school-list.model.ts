@@ -44,7 +44,17 @@ export type SchoolListPermission =
   | 'school_lists.supply.manage'
   | 'school_lists.documents.generate'
   | 'school_lists.quotations.purge'
-  | 'school_lists.quotations.delete';
+  | 'school_lists.quotations.delete'
+  // Caja de Listas Escolares (backend migration 1760008700000).
+  | 'school_lists.cash.view'
+  | 'school_lists.cash.reports'
+  | 'school_lists.cash.count'
+  | 'school_lists.cash.transfer'
+  | 'school_lists.cash.exit'
+  | 'school_lists.cash.adjust'
+  | 'school_lists.cash.authorize'
+  | 'school_lists.customers.view'
+  | 'school_lists.customers.export';
 
 export const SCHOOL_STATUS_LABEL: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'Borrador',
@@ -293,6 +303,34 @@ export const SCHOOL_ACCOUNT_LABEL: Record<SchoolAccountStatus, string> = {
 
 /** Methods that may name the bank account the money arrived to. */
 export const SCHOOL_BANK_METHODS: readonly SchoolPaymentMethod[] = ['TRANSFERENCIA', 'DEPOSITO'];
+
+/**
+ * Accounts that cannot receive school-list money (credit lines, Districol and
+ * Guayacán keep their own rules). The backend rejects them too
+ * (`SCHOOL_CASH_BANK_NOT_ALLOWED`); the form simply does not offer them.
+ */
+const SCHOOL_EXCLUDED_ACCOUNTS: readonly string[] = ['GENESIS', 'BI_CLUB', 'DISTRICOL', 'GUAYACAN'];
+
+export function isSchoolCashBank(bank: { isActive: boolean; specialAccount: string | null }): boolean {
+  return bank.isActive && !SCHOOL_EXCLUDED_ACCOUNTS.includes(bank.specialAccount ?? '');
+}
+
+/**
+ * Where the money of a list payment goes (Caja de Listas Escolares): cash
+ * enters the caja, bank payments stay in the bank until "Transferir a Caja de
+ * Listas", card/other stay outside (counted as collected only).
+ */
+export function schoolPaymentDestination(method: SchoolPaymentMethod, bankName?: string | null): string {
+  if (method === 'EFECTIVO') {
+    return 'Entra a la Caja de Listas.';
+  }
+  if (SCHOOL_BANK_METHODS.includes(method)) {
+    return bankName
+      ? `Sube el saldo de ${bankName} y queda pendiente de trasladar a la Caja de Listas.`
+      : 'Elija la cuenta que recibió el dinero: quedará pendiente de trasladar a la Caja de Listas.';
+  }
+  return 'Cuenta como recaudado, fuera de la Caja de Listas (otros medios).';
+}
 
 /**
  * States in which lines, customer data and observations may still change. A

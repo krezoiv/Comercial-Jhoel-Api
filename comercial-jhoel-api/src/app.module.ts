@@ -38,6 +38,7 @@ import { CompanySettingsModule } from './modules/company-settings/company-settin
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
 import { SchoolListsModule } from './modules/school-lists/school-lists.module';
+import { SchoolCashBoxModule } from './modules/school-cash-box/school-cash-box.module';
 import { KeyboardShortcutsModule } from './modules/keyboard-shortcuts/keyboard-shortcuts.module';
 import { PhonesModule } from './modules/phones/phones.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -110,6 +111,7 @@ import { FinancialDayReviewModule } from './modules/financial-day-review/financi
     TicketsModule,
     QuotationsModule,
     SchoolListsModule,
+    SchoolCashBoxModule,
     KeyboardShortcutsModule,
     PhonesModule,
     CatalogModule,

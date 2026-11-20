@@ -35,6 +35,10 @@ export const BANK_MOVEMENT_TYPE_LABELS: Record<BankMovementType, string> = {
   ACREDITACION_SALDO: 'Acreditación de saldo',
   DEPOSITO_CAJA: 'Depósito desde caja',
   COBRO_CXC: 'Cobro cuenta por cobrar',
+  PAGO_LISTA_ESCOLAR: 'Pago de lista escolar',
+  TRASLADO_CAJA_LISTAS: 'Traslado a Caja de Listas',
+  DEVOLUCION_LISTA_ESCOLAR: 'Devolución de lista escolar',
+  DEPOSITO_CAJA_LISTAS: 'Depósito desde Caja de Listas',
   SALDO_INICIAL: 'Saldo inicial',
   ANULACION: 'Anulación',
 };

@@ -16,6 +16,14 @@ export const BANK_MOVEMENT_TYPES = [
   'DEPOSITO_CAJA',
   /** Cuentas por Cobrar → cancelación pagada por depósito bancario (suma a la cuenta, no al efectivo). */
   'COBRO_CXC',
+  /** Listas Escolares → pago por transferencia/depósito (suma; queda pendiente de trasladar a la Caja de Listas). */
+  'PAGO_LISTA_ESCOLAR',
+  /** Caja de Listas → "Transferir a Caja de Listas" (resta; movimiento interno). */
+  'TRASLADO_CAJA_LISTAS',
+  /** Listas Escolares → devolución al cliente desde la cuenta (resta). */
+  'DEVOLUCION_LISTA_ESCOLAR',
+  /** Caja de Listas → salida "Depósito bancario" (suma). */
+  'DEPOSITO_CAJA_LISTAS',
 ] as const;
 export type BankMovementType = (typeof BANK_MOVEMENT_TYPES)[number];
 
@@ -28,6 +36,7 @@ export const BANK_MOVEMENT_ORIGINS = [
   'ACREDITACION_SALDO',
   'CONTROL_EFECTIVO',
   'CUENTAS_POR_COBRAR',
+  'LISTAS_ESCOLARES',
 ] as const;
 export type BankMovementOrigin = (typeof BANK_MOVEMENT_ORIGINS)[number];
 

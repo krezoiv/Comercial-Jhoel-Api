@@ -244,6 +244,106 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   SCHOOL_REFUND_METHOD_REQUIRED: {
     message: 'Indique cómo se devuelve al cliente el dinero recibido.',
   },
+  // ── Caja de Listas Escolares (migration 1760008700000) ──────────────────
+  SCHOOL_CASH_IMMUTABLE: {
+    message:
+      'Los movimientos de la Caja de Listas no se modifican ni se eliminan; use una reversión auditada.',
+    status: 409,
+  },
+  SCHOOL_CASH_INVALID_AMOUNT: {
+    message:
+      'El monto debe ser mayor a cero y tener como máximo dos decimales.',
+  },
+  SCHOOL_CASH_INSUFFICIENT: {
+    message:
+      'La Caja de Listas no tiene efectivo suficiente para esta operación.',
+    status: 409,
+  },
+  SCHOOL_CASH_BANK_REQUIRED: {
+    message:
+      'Seleccione la cuenta bancaria que recibió (o de la que sale) el dinero.',
+  },
+  SCHOOL_CASH_BANK_NOT_ALLOWED: {
+    message:
+      'Esa cuenta no puede recibir dinero de listas escolares (líneas de crédito, Districol y Guayacán tienen sus propias reglas).',
+  },
+  SCHOOL_CASH_PAYMENT_TRANSFERRED: {
+    message:
+      'Ese pago ya fue trasladado (total o parcialmente) a la Caja de Listas; anule primero el traslado.',
+    status: 409,
+  },
+  SCHOOL_CASH_TRANSFER_EMPTY: {
+    message: 'Seleccione al menos un pago bancario para trasladar.',
+  },
+  SCHOOL_CASH_TRANSFER_DUPLICATE: {
+    message: 'El mismo pago aparece dos veces en el traslado.',
+  },
+  SCHOOL_CASH_TRANSFER_BANK_MISMATCH: {
+    message: 'Todos los pagos del traslado deben estar en la cuenta de origen.',
+  },
+  SCHOOL_CASH_TRANSFER_EXCEEDS_PENDING: {
+    message: 'No se puede trasladar más de lo pendiente del pago.',
+    status: 409,
+  },
+  SCHOOL_CASH_RECEIPT_NOT_FOUND: {
+    message: 'No se encontró el pago bancario seleccionado.',
+    status: 404,
+  },
+  SCHOOL_CASH_TRANSFER_NOT_FOUND: {
+    message: 'No se encontró el traslado.',
+    status: 404,
+  },
+  SCHOOL_CASH_EXIT_NOT_FOUND: {
+    message: 'No se encontró la salida de caja.',
+    status: 404,
+  },
+  SCHOOL_CASH_MOVEMENT_NOT_FOUND: {
+    message: 'No se encontró el movimiento de la Caja de Listas.',
+    status: 404,
+  },
+  SCHOOL_CASH_COUNT_NOT_FOUND: {
+    message: 'No se encontró el arqueo.',
+    status: 404,
+  },
+  SCHOOL_CASH_ALREADY_REVERSED: {
+    message: 'Esa operación ya fue anulada.',
+    status: 409,
+  },
+  SCHOOL_CASH_NOT_REVERSIBLE: {
+    message:
+      'Ese movimiento no se revierte desde aquí: los pagos se anulan desde la lista; traslados y salidas, desde su propio registro.',
+    status: 409,
+  },
+  SCHOOL_CASH_INVALID_DESTINATION: {
+    message: 'Seleccione el destino del dinero.',
+  },
+  SCHOOL_CASH_INVALID_DIRECTION: {
+    message: 'Indique si el ajuste es una entrada o una salida.',
+  },
+  SCHOOL_CASH_INVALID_COUNT: {
+    message:
+      'El arqueo no es válido: use las denominaciones oficiales y cantidades enteras.',
+  },
+  SCHOOL_CASH_INVALID_REPORT: {
+    message: 'El reporte solicitado no existe.',
+  },
+  SCHOOL_CASH_INVALID_RANGE: {
+    message: 'La fecha inicial no puede ser posterior a la final.',
+  },
+  SCHOOL_CUSTOMER_NOT_FOUND: {
+    message: 'No se encontró un cliente de listas escolares con ese teléfono.',
+    status: 404,
+  },
+  SCHOOL_DELETE_HAS_CASH: {
+    message:
+      'La cotización tiene dinero registrado en la Caja de Listas; no se puede borrar (cancélela con su devolución).',
+    status: 409,
+  },
+  SCHOOL_PURGE_HAS_CASH: {
+    message:
+      'Hay cotizaciones con dinero registrado en la Caja de Listas; no se pueden borrar todas.',
+    status: 409,
+  },
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -335,6 +435,28 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
   SCHOOL_DELETE_CONFIRMATION: ([number]) =>
     number
       ? `Escriba exactamente "${number}" para confirmar el borrado.`
+      : null,
+  // SCHOOL_CASH_INSUFFICIENT:<available>:<requested>
+  SCHOOL_CASH_INSUFFICIENT: ([available, requested]) =>
+    available !== undefined && requested !== undefined
+      ? `La Caja de Listas no tiene efectivo suficiente: disponible ${money(available)}, se necesitan ${money(requested)}.`
+      : null,
+  SCHOOL_CASH_PAYMENT_TRANSFERRED: ([receipt]) =>
+    receipt
+      ? `El pago ${receipt} ya fue trasladado (total o parcialmente) a la Caja de Listas; anule primero el traslado.`
+      : null,
+  SCHOOL_CASH_TRANSFER_BANK_MISMATCH: ([receipt]) =>
+    receipt
+      ? `El pago ${receipt} se recibió en otra cuenta; un traslado sale de una sola cuenta.`
+      : null,
+  // SCHOOL_CASH_TRANSFER_EXCEEDS_PENDING:<receipt>:<pending>
+  SCHOOL_CASH_TRANSFER_EXCEEDS_PENDING: ([receipt, pending]) =>
+    receipt
+      ? `Del pago ${receipt} solo quedan ${money(pending)} pendientes de trasladar.`
+      : null,
+  SCHOOL_DELETE_HAS_CASH: ([number]) =>
+    number
+      ? `${number} tiene dinero registrado en la Caja de Listas; no se puede borrar (cancélela con su devolución).`
       : null,
   SCHOOL_PRODUCT_INACTIVE: (parts) =>
     withName(

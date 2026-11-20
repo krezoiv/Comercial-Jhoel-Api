@@ -1,0 +1,154 @@
+<div class="period" role="group" aria-label="Período de los indicadores">
+  <span class="period__label"><app-icon name="calendar" [size]="16" /> {{ periodLabel() }}</span>
+  <div class="period__chips">
+    <button type="button" [class.on]="preset() === 'ALL'" [attr.aria-pressed]="preset() === 'ALL'" (click)="choose('ALL')">Toda la temporada</button>
+    <button type="button" [class.on]="preset() === 'MONTH'" [attr.aria-pressed]="preset() === 'MONTH'" (click)="choose('MONTH')">Este mes</button>
+    <button type="button" [class.on]="preset() === 'LAST30'" [attr.aria-pressed]="preset() === 'LAST30'" (click)="choose('LAST30')">Últimos 30 días</button>
+    <button type="button" [class.on]="preset() === 'CUSTOM'" [attr.aria-pressed]="preset() === 'CUSTOM'" (click)="choose('CUSTOM')">Personalizado</button>
+  </div>
+  @if (showCustom()) {
+    <form class="period__custom" (ngSubmit)="applyCustom()">
+      <label>Desde <input type="date" name="from" [ngModel]="customFrom()" (ngModelChange)="customFrom.set($event)" /></label>
+      <label>Hasta <input type="date" name="to" [ngModel]="customTo()" (ngModelChange)="customTo.set($event)" /></label>
+      <button type="submit" class="period__apply">Aplicar</button>
+    </form>
+  }
+  @if (preset() !== 'ALL') {
+    <small class="period__note">El período aplica a ventas, recaudación y traslados; saldos, efectivo y clientes son a hoy.</small>
+  }
+</div>
+
+@if (s(); as s) {
+  @if (alerts().length) {
+    <ul class="alerts" aria-label="Alertas de la caja">
+      @for (alert of alerts(); track alert.text) {
+        <li class="alert alert--{{ alert.tone }}">
+          <app-icon [name]="alert.icon" [size]="18" />
+          <span>{{ alert.text }}</span>
+          @if (alert.action) {
+            <button type="button" (click)="act(alert)">{{ alert.action.label }}</button>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <section class="kpis kpis--primary" aria-label="Indicadores principales" [class.is-loading]="loading">
+    @for (kpi of primary(); track kpi.label) {
+      @if (kpi.view || kpi.tab) {
+        <button type="button" class="kpi kpi--{{ kpi.tone }} kpi--link" (click)="open(kpi)">
+          <span class="kpi__icon" aria-hidden="true"><app-icon [name]="kpi.icon" [size]="20" /></span>
+          <span class="kpi__body">
+            <span class="kpi__label">{{ kpi.label }}</span>
+            <span class="kpi__value">{{ kpi.value }}</span>
+            <span class="kpi__hint">{{ kpi.hint }}</span>
+          </span>
+          <app-icon class="kpi__go" name="chevron-right" [size]="16" />
+        </button>
+      } @else {
+        <article class="kpi kpi--{{ kpi.tone }}">
+          <span class="kpi__icon" aria-hidden="true"><app-icon [name]="kpi.icon" [size]="20" /></span>
+          <span class="kpi__body">
+            <span class="kpi__label">{{ kpi.label }}</span>
+            <span class="kpi__value">{{ kpi.value }}</span>
+            <span class="kpi__hint">{{ kpi.hint }}</span>
+          </span>
+        </article>
+      }
+    }
+  </section>
+
+  <section class="kpis kpis--secondary" aria-label="Indicadores de la temporada">
+    @for (kpi of secondary(); track kpi.label) {
+      @if (kpi.view || kpi.tab) {
+        <button type="button" class="kpi kpi--{{ kpi.tone }} kpi--link" (click)="open(kpi)">
+          <span class="kpi__icon" aria-hidden="true"><app-icon [name]="kpi.icon" [size]="18" /></span>
+          <span class="kpi__body">
+            <span class="kpi__label">{{ kpi.label }}</span>
+            <span class="kpi__value">{{ kpi.value }}</span>
+            <span class="kpi__hint">{{ kpi.hint }}</span>
+          </span>
+          <app-icon class="kpi__go" name="chevron-right" [size]="16" />
+        </button>
+      } @else {
+        <article class="kpi kpi--{{ kpi.tone }}">
+          <span class="kpi__icon" aria-hidden="true"><app-icon [name]="kpi.icon" [size]="18" /></span>
+          <span class="kpi__body">
+            <span class="kpi__label">{{ kpi.label }}</span>
+            <span class="kpi__value">{{ kpi.value }}</span>
+            <span class="kpi__hint">{{ kpi.hint }}</span>
+          </span>
+        </article>
+      }
+    }
+  </section>
+
+  <app-school-cash-charts [summary]="s" (granularity)="setGranularity($event)" />
+
+  <div class="duo">
+    <section class="panel panel--pending">
+      <header class="panel__head">
+        <h2><app-icon name="bank" [size]="18" /> Dinero en bancos por trasladar</h2>
+        <div class="panel__tools">
+          <button type="button" class="link" (click)="goTo.emit('traslados')">Ver y trasladar</button>
+        </div>
+      </header>
+      @if (s.pendingByBank.length) {
+        <ul class="banks">
+          @for (bank of s.pendingByBank; track bank.bankId) {
+            <li>
+              <span class="banks__name">{{ bank.bankName }}</span>
+              <span class="banks__count">{{ bank.receipts }} pago(s)</span>
+              <strong>{{ formatCurrency(bank.pending) }}</strong>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty">No hay dinero de listas pendiente en bancos.</p>
+      }
+    </section>
+
+    <section class="panel panel--neutral">
+      <header class="panel__head">
+        <h2><app-icon name="layers" [size]="18" /> Movimientos recientes de caja</h2>
+        <div class="panel__tools">
+          <button type="button" class="link" (click)="goTo.emit('movimientos')">Ver historial</button>
+        </div>
+      </header>
+      @if (s.recent.length) {
+        <ul class="recent">
+          @for (m of s.recent; track m.id) {
+            <li [class.is-off]="m.status === 'REVERTIDO'">
+              <span class="recent__icon recent__icon--{{ m.direction }}" aria-hidden="true">
+                <app-icon [name]="movementIcon[m.movementType]" [size]="16" />
+              </span>
+              <span class="recent__text">
+                <strong>{{ m.description }}</strong>
+                <small>{{ movementLabel[m.movementType] }} · {{ formatDateTime(m.createdAt) }} · {{ m.userName }}</small>
+              </span>
+              <span class="recent__amount recent__amount--{{ m.direction }}">
+                {{ m.direction === 'NONE' ? formatCurrency(m.amount) : signed(m.cashEffect) }}
+                <small>{{ m.direction === 'NONE' ? (m.bankName ?? 'Otro medio') : 'Saldo ' + formatCurrency(m.balanceAfter) }}</small>
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty">La caja todavía no tiene movimientos.</p>
+      }
+    </section>
+  </div>
+
+  <p class="foot">
+    Salidas registradas: {{ formatCurrency(s.exitsTotal) }} · Ajustes netos: {{ formatCurrency(s.adjustmentsNet) }}
+    @if (s.collected.beforeCashBox > 0) {
+      · Recaudado antes de existir la caja: {{ formatCurrency(s.collected.beforeCashBox) }} (no entra a la caja ni a los pendientes).
+    }
+  </p>
+} @else {
+  <section class="kpis kpis--primary" aria-busy="true" aria-label="Cargando indicadores">
+    @for (i of skeleton; track i) {
+      <div class="kpi kpi--skeleton"><span class="bone bone--icon"></span><span class="bone"></span></div>
+    }
+  </section>
+}

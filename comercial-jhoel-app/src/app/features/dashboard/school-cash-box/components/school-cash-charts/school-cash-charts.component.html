@@ -1,0 +1,99 @@
+<div class="grid">
+  <section class="panel panel--sales">
+    <header class="panel__head">
+      <h2><app-icon name="bar-chart" [size]="18" /> Ventas vs. recaudación</h2>
+    </header>
+    <ul class="hbars panel__body" aria-label="Ventas, abonado y pendiente de cobro">
+      @for (bar of salesVsCollected(); track bar.label) {
+        <li>
+          <span class="hbars__label">{{ bar.label }} @if (bar.note) {<small>({{ bar.note }})</small>}</span>
+          <span class="hbars__track"><span class="hbars__fill" [style.width.%]="bar.width" [style.background]="bar.color"></span></span>
+          <b>{{ formatCurrency(bar.value) }}</b>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="panel panel--bank">
+    <header class="panel__head">
+      <h2><app-icon name="wallet" [size]="18" /> Recaudación por método de pago</h2>
+    </header>
+    <ul class="hbars panel__body" aria-label="Dinero recibido por método de pago">
+      @for (bar of byMethod(); track bar.label) {
+        <li>
+          <span class="hbars__label">{{ bar.label }} <small>{{ bar.note }}</small></span>
+          <span class="hbars__track"><span class="hbars__fill" [style.width.%]="bar.width" [style.background]="bar.color"></span></span>
+          <b>{{ formatCurrency(bar.value) }}</b>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="panel panel--collected">
+    <header class="panel__head">
+      <h2><app-icon name="trending-up" [size]="18" /> Evolución de pagos</h2>
+      <div class="panel__tools seg" role="group" aria-label="Agrupar por">
+        @for (u of units; track u.id) {
+          <button type="button" [class.on]="evolution().unit === u.id" [attr.aria-pressed]="evolution().unit === u.id" (click)="granularity.emit(u.id)">
+            {{ u.label }}
+          </button>
+        }
+      </div>
+    </header>
+    <div class="panel__body">
+      @if (evolution().total > 0) {
+        <div class="cols" role="img" aria-label="Pagos recibidos por período">
+          @for (col of evolution().items; track col.start) {
+            <div class="cols__col" [style.width.%]="col.width" [title]="col.title">
+              <div class="cols__stack" [style.height.px]="col.height">
+                <span [style.height.%]="col.other" [style.background]="colors.other"></span>
+                <span [style.height.%]="col.bank" [style.background]="colors.transfer"></span>
+                <span [style.height.%]="col.cash" [style.background]="colors.cash"></span>
+              </div>
+              <small>{{ col.tick }}</small>
+            </div>
+          }
+        </div>
+        <ul class="legend">
+          <li><i [style.background]="colors.cash"></i> Efectivo</li>
+          <li><i [style.background]="colors.transfer"></i> Bancos</li>
+          <li><i [style.background]="colors.other"></i> Otros medios</li>
+        </ul>
+      } @else {
+        <p class="empty">No hay pagos en el período.</p>
+      }
+    </div>
+  </section>
+
+  <section class="panel panel--cash">
+    <header class="panel__head">
+      <h2><app-icon name="check-check" [size]="18" /> Estado de cartera</h2>
+    </header>
+    <div class="panel__body">
+      @if (portfolio(); as p) {
+        @if (p.active > 0) {
+          <div class="split" role="img" [attr.aria-label]="p.active + ' listas vigentes'">
+            @for (seg of p.segments; track seg.label) {
+              <span [style.flex-grow]="seg.count" [style.background]="seg.color"></span>
+            }
+          </div>
+          <ul class="portfolio">
+            @for (seg of p.segments; track seg.label) {
+              <li>
+                <i [style.background]="seg.color"></i>
+                <span>{{ seg.label }}</span>
+                <b>{{ seg.count }}</b>
+                <small>{{ seg.pct.toFixed(0) }} % · {{ formatCurrency(seg.amount) }} {{ seg.amountLabel }}</small>
+              </li>
+            }
+          </ul>
+          @if (p.cancelled) {
+            <p class="note">{{ p.cancelled }} lista(s) canceladas no cuentan en ventas ni en saldos.</p>
+          }
+        } @else {
+          <p class="empty">Todavía no hay listas vendidas.</p>
+        }
+      }
+    </div>
+  </section>
+</div>

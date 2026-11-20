@@ -1,0 +1,161 @@
+@use 'mixins' as *;
+@use '../../school-cash' as sc;
+
+@include sc.panel;
+@include sc.table;
+@include sc.pills;
+@include sc.filters;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-light-muted);
+
+  button {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+    @include focus-ring;
+  }
+
+  .seg__on {
+    background: var(--color-surface-light);
+    color: var(--color-text-on-light);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.filters__total {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+
+  strong {
+    font-size: var(--fs-lg, 1.125rem);
+    color: #b45309;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.table {
+  .pick {
+    width: 2.5rem;
+
+    input {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: #0d9488;
+    }
+  }
+
+  tr.is-on td {
+    background: color-mix(in srgb, #0d9488 7%, transparent);
+  }
+
+  .muted {
+    display: block;
+  }
+}
+
+.pend {
+  color: #b45309;
+}
+
+.age {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold, 600);
+  color: #d97706;
+}
+
+.amount {
+  width: 7.5rem;
+  min-height: 2rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-surface-light);
+  color: var(--color-text-on-light);
+  @include focus-ring;
+
+  &--bad {
+    border-color: #dc2626;
+  }
+}
+
+.link {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold, 600);
+  color: #0d9488;
+  @include focus-ring;
+}
+
+.bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 2px solid #0d9488;
+  background: var(--color-surface-light);
+  box-shadow: 0 -6px 16px -10px rgba(0, 0, 0, 0.35);
+
+  > span {
+    flex: 1 1 16rem;
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+  }
+}
+
+.bar__total {
+  color: #0d9488;
+  font-size: var(--fs-lg, 1.125rem);
+}
+
+.bar__bad {
+  display: block;
+  color: #dc2626;
+}
+
+.empty {
+  padding: var(--space-5);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+
+  &--error {
+    color: var(--color-danger);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (min-width: 720px) {
+  .table td[data-label='Fecha'] {
+    white-space: nowrap;
+  }
+
+  .table td.wide {
+    min-width: 15rem;
+  }
+}

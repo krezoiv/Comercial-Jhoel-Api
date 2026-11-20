@@ -1,0 +1,78 @@
+@use 'mixins' as *;
+@use '../../school-cash' as sc;
+
+@include sc.panel;
+@include sc.table;
+@include sc.filters;
+
+.totals {
+  gap: var(--space-4);
+
+  span {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  small {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.filters__actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.table .muted {
+  display: block;
+}
+
+.table a {
+  color: #4f46e5;
+  font-weight: var(--fw-semibold, 600);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.row {
+  cursor: pointer;
+
+  &:hover td {
+    background: var(--color-bg-light-muted);
+  }
+}
+
+.detail td {
+  background: var(--color-bg-light-muted);
+}
+
+.detail dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--fs-sm);
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.table-wrap.is-loading {
+  opacity: 0.6;
+}
+
+.empty {
+  padding: var(--space-5);
+  color: var(--color-text-on-light-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+
+  &--error {
+    color: var(--color-danger);
+  }
+}

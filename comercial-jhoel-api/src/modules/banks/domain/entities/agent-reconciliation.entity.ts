@@ -4,6 +4,8 @@ export interface AgentReconciliationProps {
   totalCash: number;
   /** Bodega cash included in the consolidated cuadre (0 before migration 1760007400000). */
   totalWarehouseCash: number;
+  /** School-list money in banks subtracted from the result (0 before migration 1760008700000). */
+  totalSchoolListPending: number;
   totalBanks: number;
   totalAssets: number;
   totalAccountsReceivable: number;
@@ -44,6 +46,10 @@ export class AgentReconciliation {
 
   get totalWarehouseCash(): number {
     return this.props.totalWarehouseCash;
+  }
+
+  get totalSchoolListPending(): number {
+    return this.props.totalSchoolListPending;
   }
 
   get totalBanks(): number {

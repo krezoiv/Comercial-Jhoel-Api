@@ -23,6 +23,11 @@ import { AppModule } from './../src/app.module';
  *   other lists untouched and hands its released reservations FIFO to the
  *   next pending list.
  *
+ * - a list whose money is in the Caja de Listas (migration 1760008700000) is
+ *   never deleted: its ledger is a financial record. The other cases register
+ *   their payments as "before the Caja de Listas" (payment trigger disabled
+ *   on the clone only) so the purge mechanics stay covered.
+ *
  * WRITES DATA: run it only through
  * `test/run-cash-control-e2e.sh test/school-lists-purge.e2e-spec.ts`
  * (temporary `<db>_e2e` clone, dropped afterwards).
@@ -110,9 +115,16 @@ describe('Listas Escolares — borrar cotizaciones (e2e)', () => {
       `SELECT id, name, public_price::float AS price FROM products WHERE is_active ORDER BY name LIMIT 1`,
     );
     await setBodega(product.id, 20);
+    // Payments of these cases predate the Caja de Listas (clone only).
+    await dataSource.query(
+      `ALTER TABLE school_quotation_payments DISABLE TRIGGER trg_school_cash_on_payment`,
+    );
   });
 
   afterAll(async () => {
+    await dataSource.query(
+      `ALTER TABLE school_quotation_payments ENABLE TRIGGER trg_school_cash_on_payment`,
+    );
     await app.close();
   });
 
@@ -413,5 +425,37 @@ describe('Listas Escolares — borrar cotizaciones (e2e)', () => {
         .post(`/api/school-lists/quotations/${x.id}/delete`)
         .send({ confirmation: x.quotationNumber }),
     ).expect(404);
+  });
+
+  it('una lista con dinero en la Caja de Listas no se borra (ni sola ni con todas)', async () => {
+    await dataSource.query(
+      `ALTER TABLE school_quotation_payments ENABLE TRIGGER trg_school_cash_on_payment`,
+    );
+    const paid = data(
+      await as(userToken)(
+        api()
+          .post('/api/school-lists/quotations')
+          .send({
+            customerName: 'Familia Caja',
+            customerPhone: '5555-9494',
+            grade: 'Primero Básico',
+            items: [{ productName: 'Cuaderno', quantity: 1, unitPrice: 10 }],
+            advance: { amount: 10, paymentMethod: 'EFECTIVO' },
+            clientRequestId: randomUUID(),
+          }),
+      ).expect(201),
+    );
+    const one = await as(rootToken)(
+      api()
+        .post(`/api/school-lists/quotations/${paid.id}/delete`)
+        .send({ confirmation: paid.quotationNumber }),
+    ).expect(409);
+    expect(JSON.stringify(one.body)).toContain('Caja de Listas');
+    const all = await as(rootToken)(
+      api()
+        .post('/api/school-lists/quotations/purge')
+        .send({ confirmation: 'BORRAR TODO' }),
+    ).expect(409);
+    expect(JSON.stringify(all.body)).toContain('Caja de Listas');
   });
 });

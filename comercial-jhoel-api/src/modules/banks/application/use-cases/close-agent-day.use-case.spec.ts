@@ -148,6 +148,7 @@ describe('CloseAgentDayUseCase with a cash breakdown', () => {
     const summary = {
       execute: jest.fn().mockResolvedValue({
         totalWarehouseCash: 1000,
+        totalSchoolListPending: 500,
         totalBanks: 2000,
         totalAccountsReceivable: 300,
         totalAssets: 100,
@@ -179,7 +180,9 @@ describe('CloseAgentDayUseCase with a cash breakdown', () => {
     const call = repository.closeDayWithReconciliation.mock.calls[0][0];
     expect(call.cashBreakdown).toEqual(data);
     expect(call.totalCash).toBe(4883);
-    expect(call.result).toBe(4883 + 1000 + 2000 + 300 - 100);
+    // School-list money still in banks (Q500) is subtracted and stored apart.
+    expect(call.result).toBe(4883 + 1000 + 2000 + 300 - 100 - 500);
+    expect(call.totalSchoolListPending).toBe(500);
   });
 
   it('rejects before touching the database when the breakdown does not add up', async () => {

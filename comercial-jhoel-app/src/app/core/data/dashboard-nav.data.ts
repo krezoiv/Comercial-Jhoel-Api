@@ -22,6 +22,9 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
       { label: 'Tickets', icon: 'tag', path: 'tickets' },
       { label: 'Cotizaciones', icon: 'file-check', path: 'cotizaciones' },
       { label: 'Listas Escolares', icon: 'book-open', path: 'listas-escolares' },
+      // Caja de Listas Escolares: managers see the whole caja; cashiers only the
+      // customer statements (the page shows the tabs each role may use).
+      { label: 'Caja de Listas', icon: 'wallet', path: 'caja-listas' },
     ],
   },
   {

@@ -1,0 +1,94 @@
+<div class="backdrop">
+  <div class="dialog" [class.dialog--short]="outgoing()" [class.dialog--cash]="!outgoing()" role="dialog" aria-modal="true" aria-labelledby="sce-title" appFocusTrap tabindex="-1">
+    <header class="dialog__head">
+      <h2 id="sce-title">
+        <app-icon [name]="isExit() ? 'log-out' : 'refresh-cw'" [size]="20" />
+        {{ isExit() ? 'Salida de la Caja de Listas' : 'Ajuste autorizado' }}
+      </h2>
+      <button type="button" class="dialog__close" aria-label="Cerrar" (click)="closed.emit()"><app-icon name="close" [size]="18" /></button>
+    </header>
+    <div class="dialog__body">
+      @if (!isExit()) {
+        <div class="seg" role="radiogroup" aria-label="Tipo de ajuste">
+          <button type="button" role="radio" [attr.aria-checked]="direction() === 'IN'" [class.seg__on]="direction() === 'IN'" (click)="direction.set('IN')">
+            <app-icon name="arrow-down-circle" [size]="16" /> Entrada (+)
+          </button>
+          <button type="button" role="radio" [attr.aria-checked]="direction() === 'OUT'" [class.seg__on]="direction() === 'OUT'" (click)="direction.set('OUT')">
+            <app-icon name="arrow-up-circle" [size]="16" /> Salida (−)
+          </button>
+        </div>
+      }
+
+      <div class="grid2">
+        <label class="field" for="sce-amount">
+          Monto
+          <input id="sce-amount" appDecimalInput thousands data-autofocus [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
+        </label>
+        @if (isExit()) {
+          <label class="field" for="sce-dest">
+            Destino del dinero
+            <select id="sce-dest" [ngModel]="destination()" (ngModelChange)="destination.set($event)">
+              @for (d of destinations; track d) {
+                <option [value]="d">{{ destinationLabel[d] }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+
+      @if (needsBank()) {
+        <label class="field" for="sce-bank">
+          Cuenta donde se deposita
+          <select id="sce-bank" [ngModel]="bankId()" (ngModelChange)="bankId.set($event)">
+            <option value="">Seleccione…</option>
+            @for (bank of banks(); track bank.id) {
+              <option [value]="bank.id">{{ bank.name }} · {{ bank.accountNumber }}</option>
+            }
+          </select>
+          <small>El saldo de la cuenta sube por el monto; sale de la Caja de Listas.</small>
+        </label>
+      }
+
+      @if (isExit()) {
+        <div class="grid2">
+          <label class="field" for="sce-recipient">
+            Entregado a
+            <input id="sce-recipient" type="text" maxlength="120" [ngModel]="recipient()" (ngModelChange)="recipient.set($event)" />
+          </label>
+          <label class="field" for="sce-ref">
+            Referencia
+            <input id="sce-ref" type="text" maxlength="100" [ngModel]="reference()" (ngModelChange)="reference.set($event)" />
+          </label>
+        </div>
+      }
+
+      <label class="field" for="sce-reason">
+        Motivo (obligatorio)
+        <textarea id="sce-reason" rows="2" maxlength="500" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea>
+        @if (!isExit()) {
+          <small>Use un ajuste de entrada para cargar el saldo inicial después de contar el efectivo.</small>
+        } @else {
+          <small>Una salida no se registra como gasto de la empresa automáticamente.</small>
+        }
+      </label>
+
+      <div class="total-box">
+        <span>Efectivo después: disponible {{ formatCurrency(available) }}</span>
+        <strong>{{ formatCurrency(after()) }}</strong>
+      </div>
+
+      @if (problem(); as p) {
+        <p class="hint" role="status">{{ p }}</p>
+      }
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+    </div>
+    <footer class="dialog__actions">
+      <app-button variant="ghost" (click)="closed.emit()">Cancelar</app-button>
+      <app-button [variant]="outgoing() ? 'danger' : 'primary'" [disabled]="busy() || !!problem()" (click)="save()">
+        {{ busy() ? 'Guardando…' : isExit() ? 'Registrar salida' : 'Registrar ajuste' }}
+      </app-button>
+    </footer>
+  </div>
+</div>

@@ -31,6 +31,8 @@ import {
   SchoolTemplate,
   SchoolTemplateSummary,
   formatCurrency,
+  isSchoolCashBank,
+  schoolPaymentDestination,
   guatemalaToday,
   roundMoney,
   schoolListHoldsStock,
@@ -201,6 +203,10 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   readonly advance = computed(() => (this.withAdvance() && !this.asDraft() ? (this.advanceAmount() ?? 0) : 0));
   readonly balance = computed(() => roundMoney(this.total() - this.paid()));
   readonly usesBank = computed(() => SCHOOL_BANK_METHODS.includes(this.advanceMethod()));
+  /** Where the advance goes (Caja de Listas, bank pending transfer, or outside). */
+  readonly advanceDestination = computed(() =>
+    schoolPaymentDestination(this.advanceMethod(), this.bankList().find((b) => b.id === this.advanceBankId())?.name),
+  );
 
   /** Whether saving will (re)discount inventory: only lists of the previous flow, never a draft. */
   readonly movesStock = computed(
@@ -255,6 +261,9 @@ export class SchoolQuotationEditorComponent implements OnChanges {
       const amount = this.advanceAmount();
       if (amount === null || !(amount > 0) || roundMoney(amount) !== amount) {
         issues.push('Indique un anticipo mayor que cero.');
+      }
+      if (this.usesBank() && !this.advanceBankId()) {
+        issues.push('Seleccione la cuenta bancaria que recibió el anticipo.');
       }
     }
     return issues;
@@ -658,7 +667,10 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   toggleAdvance(on: boolean): void {
     this.withAdvance.set(on);
     if (on && !this.bankList().length) {
-      this.banks.getBanks().subscribe({ next: (list) => this.bankList.set(list), error: () => this.bankList.set([]) });
+      this.banks.getBanks().subscribe({
+        next: (list) => this.bankList.set(list.filter(isSchoolCashBank)),
+        error: () => this.bankList.set([]),
+      });
     }
   }
 
@@ -743,7 +755,7 @@ export class SchoolQuotationEditorComponent implements OnChanges {
               ? {
                   amount: advanceAmount,
                   paymentMethod: this.advanceMethod(),
-                  bankId: this.usesBank() && this.advanceBankId() ? this.advanceBankId() : null,
+                  bankId: this.usesBank() ? this.advanceBankId() : null,
                   reference: this.advanceReference().trim() || null,
                 }
               : null,
