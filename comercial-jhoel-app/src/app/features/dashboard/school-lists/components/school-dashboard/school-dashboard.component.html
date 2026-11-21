@@ -17,13 +17,14 @@
   }
 
   @if (data(); as d) {
+    <!-- Quotations are never money: only accepted lists are sold or owed (migration 1760009000000). -->
     <div class="dash__tiles">
-      <app-summary-tile icon="file-check" title="Total de cotizaciones" [value]="formatQuantity(d.totalQuotations)" description="En el período seleccionado" />
-      <app-summary-tile icon="clock" title="Cotizaciones pendientes" tone="danger" [value]="formatQuantity(d.pendingQuotations)" description="Con saldo por cobrar" />
-      <app-summary-tile icon="check-circle" title="Cotizaciones pagadas" tone="success" [value]="formatQuantity(d.paidQuotations)" description="Pagadas o entregadas" />
-      <app-summary-tile icon="receipt" title="Total cotizado" [value]="formatCurrency(d.totalQuoted)" description="Sin borradores ni canceladas" />
-      <app-summary-tile icon="wallet" title="Anticipos y abonos recibidos" tone="gold" [value]="formatCurrency(d.totalReceived)" description="Neto de devoluciones" />
-      <app-summary-tile icon="alert-circle" title="Saldo pendiente por cobrar" tone="danger" [value]="formatCurrency(d.pendingBalance)" description="Cotizaciones abiertas" />
+      <app-summary-tile icon="file-check" title="Total de listas aceptadas" tone="primary" [value]="formatCurrency(d.acceptedTotal)" description="Lo vendido: aceptadas por el cliente" />
+      <app-summary-tile icon="wallet" title="Total recaudado" tone="gold" [value]="formatCurrency(d.totalReceived)" description="Pagos reales, neto de devoluciones" />
+      <app-summary-tile icon="alert-circle" title="Total pendiente de pago" tone="danger" [value]="formatCurrency(d.pendingBalance)" description="Solo listas aceptadas" />
+      <app-summary-tile icon="receipt" title="Cotizaciones pendientes de decisión" [value]="formatQuantity(d.awaitingQuotations)" [description]="formatCurrency(d.quotedPendingTotal) + ' cotizado · no es dinero'" />
+      <app-summary-tile icon="check-circle" title="Listas pagadas" tone="success" [value]="formatQuantity(d.paidQuotations)" description="Aceptadas y pagadas por completo" />
+      <app-summary-tile icon="clock" title="Listas con saldo" tone="danger" [value]="formatQuantity(d.pendingQuotations)" [description]="formatQuantity(d.totalQuotations) + ' listas en el período'" />
     </div>
 
     <div class="dash__charts">

@@ -40,6 +40,11 @@ export const SCHOOL_LIST_PERMISSION_ROLES = {
   'school_lists.quotations.purge': SUPER_ADMINS,
   /** Cancelar cotizaciones (con devolución de lo pagado). */
   'school_lists.quotations.cancel': MANAGERS,
+  /**
+   * "Devolver a cotización": corrects a list accepted by mistake (no payments,
+   * no preparation), audited with a reason (migration 1760009000000).
+   */
+  'school_lists.quotations.revert': MANAGERS,
   /** Generar el PDF de la cotización y los comprobantes de pago. */
   'school_lists.documents.generate': ALL_OPERATORS,
   // ── Caja de Listas Escolares (migration 1760008700000) ──────────────────

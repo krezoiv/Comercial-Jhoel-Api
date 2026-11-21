@@ -250,6 +250,24 @@ export const SCHOOL_CASH_REPORTS: SchoolCashReportDefinition[] = [
     ],
   },
   {
+    kind: 'estado-listas',
+    title: 'Cotizado, aceptado y cobrado por lista',
+    description:
+      'Cada lista del período con su etapa y su estado de pago. Las cotizaciones (sin aceptar) solo suman en "Cotizado": nunca en lo aceptado, lo cobrado ni lo pendiente.',
+    usesRange: true,
+    columns: [
+      text('quotation', 'Lista', 60),
+      { key: 'date', label: 'Fecha', type: 'date', width: 58 },
+      text('customer', 'Cliente', 120, true),
+      text('stage', 'Etapa', 70),
+      text('payment', 'Pago', 58),
+      money('quoted', 'Cotizado', 66),
+      money('sold', 'Aceptado', 66),
+      money('paid', 'Cobrado', 64),
+      money('balance', 'Pendiente', 64),
+    ],
+  },
+  {
     kind: 'movimientos',
     title: 'Kardex de la Caja de Listas',
     description: 'Todos los movimientos con su saldo después de cada uno.',

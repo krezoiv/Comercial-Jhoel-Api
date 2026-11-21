@@ -275,13 +275,17 @@ export class SchoolQuotationEditorComponent implements OnChanges {
   );
   /** Discount column only for roles that may discount, or when a line already has one. */
   readonly showDiscount = computed(() => this.canOverride() || this.discount() > 0);
-  /** Status the quotation has (edit) or will have once saved (new). */
+  /**
+   * Status the quotation has (edit) or will have once saved (new). A new list
+   * with an advance is accepted; without one it is a quotation the customer
+   * still has to accept (migration 1760009000000).
+   */
   readonly statusLabel = computed(() =>
     this.quotation
       ? SCHOOL_STATUS_LABEL[this.quotation.status]
       : this.asDraft()
         ? SCHOOL_STATUS_LABEL.BORRADOR
-        : this.requirementMode()
+        : this.withAdvance()
           ? SCHOOL_STATUS_LABEL.ACEPTADA
           : SCHOOL_STATUS_LABEL.COTIZADA,
   );

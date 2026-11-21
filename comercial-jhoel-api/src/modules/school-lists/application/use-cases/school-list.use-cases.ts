@@ -283,6 +283,31 @@ export class ChangeSchoolQuotationStatusUseCase extends SchoolListUseCase {
   }
 }
 
+/**
+ * "Devolver a cotización": the controlled correction for lists that were
+ * accepted by mistake (before migration 1760009000000 every saved list was
+ * born ACEPTADA). Managers only, mandatory reason; the SQL function accepts
+ * it only for an ACEPTADA list with no payments and no preparation, and
+ * writes the audit row. Nothing is ever changed automatically.
+ */
+@Injectable()
+export class RevertSchoolQuotationToQuoteUseCase extends SchoolListUseCase {
+  async execute(
+    actor: Actor,
+    id: string,
+    reason: string,
+    version: number | null,
+  ): Promise<QuotationDetailRow> {
+    this.can(actor, 'school_lists.quotations.revert');
+    const text = reason?.trim() ?? '';
+    if (text.length < 5) {
+      throw schoolListError('SCHOOL_REASON_REQUIRED');
+    }
+    await this.repository.revertToQuote(id, text, actor.userId, version);
+    return this.detail(id);
+  }
+}
+
 @Injectable()
 export class SaveSchoolPreparationUseCase extends SchoolListUseCase {
   /**

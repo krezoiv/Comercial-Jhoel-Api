@@ -37,6 +37,7 @@ import {
   schoolListErrorFromMessage,
 } from '../../../school-lists/domain/errors/school-list.errors';
 import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
+import { isAcceptedSchoolStatus } from '../../../school-lists/domain/repositories/school-list.repository';
 
 type SqlRow = Record<string, unknown>;
 
@@ -274,8 +275,10 @@ function rangeOnInstant(
 
 /**
  * Customers of Listas Escolares: every non-draft list grouped by its phone
- * digits (owner decision). `paid` and `balance` come from the official
- * `school_quotation_paid`; cancelled lists count for nothing.
+ * digits (owner decision). Money comes only from ACCEPTED lists
+ * (`school_quotation_status_accepted`, migration 1760009000000): `paid` and
+ * `balance` from the official `school_quotation_paid`; quotations (COTIZADA)
+ * are counted apart and never owed; cancelled lists count for nothing.
  */
 const CUSTOMER_CTE = `
   cq AS (
@@ -300,17 +303,20 @@ const CUSTOMER_CTE = `
            array_agg(DISTINCT grade) AS grades,
            array_agg(quotation_number ORDER BY quotation_number) AS numbers,
            count(*) AS lists,
-           count(*) FILTER (WHERE status <> 'CANCELADA') AS active_lists,
-           COALESCE(SUM(total) FILTER (WHERE status <> 'CANCELADA'), 0) AS purchased,
-           COALESCE(SUM(paid) FILTER (WHERE status <> 'CANCELADA'), 0) AS paid,
-           COALESCE(SUM(total - paid) FILTER (WHERE status <> 'CANCELADA'), 0) AS balance,
+           count(*) FILTER (WHERE school_quotation_status_accepted(status)) AS active_lists,
+           COALESCE(SUM(total) FILTER (WHERE school_quotation_status_accepted(status)), 0) AS purchased,
+           COALESCE(SUM(paid) FILTER (WHERE school_quotation_status_accepted(status)), 0) AS paid,
+           COALESCE(SUM(total - paid) FILTER (WHERE school_quotation_status_accepted(status)), 0) AS balance,
+           count(*) FILTER (WHERE status = 'COTIZADA') AS quotes,
+           COALESCE(SUM(total) FILTER (WHERE status = 'COTIZADA'), 0) AS quoted_total,
            min(created_at) AS first_at,
-           min(delivery_date) FILTER (WHERE status <> 'CANCELADA' AND total > paid) AS next_delivery
+           min(delivery_date) FILTER (WHERE school_quotation_status_accepted(status) AND total > paid) AS next_delivery
       FROM cq GROUP BY ckey
   ),
   customers AS (
     SELECT agg.*, lp.last_payment_at,
-           CASE WHEN active_lists = 0 THEN 'CANCELADO'
+           CASE WHEN active_lists = 0 AND quotes > 0 THEN 'COTIZANDO'
+                WHEN active_lists = 0 THEN 'CANCELADO'
                 WHEN balance <= 0 THEN 'SOLVENTE'
                 WHEN paid > 0 THEN 'ABONANDO'
                 ELSE 'PENDIENTE' END AS account_status
@@ -333,6 +339,8 @@ function toCustomer(row: SqlRow): CustomerRow {
     purchased: num(row.purchased),
     paid: num(row.paid),
     balance: num(row.balance),
+    quotes: num(row.quotes),
+    quotedTotal: num(row.quoted_total),
     status: text(row.account_status) as CustomerAccountStatus,
     lastPaymentAt: textOrNull(row.last_payment_at),
     firstAt: text(row.first_at),
@@ -404,7 +412,8 @@ function toPayment(row: SqlRow): CustomerPaymentRow {
 
 const PAYMENT_COUNTED = `(p.kind = 'DEVOLUCION' OR (p.kind IN ('ANTICIPO','ABONO') AND p.status = 'APLICADO'))`;
 const SIGNED_PAYMENT = `CASE WHEN p.kind = 'DEVOLUCION' THEN -p.amount ELSE p.amount END`;
-const OPEN_SALE = `q.status NOT IN ('CANCELADA','BORRADOR','ENTREGADA')`;
+/** An accepted list that can still owe money (quotations are not money, migration 1760009000000). */
+const OPEN_SALE = `(school_quotation_status_accepted(q.status) AND q.status <> 'ENTREGADA')`;
 
 /**
  * Reads and writes of the Caja de Listas. Every write is ONE call to its SQL
@@ -464,7 +473,7 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
                 (SELECT COALESCE(SUM(amount), 0) FROM school_cash_exits WHERE status = 'APLICADO') AS exits,
                 (SELECT COALESCE(SUM(CASE direction WHEN 'IN' THEN amount ELSE -amount END), 0)
                    FROM school_cash_movements WHERE movement_type = 'AJUSTE' AND status = 'APLICADO') AS adjustments,
-                pay.*, sales.*, owed.*
+                pay.*, sales.*, quotes.*, unpaid.*, owed.*
            FROM (SELECT
                    COALESCE(SUM(p.amount) FILTER (WHERE p.kind IN ('ANTICIPO','ABONO') AND p.status = 'APLICADO' AND p.payment_method = 'EFECTIVO'), 0) AS cash,
                    COALESCE(SUM(p.amount) FILTER (WHERE p.kind IN ('ANTICIPO','ABONO') AND p.status = 'APLICADO' AND p.payment_method = 'TRANSFERENCIA'), 0) AS transfer,
@@ -476,11 +485,20 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
                    COALESCE(SUM(p.amount) FILTER (WHERE p.kind IN ('ANTICIPO','ABONO') AND p.status = 'APLICADO'
                        AND NOT EXISTS (SELECT 1 FROM school_cash_movements m WHERE m.payment_id = p.id)), 0) AS before_cash_box
                    FROM school_quotation_payments p WHERE ${onPeriod('p.received_at', 1)}) pay,
-                (SELECT COALESCE(SUM(q.total) FILTER (WHERE q.status NOT IN ('CANCELADA','BORRADOR')), 0) AS sales_total,
-                        count(*) FILTER (WHERE q.status NOT IN ('CANCELADA','BORRADOR')) AS sales_count
+                (SELECT COALESCE(SUM(q.total) FILTER (WHERE school_quotation_status_accepted(q.status)), 0) AS sales_total,
+                        count(*) FILTER (WHERE school_quotation_status_accepted(q.status)) AS sales_count
                    FROM school_quotations q
                   WHERE ($1::date IS NULL OR q.quotation_date >= $1::date)
                     AND ($2::date IS NULL OR q.quotation_date <= $2::date)) sales,
+                (SELECT COALESCE(SUM(q.total), 0) AS quotes_total, count(*) AS quotes_count
+                   FROM school_quotations q WHERE q.status = 'COTIZADA') quotes,
+                (SELECT count(*) AS accepted_unpaid
+                   FROM school_quotations q
+                  WHERE q.status = 'ACEPTADA' AND school_quotation_paid(q.id) = 0
+                    AND NOT EXISTS (SELECT 1 FROM school_quotation_payments p
+                                     WHERE p.quotation_id = q.id AND p.status = 'APLICADO')
+                    AND NOT EXISTS (SELECT 1 FROM school_quotation_item_assignments a
+                                     WHERE a.quotation_id = q.id)) unpaid,
                 (SELECT COALESCE(SUM(q.total - school_quotation_paid(q.id)) FILTER (WHERE ${OPEN_SALE}), 0) AS customers_balance,
                         count(*) FILTER (WHERE ${OPEN_SALE} AND q.total > school_quotation_paid(q.id)) AS customers_with_balance
                    FROM school_quotations q) owed`,
@@ -517,16 +535,19 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
         `${COUNT_SELECT} ORDER BY c.created_at DESC LIMIT 1`,
       ),
       this.dataSource.query<SqlRow[]>(
-        `WITH l AS (SELECT q.status, q.total, school_quotation_paid(q.id) AS paid
+        `WITH l AS (SELECT q.status, q.total, school_quotation_paid(q.id) AS paid,
+                           school_quotation_status_accepted(q.status) AS accepted
                       FROM school_quotations q WHERE q.status <> 'BORRADOR')
-         SELECT count(*) AS lists,
-                count(*) FILTER (WHERE status <> 'CANCELADA' AND total <= paid) AS paid,
-                count(*) FILTER (WHERE status <> 'CANCELADA' AND total > paid AND paid > 0) AS partial,
-                count(*) FILTER (WHERE status <> 'CANCELADA' AND paid = 0 AND total > 0) AS pending,
+         SELECT count(*) FILTER (WHERE accepted OR status = 'CANCELADA') AS lists,
+                count(*) FILTER (WHERE accepted AND total <= paid) AS paid,
+                count(*) FILTER (WHERE accepted AND total > paid AND paid > 0) AS partial,
+                count(*) FILTER (WHERE accepted AND paid = 0 AND total > 0) AS pending,
                 count(*) FILTER (WHERE status = 'CANCELADA') AS cancelled,
-                COALESCE(SUM(total) FILTER (WHERE status <> 'CANCELADA' AND total <= paid), 0) AS paid_amount,
-                COALESCE(SUM(total - paid) FILTER (WHERE status <> 'CANCELADA' AND total > paid AND paid > 0), 0) AS partial_balance,
-                COALESCE(SUM(total - paid) FILTER (WHERE status <> 'CANCELADA' AND paid = 0), 0) AS pending_balance
+                count(*) FILTER (WHERE status = 'COTIZADA') AS quotes,
+                COALESCE(SUM(total) FILTER (WHERE status = 'COTIZADA'), 0) AS quotes_total,
+                COALESCE(SUM(total) FILTER (WHERE accepted AND total <= paid), 0) AS paid_amount,
+                COALESCE(SUM(total - paid) FILTER (WHERE accepted AND total > paid AND paid > 0), 0) AS partial_balance,
+                COALESCE(SUM(total - paid) FILTER (WHERE accepted AND paid = 0), 0) AS pending_balance
            FROM l`,
       ),
       this.dataSource.query<SqlRow[]>(
@@ -565,6 +586,11 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
         beforeCashBox: num(totals.before_cash_box),
       },
       sales: { total: num(totals.sales_total), count: num(totals.sales_count) },
+      quotes: {
+        total: num(totals.quotes_total),
+        count: num(totals.quotes_count),
+      },
+      acceptedWithoutPayments: num(totals.accepted_unpaid),
       customersBalance: num(totals.customers_balance),
       customersWithBalance: num(totals.customers_with_balance),
       exitsTotal: num(totals.exits),
@@ -595,6 +621,8 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
         partial: num(portfolio.partial),
         pending: num(portfolio.pending),
         cancelled: num(portfolio.cancelled),
+        quotes: num(portfolio.quotes),
+        quotesTotal: num(portfolio.quotes_total),
         paidAmount: num(portfolio.paid_amount),
         partialBalance: num(portfolio.partial_balance),
         pendingBalance: num(portfolio.pending_balance),
@@ -672,6 +700,7 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
                 COALESCE(SUM(balance), 0) AS balance,
                 count(*) FILTER (WHERE account_status = 'SOLVENTE') AS solvente,
                 count(*) FILTER (WHERE account_status = 'ABONANDO') AS abonando,
+                count(*) FILTER (WHERE account_status = 'COTIZANDO') AS cotizando,
                 count(*) FILTER (WHERE account_status = 'PENDIENTE') AS pendiente,
                 count(*) FILTER (WHERE account_status = 'CANCELADO') AS cancelado
            FROM (${base}) f`,
@@ -697,6 +726,7 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
           SOLVENTE: num(agg.solvente),
           ABONANDO: num(agg.abonando),
           PENDIENTE: num(agg.pendiente),
+          COTIZANDO: num(agg.cotizando),
           CANCELADO: num(agg.cancelado),
         },
       },
@@ -751,10 +781,10 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
           status: text(row.status),
           total,
           paid,
-          balance:
-            text(row.status) === 'CANCELADA'
-              ? 0
-              : Math.round((total - paid) * 100) / 100,
+          // Only an accepted list is owed; a quotation is not money.
+          balance: isAcceptedSchoolStatus(text(row.status))
+            ? Math.round((total - paid) * 100) / 100
+            : 0,
           itemCount: num(row.item_count),
           createdAt: text(row.created_at),
         };
@@ -1093,7 +1123,7 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
                       (SELECT COALESCE(SUM(q2.total - school_quotation_paid(q2.id)), 0) FROM school_quotations q2
                         WHERE lower(btrim(q2.customer_name)) = lower(btrim(min(q.customer_name)))
                           AND regexp_replace(q2.customer_phone, '\\D', '', 'g') = regexp_replace(min(q.customer_phone), '\\D', '', 'g')
-                          AND q2.status NOT IN ('CANCELADA','BORRADOR','ENTREGADA')) AS balance
+                          AND school_quotation_status_accepted(q2.status) AND q2.status <> 'ENTREGADA') AS balance
                  FROM school_quotation_payments p JOIN school_quotations q ON q.id = p.quotation_id
                 WHERE ${PAYMENT_COUNTED} AND ${onDay('p.received_at')}
                 GROUP BY lower(btrim(q.customer_name)), regexp_replace(q.customer_phone, '\\D', '', 'g')
@@ -1166,6 +1196,28 @@ export class TypeOrmSchoolCashBoxRepository implements SchoolCashBoxRepository {
                         q.total - school_quotation_paid(q.id) AS balance
                    FROM school_quotations q WHERE ${OPEN_SALE}) s
                 WHERE balance > 0 ORDER BY quotation`;
+        break;
+      case 'estado-listas':
+        // Quotations are information only: they never add to sold, collected or owed.
+        sql = `SELECT quotation, date, customer,
+                      CASE WHEN status = 'COTIZADA' THEN 'COTIZACION'
+                           WHEN status IN ('CANCELADA','EN_PREPARACION','TERMINADA','ENTREGADA') THEN status
+                           ELSE 'ACEPTADA' END AS stage,
+                      CASE WHEN NOT accepted THEN 'NO_APLICA'
+                           WHEN paid >= total THEN 'PAGADA'
+                           WHEN paid > 0 THEN 'PARCIAL' ELSE 'PENDIENTE' END AS payment,
+                      CASE WHEN status = 'COTIZADA' THEN total ELSE 0 END AS quoted,
+                      CASE WHEN accepted THEN total ELSE 0 END AS sold,
+                      CASE WHEN accepted THEN paid ELSE 0 END AS paid,
+                      CASE WHEN accepted THEN total - paid ELSE 0 END AS balance
+                 FROM (SELECT q.quotation_number AS quotation, q.quotation_date::text AS date,
+                              q.customer_name AS customer, q.status, q.total,
+                              school_quotation_paid(q.id) AS paid,
+                              school_quotation_status_accepted(q.status) AS accepted
+                         FROM school_quotations q
+                        WHERE q.status <> 'BORRADOR'
+                          AND q.quotation_date BETWEEN $1::date AND $2::date) l
+                ORDER BY quotation`;
         break;
       case 'cartera-clientes':
         params = [];

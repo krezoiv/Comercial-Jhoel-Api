@@ -12,6 +12,7 @@ import {
   SCHOOL_LINE_SOURCE_LABEL,
   SCHOOL_PAYMENT_KIND_LABEL,
   SCHOOL_PAYMENT_METHOD_LABEL,
+  SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE,
   SCHOOL_STATUS_LABEL,
   SCHOOL_STATUS_COLOR,
   SCHOOL_STATUS_TONE,
@@ -44,8 +45,14 @@ const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; 
   CONFIRMAR: {
     title: 'Confirmar cotización',
     message:
-      'El borrador pasará a "Cotizada", podrá recibir anticipos y abonos, y se descontarán de Bodega los productos del inventario.',
+      'El borrador pasará a "Cotizada" y se descontarán de Bodega los productos del inventario. Podrá recibir pagos cuando el cliente la acepte.',
     done: 'Cotización confirmada.',
+  },
+  ACEPTAR: {
+    title: 'Aceptar lista',
+    message:
+      'El cliente acepta la cotización: queda como venta y su total pasa a saldo pendiente de pago. No registra ningún pago ni mueve la Caja de Listas.',
+    done: 'Lista aceptada: ya puede recibir anticipos y abonos.',
   },
   PREPARAR: {
     title: 'Pasar a preparación',
@@ -68,8 +75,9 @@ const ACTION_COPY: Record<SchoolStatusAction, { title: string; message: string; 
 const REQUIREMENT_ACTION_COPY: Partial<Record<SchoolStatusAction, { title: string; message: string; done: string }>> = {
   CONFIRMAR: {
     title: 'Confirmar cotización',
-    message: 'El borrador pasará a "Aceptada" y podrá recibir anticipos y abonos. No se descuenta inventario.',
-    done: 'Cotización aceptada.',
+    message:
+      'El borrador pasará a "Cotizada". Todavía no es una venta: cuando el cliente la acepte podrá recibir pagos. No se descuenta inventario.',
+    done: 'Cotización confirmada.',
   },
   PREPARAR: {
     title: 'Iniciar preparación',
@@ -140,9 +148,16 @@ export class SchoolQuotationDetailPageComponent {
       0,
     ),
   );
-  readonly actionIcon: Record<SchoolStatusAction, string> = { CONFIRMAR: 'check', PREPARAR: 'package', TERMINAR: 'check-check', ENTREGAR: 'truck' };
+  readonly actionIcon: Record<SchoolStatusAction, string> = {
+    CONFIRMAR: 'check',
+    ACEPTAR: 'check-circle',
+    PREPARAR: 'package',
+    TERMINAR: 'check-check',
+    ENTREGAR: 'truck',
+  };
   readonly actionLabel: Record<SchoolStatusAction, string> = {
     CONFIRMAR: 'Confirmar',
+    ACEPTAR: 'Aceptar lista',
     PREPARAR: 'En preparación',
     TERMINAR: 'Marcar como terminada',
     ENTREGAR: 'Preparar y despachar lista',
@@ -158,6 +173,8 @@ export class SchoolQuotationDetailPageComponent {
 
   readonly voiding = signal<SchoolPayment | null>(null);
   readonly cancelling = signal(false);
+  /** "Devolver a cotización" (managers): audited correction of a list accepted by mistake. */
+  readonly reverting = signal(false);
   /** "Eliminar cotización" (hard delete, super administrators only). */
   readonly deleting = signal(false);
   readonly reasonBusy = signal(false);
@@ -179,6 +196,26 @@ export class SchoolQuotationDetailPageComponent {
     const q = this.quotation();
     return !!q && canReceiveSchoolPayment(q.status) && q.balance > 0 && this.service.can('school_lists.payments.register');
   });
+  /** A quotation (BORRADOR / COTIZADA): not money, no payments until the customer accepts it. */
+  readonly isQuote = computed(() => {
+    const q = this.quotation();
+    return !!q && (q.status === 'BORRADOR' || q.status === 'COTIZADA');
+  });
+  readonly quoteNotAcceptedMessage = SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE;
+  /**
+   * Only an ACEPTADA list with nothing paid and no preparation can go back to
+   * quotation; the backend re-checks it (payments, preparation, permission).
+   */
+  readonly canRevert = computed(() => {
+    const q = this.quotation();
+    return (
+      !!q &&
+      q.status === 'ACEPTADA' &&
+      q.account.paid === 0 &&
+      !q.payments.some((p) => p.status === 'APLICADO') &&
+      this.service.can('school_lists.quotations.revert')
+    );
+  });
   readonly canCancel = computed(() => {
     const q = this.quotation();
     return !!q && isSchoolQuotationEditable(q.status) && this.service.can('school_lists.quotations.cancel');
@@ -188,14 +225,16 @@ export class SchoolQuotationDetailPageComponent {
     if (!q || !this.service.can('school_lists.quotations.edit')) return [];
     const actions: SchoolStatusAction[] = [];
     if (q.status === 'BORRADOR') actions.push('CONFIRMAR');
+    // Either flow: a quotation is accepted by the customer before it is paid or prepared.
+    if (q.status === 'COTIZADA') actions.push('ACEPTAR');
     if (q.fulfillmentMode === 'PREPARACION') {
       // ACEPTADA → preparation; finishing happens on the preparation screen; delivery once finished and paid.
       if (q.status === 'ACEPTADA') actions.push('PREPARAR');
       if (q.status === 'TERMINADA' && q.balance <= 0 && !q.supply.dispatch) actions.push('ENTREGAR');
       return actions;
     }
-    if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA'].includes(q.status)) actions.push('PREPARAR');
-    if (['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status)) actions.push('TERMINAR');
+    if (['ACEPTADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA'].includes(q.status)) actions.push('PREPARAR');
+    if (['ACEPTADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status)) actions.push('TERMINAR');
     // Delivery = dispatch: only when paid and fully supplied (the dialog reviews the products).
     if (['PAGADA', 'EN_PREPARACION', 'TERMINADA'].includes(q.status) && q.balance <= 0 && q.supply.status === 'DISPONIBLE') {
       actions.push('ENTREGAR');
@@ -353,26 +392,41 @@ export class SchoolQuotationDetailPageComponent {
     this.cancelling.set(true);
   }
 
+  startRevert(): void {
+    this.reasonError.set(null);
+    this.reverting.set(true);
+  }
+
   closeReason(): void {
     this.voiding.set(null);
     this.cancelling.set(false);
+    this.reverting.set(false);
   }
 
   onReason(result: SchoolReasonResult): void {
     const q = this.quotation();
     if (!q) return;
     const payment = this.voiding();
+    const reverting = this.reverting();
     this.reasonBusy.set(true);
     this.reasonError.set(null);
     const request: Observable<SchoolQuotation> = payment
       ? this.service.voidPayment(payment.id, result.reason, this.reasonRequestId).pipe(map((r) => r.quotation))
-      : this.service.cancelQuotation(q.id, { ...result, clientRequestId: this.reasonRequestId });
+      : reverting
+        ? this.service.revertToQuote(q.id, result.reason, q.version)
+        : this.service.cancelQuotation(q.id, { ...result, clientRequestId: this.reasonRequestId });
     request.subscribe({
       next: (updated) => {
         this.reasonBusy.set(false);
         this.apply(updated);
         this.closeReason();
-        this.notifications.success(payment ? `Pago ${payment.receiptNumber} anulado.` : 'Cotización cancelada.');
+        this.notifications.success(
+          payment
+            ? `Pago ${payment.receiptNumber} anulado.`
+            : reverting
+              ? 'La lista volvió a ser una cotización: ya no cuenta como venta ni como saldo pendiente.'
+              : 'Cotización cancelada.',
+        );
       },
       error: (error: HttpErrorResponse) => {
         this.reasonBusy.set(false);
@@ -404,6 +458,10 @@ export class SchoolQuotationDetailPageComponent {
         return `${this.kindLabel[d['kind'] as SchoolPayment['kind']] ?? 'Pago'} de ${money(d['amount'])} · saldo ${money(d['balanceAfter'])}`;
       case 'PAGO_ANULADO':
         return `${String(d['receipt'] ?? '')} por ${money(d['amount'])} — ${String(d['reason'] ?? '')}`;
+      case 'ACEPTAR':
+        return `Total aceptado ${money(d['total'])}`;
+      case 'DEVUELTA_COTIZACION':
+        return `${String(d['reason'] ?? '')} · deja de contar ${money(d['total'])} como venta`;
       case 'CANCELADA':
         return `${String(d['reason'] ?? '')}${Number(d['refunded'] ?? 0) > 0 ? ` · devolución ${money(d['refunded'])}` : ''}`;
       case 'ABASTECIMIENTO':

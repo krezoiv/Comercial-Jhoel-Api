@@ -197,7 +197,13 @@ export interface SchoolCashSummary {
     installments: number;
     beforeCashBox: number;
   };
+  /** Accepted lists of the period (what was sold). Quotations never count (migration 1760009000000). */
   sales: { total: number; count: number };
+  /** Quotations (COTIZADA) pending the customer's decision — not money. */
+  quotes: { total: number; count: number };
+  /** ACEPTADA lists with no payments and no preparation, to review one by one. */
+  acceptedWithoutPayments: number;
+  /** Owed by customers: only accepted, not delivered lists. */
   customersBalance: number;
   customersWithBalance: number;
   exitsTotal: number;
@@ -214,6 +220,9 @@ export interface SchoolCashSummary {
     paidAmount: number;
     partialBalance: number;
     pendingBalance: number;
+    /** Quotations of the season (not sold, not owed). */
+    quotes: number;
+    quotesTotal: number;
   };
   customers: { total: number; withBalance: number; solvent: number; paying: number; notPaying: number };
   recent: SchoolCashMovement[];
@@ -221,7 +230,8 @@ export interface SchoolCashSummary {
 
 // ── Customers (account statements) ───────────────────────────────────────
 
-export type SchoolCustomerStatus = 'SOLVENTE' | 'ABONANDO' | 'PENDIENTE' | 'CANCELADO';
+/** COTIZANDO = the customer only has quotations: nothing bought, nothing owed. */
+export type SchoolCustomerStatus = 'SOLVENTE' | 'ABONANDO' | 'PENDIENTE' | 'COTIZANDO' | 'CANCELADO';
 export type SchoolCustomerView = 'ALL' | 'WITH_BALANCE' | 'SOLVENT' | 'NO_PAYMENTS' | 'WITH_PAYMENTS';
 export type SchoolCustomerSort = 'BALANCE' | 'PAID' | 'PURCHASED' | 'LAST_PAYMENT' | 'NAME';
 
@@ -229,6 +239,7 @@ export const SCHOOL_CUSTOMER_STATUS_LABEL: Record<SchoolCustomerStatus, string> 
   SOLVENTE: 'Solvente',
   ABONANDO: 'Abonando',
   PENDIENTE: 'Pendiente',
+  COTIZANDO: 'Solo cotizaciones',
   CANCELADO: 'Cancelado',
 };
 
@@ -237,6 +248,7 @@ export const SCHOOL_CUSTOMER_STATUS_TONE: Record<SchoolCustomerStatus, string> =
   SOLVENTE: 'cash',
   ABONANDO: 'bank',
   PENDIENTE: 'owed',
+  COTIZANDO: 'neutral',
   CANCELADO: 'neutral',
 };
 
@@ -246,6 +258,7 @@ export const SCHOOL_LIST_ACCOUNT_LABEL: Record<string, string> = {
   PENDIENTE: 'Sin pagos',
   CANCELADA: 'Cancelada',
   BORRADOR: 'Borrador (no cuenta)',
+  COTIZACION: 'Cotización (no se debe)',
 };
 
 /** A customer of Listas Escolares: every list with the same phone digits. */
@@ -259,9 +272,13 @@ export interface SchoolCustomer {
   quotationNumbers: string[];
   lists: number;
   activeLists: number;
+  /** Accepted lists only: quotations are neither bought nor owed. */
   purchased: number;
   paid: number;
   balance: number;
+  /** Quotations not accepted yet and their total (informative, never owed). */
+  quotes: number;
+  quotedTotal: number;
   status: SchoolCustomerStatus;
   lastPaymentAt: string | null;
   firstAt: string;

@@ -1959,6 +1959,35 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - **Pagos** (`school-cash-payments`): todos los pagos con su destino de dinero.
 - **Pruebas**: `school-cash-box.spec.ts` (19).
 
+### Listas Escolares — solo listas aceptadas (backend `1760009000000`, 2026-11-21)
+
+- **Modelo**: `SCHOOL_ACCEPTED_STATUSES` / `isAcceptedSchoolStatus` (espejo del backend).
+  - `canReceiveSchoolPayment` = aceptada y no entregada: BORRADOR/COTIZADA no reciben pagos.
+  - `SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE` es el mismo texto que devuelve el backend.
+  - Acción `ACEPTAR`, permiso `school_lists.quotations.revert`, filtro `acceptedWithoutPayments`.
+  - Tablero: `acceptedTotal` y `quotedPendingTotal`.
+  - Píldora ACEPTADA en `teal` (nuevo color en `_school-ui.scss`).
+- **Detalle** (`school-quotation-detail-page`):
+  - Cotización: aviso `.quote-note`, "Registrar abono" deshabilitado, saldo mostrado en Q0 y sin distintivo de cuenta.
+  - "Aceptar lista" (primario) en COTIZADA.
+  - "Devolver a cotización" (`canRevert`: ACEPTADA, sin pagos, con permiso) reutiliza `SchoolReasonModalComponent` y llama `revertToQuote`.
+- **Listado** (`school-quotations-list`):
+  - Botón de fila "Aceptar lista" en COTIZADA; el saldo de una cotización se muestra como "Cotización".
+  - Filtro "Aceptadas sin pagos": un `app-button`, porque el SCSS del listado está al límite de 12 kB.
+  - `?revisar=aceptadas-sin-pagos` lo activa al entrar.
+  - Tarjetas: total de listas, cotizaciones por decidir, listas aceptadas, con saldo y pagadas.
+- **Editor POS**:
+  - Estado previsto: borrador / Aceptada con anticipo / Cotizada sin anticipo.
+  - Aviso "Al registrar un anticipo, la lista queda aceptada"; el saldo de una lista nueva sin anticipo dice "Por cobrar al aceptarla".
+- **Caja de Listas** (`school-cash-summary`):
+  - Tarjetas: aceptadas, recaudado, pendiente de pago, cotizaciones por decidir, pagadas, con abonos.
+  - Alerta "aceptadas sin pagos" (`action.review`) que navega al listado con el filtro.
+  - Gráficos: "Total aceptado / Total recaudado / Pendiente de pago" y cartera con "Aceptadas sin pagos".
+  - Clientes: estado COTIZANDO ("Solo cotizaciones") y "+ Q… cotizado" bajo lo comprado.
+  - Expediente: tono para listas COTIZACION.
+- **Pruebas**: casos nuevos en `school-lists.spec.ts` y `school-cash-box.spec.ts`. QA en navegador sobre una copia:
+  aceptar, devolver con motivo, alerta y filtro, sin desbordes a 390 px.
+
 ### Caja y Bodega como ubicaciones independientes (2026-11-20)
 
 - **Control de Efectivo → Arqueo de Caja** (`cash-count-modal`): solo se cuenta Caja. Ya no existe la casilla "También conté

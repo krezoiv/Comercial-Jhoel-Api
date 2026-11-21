@@ -30,6 +30,8 @@ const LIST_TONE: Record<string, string> = {
   PENDIENTE: 'owed',
   CANCELADA: 'neutral',
   BORRADOR: 'neutral',
+  // A quotation the customer has not accepted: not owed (migration 1760009000000).
+  COTIZACION: 'neutral',
 };
 
 /**

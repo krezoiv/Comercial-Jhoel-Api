@@ -64,10 +64,15 @@ CREATE FUNCTION pg_temp.item(p_product UUID, p_qty INT) RETURNS JSONB LANGUAGE s
                             'quantity', p_qty, 'unitPrice', (SELECT public_price FROM products WHERE id = p_product))
 $$;
 
-CREATE FUNCTION pg_temp.pay_all(p_quotation UUID, p_user UUID, p_key TEXT) RETURNS VOID LANGUAGE sql AS $$
-  SELECT register_school_quotation_payment(p_quotation, (SELECT total - school_quotation_paid(id) FROM school_quotations WHERE id = p_quotation),
-                                           'EFECTIVO', NULL, NULL, NULL, p_user, p_key)
-$$;
+-- Pays the whole balance; a quotation is accepted first (migration 1760009000000).
+CREATE FUNCTION pg_temp.pay_all(p_quotation UUID, p_user UUID, p_key TEXT) RETURNS VOID LANGUAGE plpgsql AS $$
+BEGIN
+  IF (SELECT status FROM school_quotations WHERE id = p_quotation) = 'COTIZADA' THEN
+    PERFORM change_school_quotation_status(p_quotation, 'ACEPTAR', p_user, NULL);
+  END IF;
+  PERFORM register_school_quotation_payment(p_quotation, (SELECT total - school_quotation_paid(id) FROM school_quotations WHERE id = p_quotation),
+                                            'EFECTIVO', NULL, NULL, NULL, p_user, p_key);
+END $$;
 
 DO $$
 DECLARE
@@ -234,7 +239,7 @@ BEGIN
     pg_temp.err(format($f$SELECT allocate_school_supply_manual(%L, %L, 1, NULL, %L, 'K-SUP-MAN-04')$f$, v_d, p2, v_admin)), 'SCHOOL_SUPPLY_OVER_PENDING:0');
 
   PERFORM pg_temp.expect('S16 historial de la lista con abastecimiento y despacho',
-    (SELECT string_agg(DISTINCT action, ',' ORDER BY action) FROM school_list_history WHERE entity_id = v_b), 'ABASTECIMIENTO,CREADA,DESPACHO,PAGO');
+    (SELECT string_agg(DISTINCT action, ',' ORDER BY action) FROM school_list_history WHERE entity_id = v_b), 'ABASTECIMIENTO,ACEPTAR,CREADA,DESPACHO,PAGO');
   PERFORM pg_temp.expect('S16 asignaciones y despachos no se editan ni se borran',
     split_part(pg_temp.err(format('UPDATE school_supply_allocations SET quantity = 99 WHERE quotation_id = %L', v_c)), ':', 1) || ' '
       || split_part(pg_temp.err(format('DELETE FROM school_dispatches WHERE id = %L', v_dispatch)), ':', 1),

@@ -239,3 +239,133 @@ describe('Estado de cuenta de clientes — reglas', () => {
     expect(ledger.consistent).toBe(false);
   });
 });
+
+describe('Estado de cuenta — una cotización no es dinero (migración 1760009000000)', () => {
+  const event = (
+    quotationId: string,
+    action: string,
+    fromStatus: string | null,
+    toStatus: string,
+    day: string,
+    details: Record<string, unknown> = {},
+  ): LedgerHistoryInput => ({
+    seq: ++seq,
+    quotationId,
+    action,
+    fromStatus,
+    toStatus,
+    details,
+    createdAt: at(day, '15:30:00'),
+  });
+  const quote = (
+    id: string,
+    status: string,
+    total: number,
+    paid: number,
+  ): LedgerListInput => ({
+    id,
+    quotationNumber: `LE-${id}`,
+    studentName: 'Luis',
+    grade: 'Primero',
+    status,
+    total,
+    paid,
+  });
+  const quoted = (
+    id: string,
+    total: number,
+    day: string,
+  ): LedgerHistoryInput => ({
+    ...created(id, total, day),
+    toStatus: 'COTIZADA',
+  });
+
+  it('a quotation (COTIZADA) is never charged nor owed', () => {
+    const ledger = buildCustomerLedger(
+      [quote('c1', 'COTIZADA', 1000, 0)],
+      [quoted('c1', 1000, '2026-11-20')],
+      [],
+    );
+    expect(ledger.rows).toHaveLength(0);
+    expect(ledger.closing).toBe(0);
+    expect(ledger.officialBalance).toBe(0);
+    expect(ledger.consistent).toBe(true);
+  });
+
+  it('it is charged when the customer accepts it, then each payment lowers the balance', () => {
+    const ledger = buildCustomerLedger(
+      [quote('c2', 'ACEPTADA', 1000, 500)],
+      [
+        quoted('c2', 1000, '2026-11-20'),
+        event('c2', 'ACEPTAR', 'COTIZADA', 'ACEPTADA', '2026-11-21', {
+          total: 1000,
+        }),
+      ],
+      [
+        payment('c2', 'ANTICIPO', 300, '2026-11-21'),
+        payment('c2', 'ABONO', 200, '2026-11-22'),
+      ],
+    );
+    expect(ledger.rows.map((r) => `${r.kind}:${r.balance}`)).toEqual([
+      'CARGO_LISTA:1000',
+      'PAGO:700',
+      'PAGO:500',
+    ]);
+    expect(ledger.rows[0].description).toContain('(aceptada)');
+    expect(ledger.closing).toBe(500);
+    expect(ledger.consistent).toBe(true);
+  });
+
+  it('"devuelta a cotización" removes the charge (audited correction)', () => {
+    const ledger = buildCustomerLedger(
+      [quote('c3', 'COTIZADA', 450, 0)],
+      [
+        { ...created('c3', 450, '2026-11-18') },
+        event(
+          'c3',
+          'DEVUELTA_COTIZACION',
+          'ACEPTADA',
+          'COTIZADA',
+          '2026-11-21',
+          {
+            reason: 'Solo pidió la cotización',
+            total: 450,
+          },
+        ),
+      ],
+      [],
+    );
+    expect(ledger.rows.map((r) => `${r.kind}:${r.balance}`)).toEqual([
+      'CARGO_LISTA:450',
+      'CANCELACION:0',
+    ]);
+    expect(ledger.rows[1].description).toContain('devuelta a cotización');
+    expect(ledger.consistent).toBe(true);
+  });
+
+  it('an old list accepted by its first payment is charged right before that payment', () => {
+    const ledger = buildCustomerLedger(
+      [quote('c4', 'ANTICIPO_RECIBIDO', 600, 100)],
+      [
+        quoted('c4', 600, '2026-11-15'),
+        {
+          ...event('c4', 'PAGO', 'COTIZADA', 'ANTICIPO_RECIBIDO', '2026-11-16'),
+          createdAt: at('2026-11-16', '16:00:00'),
+        },
+      ],
+      [payment('c4', 'ANTICIPO', 100, '2026-11-16')],
+    );
+    expect(ledger.rows.map((r) => `${r.kind}:${r.balance}`)).toEqual([
+      'CARGO_LISTA:600',
+      'PAGO:500',
+    ]);
+    expect(ledger.closing).toBe(500);
+    expect(ledger.consistent).toBe(true);
+  });
+
+  it('a customer with only quotations is COTIZANDO, not owing', () => {
+    expect(
+      customerAccountStatus({ activeLists: 0, paid: 0, balance: 0, quotes: 2 }),
+    ).toBe('COTIZANDO');
+  });
+});

@@ -75,7 +75,24 @@ export const SCHOOL_CASH_REPORT_LABELS: Record<
       SOLVENTE: 'Solvente',
       ABONANDO: 'Abonando',
       PENDIENTE: 'Pendiente',
+      COTIZANDO: 'Solo cotizaciones',
       CANCELADO: 'Cancelado',
+    },
+  },
+  'estado-listas': {
+    stage: {
+      COTIZACION: 'Cotización',
+      ACEPTADA: 'Aceptada',
+      EN_PREPARACION: 'En preparación',
+      TERMINADA: 'Lista para entregar',
+      ENTREGADA: 'Entregada',
+      CANCELADA: 'Cancelada',
+    },
+    payment: {
+      NO_APLICA: '—',
+      PAGADA: 'Pagada',
+      PARCIAL: 'Parcial',
+      PENDIENTE: 'Pendiente',
     },
   },
 };

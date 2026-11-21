@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   SCHOOL_ACCOUNT_LABEL,
   SCHOOL_ACCOUNT_TONE,
+  SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE,
   SCHOOL_STATUSES,
   SCHOOL_STATUS_COLOR,
   SCHOOL_STATUS_LABEL,
@@ -90,6 +91,12 @@ export class SchoolQuotationsListComponent {
   readonly supplyStatus = signal<SchoolSupplyStatus | ''>('');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
+  /**
+   * "Aceptadas sin pagos": lists saved as accepted before migration
+   * 1760009000000 may be quotations the customer never accepted. The owner
+   * reviews them one by one (no automatic correction).
+   */
+  readonly acceptedWithoutPayments = signal(false);
   readonly page = signal(1);
   /** Column the backend orders by (null = newest first). */
   readonly sortBy = signal<SchoolQuotationSortField | null>(null);
@@ -107,6 +114,10 @@ export class SchoolQuotationsListComponent {
   readonly delivering = signal<string | null>(null);
 
   constructor() {
+    // The Caja de Listas alert links here to review the lists accepted without payments.
+    if (inject(ActivatedRoute).snapshot.queryParamMap.get('revisar') === 'aceptadas-sin-pagos') {
+      this.acceptedWithoutPayments.set(true);
+    }
     this.service.getTemplates().subscribe({
       next: (templates) => this.grades.set([...new Set(templates.map((t) => t.grade))].sort()),
     });
@@ -147,12 +158,19 @@ export class SchoolQuotationsListComponent {
       return [];
     }
     const period = `${formatSchoolDate(d.dateFrom)} – ${formatSchoolDate(d.dateTo)}`;
+    // Quotations are never money: only accepted lists are sold or owed (migration 1760009000000).
     return [
-      { label: 'Total de cotizaciones', value: String(d.totalQuotations), hint: period, icon: 'file-check', color: 'blue' },
-      { label: 'Pendientes', value: String(d.awaitingQuotations), hint: 'Borrador, cotizada o aceptada sin preparar', icon: 'clock', color: 'sky' },
-      { label: 'Pagadas', value: String(d.paidQuotations), hint: 'Saldo cubierto o entregadas', icon: 'check-circle', color: 'green' },
+      { label: 'Total de listas', value: String(d.totalQuotations), hint: period, icon: 'file-check', color: 'blue' },
+      {
+        label: 'Cotizaciones por decidir',
+        value: String(d.awaitingQuotations),
+        hint: `${formatCurrency(d.quotedPendingTotal)} cotizado · no es dinero`,
+        icon: 'clock',
+        color: 'sky',
+      },
+      { label: 'Listas aceptadas', value: formatCurrency(d.acceptedTotal), hint: `Recaudado ${formatCurrency(d.totalReceived)}`, icon: 'receipt', color: 'purple' },
       { label: 'Con saldo pendiente', value: String(d.pendingQuotations), hint: `Por cobrar ${formatCurrency(d.pendingBalance)}`, icon: 'wallet', color: 'orange' },
-      { label: 'Total cotizado', value: formatCurrency(d.totalQuoted), hint: `Recibido ${formatCurrency(d.totalReceived)}`, icon: 'receipt', color: 'purple' },
+      { label: 'Listas pagadas', value: String(d.paidQuotations), hint: 'Aceptadas y pagadas por completo', icon: 'check-circle', color: 'green' },
     ];
   }
 
@@ -175,6 +193,7 @@ export class SchoolQuotationsListComponent {
     this.supplyStatus.set('');
     this.dateFrom.set('');
     this.dateTo.set('');
+    this.acceptedWithoutPayments.set(false);
     this.applyFilters();
   }
 
@@ -193,6 +212,7 @@ export class SchoolQuotationsListComponent {
         grade: this.grade() || undefined,
         status: this.status() || undefined,
         supplyStatus: this.supplyStatus() || undefined,
+        acceptedWithoutPayments: this.acceptedWithoutPayments() || undefined,
         dateFrom: this.dateFrom() || undefined,
         dateTo: this.dateTo() || undefined,
         sortBy: this.sortBy() ?? undefined,
@@ -244,7 +264,50 @@ export class SchoolQuotationsListComponent {
     if (q.fulfillmentMode === 'PREPARACION') {
       return q.status === 'EN_PREPARACION';
     }
-    return ['COTIZADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status);
+    return ['ACEPTADA', 'ANTICIPO_RECIBIDO', 'PAGO_PARCIAL', 'PAGADA', 'EN_PREPARACION'].includes(q.status);
+  }
+
+  /** Toggles the "Aceptadas sin pagos" review filter and reloads. */
+  toggleAcceptedWithoutPayments(): void {
+    this.acceptedWithoutPayments.update((on) => !on);
+    this.applyFilters();
+  }
+
+  /** Title of the row's payment button: why a quotation cannot be paid yet. */
+  payTitle(q: SchoolQuotationSummary): string {
+    return q.status === 'COTIZADA' || q.status === 'BORRADOR' ? SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE : 'Registrar abono';
+  }
+
+  /**
+   * "Aceptar lista": the customer accepts the quotation. It becomes a sale and
+   * its total is owed; no payment is registered and the Caja de Listas does not move.
+   */
+  async accept(q: SchoolQuotationSummary): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'UPDATE',
+      title: 'Aceptar lista',
+      message:
+        `${q.customerName} acepta la cotización ${q.quotationNumber} por ${formatCurrency(q.total)}. ` +
+        'Queda como venta y su total pasa a saldo pendiente de pago; no registra ningún pago ni mueve la Caja de Listas.',
+      confirmText: 'Aceptar lista',
+    });
+    if (!ok) {
+      return;
+    }
+    this.delivering.set(q.id);
+    this.service.changeStatus(q.id, 'ACEPTAR', q.version).subscribe({
+      next: () => {
+        this.delivering.set(null);
+        this.notifications.success(`${q.quotationNumber} aceptada: ya puede recibir anticipos y abonos.`);
+        this.load();
+        this.loadSummary();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.delivering.set(null);
+        this.notifications.error(extractErrorMessage(error, 'No se pudo aceptar la lista.'));
+        this.load();
+      },
+    });
   }
 
   finishTitle(q: SchoolQuotationSummary): string {

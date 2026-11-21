@@ -68,6 +68,15 @@ describe('Caja de Listas — estado de cuenta de clientes (e2e)', () => {
           }),
       ).expect(201),
     );
+  /** The customer accepts the quotation (migration 1760009000000): payments are enabled. */
+  const accept = async (quotationId: string) =>
+    data(
+      await as(userToken)(
+        api()
+          .post(`/api/school-lists/quotations/${quotationId}/status`)
+          .send({ action: 'ACEPTAR' }),
+      ).expect(200),
+    );
   const pay = async (quotationId: string, body: Body) =>
     data(
       await as(userToken)(
@@ -150,6 +159,14 @@ describe('Caja de Listas — estado de cuenta de clientes (e2e)', () => {
       'Tercero Básico',
       650,
     );
+    // Without an advance a list is a quotation: nothing sold, nothing owed.
+    expect(ana.status).toBe('COTIZADA');
+    expect((await customer(MARIA)).customer).toMatchObject({
+      purchased: 800,
+      balance: 500,
+      quotes: 1,
+    });
+    await accept(ana.id);
     await pay(juan.id, {
       amount: 200,
       paymentMethod: 'TRANSFERENCIA',
@@ -157,7 +174,14 @@ describe('Caja de Listas — estado de cuenta de clientes (e2e)', () => {
       reference: 'BI-9',
     }); // (7) bank
     // Pedro: one list, nothing paid (2). Lucía: paid in full (5, 6).
-    await createList('Pedro Gómez', PEDRO, 'Luis Gómez', 'Segundo Básico', 400);
+    const pedro = await createList(
+      'Pedro Gómez',
+      PEDRO,
+      'Luis Gómez',
+      'Segundo Básico',
+      400,
+    );
+    await accept(pedro.id);
     await createList('Lucía Ruiz', LUCIA, 'Sofía Ruiz', 'Primero Básico', 250, {
       amount: 250,
       paymentMethod: 'EFECTIVO',
@@ -301,6 +325,75 @@ describe('Caja de Listas — estado de cuenta de clientes (e2e)', () => {
     const monthly = await summary({ granularity: 'month' });
     expect(monthly.series.length).toBe(12);
     expect(monthly.series.at(-1).total).toBeGreaterThan(0);
+  });
+
+  it('a quotation is not money: no sale, no balance and no payments until the customer accepts it', async () => {
+    const ROSA = '5918-0005';
+    const before = await summary();
+    const rosa = await createList(
+      'Rosa Díaz',
+      ROSA,
+      'Eva Díaz',
+      'Primero Básico',
+      1000,
+    );
+    expect(rosa.status).toBe('COTIZADA');
+    const quoted = await summary();
+    expect(quoted.cashBalance).toBe(before.cashBalance);
+    expect(quoted.sales.total).toBe(before.sales.total);
+    expect(quoted.customersBalance).toBe(before.customersBalance);
+    expect(quoted.quotes.total - before.quotes.total).toBe(1000);
+    expect(quoted.quotes.count - before.quotes.count).toBe(1);
+
+    // A payment on a quotation is refused by the backend (direct API call).
+    const refused = await as(userToken)(
+      api().post(`/api/school-lists/quotations/${rosa.id}/payments`).send({
+        amount: 300,
+        paymentMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
+    ).expect(409);
+    expect(refused.body.message).toBe(
+      'Esta lista todavía es una cotización. Debe ser aceptada por el cliente antes de registrar pagos.',
+    );
+    expect((await customer(ROSA)).customer).toMatchObject({
+      status: 'COTIZANDO',
+      purchased: 0,
+      balance: 0,
+      quotes: 1,
+      quotedTotal: 1000,
+    });
+
+    // Accepted: owed, still no money. Advance: only the money received.
+    await accept(rosa.id);
+    const accepted = await summary();
+    expect(accepted.cashBalance).toBe(before.cashBalance);
+    expect(accepted.sales.total - before.sales.total).toBe(1000);
+    expect(accepted.customersBalance - before.customersBalance).toBe(1000);
+    await pay(rosa.id, { amount: 300, paymentMethod: 'EFECTIVO' });
+    const paid = await summary();
+    expect(paid.cashBalance - before.cashBalance).toBe(300);
+    expect(paid.customersBalance - before.customersBalance).toBe(700);
+    const statement = await customer(ROSA);
+    expect(statement.ledger.rows.map((r: Body) => r.kind)).toEqual([
+      'CARGO_LISTA',
+      'PAGO',
+    ]);
+    expect(statement.ledger.consistent).toBe(true);
+
+    // The report separates quoted, accepted, collected and owed.
+    const report = data(
+      await as(adminToken)(
+        api().get('/api/school-cash-box/reports/estado-listas'),
+      ).expect(200),
+    );
+    const row = (report.rows as Body[]).find(
+      (r) => r.quotation === rosa.quotationNumber,
+    );
+    expect(row).toMatchObject({ stage: 'Aceptada', payment: 'Parcial' });
+    expect(
+      ['quoted', 'sold', 'paid', 'balance'].map((k) => Number(row?.[k])),
+    ).toEqual([0, 1000, 300, 700]);
   });
 
   it('filters and sorts the customers table', async () => {

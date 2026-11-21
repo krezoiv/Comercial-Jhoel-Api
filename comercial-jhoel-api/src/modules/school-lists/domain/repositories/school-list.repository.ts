@@ -14,6 +14,26 @@ export const SCHOOL_QUOTATION_STATUSES = [
 ] as const;
 export type SchoolQuotationStatus = (typeof SCHOOL_QUOTATION_STATUSES)[number];
 
+/**
+ * Lists the customer ACCEPTED: they count as sold and owed and may receive
+ * payments. BORRADOR and COTIZADA are quotations (no money effect), CANCELADA
+ * is closed. Mirror of the SQL `school_quotation_status_accepted`
+ * (migration 1760009000000), which is the one enforced.
+ */
+export const SCHOOL_ACCEPTED_STATUSES: readonly SchoolQuotationStatus[] = [
+  'ACEPTADA',
+  'ANTICIPO_RECIBIDO',
+  'PAGO_PARCIAL',
+  'PAGADA',
+  'EN_PREPARACION',
+  'TERMINADA',
+  'ENTREGADA',
+];
+
+export function isAcceptedSchoolStatus(status: string): boolean {
+  return (SCHOOL_ACCEPTED_STATUSES as readonly string[]).includes(status);
+}
+
 export const SCHOOL_PAYMENT_METHODS = [
   'EFECTIVO',
   'TRANSFERENCIA',
@@ -25,6 +45,8 @@ export type SchoolPaymentMethod = (typeof SCHOOL_PAYMENT_METHODS)[number];
 
 export const SCHOOL_STATUS_ACTIONS = [
   'CONFIRMAR',
+  // The customer accepts the quotation: payments are enabled (migration 1760009000000).
+  'ACEPTAR',
   'PREPARAR',
   'TERMINAR',
   'ENTREGAR',
@@ -434,6 +456,12 @@ export interface FindQuotationsOptions {
   number?: string;
   grade?: string;
   status?: SchoolQuotationStatus;
+  /**
+   * ACEPTADA lists with no payment and no preparation: the ones that may have
+   * been accepted only because every saved list used to be (review them and
+   * "Devolver a cotización" when the customer never accepted).
+   */
+  acceptedWithoutPayments?: boolean;
   dateFrom?: string;
   dateTo?: string;
   /** Column to order by (whitelisted in the DTO); default: newest first. */
@@ -457,12 +485,19 @@ export type QuotationSortField = (typeof QUOTATION_SORT_FIELDS)[number];
 
 export interface DashboardRow {
   totalQuotations: number;
-  /** BORRADOR, COTIZADA or ACEPTADA: not being prepared yet. */
+  /** BORRADOR or COTIZADA: quotations waiting for the customer's decision. */
   awaitingQuotations: number;
+  /** Accepted lists with balance to collect. */
   pendingQuotations: number;
   paidQuotations: number;
+  /** Every quotation value (accepted or not) — commercial information only. */
   totalQuoted: number;
+  /** Value of the lists the customers accepted (sold, not money). */
+  acceptedTotal: number;
+  /** Value of the quotations still waiting for a decision (COTIZADA). */
+  quotedPendingTotal: number;
   totalReceived: number;
+  /** Owed on ACCEPTED lists only. */
   pendingBalance: number;
   byGrade: { grade: string; count: number; total: number }[];
   incomeByDay: { date: string; amount: number }[];
@@ -540,6 +575,13 @@ export interface SchoolListRepository {
   changeStatus(
     id: string,
     action: SchoolStatusAction,
+    userId: string,
+    expectedVersion: number | null,
+  ): Promise<string>;
+  /** "Devolver a cotización" (ACEPTADA → COTIZADA, no payments, no preparation), audited with a reason. */
+  revertToQuote(
+    id: string,
+    reason: string,
     userId: string,
     expectedVersion: number | null,
   ): Promise<string>;

@@ -50,16 +50,18 @@ El dinero de listas que todavía está en bancos aparece como **"Listas escolare
 
 ## Indicadores
 
+Desde la migración `1760009000000` una cotización no es venta, deuda ni dinero. Ver "Solo listas aceptadas" al final.
+
 | Indicador | Qué muestra |
 |---|---|
-| Total recaudado | Pagos reales de clientes, menos devoluciones |
+| Total de listas aceptadas | Lo vendido: listas que el cliente aceptó (no es dinero recibido) |
+| Total recaudado | Pagos reales de clientes, menos devoluciones (anticipos y abonos) |
+| Total pendiente de pago | Lo que deben las listas aceptadas y no entregadas |
+| Cotizaciones pendientes de decisión | Cotizaciones sin aceptar y su total; no suman a la caja ni a la deuda |
+| Listas pagadas / con abonos | Listas aceptadas pagadas por completo / con pagos y saldo |
 | Efectivo en Caja de Listas | Saldo teórico según el Kardex |
 | En bancos por trasladar | Pagos bancarios que todavía están en el banco |
 | Trasladado de bancos | Suma de los traslados banco → caja |
-| Recibido en bancos | Transferencias y depósitos |
-| Ventas de listas | Total de listas vendidas (no es dinero recibido) |
-| Saldo pendiente de clientes | Lo que los clientes todavía deben |
-| Abonos recibidos | Abonos, y aparte los anticipos |
 
 ## Reportes
 
@@ -73,6 +75,7 @@ Se exportan a PDF y a Excel:
 - Salidas de efectivo
 - Saldos pendientes de clientes
 - Kardex de la caja
+- Cotizado, aceptado y cobrado por lista (etapa y estado de pago de cada lista)
 
 ## Al publicar en producción
 
@@ -98,4 +101,21 @@ Se exportan a PDF y a Excel:
   - Tarjetas: total vendido, abonado, pendiente de cobro, efectivo en caja, bancos por trasladar, clientes con saldo y solventes, trasladado, total de listas y abonos.
   - Gráficos: ventas vs. recaudación, recaudación por método, evolución por día, semana o mes, y estado de cartera.
   - El período (toda la temporada, este mes, últimos 30 días o personalizado) aplica a ventas, recaudación y traslados. Los saldos son siempre a hoy.
+
+## Solo listas aceptadas y pagos reales (migración `1760009000000`)
+
+- **Cotización.** Una lista nueva sin anticipo se guarda como **Cotizada**. No cuenta como venta, deuda ni dinero, y no recibe pagos: el sistema responde "Esta lista todavía es una cotización. Debe ser aceptada por el cliente antes de registrar pagos.".
+- **Aceptar lista.** Cuando el cliente acepta, el botón **Aceptar lista** (en el detalle o en la fila del listado) la pasa a **Aceptada**.
+  - Desde ese momento su total cuenta como venta y como pendiente de pago.
+  - Aceptarla no registra ningún pago ni mueve la caja.
+- **Con anticipo.** Si se guarda con anticipo, la lista queda aceptada de una vez (decisión del dueño). El anticipo entra a la caja o al banco como cualquier pago.
+- **Pagos.** Cada anticipo o abono sube lo recaudado y baja lo pendiente. Al pagar todo, lo pendiente llega a Q0. Un mismo pago reintentado no se cuenta dos veces.
+- **Listas anteriores.** Antes de este cambio las listas nuevas quedaban aceptadas al guardarse, aunque fueran solo cotizaciones. No se corrigió nada automáticamente.
+  - El aviso de la Caja de Listas y el filtro **Aceptadas sin pagos** del listado muestran las aceptadas que no tienen pagos ni preparación.
+  - Se revisan una por una. Si el cliente nunca aceptó, un supervisor o administrador usa **Devolver a cotización**, con motivo obligatorio.
+  - Devolver a cotización queda en el historial, no toca pagos, caja ni inventario, y no se permite si la lista ya tiene pagos o preparación.
+- **Clientes.** Lo comprado y el saldo solo cuentan listas aceptadas. Las cotizaciones se muestran aparte ("+ Q… cotizado"). Un cliente que solo tiene cotizaciones aparece como **Solo cotizaciones**, no como deudor.
+- **Al publicar en producción.**
+  1. Correr `npm run migration:run:prod`.
+  2. Abrir Caja de Listas y, si aparece el aviso de listas aceptadas sin pagos, revisarlas con el filtro **Aceptadas sin pagos**.
 

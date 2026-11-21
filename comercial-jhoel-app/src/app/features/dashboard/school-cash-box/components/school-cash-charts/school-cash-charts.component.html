@@ -88,7 +88,7 @@
             }
           </ul>
           @if (p.cancelled) {
-            <p class="note">{{ p.cancelled }} lista(s) canceladas no cuentan en ventas ni en saldos.</p>
+            <p class="note">{{ p.cancelled }} lista(s) canceladas y {{ p.quotes }} cotización(es) sin aceptar no cuentan en ventas ni en saldos.</p>
           }
         } @else {
           <p class="empty">Todavía no hay listas vendidas.</p>

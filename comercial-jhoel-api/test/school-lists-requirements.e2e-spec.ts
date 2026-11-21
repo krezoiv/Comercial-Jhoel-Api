@@ -520,6 +520,10 @@ describe('Listas Escolares — requerimientos y preparación (e2e)', () => {
           }),
       ).expect(201),
     );
+    // A quotation is prepared only after the customer accepts it (1760009000000).
+    expect(quotation.status).toBe('COTIZADA');
+    await status(quotation.id, 'PREPARAR').expect(409);
+    await status(quotation.id, 'ACEPTAR').expect(200);
     let q = data(await status(quotation.id, 'PREPARAR').expect(200));
     q = data(
       await prepare(q.id, q.version, [
@@ -548,7 +552,7 @@ describe('Listas Escolares — requerimientos y preparación (e2e)', () => {
     ]);
   });
 
-  it('un borrador se confirma como ACEPTADA; las listas anteriores conservan su flujo', async () => {
+  it('un borrador se confirma como COTIZADA y el cliente la acepta; las listas anteriores conservan su flujo', async () => {
     const draft = data(
       await as(userToken)(
         api()
@@ -567,7 +571,9 @@ describe('Listas Escolares — requerimientos y preparación (e2e)', () => {
     );
     expect(draft.status).toBe('BORRADOR');
     const confirmed = data(await status(draft.id, 'CONFIRMAR').expect(200));
-    expect(confirmed.status).toBe('ACEPTADA');
+    expect(confirmed.status).toBe('COTIZADA');
+    const accepted = data(await status(draft.id, 'ACEPTAR').expect(200));
+    expect(accepted.status).toBe('ACEPTADA');
     // Skipping the preparation is not allowed.
     await status(draft.id, 'TERMINAR').expect(409);
     expect(await movements(draft.id)).toEqual([]);
@@ -610,6 +616,7 @@ describe('Listas Escolares — requerimientos y preparación (e2e)', () => {
     expect(
       (await movements(legacy.id)).map((m) => [m.movement_type, m.qty]),
     ).toEqual([['SALIDA_LISTA_ESCOLAR', 1]]);
+    await status(legacy.id, 'ACEPTAR').expect(200);
     const prepared = data(await status(legacy.id, 'PREPARAR').expect(200));
     expect(prepared.status).toBe('EN_PREPARACION');
     const notApplicable = await prepare(legacy.id, prepared.version, []).expect(

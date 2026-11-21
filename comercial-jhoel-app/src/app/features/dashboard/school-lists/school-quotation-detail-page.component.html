@@ -8,7 +8,8 @@
         <h1>{{ q.quotationNumber }}</h1>
         <div class="hero__badges">
           <span [class]="'status-pill status-pill--' + statusColor[q.status]">{{ statusLabel[q.status] }}</span>
-          @if (accountLabel[q.accountStatus] !== statusLabel[q.status] && q.status !== 'CANCELADA') {
+          <!-- A quotation owes nothing until it is accepted: no account badge. -->
+          @if (accountLabel[q.accountStatus] !== statusLabel[q.status] && q.status !== 'CANCELADA' && !isQuote()) {
             <app-badge [tone]="accountTone[q.accountStatus]">{{ accountLabel[q.accountStatus] }}</app-badge>
           }
           <span class="muted">{{ q.grade }} · {{ formatDate(q.quotationDate) }}</span>
@@ -17,9 +18,11 @@
       <div class="hero__actions">
         @if (canPay()) {
           <app-button variant="primary" size="sm" (click)="paying.set(true)"><app-icon name="wallet" [size]="15" /> Registrar abono</app-button>
+        } @else if (isQuote() && service.can('school_lists.payments.register')) {
+          <app-button variant="primary" size="sm" disabled [title]="quoteNotAcceptedMessage"><app-icon name="wallet" [size]="15" /> Registrar abono</app-button>
         }
         @for (a of nextActions(); track a) {
-          <app-button variant="secondary" size="sm" [disabled]="busy()" (click)="runAction(a)">
+          <app-button [variant]="a === 'ACEPTAR' ? 'primary' : 'secondary'" size="sm" [disabled]="busy()" (click)="runAction(a)">
             <app-icon [name]="actionIcon[a]" [size]="15" /> {{ requirementMode() && a === 'PREPARAR' ? 'Iniciar preparación' : actionLabel[a] }}
           </app-button>
         }
@@ -35,6 +38,9 @@
           <app-button variant="ghost" size="sm" [disabled]="documents.busy() === q.id" (click)="pdf('download')"><app-icon name="download" [size]="15" /> PDF</app-button>
           <app-button variant="ghost" size="sm" [disabled]="documents.busy() === q.id" (click)="pdf('print')"><app-icon name="printer" [size]="15" /> Imprimir</app-button>
         }
+        @if (canRevert()) {
+          <app-button variant="ghost" size="sm" (click)="startRevert()"><app-icon name="rotate-ccw" [size]="15" /> Devolver a cotización</app-button>
+        }
         @if (canCancel()) {
           <app-button variant="danger" size="sm" (click)="startCancel()"><app-icon name="x-circle" [size]="15" /> Anular lista</app-button>
         }
@@ -44,12 +50,25 @@
       </div>
     </header>
 
+    @if (isQuote()) {
+      <p class="quote-note" role="note">
+        <app-icon name="alert-circle" [size]="16" />
+        <span>{{ quoteNotAcceptedMessage }} Mientras sea cotización no cuenta como venta, deuda ni dinero recibido.</span>
+      </p>
+    }
+
     <div class="tiles">
       <app-summary-tile icon="receipt" title="Total de cotización" [value]="formatCurrency(q.account.total)" />
       <app-summary-tile icon="arrow-down-circle" title="Total de anticipos" tone="gold" [value]="formatCurrency(q.account.advances)" />
       <app-summary-tile icon="wallet" title="Total de abonos" tone="gold" [value]="formatCurrency(q.account.installments)" />
       <app-summary-tile icon="check-circle" title="Total pagado" tone="success" [value]="formatCurrency(q.account.paid)" [description]="q.account.refunds > 0 ? 'Devuelto ' + formatCurrency(q.account.refunds) : undefined" />
-      <app-summary-tile icon="alert-circle" title="Saldo pendiente" [tone]="q.balance > 0 ? 'danger' : 'success'" [value]="formatCurrency(q.balance)" />
+      <app-summary-tile
+        icon="alert-circle"
+        title="Saldo pendiente"
+        [tone]="isQuote() ? 'neutral' : q.balance > 0 ? 'danger' : 'success'"
+        [value]="isQuote() ? formatCurrency(0) : formatCurrency(q.balance)"
+        [description]="isQuote() ? 'Cotización: se debe solo al aceptarla' : undefined"
+      />
     </div>
 
     <div class="tabs" role="tablist">
@@ -265,13 +284,15 @@
     <app-school-payment-modal [quotation]="paying() ? q : null" (closed)="paying.set(false)" (paid)="onPaid($event)" />
     <app-school-purge-modal [open]="deleting()" [quotation]="q" (closed)="deleting.set(false)" (purged)="onDeleted($event)" />
     <app-school-reason-modal
-      [open]="!!voiding() || cancelling()"
-      [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : 'Anular lista ' + q.quotationNumber"
+      [open]="!!voiding() || cancelling() || reverting()"
+      [title]="voiding() ? 'Anular pago ' + voiding()!.receiptNumber : reverting() ? 'Devolver a cotización ' + q.quotationNumber : 'Anular lista ' + q.quotationNumber"
       [message]="voiding()
         ? 'Se registrará una anulación por ' + formatCurrency(voiding()!.amount) + '; el pago original se conserva como anulado y el saldo vuelve a quedar pendiente.'
-        : 'La lista quedará anulada y conservará todo su historial.' + (q.account.paid > 0 ? ' Se registrará la devolución de lo pagado.' : '') + (heldUnits() > 0 ? ' Se devolverán a Bodega ' + heldUnits() + ' unidad(es) descontadas por esta lista.' : '') + (reservedUnits() > 0 ? ' Se liberarán ' + reservedUnits() + ' unidad(es) reservadas, que quedan disponibles para otras listas.' : '')"
-      [confirmText]="voiding() ? 'Anular pago' : 'Anular lista'"
-      [refundAmount]="voiding() ? 0 : q.account.paid"
+        : reverting()
+          ? 'Use esta corrección solo si el cliente nunca aceptó la lista. Vuelve a ser cotización: deja de contar ' + formatCurrency(q.total) + ' como venta y como saldo pendiente. No toca pagos, caja ni inventario, y queda en el historial con su motivo.'
+          : 'La lista quedará anulada y conservará todo su historial.' + (q.account.paid > 0 ? ' Se registrará la devolución de lo pagado.' : '') + (heldUnits() > 0 ? ' Se devolverán a Bodega ' + heldUnits() + ' unidad(es) descontadas por esta lista.' : '') + (reservedUnits() > 0 ? ' Se liberarán ' + reservedUnits() + ' unidad(es) reservadas, que quedan disponibles para otras listas.' : '')"
+      [confirmText]="voiding() ? 'Anular pago' : reverting() ? 'Devolver a cotización' : 'Anular lista'"
+      [refundAmount]="voiding() || reverting() ? 0 : q.account.paid"
       [busy]="reasonBusy()"
       [error]="reasonError()"
       (closed)="closeReason()"

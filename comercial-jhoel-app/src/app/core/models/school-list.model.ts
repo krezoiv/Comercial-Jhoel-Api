@@ -20,8 +20,12 @@ export type SchoolQuotationStatus =
 export type SchoolAccountStatus = 'PENDIENTE' | 'PARCIAL' | 'PAGADA' | 'CERRADA';
 export type SchoolPaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'DEPOSITO' | 'TARJETA' | 'OTRO';
 export type SchoolPaymentKind = 'ANTICIPO' | 'ABONO' | 'DEVOLUCION' | 'ANULACION';
-/** TERMINAR = the list is packed and dispatched, ready to hand over. */
-export type SchoolStatusAction = 'CONFIRMAR' | 'PREPARAR' | 'TERMINAR' | 'ENTREGAR';
+/**
+ * ACEPTAR = the customer accepts a quotation (COTIZADA → ACEPTADA, migration
+ * 1760009000000); only then can it be paid or prepared. TERMINAR = the list is
+ * packed and dispatched, ready to hand over.
+ */
+export type SchoolStatusAction = 'CONFIRMAR' | 'ACEPTAR' | 'PREPARAR' | 'TERMINAR' | 'ENTREGAR';
 export type SchoolLineSource = 'PLANTILLA' | 'INVENTARIO' | 'MANUAL';
 /**
  * How a list reaches inventory (migration 1760008400000):
@@ -45,6 +49,8 @@ export type SchoolListPermission =
   | 'school_lists.documents.generate'
   | 'school_lists.quotations.purge'
   | 'school_lists.quotations.delete'
+  // "Devolver a cotización" — managers only (backend migration 1760009000000).
+  | 'school_lists.quotations.revert'
   // Caja de Listas Escolares (backend migration 1760008700000).
   | 'school_lists.cash.view'
   | 'school_lists.cash.reports'
@@ -88,13 +94,37 @@ export const SCHOOL_STATUS_TONE: Record<
 export const SCHOOL_STATUSES = Object.keys(SCHOOL_STATUS_LABEL) as SchoolQuotationStatus[];
 
 /**
- * Color key of each status pill (`.status-pill--<key>` in `_school-lists.scss`):
- * gray draft, blue quoted, purple anticipo, orange partial, green paid, sky
+ * Statuses of a list the customer accepted (mirror of the backend's
+ * `school_quotation_status_accepted`, migration 1760009000000). Only these
+ * count as sold or owed; BORRADOR and COTIZADA are quotations (never money)
+ * and CANCELADA is closed.
+ */
+export const SCHOOL_ACCEPTED_STATUSES: readonly SchoolQuotationStatus[] = [
+  'ACEPTADA',
+  'ANTICIPO_RECIBIDO',
+  'PAGO_PARCIAL',
+  'PAGADA',
+  'EN_PREPARACION',
+  'TERMINADA',
+  'ENTREGADA',
+];
+
+export function isAcceptedSchoolStatus(status: SchoolQuotationStatus): boolean {
+  return SCHOOL_ACCEPTED_STATUSES.includes(status);
+}
+
+/** Backend message when a payment is attempted on a quotation (shown before calling it). */
+export const SCHOOL_QUOTE_NOT_ACCEPTED_MESSAGE =
+  'Esta lista todavía es una cotización. Debe ser aceptada por el cliente antes de registrar pagos.';
+
+/**
+ * Color key of each status pill (`.status-pill--<key>` in `_school-ui.scss`):
+ * gray draft, blue quoted, teal accepted, purple anticipo, orange partial, green paid, sky
  * preparing, indigo finished, dark green delivered, red cancelled.
  */
 export const SCHOOL_STATUS_COLOR: Record<SchoolQuotationStatus, string> = {
   BORRADOR: 'gray',
-  ACEPTADA: 'blue',
+  ACEPTADA: 'teal',
   COTIZADA: 'blue',
   ANTICIPO_RECIBIDO: 'purple',
   PAGO_PARCIAL: 'orange',
@@ -344,8 +374,13 @@ export function isSchoolQuotationEditable(
   return status !== 'ENTREGADA' && status !== 'CANCELADA' && !(mode === 'PREPARACION' && status === 'TERMINADA');
 }
 
+/**
+ * Only an accepted list receives payments (migration 1760009000000): a
+ * quotation (BORRADOR / COTIZADA) is accepted first; delivered or cancelled
+ * lists are closed. The backend enforces it (SCHOOL_QUOTE_NOT_ACCEPTED).
+ */
 export function canReceiveSchoolPayment(status: SchoolQuotationStatus): boolean {
-  return status !== 'BORRADOR' && status !== 'ENTREGADA' && status !== 'CANCELADA';
+  return isAcceptedSchoolStatus(status) && status !== 'ENTREGADA';
 }
 
 // ── Templates ──────────────────────────────────────────────────────────────
@@ -615,6 +650,8 @@ export interface SchoolQuotationFilters {
   grade?: string;
   status?: SchoolQuotationStatus | '';
   supplyStatus?: SchoolSupplyStatus | '';
+  /** "Aceptadas sin pagos": ACEPTADA, nothing paid, not prepared — to review one by one. */
+  acceptedWithoutPayments?: boolean;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: SchoolQuotationSortField;
@@ -637,12 +674,16 @@ export interface SchoolDashboard {
   dateFrom: string;
   dateTo: string;
   totalQuotations: number;
-  /** BORRADOR, COTIZADA or ACEPTADA: not being prepared yet. */
+  /** Quotations pending the customer's decision (BORRADOR or COTIZADA). */
   awaitingQuotations: number;
-  /** Active quotations with a balance still to collect. */
+  /** Accepted lists with a balance still to collect. */
   pendingQuotations: number;
   paidQuotations: number;
   totalQuoted: number;
+  /** Total of the accepted lists (what was really sold). */
+  acceptedTotal: number;
+  /** Total of the quotations not accepted yet — never counted as money. */
+  quotedPendingTotal: number;
   totalReceived: number;
   pendingBalance: number;
   byGrade: { grade: string; count: number; total: number }[];
@@ -670,7 +711,9 @@ export const SCHOOL_HISTORY_LABEL: Record<string, string> = {
   OBSERVACIONES: 'Observaciones actualizadas',
   PAGO: 'Pago registrado',
   PAGO_ANULADO: 'Pago anulado',
-  CONFIRMAR: 'Borrador confirmado',
+  CONFIRMAR: 'Borrador confirmado como cotización',
+  ACEPTAR: 'Aceptada por el cliente',
+  DEVUELTA_COTIZACION: 'Devuelta a cotización',
   PREPARAR: 'En preparación',
   PREPARACION: 'Productos de inventario asignados',
   TERMINAR: 'Terminada · despachada, lista para entregar',

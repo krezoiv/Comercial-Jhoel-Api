@@ -2,23 +2,33 @@
  * Customer account statement of Listas Escolares (Caja de Listas expansion,
  * 2026-11-19). A customer is every list with the same phone digits (owner
  * decision). Nothing here is stored: the chronological ledger is rebuilt only
- * from real records — the list history (`CREADA`, `EDITADA` with
- * totalBefore/totalAfter, leaving `BORRADOR`, `CANCELADA`) and the payment
- * rows (anticipos, abonos, voids, refunds) — and its final balance is checked
- * against the official balance (Σ total − paid of the lists that are not
- * cancelled). A mismatch is reported, never hidden or "fixed".
+ * from real records — the list history and the payment rows (anticipos,
+ * abonos, voids, refunds) — and its final balance is checked against the
+ * official balance (Σ total − paid of the ACCEPTED lists). A mismatch is
+ * reported, never hidden or "fixed".
+ *
+ * A quotation is not money (migration 1760009000000): a list is charged when
+ * it becomes ACCEPTED — at creation when it was saved accepted, on ACEPTAR,
+ * or (old lists) on the first payment that accepted it — and uncharged when
+ * it is cancelled or "devuelta a cotización".
  */
 
+import { isAcceptedSchoolStatus } from '../../school-lists/domain/repositories/school-list.repository';
 import type { CustomerAccountStatus } from './repositories/school-cash-box.repository';
 
-/** SOLVENTE: nothing owed · ABONANDO: paid something, still owes · PENDIENTE: owes and never paid · CANCELADO: only cancelled lists. */
+/**
+ * SOLVENTE: nothing owed · ABONANDO: paid something, still owes · PENDIENTE:
+ * owes and never paid · COTIZANDO: only quotations, nothing accepted yet ·
+ * CANCELADO: only cancelled lists.
+ */
 export function customerAccountStatus(totals: {
   activeLists: number;
   paid: number;
   balance: number;
+  quotes?: number;
 }): CustomerAccountStatus {
   if (totals.activeLists === 0) {
-    return 'CANCELADO';
+    return (totals.quotes ?? 0) > 0 ? 'COTIZANDO' : 'CANCELADO';
   }
   if (totals.balance <= 0) {
     return 'SOLVENTE';
@@ -160,7 +170,7 @@ function listEvents(
   history: LedgerHistoryInput[],
 ): Event[] {
   const events: Event[] = [];
-  let draft = false;
+  // Charged = the list is accepted and its total is owed right now.
   let charged = false;
   let total = 0;
   const base = (
@@ -178,15 +188,18 @@ function listEvents(
     reference: null,
     delta,
   });
+  const accept = (row: LedgerHistoryInput, how: string) => {
+    events.push(
+      base(row, 'CARGO_LISTA', `Lista escolar ${listLabel(list)}${how}`, total),
+    );
+    charged = true;
+  };
   for (const row of [...history].sort((a, b) => a.seq - b.seq)) {
     if (row.action === 'CREADA') {
       total = cents(Number(row.details.total ?? 0) || 0);
-      draft = row.toStatus === 'BORRADOR';
-      if (!draft) {
-        events.push(
-          base(row, 'CARGO_LISTA', `Lista escolar ${listLabel(list)}`, total),
-        );
-        charged = true;
+      // Saved already accepted (with an advance, or before the fix).
+      if (row.toStatus && isAcceptedSchoolStatus(row.toStatus)) {
+        accept(row, '');
       }
     } else if (row.action === 'EDITADA') {
       const before = cents(Number(row.details.totalBefore ?? total / 100) || 0);
@@ -214,24 +227,35 @@ function listEvents(
         );
         charged = false;
       }
-      draft = false;
+    } else if (row.action === 'DEVUELTA_COTIZACION') {
+      if (charged) {
+        events.push(
+          base(
+            row,
+            'CANCELACION',
+            `Lista ${list.quotationNumber} devuelta a cotización (no aceptada)`,
+            -total,
+          ),
+        );
+        charged = false;
+      }
     } else if (
-      draft &&
-      row.fromStatus === 'BORRADOR' &&
+      !charged &&
       row.toStatus &&
-      row.toStatus !== 'BORRADOR'
+      isAcceptedSchoolStatus(row.toStatus)
     ) {
-      // A draft becomes a sale when it is confirmed: that is when it is owed.
-      draft = false;
-      events.push(
-        base(
-          row,
-          'CARGO_LISTA',
-          `Lista escolar ${listLabel(list)} (confirmada)`,
-          total,
-        ),
+      // The moment the list became accepted: that is when it is owed.
+      if (row.action === 'ACEPTAR' && row.details.total !== undefined) {
+        total = cents(Number(row.details.total) || 0);
+      }
+      accept(
+        row,
+        row.action === 'ACEPTAR'
+          ? ' (aceptada)'
+          : row.action === 'PAGO'
+            ? ' (aceptada con su primer pago)'
+            : ' (confirmada)',
       );
-      charged = true;
     }
   }
   return events;
@@ -307,7 +331,7 @@ export function buildCustomerLedger(
   );
 
   const official = lists
-    .filter((list) => list.status !== 'CANCELADA' && list.status !== 'BORRADOR')
+    .filter((list) => isAcceptedSchoolStatus(list.status))
     .reduce((sum, list) => sum + cents(list.total) - cents(list.paid), 0);
   const fullClosing = events.reduce((sum, event) => sum + event.delta, 0);
 

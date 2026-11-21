@@ -59,6 +59,16 @@
       <input name="dateTo" type="date" [min]="dateFrom()" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" />
     </label>
     <div class="filters__actions">
+      <!-- Lists accepted with no payments: review one by one; "Devolver a cotización" corrects a mistake. -->
+      <app-button
+        [variant]="acceptedWithoutPayments() ? 'secondary' : 'ghost'"
+        size="sm"
+        title="Listas aceptadas sin pagos ni preparación: revíselas una por una"
+        (click)="toggleAcceptedWithoutPayments()"
+      >
+        <app-icon [name]="acceptedWithoutPayments() ? 'check-circle' : 'alert-circle'" [size]="14" />
+        {{ acceptedWithoutPayments() ? 'Viendo aceptadas sin pagos' : 'Aceptadas sin pagos' }}
+      </app-button>
       <app-button type="submit" variant="primary" size="sm"><app-icon name="filter" [size]="14" /> Aplicar</app-button>
       <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
     </div>
@@ -99,8 +109,13 @@
               <td class="num" data-label="Total"><strong>{{ formatCurrency(q.total) }}</strong></td>
               <td class="num" data-label="Anticipo">{{ q.advance > 0 ? formatCurrency(q.advance) : '—' }}</td>
               <td class="num" data-label="Saldo">
-                <span [class]="'dot dot--' + accountTone[q.accountStatus]" [attr.title]="accountLabel[q.accountStatus]"></span>
-                {{ formatCurrency(q.balance) }}
+                @if (q.status === 'COTIZADA' || q.status === 'BORRADOR') {
+                  <!-- A quotation is not owed until the customer accepts it. -->
+                  <span class="muted" title="Cotización: no se debe hasta que el cliente la acepte">Cotización</span>
+                } @else {
+                  <span [class]="'dot dot--' + accountTone[q.accountStatus]" [attr.title]="accountLabel[q.accountStatus]"></span>
+                  {{ formatCurrency(q.balance) }}
+                }
               </td>
               <td data-label="Estado"><span [class]="'status-pill status-pill--' + statusColor[q.status]">{{ statusLabel[q.status] }}</span></td>
               <td data-label="Abastecimiento">
@@ -114,8 +129,11 @@
                   @if (service.can('school_lists.quotations.edit')) {
                     <button type="button" class="icon-btn" title="Editar cotización" aria-label="Editar cotización" [disabled]="!isEditable(q.status, q.fulfillmentMode)" (click)="edit(q)"><app-icon name="edit-2" [size]="16" /></button>
                   }
+                  @if (q.status === 'COTIZADA' && service.can('school_lists.quotations.edit')) {
+                    <button type="button" class="icon-btn icon-btn--accept" title="Aceptar lista (el cliente acepta la cotización)" [attr.aria-label]="'Aceptar lista ' + q.quotationNumber" [disabled]="delivering() === q.id" (click)="accept(q)"><app-icon name="check-circle" [size]="16" /></button>
+                  }
                   @if (service.can('school_lists.payments.register')) {
-                    <button type="button" class="icon-btn" title="Registrar abono" aria-label="Registrar abono" [disabled]="!canPay(q.status) || q.balance <= 0" (click)="paying.set(q)"><app-icon name="wallet" [size]="16" /></button>
+                    <button type="button" class="icon-btn" [title]="payTitle(q)" [attr.aria-label]="payTitle(q)" [disabled]="!canPay(q.status) || q.balance <= 0" (click)="paying.set(q)"><app-icon name="wallet" [size]="16" /></button>
                   }
                   <button type="button" class="icon-btn" title="Estado de cuenta" aria-label="Estado de cuenta" (click)="open(q, 'cuenta')"><app-icon name="receipt" [size]="16" /></button>
                   @if (service.can('school_lists.documents.generate')) {

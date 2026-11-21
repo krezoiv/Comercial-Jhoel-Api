@@ -270,6 +270,8 @@ BEGIN
 
   -- 18. Cancelación con devolución por banco: consume lo pendiente de ESA lista en ese banco.
   v_q2 := create_school_quotation(pg_temp.quote(400), v_user, 'SCB-Q2-0001');
+  -- Since 1760009000000 a quotation must be accepted before it is paid.
+  PERFORM change_school_quotation_status(v_q2, 'ACEPTAR', v_user, NULL);
   v_bank_payment := register_school_quotation_payment(v_q2, 400, 'DEPOSITO', v_bank, 'BOL-55', NULL, v_user, 'SCB-P-BANK-10');
   PERFORM pg_temp.expect('18. cancelación con devolución en efectivo sin caja',
     pg_temp.err(format($f$SELECT cancel_school_quotation(%L, 'Cliente desistió', 'EFECTIVO', NULL, NULL, %L, 'SCB-CANCEL-1')$f$, v_q2, v_admin)),
@@ -290,6 +292,7 @@ BEGIN
   -- 20. Pagos anteriores a la caja: su anulación no toca la caja ni el banco.
   ALTER TABLE school_quotation_payments DISABLE TRIGGER trg_school_cash_on_payment;
   v_q2 := create_school_quotation(pg_temp.quote(90), v_user, 'SCB-Q3-0001');
+  PERFORM change_school_quotation_status(v_q2, 'ACEPTAR', v_user, NULL);
   v_cash_payment := register_school_quotation_payment(v_q2, 90, 'EFECTIVO', NULL, NULL, NULL, v_user, 'SCB-P-OLD-01');
   ALTER TABLE school_quotation_payments ENABLE TRIGGER trg_school_cash_on_payment;
   v_rows := (SELECT count(*) FROM school_cash_movements);

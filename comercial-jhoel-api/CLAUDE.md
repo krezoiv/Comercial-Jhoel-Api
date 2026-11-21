@@ -1723,6 +1723,47 @@ Ampliación del 2026-11-19. Solo lectura sobre las tablas existentes; nada nuevo
 - **Reporte nuevo** `cartera-clientes`.
 - **Pruebas**: `customer-ledger.spec.ts` y `test/school-customers.e2e-spec.ts` (los 20 escenarios pedidos, con `test/run-cash-control-e2e.sh`).
 
+### Caja de Listas — solo listas aceptadas y pagos reales (migración `1760009000000`)
+
+Pedido del dueño (2026-11-21): una cotización no es venta, deuda ni dinero.
+
+- **Familia aceptada**: `school_quotation_status_accepted(status)` (IMMUTABLE) = ACEPTADA, ANTICIPO_RECIBIDO, PAGO_PARCIAL,
+  PAGADA, EN_PREPARACION, TERMINADA, ENTREGADA. Las cotizaciones son BORRADOR y COTIZADA; CANCELADA está cerrada. Espejo en
+  TS: `SCHOOL_ACCEPTED_STATUSES` / `isAcceptedSchoolStatus` (`school-lists/domain/repositories/school-list.repository.ts`).
+- **Nacimiento** (decisión del dueño): `create_school_quotation` deja COTIZADA salvo que traiga anticipo, que la deja
+  ACEPTADA antes del historial `CREADA`. `CONFIRMAR` (borrador) → COTIZADA en ambos flujos.
+- **Aceptar**: acción `ACEPTAR` (COTIZADA → ACEPTADA) en `change_school_quotation_status`, con permiso de edición; el
+  historial guarda `details.total`. `PREPARAR` y `TERMINAR` (flujo anterior) ya no salen de COTIZADA.
+- **Pagos**: `school_quotation_insert_payment` rechaza una lista no aceptada con `SCHOOL_QUOTE_NOT_ACCEPTED`, que llega como
+  "Esta lista todavía es una cotización. Debe ser aceptada por el cliente antes de registrar pagos." (409).
+  `school_quotation_refresh_status` ya no maneja COTIZADA. En el flujo anterior ACEPTADA ocupa el lugar que tenía COTIZADA y
+  los pagos la mueven igual que antes. Anular todos los pagos deja ACEPTADA, nunca COTIZADA.
+- **Devolver a cotización** (corrección auditada de las aceptadas por error, decisión del dueño "revisar una por una"):
+  `revert_school_quotation_to_quote(id, motivo, usuario, versión)` → `POST /school-lists/quotations/:id/revert-to-quote`.
+  - Permiso `school_lists.quotations.revert` (SUPER_ADMIN, ADMIN, SUPERVISOR_DE_TURNO) y motivo de 5 a 255 caracteres.
+  - Solo desde ACEPTADA, sin pagos (ni anulados aplicados) y sin preparación: `SCHOOL_QUOTE_REVERT_NOT_ALLOWED:status|payments|preparation`.
+  - Historial `DEVUELTA_COTIZACION` con `{reason, total}`. No toca pagos, caja ni inventario.
+- **Nada automático sobre los históricos**: el filtro `acceptedWithoutPayments` de `GET quotations` y
+  `summary.acceptedWithoutPayments` muestran las ACEPTADA sin pagos ni preparación para revisarlas.
+- **Cifras**:
+  - Tablero de listas: `acceptedTotal`, `quotedPendingTotal`; pendientes y pagadas solo sobre aceptadas.
+  - Caja de Listas: `sales`, `customersBalance` (`OPEN_SALE`), `portfolio` y clientes solo sobre aceptadas.
+    `summary.quotes` y `portfolio.quotes/quotesTotal` van aparte.
+  - Cliente: `purchased/balance` solo sobre aceptadas, `quotes/quotedTotal` aparte, estado COTIZANDO.
+  - Lista: `accountStatus` COTIZACION y saldo 0 mientras no se acepte.
+  - Reporte nuevo `estado-listas` (cotizado, aceptado, cobrado y pendiente por lista).
+  - El Kardex de la caja ya era solo de pagos y no cambió.
+- **Estado de cuenta del cliente**: cargo al aceptar.
+  - Señales de aceptación: CREADA con estado aceptado, `ACEPTAR`, `CONFIRMAR` hacia aceptada, o la primera fila PAGO de una lista antigua.
+  - `CANCELADA` y `DEVUELTA_COTIZACION` restan el cargo.
+- **Gotcha arreglado**: el SELECT del resumen no incluía `quotes.*` ni `unpaid.*` → las dos cifras llegaban en 0.
+- **Pruebas**:
+  - `sql/tests/school-lists-accepted-only.test.sql` (32 casos, los 10 escenarios del pedido).
+  - Ajustes en `school-lists`, `school-supply` y `school-cash-box.test.sql`.
+  - `customer-ledger.spec.ts` y `school-list.use-cases.spec.ts`.
+  - E2E: `school-customers` ("una cotización no es dinero"), `school-lists`, `school-lists-requirements` y `school-supply`.
+  - Down/up verificado en una copia con md5 de las funciones.
+
 ### Listas Escolares — inventario negativo, abastecimiento FIFO y despacho (migración `1760008300000`)
 
 - **Restricciones de no negativos**: los CHECK `CHK_inventory_stock_quantity_non_negative` y `CHK_products_stock_non_negative` son ahora triggers con la misma regla y el mismo error (23514 y mismo nombre de restricción).

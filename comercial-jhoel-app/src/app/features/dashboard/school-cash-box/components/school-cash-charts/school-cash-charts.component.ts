@@ -67,9 +67,10 @@ export class SchoolCashChartsComponent {
     const s = this.s();
     return s
       ? bars([
-          { label: 'Total vendido', value: s.sales.total, color: COLOR.sales },
-          { label: 'Total abonado', value: s.collected.total, color: COLOR.collected },
-          { label: 'Pendiente de cobro', value: s.customersBalance, color: COLOR.owed, note: 'a hoy' },
+          // Only accepted lists and real payments (migration 1760009000000).
+          { label: 'Total aceptado', value: s.sales.total, color: COLOR.sales },
+          { label: 'Total recaudado', value: s.collected.total, color: COLOR.collected },
+          { label: 'Pendiente de pago', value: s.customersBalance, color: COLOR.owed, note: 'a hoy' },
         ])
       : [];
   });
@@ -131,10 +132,12 @@ export class SchoolCashChartsComponent {
     return {
       active,
       cancelled: p.cancelled,
+      /** Quotations not accepted yet: outside the portfolio (migration 1760009000000). */
+      quotes: p.quotes,
       segments: [
         { label: 'Pagadas', count: p.paid, pct: pct(p.paid), color: COLOR.cash, amount: p.paidAmount, amountLabel: 'cobrado' },
         { label: 'Parcialmente pagadas', count: p.partial, pct: pct(p.partial), color: COLOR.partial, amount: p.partialBalance, amountLabel: 'por cobrar' },
-        { label: 'Sin pagos', count: p.pending, pct: pct(p.pending), color: COLOR.owed, amount: p.pendingBalance, amountLabel: 'por cobrar' },
+        { label: 'Aceptadas sin pagos', count: p.pending, pct: pct(p.pending), color: COLOR.owed, amount: p.pendingBalance, amountLabel: 'por cobrar' },
       ],
     };
   });

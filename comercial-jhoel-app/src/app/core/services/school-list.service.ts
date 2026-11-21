@@ -147,6 +147,16 @@ export class SchoolListService {
   }
 
   /**
+   * "Devolver a cotización" (managers): audited correction of a list accepted by
+   * mistake. The backend refuses it once the list has payments or preparation.
+   */
+  revertToQuote(id: string, reason: string, version: number): Observable<SchoolQuotation> {
+    return this.http
+      .post<ApiSuccessResponse<SchoolQuotation>>(`${BASE_URL}/quotations/${id}/revert-to-quote`, { reason, version })
+      .pipe(map((r) => r.data));
+  }
+
+  /**
    * "Guardar preparación": inventory products assigned to each requirement of a
    * list in EN_PREPARACION. Moves no stock; "Finalizar preparación" is the
    * TERMINAR status action.

@@ -229,7 +229,13 @@ export interface SchoolCashSummaryRow {
     /** Received before the Caja de Listas existed (never in the caja). */
     beforeCashBox: number;
   };
+  /** ACCEPTED lists in the period (sold, not money — migration 1760009000000). */
   sales: { total: number; count: number };
+  /** Quotations waiting for the customer's decision (COTIZADA), now — informative, never money. */
+  quotes: { total: number; count: number };
+  /** ACEPTADA lists with no payment and no preparation: candidates for "Devolver a cotización". */
+  acceptedWithoutPayments: number;
+  /** Owed on accepted lists only. */
   customersBalance: number;
   customersWithBalance: number;
   exitsTotal: number;
@@ -245,6 +251,9 @@ export interface SchoolCashSummaryRow {
     partial: number;
     pending: number;
     cancelled: number;
+    /** Quotations not accepted yet (outside every money figure). */
+    quotes: number;
+    quotesTotal: number;
     paidAmount: number;
     partialBalance: number;
     pendingBalance: number;
@@ -261,7 +270,7 @@ export interface SchoolCashSummaryRow {
 }
 
 export type CustomerAccountStatus =
-  'SOLVENTE' | 'ABONANDO' | 'PENDIENTE' | 'CANCELADO';
+  'SOLVENTE' | 'ABONANDO' | 'PENDIENTE' | 'COTIZANDO' | 'CANCELADO';
 export const CUSTOMER_VIEWS = [
   'ALL',
   'WITH_BALANCE',
@@ -302,10 +311,14 @@ export interface CustomerRow {
   grades: string[];
   quotationNumbers: string[];
   lists: number;
+  /** ACCEPTED lists — the only ones that count as bought and owed. */
   activeLists: number;
   purchased: number;
   paid: number;
   balance: number;
+  /** Quotations still waiting for the customer's decision (no money). */
+  quotes: number;
+  quotedTotal: number;
   status: CustomerAccountStatus;
   lastPaymentAt: string | null;
   firstAt: string;

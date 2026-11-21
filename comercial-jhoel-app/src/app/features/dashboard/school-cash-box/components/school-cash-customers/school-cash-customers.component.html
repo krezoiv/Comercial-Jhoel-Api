@@ -37,6 +37,7 @@
         <option value="PENDIENTE">Pendiente</option>
         <option value="ABONANDO">Abonando</option>
         <option value="SOLVENTE">Solvente</option>
+        <option value="COTIZANDO">Solo cotizaciones</option>
         <option value="CANCELADO">Cancelado</option>
       </select>
     </label>
@@ -108,7 +109,13 @@
                 <span class="muted">{{ c.grades.join(' · ') }}</span>
               </td>
               <td data-label="Listas" class="num">{{ c.activeLists }}@if (c.lists > c.activeLists) {<span class="muted">+{{ c.lists - c.activeLists }} cancel.</span>}</td>
-              <td data-label="Comprado" class="num">{{ formatCurrency(c.purchased) }}</td>
+              <td data-label="Comprado" class="num">
+                {{ formatCurrency(c.purchased) }}
+                @if (c.quotes > 0) {
+                  <!-- Quotations are informative: never bought nor owed until accepted. -->
+                  <small class="muted quoted" [title]="c.quotes + ' cotización(es) sin aceptar'">+ {{ formatCurrency(c.quotedTotal) }} cotizado</small>
+                }
+              </td>
               <td data-label="Abonado" class="num">
                 <span class="paid">{{ formatCurrency(c.paid) }}</span>
                 <span class="meter" aria-hidden="true"><span [style.width.%]="percent(c)"></span></span>

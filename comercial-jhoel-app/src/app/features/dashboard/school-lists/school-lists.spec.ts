@@ -561,6 +561,8 @@ describe('Listas Escolares — role-based actions', () => {
         pendingQuotations: 2,
         paidQuotations: 1,
         totalQuoted: 3400,
+        acceptedTotal: 2800,
+        quotedPendingTotal: 600,
         totalReceived: 1200,
         pendingBalance: 2200,
         byGrade: [{ grade: 'Primero Básico', count: 4, total: 3400 }],
@@ -571,7 +573,12 @@ describe('Listas Escolares — role-based actions', () => {
     const fixture = TestBed.createComponent(SchoolDashboardComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance.gradeSegments()).toEqual([jasmine.objectContaining({ label: 'Primero Básico', value: 4 })]);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Saldo pendiente por cobrar');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    // Only accepted lists are sold or owed; quotations show apart (migration 1760009000000).
+    expect(text).toContain('Total de listas aceptadas');
+    expect(text).toContain('Q 2,800.00');
+    expect(text).toContain('Total pendiente de pago');
+    expect(text).toContain('Q 600.00 cotizado · no es dinero');
   });
 });
 
@@ -785,6 +792,48 @@ describe('SchoolQuotationEditorComponent — categorías y cambio de producto', 
   });
 });
 
+describe('Listas Escolares — solo listas aceptadas (migración 1760009000000)', () => {
+  it('a quotation cannot be paid; only accepted lists receive payments', () => {
+    expect(canReceiveSchoolPayment('BORRADOR')).toBeFalse();
+    expect(canReceiveSchoolPayment('COTIZADA')).toBeFalse();
+    expect(canReceiveSchoolPayment('ACEPTADA')).toBeTrue();
+    expect(canReceiveSchoolPayment('PAGO_PARCIAL')).toBeTrue();
+    expect(canReceiveSchoolPayment('ENTREGADA')).toBeFalse();
+    expect(canReceiveSchoolPayment('CANCELADA')).toBeFalse();
+  });
+
+  it('the list offers "Aceptar lista" for a quotation and accepts it through the status endpoint', async () => {
+    const service = setup(CASHIER);
+    spyOn(service, 'getDashboard').and.returnValue(throwError(() => new Error('x')));
+    spyOn(service, 'getQuotations').and.returnValue(
+      of({ items: [quotation({ status: 'COTIZADA', advance: 0, paid: 0, balance: 300 })], total: 1, page: 1, limit: 20 }),
+    );
+    const change = spyOn(service, 'changeStatus').and.returnValue(of(quotation({ status: 'ACEPTADA' })));
+    spyOn(TestBed.inject(ConfirmDialogService), 'confirm').and.resolveTo(true);
+    const fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    const pay = html.querySelector<HTMLButtonElement>('button[aria-label^="Esta lista todavía es una cotización"]');
+    expect(pay?.disabled).toBeTrue();
+    expect(html.querySelector('td[data-label="Saldo"]')?.textContent).toContain('Cotización');
+    const accept = html.querySelector<HTMLButtonElement>('button[aria-label^="Aceptar lista"]');
+    expect(accept).not.toBeNull();
+    await fixture.componentInstance.accept(fixture.componentInstance.items()[0]);
+    expect(change).toHaveBeenCalledWith('q1', 'ACEPTAR', jasmine.any(Number));
+  });
+
+  it('"Aceptadas sin pagos" sends the review filter to the backend', () => {
+    const service = setup(CASHIER);
+    spyOn(service, 'getDashboard').and.returnValue(throwError(() => new Error('x')));
+    const get = spyOn(service, 'getQuotations').and.returnValue(of({ items: [], total: 0, page: 1, limit: 20 }));
+    const fixture = TestBed.createComponent(SchoolQuotationsListComponent);
+    fixture.detectChanges();
+    expect(get.calls.mostRecent().args[0].acceptedWithoutPayments).toBeUndefined();
+    fixture.componentInstance.toggleAcceptedWithoutPayments();
+    expect(get.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ acceptedWithoutPayments: true, page: 1 }));
+  });
+});
+
 describe('SchoolQuotationsListComponent — resumen y orden', () => {
   it('builds the summary cards from the backend and sorts through the API', () => {
     const service = setup(CASHIER);
@@ -797,6 +846,8 @@ describe('SchoolQuotationsListComponent — resumen y orden', () => {
         pendingQuotations: 4,
         paidQuotations: 2,
         totalQuoted: 5400,
+        acceptedTotal: 4800,
+        quotedPendingTotal: 600,
         totalReceived: 1200,
         pendingBalance: 4200,
         byGrade: [],
@@ -813,11 +864,11 @@ describe('SchoolQuotationsListComponent — resumen y orden', () => {
       return `${el.querySelector('.kpi__label')!.textContent} = ${el.querySelector('.kpi__value')!.textContent}`;
     };
     expect(html.querySelectorAll('.kpi').length).toBe(5);
-    expect(card(0)).toBe('Total de cotizaciones = 9');
-    expect(card(1)).toBe('Pendientes = 3');
-    expect(card(2)).toBe('Pagadas = 2');
+    expect(card(0)).toBe('Total de listas = 9');
+    expect(card(1)).toBe('Cotizaciones por decidir = 3');
+    expect(card(2)).toBe('Listas aceptadas = Q 4,800.00');
     expect(card(3)).toBe('Con saldo pendiente = 4');
-    expect(card(4)).toBe('Total cotizado = Q 5,400.00');
+    expect(card(4)).toBe('Listas pagadas = 2');
     // Status pill with the color of its status, and the anticipo column.
     expect(html.querySelector('.status-pill--purple')?.textContent).toContain('Anticipo recibido');
     expect(html.querySelector('td[data-label="Anticipo"]')?.textContent).toContain('Q 300.00');
@@ -1422,7 +1473,9 @@ describe('Ventana POS — requerimientos, resumen y pagos', () => {
     expect(text).toContain('María López');
     expect(text).toContain('Cuaderno mediano');
     expect(text).toContain(editor.formatCurrency(55));
-    expect(text).toContain('Aceptada');
+    // Without an advance a new list is a quotation the customer still has to accept (1760009000000).
+    expect(text).toContain('Cotizada');
+    expect(text).not.toContain('Aceptada');
     expect(create).not.toHaveBeenCalled();
   });
 });

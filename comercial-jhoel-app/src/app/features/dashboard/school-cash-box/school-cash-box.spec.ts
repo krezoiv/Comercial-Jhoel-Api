@@ -57,6 +57,8 @@ const summary = (over: Partial<SchoolCashSummary> = {}): SchoolCashSummary => ({
   transfersCount: 1,
   collected: { total: 1950, cash: 1050, transfer: 500, deposit: 200, other: 200, refunds: 0, advances: 800, installments: 1150, beforeCashBox: 0 },
   sales: { total: 3000, count: 4 },
+  quotes: { total: 900, count: 2 },
+  acceptedWithoutPayments: 0,
   customersBalance: 1050,
   customersWithBalance: 2,
   exitsTotal: 0,
@@ -68,7 +70,7 @@ const summary = (over: Partial<SchoolCashSummary> = {}): SchoolCashSummary => ({
     { start: '2026-11-18', cash: 0, bank: 0, other: 0, total: 0 },
     { start: '2026-11-19', cash: 100, bank: 50, other: 0, total: 150 },
   ],
-  portfolio: { lists: 5, paid: 1, partial: 2, pending: 1, cancelled: 1, paidAmount: 250, partialBalance: 650, pendingBalance: 400 },
+  portfolio: { lists: 5, paid: 1, partial: 2, pending: 1, cancelled: 1, paidAmount: 250, partialBalance: 650, pendingBalance: 400, quotes: 2, quotesTotal: 900 },
   customers: { total: 4, withBalance: 3, solvent: 1, paying: 2, notPaying: 1 },
   recent: [],
   ...over,
@@ -180,14 +182,18 @@ describe('SchoolCashSummaryComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
     const byLabel = Object.fromEntries([...comp.primary(), ...comp.secondary()].map((k) => [k.label, k.value]));
-    expect(byLabel['Total vendido']).toContain('3,000.00');
-    expect(byLabel['Total abonado / recaudado']).toContain('1,950.00');
-    expect(byLabel['Pendiente de cobro']).toContain('1,050.00');
+    // Quotations are never money: only accepted lists and real payments (migration 1760009000000).
+    expect(byLabel['Total de listas aceptadas']).toContain('3,000.00');
+    expect(byLabel['Total recaudado']).toContain('1,950.00');
+    expect(byLabel['Total pendiente de pago']).toContain('1,050.00');
+    expect(byLabel['Cotizaciones pendientes de decisión']).toBe('2');
+    expect(byLabel['Listas pagadas']).toBe('1');
+    expect(byLabel['Listas con abonos']).toBe('2');
     expect(byLabel['Efectivo disponible en caja']).toContain('1,250.00');
     expect(byLabel['En bancos por trasladar']).toContain('500.00');
     expect(byLabel['Clientes con saldo pendiente']).toBe('3');
     expect(byLabel['Clientes solventes']).toBe('1');
-    expect(byLabel['Total de listas']).toBe('5');
+    expect(byLabel['Total de listas']).toBe('7');
     const alerts = comp.alerts().map((a) => a.text).join(' | ');
     expect(alerts).toContain('hace 5 día');
     expect(alerts).toContain('faltante');
@@ -203,7 +209,7 @@ describe('SchoolCashSummaryComponent', () => {
     const views: string[] = [];
     comp.customers.subscribe((v) => views.push(v));
     comp.open(comp.secondary().find((k) => k.label === 'Clientes solventes')!);
-    comp.open(comp.primary().find((k) => k.label === 'Clientes con saldo pendiente')!);
+    comp.open(comp.secondary().find((k) => k.label === 'Clientes con saldo pendiente')!);
     expect(views).toEqual(['SOLVENT', 'WITH_BALANCE']);
     const periods: unknown[] = [];
     comp.periodChange.subscribe((p) => periods.push(p));
@@ -222,9 +228,9 @@ describe('SchoolCashChartsComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
     expect(comp.salesVsCollected().map((b) => [b.label, b.value])).toEqual([
-      ['Total vendido', 3000],
-      ['Total abonado', 1950],
-      ['Pendiente de cobro', 1050],
+      ['Total aceptado', 3000],
+      ['Total recaudado', 1950],
+      ['Pendiente de pago', 1050],
     ]);
     expect(comp.salesVsCollected()[0].width).toBe(100);
     expect(comp.byMethod().map((b) => b.value)).toEqual([1050, 500, 200, 200]);
@@ -414,7 +420,7 @@ describe('Caja de Listas — cajeros y estados de cuenta', () => {
     const { cash } = setup(CASHIER);
     const load = spyOn(cash, 'getSummary').and.returnValue(of(summary()));
     spyOn(cash, 'getCustomers').and.returnValue(
-      of({ items: [], total: 0, page: 1, limit: 20, totals: { customers: 0, purchased: 0, paid: 0, balance: 0, byStatus: { SOLVENTE: 0, ABONANDO: 0, PENDIENTE: 0, CANCELADO: 0 } } }),
+      of({ items: [], total: 0, page: 1, limit: 20, totals: { customers: 0, purchased: 0, paid: 0, balance: 0, byStatus: { SOLVENTE: 0, ABONANDO: 0, PENDIENTE: 0, COTIZANDO: 0, CANCELADO: 0 } } }),
     );
     const fixture = TestBed.createComponent(SchoolCashBoxPageComponent);
     fixture.detectChanges();
@@ -429,7 +435,7 @@ describe('Caja de Listas — cajeros y estados de cuenta', () => {
 const customerRow = {
   key: '55551234', name: 'María López', phone: '5555-1234', otherNames: ['Maria Lopez'], students: ['Ana López', 'Juan López'],
   grades: ['Primero Básico', 'Tercero Básico'], quotationNumbers: ['LE-000001', 'LE-000002'], lists: 2, activeLists: 2,
-  purchased: 1450, paid: 500, balance: 950, status: 'ABONANDO' as const, lastPaymentAt: '2026-11-19T16:00:00Z',
+  purchased: 1450, paid: 500, balance: 950, quotes: 0, quotedTotal: 0, status: 'ABONANDO' as const, lastPaymentAt: '2026-11-19T16:00:00Z',
   firstAt: '2026-11-10T15:00:00Z', nextDeliveryDate: null,
 };
 
@@ -438,7 +444,7 @@ describe('SchoolCashCustomersComponent', () => {
     const { cash } = setup(MANAGER);
     spyOn(TestBed.inject(SchoolListService), 'getTemplates').and.returnValue(of([]));
     const get = spyOn(cash, 'getCustomers').and.returnValue(
-      of({ items: [customerRow], total: 1, page: 1, limit: 20, totals: { customers: 1, purchased: 1450, paid: 500, balance: 950, byStatus: { SOLVENTE: 0, ABONANDO: 1, PENDIENTE: 0, CANCELADO: 0 } } }),
+      of({ items: [customerRow], total: 1, page: 1, limit: 20, totals: { customers: 1, purchased: 1450, paid: 500, balance: 950, byStatus: { SOLVENTE: 0, ABONANDO: 1, PENDIENTE: 0, COTIZANDO: 0, CANCELADO: 0 } } }),
     );
     const fixture = TestBed.createComponent(SchoolCashCustomersComponent);
     fixture.componentRef.setInput('view', 'WITH_BALANCE');

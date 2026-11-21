@@ -252,7 +252,7 @@ export class SchoolCustomersQueryDto extends SchoolCashRangeQueryDto {
   view?: CustomerView;
 
   @IsOptional()
-  @IsIn(['SOLVENTE', 'ABONANDO', 'PENDIENTE', 'CANCELADO'])
+  @IsIn(['SOLVENTE', 'ABONANDO', 'PENDIENTE', 'COTIZANDO', 'CANCELADO'])
   status?: CustomerAccountStatus;
 
   @IsOptional()

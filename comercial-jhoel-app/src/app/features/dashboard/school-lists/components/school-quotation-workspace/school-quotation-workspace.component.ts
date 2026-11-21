@@ -82,7 +82,9 @@ export class SchoolQuotationWorkspaceComponent implements OnInit, OnDestroy {
 
   readonly title = computed(() => (this.quotation ? `Editar cotización ${this.quotation.quotationNumber}` : 'Nueva cotización escolar'));
   readonly statusColor = computed(() => {
-    const status = this.quotation?.status ?? (this.editor().asDraft() ? 'BORRADOR' : 'ACEPTADA');
+    // A new list with an advance is accepted; without one it is a quotation (migration 1760009000000).
+    const editor = this.editor();
+    const status = this.quotation?.status ?? (editor.asDraft() ? 'BORRADOR' : editor.withAdvance() ? 'ACEPTADA' : 'COTIZADA');
     return SCHOOL_STATUS_COLOR[status];
   });
   /** Header save indicator. */

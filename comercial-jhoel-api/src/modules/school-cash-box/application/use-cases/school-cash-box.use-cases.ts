@@ -60,6 +60,7 @@ import type {
   SchoolPaymentMethod,
   SchoolQuotationStatus,
 } from '../../../school-lists/domain/repositories/school-list.repository';
+import { isAcceptedSchoolStatus } from '../../../school-lists/domain/repositories/school-list.repository';
 import { COMPANY_SETTINGS_REPOSITORY } from '../../../company-settings/domain/repositories/company-settings.repository';
 import type { CompanySettingsRepository } from '../../../company-settings/domain/repositories/company-settings.repository';
 
@@ -184,10 +185,14 @@ export const CUSTOMER_STATUS_LABEL: Record<CustomerAccountStatus, string> = {
   SOLVENTE: 'Solvente',
   ABONANDO: 'Abonando',
   PENDIENTE: 'Pendiente',
+  COTIZANDO: 'Solo cotizaciones',
   CANCELADO: 'Solo listas canceladas',
 };
 
-/** Payment state of ONE list (drafts and cancelled lists never owe anything). */
+/**
+ * Payment state of ONE list. Drafts, quotations not accepted yet and
+ * cancelled lists never owe anything (migration 1760009000000).
+ */
 export function listAccountStatus(
   list: Pick<CustomerListRow, 'status' | 'total' | 'paid'>,
 ): string {
@@ -196,6 +201,9 @@ export function listAccountStatus(
   }
   if (list.status === 'CANCELADA') {
     return 'CANCELADA';
+  }
+  if (!isAcceptedSchoolStatus(list.status)) {
+    return 'COTIZACION';
   }
   if (list.paid >= list.total) {
     return 'PAGADA';

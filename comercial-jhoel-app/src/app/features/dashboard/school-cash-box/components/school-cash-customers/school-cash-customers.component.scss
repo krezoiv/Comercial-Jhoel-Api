@@ -236,3 +236,10 @@
   }
 }
 
+
+/* Quotations not accepted yet: shown apart, never part of "Comprado" (migration 1760009000000). */
+.table .quoted {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}

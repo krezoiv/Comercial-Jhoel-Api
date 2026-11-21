@@ -205,6 +205,12 @@ describe('Listas Escolares — abastecimiento y despacho (e2e)', () => {
     );
 
     // Not dispatchable yet (and the old "entregar" is redirected).
+    // The customer accepts the quotation before paying it (1760009000000).
+    await as(userToken)(
+      api()
+        .post(`/api/school-lists/quotations/${created.id}/status`)
+        .send({ action: 'ACEPTAR' }),
+    ).expect(200);
     await as(userToken)(
       api().post(`/api/school-lists/quotations/${created.id}/payments`).send({
         amount: created.total,

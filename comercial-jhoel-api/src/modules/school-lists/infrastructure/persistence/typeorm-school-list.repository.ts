@@ -376,6 +376,11 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     if (options.status) {
       add(`q.status = ?`, options.status);
     }
+    if (options.acceptedWithoutPayments) {
+      where.push(`q.status = 'ACEPTADA' AND school_quotation_paid(q.id) = 0
+        AND NOT EXISTS (SELECT 1 FROM school_quotation_payments p WHERE p.quotation_id = q.id AND p.status = 'APLICADO')
+        AND NOT EXISTS (SELECT 1 FROM school_quotation_item_assignments a WHERE a.quotation_id = q.id)`);
+    }
     if (options.supplyStatus) {
       add(`school_quotation_supply_status(q.id) = ?`, options.supplyStatus);
     }
@@ -976,6 +981,18 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
     );
   }
 
+  async revertToQuote(
+    id: string,
+    reason: string,
+    userId: string,
+    expectedVersion: number | null,
+  ): Promise<string> {
+    return this.scalar(
+      `SELECT revert_school_quotation_to_quote($1, $2, $3, $4) AS id`,
+      [id, reason, userId, expectedVersion],
+    );
+  }
+
   async savePreparation(
     id: string,
     assignments: PreparationAssignmentInput[],
@@ -1058,14 +1075,18 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
           WHERE q.quotation_date BETWEEN $1::date AND $2::date
        )
        SELECT count(*) AS total_quotations,
-              count(*) FILTER (WHERE status IN ('BORRADOR','COTIZADA','ACEPTADA')) AS awaiting_quotations,
-              count(*) FILTER (WHERE status IN ('COTIZADA','ACEPTADA','ANTICIPO_RECIBIDO','PAGO_PARCIAL','EN_PREPARACION','TERMINADA')
+              -- Quotations (BORRADOR / COTIZADA) are not money: only accepted lists are
+              -- sold or owed (migration 1760009000000, school_quotation_status_accepted).
+              count(*) FILTER (WHERE status IN ('BORRADOR','COTIZADA')) AS awaiting_quotations,
+              count(*) FILTER (WHERE school_quotation_status_accepted(status) AND status <> 'ENTREGADA'
                                  AND total > paid) AS pending_quotations,
-              count(*) FILTER (WHERE status IN ('PAGADA','ENTREGADA')
-                                 OR (status IN ('ACEPTADA','EN_PREPARACION','TERMINADA') AND total <= paid)) AS paid_quotations,
+              count(*) FILTER (WHERE school_quotation_status_accepted(status) AND total <= paid) AS paid_quotations,
               COALESCE(SUM(total) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR')), 0) AS total_quoted,
+              COALESCE(SUM(total) FILTER (WHERE school_quotation_status_accepted(status)), 0) AS accepted_total,
+              COALESCE(SUM(total) FILTER (WHERE status = 'COTIZADA'), 0) AS quoted_pending_total,
               COALESCE(SUM(paid) FILTER (WHERE status <> 'CANCELADA'), 0) AS total_received,
-              COALESCE(SUM(total - paid) FILTER (WHERE status NOT IN ('CANCELADA','BORRADOR','ENTREGADA')), 0) AS pending_balance
+              COALESCE(SUM(total - paid) FILTER (WHERE school_quotation_status_accepted(status)
+                                                   AND status <> 'ENTREGADA'), 0) AS pending_balance
          FROM q`,
       range,
     );
@@ -1099,6 +1120,8 @@ export class TypeOrmSchoolListRepository implements SchoolListRepository {
       pendingQuotations: num(totals.pending_quotations),
       paidQuotations: num(totals.paid_quotations),
       totalQuoted: num(totals.total_quoted),
+      acceptedTotal: num(totals.accepted_total),
+      quotedPendingTotal: num(totals.quoted_pending_total),
       totalReceived: num(totals.total_received),
       pendingBalance: num(totals.pending_balance),
       byGrade: byGrade.map((r) => ({

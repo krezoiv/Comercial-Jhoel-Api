@@ -18,6 +18,7 @@ import {
   VoidSchoolPaymentUseCase,
   CancelSchoolQuotationUseCase,
   ChangeSchoolQuotationStatusUseCase,
+  RevertSchoolQuotationToQuoteUseCase,
   GetSchoolBodegaStockUseCase,
   SaveSchoolPreparationUseCase,
   PreviewSchoolQuotationPurgeUseCase,
@@ -151,6 +152,7 @@ function repository(): jest.Mocked<SchoolListRepository> {
     getTemplate: jest.fn().mockResolvedValue({ id: 't1', items: [] }),
     saveTemplate: jest.fn().mockResolvedValue('t1'),
     setTemplateActive: jest.fn().mockResolvedValue('t1'),
+    revertToQuote: jest.fn().mockResolvedValue('q1'),
     duplicateTemplate: jest.fn().mockResolvedValue('t2'),
     findQuotations: jest.fn(),
     getQuotation: jest.fn().mockResolvedValue(detail),
@@ -225,8 +227,15 @@ describe('Listas Escolares — use cases', () => {
     expect(useCase.execute(supervisor).permissions).not.toContain(
       'school_lists.payments.void',
     );
-    // 11 of the lists + 7 of the Caja de Listas + 2 of the customer statements.
-    expect(useCase.execute(admin).permissions).toHaveLength(20);
+    // 12 of the lists + 7 of the Caja de Listas + 2 of the customer statements.
+    expect(useCase.execute(admin).permissions).toHaveLength(21);
+    // "Devolver a cotización" (migration 1760009000000): managers, never cashiers.
+    expect(useCase.execute(supervisor).permissions).toContain(
+      'school_lists.quotations.revert',
+    );
+    expect(useCase.execute(cashier).permissions).not.toContain(
+      'school_lists.quotations.revert',
+    );
     // Caja de Listas: supervisors see it and count it; only admins move money.
     expect(useCase.execute(supervisor).permissions).toEqual(
       expect.arrayContaining([
@@ -399,6 +408,43 @@ describe('Listas Escolares — use cases', () => {
       { reason: 'El cliente desiste', refundMethod: 'EFECTIVO' },
       'u-sup',
       `SLC:${REQUEST_ID}`,
+    );
+  });
+
+  it('ACEPTAR: the customer accepts a quotation (cashiers may do it)', async () => {
+    const repo = repository();
+    await new ChangeSchoolQuotationStatusUseCase(repo).execute(
+      cashier,
+      'q1',
+      'ACEPTAR',
+      3,
+    );
+    expect(repo.changeStatus).toHaveBeenCalledWith(
+      'q1',
+      'ACEPTAR',
+      'u-user',
+      3,
+    );
+  });
+
+  it('"Devolver a cotización": managers only, with a reason', async () => {
+    const repo = repository();
+    const useCase = new RevertSchoolQuotationToQuoteUseCase(repo);
+    await expect(
+      useCase.execute(cashier, 'q1', 'El cliente no aceptó', 2),
+    ).rejects.toMatchObject({ code: 'SCHOOL_LIST_FORBIDDEN' });
+    await expect(
+      useCase.execute(supervisor, 'q1', ' no ', 2),
+    ).rejects.toMatchObject({
+      code: 'SCHOOL_REASON_REQUIRED',
+    });
+    expect(repo.revertToQuote).not.toHaveBeenCalled();
+    await useCase.execute(supervisor, 'q1', '  El cliente solo cotizó  ', 2);
+    expect(repo.revertToQuote).toHaveBeenCalledWith(
+      'q1',
+      'El cliente solo cotizó',
+      'u-sup',
+      2,
     );
   });
 

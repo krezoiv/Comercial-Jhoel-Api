@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import {
   SCHOOL_CASH_MOVEMENT_ICON,
@@ -31,7 +32,8 @@ interface Alert {
   tone: 'pending' | 'short' | 'neutral';
   icon: string;
   text: string;
-  action?: { label: string; tab?: SchoolCashTab; count?: boolean; view?: SchoolCustomerView };
+  /** `review`: opens Listas Escolares with the "Aceptadas sin pagos" filter. */
+  action?: { label: string; tab?: SchoolCashTab; count?: boolean; view?: SchoolCustomerView; review?: boolean };
 }
 
 type PeriodPreset = 'ALL' | 'MONTH' | 'LAST30' | 'CUSTOM';
@@ -58,6 +60,7 @@ function shiftDays(day: string, days: number): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolCashSummaryComponent {
+  private readonly router = inject(Router);
   private readonly data = signal<SchoolCashSummary | null>(null);
   private readonly current = signal<SchoolCashPeriod>({ granularity: 'day' });
   @Input() set summary(value: SchoolCashSummary | null) {
@@ -110,21 +113,31 @@ export class SchoolCashSummaryComponent {
     if (!s) {
       return [];
     }
+    // Quotations are never money (migration 1760009000000): only accepted lists are sold
+    // or owed, and only real payments are collected.
     return [
-      { tone: 'sales', icon: 'receipt', label: 'Total vendido', value: formatCurrency(s.sales.total), hint: `${s.sales.count} lista(s) vendida(s) · no es dinero recibido` },
+      {
+        tone: 'sales',
+        icon: 'receipt',
+        label: 'Total de listas aceptadas',
+        value: formatCurrency(s.sales.total),
+        hint: `${s.sales.count} lista(s) aceptada(s) · no es dinero recibido`,
+      },
       {
         tone: 'collected',
         icon: 'trending-up',
-        label: 'Total abonado / recaudado',
+        label: 'Total recaudado',
         value: formatCurrency(s.collected.total),
-        hint: `Pagos reales de clientes${s.collected.refunds ? ` · devoluciones ${formatCurrency(s.collected.refunds)}` : ''}`,
+        hint:
+          `Anticipos ${formatCurrency(s.collected.advances)} · abonos ${formatCurrency(s.collected.installments)}` +
+          (s.collected.refunds ? ` · devoluciones ${formatCurrency(s.collected.refunds)}` : ''),
       },
       {
         tone: 'owed',
         icon: 'alert-circle',
-        label: 'Pendiente de cobro',
+        label: 'Total pendiente de pago',
         value: formatCurrency(s.customersBalance),
-        hint: `${s.customersWithBalance} lista(s) con saldo · a hoy`,
+        hint: `${s.customersWithBalance} lista(s) aceptada(s) con saldo · a hoy`,
         view: 'WITH_BALANCE',
       },
       { tone: 'cash', icon: 'wallet', label: 'Efectivo disponible en caja', value: formatCurrency(s.cashBalance), hint: 'Saldo teórico del Kardex · a hoy' },
@@ -137,12 +150,11 @@ export class SchoolCashSummaryComponent {
         tab: 'traslados',
       },
       {
-        tone: 'owed',
-        icon: 'users',
-        label: 'Clientes con saldo pendiente',
-        value: String(s.customers.withBalance),
-        hint: `${s.customers.notPaying} sin ningún abono · ver lista`,
-        view: 'WITH_BALANCE',
+        tone: 'neutral',
+        icon: 'file-check',
+        label: 'Cotizaciones pendientes de decisión',
+        value: String(s.quotes.count),
+        hint: `${formatCurrency(s.quotes.total)} cotizado · no suma a la caja ni a la deuda`,
       },
     ];
   });
@@ -154,16 +166,26 @@ export class SchoolCashSummaryComponent {
     }
     const p = s.portfolio;
     return [
-      { tone: 'moved', icon: 'arrow-down-circle', label: 'Trasladado de bancos', value: formatCurrency(s.transferredTotal), hint: `${s.transfersCount} traslado(s) · movimiento interno`, tab: 'traslados' },
+      { tone: 'cash', icon: 'check-circle', label: 'Listas pagadas', value: String(p.paid), hint: `${formatCurrency(p.paidAmount)} cobrado por completo` },
+      { tone: 'bank', icon: 'wallet', label: 'Listas con abonos', value: String(p.partial), hint: `Saldo por cobrar ${formatCurrency(p.partialBalance)}` },
+      {
+        tone: 'owed',
+        icon: 'users',
+        label: 'Clientes con saldo pendiente',
+        value: String(s.customers.withBalance),
+        hint: `${s.customers.notPaying} sin ningún abono · ver lista`,
+        view: 'WITH_BALANCE',
+      },
       { tone: 'cash', icon: 'check-check', label: 'Clientes solventes', value: String(s.customers.solvent), hint: `${s.customers.total} cliente(s) en total`, view: 'SOLVENT' },
+      { tone: 'moved', icon: 'arrow-down-circle', label: 'Trasladado de bancos', value: formatCurrency(s.transferredTotal), hint: `${s.transfersCount} traslado(s) · movimiento interno`, tab: 'traslados' },
       {
         tone: 'neutral',
         icon: 'graduation-cap',
         label: 'Total de listas',
-        value: String(p.lists),
-        hint: `${p.paid} pagadas · ${p.partial} parciales · ${p.pending} sin pagos · ${p.cancelled} canceladas`,
+        // Portfolio lists are accepted or cancelled; quotations are counted apart.
+        value: String(p.lists + p.quotes),
+        hint: `${p.lists - p.cancelled} aceptadas (${p.pending} sin pagos) · ${p.quotes} cotizaciones · ${p.cancelled} canceladas`,
       },
-      { tone: 'bank', icon: 'receipt', label: 'Abonos recibidos', value: formatCurrency(s.collected.installments), hint: `Pagos iniciales ${formatCurrency(s.collected.advances)}` },
     ];
   });
 
@@ -173,6 +195,16 @@ export class SchoolCashSummaryComponent {
       return [];
     }
     const alerts: Alert[] = [];
+    if (s.acceptedWithoutPayments > 0) {
+      // Lists saved as accepted before migration 1760009000000 may be quotations the
+      // customer never accepted: the owner reviews them one by one (nothing automatic).
+      alerts.push({
+        tone: 'neutral',
+        icon: 'alert-circle',
+        text: `${s.acceptedWithoutPayments} lista(s) aceptada(s) sin pagos cuentan como pendiente de pago. Revise si el cliente realmente las aceptó; si no, devuélvalas a cotización.`,
+        action: { label: 'Revisar', review: true },
+      });
+    }
     const age = daysSince(s.oldestPendingAt);
     if (s.pendingReceipts > 0) {
       alerts.push({
@@ -255,7 +287,11 @@ export class SchoolCashSummaryComponent {
   }
 
   act(alert: Alert): void {
-    if (alert.action?.count) {
+    if (alert.action?.review) {
+      void this.router.navigate(['/dashboard/listas-escolares'], {
+        queryParams: { tab: 'cotizaciones', revisar: 'aceptadas-sin-pagos' },
+      });
+    } else if (alert.action?.count) {
       this.count.emit();
     } else if (alert.action?.view) {
       this.customers.emit(alert.action.view);

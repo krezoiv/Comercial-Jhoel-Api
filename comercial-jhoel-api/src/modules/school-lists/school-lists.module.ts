@@ -5,6 +5,7 @@ import { TypeOrmSchoolListRepository } from './infrastructure/persistence/typeor
 import {
   CancelSchoolQuotationUseCase,
   ChangeSchoolQuotationStatusUseCase,
+  RevertSchoolQuotationToQuoteUseCase,
   SaveSchoolPreparationUseCase,
   PreviewSchoolQuotationPurgeUseCase,
   PurgeSchoolQuotationsUseCase,
@@ -62,6 +63,7 @@ import { SchoolListsController } from './presentation/controllers/school-lists.c
     UpdateSchoolQuotationUseCase,
     UpdateSchoolQuotationObservationsUseCase,
     ChangeSchoolQuotationStatusUseCase,
+    RevertSchoolQuotationToQuoteUseCase,
     SaveSchoolPreparationUseCase,
     PreviewSchoolQuotationPurgeUseCase,
     PurgeSchoolQuotationsUseCase,

@@ -174,6 +174,12 @@ export class StatusActionRequestDto {
   @IsOptional() @IsInt() @Min(1) version?: number;
 }
 
+/** "Devolver a cotización" (audited correction of a list accepted by mistake). */
+export class RevertToQuoteRequestDto {
+  @IsString() @MinLength(5) @MaxLength(255) reason: string;
+  @IsOptional() @IsInt() @Min(1) version?: number;
+}
+
 export class RegisterPaymentRequestDto extends PaymentRequestDto {
   @IsUUID() clientRequestId: string;
 }
@@ -199,6 +205,11 @@ export class QuotationsQueryDto {
   @IsOptional() @IsString() @MaxLength(20) number?: string;
   @IsOptional() @IsString() @MaxLength(60) grade?: string;
   @IsOptional() @IsIn(SCHOOL_QUOTATION_STATUSES) status?: SchoolQuotationStatus;
+  /** "Aceptadas sin pagos" (review of lists accepted before migration 1760009000000). */
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  acceptedWithoutPayments?: boolean;
   @IsOptional() @IsIn(SCHOOL_SUPPLY_STATUSES) supplyStatus?: SchoolSupplyStatus;
   @IsOptional() @IsDateString({ strict: true }) dateFrom?: string;
   @IsOptional() @IsDateString({ strict: true }) dateTo?: string;

@@ -21,6 +21,7 @@ import {
   Actor,
   CancelSchoolQuotationUseCase,
   ChangeSchoolQuotationStatusUseCase,
+  RevertSchoolQuotationToQuoteUseCase,
   CreateSchoolQuotationUseCase,
   DuplicateSchoolTemplateUseCase,
   GetSchoolListDashboardUseCase,
@@ -74,6 +75,7 @@ import {
   SaveTemplateRequestDto,
   StockQueryDto,
   StatusActionRequestDto,
+  RevertToQuoteRequestDto,
   TemplateStatusRequestDto,
   TemplatesQueryDto,
   UpdateQuotationRequestDto,
@@ -116,6 +118,7 @@ export class SchoolListsController {
     private readonly updateQuotation: UpdateSchoolQuotationUseCase,
     private readonly updateObservations: UpdateSchoolQuotationObservationsUseCase,
     private readonly changeStatus: ChangeSchoolQuotationStatusUseCase,
+    private readonly revertToQuote: RevertSchoolQuotationToQuoteUseCase,
     private readonly savePreparation: SaveSchoolPreparationUseCase,
     private readonly purgePreviewUseCase: PreviewSchoolQuotationPurgeUseCase,
     private readonly purgeUseCase: PurgeSchoolQuotationsUseCase,
@@ -414,6 +417,21 @@ export class SchoolListsController {
       actor(user),
       id,
       dto.action,
+      dto.version ?? null,
+    );
+  }
+
+  @Post('quotations/:id/revert-to-quote')
+  @HttpCode(HttpStatus.OK)
+  revert(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RevertToQuoteRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.revertToQuote.execute(
+      actor(user),
+      id,
+      dto.reason,
       dto.version ?? null,
     );
   }

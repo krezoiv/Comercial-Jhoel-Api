@@ -629,6 +629,22 @@ describe('Listas Escolares (e2e)', () => {
         }),
     ).expect(200);
 
+    // A quotation receives no payments until the customer accepts it (1760009000000).
+    await as(userToken)(
+      api().post(`/api/school-lists/quotations/${draft.id}/payments`).send({
+        amount: 50,
+        paymentMethod: 'EFECTIVO',
+        clientRequestId: randomUUID(),
+      }),
+    ).expect(409);
+    const accepted = data(
+      await as(userToken)(
+        api()
+          .post(`/api/school-lists/quotations/${draft.id}/status`)
+          .send({ action: 'ACEPTAR' }),
+      ).expect(200),
+    );
+    expect(accepted.status).toBe('ACEPTADA');
     await as(userToken)(
       api().post(`/api/school-lists/quotations/${draft.id}/payments`).send({
         amount: 50,

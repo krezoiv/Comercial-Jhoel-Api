@@ -21,6 +21,14 @@
       <span class="switch__track" aria-hidden="true"></span>
       Registrar pago inicial (anticipo)
     </label>
+    @if (!e.asDraft()) {
+      <!-- Owner decision (migration 1760009000000): an advance means the customer accepted. -->
+      <p class="side__hint">
+        {{ e.withAdvance()
+          ? 'Al registrar un anticipo, la lista queda aceptada.'
+          : 'Sin anticipo se guarda como cotización: no es venta ni deuda hasta que el cliente la acepte.' }}
+      </p>
+    }
     @if (e.withAdvance() && !e.asDraft()) {
       <div class="pay">
         <div class="fld">
@@ -69,7 +77,7 @@
     <div><dt>{{ e.isEdit() ? 'Total abonado' : 'Pago inicial' }}</dt><dd class="in">{{ e.formatCurrency(e.paid()) }}</dd></div>
   </dl>
   <div class="big big--balance">
-    <span>Saldo pendiente</span>
+    <span>{{ !e.isEdit() && (!e.withAdvance() || e.asDraft()) ? 'Por cobrar al aceptarla' : 'Saldo pendiente' }}</span>
     @for (v of [e.balance()]; track v) { <strong class="bump">{{ e.formatCurrency(v) }}</strong> }
   </div>
   @if (!e.isEdit()) {
@@ -84,7 +92,7 @@
       <span class="switch__track" aria-hidden="true"></span>
       Guardar como borrador
     </label>
-    <p class="side__hint">Sin pagos hasta confirmarla{{ e.requirementMode() ? '; al confirmarla pasa a "Aceptada"' : '' }}.</p>
+    <p class="side__hint">Sin pagos: al confirmarla pasa a "Cotizada" y recibe pagos cuando el cliente la acepte.</p>
   </section>
 }
 

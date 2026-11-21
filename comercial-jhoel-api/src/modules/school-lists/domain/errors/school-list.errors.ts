@@ -167,6 +167,16 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
   SCHOOL_REASON_REQUIRED: {
     message: 'El motivo es obligatorio (mínimo 5 caracteres).',
   },
+  // ── Solo listas aceptadas mueven dinero (migración 1760009000000) ──
+  SCHOOL_QUOTE_NOT_ACCEPTED: {
+    message:
+      'Esta lista todavía es una cotización. Debe ser aceptada por el cliente antes de registrar pagos.',
+    status: 409,
+  },
+  SCHOOL_QUOTE_REVERT_NOT_ALLOWED: {
+    message: 'Esta lista no se puede devolver a cotización.',
+    status: 409,
+  },
   SCHOOL_USE_DISPATCH: {
     message: 'La entrega se registra con "Preparar y despachar lista".',
     status: 409,
@@ -376,6 +386,14 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
     STATUS_LABEL[status]
       ? `La cotización está ${STATUS_LABEL[status]} y no admite esta operación.`
       : null,
+  SCHOOL_QUOTE_REVERT_NOT_ALLOWED: ([reason]) =>
+    reason === 'payments'
+      ? 'La lista ya tiene pagos registrados; no se puede devolver a cotización.'
+      : reason === 'preparation'
+        ? 'La lista ya tiene preparación guardada; no se puede devolver a cotización.'
+        : reason === 'status'
+          ? 'Solo una lista ACEPTADA (sin pagos ni preparación) se puede devolver a cotización.'
+          : null,
   SCHOOL_QUOTE_NOT_EDITABLE: ([status]) =>
     STATUS_LABEL[status]
       ? `La cotización está ${STATUS_LABEL[status]}; ya no se puede modificar.`

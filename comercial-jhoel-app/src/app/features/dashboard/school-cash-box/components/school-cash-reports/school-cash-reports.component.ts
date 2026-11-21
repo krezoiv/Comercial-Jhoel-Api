@@ -23,6 +23,8 @@ const REPORT_ICON: Record<string, string> = {
   'saldos-clientes': 'alert-circle',
   movimientos: 'layers',
   'cartera-clientes': 'users',
+  // Quoted vs accepted vs collected per list (migration 1760009000000).
+  'estado-listas': 'file-check',
 };
 
 /**
