@@ -19,10 +19,12 @@ DB_NAME="${DB_NAME:-comercial_jhoel}"
 TEST_DB="${DB_NAME}_qa_cash_concurrency"
 PSQL=(docker compose exec -T postgres psql -U "$DB_USER" -v ON_ERROR_STOP=1 -qAt)
 
+WORK_DIR=$(mktemp -d)
+
 cleanup() {
   docker compose exec -T postgres dropdb -U "$DB_USER" --if-exists "$TEST_DB" >/dev/null 2>&1 || true
 }
-trap cleanup EXIT
+trap 'cleanup; rm -rf "$WORK_DIR"' EXIT
 
 cleanup
 docker compose exec -T postgres createdb -U "$DB_USER" "$TEST_DB"
@@ -107,39 +109,38 @@ else
   exit 1
 fi
 
-# Entrega a Bodega con inventario por denominación (migraciones 1760007400000 y
-# 1760007800000): un arqueo deja 10 billetes de Q200 en caja (y saldo de sobra);
-# dos usuarios envían a la vez 6 × Q200 cada uno. La disponibilidad por
-# denominación se valida bajo el lock de caja: debe aplicarse una sola entrega,
-# la otra recibe CASH_DENOMINATION_NOT_AVAILABLE, el inventario nunca queda
-# negativo y el total bajo custodia no cambia.
+# Entrega a Bodega (migración 1760008900000): la disponibilidad es el saldo
+# OFICIAL de caja, sin arqueo. La caja queda en Q5,000 exactos y dos usuarios
+# envían a la vez Q3,000 cada uno: el saldo se lee bajo el lock de caja, así que
+# se aplica una sola entrega, la otra recibe CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH
+# (Q2,000 disponibles), la caja nunca queda negativa y la custodia no cambia.
 "${PSQL[@]}" -d "$TEST_DB" -c "INSERT INTO day_openings (date, opened_by) VALUES ('2099-07-01', '$ADMIN_ID')" >/dev/null
-"${PSQL[@]}" -d "$TEST_DB" -c "SELECT register_manual_cash_movement('ENTRADA_MANUAL', 5000, '$ADMIN_ID', NULL, 'Fondo concurrencia', 'CONC:WH:FUND')" >/dev/null
-"${PSQL[@]}" -d "$TEST_DB" -c "SELECT register_cash_count('[{\"denomination\":200,\"quantity\":10}]'::jsonb, 'Arqueo concurrencia', NULL, '$ADMIN_ID', 'CONC:WH:COUNT', NULL, NULL)" >/dev/null
+"${PSQL[@]}" -d "$TEST_DB" -c "SELECT apply_cash_movement('AJUSTE', CASE WHEN cash_balance() < 5000 THEN 'IN' ELSE 'OUT' END, abs(5000 - cash_balance()), '$ADMIN_ID', 'Concurrencia Bodega', NULL, NULL, NULL, 'Prueba', NULL, 'CONC:WH:ADJ') WHERE cash_balance() <> 5000" >/dev/null
 WH_CASH_BEFORE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
 WH_BEFORE=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT warehouse_cash_balance()::numeric(14,2)")
 
 transfer_sql() {
   cat <<SQL
 BEGIN;
-SELECT register_cash_warehouse_transfer(1200, '[{"denomination":200,"quantity":6}]'::jsonb, 'Cajero concurrencia', 'Bodeguero concurrencia', NULL, NULL, '$ADMIN_ID', 'CONC:WH:$1');
+SELECT register_cash_warehouse_transfer(3000, '[{"denomination":200,"quantity":15}]'::jsonb, 'Cajero concurrencia', 'Bodeguero concurrencia', NULL, NULL, '$ADMIN_ID', 'CONC:WH:$1');
 SELECT pg_sleep($2);
 COMMIT;
 SQL
 }
-(transfer_sql P 2 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+(transfer_sql P 2 | "${PSQL[@]}" -d "$TEST_DB" >"$WORK_DIR/wh_p.log" 2>&1 || true) &
 sleep 0.5
-(transfer_sql Q 0 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+(transfer_sql Q 0 | "${PSQL[@]}" -d "$TEST_DB" >"$WORK_DIR/wh_q.log" 2>&1 || true) &
 wait
 
 WH_TRANSFERS=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT count(*) FROM cash_warehouse_transfers WHERE idempotency_key IN ('CONC:WH:P', 'CONC:WH:Q')")
-WH_Q200=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT quantity FROM cash_location_inventory('CAJA') WHERE denomination = 200")
+# Whichever session got the caja lock second is the one rejected.
+WH_REJECTED=$(cat "$WORK_DIR/wh_p.log" "$WORK_DIR/wh_q.log" | grep -c "CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH:2000.00" || true)
 WH_CASH_AFTER=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT cash_balance()::numeric(14,2)")
 WH_AFTER=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT warehouse_cash_balance()::numeric(14,2)")
 WH_CUSTODY_OK=$("${PSQL[@]}" -d "$TEST_DB" -c "SELECT ($WH_CASH_AFTER + $WH_AFTER) = ($WH_CASH_BEFORE + $WH_BEFORE) AND $WH_CASH_AFTER >= 0")
-echo "Bodega: entregas $WH_TRANSFERS (esperado 1) · Q200 en caja 10 → $WH_Q200 (esperado 4) · caja $WH_CASH_BEFORE → $WH_CASH_AFTER · Bodega $WH_BEFORE → $WH_AFTER · custodia constante: $WH_CUSTODY_OK"
-if [[ "$WH_TRANSFERS" == "1" && "$WH_Q200" == "4" && "$WH_CUSTODY_OK" == "t" ]]; then
-  echo "OK  concurrencia Bodega: una sola entrega, billetes nunca negativos, custodia constante"
+echo "Bodega: entregas $WH_TRANSFERS (esperado 1) · rechazo por saldo $WH_REJECTED (esperado 1) · caja $WH_CASH_BEFORE → $WH_CASH_AFTER (esperado 2000.00) · Bodega $WH_BEFORE → $WH_AFTER · custodia constante: $WH_CUSTODY_OK"
+if [[ "$WH_TRANSFERS" == "1" && "$WH_REJECTED" == "1" && "$WH_CASH_AFTER" == "2000.00" && "$WH_CUSTODY_OK" == "t" ]]; then
+  echo "OK  concurrencia Bodega: una sola entrega, sin pasar del saldo oficial, custodia constante"
 else
   echo "FALLÓ concurrencia Bodega"
   exit 1

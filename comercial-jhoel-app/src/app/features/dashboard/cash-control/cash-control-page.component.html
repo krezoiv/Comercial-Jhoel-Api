@@ -93,7 +93,7 @@
         }
         @if (canCustody()) {
           <app-button variant="secondary" (click)="openCount()"><app-icon name="check-check" [size]="16" /> Arqueo de caja</app-button>
-          <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Entregar a Bodega</app-button>
+          <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Trasladar a Bodega</app-button>
           <app-button variant="secondary" (click)="openWithdrawal()"><app-icon name="arrow-up-circle" [size]="16" /> Retirar de Bodega</app-button>
         }
         @if (isAdmin()) {
@@ -288,7 +288,7 @@
   @if (tab() === 'inventario' && canCustody()) {
     <div class="custody-actions">
       <app-button variant="primary" (click)="openWithdrawal()"><app-icon name="arrow-up-circle" [size]="16" /> Enviar de Bodega a caja</app-button>
-      <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Retirar de caja a Bodega</app-button>
+      <app-button variant="secondary" (click)="openTransfer()"><app-icon name="package" [size]="16" /> Trasladar de Caja a Bodega</app-button>
     </div>
     <app-cash-inventory-panel [refreshKey]="custodyRefresh()" [isAdmin]="isAdmin()" (changed)="onCustodyChanged()" />
     <app-custody-transfers-panel [refreshKey]="custodyRefresh()" />

@@ -318,6 +318,15 @@ export interface CustodyTransferRow {
   createdAt: Date;
   voidedAt: Date | null;
   voidReason: string | null;
+  /**
+   * Caja and Bodega balances right before / after the transfer, read from the
+   * Kardex rows it wrote (null on the side it does not touch, e.g. caja for a
+   * Bodega → bank deposit).
+   */
+  cashBalanceBefore: number | null;
+  cashBalanceAfter: number | null;
+  warehouseBalanceBefore: number | null;
+  warehouseBalanceAfter: number | null;
   details: DenominationRow[];
 }
 

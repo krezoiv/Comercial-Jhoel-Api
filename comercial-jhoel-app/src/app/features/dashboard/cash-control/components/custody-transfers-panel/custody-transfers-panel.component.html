@@ -90,6 +90,12 @@
         <div><dt>Estado</dt><dd>{{ t.status === 'APLICADO' ? 'Aplicado' : 'Anulado' + (t.voidReason ? ' — ' + t.voidReason : '') }}</dd></div>
         @if (t.voucherReference) { <div><dt>Comprobante</dt><dd>{{ t.voucherReference }}</dd></div> }
         @if (t.observations) { <div><dt>Observaciones</dt><dd>{{ t.observations }}</dd></div> }
+        @if (t.cashBalanceBefore != null) {
+          <div><dt>Caja antes → después</dt><dd>{{ formatCurrency(t.cashBalanceBefore) }} → {{ formatCurrency(t.cashBalanceAfter ?? 0) }}</dd></div>
+        }
+        @if (t.warehouseBalanceBefore != null) {
+          <div><dt>Bodega antes → después</dt><dd>{{ formatCurrency(t.warehouseBalanceBefore) }} → {{ formatCurrency(t.warehouseBalanceAfter ?? 0) }}</dd></div>
+        }
       </dl>
       @if (t.details.length) {
         <table class="table table--compact">

@@ -1,17 +1,18 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
-import { CashCustody, LocationInventory, WarehouseTransfer } from '../../../../../core/models';
+import { CashCustody, WarehouseTransfer } from '../../../../../core/models';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
-import { WarehouseTransferModalComponent } from './warehouse-transfer-modal.component';
+import { WarehouseTransferModalComponent, exceedsCashMessage } from './warehouse-transfer-modal.component';
 
 const custody: CashCustody = {
-  cashBalance: 100000,
+  cashBalance: 5000,
   warehouseBalance: 20000,
-  custodyTotal: 120000,
+  custodyTotal: 25000,
   warehouseHasInitialBalance: true,
   warehouseLastMovementAt: null,
   currentDay: { businessDate: '2026-11-11', isOpen: true },
@@ -20,120 +21,129 @@ const custody: CashCustody = {
   depositedToBankToday: 0,
 };
 
-
-/** Inventory as the backend returns it: 12 denominations, only those given non-zero. */
-function inventoryOf(location: 'CAJA' | 'BODEGA', quantities: Record<number, number>, hasAnchor = true): LocationInventory {
-  const denoms = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
-  const lines = denoms.map((denomination) => {
-    const quantity = quantities[denomination] ?? 0;
-    return { denomination, quantity, subtotal: denomination * quantity };
-  });
-  const known = lines.reduce((sum, l) => sum + l.subtotal, 0);
-  return { location, hasAnchor, anchorKind: hasAnchor ? (location === 'CAJA' ? 'ARQUEO_CAJA' : 'CONTEO_BODEGA') : null,
-    anchorId: null, anchorNumber: 1, anchorAt: null, anchorByUsername: null, balance: known, knownTotal: known, unbroken: 0, lines };
-}
-
-describe('WarehouseTransferModalComponent (entrega a Bodega)', () => {
+describe('WarehouseTransferModalComponent (traslado de Caja a Bodega)', () => {
   let modal: WarehouseTransferModalComponent;
   let registerSpy: jasmine.Spy;
+  let custodySpy: jasmine.Spy;
   let inventorySpy: jasmine.Spy;
+  let confirmSpy: jasmine.Spy;
 
   function open(overrides: Partial<CashCustody> = {}): void {
+    custodySpy.and.returnValue(of({ ...custody, ...overrides }));
     modal.open = true;
-    modal.custody = { ...custody, ...overrides };
+    modal.custody = custody;
     modal.ngOnChanges();
     // No session in tests: the person who delivers must still be identified.
     modal.deliveredBy.set('Juan Caja');
+    modal.receivedBy.set('Ana Bodega');
   }
 
   beforeEach(() => {
+    confirmSpy = jasmine.createSpy('confirm').and.resolveTo(true);
     TestBed.configureTestingModule({
       imports: [WarehouseTransferModalComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: ConfirmDialogService, useValue: { confirm: () => Promise.resolve(true) } },
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ConfirmDialogService, useValue: { confirm: confirmSpy } }],
     });
-    registerSpy = spyOn(TestBed.inject(CashCustodyService), 'registerTransfer').and.returnValue(
-      of({ transfer: { referenceNumber: 'ENT-000001' } as WarehouseTransfer, custody: { ...custody, cashBalance: 85000, warehouseBalance: 35000 } }),
+    const service = TestBed.inject(CashCustodyService);
+    registerSpy = spyOn(service, 'registerTransfer').and.returnValue(
+      of({ transfer: { referenceNumber: 'ENT-000001' } as WarehouseTransfer, custody: { ...custody, cashBalance: 2000, warehouseBalance: 23000 } }),
     );
-    inventorySpy = spyOn(TestBed.inject(CashCustodyService), 'getInventory').and.returnValue(
-      of({ cash: inventoryOf('CAJA', { 200: 500 }), warehouse: inventoryOf('BODEGA', {}) }),
-    );
+    custodySpy = spyOn(service, 'getCustody').and.returnValue(of(custody));
+    inventorySpy = spyOn(service, 'getInventory').and.callThrough();
     modal = TestBed.createComponent(WarehouseTransferModalComponent).componentInstance;
   });
 
-  it('previews caja −15,000 and Bodega +15,000 with the total unchanged', () => {
-    open();
-    modal.amount.set(15000);
-    expect(modal.cashAfter()).toBe(85000);
-    expect(modal.warehouseAfter()).toBe(35000);
+  it('reads the official caja balance from the backend on open — never the arqueo inventory', () => {
+    open({ cashBalance: 5000 });
+    expect(custodySpy).toHaveBeenCalled();
+    expect(inventorySpy).not.toHaveBeenCalled();
+    expect(modal.cashBalance()).toBe(5000);
   });
 
-  it('requires breakdown matching the amount, both people and enough caja', () => {
+  it('caso 1: with no arqueo at all a transfer within the balance can be confirmed', () => {
     open();
-    modal.deliveredBy.set('');
-    modal.amount.set(15000);
-    modal.receivedBy.set('Ana Bodega');
-    modal.onQuantityChange({ denomination: 200, quantity: 75 });
-    expect(modal.canSave()).toBeFalse(); // who delivers is mandatory
-    open();
-    modal.amount.set(15000);
-    modal.receivedBy.set('Ana Bodega');
-    expect(modal.canSave()).toBeFalse();
-    modal.onQuantityChange({ denomination: 200, quantity: 75 });
+    modal.onQuantityChange({ denomination: 200, quantity: 15 });
+    expect(modal.amount()).toBe(3000);
+    expect(modal.cashAfter()).toBe(2000);
+    expect(modal.warehouseAfter()).toBe(23000);
     expect(modal.canSave()).toBeTrue();
-    modal.amount.set(100000.01);
-    expect(modal.insufficientCash()).toBeTrue();
-    expect(modal.canSave()).toBeFalse();
   });
 
-  it('never saves without breakdown (also administrators) and shows the caja stock per denomination', () => {
+  it('the amount is the breakdown total (Q2,419.00 example) and cannot disagree with it', () => {
     open();
-    modal.amount.set(500);
-    modal.receivedBy.set('Ana Bodega');
-    expect(modal.canSave()).toBeFalse(); // no bills/coins entered
-    expect(modal.available()?.['200']).toBe(500);
-    expect(modal.available()?.['100']).toBe(0);
+    const rows: Array<[number, number]> = [
+      [200, 5], [100, 5], [50, 10], [20, 10], [10, 10], [5, 10],
+      [1, 50], [0.5, 20], [0.25, 20], [0.1, 20], [0.05, 20], [0.01, 100],
+    ];
+    for (const [denomination, quantity] of rows) {
+      modal.onQuantityChange({ denomination, quantity });
+    }
+    expect(modal.amount()).toBe(2419);
+    expect(modal.cashAfter()).toBe(2581);
   });
 
-  it('blocks more bills than the caja has, and a caja without a count', () => {
-    inventorySpy.and.returnValue(of({ cash: inventoryOf('CAJA', { 200: 3 }), warehouse: inventoryOf('BODEGA', {}) }));
+  it('caso 3: over the available cash shows the error and blocks the confirmation', () => {
     open();
-    modal.amount.set(800);
-    modal.receivedBy.set('Ana Bodega');
-    modal.onQuantityChange({ denomination: 200, quantity: 4 });
-    expect(modal.overStock()).toBeTrue();
+    modal.onQuantityChange({ denomination: 200, quantity: 25 });
+    modal.onQuantityChange({ denomination: 1, quantity: 1 });
+    expect(modal.amount()).toBe(5001);
+    expect(modal.exceedsCash()).toBeTrue();
+    expect(modal.breakdownStatus()).toBe('red');
     expect(modal.canSave()).toBeFalse();
-    modal.onQuantityChange({ denomination: 200, quantity: 3 });
-    modal.amount.set(600);
-    expect(modal.canSave()).toBeTrue();
-    inventorySpy.and.returnValue(of({ cash: inventoryOf('CAJA', {}, false), warehouse: inventoryOf('BODEGA', {}) }));
-    open();
-    modal.amount.set(200);
-    modal.receivedBy.set('Ana Bodega');
-    modal.onQuantityChange({ denomination: 200, quantity: 1 });
-    expect(modal.needsCount()).toBeTrue();
-    expect(modal.canSave()).toBeFalse();
+    expect(modal.exceedsMessage()).toBe(exceedsCashMessage(5000));
+    expect(exceedsCashMessage(5000)).toContain('No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: Q');
+    modal.onQuantityChange({ denomination: 1, quantity: 0 });
+    expect(modal.canSave()).toBeTrue(); // exactly all the cash is allowed
   });
 
-  it('is blocked without an open bank day', () => {
+  it('needs bills/coins, both people and an open bank day', () => {
+    open();
+    expect(modal.canSave()).toBeFalse(); // nothing entered
+    modal.onQuantityChange({ denomination: 100, quantity: 1 });
+    modal.receivedBy.set('');
+    expect(modal.canSave()).toBeFalse();
     open({ currentDay: { businessDate: '2026-11-11', isOpen: false } });
-    modal.amount.set(100);
-    modal.receivedBy.set('Ana Bodega');
     modal.onQuantityChange({ denomination: 100, quantity: 1 });
     expect(modal.canSave()).toBeFalse();
   });
 
-  it('sends the delivery once with its breakdown and request id', async () => {
+  it('shows the summary before confirming and sends once with the breakdown and request id', async () => {
     open();
-    modal.amount.set(15000);
-    modal.receivedBy.set('Ana Bodega');
-    modal.onQuantityChange({ denomination: 200, quantity: 75 });
+    modal.onQuantityChange({ denomination: 200, quantity: 15 });
+    modal.observations.set('Fin de turno');
     await modal.save();
-    expect(registerSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ amount: 15000, details: [{ denomination: 200, quantity: 75 }], receivedBy: 'Ana Bodega' }),
+    const message = confirmSpy.calls.mostRecent().args[0].message as string;
+    expect(message).toContain('Efectivo disponible antes del traslado');
+    expect(message).toContain('Total trasladado');
+    expect(message).toContain('Efectivo restante en Caja');
+    expect(message).toContain('Total que ingresará a Bodega');
+    expect(registerSpy).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        amount: 3000,
+        details: [{ denomination: 200, quantity: 15 }],
+        receivedBy: 'Ana Bodega',
+        observations: 'Fin de turno',
+      }),
     );
+  });
+
+  it('nothing is sent when the summary is cancelled', async () => {
+    confirmSpy.and.resolveTo(false);
+    open();
+    modal.onQuantityChange({ denomination: 200, quantity: 1 });
+    await modal.save();
+    expect(registerSpy).not.toHaveBeenCalled();
+  });
+
+  it('a backend rejection is shown and the balance is read again', async () => {
+    registerSpy.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: { message: exceedsCashMessage(1000) } })),
+    );
+    open();
+    modal.onQuantityChange({ denomination: 200, quantity: 10 });
+    const calls = custodySpy.calls.count();
+    await modal.save();
+    expect(modal.errorMessage()).toContain('No puedes trasladar más efectivo');
+    expect(custodySpy.calls.count()).toBe(calls + 1);
   });
 });

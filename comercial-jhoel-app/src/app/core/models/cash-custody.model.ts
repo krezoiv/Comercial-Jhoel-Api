@@ -276,6 +276,11 @@ export interface CustodyTransfer {
   createdAt: string;
   voidedAt: string | null;
   voidReason: string | null;
+  /** Balances right before/after, from the Kardex rows of the transfer (null on the side it does not touch). */
+  cashBalanceBefore?: number | null;
+  cashBalanceAfter?: number | null;
+  warehouseBalanceBefore?: number | null;
+  warehouseBalanceAfter?: number | null;
   details: CashDenominationRow[];
 }
 

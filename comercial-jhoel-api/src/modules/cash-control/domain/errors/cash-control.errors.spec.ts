@@ -1,6 +1,17 @@
 import { cashControlErrorFromMessage } from './cash-control.errors';
 
 describe('cashControlErrorFromMessage — detailed inventory messages', () => {
+  it('Caja → Bodega over the official caja balance says how much is available', () => {
+    const error = cashControlErrorFromMessage(
+      'CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH:5000.00',
+    );
+    expect(error?.code).toBe('CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH');
+    expect(error?.status).toBe(400);
+    expect(error?.message).toBe(
+      'No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: Q5,000.00.',
+    );
+  });
+
   it('names the denomination, what is available and what was requested (caja)', () => {
     const error = cashControlErrorFromMessage(
       'CASH_DENOMINATION_NOT_AVAILABLE:200:5:6',

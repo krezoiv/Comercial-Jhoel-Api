@@ -2007,3 +2007,16 @@ las mismas señales que usaban las listas desplegables.
   por eso las tarjetas de operaciones son un componente con sus propios estilos. `bank-transfers-page.component.scss`
   está en ~11 kB.
 
+### Traslado de Caja a Bodega sin arqueo (2026-11-20)
+
+- `WarehouseTransferModalComponent` ("Trasladar a Bodega"):
+  - Al abrir, vuelve a leer `GET /cash-control/custody`; el límite es el saldo oficial de caja, nunca el inventario
+    del arqueo (ya no llama `getInventory`).
+  - El monto no se escribe: es el total del desglose (`amount` computed).
+  - Muestra Efectivo disponible, Monto a trasladar y Saldo estimado; si se pasa, sale el mensaje del backend
+    (`exceedsCashMessage`) y se bloquea la confirmación.
+  - Antes de enviar muestra un resumen; si el backend rechaza, vuelve a leer el saldo.
+- `CashBreakdownTableComponent` acepta `statusMessage` para reemplazar su texto de estado. La tabla actualiza los
+  totales en `(change)`, es decir al salir del campo.
+- El historial (`custody-transfers-panel`) muestra Caja y Bodega antes → después de cada traslado.
+

@@ -120,8 +120,12 @@ const CUSTODY_TRANSFERS_UNION = `
          t.created_by, t.created_at, t.voided_at, t.void_reason,
          COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
                      'subtotal', d.subtotal) ORDER BY d.denomination DESC)
-                   FROM cash_movement_details d WHERE d.movement_id = t.cash_movement_id), '[]') AS details
+                   FROM cash_movement_details d WHERE d.movement_id = t.cash_movement_id), '[]') AS details,
+         cm.previous_balance AS cash_before, cm.new_balance AS cash_after,
+         wm.previous_balance AS warehouse_before, wm.new_balance AS warehouse_after
   FROM cash_warehouse_transfers t
+  LEFT JOIN cash_movements cm ON cm.id = t.cash_movement_id
+  LEFT JOIN warehouse_cash_movements wm ON wm.id = t.warehouse_movement_id
   UNION ALL
   SELECT w.id, CASE w.destination WHEN 'CAJA' THEN 'BODEGA_A_CAJA' ELSE 'BODEGA_A_BANCO' END, w.reference_number,
          'BODEGA', w.destination, b.name, w.amount, w.status,
@@ -129,8 +133,11 @@ const CUSTODY_TRANSFERS_UNION = `
          w.created_by, w.created_at, w.voided_at, w.void_reason,
          COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
                      'subtotal', d.subtotal) ORDER BY d.denomination DESC)
-                   FROM warehouse_cash_movement_details d WHERE d.movement_id = w.warehouse_movement_id), '[]')
+                   FROM warehouse_cash_movement_details d WHERE d.movement_id = w.warehouse_movement_id), '[]'),
+         cm.previous_balance, cm.new_balance, wm.previous_balance, wm.new_balance
   FROM warehouse_cash_withdrawals w LEFT JOIN banks b ON b.id = w.bank_id
+  LEFT JOIN cash_movements cm ON cm.id = w.cash_movement_id
+  LEFT JOIN warehouse_cash_movements wm ON wm.id = w.warehouse_movement_id
 `;
 
 const COUNT_SELECT = `
@@ -697,6 +704,10 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
         createdAt: r.created_at as Date,
         voidedAt: (r.voided_at as Date | null) ?? null,
         voidReason: textOrNull(r.void_reason),
+        cashBalanceBefore: numOrNull(r.cash_before),
+        cashBalanceAfter: numOrNull(r.cash_after),
+        warehouseBalanceBefore: numOrNull(r.warehouse_before),
+        warehouseBalanceAfter: numOrNull(r.warehouse_after),
         details: toDetails(r.details),
       })),
       total: num(count?.total),

@@ -42,6 +42,19 @@ Desde la migración `1760008800000-CuadreWarehouseCountAndCutCustody`, Control d
 
 ## Traslados
 
+### Caja → Bodega no necesita arqueo
+
+- **Qué limita el traslado.** Solo el efectivo disponible en Caja según el sistema (el Kardex), sin importar si hay arqueo o cuándo se hizo.
+  - Ejemplo: con Q5,000 se pueden trasladar Q3,000 y Caja queda en Q2,000.
+  - Ejemplo: Q5,500 se rechaza con "No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: Q5,000.00.".
+- **Monto.** Se ingresan los billetes y monedas que se envían, y el monto es el total de ese desglose; no se escribe aparte.
+- **Confirmación.** Antes de confirmar se ve un resumen: disponible, total trasladado, lo que queda en Caja y lo que entra a Bodega.
+- **Historial.** Guarda el desglose (inmutable), quién entrega y quién recibe, las observaciones, el día operativo y los saldos de Caja y Bodega antes y después.
+- **Dos usuarios a la vez.** Nunca pueden pasar juntos del saldo disponible: el segundo traslado se rechaza.
+- **El arqueo** sigue igual: solo dice si Caja está cuadrada, con faltante o con sobrante.
+
+### Efectos en los saldos
+
 - **Caja → Bodega.** Baja Caja y sube Bodega.
 - **Bodega → Caja.** Baja Bodega y sube Caja.
 - **Efecto en los totales.** Ninguno de los dos cambia el total bajo resguardo, ni se registra como ingreso o gasto.

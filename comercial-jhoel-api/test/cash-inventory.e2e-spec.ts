@@ -10,8 +10,9 @@ import { AppModule } from './../src/app.module';
 /**
  * Control de Efectivo — per-denomination inventory of caja and Bodega,
  * transfers with mandatory breakdown and Arqueo de Caja drafts (migration
- * 1760007800000), end to end over HTTP: Bodega → caja and caja → Bodega with
- * exact bills/coins, rejection of unavailable denominations, history with
+ * 1760007800000), end to end over HTTP: Bodega → caja with exact bills/coins
+ * and rejection of unavailable denominations, caja → Bodega limited only by
+ * the official caja balance (migration 1760008900000), history with
  * filters and breakdown, and drafts that survive "navigation", reload and a new
  * login (they live in the database, per user and bank day).
  *
@@ -220,7 +221,7 @@ describe('Control de Efectivo — inventario por denominación y borradores (e2e
     ).toBeNull();
   });
 
-  it('caja → Bodega y Bodega → caja con billetes exactos, rechazo por denominación e historial con desglose', async () => {
+  it('caja → Bodega (limitada por el saldo oficial) y Bodega → caja (por denominación) con historial y desglose', async () => {
     let inv = await inventory();
     expect(inv.cash.hasAnchor).toBe(true);
     expect([qty(inv.cash, 200), qty(inv.cash, 100), qty(inv.cash, 50)]).toEqual(
@@ -238,20 +239,25 @@ describe('Control de Efectivo — inventario por denominación y borradores (e2e
     ).expect(400);
     expect(noBreakdown.body.message).toContain('desglose');
 
-    // More Q200 than the caja has: 409 naming the denomination.
-    const tooMany = await as(superToken)(
+    // Over the OFFICIAL caja balance: 400 saying how much is available. The
+    // inventory derived from the last arqueo is no longer a limit
+    // (migration 1760008900000).
+    const cashBalance = Number(inv.cash.balance);
+    const bills = Math.floor(cashBalance / 200) + 1;
+    const tooMuch = await as(superToken)(
       api()
         .post('/api/cash-control/warehouse/transfers')
         .send({
-          amount: 2200,
-          details: [{ denomination: 200, quantity: 11 }],
+          amount: bills * 200,
+          details: [{ denomination: 200, quantity: bills }],
           deliveredBy: 'Cajero e2e',
           receivedBy: 'Bodega e2e',
           clientRequestId: randomUUID(),
         }),
-    ).expect(409);
-    expect(tooMany.body.message).toContain('Q200');
-    expect(tooMany.body.message).toContain('disponibles 10, solicitados 11');
+    ).expect(400);
+    expect(tooMuch.body.message).toContain(
+      'No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: Q',
+    );
 
     // Caja → Bodega: 3×Q200 + 5×Q100 = Q1,100.
     const transfer = data(
@@ -378,6 +384,18 @@ describe('Control de Efectivo — inventario por denominación y borradores (e2e
       sent.details.map((d: Body) => `${d.denomination}x${d.quantity}`),
     ).toEqual(['200x2', '100x3']);
     expect(sent.createdByUsername).toBe(superUser.username);
+    // Caja and Bodega balances before/after come from the Kardex rows of the transfer.
+    const delivered = ours.find((t: Body) => t.kind === 'CAJA_A_BODEGA');
+    expect(
+      delivered.cashBalanceBefore - delivered.cashBalanceAfter,
+    ).toBeCloseTo(1100, 2);
+    expect(
+      delivered.warehouseBalanceAfter - delivered.warehouseBalanceBefore,
+    ).toBeCloseTo(1100, 2);
+    expect(
+      delivered.details.map((d: Body) => `${d.denomination}x${d.quantity}`),
+    ).toEqual(['200x3', '100x5']);
+    expect(delivered.observations).toBe('Retiro de caja hacia Bodega');
     const filtered = data(
       await as(superToken)(
         api()

@@ -1628,6 +1628,32 @@ Pedido del dueño (2026-11-20). Ningún saldo nuevo: Caja = `cash_balance()`, Bo
   `cash-custody.use-cases.spec.ts`, `test/cuadre-cash-breakdown.e2e-spec.ts` (escenario Caja −Q100 / Bodega +Q100).
   Down/up verificados en una copia: las funciones vuelven exactamente a su definición anterior.
 
+### Caja → Bodega sin depender del Arqueo de Caja (migración `1760008900000`)
+
+Pedido del dueño (2026-11-20): el arqueo es solo control; no limita los traslados.
+
+- `register_cash_warehouse_transfer` ya no llama `cash_assert_denominations_available('CAJA', …)`: no exige arqueo
+  (`CASH_COUNT_REQUIRED`) ni limita por billete según el inventario del último arqueo
+  (`CASH_DENOMINATION_NOT_AVAILABLE`). La única regla de disponibilidad es `monto ≤ cash_balance()`, leída bajo el lock
+  de caja (orden caja → Bodega). Si no alcanza, lanza `CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH:<disponible>`, que llega
+  como "No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: Q5,000.00." (400).
+- Sigue igual:
+  - El desglose es obligatorio y debe sumar el monto.
+  - Idempotencia, los dos Kardex en una transacción y la referencia `ENT-`.
+  - Bodega conserva su conteo inicial y su validación por billete al retirar.
+- `cash_movement_details` ahora es inmutable (`trg_cash_movement_details_guard`, `cash_custody_status_only_guard`);
+  nada la actualizaba ni borraba.
+- El inventario de caja por billete puede quedar negativo en una denominación: significa que el último arqueo está
+  desactualizado.
+- `GET /cash-control/custody/transfers` agrega `cashBalanceBefore/After` y `warehouseBalanceBefore/After`, tomados de
+  los renglones del Kardex del traslado.
+- **Pruebas**:
+  - `sql/tests/warehouse-transfer-without-count.test.sql` (24 casos: sin arqueo, arqueo viejo, exceso, desglose,
+    saldos, Kardex, falla a mitad, historial).
+  - El caso de Bodega de `cash-control-concurrency.sh`: dos traslados de Q3,000 con Q5,000 → uno aplicado, uno
+    rechazado.
+  - `test/cash-inventory.e2e-spec.ts`.
+
 ### Caja de Listas Escolares (`modules/school-cash-box/`, migración `1760008700000`)
 
 Caja independiente para el dinero de las listas escolares (decisiones del dueño, 2026-11-19). No toca Control de Efectivo, Bodega ni Guayacán.

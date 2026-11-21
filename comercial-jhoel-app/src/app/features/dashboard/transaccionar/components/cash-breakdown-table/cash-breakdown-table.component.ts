@@ -39,6 +39,8 @@ export class CashBreakdownTableComponent {
    * forms (Transaccionar, arqueos) do not pass it and render as before.
    */
   @Input() available: Record<string, number> | null = null;
+  /** Replaces the status copy when the form compares against something other than a target amount (e.g. Caja → Bodega). */
+  @Input() statusMessage: string | null = null;
 
   @Output() quantityChange = new EventEmitter<{ denomination: number; quantity: number }>();
 
@@ -60,6 +62,9 @@ export class CashBreakdownTableComponent {
 
   /** Dynamic status copy — tells the user exactly how much is missing or in excess, not just that it doesn't match yet. */
   get statusText(): string {
+    if (this.statusMessage) {
+      return this.statusMessage;
+    }
     if (this.status === 'green') {
       return 'Efectivo cuadrado';
     }

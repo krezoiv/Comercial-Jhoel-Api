@@ -1,0 +1,92 @@
+@use 'breakpoints' as bp;
+
+// Caja (teal) → Bodega (amber), same colours as the Arqueo General of Cuadre de Agentes.
+.route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.route__place {
+  --tone: #0d9488;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--color-border-light));
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--tone) 8%, var(--color-surface-light));
+  color: var(--tone);
+  font-weight: var(--fw-semibold);
+
+  small {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-regular, 400);
+    color: var(--color-text-on-light-muted);
+  }
+
+  &--bodega {
+    --tone: #b45309;
+  }
+}
+
+.route__arrow {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-on-light-subtle);
+}
+
+.figures {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+
+  @include bp.respond(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.figure {
+  --tone: #0d9488;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-light);
+  border-top: 3px solid var(--tone);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-light);
+
+  strong {
+    font-size: var(--fs-lg, 1.25rem);
+    color: var(--tone);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--available {
+    background: color-mix(in srgb, var(--tone) 7%, var(--color-surface-light));
+  }
+
+  &--amount {
+    --tone: #4f46e5;
+  }
+
+  &--after {
+    --tone: #475569;
+  }
+
+  &--error {
+    --tone: #dc2626;
+    background: color-mix(in srgb, #dc2626 7%, var(--color-surface-light));
+  }
+}
+
+.figure__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-on-light-muted);
+}

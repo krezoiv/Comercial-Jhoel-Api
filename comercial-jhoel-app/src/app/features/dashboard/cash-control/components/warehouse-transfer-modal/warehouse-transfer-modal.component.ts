@@ -1,40 +1,41 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-
-import {
-  CashCustody,
-  LocationInventory,
-  WarehouseTransfer,
-  availableByDenomination,
-  formatCurrency,
-} from '../../../../../core/models';
+import { CashCustody, WarehouseTransfer, formatCurrency } from '../../../../../core/models';
 import { CuadreStatus } from '../../../../../core/services/bank-deposit-draft.store';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { CashCustodyService } from '../../../../../core/services/cash-custody.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
-import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { CashBreakdownTableComponent } from '../../../transaccionar/components/cash-breakdown-table/cash-breakdown-table.component';
 import { cashCountsToDetails, cashCountsTotal, emptyCashCounts, formatIsoDate, round2 } from '../../cash-control.util';
 
+/** Same copy as the backend (`CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH`). */
+export function exceedsCashMessage(available: number): string {
+  return `No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: ${formatCurrency(available)}.`;
+}
+
 /**
- * "Entrega de Efectivo a Bodega" (retiro de caja hacia Bodega): an internal
- * transfer — caja goes down, Bodega goes up by the same amount, total custody
- * unchanged; never an expense. The breakdown is mandatory (per-denomination
- * inventory, migration 1760007800000) and each row shows how many bills/coins
- * the caja has; the backend re-checks balance and denominations under its
- * lock and applies both Kardex in one transaction. One `clientRequestId` per
- * opening makes a double click harmless.
+ * "Traslado de efectivo de Caja a Bodega": an internal transfer — caja goes
+ * down, Bodega goes up by the same amount, total custody unchanged; never an
+ * expense nor an income.
+ *
+ * Independent of the Arqueo de Caja (migration 1760008900000): what can be
+ * sent is the OFFICIAL caja balance, re-read from the backend when the form
+ * opens — never the last arqueo. The amount is not typed: it IS the total of
+ * the breakdown (Q200 … Q0.01), so they can never disagree. The previews here
+ * are UX only; the backend re-reads the balance under its lock, validates the
+ * breakdown and applies both Kardex rows in one transaction. One
+ * `clientRequestId` per opening makes a double click harmless.
  */
 @Component({
   selector: 'app-warehouse-transfer-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, IconComponent, DecimalInputDirective, CashBreakdownTableComponent],
+  imports: [FormsModule, ButtonComponent, IconComponent, CashBreakdownTableComponent],
   templateUrl: './warehouse-transfer-modal.component.html',
-  styleUrl: '../cash-bank-deposit-modal/cash-bank-deposit-modal.component.scss',
+  styleUrls: ['../cash-bank-deposit-modal/cash-bank-deposit-modal.component.scss', './warehouse-transfer-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WarehouseTransferModalComponent implements OnChanges {
@@ -52,17 +53,9 @@ export class WarehouseTransferModalComponent implements OnChanges {
   readonly formatCurrency = formatCurrency;
   readonly formatIsoDate = formatIsoDate;
 
-  readonly amount = signal<number | null>(null);
-  /** Caja inventory by denomination (loaded on open) — what can be sent. */
-  readonly inventory = signal<LocationInventory | null>(null);
-  readonly available = computed(() => availableByDenomination(this.inventory()));
-  /** Some quantity is above what the caja has (UX; the backend decides). */
-  readonly overStock = computed(() => {
-    const available = this.available();
-    return !!available && Object.entries(this.cashCounts()).some(([d, q]) => (q || 0) > (available[d] ?? 0));
-  });
-  /** The caja has no count yet: its inventory is unknown, the backend would reject. */
-  readonly needsCount = computed(() => !!this.inventory() && !this.inventory()!.hasAnchor);
+  /** Balances read from the backend when the form opens (falls back to the page's copy meanwhile). */
+  readonly live = signal<CashCustody | null>(null);
+  readonly loadingBalance = signal(false);
   readonly cashCounts = signal<Record<string, number>>(emptyCashCounts());
   readonly deliveredBy = signal('');
   readonly receivedBy = signal('');
@@ -72,70 +65,90 @@ export class WarehouseTransferModalComponent implements OnChanges {
   readonly errorMessage = signal<string | null>(null);
   private requestId = crypto.randomUUID();
 
-  readonly totalCounted = computed(() => cashCountsTotal(this.cashCounts()));
+  readonly current = computed(() => this.live() ?? this.custody);
+  readonly cashBalance = computed(() => this.current()?.cashBalance ?? 0);
+  readonly warehouseBalance = computed(() => this.current()?.warehouseBalance ?? 0);
+  /** The amount sent = the total of the breakdown (never typed separately). */
+  readonly amount = computed(() => cashCountsTotal(this.cashCounts()));
+  readonly cashAfter = computed(() => round2(this.cashBalance() - this.amount()));
+  readonly warehouseAfter = computed(() => round2(this.warehouseBalance() + this.amount()));
+  readonly exceedsCash = computed(() => this.amount() > this.cashBalance());
   readonly breakdownStatus = computed<CuadreStatus>(() => {
-    const total = this.totalCounted();
-    const amount = round2(this.amount() ?? 0);
-    if (amount > 0 && total === amount) return 'green';
-    return total > amount ? 'red' : 'yellow';
+    if (this.exceedsCash()) return 'red';
+    return this.amount() > 0 ? 'green' : 'yellow';
   });
-  readonly cashBalance = computed(() => this.custody?.cashBalance ?? 0);
-  readonly cashAfter = computed(() => round2(this.cashBalance() - (this.amount() ?? 0)));
-  readonly warehouseAfter = computed(() => round2((this.custody?.warehouseBalance ?? 0) + (this.amount() ?? 0)));
-  readonly insufficientCash = computed(() => (this.amount() ?? 0) > this.cashBalance());
-  readonly dayOpen = computed(() => !!this.custody?.currentDay?.isOpen);
+  readonly breakdownMessage = computed(() => {
+    const amount = this.amount();
+    if (amount <= 0) return 'Ingresa la cantidad de billetes y monedas que envías a Bodega';
+    if (this.exceedsCash()) return `Supera el efectivo disponible por ${formatCurrency(round2(amount - this.cashBalance()))}`;
+    return `Traslado de ${formatCurrency(amount)} dentro del efectivo disponible`;
+  });
+  readonly dayOpen = computed(() => !!this.current()?.currentDay?.isOpen);
   readonly peopleValid = computed(() => this.deliveredBy().trim().length >= 3 && this.receivedBy().trim().length >= 3);
   readonly canSave = computed(
     () =>
       !this.isSaving() &&
+      !this.loadingBalance() &&
       this.dayOpen() &&
-      (this.amount() ?? 0) > 0 &&
-      !this.insufficientCash() &&
-      this.peopleValid() &&
-      this.breakdownStatus() === 'green' &&
-      !this.overStock() &&
-      !this.needsCount(),
+      this.amount() > 0 &&
+      !this.exceedsCash() &&
+      this.peopleValid(),
   );
 
   ngOnChanges(): void {
     if (this.open && !this.isSaving()) {
-      this.amount.set(null);
       this.cashCounts.set(emptyCashCounts());
-      this.inventory.set(null);
-      this.service.getInventory().subscribe({
-        next: (inv) => this.inventory.set(inv.cash),
-        error: () => this.inventory.set(null),
-      });
       this.deliveredBy.set(this.auth.currentUser()?.username ?? '');
       this.receivedBy.set('');
       this.voucher.set('');
       this.observations.set('');
       this.errorMessage.set(null);
       this.requestId = crypto.randomUUID();
+      this.refreshBalance();
     }
   }
 
-  onQuantityChange(change: { denomination: number; quantity: number }): void {
-    this.cashCounts.update((counts) => ({ ...counts, [String(change.denomination)]: change.quantity }));
+  /** The official caja balance, straight from the backend. */
+  refreshBalance(): void {
+    this.loadingBalance.set(true);
+    this.service.getCustody().subscribe({
+      next: (custody) => {
+        this.live.set(custody);
+        this.loadingBalance.set(false);
+      },
+      error: () => {
+        // Keep the page's copy; the backend validates on save anyway.
+        this.live.set(null);
+        this.loadingBalance.set(false);
+      },
+    });
   }
 
-  useCountedAsAmount(): void {
-    this.amount.set(this.totalCounted() || null);
+  onQuantityChange(change: { denomination: number; quantity: number }): void {
+    const quantity = Math.max(0, Math.trunc(Number(change.quantity) || 0));
+    this.cashCounts.update((counts) => ({ ...counts, [String(change.denomination)]: quantity }));
+  }
+
+  exceedsMessage(): string {
+    return exceedsCashMessage(this.cashBalance());
   }
 
   async save(): Promise<void> {
     if (!this.canSave()) {
       return;
     }
-    const amount = this.amount() ?? 0;
+    const amount = this.amount();
     const confirmed = await this.confirmDialog.confirm({
       type: 'FINANCIAL_OPERATION',
-      title: 'Confirmar entrega a Bodega',
+      title: 'Confirmar traslado a Bodega',
       message:
-        `Transferencia interna de ${formatCurrency(amount)}: entrega ${this.deliveredBy().trim()}, recibe ${this.receivedBy().trim()}` +
-        `. ` +
-        `Caja después: aprox. ${formatCurrency(this.cashAfter())}; Bodega después: aprox. ${formatCurrency(this.warehouseAfter())}. ` +
-        'El total bajo custodia no cambia. No es un gasto ni un ingreso.',
+        `Efectivo disponible antes del traslado: ${formatCurrency(this.cashBalance())}. ` +
+        `Total trasladado: ${formatCurrency(amount)}. ` +
+        `Efectivo restante en Caja: ${formatCurrency(this.cashAfter())}. ` +
+        `Total que ingresará a Bodega: ${formatCurrency(amount)}. ` +
+        `Entrega ${this.deliveredBy().trim()}, recibe ${this.receivedBy().trim()}. ` +
+        'Es un traslado interno: no es gasto ni ingreso y el total bajo resguardo no cambia.',
+      confirmText: 'Confirmar traslado a Bodega',
     });
     if (!confirmed) {
       return;
@@ -156,13 +169,15 @@ export class WarehouseTransferModalComponent implements OnChanges {
         next: (result) => {
           this.isSaving.set(false);
           this.notifications.success(
-            `Entrega ${result.transfer.referenceNumber} registrada. Caja: ${formatCurrency(result.custody.cashBalance)} · Bodega: ${formatCurrency(result.custody.warehouseBalance)}.`,
+            `Traslado ${result.transfer.referenceNumber} registrado. Caja: ${formatCurrency(result.custody.cashBalance)} · Bodega: ${formatCurrency(result.custody.warehouseBalance)}.`,
           );
           this.saved.emit(result);
         },
         error: (error: HttpErrorResponse) => {
           this.isSaving.set(false);
-          this.errorMessage.set(extractErrorMessage(error, 'No se pudo registrar la entrega a Bodega.'));
+          this.errorMessage.set(extractErrorMessage(error, 'No se pudo registrar el traslado a Bodega.'));
+          // The balance may have changed (another user): show the current one.
+          this.refreshBalance();
         },
       });
   }

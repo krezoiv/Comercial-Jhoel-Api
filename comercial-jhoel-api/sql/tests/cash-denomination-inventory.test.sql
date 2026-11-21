@@ -82,9 +82,13 @@ BEGIN
 
   -- ── Sin punto de partida ──────────────────────────────────────────────────────────
   IF NOT EXISTS (SELECT 1 FROM cash_location_anchor('CAJA')) THEN
-    PERFORM pg_temp.expect('P1 sin arqueo previo, la caja no permite entregar (no se conoce el inventario)',
+    -- Since 1760008900000 the arqueo is not required to send cash to Bodega.
+    PERFORM pg_temp.expect('P1 sin arqueo previo la caja SÍ puede entregar a Bodega (saldo oficial suficiente)',
       pg_temp.err(format('SELECT register_cash_warehouse_transfer(200, %L, %L, %L, NULL, NULL, %L, %L)',
-        pg_temp.breakdown(200, 1), 'Juan Caja', 'Ana Bodega', v_super, 'INV-P1')), 'CASH_COUNT_REQUIRED');
+        pg_temp.breakdown(200, 1), 'Juan Caja', 'Ana Bodega', v_super, 'INV-P1')), 'OK');
+    -- Undo it (audited reversal) so the rest of the scenario starts from Q2,000.
+    PERFORM void_cash_warehouse_transfer((SELECT id FROM cash_warehouse_transfers WHERE idempotency_key = 'INV-P1'),
+      v_super, 'Prueba: deshacer la entrega');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM cash_location_anchor('BODEGA')) THEN
     PERFORM pg_temp.expect('P2 Bodega sin conteo inicial: el resumen lo indica',
@@ -103,16 +107,10 @@ BEGIN
   PERFORM pg_temp.expect('I4 … y suma a "sin desglosar"; conocido + sin desglosar = saldo', pg_temp.summary('CAJA'),
     'true/ARQUEO_CAJA conocido 2000.00 sin desglosar 300.00 saldo 2300.00');
 
-  -- ── Caja → Bodega: validación por denominación ────────────────────────────────────
-  PERFORM pg_temp.expect('V1 no se envían más billetes de Q200 de los que hay en caja',
-    pg_temp.err(format('SELECT register_cash_warehouse_transfer(1200, %L, %L, %L, NULL, NULL, %L, %L)',
-      pg_temp.breakdown(200, 6), 'Juan Caja', 'Ana Bodega', v_super, 'INV-V1')), 'CASH_DENOMINATION_NOT_AVAILABLE');
-  PERFORM pg_temp.expect('V2 el mensaje dice denominación, disponibles y solicitados',
-    pg_temp.errfull(format('SELECT register_cash_warehouse_transfer(1200, %L, %L, %L, NULL, NULL, %L, %L)',
-      pg_temp.breakdown(200, 6), 'Juan Caja', 'Ana Bodega', v_super, 'INV-V2')), 'CASH_DENOMINATION_NOT_AVAILABLE:200:5:6');
-  PERFORM pg_temp.expect('V3 tampoco billetes que nunca se contaron (Q20)',
-    pg_temp.err(format('SELECT register_cash_warehouse_transfer(20, %L, %L, %L, NULL, NULL, %L, %L)',
-      pg_temp.breakdown(20, 1), 'Juan Caja', 'Ana Bodega', v_super, 'INV-V3')), 'CASH_DENOMINATION_NOT_AVAILABLE');
+  -- ── Caja → Bodega: solo el saldo oficial limita (1760008900000), nunca el arqueo ──
+  PERFORM pg_temp.expect('V1 más que el saldo oficial de caja se rechaza, con el disponible',
+    pg_temp.errfull(format('SELECT register_cash_warehouse_transfer(2400, %L, %L, %L, NULL, NULL, %L, %L)',
+      pg_temp.breakdown(200, 12), 'Juan Caja', 'Ana Bodega', v_super, 'INV-V1')), 'CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH:2300.00');
   PERFORM pg_temp.expect('V4 sin desglose se rechaza (también a administradores)',
     pg_temp.err(format('SELECT register_cash_warehouse_transfer(200, NULL, %L, %L, NULL, NULL, %L, %L)',
       'Juan Caja', 'Ana Bodega', v_super, 'INV-V4')), 'CASH_CUSTODY_BREAKDOWN_REQUIRED');

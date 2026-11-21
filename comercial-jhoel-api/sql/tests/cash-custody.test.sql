@@ -87,7 +87,7 @@ BEGIN
   PERFORM pg_temp.expect('V4 no se entrega más del efectivo en caja',
     pg_temp.err(format('SELECT register_cash_warehouse_transfer(100000.01, %L, %L, %L, NULL, NULL, %L, %L)',
       pg_temp.breakdown(200, 500, 0.01, 1), 'Juan Caja', 'Ana Bodega', v_super, 'T-V4')),
-    'CASH_INSUFFICIENT_BALANCE');
+    'CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH');
   IF v_user IS NOT NULL THEN
     PERFORM pg_temp.expect('V5 un cajero no registra entregas (RBAC en la base)',
       pg_temp.err(format('SELECT register_cash_warehouse_transfer(100, %L, %L, %L, NULL, NULL, %L, %L)',

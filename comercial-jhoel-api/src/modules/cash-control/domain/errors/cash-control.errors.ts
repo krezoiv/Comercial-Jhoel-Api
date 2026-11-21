@@ -205,6 +205,10 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message:
       'Indica el desglose de billetes y monedas: todo traslado entre caja y Bodega lo requiere.',
   },
+  // Caja → Bodega: availability is the official caja balance (migración 1760008900000).
+  CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH: {
+    message: 'No puedes trasladar más efectivo del disponible en Caja.',
+  },
   CASH_COUNT_REQUIRED: {
     message:
       'No hay un arqueo de caja que sirva de punto de partida del inventario por denominación. Registra un arqueo de caja (o finaliza un corte) y vuelve a intentar.',
@@ -245,6 +249,10 @@ const bill = (value: string): string =>
  * (`CODE:denomination:available:requested` / `CODE:counted:balance`).
  */
 const DETAILED: Record<string, (parts: string[]) => string | null> = {
+  CASH_WAREHOUSE_TRANSFER_EXCEEDS_CASH: ([available]) =>
+    available
+      ? `No puedes trasladar más efectivo del disponible en Caja. Efectivo disponible: ${money(available)}.`
+      : null,
   CASH_DENOMINATION_NOT_AVAILABLE: ([d, available, requested]) =>
     d
       ? `No hay suficientes billetes o monedas de ${bill(d)} en caja: disponibles ${available}, solicitados ${requested}. ` +
