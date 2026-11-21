@@ -27,6 +27,7 @@
           [title]="trendLabel(item)"
         >
           <div class="account__top">
+            <app-bank-logo [name]="item.bankName" [specialAccount]="item.specialAccount" size="sm" />
             <span class="account__name">{{ item.bankName }}</span>
             @if (item.trend !== 'FLAT') {
               <span
@@ -35,17 +36,22 @@
                 [class.trend--negative]="item.trendTone === 'NEGATIVE'"
                 [attr.aria-label]="trendLabel(item)"
               >
-                <app-icon [name]="item.trend === 'UP' ? 'arrow-up' : 'arrow-down'" [size]="13" />
+                <app-icon [name]="item.trend === 'UP' ? 'arrow-up' : 'arrow-down'" [size]="12" />
               </span>
             }
           </div>
-          <app-bank-balance-amount
-            class="account__balance"
-            [value]="item.currentBalance"
-            [specialAccount]="item.specialAccount"
-            strong
-          />
-          <span class="account__number" [title]="item.accountTypeName">{{ item.accountNumber }}</span>
+          <div class="account__bottom">
+            <app-bank-balance-amount
+              class="account__balance"
+              [value]="item.currentBalance"
+              [specialAccount]="item.specialAccount"
+              strong
+            />
+            <span class="account__meta">
+              <span class="chip" [class.chip--credit]="isCreditLine(item)">{{ item.accountTypeName }}</span>
+              <span class="account__number">{{ item.accountNumber }}</span>
+            </span>
+          </div>
         </li>
       }
     </ul>

@@ -76,16 +76,16 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
 
-  @include bp.respond(sm) {
-    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  }
   margin: 0;
   padding: 0;
   list-style: none;
 
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  }
+
   @include bp.respond(lg) {
-    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
-    gap: var(--space-3);
+    gap: var(--space-2) var(--space-3);
   }
 }
 
@@ -93,12 +93,13 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-light-muted);
-  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, var(--color-surface-light) 0%, var(--color-bg-light-muted) 100%);
+  border: 1px solid var(--color-border-light);
   transition:
     border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out),
@@ -125,38 +126,75 @@
   }
 
   &:hover {
-    border-color: var(--color-border-light);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
   }
 }
 
 .account__top {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-2);
   min-width: 0;
+
+  .trend {
+    margin-left: auto;
+  }
 }
 
-// Nombre y número siempre completos (nunca "…"): si no caben, bajan de línea.
+// Nombre y número siempre completos (nunca "…"): si no caben, bajan de
+// línea por palabras completas.
 .account__name {
   min-width: 0;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   line-height: 1.3;
-  color: var(--color-text-on-light-muted);
-  overflow-wrap: anywhere;
+  color: var(--color-text-on-light);
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+// Saldo a la izquierda, tipo y número a la derecha: dos filas por tarjeta.
+.account__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--space-2);
+  min-width: 0;
+}
+
+.account__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px var(--space-1);
+}
+
+// Tipo de cuenta; las líneas de crédito se distinguen en ámbar.
+.chip {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-primary-600) 10%, transparent);
+  color: var(--color-primary-600);
+  font-size: 0.68rem;
+  font-weight: var(--fw-semibold);
+
+  &--credit {
+    background: color-mix(in srgb, #d97706 14%, transparent);
+    color: #b45309;
+  }
 }
 
 .account__balance {
   justify-content: flex-start;
-  font-size: var(--fs-md);
+  font-size: var(--fs-base);
   color: var(--color-text-on-light);
 }
 
 .account__number {
-  font-size: var(--fs-xs);
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-on-light-subtle);
   overflow-wrap: anywhere;

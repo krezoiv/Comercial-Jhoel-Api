@@ -3,14 +3,20 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { Bank, BankMovement, bankAccountLabel } from '../../../../../core/models';
+import { Bank, BankMovement } from '../../../../../core/models';
 import { BankService } from '../../../../../core/services/bank.service';
 import { BankTransferService } from '../../../../../core/services/bank-transfer.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { creditLineMovementError, formatSignedBankBalance, isCreditLineAccount } from '../../../../../core/utils/bank-balance.util';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../../../shared/directives/decimal-input.directive';
-import { BankBalanceAmountComponent, ButtonComponent, IconComponent } from '../../../../../shared/ui';
+import {
+  BankAccountPickerComponent,
+  BankBalanceAmountComponent,
+  BankLogoComponent,
+  ButtonComponent,
+  IconComponent,
+} from '../../../../../shared/ui';
 import { VoidConfirmModalComponent } from '../../../reports/bank-deposits/components/void-confirm-modal/void-confirm-modal.component';
 
 function round2(value: number): number {
@@ -25,8 +31,9 @@ const GENERIC_ERROR = 'No fue posible acreditar el saldo. Intenta nuevamente.';
  * contrapartida — distinto del Depósito de Transaccionar y de una
  * transferencia.
  *
- * - El saldo actual se consulta al backend (`GET /banks/:id`) al elegir la
- *   cuenta, nunca se toma del listado en memoria.
+ * - La cuenta se elige con tarjetas (`app-bank-account-picker`); el saldo
+ *   actual se consulta al backend (`GET /banks/:id`) al elegirla, nunca se
+ *   toma del listado en memoria.
  * - "Nuevo saldo" = saldo actual + monto, con signo real (una cuenta en
  *   negativo se acerca a cero; nunca `Math.abs`). Es solo una vista previa:
  *   el backend recalcula bajo lock y devuelve el saldo definitivo.
@@ -43,6 +50,8 @@ const GENERIC_ERROR = 'No fue posible acreditar el saldo. Intenta nuevamente.';
     ButtonComponent,
     IconComponent,
     BankBalanceAmountComponent,
+    BankAccountPickerComponent,
+    BankLogoComponent,
     VoidConfirmModalComponent,
   ],
   templateUrl: './balance-credit.component.html',
@@ -60,7 +69,6 @@ export class BalanceCreditComponent {
   private readonly bankTransferService = inject(BankTransferService);
   private readonly notificationService = inject(NotificationService);
 
-  readonly accountLabel = bankAccountLabel;
   readonly formatSigned = formatSignedBankBalance;
 
   readonly bankId = signal('');

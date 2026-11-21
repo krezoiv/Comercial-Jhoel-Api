@@ -1,0 +1,133 @@
+<section class="picker" [class.picker--locked]="disabled()" [attr.aria-label]="heading()">
+  <header class="picker__header">
+    <h3 class="picker__title">
+      @if (step(); as n) {
+        <span class="picker__step" [class.picker__step--done]="!!selectedId()">
+          @if (selectedId()) {
+            <app-icon name="check" [size]="12" />
+          } @else {
+            {{ n }}
+          }
+        </span>
+      }
+      {{ heading() }}
+    </h3>
+    @if (collapsed()) {
+      <button type="button" class="picker__change" (click)="change()">
+        <app-icon name="edit-2" [size]="14" /> Cambiar
+      </button>
+    } @else if (showSearch() && !disabled() && !loading()) {
+      <label class="picker__search">
+        <app-icon name="search" [size]="14" />
+        <span class="sr-only">Buscar cuenta</span>
+        <input
+          type="search"
+          placeholder="Buscar banco o cuenta"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+        />
+      </label>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="grid" aria-busy="true">
+      @for (bone of skeleton; track bone) {
+        <div class="card card--bone"><span class="bone bone--logo"></span><span class="bone"></span><span class="bone bone--short"></span></div>
+      }
+    </div>
+  } @else if (disabled()) {
+    <p class="picker__locked"><app-icon name="lock" [size]="14" /> {{ disabledMessage() }}</p>
+  } @else if (collapsed()) {
+    @if (selectedAccount(); as account) {
+      <div class="card card--chosen">
+        <app-bank-logo [name]="account.name" [specialAccount]="account.specialAccount" size="lg" />
+        <span class="card__body">
+          <strong class="card__name">{{ account.name }}</strong>
+          <span class="card__meta">{{ account.accountTypeName }} · <span class="nowrap">{{ account.accountNumber }}</span></span>
+        </span>
+        <span class="card__balance">
+          <small>{{ balanceLabel() }}</small>
+          <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" strong />
+        </span>
+        <span class="check" aria-hidden="true"><app-icon name="check" [size]="14" /></span>
+      </div>
+    } @else {
+      @if (selectedExtra(); as option) {
+        <div class="card card--chosen">
+          <span class="extra-icon" aria-hidden="true"><app-icon [name]="option.icon" [size]="20" /></span>
+          <span class="card__body">
+            <strong class="card__name">{{ option.title }}</strong>
+            <span class="card__meta">{{ option.subtitle }}</span>
+          </span>
+          <span class="check" aria-hidden="true"><app-icon name="check" [size]="14" /></span>
+        </div>
+      }
+    }
+  } @else if (accounts().length === 0 && extraOptions().length === 0) {
+    <p class="picker__empty"><app-icon name="bank" [size]="18" /> {{ emptyMessage() }}</p>
+  } @else {
+    <div class="grid" role="radiogroup" [attr.aria-label]="heading()">
+      @for (option of extraOptions(); track option.id) {
+        <button
+          type="button"
+          role="radio"
+          class="card card--extra"
+          [class.card--selected]="option.id === selectedId()"
+          [attr.aria-checked]="option.id === selectedId()"
+          [disabled]="!!option.blockedReason"
+          (click)="choose(option.id, option.blockedReason)"
+        >
+          <span class="card__top">
+            <span class="extra-icon" aria-hidden="true"><app-icon [name]="option.icon" [size]="18" /></span>
+            <span class="card__body">
+              <strong class="card__name">{{ option.title }}</strong>
+              <span class="card__meta">{{ option.subtitle }}</span>
+            </span>
+          </span>
+          @if (option.blockedReason) {
+            <span class="card__blocked"><app-icon name="lock" [size]="12" /> {{ option.blockedReason }}</span>
+          }
+          @if (option.id === selectedId()) {
+            <span class="check" aria-hidden="true"><app-icon name="check" [size]="14" /></span>
+          }
+        </button>
+      }
+      @for (account of visibleAccounts(); track account.id; let i = $index) {
+        <button
+          type="button"
+          role="radio"
+          class="card"
+          [style.--i]="i"
+          [class.card--selected]="account.id === selectedId()"
+          [attr.aria-checked]="account.id === selectedId()"
+          [disabled]="!!reason(account)"
+          [attr.title]="reason(account)"
+          (click)="choose(account.id, reason(account))"
+        >
+          <span class="card__top">
+            <app-bank-logo [name]="account.name" [specialAccount]="account.specialAccount" />
+            <span class="card__body">
+              <strong class="card__name">{{ account.name }}</strong>
+              <span class="card__meta">{{ account.accountTypeName }} · <span class="nowrap">{{ account.accountNumber }}</span></span>
+            </span>
+          </span>
+          <span class="card__balance">
+            <small>{{ balanceLabel() }}</small>
+            <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" strong />
+          </span>
+          @if (reason(account); as blocked) {
+            <span class="card__blocked"><app-icon name="lock" [size]="12" /> {{ blocked }}</span>
+          }
+          @if (account.id === selectedId()) {
+            <span class="check" aria-hidden="true"><app-icon name="check" [size]="14" /></span>
+          }
+        </button>
+      } @empty {
+        @if (query()) {
+          <p class="picker__empty">Ninguna cuenta coincide con «{{ query() }}».</p>
+        }
+      }
+    </div>
+  }
+</section>

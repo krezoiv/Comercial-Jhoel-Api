@@ -43,130 +43,150 @@
   } @else {
   <div id="panel-transfers" class="transfers__panel" role="tabpanel" [attr.aria-labelledby]="isAdmin() ? 'tab-transfers' : null">
 
-  <section class="transfers__card">
-    <div class="transfers__grid">
-      <div class="field">
-        <label for="transfer-source">Cuenta origen</label>
-        <select id="transfer-source" [ngModel]="sourceId()" (ngModelChange)="onSourceChange($event)" [disabled]="loadingAccounts()">
-          <option value="" disabled>Seleccionar cuenta origen</option>
-          @for (account of accounts(); track account.id) {
-            <option [value]="account.id">{{ accountLabel(account) }} — {{ formatSigned(account.finalBalance) }}</option>
-          }
-        </select>
-      </div>
+  <section class="transfers__card transfers__card--flow">
+    <div class="flow">
+      <app-bank-account-picker
+        heading="Cuenta de origen"
+        [step]="1"
+        balanceLabel="Saldo disponible"
+        [accounts]="accounts()"
+        [selectedId]="sourceId()"
+        [loading]="loadingAccounts()"
+        [collapsible]="true"
+        (selectedChange)="onSourceChange($event)"
+      />
 
-      <div class="field">
-        <label for="transfer-destination">Cuenta destino</label>
-        <select
-          id="transfer-destination"
-          [ngModel]="destinationId()"
-          (ngModelChange)="destinationId.set($event)"
-          [disabled]="loadingAccounts() || !sourceId()"
-        >
-          <option value="" disabled>{{ sourceId() ? 'Seleccionar cuenta destino' : 'Elija primero la cuenta origen' }}</option>
-          <option [value]="cashWithdrawalValue" [disabled]="cashWithdrawalBlockedReason() !== null">
-            Retiro de efectivo en banco{{ cashWithdrawalBlockedReason() ? ' — no permitido desde esta cuenta' : '' }}
-          </option>
-          @for (option of destinationOptions(); track option.bank.id) {
-            <option [value]="option.bank.id" [disabled]="option.blockedReason !== null">
-              {{ accountLabel(option.bank) }}{{ option.blockedReason ? ' — no permitido desde esta cuenta' : '' }}
-            </option>
-          }
-        </select>
-      </div>
+      <span class="flow__arrow" aria-hidden="true"><app-icon name="arrow-down" [size]="18" /></span>
 
-      <div class="field">
-        <label for="transfer-amount">Monto</label>
-        <div class="money-input">
-          <span>Q</span>
+      <app-bank-account-picker
+        heading="Cuenta destino"
+        [step]="2"
+        [accounts]="accounts()"
+        [selectedId]="destinationId()"
+        [loading]="loadingAccounts()"
+        [disabled]="!sourceId()"
+        disabledMessage="Elija primero la cuenta de origen."
+        [blockedReasons]="destinationBlockedReasons()"
+        [extraOptions]="destinationExtras()"
+        [collapsible]="true"
+        (selectedChange)="destinationId.set($event)"
+      />
+    </div>
+
+    <div class="details" [class.details--ready]="!!sourceId() && !!destinationId()">
+      <h3 class="details__title"><span class="details__step">3</span> Monto y detalle</h3>
+      <div class="transfers__grid">
+        <div class="field field--amount">
+          <label for="transfer-amount">{{ isCashWithdrawal() ? 'Monto a retirar' : 'Monto a transferir' }}</label>
+          <div class="money-input money-input--hero">
+            <span>Q</span>
+            <input
+              id="transfer-amount"
+              type="text"
+              inputmode="decimal"
+              appDecimalInput
+              [ngModel]="amount()"
+              (ngModelChange)="onAmountChange($event)"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="transfer-reference">Referencia <span class="field__optional">(opcional)</span></label>
           <input
-            id="transfer-amount"
+            id="transfer-reference"
             type="text"
-            inputmode="decimal"
-            appDecimalInput
-            [ngModel]="amount()"
-            (ngModelChange)="onAmountChange($event)"
-            placeholder="0.00"
+            maxlength="100"
+            placeholder="Ej. No. de boleta"
+            [ngModel]="referenceText()"
+            (ngModelChange)="referenceText.set($event)"
           />
         </div>
-      </div>
 
-      <div class="field">
-        <label for="transfer-reference">Referencia <span class="field__optional">(opcional)</span></label>
-        <input
-          id="transfer-reference"
-          type="text"
-          maxlength="100"
-          placeholder="Ej. No. de boleta"
-          [ngModel]="referenceText()"
-          (ngModelChange)="referenceText.set($event)"
-        />
-      </div>
-
-      <div class="field field--wide">
-        <label for="transfer-concept">Concepto / observación <span class="field__optional">(opcional)</span></label>
-        <input
-          id="transfer-concept"
-          type="text"
-          maxlength="255"
-          placeholder="Ej. Fondeo de cuenta para operaciones del día"
-          [ngModel]="concept()"
-          (ngModelChange)="concept.set($event)"
-        />
+        <div class="field">
+          <label for="transfer-concept">Concepto / observación <span class="field__optional">(opcional)</span></label>
+          <input
+            id="transfer-concept"
+            type="text"
+            maxlength="255"
+            placeholder="Ej. Fondeo de cuenta para operaciones del día"
+            [ngModel]="concept()"
+            (ngModelChange)="concept.set($event)"
+          />
+        </div>
       </div>
     </div>
 
     @if (source() || destination()) {
-      <div class="transfers__preview">
-        <div class="preview-side">
-          <span class="preview-side__title">Origen</span>
-          @if (source(); as account) {
-            <strong class="preview-side__account">{{ accountLabel(account) }}</strong>
-            <div class="preview-side__figures">
-              <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
-              @if (preview(); as p) {
-                <app-icon name="arrow-right" [size]="14" />
-                <app-bank-balance-amount [value]="p.sourceAfter" [specialAccount]="account.specialAccount" strong />
-              }
-            </div>
-          } @else {
-            <span class="preview-side__empty">Sin seleccionar</span>
-          }
-        </div>
-        <div class="transfers__preview-arrow">
-          <app-icon name="arrow-right" [size]="20" />
-          @if (preview(); as p) {
-            <strong>{{ formatSigned(p.amount) }}</strong>
-          }
-        </div>
-        <div class="preview-side">
-          <span class="preview-side__title">Destino</span>
-          @if (destination(); as account) {
-            <strong class="preview-side__account">{{ accountLabel(account) }}</strong>
-            <div class="preview-side__figures">
-              <app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" />
-              @if (preview(); as p) {
-                @if (p.destinationAfter !== null) {
-                  <app-icon name="arrow-right" [size]="14" />
-                  <app-bank-balance-amount [value]="p.destinationAfter" [specialAccount]="account.specialAccount" strong />
-                }
-              }
-            </div>
-            @if (account.maxBalance !== null && creditLineOperation() !== 'PAYMENT') {
-              <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
+      <div class="summary" aria-live="polite">
+        <h3 class="summary__title">Resumen de la transferencia</h3>
+        <div class="transfers__preview">
+          <div class="preview-side">
+            <span class="preview-side__title">Origen</span>
+            @if (source(); as account) {
+              <strong class="preview-side__account">
+                <app-bank-logo [name]="account.name" [specialAccount]="account.specialAccount" size="sm" />
+                {{ account.name }}
+              </strong>
+              <dl class="preview-side__rows">
+                <div><dt>Saldo inicial</dt><dd><app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" /></dd></div>
+                <div>
+                  <dt>Saldo estimado después</dt>
+                  <dd>
+                    @if (preview(); as p) {
+                      <app-bank-balance-amount [value]="p.sourceAfter" [specialAccount]="account.specialAccount" strong />
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+              </dl>
+            } @else {
+              <span class="preview-side__empty">Sin seleccionar</span>
             }
-          } @else if (isCashWithdrawal()) {
-            <strong class="preview-side__account">
-              <app-icon name="wallet" [size]="14" />
-              Retiro de efectivo en banco
-            </strong>
-            <small class="preview-side__hint">
-              Solo disminuye el saldo de la cuenta origen; no se acredita a ninguna otra cuenta.
-            </small>
-          } @else {
-            <span class="preview-side__empty">Sin seleccionar</span>
-          }
+          </div>
+          <div class="transfers__preview-arrow">
+            <app-icon name="arrow-right" [size]="20" />
+            <span class="transfers__preview-amount">{{ preview() ? formatSigned(preview()!.amount) : 'Q —' }}</span>
+          </div>
+          <div class="preview-side">
+            <span class="preview-side__title">Destino</span>
+            @if (destination(); as account) {
+              <strong class="preview-side__account">
+                <app-bank-logo [name]="account.name" [specialAccount]="account.specialAccount" size="sm" />
+                {{ account.name }}
+              </strong>
+              <dl class="preview-side__rows">
+                <div><dt>Saldo inicial</dt><dd><app-bank-balance-amount [value]="account.finalBalance" [specialAccount]="account.specialAccount" /></dd></div>
+                <div>
+                  <dt>Saldo estimado después</dt>
+                  <dd>
+                    @if (preview()?.destinationAfter != null) {
+                      <app-bank-balance-amount [value]="preview()!.destinationAfter!" [specialAccount]="account.specialAccount" strong />
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+              </dl>
+              @if (account.maxBalance !== null && creditLineOperation() !== 'PAYMENT') {
+                <small class="preview-side__hint">Límite configurado: {{ formatSigned(account.maxBalance) }}</small>
+              }
+            } @else if (isCashWithdrawal()) {
+              <strong class="preview-side__account">
+                <app-icon name="wallet" [size]="16" />
+                Retiro de efectivo en banco
+              </strong>
+              <small class="preview-side__hint">
+                Solo disminuye el saldo de la cuenta origen; no se acredita a ninguna otra cuenta.
+              </small>
+            } @else {
+              <span class="preview-side__empty">Sin seleccionar</span>
+            }
+          </div>
         </div>
+        <small class="preview-side__hint">Vista previa informativa: el sistema vuelve a validar los saldos al guardar.</small>
       </div>
     }
 
@@ -198,8 +218,8 @@
 
     <div class="transfers__actions">
       <app-button variant="primary" [disabled]="!canSubmit()" (click)="requestConfirm()">
-        <app-icon [name]="isCashWithdrawal() ? 'wallet' : 'arrow-left-right'" [size]="16" />
-        {{ isCashWithdrawal() ? 'Registrar retiro' : 'Registrar transferencia' }}
+        <app-icon [name]="isCashWithdrawal() ? 'wallet' : 'check'" [size]="16" />
+        {{ isCashWithdrawal() ? 'Confirmar retiro' : 'Confirmar transferencia' }}
       </app-button>
     </div>
   </section>

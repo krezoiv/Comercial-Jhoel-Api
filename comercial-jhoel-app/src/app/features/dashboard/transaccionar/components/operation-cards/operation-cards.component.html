@@ -1,0 +1,41 @@
+<section class="ops" aria-labelledby="ops-title">
+  <header class="ops__header">
+    <h2 class="ops__title" id="ops-title"><app-icon name="arrow-left-right" [size]="18" /> Operaciones financieras</h2>
+    <p class="ops__subtitle">Elige la operación que deseas registrar.</p>
+  </header>
+
+  @if (loading()) {
+    <div class="ops__grid" aria-busy="true">
+      @for (bone of skeleton; track bone) {
+        <span class="op op--bone"><span class="bone bone--icon"></span><span class="bone"></span></span>
+      }
+    </div>
+  } @else if (types().length === 0) {
+    <div class="type-grid__empty">
+      <app-icon name="arrow-left-right" [size]="32" />
+      <p>Aún no hay tipos de transacción activos.</p>
+      <p class="type-grid__empty-hint">Un administrador puede crearlos en Sistema → Tipo de Transacción.</p>
+    </div>
+  } @else {
+    <div class="ops__grid">
+      @for (type of types(); track type.id; let i = $index) {
+        @let look = typeStyle(type);
+        <button
+          type="button"
+          class="op"
+          [style.--tone]="look.color"
+          [style.--i]="i"
+          [disabled]="disabled()"
+          (click)="selected.emit(type)"
+        >
+          <span class="op__icon"><app-icon [name]="type.icon" [size]="22" /></span>
+          <span class="op__text">
+            <strong class="op__name">{{ type.name }}</strong>
+            <small class="op__description">{{ look.description }}</small>
+          </span>
+          <span class="op__go"><span>Registrar</span> <app-icon name="arrow-right" [size]="14" /></span>
+        </button>
+      }
+    </div>
+  }
+</section>

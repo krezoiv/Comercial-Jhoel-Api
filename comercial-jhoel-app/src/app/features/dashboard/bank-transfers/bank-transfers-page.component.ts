@@ -17,7 +17,10 @@ import {
 import { extractErrorMessage } from '../../../core/utils/extract-error-message';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import {
+  BankAccountPickerComponent,
   BankBalanceAmountComponent,
+  BankLogoComponent,
+  BankPickerExtraOption,
   ButtonComponent,
   CreditLineSummaryComponent,
   IconComponent,
@@ -65,7 +68,9 @@ function cashWithdrawalRuleError(source: Bank | null): string | null {
 
 /**
  * Finanzas → Transferencias Bancarias. Traslada saldo entre dos cuentas
- * propias. La vista previa (saldos antes/después) y las validaciones son
+ * propias. Origen y destino se eligen con tarjetas
+ * (`app-bank-account-picker`), conectadas a las mismas señales y reglas que
+ * usaban las listas desplegables. La vista previa (saldos antes/después) y las validaciones son
  * solo UX: el backend vuelve a leer ambos saldos bajo lock y es quien
  * acepta o rechaza. Confirmación obligatoria antes de enviar; el modal no
  * se cierra al hacer clic fuera y el botón se bloquea mientras guarda
@@ -82,6 +87,8 @@ function cashWithdrawalRuleError(source: Bank | null): string | null {
     ButtonComponent,
     IconComponent,
     BankBalanceAmountComponent,
+    BankAccountPickerComponent,
+    BankLogoComponent,
     CreditLineSummaryComponent,
     VoidConfirmModalComponent,
     BalanceCreditComponent,
@@ -124,12 +131,32 @@ export class BankTransfersPageComponent {
   readonly cashWithdrawalBlockedReason = computed(() => cashWithdrawalRuleError(this.source()));
   readonly destination = computed(() => this.accounts().find((bank) => bank.id === this.destinationId()) ?? null);
 
-  /** Destinos posibles: cualquier otra cuenta; los especiales bloqueados por la regla de origen se muestran deshabilitados con el motivo. */
-  readonly destinationOptions = computed(() =>
-    this.accounts()
-      .filter((bank) => bank.id !== this.sourceId())
-      .map((bank) => ({ bank, blockedReason: destinationRuleError(this.source(), bank) })),
-  );
+  /**
+   * Destination cards that cannot be chosen, with the reason: the origin
+   * account itself (never the same account twice) and the special accounts
+   * blocked by the origin's rule (same rules the dropdown applied).
+   */
+  readonly destinationBlockedReasons = computed<Record<string, string>>(() => {
+    const reasons: Record<string, string> = {};
+    for (const bank of this.accounts()) {
+      const reason = bank.id === this.sourceId() ? 'Es la cuenta de origen.' : destinationRuleError(this.source(), bank);
+      if (reason) {
+        reasons[bank.id] = reason;
+      }
+    }
+    return reasons;
+  });
+
+  /** "Retiro de efectivo en banco" as a destination card (not an account). */
+  readonly destinationExtras = computed<BankPickerExtraOption[]>(() => [
+    {
+      id: CASH_WITHDRAWAL_VALUE,
+      title: 'Retiro de efectivo en banco',
+      subtitle: 'Solo disminuye el saldo de la cuenta origen',
+      icon: 'wallet',
+      blockedReason: this.cashWithdrawalBlockedReason(),
+    },
+  ]);
 
   /**
    * Operación sobre la línea de crédito de BI Club, si aplica:

@@ -113,12 +113,20 @@ export function findTransactionBankRule(agent: AgentIdentity): TransactionBankAc
   return TRANSACTION_BANK_ACCOUNT_RULES.find((rule) => rule.agentNames.includes(name)) ?? null;
 }
 
-function accountMatchesRule(account: Bank, rule: TransactionBankAccountRule): boolean {
+function accountMatchesRule(account: Pick<Bank, 'name' | 'specialAccount'>, rule: TransactionBankAccountRule): boolean {
   const { names } = rule.account;
   if ('specialAccount' in rule.account && account.specialAccount === rule.account.specialAccount) {
     return true;
   }
   return names?.includes(normalizeBankName(account.name)) ?? false;
+}
+
+/**
+ * Inverse of the mapping: the rule (and therefore the Banco Agente) of a bank
+ * ACCOUNT — used only to show that bank's existing logo next to the account.
+ */
+export function findAccountRule(account: Pick<Bank, 'name' | 'specialAccount'>): TransactionBankAccountRule | null {
+  return TRANSACTION_BANK_ACCOUNT_RULES.find((rule) => accountMatchesRule(account, rule)) ?? null;
 }
 
 export type TransactionBankResolution =

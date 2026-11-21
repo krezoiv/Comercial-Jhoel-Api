@@ -1975,3 +1975,35 @@ cortes, CxC, Activos, Movimientos, Cuadre, Auditoría). Todo número viene del b
 - **Gestión de Días Cerrados**: `CuadreCashCountViewComponent` muestra el arqueo guardado (Caja, Bodega, consolidado y
   denominaciones). Los cuadres anteriores muestran solo lo que tienen.
 
+### Selección visual de bancos — Transaccionar, Transferencias y Acreditar saldo (2026-11-20, solo UI)
+
+Ninguna regla, cálculo, endpoint ni flujo de confirmación cambió: los componentes nuevos solo pintan y emiten ids hacia
+las mismas señales que usaban las listas desplegables.
+
+- **`<app-bank-logo>`** (shared/ui) y **`BankLogoService`** (core/services):
+  - El logo de una cuenta es la imagen ya subida para su Banco Agente (Sistema → Banco Agente).
+  - Se relaciona con `findAccountRule`, el inverso del mapeo único de `transaction-bank-account.util.ts`.
+  - Sin logo se muestra la sigla sobre un tono neutro; nunca se inventa un logo oficial.
+  - El catálogo de agentes se pide una sola vez por sesión.
+- **`<app-bank-account-picker>`** (shared/ui): tarjetas seleccionables (`role="radio"`) con logo, nombre, tipo, número y
+  saldo.
+  - `blockedReasons` deshabilita una tarjeta y muestra el motivo; `extraOptions` sirve para opciones que no son cuentas
+    (retiro de efectivo en banco).
+  - `collapsible` deja solo la tarjeta elegida, con "Cambiar".
+  - Búsqueda desde 7 cuentas, skeleton y estado vacío.
+  - En celular es una fila compacta por cuenta.
+- **Transferencias Bancarias**:
+  - Pasos: 1 origen → 2 destino (bloqueado hasta elegir el origen) → 3 monto, referencia y concepto → resumen →
+    "Confirmar transferencia", que abre el mismo modal de confirmación de antes.
+  - `destinationBlockedReasons` marca la cuenta de origen y las reglas de BI Club y Districol (`destinationRuleError`).
+- **Acreditar saldo**: "Cuenta a acreditar" con el mismo picker; al elegir sigue consultando `GET /banks/:id`.
+- **Transaccionar (vista de tipos)**:
+  - Arriba van los saldos (`app-bank-balance-strip`, ahora con logo y chip de tipo de cuenta; las líneas de crédito
+    van en ámbar) y las operaciones (`app-operation-cards`). Desde 1200 px van lado a lado.
+  - Los resúmenes y el gráfico quedan debajo.
+  - Colores de `transaction-type-style.ts`, primero por efecto y luego por nombre: Depósitos verde, Desembolsos Génesis
+    azul, Pagos Varios naranja, Préstamos Génesis violeta, Reintegros Génesis turquesa, Retiros rojo.
+- **Gotcha**: `transaccionar-page.component.scss` superó el presupuesto de 12 kB (falla la compilación de producción);
+  por eso las tarjetas de operaciones son un componente con sus propios estilos. `bank-transfers-page.component.scss`
+  está en ~11 kB.
+

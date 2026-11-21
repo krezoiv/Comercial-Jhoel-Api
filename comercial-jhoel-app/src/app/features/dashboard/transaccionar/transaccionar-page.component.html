@@ -1,9 +1,25 @@
 @if (view() === 'dashboard') {
   <div class="transaccionar">
-    <app-page-header icon="bank" title="Transaccionar" subtitle="Selecciona el tipo de transacción que deseas registrar." />
+    <app-page-header
+      icon="bank"
+      title="Transaccionar"
+      subtitle="Gestiona tus movimientos financieros y consulta los saldos de tus cuentas."
+    />
 
-    <app-transaction-monthly-chart />
+    <!-- Arriba: 1. saldos bancarios y 2. operaciones (lado a lado en pantallas anchas) -->
+    <div class="transaccionar__top">
+    <app-bank-balance-strip class="transaccionar__balance-strip" />
 
+    <!-- 2. Operaciones financieras -->
+    <app-operation-cards
+      [types]="transactionTypes()"
+      [loading]="loadingTypes()"
+      [disabled]="bankPicker() !== null"
+      (selected)="selectType($event)"
+    />
+    </div>
+
+    <!-- 3. Indicadores -->
     <div class="summary-row">
       <app-transaction-summary-card
         title="Resumen Diario"
@@ -31,28 +47,7 @@
       />
     </div>
 
-    <app-bank-balance-strip class="transaccionar__balance-strip" />
-
-    @if (loadingTypes()) {
-      <p class="type-grid__loading">Cargando tipos de transacción…</p>
-    } @else if (transactionTypes().length === 0) {
-      <div class="type-grid__empty">
-        <app-icon name="arrow-left-right" [size]="32" />
-        <p>Aún no hay tipos de transacción activos.</p>
-        <p class="type-grid__empty-hint">Un administrador puede crearlos en Sistema → Tipo de Transacción.</p>
-      </div>
-    } @else {
-      <div class="type-grid">
-        @for (type of transactionTypes(); track type.id) {
-          <button type="button" class="type-card" [disabled]="bankPicker() !== null" (click)="selectType(type)">
-            <span class="type-card__icon">
-              <app-icon [name]="type.icon" [size]="28" />
-            </span>
-            <span class="type-card__name">{{ type.name }}</span>
-          </button>
-        }
-      </div>
-    }
+    <app-transaction-monthly-chart />
   </div>
 } @else {
   <div class="transaccionar">

@@ -10,22 +10,21 @@
     </div>
   </header>
 
+  <app-bank-account-picker
+    class="credit__picker"
+    heading="Cuenta a acreditar"
+    [step]="1"
+    [accounts]="accounts()"
+    [selectedId]="bankId()"
+    [loading]="loadingAccounts()"
+    [disabled]="isSaving()"
+    disabledMessage="Acreditando…"
+    [collapsible]="true"
+    (selectedChange)="onAccountChange($event)"
+  />
+
   <div class="credit__layout">
     <div class="credit__form">
-      <div class="field">
-        <label for="credit-account">Cuenta bancaria</label>
-        <select
-          id="credit-account"
-          [ngModel]="bankId()"
-          (ngModelChange)="onAccountChange($event)"
-          [disabled]="loadingAccounts() || isSaving()"
-        >
-          <option value="" disabled>{{ loadingAccounts() ? 'Cargando cuentas…' : 'Seleccionar cuenta' }}</option>
-          @for (option of accounts(); track option.id) {
-            <option [value]="option.id">{{ accountLabel(option) }} — {{ formatSigned(option.finalBalance) }}</option>
-          }
-        </select>
-      </div>
 
       <div class="field">
         <label for="credit-amount">Monto a acreditar</label>
@@ -77,6 +76,17 @@
 
     <aside class="credit__summary" aria-live="polite">
       <div class="credit__summary-row">
+        <span>Cuenta a acreditar</span>
+        @if (account(); as selected) {
+          <strong class="credit__account">
+            <app-bank-logo [name]="selected.name" [specialAccount]="selected.specialAccount" size="sm" />
+            {{ selected.name }}
+          </strong>
+        } @else {
+          <span class="credit__muted">Seleccione una cuenta</span>
+        }
+      </div>
+      <div class="credit__summary-row">
         <span>Saldo actual</span>
         @if (loadingBalance()) {
           <span class="credit__muted">Consultando…</span>
@@ -91,7 +101,7 @@
         <strong class="credit__plus">{{ preview() ? '+ ' + formatSigned(preview()!.amount) : '—' }}</strong>
       </div>
       <div class="credit__summary-row credit__summary-row--total">
-        <span>Nuevo saldo</span>
+        <span>Saldo estimado después de acreditar</span>
         @if (preview(); as p) {
           <app-bank-balance-amount [value]="p.after" [specialAccount]="account()?.specialAccount ?? null" strong />
         } @else {

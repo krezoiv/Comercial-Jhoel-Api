@@ -19,72 +19,22 @@
   }
 }
 
-// ---- Dashboard (tipo de transacción cards) ----
-
-.type-grid {
+// ---- Dashboard: saldos + operaciones arriba ----
+// Saldos y operaciones visibles a la vez sin desplazarse: en pantallas
+// anchas las operaciones van en una columna a la derecha de los saldos.
+.transaccionar__top {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
 
-  @include bp.respond(sm) {
-    grid-template-columns: repeat(3, 1fr);
+  .transaccionar__balance-strip {
+    margin-bottom: 0;
   }
 
-  @include bp.respond(lg) {
-    grid-template-columns: repeat(4, 1fr);
+  @media (min-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem);
+    align-items: start;
   }
-}
-
-.type-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary-500);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
-}
-
-.type-card__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: var(--radius-full);
-  background: var(--gradient-brand-soft);
-  color: var(--color-primary-600);
-}
-
-.type-card__name {
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-on-light);
-  text-align: center;
-}
-
-.type-grid__loading,
-.type-grid__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-10) var(--space-4);
-  color: var(--color-text-on-light-subtle);
-  text-align: center;
-}
-
-.type-grid__empty-hint {
-  font-size: var(--fs-sm);
 }
 
 .transaccionar__card {

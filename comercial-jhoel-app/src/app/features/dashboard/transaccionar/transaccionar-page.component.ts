@@ -33,6 +33,7 @@ import { onCashChanged } from '../../../core/services/cash-control-sync.service'
 import { GuayacanCashSyncService, onGuayacanCashChanged } from '../../../core/services/guayacan-cash-sync.service';
 import { resolveTransactionBankAccount, transactionBankMonogram } from '../../../core/utils/transaction-bank-account.util';
 import { transactionBankImageUrl } from '../../../core/services/transaction-bank.service';
+import { OperationCardsComponent } from './components/operation-cards/operation-cards.component';
 import { DecimalInputDirective } from '../../../shared/directives/decimal-input.directive';
 import {
   BankBalanceAmountComponent,
@@ -107,6 +108,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     ClientSearchSelectComponent,
     BankBalanceAmountComponent,
     BankBalanceStripComponent,
+    OperationCardsComponent,
     RecentTransactionsCardComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
