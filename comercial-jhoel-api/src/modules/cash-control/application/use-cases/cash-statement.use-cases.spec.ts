@@ -14,6 +14,7 @@ const PERIOD: CashStatementPeriod = {
   kind: 'BANK_DAY',
   location: 'CAJA',
   businessDate: '2099-06-01',
+  dayOpeningId: 'day-1',
   dateFrom: '2099-06-01',
   dateTo: '2099-06-01',
   windowStart: new Date('2099-06-01T14:00:00Z'),
@@ -96,10 +97,27 @@ function repository(): jest.Mocked<CashStatementRepository> {
   };
 }
 
+function integrity() {
+  return {
+    getOpeningStatus: jest.fn().mockResolvedValue({
+      dayOpeningId: 'day-1',
+      businessDate: '2099-06-01',
+      previousCloseBalance: 5250,
+      currentTheoretical: 4250,
+      movementsSinceOpening: 3,
+      lastCountBefore: null,
+      opening: null,
+    }),
+  } as unknown as ConstructorParameters<typeof GetCashStatementUseCase>[1];
+}
+
 describe('Estado de Cuenta de Efectivo — casos de uso', () => {
   it('managers get counts, cuts and custody; the summary follows the formula', async () => {
     const repo = repository();
-    const out = await new GetCashStatementUseCase(repo).execute(admin, {});
+    const out = await new GetCashStatementUseCase(repo, integrity()).execute(
+      admin,
+      {},
+    );
     expect(out.summary).toMatchObject({
       theoreticalBalance: 4250,
       consistent: true,
@@ -117,7 +135,10 @@ describe('Estado de Cuenta de Efectivo — casos de uso', () => {
 
   it('a cashier sees the Kardex figures but never counts, differences, Bodega or custody', async () => {
     const repo = repository();
-    const out = await new GetCashStatementUseCase(repo).execute(cashier, {});
+    const out = await new GetCashStatementUseCase(repo, integrity()).execute(
+      cashier,
+      {},
+    );
     expect([out.counts, out.cuts, out.custody, out.summary.physical]).toEqual([
       null,
       null,
@@ -128,7 +149,7 @@ describe('Estado de Cuenta de Efectivo — casos de uso', () => {
     expect(repo.findCounts).not.toHaveBeenCalled();
     expect(repo.getCustody).not.toHaveBeenCalled();
     await expect(
-      new GetCashStatementUseCase(repo).execute(cashier, {
+      new GetCashStatementUseCase(repo, integrity()).execute(cashier, {
         location: 'BODEGA',
       }),
     ).rejects.toMatchObject({ code: 'CASH_CUSTODY_FORBIDDEN' });
@@ -136,7 +157,7 @@ describe('Estado de Cuenta de Efectivo — casos de uso', () => {
 
   it('validates the period and reports an unknown bank day', async () => {
     const repo = repository();
-    const useCase = new GetCashStatementUseCase(repo);
+    const useCase = new GetCashStatementUseCase(repo, integrity());
     await expect(
       useCase.execute(admin, { dateFrom: '2099-06-02', dateTo: '2099-06-01' }),
     ).rejects.toMatchObject({ code: 'CASH_STATEMENT_INVALID_RANGE' });

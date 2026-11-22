@@ -23,6 +23,11 @@ import {
   CashStatement,
   CashStatementDay,
   CashStatementQuery,
+  CashIntegrityReport,
+  IntegrityWindow,
+  ResolveDifferenceInput,
+  OpeningStatus,
+  RegisterOpeningCountInput,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/cash-control`;
@@ -92,6 +97,40 @@ export class CashControlService {
       params: toParams({ ...query, page: undefined, limit: undefined, format }),
       responseType: 'blob',
     });
+  }
+
+  /** Auditoría de efectivo of a bank day (default: current) or a date range (supervisors and admins). */
+  getIntegrity(query: { bankDate?: string; dateFrom?: string; dateTo?: string }): Observable<CashIntegrityReport> {
+    return this.http
+      .get<ApiSuccessResponse<CashIntegrityReport>>(`${BASE_URL}/integrity`, { params: toParams(query) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** "Investigar": the Kardex movements (afterSequence, upToSequence] of Caja or Bodega. */
+  getIntegrityMovements(window: IntegrityWindow): Observable<CashStatement['movements']> {
+    return this.http
+      .get<ApiSuccessResponse<CashStatement['movements']>>(`${BASE_URL}/integrity/movements`, { params: toParams(window) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Documented resolution of an arqueo difference (admins), optionally with its authorized adjustment. */
+  resolveDifference(input: ResolveDifferenceInput): Observable<{ id: string }> {
+    return this.http
+      .post<ApiSuccessResponse<{ id: string }>>(`${BASE_URL}/integrity/resolutions`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  /** Arqueo de apertura of the current bank day (`opening: null` = still pending; null = no bank day open). */
+  getOpeningStatus(): Observable<OpeningStatus | null> {
+    return this.http
+      .get<ApiSuccessResponse<OpeningStatus | null>>(`${BASE_URL}/counts/opening/current`)
+      .pipe(map((r) => r.data));
+  }
+
+  registerOpeningCount(input: RegisterOpeningCountInput): Observable<OpeningStatus | null> {
+    return this.http
+      .post<ApiSuccessResponse<OpeningStatus | null>>(`${BASE_URL}/counts/opening`, input)
+      .pipe(map((r) => r.data));
   }
 
   getMovements(filters: CashMovementFilters): Observable<PaginatedCashMovements> {

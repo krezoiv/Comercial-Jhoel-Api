@@ -16,6 +16,11 @@
           <button type="button" [class.seg--on]="location() === 'BODEGA'" [attr.aria-pressed]="location() === 'BODEGA'" (click)="setLocation('BODEGA')">Bodega</button>
         </div>
         @if (location() === 'CAJA') {
+          @if (statement()?.opening; as o) {
+            @if (!o.opening && statement()!.period.isCurrent) {
+              <app-button variant="primary" size="sm" (click)="countOpening.emit()"><app-icon name="calendar" [size]="15" /> Contar apertura</app-button>
+            }
+          }
           <app-button variant="secondary" size="sm" (click)="countCaja.emit()"><app-icon name="check-check" [size]="15" /> Arqueo de Caja</app-button>
         } @else {
           <app-button variant="secondary" size="sm" (click)="auditOpen.set(true)"><app-icon name="check-check" [size]="15" /> Arqueo de Bodega</app-button>

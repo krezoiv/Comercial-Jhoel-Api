@@ -1,0 +1,47 @@
+@if (f(); as finding) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resolution-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="resolution-title">
+          <app-icon name="file-check" [size]="20" />
+          Resolver diferencia · {{ finding.count?.label }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      <p class="modal__hint modal__hint--top">
+        {{ difference() < 0 ? 'Faltante' : 'Sobrante' }} de {{ formatCurrency(difference() < 0 ? -difference() : difference()) }}.
+        La diferencia queda en el historial como resuelta; el arqueo original no se modifica.
+      </p>
+
+      <div class="field">
+        <label for="resolution-cause">Causa</label>
+        <select id="resolution-cause" [ngModel]="cause()" (ngModelChange)="cause.set($event)">
+          @for (c of causes; track c[0]) { <option [value]="c[0]">{{ c[1] }}</option> }
+        </select>
+      </div>
+      <div class="field">
+        <label for="resolution-explanation">Explicación *</label>
+        <textarea id="resolution-explanation" rows="3" maxlength="500" placeholder="Qué se revisó, qué se encontró y quién lo confirmó (mínimo 10 caracteres)"
+          [ngModel]="explanation()" (ngModelChange)="explanation.set($event)"></textarea>
+      </div>
+      @if (canAdjust()) {
+        <label class="check">
+          <input type="checkbox" [ngModel]="withAdjustment()" (ngModelChange)="withAdjustment.set($event)" />
+          Registrar ajuste autorizado al Kardex: {{ difference() < 0 ? 'salida' : 'entrada' }} de {{ formatCurrency(difference() < 0 ? -difference() : difference()) }}
+        </label>
+      } @else {
+        <p class="modal__hint">Las diferencias de Bodega se documentan aquí; no tienen ajuste al Kardex de Bodega.</p>
+      }
+
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">{{ isSaving() ? 'Guardando…' : 'Resolver' }}</app-button>
+      </div>
+    </div>
+  </div>
+}

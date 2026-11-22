@@ -5,6 +5,7 @@
  */
 
 import type { CashCountResult } from './cash-custody.model';
+import type { OpeningStatus } from './cash-integrity.model';
 
 export type CashStatementLocation = 'CAJA' | 'BODEGA';
 export type CashStatementCountStatus = CashCountResult | 'SIN_ARQUEO';
@@ -67,7 +68,7 @@ export interface CashStatementSummary {
 }
 
 export interface CashStatementWarning {
-  code: 'KARDEX_INCONSISTENT' | 'OPENING_ANCHOR_MISMATCH' | 'PREVIOUS_CLOSE_DIFFERENCE' | 'MOVEMENTS_AFTER_COUNT';
+  code: 'OPENING_PENDING' | 'KARDEX_INCONSISTENT' | 'OPENING_ANCHOR_MISMATCH' | 'PREVIOUS_CLOSE_DIFFERENCE' | 'MOVEMENTS_AFTER_COUNT';
   tone: 'danger' | 'warning' | 'info';
   message: string;
 }
@@ -128,6 +129,8 @@ export interface CashStatement {
   cuts: CashStatementCut[] | null;
   custody: { cash: number; warehouse: number; total: number } | null;
   canViewCustody: boolean;
+  /** Arqueo de apertura of the bank day (Caja, custody viewers). */
+  opening: OpeningStatus | null;
 }
 
 export interface CashStatementDay {

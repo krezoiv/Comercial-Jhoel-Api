@@ -14,6 +14,7 @@ const period = (
   kind: 'BANK_DAY',
   location: 'CAJA',
   businessDate: '2099-06-01',
+  dayOpeningId: 'day-1',
   dateFrom: '2099-06-01',
   dateTo: '2099-06-01',
   windowStart: new Date('2099-06-01T14:00:00Z'),

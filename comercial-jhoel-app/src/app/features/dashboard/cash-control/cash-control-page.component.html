@@ -5,6 +5,20 @@
     subtitle="Efectivo físico disponible en tiempo real, Kardex de movimientos y cortes de mediodía y final del día."
   />
 
+  @if (openingStatus(); as os) {
+    @if (!os.opening) {
+      <!-- A pending opening count is a warning, never a block (owner decision). -->
+      <div class="opening-banner" role="status">
+        <app-icon name="alert-circle" [size]="18" />
+        <span>
+          Falta el arqueo de apertura del día {{ formatIsoDate(os.businessDate) }}: cuente el efectivo y compárelo con el
+          cierre oficial de ayer ({{ formatCurrency(os.previousCloseBalance) }}).
+        </span>
+        <app-button variant="primary" size="sm" (click)="openOpening()">Contar apertura</app-button>
+      </div>
+    }
+  }
+
   <div class="tabs" role="tablist" aria-label="Secciones de Control de Efectivo">
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'efectivo'" [class.tabs__tab--on]="tab() === 'efectivo'" (click)="setTab('efectivo')">
       <app-icon name="wallet" [size]="16" /> Efectivo y Kardex
@@ -12,6 +26,11 @@
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'estado'" [class.tabs__tab--on]="tab() === 'estado'" (click)="setTab('estado')">
       <app-icon name="file-check" [size]="16" /> Estado de cuenta
     </button>
+    @if (canCustody()) {
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'auditoria'" [class.tabs__tab--on]="tab() === 'auditoria'" (click)="setTab('auditoria')">
+        <app-icon name="search" [size]="16" /> Auditoría
+      </button>
+    }
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'cortes'" [class.tabs__tab--on]="tab() === 'cortes'" (click)="setTab('cortes')">
       <app-icon name="clock" [size]="16" /> Cortes del día
     </button>
@@ -276,6 +295,16 @@
       [refreshKey]="custodyRefresh()"
       [warehouseBalance]="custody()?.warehouseBalance ?? 0"
       (countCaja)="openCount()"
+      (countOpening)="openOpening()"
+    />
+  }
+
+  @if (tab() === 'auditoria' && canCustody()) {
+    <app-cash-integrity-panel
+      [canOperate]="canCustody()"
+      [canResolve]="isAdmin()"
+      [refreshKey]="custodyRefresh()"
+      (countOpening)="openOpening()"
     />
   }
 
@@ -337,6 +366,13 @@
   [danger]="true"
   (confirmed)="voidMovement($event)"
   (cancelled)="voidTarget.set(null)"
+/>
+
+<app-opening-count-modal
+  [open]="openingOpen()"
+  [status]="openingStatus()"
+  (saved)="onOpeningSaved($event)"
+  (closed)="openingOpen.set(false)"
 />
 
 <app-cash-count-modal

@@ -1713,6 +1713,22 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
     el saldo vivo (`warehouseBalance` de la página), no contra el de un período pasado.
   - Modelos en `core/models/cash-statement.model.ts`.
   - Pruebas: `cash-statement-panel.component.spec.ts`.
+- **Auditoría y arqueo de apertura** (backend `1760009200000`, 2026-11-21):
+  - Pestaña "Auditoría" (`?tab=auditoria`, `canCustody`): `CashIntegrityPanelComponent`.
+    - Estado OK / Revisar / Alerta, apertura del día y línea de tiempo de arqueos con la columna "Cambio" (dónde empezó
+      la diferencia).
+    - Hallazgos con "Posibles causas en ese tramo (verificar)".
+    - "Investigar" abre `integrity-window-modal`, que lista los movimientos del tramo y resalta los que tienen otro
+      hallazgo.
+    - "Resolver" (solo admin) abre `difference-resolution-modal`: causa, explicación y ajuste autorizado opcional.
+  - Arqueo de apertura: aviso en la página (`.opening-banner`, solo aviso, nunca bloquea) y botones "Contar apertura" en
+    el Estado de cuenta y en la Auditoría.
+    - Abren `opening-count-modal`: cierre oficial de ayer, contado al cierre y saldo del sistema; con diferencia exige
+      motivo y responsable.
+    - El modal usa la señal `cuadreStatus`, porque `status` es su `@Input`.
+  - Ningún cálculo en Angular: todo sale de `GET /cash-control/integrity`. Se refresca con `onCashChanged`.
+  - Modelos en `core/models/cash-integrity.model.ts`. Pruebas: `cash-integrity-panel.component.spec.ts`.
+  - Angular no admite funciones flecha en plantillas: usar un método (`relatedTitles`).
 
 ### Notifications
 

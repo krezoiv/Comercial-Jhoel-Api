@@ -44,6 +44,33 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message:
       'Este movimiento se anula desde su módulo de origen (Transaccionar, Cartera o Transferencias Bancarias); la reversa llega sola al Kardex.',
   },
+  // Arqueo de apertura and difference resolutions (migration 1760009200000).
+  CASH_OPENING_COUNT_EXISTS: {
+    message:
+      'El arqueo de apertura de este día ya fue registrado. Para otro conteo use el Arqueo de Caja.',
+    status: 409,
+  },
+  CASH_OPENING_DIFFERENCE_REASON_REQUIRED: {
+    message:
+      'El conteo de apertura no coincide con el saldo del sistema: indique el motivo (mínimo 5 caracteres) y el responsable.',
+  },
+  CASH_RESOLUTION_EXPLANATION_REQUIRED: {
+    message: 'La explicación es obligatoria (mínimo 10 caracteres).',
+  },
+  CASH_RESOLUTION_INVALID_CAUSE: {
+    message: 'La causa de la diferencia no es válida.',
+  },
+  CASH_COUNT_NO_DIFFERENCE: {
+    message: 'Ese arqueo está cuadrado: no hay diferencia que resolver.',
+  },
+  CASH_DIFFERENCE_ALREADY_RESOLVED: {
+    message: 'La diferencia de ese arqueo ya fue resuelta.',
+    status: 409,
+  },
+  CASH_RESOLUTION_ADJUSTMENT_NOT_AVAILABLE: {
+    message:
+      'Las diferencias de Bodega se explican aquí; no tienen ajuste automático al Kardex de Bodega.',
+  },
   // Estado de Cuenta de Efectivo (read-only).
   CASH_STATEMENT_DAY_NOT_FOUND: {
     message: 'No hay un día bancario aperturado en esa fecha.',
@@ -270,6 +297,10 @@ const DETAILED: Record<string, (parts: string[]) => string | null> = {
   WAREHOUSE_DENOMINATION_NOT_AVAILABLE: ([d, available, requested]) =>
     d
       ? `No hay suficientes billetes o monedas de ${bill(d)} en Bodega: disponibles ${available}, solicitados ${requested}.`
+      : null,
+  CASH_OPENING_DIFFERENCE_REASON_REQUIRED: ([difference]) =>
+    difference
+      ? `El conteo de apertura tiene una diferencia de ${money(difference)} con el saldo del sistema: indique el motivo (mínimo 5 caracteres) y el responsable.`
       : null,
   WAREHOUSE_COUNT_MISMATCH: ([counted, balance]) =>
     counted

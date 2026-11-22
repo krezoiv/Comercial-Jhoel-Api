@@ -96,3 +96,36 @@ Está en **Control de Efectivo → Estado de cuenta**. Funciona como un estado d
 - **Exportar.** PDF y Excel con las mismas cifras y filtros de la pantalla.
 - **Al publicar en producción.** Correr `npm run migration:run:prod` (migración `1760009100000`, solo agrega el Arqueo
   de Bodega). El Estado de Cuenta no necesita datos nuevos: lee el Kardex que ya existe.
+
+## Control diario y auditoría de efectivo
+
+Para tener certeza de que el efectivo físico coincide con el sistema, cada día:
+
+1. **Arqueo de apertura.**
+   - Al abrir, un supervisor o administrador cuenta la Caja. Se compara con el **cierre oficial de ayer** y con lo que
+     se contó al cerrar.
+   - Si hay diferencia, se piden motivo y responsable, y queda como evidencia.
+   - Mientras no se haga, Control de Efectivo muestra un aviso, pero no bloquea la operación.
+2. **Movimientos.** Cada movimiento ya guarda quién, cuándo, cuánto, de qué operación viene y el saldo antes y después.
+3. **Arqueos durante el día y arqueo final** (cortes). Cada uno compara lo contado con el saldo teórico de ese momento.
+4. **Auditoría** (Control de Efectivo → Auditoría, supervisores y administradores). Revisa:
+   - Que el Kardex continúe sin saltos.
+   - Que cada operación (Transaccionar, cuentas por cobrar, activos, retiros de banco, traslados a Bodega) haya movido
+     Caja exactamente como debía: sin omitidas, montos distintos, signos invertidos ni movimientos que no
+     correspondían.
+   - Duplicados y posibles duplicados.
+   - Que los saldos guardados por cortes y aperturas coincidan con el Kardex.
+   - Entre dos arqueos seguidos, **cuánto cambió la diferencia**. Ahí empezó el faltante o sobrante, y con "Investigar"
+     se ven los movimientos de ese tramo, con usuario y hora.
+5. **No se oculta nada.**
+   - Nada se cuadra solo ni se modifica.
+   - Un administrador cierra una diferencia indicando la causa y una explicación. Si corresponde, en el mismo paso
+     registra el ajuste autorizado por exactamente esa diferencia.
+   - El arqueo conserva su diferencia original y queda como "resuelta".
+
+La auditoría muestra hechos (operación, usuario, fecha, monto) y los clasifica como error de registro, error de
+cálculo, duplicado, omitido, diferencia de arqueo, inconsistencia histórica o causa no determinada. Nunca afirma que hubo
+pérdida o fraude.
+
+**Al publicar en producción:** `npm run migration:run:prod` (migración `1760009200000`; solo agrega tablas y funciones
+nuevas).

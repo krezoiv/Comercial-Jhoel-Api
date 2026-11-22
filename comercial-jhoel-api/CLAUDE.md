@@ -1713,6 +1713,57 @@ saldos nuevos para él.
     sentidos, arqueos, estabilidad histórica, permisos, PDF/Excel y validaciones.
   - Down/up verificado en una copia.
 
+### Auditoría de efectivo, arqueo de apertura y resolución de diferencias (migración `1760009200000`)
+
+Pedido del dueño (2026-11-21): "eliminar descuadres y detectar desviaciones de efectivo". Diagnóstico: ningún módulo
+calcula el efectivo por su cuenta; Efectivo Disponible, Transaccionar, Cuadre y Estado de Cuenta usan `cash_balance()`
+(el Kardex). Lo que puede desviarse son los registros y las fotos que otros módulos guardan; eso es lo que se audita.
+
+- **Auditoría** (`GET /cash-control/integrity?bankDate|dateFrom&dateTo`, `cash_custody.view`, decisión del dueño):
+  - Solo lectura. Repositorio `typeorm-cash-integrity.repository.ts`; reglas puras en `domain/cash-integrity.ts`.
+  - Revisiones (`check`):
+    - `KARDEX_CHAIN`: el saldo anterior ≠ el saldo posterior del renglón previo.
+    - `SIGN_RULE`: un tipo de dirección fija registrado al revés.
+    - `REVERSAL`: una anulación que no refleja al original, o un original anulado sin su reversa.
+    - `SOURCE_*` (espejo de los triggers): cada operación contra su efecto neto en el Kardex. Cubre Transaccionar
+      (`cash_effect`; Guayacán y anuladas = 0), CxC, Activos, retiro bancario a caja y traslados con Bodega.
+      `MISSING` = omitida, `SIGN` = signo invertido, `AMOUNT`, `UNEXPECTED`, `NO_EFFECT`.
+    - `DUPLICATE_REFERENCE`: dos movimientos vigentes de la misma operación.
+    - `POSSIBLE_DUPLICATE`: mismo tipo, monto, descripción y usuario en 10 minutos; es "verificar", nunca una conclusión.
+    - `SNAPSHOT`: saldos guardados de cortes, días de cortes, arqueos y aperturas bancarias contra el Kardex.
+    - `DIFFERENCE_CHANGE`: entre dos conteos consecutivos de Caja o de Bodega, el cambio de la diferencia y el tramo
+      (`afterSequence`, `upToSequence`] donde ocurrió. Responde "¿cuándo comenzó?".
+  - "Omitida" solo aplica a operaciones posteriores al primer movimiento de su tipo en el Kardex; las anteriores
+    nunca se rastrearon.
+  - Clasificación sin afirmar fraude: ERROR_REGISTRO, ERROR_CALCULO, MOVIMIENTO_DUPLICADO, MOVIMIENTO_OMITIDO,
+    DIFERENCIA_ARQUEO, INCONSISTENCIA_HISTORICA, NO_DETERMINADA.
+  - `relatedKeys` liga los hallazgos de movimientos que caen en el tramo de un cambio de diferencia (posibles causas).
+  - `GET integrity/movements` devuelve los movimientos de ese tramo (hasta 500).
+  - Gotcha: cada consulta recibe solo los parámetros que usa (Postgres no infiere el tipo de un `$n` sin usar).
+- **Arqueo de apertura** (`cash_opening_counts` + `register_cash_opening_count`):
+  - Es un Arqueo de Caja normal (`register_cash_count`, mismos bloqueos y foto) más su conciliación: cierre oficial de
+    ayer (`cash_balance_at(ancla)`), movimientos desde la apertura y el último conteo antes del día.
+  - Uno por día bancario. Con diferencia exige motivo (≥5) y responsable (≥3).
+  - Roles `operate` (decisión del dueño). Es aviso, nunca bloqueo (decisión del dueño). Inmutable.
+  - Rutas: `GET /cash-control/counts/opening/current` y `POST /cash-control/counts/opening`.
+  - El Estado de Cuenta agrega `opening` y el aviso `OPENING_PENDING`.
+- **Resolución de diferencias** (`cash_difference_resolutions` + `resolve_cash_count_difference`, `authorize`,
+  decisión del dueño):
+  - Causa, explicación (≥10) y, para Caja, opcionalmente el AJUSTE autorizado por exactamente la diferencia contada
+    (OUT si falta, IN si sobra; referencia `CASH_COUNT`), en la misma transacción.
+  - Una por conteo. Idempotente (`RES:`). Inmutable.
+  - El arqueo conserva su diferencia original. Bodega solo se explica (no tiene tipo AJUSTE).
+  - Ruta: `POST /cash-control/integrity/resolutions`.
+- **Pruebas**:
+  - `sql/tests/cash-opening-and-resolutions.test.sql` (24 casos).
+  - `cash-integrity.spec.ts` y `cash-integrity.use-cases.spec.ts`.
+  - `test/cash-integrity.e2e-spec.ts`:
+    - Un día limpio con cortes reales: cero hallazgos (sin falsos positivos).
+    - Un día con anomalías inyectadas en la copia: omitida, signo invertido, salida como entrada, ancla alterada y
+      posible duplicado. Todas se detectan y se ubican en el tramo entre arqueos.
+    - Resolución con ajuste y permisos.
+  - Down/up verificado en una copia.
+
 ### Caja de Listas Escolares (`modules/school-cash-box/`, migración `1760008700000`)
 
 Caja independiente para el dinero de las listas escolares (decisiones del dueño, 2026-11-19). No toca Control de Efectivo, Bodega ni Guayacán.

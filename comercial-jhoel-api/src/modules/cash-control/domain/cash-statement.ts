@@ -42,6 +42,8 @@ export interface CashStatementPeriod {
   location: CashStatementLocation;
   /** Bank operational day (`yyyy-MM-dd`) when `kind = BANK_DAY`. */
   businessDate: string | null;
+  /** Its `day_openings` id (bank day only): links the arqueo de apertura. */
+  dayOpeningId: string | null;
   dateFrom: string;
   dateTo: string;
   windowStart: Date;
@@ -106,6 +108,7 @@ export interface CashStatementPhysical {
 }
 
 export type CashStatementWarningCode =
+  | 'OPENING_PENDING'
   | 'KARDEX_INCONSISTENT'
   | 'OPENING_ANCHOR_MISMATCH'
   | 'PREVIOUS_CLOSE_DIFFERENCE'

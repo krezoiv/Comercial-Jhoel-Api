@@ -79,6 +79,8 @@ export class CashStatementPanelComponent implements OnChanges {
   @Input() refreshKey = 0;
   /** Opens the page's Arqueo de Caja. */
   @Output() countCaja = new EventEmitter<void>();
+  /** Opens the page's Arqueo de apertura (pending on the current bank day). */
+  @Output() countOpening = new EventEmitter<void>();
 
   private readonly service = inject(CashControlService);
   private readonly notifications = inject(NotificationService);

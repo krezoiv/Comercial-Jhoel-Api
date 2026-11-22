@@ -19,6 +19,7 @@ import {
   CashPosition,
   ManualCashMovementType,
   formatCurrency,
+  OpeningStatus,
 } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { CashControlService } from '../../../core/services/cash-control.service';
@@ -56,8 +57,10 @@ import { WarehouseWithdrawalModalComponent } from './components/warehouse-withdr
 import { CashBankDayCardComponent } from './components/bank-day-card/bank-day-card.component';
 import { CashBankDayHistoryComponent } from './components/bank-day-history/bank-day-history.component';
 import { CashStatementPanelComponent } from './components/cash-statement-panel/cash-statement-panel.component';
+import { CashIntegrityPanelComponent } from './components/cash-integrity-panel/cash-integrity-panel.component';
+import { OpeningCountModalComponent } from './components/opening-count-modal/opening-count-modal.component';
 
-type CashTab = 'efectivo' | 'estado' | 'cortes' | 'historial' | 'arqueos' | 'bodega' | 'inventario';
+type CashTab = 'efectivo' | 'estado' | 'auditoria' | 'cortes' | 'historial' | 'arqueos' | 'bodega' | 'inventario';
 
 const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '', userId: '' } as const;
 
@@ -93,6 +96,8 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     CashInventoryPanelComponent,
     CustodyTransfersPanelComponent,
     CashStatementPanelComponent,
+    CashIntegrityPanelComponent,
+    OpeningCountModalComponent,
   ],
   templateUrl: './cash-control-page.component.html',
   styleUrl: './cash-control-page.component.scss',
@@ -127,6 +132,9 @@ export class CashControlPageComponent {
   /** Caja / Bodega / total under custody (backend). */
   readonly custody = signal<CashCustody | null>(null);
   readonly countOpen = signal(false);
+  /** Arqueo de apertura of the current bank day (custody viewers): `opening === null` = pending. */
+  readonly openingStatus = signal<OpeningStatus | null>(null);
+  readonly openingOpen = signal(false);
   readonly countCorrection = signal<CashCountRecord | null>(null);
   readonly transferOpen = signal(false);
   readonly withdrawalOpen = signal(false);
@@ -200,6 +208,29 @@ export class CashControlPageComponent {
     this.loadMovements();
     this.loadBankDays();
     this.loadCustody();
+    this.loadOpening();
+  }
+
+  /** The opening count is a warning, never a block (owner decision). */
+  loadOpening(): void {
+    if (!this.canCustody()) {
+      return;
+    }
+    this.service
+      .getOpeningStatus()
+      .pipe(catchError(() => of(null)))
+      .subscribe((status) => this.openingStatus.set(status));
+  }
+
+  openOpening(): void {
+    this.loadOpening();
+    this.openingOpen.set(true);
+  }
+
+  onOpeningSaved(status: OpeningStatus | null): void {
+    this.openingOpen.set(false);
+    this.openingStatus.set(status);
+    this.custodyRefresh.update((value) => value + 1);
   }
 
   loadCustody(): void {
@@ -427,7 +458,7 @@ export class CashControlPageComponent {
 
   private initialTab(): CashTab {
     const tab = this.route.snapshot.queryParamMap.get('tab') ?? (this.route.snapshot.data['tab'] as string | undefined);
-    return tab === 'estado' || tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' || tab === 'inventario'
+    return tab === 'estado' || tab === 'auditoria' || tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' || tab === 'inventario'
       ? tab
       : 'efectivo';
   }

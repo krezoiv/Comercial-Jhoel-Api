@@ -1,0 +1,49 @@
+@if (finding; as f) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="window-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="window-title">
+          <app-icon name="search" [size]="20" />
+          Investigar · {{ f.title }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      <p class="modal__hint modal__hint--top">
+        {{ f.detail }} Estos son los movimientos de {{ f.window?.location === 'BODEGA' ? 'Bodega' : 'Caja' }} entre ambos conteos, en orden.
+        Los resaltados tienen otro hallazgo: revíselos primero.
+      </p>
+
+      @if (loading()) {
+        <p class="state">Cargando movimientos…</p>
+      } @else if (error()) {
+        <p class="modal__error" role="alert">{{ error() }}</p>
+      } @else if (!rows().length) {
+        <p class="state">No hubo movimientos entre ambos conteos: la diferencia apareció sin movimientos registrados (conteo o efectivo físico).</p>
+      } @else {
+        <ol class="moves">
+          @for (row of rows(); track row.id) {
+            <li [class.flagged]="flagged.includes(row.id)">
+              <div class="moves__main">
+                <strong>{{ typeLabel(row) }}</strong>
+                <span>{{ row.description }}{{ row.beneficiary ? ' · ' + row.beneficiary : '' }}</span>
+                <small>{{ formatDateTime(row.createdAt) }} · {{ row.username }} · {{ row.operationNumber }}{{ row.status === 'ANULADO' ? ' · anulado' : '' }}</small>
+              </div>
+              <div class="moves__amounts">
+                <span [class]="row.direction === 'IN' ? 'in' : 'out'">{{ row.direction === 'IN' ? '+' : '−' }}{{ formatCurrency(row.amount) }}</span>
+                <small>Saldo {{ formatCurrency(row.newBalance) }}</small>
+              </div>
+            </li>
+          }
+        </ol>
+        @if (total() > rows().length) {
+          <p class="state">Se muestran {{ rows().length }} de {{ total() }} movimientos.</p>
+        }
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" (click)="closed.emit()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

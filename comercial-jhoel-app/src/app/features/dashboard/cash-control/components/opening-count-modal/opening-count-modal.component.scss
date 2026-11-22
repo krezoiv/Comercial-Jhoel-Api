@@ -1,0 +1,69 @@
+@use 'breakpoints' as bp;
+
+.facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  div {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light);
+  }
+
+  small {
+    display: block;
+    font-weight: 400;
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+}
+
+.result {
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-weight: var(--fw-semibold);
+
+  &--ok {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+  }
+
+  &--short {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+  }
+
+  &--over {
+    color: #c2410c;
+    background: rgba(234, 88, 12, 0.12);
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

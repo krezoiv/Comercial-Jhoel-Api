@@ -94,6 +94,7 @@ const statement = (over: Partial<CashStatement> = {}): CashStatement => ({
   cuts: [],
   custody: { cash: 8450, warehouse: 3500, total: 11950 },
   canViewCustody: true,
+  opening: null,
   ...over,
 });
 

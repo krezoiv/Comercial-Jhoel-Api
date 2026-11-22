@@ -1,0 +1,169 @@
+<section class="panel" aria-labelledby="integrity-title">
+  <header class="head">
+    <div>
+      <h2 class="head__title" id="integrity-title"><app-icon name="search" [size]="20" /> Auditoría de efectivo</h2>
+      <p class="head__sub">
+        Verifica el Kardex, cada operación que mueve efectivo, los saldos guardados y los arqueos. Muestra hechos; nunca corrige ni cuadra nada solo.
+      </p>
+    </div>
+    <app-button variant="secondary" size="sm" [disabled]="loading()" (click)="load()">
+      <app-icon name="rotate-ccw" [size]="15" /> {{ loading() ? 'Verificando…' : 'Volver a verificar' }}
+    </app-button>
+  </header>
+
+  <div class="period" role="group" aria-label="Período">
+    <div class="seg">
+      <button type="button" [class.seg--on]="mode() === 'DAY'" [attr.aria-pressed]="mode() === 'DAY'" (click)="setMode('DAY')">Día bancario</button>
+      <button type="button" [class.seg--on]="mode() === 'RANGE'" [attr.aria-pressed]="mode() === 'RANGE'" (click)="setMode('RANGE')">Rango</button>
+    </div>
+    @if (mode() === 'DAY') {
+      <label class="field"><span>Día operativo</span>
+        <select [ngModel]="bankDate()" (ngModelChange)="bankDate.set($event); load()">
+          <option value="">Día en curso</option>
+          @for (d of days(); track d.businessDate) {
+            @if (!d.isCurrent) { <option [value]="d.businessDate">{{ formatIsoDate(d.businessDate) }}</option> }
+          }
+        </select>
+      </label>
+    } @else {
+      <label class="field"><span>Desde</span>
+        <input type="date" [max]="today" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); load()" />
+      </label>
+      <label class="field"><span>Hasta</span>
+        <input type="date" [min]="dateFrom()" [max]="today" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); load()" />
+      </label>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (report(); as r) {
+    <div [class]="'status status--' + r.summary.status.toLowerCase()" role="status">
+      <app-icon [name]="r.summary.status === 'OK' ? 'check-circle' : 'alert-triangle'" [size]="22" />
+      <div>
+        <strong>{{ statusLabel[r.summary.status] }}</strong>
+        <span>
+          @if (r.summary.status === 'OK') {
+            El Kardex, las operaciones, los saldos guardados y los arqueos coinciden en este período.
+          } @else {
+            {{ r.summary.bySeverity.ALTA }} alta(s) · {{ r.summary.bySeverity.MEDIA }} media(s) · {{ r.summary.bySeverity.BAJA }} baja(s)
+            @if (r.summary.unresolvedDifferences) { · {{ r.summary.unresolvedDifferences }} diferencia(s) de arqueo sin resolver }
+          }
+        </span>
+        <small>Verificado {{ formatDateTime(r.checkedAt) }}</small>
+      </div>
+    </div>
+
+    @if (r.opening; as o) {
+      <section class="block" aria-labelledby="opening-title">
+        <h3 class="block__title" id="opening-title"><app-icon name="calendar" [size]="16" /> Apertura del día {{ formatIsoDate(o.businessDate) }}</h3>
+        <div class="opening">
+          <div><span>Cierre oficial de ayer</span><strong>{{ formatCurrency(o.previousCloseBalance) }}</strong></div>
+          <div>
+            <span>Contado al cierre</span>
+            <strong>{{ o.lastCountBefore ? formatCurrency(o.lastCountBefore.counted) : '—' }}</strong>
+            @if (o.lastCountBefore; as l) { <small>{{ l.label }}</small> }
+          </div>
+          @if (o.opening; as a) {
+            <div>
+              <span>Contado al abrir</span><strong>{{ formatCurrency(a.counted) }}</strong>
+              <small>Arqueo #{{ a.number }} · {{ a.username }} · {{ formatDateTime(a.countedAt) }}</small>
+            </div>
+            <div [class]="a.difference === 0 ? 'ok' : a.difference < 0 ? 'short' : 'over'">
+              <span>Diferencia de apertura</span><strong>{{ a.difference === 0 ? 'Cuadrado' : formatDifference(a.difference) }}</strong>
+              @if (a.reason) { <small>{{ a.reason }} · responsable {{ a.responsible }}</small> }
+            </div>
+          } @else {
+            <div class="pending">
+              <span>Arqueo de apertura</span><strong>Pendiente</strong>
+              <small>Cuente el efectivo para comprobar que coincide con el cierre de ayer.</small>
+              @if (canOperate && r.period.isCurrent) {
+                <app-button variant="primary" size="sm" (click)="countOpening.emit()"><app-icon name="check-check" [size]="15" /> Contar apertura</app-button>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="block" aria-labelledby="timeline-title">
+      <h3 class="block__title" id="timeline-title"><app-icon name="clock" [size]="16" /> Arqueos del período (¿cuándo cambió la diferencia?)</h3>
+      @if (timeline().length) {
+        <div class="scroll" tabindex="0">
+          <table class="timeline">
+            <thead>
+              <tr>
+                <th scope="col">Hora</th><th scope="col">Conteo</th><th scope="col">Usuario</th>
+                <th scope="col" class="num">Teórico</th><th scope="col" class="num">Contado</th>
+                <th scope="col" class="num">Diferencia</th><th scope="col" class="num">Cambio</th><th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of timeline(); track c.id) {
+                <tr>
+                  <td>{{ formatDateTime(c.countedAt) }}</td>
+                  <td>{{ c.label }} <small>{{ c.location }}</small></td>
+                  <td>{{ c.username }}</td>
+                  <td class="num">{{ formatCurrency(c.theoretical) }}</td>
+                  <td class="num">{{ formatCurrency(c.counted) }}</td>
+                  <td class="num" [class.short]="c.difference < 0" [class.over]="c.difference > 0">{{ c.difference === 0 ? '—' : formatDifference(c.difference) }}</td>
+                  <td class="num" [class.short]="c.change < 0" [class.over]="c.change > 0">{{ c.change === 0 ? 'Sin cambio' : formatDifference(c.change) }}</td>
+                  <td>{{ c.difference === 0 ? 'Cuadrado' : c.resolution ? 'Resuelta' : 'Pendiente' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">Sin arqueos en el período: el efectivo físico no se ha comprobado.</p>
+      }
+    </section>
+
+    <section class="block" aria-labelledby="findings-title">
+      <h3 class="block__title" id="findings-title"><app-icon name="alert-circle" [size]="16" /> Hallazgos ({{ findings().length }})</h3>
+      @for (f of findings(); track f.key) {
+        <article [class]="'finding finding--' + f.severity.toLowerCase()">
+          <header class="finding__head">
+            <span [class]="'chip chip--' + f.severity.toLowerCase()">{{ severityLabel[f.severity] }}</span>
+            <span class="chip">{{ classificationLabel[f.classification] }}</span>
+            <strong>{{ f.title }}</strong>
+          </header>
+          <p class="finding__detail">{{ f.detail }}</p>
+          <p class="finding__meta">
+            @if (f.occurredAt) { {{ formatDateTime(f.occurredAt) }} }
+            @if (f.username) { · {{ f.username }} }
+            @if (f.amount !== null && f.amount !== 0) { · {{ formatDifference(f.amount) }} }
+            @if (f.reference) { · {{ f.reference.label }} }
+          </p>
+          @if (f.relatedKeys.length) {
+            <p class="finding__related">
+              Posibles causas en ese tramo (verificar): {{ relatedTitles(f) }}
+            </p>
+          }
+          @if (f.count?.resolution; as res) {
+            <p class="finding__resolved">
+              <app-icon name="check-circle" [size]="14" /> Resuelta por {{ res.username }} ({{ formatDateTime(res.createdAt) }}) — {{ classificationLabel[res.cause] }}: {{ res.explanation }}{{ res.adjustmentMovementId ? ' · con ajuste autorizado' : '' }}
+            </p>
+          }
+          <div class="finding__actions">
+            @if (f.window) {
+              <app-button variant="ghost" size="sm" (click)="investigating.set(f)"><app-icon name="search" [size]="14" /> Investigar</app-button>
+            }
+            @if (canResolveFinding(f)) {
+              <app-button variant="secondary" size="sm" (click)="resolving.set(f)"><app-icon name="file-check" [size]="14" /> Resolver</app-button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <p class="empty">Sin hallazgos en el período.</p>
+      }
+    </section>
+  } @else if (loading()) {
+    <p class="empty">Verificando…</p>
+  }
+</section>
+
+<app-integrity-window-modal [finding]="investigating()" [flagged]="flagged()" (closed)="investigating.set(null)" />
+<app-difference-resolution-modal [finding]="resolving()" (saved)="onResolved()" (closed)="resolving.set(null)" />

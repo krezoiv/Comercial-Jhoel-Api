@@ -23,6 +23,11 @@ import {
   assertCashCustodyPermission,
 } from '../../domain/policies/cash-control.policy';
 import { cashControlError } from '../../domain/errors/cash-control.errors';
+import {
+  CASH_INTEGRITY_REPOSITORY,
+  type CashIntegrityRepository,
+  type OpeningStatus,
+} from '../../domain/repositories/cash-integrity.repository';
 import { buildReportPdf } from '../../../reports/infrastructure/pdf/report-pdf.builder';
 import { buildCashStatementExcel } from '../../infrastructure/export/cash-statement.excel';
 
@@ -69,6 +74,8 @@ export interface CashStatementOutput {
   /** Caja, Bodega and total under custody at the end of the period — `null` without `cash_custody.view`. */
   custody: { cash: number; warehouse: number; total: number } | null;
   canViewCustody: boolean;
+  /** Arqueo de apertura of the bank day (Caja, custody viewers); `null` otherwise. */
+  opening: OpeningStatus | null;
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -133,6 +140,7 @@ async function loadStatement(
   query: CashStatementQuery,
   page: number,
   limit: number,
+  integrity: CashIntegrityRepository | null = null,
 ): Promise<CashStatementOutput> {
   const location = query.location ?? 'CAJA';
   const canViewCustody = canViewCashCustody(role);
@@ -177,6 +185,19 @@ async function loadStatement(
     movementsAfterLatest,
     previousCount,
   });
+  // Arqueo de apertura of a Caja bank day: shown to custody viewers; a missing
+  // one on the open day is a warning, never a block (owner decision).
+  const opening =
+    integrity && canViewCustody && location === 'CAJA' && period.dayOpeningId
+      ? await integrity.getOpeningStatus(period.dayOpeningId)
+      : null;
+  if (opening && !opening.opening && period.isCurrent) {
+    warnings.unshift({
+      code: 'OPENING_PENDING',
+      tone: 'warning',
+      message: `Falta el arqueo de apertura: cuente el efectivo y compárelo con el cierre oficial de ayer (Q${opening.previousCloseBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+    });
+  }
   return {
     location,
     period: periodOutput(period),
@@ -192,6 +213,7 @@ async function loadStatement(
         }
       : null,
     canViewCustody,
+    opening,
   };
 }
 
@@ -208,6 +230,8 @@ export class GetCashStatementUseCase {
   constructor(
     @Inject(CASH_STATEMENT_REPOSITORY)
     private readonly repository: CashStatementRepository,
+    @Inject(CASH_INTEGRITY_REPOSITORY)
+    private readonly integrity: CashIntegrityRepository,
   ) {}
 
   execute(
@@ -216,7 +240,14 @@ export class GetCashStatementUseCase {
   ): Promise<CashStatementOutput> {
     const page = Math.max(1, query.page ?? 1);
     const limit = Math.min(200, Math.max(1, query.limit ?? 50));
-    return loadStatement(this.repository, actor.role, query, page, limit);
+    return loadStatement(
+      this.repository,
+      actor.role,
+      query,
+      page,
+      limit,
+      this.integrity,
+    );
   }
 }
 

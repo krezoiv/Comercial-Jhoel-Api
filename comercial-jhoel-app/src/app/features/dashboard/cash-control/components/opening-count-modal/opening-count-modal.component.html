@@ -1,0 +1,88 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="opening-count-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="opening-count-title">
+          <app-icon name="check-check" [size]="20" />
+          Arqueo de apertura
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      @if (st(); as s) {
+        <dl class="facts">
+          <div>
+            <dt>Cierre oficial de ayer</dt>
+            <dd>{{ formatCurrency(s.previousCloseBalance) }}</dd>
+          </div>
+          <div>
+            <dt>Contado al cierre</dt>
+            <dd>
+              @if (s.lastCountBefore; as last) {
+                {{ formatCurrency(last.counted) }}
+                <small>{{ last.label }} · {{ formatDateTime(last.countedAt) }}</small>
+              } @else {
+                <small>Sin conteo anterior</small>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Saldo del sistema ahora</dt>
+            <dd>
+              {{ formatCurrency(theoretical()) }}
+              @if (s.movementsSinceOpening) { <small>{{ s.movementsSinceOpening }} movimiento(s) desde la apertura</small> }
+            </dd>
+          </div>
+        </dl>
+      }
+
+      <div class="breakdown">
+        <app-cash-breakdown-table
+          [cashCounts]="cashCounts()"
+          [totalCash]="totalCounted()"
+          [totalAmount]="theoretical()"
+          [status]="cuadreStatus()"
+          emptyAmountText="Caja sin saldo"
+          (quantityChange)="onQuantityChange($event)"
+        />
+      </div>
+
+      <p [class]="'result result--' + (difference() === 0 ? 'ok' : difference() < 0 ? 'short' : 'over')" aria-live="polite">
+        @if (difference() === 0) {
+          Cuadrado con el sistema
+        } @else {
+          {{ difference() < 0 ? 'Faltante' : 'Sobrante' }} de {{ formatCurrency(difference() < 0 ? -difference() : difference()) }} ({{ formatDifference(difference()) }})
+        }
+      </p>
+
+      @if (needsReason()) {
+        <div class="row">
+          <div class="field">
+            <label for="opening-reason">Motivo de la diferencia *</label>
+            <input id="opening-reason" type="text" maxlength="255" placeholder="Qué se sabe de la diferencia" [ngModel]="reason()" (ngModelChange)="reason.set($event)" />
+          </div>
+          <div class="field">
+            <label for="opening-responsible">Responsable *</label>
+            <input id="opening-responsible" type="text" maxlength="120" placeholder="Quién entregó o recibió el efectivo" [ngModel]="responsible()" (ngModelChange)="responsible.set($event)" />
+          </div>
+        </div>
+      }
+      <div class="field">
+        <label for="opening-observations">Observaciones <span class="field__optional">(opcional)</span></label>
+        <input id="opening-observations" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+      </div>
+
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button variant="primary" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : 'Registrar apertura' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

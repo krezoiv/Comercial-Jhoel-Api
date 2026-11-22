@@ -69,6 +69,16 @@ import {
 import { CASH_STATEMENT_REPOSITORY } from './domain/repositories/cash-statement.repository';
 import { TypeOrmCashStatementRepository } from './infrastructure/persistence/typeorm-cash-statement.repository';
 import { CashStatementController } from './presentation/controllers/cash-statement.controller';
+import { CashIntegrityController } from './presentation/controllers/cash-integrity.controller';
+import { CASH_INTEGRITY_REPOSITORY } from './domain/repositories/cash-integrity.repository';
+import { TypeOrmCashIntegrityRepository } from './infrastructure/persistence/typeorm-cash-integrity.repository';
+import {
+  GetCashIntegrityUseCase,
+  GetOpeningStatusUseCase,
+  ListIntegrityMovementsUseCase,
+  RegisterOpeningCountUseCase,
+  ResolveCountDifferenceUseCase,
+} from './application/use-cases/cash-integrity.use-cases';
 
 /**
  * Finance → Control de Efectivo: the single official physical-cash Kardex
@@ -85,6 +95,7 @@ import { CashStatementController } from './presentation/controllers/cash-stateme
   // CashStatementController first: its fixed `cash-control/statement/*` paths never meet a `:param` route.
   controllers: [
     CashStatementController,
+    CashIntegrityController,
     CashControlController,
     CashCustodyController,
   ],
@@ -106,6 +117,16 @@ import { CashStatementController } from './presentation/controllers/cash-stateme
     GetCashStatementUseCase,
     ListCashStatementDaysUseCase,
     ExportCashStatementUseCase,
+    // Auditoría de efectivo + arqueo de apertura + resoluciones (read-only checks).
+    {
+      provide: CASH_INTEGRITY_REPOSITORY,
+      useClass: TypeOrmCashIntegrityRepository,
+    },
+    GetCashIntegrityUseCase,
+    ListIntegrityMovementsUseCase,
+    GetOpeningStatusUseCase,
+    RegisterOpeningCountUseCase,
+    ResolveCountDifferenceUseCase,
     GetCashCustodyUseCase,
     RegisterCashCountUseCase,
     ListCashCountsUseCase,
