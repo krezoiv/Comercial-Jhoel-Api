@@ -1,0 +1,79 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+@use 'breakpoints' as bp;
+
+.amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+
+  strong {
+    font-size: var(--fs-xl, 1.5rem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--in {
+    background: var(--color-success-soft);
+    strong { color: var(--color-success); }
+  }
+
+  &--out {
+    background: var(--color-danger-soft);
+    strong { color: var(--color-danger); }
+  }
+}
+
+.balances {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-muted);
+  }
+
+  strong {
+    font-size: var(--fs-md);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-on-light);
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--color-text-on-light);
+  }
+
+  .mono {
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+}

@@ -1,0 +1,129 @@
+<section class="panel" aria-labelledby="statement-title">
+  <header class="head">
+    <div class="head__text">
+      <h2 class="head__title" id="statement-title"><app-icon name="file-check" [size]="20" /> Estado de cuenta de efectivo</h2>
+      <p class="head__period">
+        {{ location() === 'BODEGA' ? 'Bodega' : 'Caja' }} · {{ periodLabel() || 'Cargando…' }}
+        @if (statement()?.period?.agentDayStatus; as status) {
+          <span class="chip">Día {{ status === 'ABIERTO' ? 'abierto' : status === 'CERRADO' ? 'cerrado' : 'anulado' }}</span>
+        }
+      </p>
+    </div>
+    <div class="head__actions">
+      @if (canCustody) {
+        <div class="seg" role="group" aria-label="Ubicación del efectivo">
+          <button type="button" [class.seg--on]="location() === 'CAJA'" [attr.aria-pressed]="location() === 'CAJA'" (click)="setLocation('CAJA')">Caja</button>
+          <button type="button" [class.seg--on]="location() === 'BODEGA'" [attr.aria-pressed]="location() === 'BODEGA'" (click)="setLocation('BODEGA')">Bodega</button>
+        </div>
+        @if (location() === 'CAJA') {
+          <app-button variant="secondary" size="sm" (click)="countCaja.emit()"><app-icon name="check-check" [size]="15" /> Arqueo de Caja</app-button>
+        } @else {
+          <app-button variant="secondary" size="sm" (click)="auditOpen.set(true)"><app-icon name="check-check" [size]="15" /> Arqueo de Bodega</app-button>
+        }
+      }
+      <app-button variant="ghost" size="sm" [disabled]="!statement() || exporting() !== null" (click)="export('pdf')">
+        <app-icon name="download" [size]="15" /> {{ exporting() === 'pdf' ? 'Generando…' : 'PDF' }}
+      </app-button>
+      <app-button variant="ghost" size="sm" [disabled]="!statement() || exporting() !== null" (click)="export('xlsx')">
+        <app-icon name="download" [size]="15" /> {{ exporting() === 'xlsx' ? 'Generando…' : 'Excel' }}
+      </app-button>
+    </div>
+  </header>
+
+  <div class="period" role="group" aria-label="Período">
+    <div class="seg">
+      <button type="button" [class.seg--on]="mode() === 'DAY'" [attr.aria-pressed]="mode() === 'DAY'" (click)="setMode('DAY')">Día bancario</button>
+      <button type="button" [class.seg--on]="mode() === 'DATE'" [attr.aria-pressed]="mode() === 'DATE'" (click)="setMode('DATE')">Fecha</button>
+      <button type="button" [class.seg--on]="mode() === 'RANGE'" [attr.aria-pressed]="mode() === 'RANGE'" (click)="setMode('RANGE')">Rango</button>
+    </div>
+    @switch (mode()) {
+      @case ('DAY') {
+        <label class="field">
+          <span>Día operativo</span>
+          <select [ngModel]="bankDate()" (ngModelChange)="selectDay($event)">
+            <option value="">Día en curso</option>
+            @for (d of days(); track d.businessDate) {
+              @if (!d.isCurrent) { <option [value]="d.businessDate">{{ d.businessDate.split('-').reverse().join('/') }}</option> }
+            }
+          </select>
+        </label>
+      }
+      @case ('DATE') {
+        <label class="field"><span>Fecha</span>
+          <input type="date" [max]="today" [ngModel]="date()" (ngModelChange)="date.set($event); reload(true)" />
+        </label>
+      }
+      @case ('RANGE') {
+        <label class="field"><span>Desde</span>
+          <input type="date" [max]="today" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); reload(true)" />
+        </label>
+        <label class="field"><span>Hasta</span>
+          <input type="date" [min]="dateFrom()" [max]="today" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); reload(true)" />
+        </label>
+      }
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <app-cash-statement-cards [statement]="statement()" [class.busy]="loading()" />
+
+  <div class="layout">
+    <div class="layout__main">
+      <form class="filters" (ngSubmit)="reload(true)">
+        <label class="field field--search">
+          <span><app-icon name="search" [size]="13" /> Descripción, beneficiario, No. o referencia</span>
+          <input type="search" name="search" placeholder="Buscar…" [ngModel]="search()" (ngModelChange)="onSearch($event)" />
+        </label>
+        <label class="field"><span>Movimientos</span>
+          <select name="direction" [ngModel]="direction()" (ngModelChange)="direction.set($event); reload(true)">
+            <option value="">Entradas y salidas</option>
+            <option value="IN">Solo entradas</option>
+            <option value="OUT">Solo salidas</option>
+          </select>
+        </label>
+        <label class="field"><span>Tipo</span>
+          <select name="type" [ngModel]="movementType()" (ngModelChange)="movementType.set($event); reload(true)">
+            <option value="">Todos</option>
+            @for (t of typeOptions(); track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+          </select>
+        </label>
+        <label class="field"><span>Usuario</span>
+          <select name="user" [ngModel]="userId()" (ngModelChange)="userId.set($event); reload(true)">
+            <option value="">Todos</option>
+            @for (u of users; track u.id) { <option [value]="u.id">{{ u.username }}</option> }
+          </select>
+        </label>
+        @if (filtered()) {
+          <app-button variant="ghost" size="sm" (click)="clearFilters()">Limpiar</app-button>
+        }
+      </form>
+
+      <app-cash-statement-table [statement]="statement()" [filtered]="filtered()" (open)="detail.set($event)" />
+      @if (statement(); as st) {
+        @if (st.movements.total > pageSize) {
+          <app-report-pagination [total]="st.movements.total" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
+        }
+      }
+    </div>
+
+    <aside class="layout__side">
+      <app-cash-statement-controls
+        [statement]="statement()"
+        [days]="location() === 'CAJA' ? days() : []"
+        [selectedDay]="mode() === 'DAY' ? bankDate() : '-'"
+        (selectDay)="selectDay($event)"
+      />
+    </aside>
+  </div>
+</section>
+
+<app-cash-statement-detail-modal [row]="detail()" [location]="location()" (closed)="detail.set(null)" />
+<app-warehouse-audit-modal
+  [open]="auditOpen()"
+  [theoretical]="warehouseBalance"
+  (saved)="onAuditSaved()"
+  (closed)="auditOpen.set(false)"
+/>

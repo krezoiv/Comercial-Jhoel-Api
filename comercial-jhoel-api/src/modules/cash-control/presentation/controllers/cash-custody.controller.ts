@@ -32,6 +32,9 @@ import {
   GetCashInventoryUseCase,
   RegisterWarehouseCashCountUseCase,
   ListWarehouseCashCountsUseCase,
+  RegisterWarehouseCashAuditUseCase,
+  ListWarehouseCashAuditsUseCase,
+  GetWarehouseCashAuditUseCase,
   GetCashCountDraftUseCase,
   SaveCashCountDraftUseCase,
   DiscardCashCountDraftUseCase,
@@ -45,6 +48,7 @@ import {
   CorrectCashCountRequestDto,
   CustodyTransfersQueryDto,
   PageQueryDto,
+  RegisterWarehouseCashAuditRequestDto,
   RegisterWarehouseCashCountRequestDto,
   SaveCashCountDraftRequestDto,
   LatestCashCountQueryDto,
@@ -82,6 +86,9 @@ export class CashCustodyController {
     private readonly getWithdrawal: GetWarehouseWithdrawalUseCase,
     private readonly getInventory: GetCashInventoryUseCase,
     private readonly registerWarehouseCount: RegisterWarehouseCashCountUseCase,
+    private readonly registerWarehouseAudit: RegisterWarehouseCashAuditUseCase,
+    private readonly listWarehouseAudits: ListWarehouseCashAuditsUseCase,
+    private readonly getWarehouseAudit: GetWarehouseCashAuditUseCase,
     private readonly listWarehouseCounts: ListWarehouseCashCountsUseCase,
     private readonly getDraft: GetCashCountDraftUseCase,
     private readonly saveDraft: SaveCashCountDraftUseCase,
@@ -112,6 +119,40 @@ export class CashCustodyController {
     @CurrentUser() user: RequestUser,
   ) {
     return this.registerWarehouseCount.execute({
+      ...dto,
+      userId: user.userId,
+      role: user.role,
+    });
+  }
+
+  /** History of the Arqueos de Bodega (control counts with difference). */
+  @Get('warehouse/audits')
+  warehouseAudits(
+    @Query() query: PageQueryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.listWarehouseAudits.execute({ ...query, role: user.role });
+  }
+
+  @Get('warehouse/audits/:id')
+  warehouseAudit(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.getWarehouseAudit.execute(id, user.role);
+  }
+
+  /**
+   * "Arqueo de Bodega" (supervisors and admins): counts Bodega and records the
+   * difference against its Kardex. Never adjusts, never moves money.
+   */
+  @Post('warehouse/audits')
+  @HttpCode(HttpStatus.CREATED)
+  createWarehouseAudit(
+    @Body() dto: RegisterWarehouseCashAuditRequestDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.registerWarehouseAudit.execute({
       ...dto,
       userId: user.userId,
       role: user.role,

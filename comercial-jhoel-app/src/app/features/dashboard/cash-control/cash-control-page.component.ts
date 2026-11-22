@@ -55,8 +55,9 @@ import { WarehousePanelComponent } from './components/warehouse-panel/warehouse-
 import { WarehouseWithdrawalModalComponent } from './components/warehouse-withdrawal-modal/warehouse-withdrawal-modal.component';
 import { CashBankDayCardComponent } from './components/bank-day-card/bank-day-card.component';
 import { CashBankDayHistoryComponent } from './components/bank-day-history/bank-day-history.component';
+import { CashStatementPanelComponent } from './components/cash-statement-panel/cash-statement-panel.component';
 
-type CashTab = 'efectivo' | 'cortes' | 'historial' | 'arqueos' | 'bodega' | 'inventario';
+type CashTab = 'efectivo' | 'estado' | 'cortes' | 'historial' | 'arqueos' | 'bodega' | 'inventario';
 
 const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '', userId: '' } as const;
 
@@ -91,6 +92,7 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
     CashBankDayHistoryComponent,
     CashInventoryPanelComponent,
     CustodyTransfersPanelComponent,
+    CashStatementPanelComponent,
   ],
   templateUrl: './cash-control-page.component.html',
   styleUrl: './cash-control-page.component.scss',
@@ -425,7 +427,7 @@ export class CashControlPageComponent {
 
   private initialTab(): CashTab {
     const tab = this.route.snapshot.queryParamMap.get('tab') ?? (this.route.snapshot.data['tab'] as string | undefined);
-    return tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' || tab === 'inventario'
+    return tab === 'estado' || tab === 'cortes' || tab === 'historial' || tab === 'arqueos' || tab === 'bodega' || tab === 'inventario'
       ? tab
       : 'efectivo';
   }

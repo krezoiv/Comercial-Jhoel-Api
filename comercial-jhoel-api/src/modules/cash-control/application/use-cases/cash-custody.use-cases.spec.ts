@@ -9,6 +9,8 @@ import {
   GetLatestCashCountUseCase,
   GetCashInventoryUseCase,
   RegisterWarehouseCashCountUseCase,
+  RegisterWarehouseCashAuditUseCase,
+  ListWarehouseCashAuditsUseCase,
   GetCashCountDraftUseCase,
   SaveCashCountDraftUseCase,
   DiscardCashCountDraftUseCase,
@@ -75,6 +77,13 @@ function repository(): jest.Mocked<CashCustodyRepository> {
       .fn()
       .mockResolvedValue({ items: [], total: 0, page: 1, limit: 25 }),
     findWarehouseCountById: jest.fn().mockResolvedValue({ id: 'wc1' }),
+    registerWarehouseAudit: jest.fn().mockResolvedValue('wa1'),
+    findWarehouseAudits: jest
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, page: 1, limit: 25 }),
+    findWarehouseAuditById: jest
+      .fn()
+      .mockResolvedValue({ id: 'wa1', difference: -50, result: 'FALTANTE' }),
     getCountDraft: jest.fn().mockResolvedValue(null),
     saveCountDraft: jest
       .fn()
@@ -638,6 +647,50 @@ describe('Arqueo de caja y Bodega — casos de uso', () => {
           limit: 25,
         }),
       );
+    });
+  });
+
+  describe('arqueo de Bodega con diferencia (1760009100000)', () => {
+    it('supervisors count Bodega (same rights as the Arqueo de Caja); cashiers may not', async () => {
+      const repo = repository();
+      const useCase = new RegisterWarehouseCashAuditUseCase(repo);
+      await expect(
+        useCase.execute({
+          ...USER,
+          details: [{ denomination: 100, quantity: 1 }],
+          clientRequestId: 'k',
+        }),
+      ).rejects.toMatchObject({ code: 'CASH_CUSTODY_FORBIDDEN' });
+      await expect(
+        useCase.execute({ ...SUPERVISOR, details: [], clientRequestId: 'k' }),
+      ).rejects.toMatchObject({ code: 'CASH_BREAKDOWN_REQUIRED' });
+      const audit = await useCase.execute({
+        ...SUPERVISOR,
+        details: [{ denomination: 50, quantity: 91 }],
+        observations: '  conteo de cierre  ',
+        clientRequestId: 'req-1',
+      });
+      expect(audit).toMatchObject({ difference: -50, result: 'FALTANTE' });
+      expect(repo.registerWarehouseAudit).toHaveBeenCalledWith({
+        details: [{ denomination: 50, quantity: 91 }],
+        observations: 'conteo de cierre',
+        userId: 'u-sup',
+        idempotencyKey: 'WHA:req-1',
+      });
+      // A control: it never touches the exact count that anchors the inventory.
+      expect(repo.registerWarehouseCount).not.toHaveBeenCalled();
+    });
+
+    it('the history is for custody viewers only', async () => {
+      const repo = repository();
+      await expect(
+        new ListWarehouseCashAuditsUseCase(repo).execute({ role: 'USER' }),
+      ).rejects.toMatchObject({ code: 'CASH_CUSTODY_FORBIDDEN' });
+      await new ListWarehouseCashAuditsUseCase(repo).execute({
+        role: 'SUPERVISOR_DE_TURNO',
+        limit: 500,
+      });
+      expect(repo.findWarehouseAudits).toHaveBeenCalledWith(1, 200);
     });
   });
 });

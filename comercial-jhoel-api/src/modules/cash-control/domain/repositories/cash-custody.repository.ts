@@ -273,6 +273,34 @@ export interface WarehouseCashCountRow {
   details: DenominationRow[];
 }
 
+/**
+ * Arqueo de Bodega (migration 1760009100000): a control count that records its
+ * difference against the Bodega Kardex. It never adjusts and never becomes the
+ * inventory anchor (that stays `WarehouseCashCountRow`).
+ */
+export interface WarehouseCashAuditRow {
+  id: string;
+  number: number;
+  countedAt: Date;
+  businessDate: string;
+  /** Bodega Kardex balance read under the Bodega lock. */
+  theoreticalBalance: number;
+  totalCounted: number;
+  /** counted − theoretical. */
+  difference: number;
+  result: CashCountResult;
+  observations: string | null;
+  createdByUsername: string;
+  details: DenominationRow[];
+}
+
+export interface RegisterWarehouseCashAuditData {
+  details: Array<{ denomination: number; quantity: number }>;
+  observations?: string | null;
+  userId: string;
+  idempotencyKey: string;
+}
+
 export interface RegisterWarehouseCashCountData {
   details: Array<{ denomination: number; quantity: number }>;
   observations?: string | null;
@@ -384,6 +412,13 @@ export interface CashCustodyRepository {
     limit: number,
   ): Promise<Paginated<WarehouseCashCountRow>>;
   findWarehouseCountById(id: string): Promise<WarehouseCashCountRow | null>;
+  /** Arqueo de Bodega: control count with difference (never adjusts). */
+  registerWarehouseAudit(data: RegisterWarehouseCashAuditData): Promise<string>;
+  findWarehouseAudits(
+    page: number,
+    limit: number,
+  ): Promise<Paginated<WarehouseCashAuditRow>>;
+  findWarehouseAuditById(id: string): Promise<WarehouseCashAuditRow | null>;
   /** Draft of `userId` for the current bank day, or null (also when no day is open). */
   getCountDraft(userId: string): Promise<CashCountDraft | null>;
   /** Upsert for the current bank day; null when no bank day is open. */

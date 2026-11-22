@@ -1654,6 +1654,65 @@ Pedido del dueño (2026-11-20): el arqueo es solo control; no limita los traslad
     rechazado.
   - `test/cash-inventory.e2e-spec.ts`.
 
+### Estado de Cuenta de Efectivo + Arqueo de Bodega (migración `1760009100000`)
+
+Pedido del dueño (2026-11-21). El Estado de Cuenta es una VISTA de solo lectura sobre el Kardex oficial: no hay tablas ni
+saldos nuevos para él.
+
+- **Período** (decisión del dueño: día bancario):
+  - Por defecto, el día bancario en curso. Para Caja usa el rango de `cash_bank_day_openings`, desde su apertura hasta la
+    siguiente; las anclas son inmutables, así que un día pasado nunca cambia.
+  - También se puede pedir `dateFrom`/`dateTo`: un rango de fechas de Guatemala convertido en un tramo contiguo de
+    secuencias del Kardex (`start < sequence ≤ end`).
+  - Bodega no tiene ancla propia: usa la ventana de tiempo del día bancario.
+- **Cifras** (`domain/cash-statement.ts`, función pura con spec):
+  - Saldo inicial = `cash_balance_at(start)`, o sea el cierre del período anterior.
+  - Entradas y salidas = filas IN/OUT. Las NONE (sin efecto físico) nunca aparecen.
+  - Saldo teórico = inicial + entradas − salidas, calculado en centavos y comparado con el último saldo del Kardex
+    (`consistent`).
+  - Saldo acumulado por fila = `new_balance` del Kardex, nunca recalculado.
+- **Avisos, nunca correcciones**:
+  - `KARDEX_INCONSISTENT`.
+  - `OPENING_ANCHOR_MISMATCH`: el saldo guardado en la apertura ≠ el Kardex.
+  - `PREVIOUS_CLOSE_DIFFERENCE`: el último arqueo antes del período tuvo diferencia.
+  - `MOVEMENTS_AFTER_COUNT`.
+- **Físico**: es el último arqueo VIGENTE del período.
+  - Caja: `cash_counts` y el arqueo vigente de cada corte FINALIZADO.
+  - Bodega: `warehouse_cash_audits`.
+  - Estado CUADRADO / FALTANTE / SOBRANTE / SIN_ARQUEO, con la diferencia tal como se guardó.
+- **Filas**:
+  - Beneficiario: Transaccionar `description`/`client_name`, el cliente de CxC o Activos, quien recibe o entrega en los
+    traslados, o el motivo de los movimientos manuales.
+  - Número: `ENT-`/`RET-` del traslado, o `MOV-`/`BOD-` + secuencia.
+  - Búsqueda con `search_normalize`. Los filtros solo cambian la tabla; los totales son siempre del período completo.
+- **Permisos** (decisión del dueño: mantener los actuales):
+  - Cualquier autenticado ve los movimientos y las cifras del Kardex.
+  - Solo `cash_custody.view` recibe arqueos, cortes, custodia y `summary.physical`; para los demás llegan en `null`.
+  - `location=BODEGA` exige ese mismo permiso.
+- **Rutas** (`CashStatementController`, registrado antes que los otros controladores de `/cash-control`):
+  - `GET /cash-control/statement`.
+  - `GET /cash-control/statement/days`: historial por día con el último arqueo.
+  - `GET /cash-control/statement/export?format=pdf|xlsx`: `buildReportPdf` horizontal y `buildCashStatementExcel`, con
+    las mismas cifras y permisos que la pantalla.
+- **Arqueo de Bodega** (decisión del dueño: arqueo nuevo de control):
+  - Tablas `warehouse_cash_audits` + `_details`, inmutables por `cash_custody_status_only_guard`.
+  - `register_warehouse_cash_audit` fotografía el saldo y la última secuencia de Bodega bajo `warehouse_cash_main`, y
+    guarda contado, diferencia y resultado.
+  - Exige día bancario abierto y rol `cash_custody.operate` (los mismos que el Arqueo de Caja). Es idempotente (`WHA:`).
+  - No escribe ningún Kardex ni ajusta nada.
+  - El conteo exacto `warehouse_cash_counts` sigue siendo la única base del inventario por billete.
+  - Rutas: `GET/POST /cash-control/warehouse/audits`, `GET …/audits/:id`.
+- **Sin cambios**: secciones 11, 13 y 14 del pedido, ya cubiertas por `1760008800000` (Cuadre con Caja + Bodega contadas,
+  cortes con foto de Bodega) y `1760008900000` (traslado sin arqueo). El dinero de Listas Escolares, Guayacán, Ventas y
+  Recargas sigue en sus propias cajas.
+- **Pruebas**:
+  - `sql/tests/warehouse-cash-audits.test.sql` (20 casos).
+  - `cash-statement.spec.ts` y `cash-statement.use-cases.spec.ts`.
+  - Casos de auditoría en `cash-custody.use-cases.spec.ts`.
+  - `test/cash-statement.e2e-spec.ts`: dos días, Transaccionar con beneficiario, operación NONE, traslados en ambos
+    sentidos, arqueos, estabilidad histórica, permisos, PDF/Excel y validaciones.
+  - Down/up verificado en una copia.
+
 ### Caja de Listas Escolares (`modules/school-cash-box/`, migración `1760008700000`)
 
 Caja independiente para el dinero de las listas escolares (decisiones del dueño, 2026-11-19). No toca Control de Efectivo, Bodega ni Guayacán.

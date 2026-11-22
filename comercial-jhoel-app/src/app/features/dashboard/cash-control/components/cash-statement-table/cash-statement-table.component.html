@@ -1,0 +1,72 @@
+@if (s(); as st) {
+  <div class="scroll" tabindex="0" aria-label="Movimientos del estado de cuenta">
+    <table class="statement">
+      <thead>
+        <tr>
+          <th scope="col">Fecha y hora</th>
+          <th scope="col">No.</th>
+          <th scope="col">Operación</th>
+          <th scope="col">Descripción / Beneficiario</th>
+          <th scope="col">Referencia</th>
+          <th scope="col">Usuario</th>
+          <th scope="col" class="num">Entrada</th>
+          <th scope="col" class="num">Salida</th>
+          <th scope="col" class="num sticky">Saldo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (firstPage()) {
+          <tr class="opening">
+            <td colspan="3">{{ st.period.kind === 'BANK_DAY' ? 'Apertura' : 'Inicio del período' }}</td>
+            <td colspan="5">Saldo inicial</td>
+            <td class="num sticky"><strong>{{ formatCurrency(st.summary.openingBalance) }}</strong></td>
+          </tr>
+        }
+        @for (row of rows(); track row.id) {
+          <tr [class.voided]="row.status === 'ANULADO'" (click)="open.emit(row)">
+            <td class="when">{{ formatDate(row.createdAt) }}<small>{{ formatTime(row.createdAt) }}</small></td>
+            <td>
+              <button type="button" class="op" [attr.aria-label]="'Ver detalle de ' + row.operationNumber" (click)="$event.stopPropagation(); open.emit(row)">
+                {{ row.operationNumber }}
+              </button>
+            </td>
+            <td class="wrap">
+              {{ typeLabel(row) }}
+              @if (row.status === 'ANULADO') { <span class="tag">Anulado</span> }
+              @if (row.cutPeriodNumber) { <span class="tag tag--soft">Corte {{ row.cutPeriodNumber }}</span> }
+            </td>
+            <td class="desc">
+              <span>{{ row.description }}</span>
+              @if (row.beneficiary) { <small>{{ row.beneficiary }}</small> }
+            </td>
+            <td class="wrap ref">{{ row.reference || '—' }}</td>
+            <td>{{ row.username }}</td>
+            <td class="num in">{{ row.direction === 'IN' ? formatCurrency(row.amount) : '' }}</td>
+            <td class="num out">{{ row.direction === 'OUT' ? formatCurrency(row.amount) : '' }}</td>
+            <td class="num sticky"><strong>{{ formatCurrency(row.newBalance) }}</strong></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="empty">{{ filtered ? 'Ningún movimiento coincide con los filtros.' : 'No hubo entradas ni salidas físicas en el período.' }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        @if (filtered) {
+          <tr>
+            <td colspan="6">Movimientos filtrados ({{ st.movements.total }})</td>
+            <td class="num in">{{ formatCurrency(st.movements.filteredIn) }}</td>
+            <td class="num out">{{ formatCurrency(st.movements.filteredOut) }}</td>
+            <td class="sticky"></td>
+          </tr>
+        }
+        <tr>
+          <td colspan="6">Totales del período · saldo teórico</td>
+          <td class="num in">{{ formatCurrency(st.summary.totalIn) }}</td>
+          <td class="num out">{{ formatCurrency(st.summary.totalOut) }}</td>
+          <td class="num sticky"><strong>{{ formatCurrency(st.summary.theoreticalBalance) }}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}

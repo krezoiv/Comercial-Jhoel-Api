@@ -44,6 +44,15 @@ const MESSAGES: Record<string, { message: string; status?: number }> = {
     message:
       'Este movimiento se anula desde su módulo de origen (Transaccionar, Cartera o Transferencias Bancarias); la reversa llega sola al Kardex.',
   },
+  // Estado de Cuenta de Efectivo (read-only).
+  CASH_STATEMENT_DAY_NOT_FOUND: {
+    message: 'No hay un día bancario aperturado en esa fecha.',
+    status: 404,
+  },
+  CASH_STATEMENT_INVALID_RANGE: {
+    message:
+      'El rango de fechas no es válido: la fecha inicial debe ser anterior a la final y el rango no puede pasar de 366 días.',
+  },
   CASH_DAY_NOT_FOUND: {
     message: 'No se encontró el día operativo de efectivo.',
     status: 404,

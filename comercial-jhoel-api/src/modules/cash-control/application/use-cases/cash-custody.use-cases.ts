@@ -9,6 +9,7 @@ import type {
   CustodyTransferKind,
   CustodyTransferRow,
   LocationInventory,
+  WarehouseCashAuditRow,
   WarehouseCashCountRow,
   LatestCashCountCandidate,
   Paginated,
@@ -640,6 +641,83 @@ export class ListWarehouseCashCountsUseCase {
       page(input.page),
       limit(input.limit),
     );
+  }
+}
+
+/**
+ * Arqueo de Bodega (migration 1760009100000): counts Bodega by denomination and
+ * records its difference against the Bodega Kardex. Same roles as the Arqueo
+ * de Caja (owner decision). A control, never a movement: no Kardex row, no
+ * adjustment, never the inventory anchor (the exact count above stays that).
+ */
+@Injectable()
+export class RegisterWarehouseCashAuditUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(
+    input: {
+      details: DenominationInput[];
+      observations?: string;
+      clientRequestId: string;
+    } & CustodyActor,
+  ): Promise<WarehouseCashAuditRow> {
+    assertCashCustodyPermission(input.role, 'cash_custody.operate');
+    if (!input.details?.length) {
+      throw cashControlError('CASH_BREAKDOWN_REQUIRED');
+    }
+    const id = await this.repository.registerWarehouseAudit({
+      details: input.details,
+      observations: input.observations?.trim() || null,
+      userId: input.userId,
+      idempotencyKey: `WHA:${input.clientRequestId}`,
+    });
+    const audit = await this.repository.findWarehouseAuditById(id);
+    if (!audit) {
+      throw cashControlError('CASH_COUNT_NOT_FOUND');
+    }
+    return audit;
+  }
+}
+
+/** History of the Arqueos de Bodega. */
+@Injectable()
+export class ListWarehouseCashAuditsUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(input: {
+    page?: number;
+    limit?: number;
+    role: string;
+  }): Promise<Paginated<WarehouseCashAuditRow>> {
+    assertCashCustodyPermission(input.role, 'cash_custody.view');
+    return this.repository.findWarehouseAudits(
+      page(input.page),
+      limit(input.limit),
+    );
+  }
+}
+
+/** One Arqueo de Bodega with its denominations. */
+@Injectable()
+export class GetWarehouseCashAuditUseCase {
+  constructor(
+    @Inject(CASH_CUSTODY_REPOSITORY)
+    private readonly repository: CashCustodyRepository,
+  ) {}
+
+  async execute(id: string, role: string): Promise<WarehouseCashAuditRow> {
+    assertCashCustodyPermission(role, 'cash_custody.view');
+    const audit = await this.repository.findWarehouseAuditById(id);
+    if (!audit) {
+      throw cashControlError('CASH_COUNT_NOT_FOUND');
+    }
+    return audit;
   }
 }
 

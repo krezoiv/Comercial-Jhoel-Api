@@ -15,7 +15,9 @@ import {
   CustodyTransferRow,
   FindCustodyTransfersOptions,
   LocationInventory,
+  RegisterWarehouseCashAuditData,
   RegisterWarehouseCashCountData,
+  WarehouseCashAuditRow,
   WarehouseCashCountRow,
   LatestCashCountCandidate,
   LatestCashCountLookup,
@@ -105,6 +107,15 @@ const WAREHOUSE_COUNT_SELECT = `
                      'subtotal', d.subtotal) ORDER BY d.denomination DESC)
                    FROM warehouse_cash_count_details d WHERE d.count_id = w.id), '[]') AS details
   FROM warehouse_cash_counts w JOIN users u ON u.id = w.created_by
+`;
+
+/** Arqueos de Bodega (control counts with difference, migration 1760009100000). */
+const WAREHOUSE_AUDIT_SELECT = `
+  SELECT a.*, to_char(a.business_date, 'YYYY-MM-DD') AS business_date_text, u.username,
+         COALESCE((SELECT json_agg(json_build_object('denomination', d.denomination, 'quantity', d.quantity,
+                     'subtotal', d.subtotal) ORDER BY d.denomination DESC)
+                   FROM warehouse_cash_audit_details d WHERE d.audit_id = a.id), '[]') AS details
+  FROM warehouse_cash_audits a JOIN users u ON u.id = a.created_by
 `;
 
 /**
@@ -608,6 +619,68 @@ export class TypeOrmCashCustodyRepository implements CashCustodyRepository {
       [id],
     );
     return row ? this.toWarehouseCount(row) : null;
+  }
+
+  // ── Arqueo de Bodega (control con diferencia) ───────────────────────────
+
+  async registerWarehouseAudit(
+    data: RegisterWarehouseCashAuditData,
+  ): Promise<string> {
+    const [row] = await this.write<SqlRow[]>(
+      `SELECT register_warehouse_cash_audit($1::jsonb, $2, $3, $4) AS id`,
+      [
+        JSON.stringify(data.details),
+        data.observations ?? null,
+        data.userId,
+        data.idempotencyKey,
+      ],
+    );
+    return text(row.id);
+  }
+
+  async findWarehouseAudits(
+    page: number,
+    limit: number,
+  ): Promise<Paginated<WarehouseCashAuditRow>> {
+    const [count] = await this.dataSource.query<SqlRow[]>(
+      `SELECT count(*) AS total FROM warehouse_cash_audits`,
+    );
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `${WAREHOUSE_AUDIT_SELECT} ORDER BY a.number DESC LIMIT $1 OFFSET $2`,
+      [limit, (page - 1) * limit],
+    );
+    return {
+      items: rows.map((r) => this.toWarehouseAudit(r)),
+      total: num(count?.total),
+      page,
+      limit,
+    };
+  }
+
+  async findWarehouseAuditById(
+    id: string,
+  ): Promise<WarehouseCashAuditRow | null> {
+    const [row] = await this.dataSource.query<SqlRow[]>(
+      `${WAREHOUSE_AUDIT_SELECT} WHERE a.id = $1`,
+      [id],
+    );
+    return row ? this.toWarehouseAudit(row) : null;
+  }
+
+  private toWarehouseAudit(row: SqlRow): WarehouseCashAuditRow {
+    return {
+      id: text(row.id),
+      number: num(row.number),
+      countedAt: row.counted_at as Date,
+      businessDate: text(row.business_date_text),
+      theoreticalBalance: num(row.theoretical_balance),
+      totalCounted: num(row.total_counted),
+      difference: num(row.difference),
+      result: text(row.result) as CashCountResult,
+      observations: textOrNull(row.observations),
+      createdByUsername: text(row.username),
+      details: toDetails(row.details),
+    };
   }
 
   // ── Borradores del Arqueo de Caja (por usuario × día bancario actual) ─────

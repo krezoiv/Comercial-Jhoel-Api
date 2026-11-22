@@ -1,0 +1,49 @@
+@if (s(); as st) {
+  @if (st.warnings.length) {
+    <ul class="warnings" aria-label="Avisos del estado de cuenta">
+      @for (w of st.warnings; track w.code) {
+        <li [class]="'warning warning--' + w.tone">
+          <app-icon [name]="w.tone === 'danger' ? 'alert-triangle' : 'alert-circle'" [size]="16" />
+          <span>{{ w.message }}</span>
+        </li>
+      }
+    </ul>
+  }
+
+  <section class="cards" aria-label="Resumen del estado de cuenta">
+    @for (card of cards(); track card.key) {
+      <article [class]="'card card--' + card.tone">
+        <span class="card__icon" aria-hidden="true"><app-icon [name]="card.icon" [size]="18" /></span>
+        <span class="card__label">{{ card.label }}</span>
+        <strong class="card__value">{{ card.value }}</strong>
+        <span class="card__hint">{{ card.hint }}</span>
+      </article>
+    }
+  </section>
+
+  @if (st.custody; as custody) {
+    <!-- Caja and Bodega are kept apart; the total never nets their differences. -->
+    <section class="custody" aria-label="Efectivo bajo custodia">
+      <div class="custody__item">
+        <span>Caja (teórico)</span>
+        <strong>{{ formatCurrency(custody.cash) }}</strong>
+      </div>
+      <span class="custody__op" aria-hidden="true">+</span>
+      <div class="custody__item">
+        <span>Bodega (teórico)</span>
+        <strong>{{ formatCurrency(custody.warehouse) }}</strong>
+      </div>
+      <span class="custody__op" aria-hidden="true">=</span>
+      <div class="custody__item custody__item--total">
+        <span>Total bajo custodia</span>
+        <strong>{{ formatCurrency(custody.total) }}</strong>
+      </div>
+      @if (st.summary.toWarehouse || st.summary.fromWarehouse) {
+        <p class="custody__note">
+          Traslados del período: {{ formatCurrency(st.summary.toWarehouse) }} de Caja a Bodega ·
+          {{ formatCurrency(st.summary.fromWarehouse) }} de Bodega a Caja. Son movimientos internos: no son ingreso ni gasto.
+        </p>
+      }
+    </section>
+  }
+}

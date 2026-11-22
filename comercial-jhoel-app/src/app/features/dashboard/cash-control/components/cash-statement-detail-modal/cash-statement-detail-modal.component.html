@@ -1,0 +1,67 @@
+@if (r(); as row) {
+  <div class="modal-backdrop" role="presentation" (click)="closed.emit()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statement-detail-title" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2 class="modal__title" id="statement-detail-title">
+          <app-icon [name]="row.direction === 'IN' ? 'arrow-down-circle' : 'arrow-up-circle'" [size]="20" />
+          {{ row.operationNumber }} · {{ typeLabel() }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div [class]="'amount amount--' + (row.direction === 'IN' ? 'in' : 'out')">
+        <span>{{ row.direction === 'IN' ? 'Entrada' : 'Salida' }} de {{ location === 'BODEGA' ? 'Bodega' : 'Caja' }}</span>
+        <strong>{{ row.direction === 'IN' ? '+' : '−' }}{{ formatCurrency(row.amount) }}</strong>
+      </div>
+
+      <div class="balances">
+        <div><span>Saldo anterior</span><strong>{{ formatCurrency(row.previousBalance) }}</strong></div>
+        <app-icon name="chevron-right" [size]="18" />
+        <div><span>Saldo posterior</span><strong>{{ formatCurrency(row.newBalance) }}</strong></div>
+      </div>
+
+      <dl class="facts">
+        <div><dt>Fecha y hora</dt><dd>{{ formatDateTime(row.createdAt) }}</dd></div>
+        <div><dt>Módulo de origen</dt><dd>{{ origin() }}</dd></div>
+        <div class="wide"><dt>Descripción</dt><dd>{{ row.description }}</dd></div>
+        @if (row.beneficiary) {
+          <div class="wide"><dt>Beneficiario / persona</dt><dd>{{ row.beneficiary }}</dd></div>
+        }
+        <div><dt>Referencia</dt><dd>{{ row.reference || '—' }}</dd></div>
+        <div><dt>Usuario</dt><dd>{{ row.username }}</dd></div>
+        @if (row.cutPeriodNumber) {
+          <div><dt>Corte</dt><dd>{{ row.cutPeriodNumber === 1 ? 'Corte 1 · mediodía' : 'Corte 2 · final del día' }}</dd></div>
+        }
+        <div><dt>Movimiento del Kardex</dt><dd class="mono">#{{ row.sequence }}</dd></div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            {{ row.status === 'ANULADO' ? 'Anulado' : 'Vigente' }}
+            @if (row.voidedAt) { · {{ formatDateTime(row.voidedAt) }} }
+          </dd>
+        </div>
+        @if (row.voidReason) {
+          <div class="wide"><dt>Motivo de la anulación</dt><dd>{{ row.voidReason }}</dd></div>
+        }
+        @if (row.reversalOfId) {
+          <div class="wide"><dt>Relación</dt><dd>Reversa de un movimiento anterior: el original se conserva como anulado.</dd></div>
+        }
+      </dl>
+
+      <div class="modal__actions">
+        @if (isTransaccionar()) {
+          <app-button variant="secondary" (click)="depositOpen.set(true)"><app-icon name="eye" [size]="16" /> Ver operación original</app-button>
+        } @else {
+          @if (originRoute(); as route) {
+            <app-button variant="secondary" [routerLink]="route.path">Ir a {{ route.label }}</app-button>
+          }
+        }
+        <app-button variant="ghost" (click)="closed.emit()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+
+  <app-bank-deposit-detail-modal [open]="depositOpen()" [operationId]="row.referenceId" (closed)="depositOpen.set(false)" />
+}

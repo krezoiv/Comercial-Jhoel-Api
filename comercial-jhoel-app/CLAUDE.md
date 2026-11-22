@@ -1694,6 +1694,25 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
   `app-cash-breakdown-table` en verde solo si cuadra, vista previa caja ↓ / banco ↑). En el Kardex, "Ver desglose" lee
   `GET /cash-control/movements/:id` (`details`); anularlo revierte caja y banco.
 - Sistema → Tipo de Transacción edita `cashEffect` (sugerido desde el efecto bancario con `defaultCashEffect`).
+- **Pestaña "Estado de cuenta"** (`?tab=estado`, backend `1760009100000`, 2026-11-21): `CashStatementPanelComponent`,
+  que orquesta.
+  - Hijos presentacionales:
+    - `cash-statement-cards`: 8 tarjetas, avisos del backend y Caja + Bodega = total bajo custodia, nunca neteados.
+    - `cash-statement-table`: el No. es el botón de detalle; entradas en verde, salidas en rojo, saldo fijo a la
+      derecha. Fecha y hora van en una sola columna para que Entrada y Salida quepan a 1440 px.
+    - `cash-statement-controls`: arqueos y cortes del período, e historial por día que abre ese día.
+    - `cash-statement-detail-modal`: módulo de origen, saldo anterior y posterior. Una operación de Transaccionar abre
+      `app-bank-deposit-detail-modal` ahí mismo.
+    - `warehouse-audit-modal`: Arqueo de Bodega con faltante o sobrante en vivo; reutiliza `app-cash-breakdown-table`.
+  - Período: día bancario (por defecto el en curso), fecha o rango. Caja/Bodega y los botones de arqueo solo con
+    `canCustody`.
+  - Ninguna cifra se calcula en Angular: todo sale de `GET /cash-control/statement`.
+  - Se refresca con `onCashChanged`, solo mientras el período está abierto.
+  - Exporta PDF y Excel por `exportStatement` (blob).
+  - El Arqueo de Caja usa el modal existente de la página (`countCaja` → `openCount()`). El de Bodega se compara contra
+    el saldo vivo (`warehouseBalance` de la página), no contra el de un período pasado.
+  - Modelos en `core/models/cash-statement.model.ts`.
+  - Pruebas: `cash-statement-panel.component.spec.ts`.
 
 ### Notifications
 

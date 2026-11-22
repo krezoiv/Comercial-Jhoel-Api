@@ -1,0 +1,84 @@
+@if (statement?.counts; as counts) {
+  <section class="block" aria-labelledby="st-counts-title">
+    <h3 class="block__title" id="st-counts-title"><app-icon name="check-check" [size]="16" /> Arqueos del período</h3>
+    @if (counts.length) {
+      <ul class="list">
+        @for (c of counts; track c.id) {
+          <li [class.replaced]="c.status === 'REEMPLAZADO'">
+            <div class="list__main">
+              <strong>{{ c.number }}</strong>
+              <span>{{ formatDateTime(c.countedAt) }} · {{ c.username }}{{ c.status === 'REEMPLAZADO' ? ' · reemplazado' : '' }}</span>
+            </div>
+            <div class="list__figures">
+              <span>Teórico {{ formatCurrency(c.theoretical) }}</span>
+              <span>Físico {{ formatCurrency(c.counted) }}</span>
+            </div>
+            <span [class]="'pill pill--' + statusTone[c.result]">{{ statusLabel[c.result] }} {{ c.difference === 0 ? '' : formatDifference(c.difference) }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty">Sin arqueos en el período: el efectivo físico no se ha comprobado.</p>
+    }
+  </section>
+}
+
+@if (statement?.cuts; as cuts) {
+  @if (cuts.length) {
+    <section class="block" aria-labelledby="st-cuts-title">
+      <h3 class="block__title" id="st-cuts-title"><app-icon name="file-check" [size]="16" /> Cortes</h3>
+      <ul class="list">
+        @for (cut of cuts; track cut.id) {
+          <li>
+            <div class="list__main">
+              <strong>Corte {{ cut.periodNumber }} · {{ cut.periodNumber === 1 ? 'mediodía' : 'final del día' }}</strong>
+              <span>
+                {{ cut.status === 'FINALIZADO' ? 'Finalizado' : cut.status === 'ABIERTO' ? 'Abierto' : 'Programado' }}
+                @if (cut.startedAt) { · {{ formatTime(cut.startedAt) }} }
+                @if (cut.finishedAt) { – {{ formatTime(cut.finishedAt) }} }
+                @if (cut.closedByUsername) { · {{ cut.closedByUsername }} }
+              </span>
+            </div>
+            @if (cut.closingSystemCash !== null) {
+              <div class="list__figures">
+                <span>Teórico {{ formatCurrency(cut.closingSystemCash) }}</span>
+                <span>Caja contada {{ formatCurrency(cut.closingPhysicalCash ?? 0) }}</span>
+                @if (cut.closingWarehouseBalance !== null) { <span>Bodega {{ formatCurrency(cut.closingWarehouseBalance) }}</span> }
+              </div>
+              <span [class]="'pill pill--' + (cut.cashDifference === 0 ? 'ok' : (cut.cashDifference ?? 0) < 0 ? 'short' : 'over')">
+                {{ cut.cashDifference === 0 ? 'Cuadrado' : formatDifference(cut.cashDifference ?? 0) }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}
+
+@if (days.length) {
+  <section class="block" aria-labelledby="st-days-title">
+    <h3 class="block__title" id="st-days-title"><app-icon name="calendar" [size]="16" /> Historial por día</h3>
+    <ul class="list list--days">
+      @for (d of days; track d.businessDate) {
+        <li>
+          <button
+            type="button"
+            class="day"
+            [class.day--on]="(selectedDay || '') === (d.isCurrent ? '' : d.businessDate)"
+            (click)="selectDay.emit(d.isCurrent ? '' : d.businessDate)"
+          >
+            <span class="day__date">{{ formatIsoDate(d.businessDate) }}{{ d.isCurrent ? ' · en curso' : '' }}</span>
+            <span class="day__flow">
+              {{ formatCurrency(d.openingBalance) }} <span class="in">+{{ formatCurrency(d.totalIn) }}</span>
+              <span class="out">−{{ formatCurrency(d.totalOut) }}</span> = <strong>{{ formatCurrency(d.closingBalance) }}</strong>
+            </span>
+            @if (d.lastCount; as c) {
+              <span [class]="'pill pill--' + statusTone[c.result]">{{ statusLabel[c.result] }}{{ c.difference === 0 ? '' : ' ' + formatDifference(c.difference) }}</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+}

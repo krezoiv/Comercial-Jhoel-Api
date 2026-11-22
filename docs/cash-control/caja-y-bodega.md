@@ -64,3 +64,35 @@ Desde la migración `1760008800000-CuadreWarehouseCountAndCutCustody`, Control d
 
 1. Desplegar y correr `npm run migration:run:prod`.
 2. Desde ese momento el Cuadre de Agentes pide el Arqueo de Caja (Caja + Bodega) antes de guardar.
+
+## Estado de Cuenta de Efectivo
+
+Está en **Control de Efectivo → Estado de cuenta**. Funciona como un estado de cuenta bancario del efectivo físico.
+
+- **Qué muestra.**
+  - Saldo inicial, total de entradas, total de salidas y saldo teórico (saldo inicial + entradas − salidas).
+  - El efectivo físico del último arqueo, la diferencia, la cantidad de movimientos y el último movimiento.
+  - Cada movimiento con fecha y hora, número, tipo, descripción o beneficiario, referencia, usuario, entrada, salida y
+    saldo después de aplicarlo.
+- **Período.**
+  - Por defecto, el día bancario en curso: desde la apertura en Agentes Bancarios hasta la siguiente apertura.
+  - También se puede elegir un día anterior, una fecha o un rango.
+  - El saldo inicial de un día es exactamente el cierre del día anterior según el Kardex. Un movimiento de hoy nunca
+    cambia un día anterior.
+- **Qué cuenta.** Solo lo que entra o sale físicamente de Caja. Las operaciones que solo mueven bancos, cuentas por
+  cobrar o activos sin efectivo no aparecen. El efectivo de Listas Escolares, Guayacán, Ventas y Recargas tiene sus
+  propias cajas.
+- **Avisos.** Si el último arqueo antes del período tuvo faltante o sobrante, si hubo movimientos después del último
+  arqueo, o si algo no cuadra con el Kardex, se avisa. Nunca se corrige solo.
+- **Caja y Bodega.** Se ven por separado y con su total bajo custodia. Un faltante de Caja y un sobrante de Bodega
+  nunca se compensan.
+- **Arqueo de Bodega.**
+  - Supervisores y administradores cuentan Bodega por denominación. Queda registrado el saldo teórico, el contado, la
+    diferencia y si está cuadrado, con faltante o con sobrante.
+  - No mueve efectivo ni ajusta nada.
+  - Es distinto del "conteo de Bodega" exacto, que sigue siendo la base de los billetes disponibles en Bodega.
+- **Acceso.** Todos ven los movimientos y saldos. El efectivo contado, las diferencias, Bodega y el total bajo custodia
+  solo los ven supervisores y administradores, y lo mismo aplica al PDF y al Excel.
+- **Exportar.** PDF y Excel con las mismas cifras y filtros de la pantalla.
+- **Al publicar en producción.** Correr `npm run migration:run:prod` (migración `1760009100000`, solo agrega el Arqueo
+  de Bodega). El Estado de Cuenta no necesita datos nuevos: lee el Kardex que ya existe.

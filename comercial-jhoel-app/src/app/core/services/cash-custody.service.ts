@@ -24,6 +24,7 @@ import {
   WarehouseMovement,
   WarehouseTransfer,
   WarehouseWithdrawal,
+  WarehouseCashAudit,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/cash-control`;
@@ -149,6 +150,24 @@ export class CashCustodyService {
   ): Observable<{ count: WarehouseCashCount; inventory: LocationInventory }> {
     return this.http
       .post<ApiSuccessResponse<{ count: WarehouseCashCount; inventory: LocationInventory }>>(`${BASE_URL}/warehouse/counts`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  /**
+   * Arqueo de Bodega (supervisors and admins): records the difference against
+   * the Bodega Kardex; never adjusts, never moves cash.
+   */
+  registerWarehouseAudit(input: RegisterWarehouseCashCountInput): Observable<WarehouseCashAudit> {
+    return this.http
+      .post<ApiSuccessResponse<WarehouseCashAudit>>(`${BASE_URL}/warehouse/audits`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  getWarehouseAudits(page = 1, limit = 10): Observable<PaginatedResult<WarehouseCashAudit>> {
+    return this.http
+      .get<ApiSuccessResponse<PaginatedResult<WarehouseCashAudit>>>(`${BASE_URL}/warehouse/audits`, {
+        params: toParams({ page, limit }),
+      })
       .pipe(map((r) => r.data));
   }
 

@@ -9,6 +9,9 @@
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'efectivo'" [class.tabs__tab--on]="tab() === 'efectivo'" (click)="setTab('efectivo')">
       <app-icon name="wallet" [size]="16" /> Efectivo y Kardex
     </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'estado'" [class.tabs__tab--on]="tab() === 'estado'" (click)="setTab('estado')">
+      <app-icon name="file-check" [size]="16" /> Estado de cuenta
+    </button>
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'cortes'" [class.tabs__tab--on]="tab() === 'cortes'" (click)="setTab('cortes')">
       <app-icon name="clock" [size]="16" /> Cortes del día
     </button>
@@ -264,6 +267,16 @@
         <app-report-pagination [total]="totalMovements()" [page]="page()" [limit]="pageSize" (pageChange)="onPageChange($event)" />
       }
     </app-card>
+  }
+
+  @if (tab() === 'estado') {
+    <app-cash-statement-panel
+      [canCustody]="canCustody()"
+      [users]="users()"
+      [refreshKey]="custodyRefresh()"
+      [warehouseBalance]="custody()?.warehouseBalance ?? 0"
+      (countCaja)="openCount()"
+    />
   }
 
   @if (tab() === 'cortes') {

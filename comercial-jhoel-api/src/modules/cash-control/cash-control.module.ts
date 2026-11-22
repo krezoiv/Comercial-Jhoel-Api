@@ -40,6 +40,9 @@ import {
   GetCashInventoryUseCase,
   RegisterWarehouseCashCountUseCase,
   ListWarehouseCashCountsUseCase,
+  RegisterWarehouseCashAuditUseCase,
+  ListWarehouseCashAuditsUseCase,
+  GetWarehouseCashAuditUseCase,
   GetCashCountDraftUseCase,
   SaveCashCountDraftUseCase,
   DiscardCashCountDraftUseCase,
@@ -58,6 +61,14 @@ import {
   RegisterWarehouseWithdrawalUseCase,
   VoidWarehouseWithdrawalUseCase,
 } from './application/use-cases/cash-custody.use-cases';
+import {
+  ExportCashStatementUseCase,
+  GetCashStatementUseCase,
+  ListCashStatementDaysUseCase,
+} from './application/use-cases/cash-statement.use-cases';
+import { CASH_STATEMENT_REPOSITORY } from './domain/repositories/cash-statement.repository';
+import { TypeOrmCashStatementRepository } from './infrastructure/persistence/typeorm-cash-statement.repository';
+import { CashStatementController } from './presentation/controllers/cash-statement.controller';
 
 /**
  * Finance → Control de Efectivo: the single official physical-cash Kardex
@@ -71,7 +82,12 @@ import {
 @Module({
   // DAY_OPENING_REPOSITORY: a bank deposit, like every balance-moving bank operation, needs the day open.
   imports: [BanksModule],
-  controllers: [CashControlController, CashCustodyController],
+  // CashStatementController first: its fixed `cash-control/statement/*` paths never meet a `:param` route.
+  controllers: [
+    CashStatementController,
+    CashControlController,
+    CashCustodyController,
+  ],
   providers: [
     {
       provide: CASH_CONTROL_REPOSITORY,
@@ -82,6 +98,14 @@ import {
       provide: CASH_CUSTODY_REPOSITORY,
       useClass: TypeOrmCashCustodyRepository,
     },
+    // Estado de Cuenta de Efectivo (read-only over the Kardex).
+    {
+      provide: CASH_STATEMENT_REPOSITORY,
+      useClass: TypeOrmCashStatementRepository,
+    },
+    GetCashStatementUseCase,
+    ListCashStatementDaysUseCase,
+    ExportCashStatementUseCase,
     GetCashCustodyUseCase,
     RegisterCashCountUseCase,
     ListCashCountsUseCase,
@@ -90,6 +114,9 @@ import {
     GetCashInventoryUseCase,
     RegisterWarehouseCashCountUseCase,
     ListWarehouseCashCountsUseCase,
+    RegisterWarehouseCashAuditUseCase,
+    ListWarehouseCashAuditsUseCase,
+    GetWarehouseCashAuditUseCase,
     GetCashCountDraftUseCase,
     SaveCashCountDraftUseCase,
     DiscardCashCountDraftUseCase,

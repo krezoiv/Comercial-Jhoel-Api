@@ -1,0 +1,155 @@
+@use 'breakpoints' as bp;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-light);
+  box-shadow: var(--shadow-sm);
+
+  @include bp.respond(md) {
+    padding: var(--space-5);
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--fs-lg);
+    color: var(--color-text-on-light);
+  }
+
+  &__period {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
+
+.chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  background: var(--color-neutral-soft);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+
+  button {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light-muted);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  &--on,
+  button.seg--on {
+    color: var(--color-text-on-light);
+    font-weight: var(--fw-semibold);
+    background: var(--color-surface-light);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.period,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  input,
+  select {
+    min-width: 0;
+    max-width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--color-text-on-light);
+    background: var(--color-surface-light);
+  }
+
+  &--search {
+    flex: 1 1 16rem;
+  }
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.busy {
+  opacity: 0.6;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+
+  // Side column only on wide screens: the statement table needs the room.
+  @include bp.respond(xxl) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  &__side {
+    min-width: 0;
+  }
+}

@@ -172,6 +172,13 @@ export class RegisterWarehouseCashCountRequestDto {
   @IsUUID() clientRequestId: string;
 }
 
+/**
+ * Arqueo de Bodega (migration 1760009100000): same shape as the Bodega count —
+ * denominations, observations and one `clientRequestId` per form opening —
+ * but the total may differ from the balance (the difference is recorded).
+ */
+export class RegisterWarehouseCashAuditRequestDto extends RegisterWarehouseCashCountRequestDto {}
+
 export class PageQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(200) limit?: number;

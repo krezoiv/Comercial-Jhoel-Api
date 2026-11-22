@@ -20,6 +20,9 @@ import {
   RegisterCashBankDepositInput,
   RegisterCashMovementInput,
   CashBankDaySummary,
+  CashStatement,
+  CashStatementDay,
+  CashStatementQuery,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/cash-control`;
@@ -63,6 +66,32 @@ export class CashControlService {
   /** Lightweight balance + last sequence, used for change detection polling. */
   getBalance(): Observable<CashBalanceSnapshot> {
     return this.http.get<ApiSuccessResponse<CashBalanceSnapshot>>(`${BASE_URL}/balance`).pipe(map((r) => r.data));
+  }
+
+  /**
+   * Estado de Cuenta de Efectivo: a bank day (default: current) or a date
+   * range, with its movements page. Counts, Bodega and custody come back
+   * `null` for users without custody permission.
+   */
+  getStatement(query: CashStatementQuery): Observable<CashStatement> {
+    return this.http
+      .get<ApiSuccessResponse<CashStatement>>(`${BASE_URL}/statement`, { params: toParams(query) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** History of the Caja statement: one line per bank day, newest first. */
+  getStatementDays(limit = 30): Observable<CashStatementDay[]> {
+    return this.http
+      .get<ApiSuccessResponse<CashStatementDay[]>>(`${BASE_URL}/statement/days`, { params: toParams({ limit }) })
+      .pipe(map((r) => r.data));
+  }
+
+  /** PDF / Excel of the statement with the same period and filters (a file, not JSON). */
+  exportStatement(query: CashStatementQuery, format: 'pdf' | 'xlsx'): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/statement/export`, {
+      params: toParams({ ...query, page: undefined, limit: undefined, format }),
+      responseType: 'blob',
+    });
   }
 
   getMovements(filters: CashMovementFilters): Observable<PaginatedCashMovements> {
