@@ -382,6 +382,10 @@
       </app-button>
     </section>
     }
+
+    @if (groupAllowed()) {
+      <app-type-operations-panel [transactionTypeId]="draft.transactionTypeId()" [transactionTypeName]="draft.transactionTypeName()" />
+    }
   </div>
 
   <app-bank-deposit-save-confirm-modal

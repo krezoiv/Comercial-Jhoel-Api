@@ -1,4 +1,11 @@
 import { BankDepositOperation } from '../entities/bank-deposit-operation.entity';
+import type {
+  OperationModality,
+  OperationPaymentGroupLink,
+  TypeOperationEntry,
+  TypeOperationFilters,
+  TypeOperationSummary,
+} from '../operation-modality';
 import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
 
 export const BANK_DEPOSIT_REPOSITORY = Symbol('BANK_DEPOSIT_REPOSITORY');
@@ -32,6 +39,8 @@ export interface RegisterBankDepositOperationData {
 }
 
 export interface FindBankDepositOperationsOptions {
+  /** INDIVIDUAL / GRUPAL (Pagos grupales); omitted = both. */
+  modality?: OperationModality;
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
@@ -51,6 +60,7 @@ export interface PaginatedResult<T> {
 }
 
 export interface BankDepositReportFilters {
+  modality?: OperationModality;
   startDate?: string;
   endDate?: string;
   transactionBankId?: string;
@@ -105,6 +115,16 @@ export interface BankDepositRepository {
   ): Promise<BankDepositOperation | null>;
   /** Las `limit` operaciones más recientes por `createdAt DESC, id DESC` (anuladas incluidas, marcadas) — limitado en SQL. Respalda la tarjeta "Últimas transacciones" de Transaccionar. */
   findRecent(limit: number): Promise<BankDepositOperation[]>;
+  /** Group of each GRUPAL operation among `operationIds` (absent = INDIVIDUAL). */
+  findPaymentGroupLinks(
+    operationIds: string[],
+  ): Promise<Map<string, OperationPaymentGroupLink>>;
+  /** "Operaciones de <tipo>": individual operations and payment groups of one type, filtered and paginated. */
+  findTypeEntries(filters: TypeOperationFilters): Promise<{
+    items: TypeOperationEntry[];
+    total: number;
+    summary: TypeOperationSummary;
+  }>;
   /** Excludes voided operations — a report is about real deposited money, see `TypeOrmBankDepositRepository.getReportSummary`'s own doc comment. */
   getReportSummary(
     filters: BankDepositReportFilters,

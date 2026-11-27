@@ -443,15 +443,8 @@ export const routes: Routes = [
         title: 'Transaccionar — Sistema',
       },
       {
-        path: 'pagos-grupales',
-        loadComponent: () =>
-          import('./features/dashboard/payment-groups/payment-groups-page.component').then(
-            (m) => m.PaymentGroupsPageComponent
-          ),
-        title: 'Pagos grupales — Sistema',
-      },
-      {
-        path: 'pagos-grupales/:id',
+        // Pago grupal is a modality of Pago Varios / Préstamos Génesis: its detail lives inside Transaccionar.
+        path: 'transaccionar/pago-grupal/:id',
         loadComponent: () =>
           import('./features/dashboard/payment-groups/payment-group-detail-page.component').then(
             (m) => m.PaymentGroupDetailPageComponent

@@ -1,3 +1,4 @@
+import type { OperationModality } from '../../../bank-deposits/domain/operation-modality';
 import { Inject, Injectable } from '@nestjs/common';
 import { BANK_DEPOSIT_REPOSITORY } from '../../../bank-deposits/domain/repositories/bank-deposit.repository';
 import type { BankDepositRepository } from '../../../bank-deposits/domain/repositories/bank-deposit.repository';
@@ -5,6 +6,8 @@ import { InvalidBankDepositDateRangeError } from '../../../bank-deposits/domain/
 import { BankDepositsReportSummaryOutput } from '../dtos/bank-deposits-report-output';
 
 export interface GetBankDepositsReportSummaryInput {
+  /** INDIVIDUAL / GRUPAL (Pagos grupales); omitted = both. */
+  modality?: OperationModality;
   startDate?: string;
   endDate?: string;
   transactionBankId?: string;
@@ -30,6 +33,7 @@ export class GetBankDepositsReportSummaryUseCase {
     }
 
     return this.bankDepositRepository.getReportSummary({
+      modality: input.modality,
       startDate: input.startDate,
       endDate: input.endDate,
       transactionBankId: input.transactionBankId,

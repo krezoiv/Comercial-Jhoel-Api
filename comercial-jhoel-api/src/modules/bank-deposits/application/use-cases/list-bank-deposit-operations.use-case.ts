@@ -7,7 +7,11 @@ import {
 } from '../dtos/bank-deposit-output';
 import { InvalidBankDepositDateRangeError } from '../../domain/errors/invalid-bank-deposit-date-range.error';
 
+import type { OperationModality } from '../../domain/operation-modality';
+
 export interface ListBankDepositOperationsInput {
+  /** INDIVIDUAL / GRUPAL (Pagos grupales); omitted = both. */
+  modality?: OperationModality;
   transactionBankId?: string;
   transactionTypeId?: string;
   userId?: string;
@@ -52,6 +56,7 @@ export class ListBankDepositOperationsUseCase {
         : DEFAULT_LIMIT;
 
     const result = await this.bankDepositRepository.findAll({
+      modality: input.modality,
       transactionBankId: input.transactionBankId,
       transactionTypeId: input.transactionTypeId,
       userId: input.userId,
@@ -61,9 +66,15 @@ export class ListBankDepositOperationsUseCase {
       page,
       limit,
     });
+    const links = await this.bankDepositRepository.findPaymentGroupLinks(
+      result.items.map((operation) => operation.id),
+    );
     return {
       items: result.items.map((operation) =>
-        toBankDepositOperationSummaryOutput(operation),
+        toBankDepositOperationSummaryOutput(
+          operation,
+          links.get(operation.id) ?? null,
+        ),
       ),
       total: result.total,
       page: result.page,

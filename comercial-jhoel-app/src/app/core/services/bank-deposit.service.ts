@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -13,6 +13,8 @@ import {
   BankDepositWeeklyStats,
   BankDepositYearlyStats,
   RegisterBankDepositInput,
+  TypeOperationFilters,
+  TypeOperationList,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/bank-deposits`;
@@ -32,6 +34,19 @@ export class BankDepositService {
   getRecentOperations(): Observable<BankDepositOperationSummary[]> {
     return this.http
       .get<ApiSuccessResponse<BankDepositOperationSummary[]>>(`${BASE_URL}/recent`)
+      .pipe(map((response) => response.data));
+  }
+
+  /** "Operaciones de <tipo>": individual operations and payment groups of one type, with their modality. */
+  getTypeOperations(transactionTypeId: string, filters: TypeOperationFilters = {}): Observable<TypeOperationList> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(filters as Record<string, unknown>)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http
+      .get<ApiSuccessResponse<TypeOperationList>>(`${BASE_URL}/by-type/${transactionTypeId}`, { params })
       .pipe(map((response) => response.data));
   }
 

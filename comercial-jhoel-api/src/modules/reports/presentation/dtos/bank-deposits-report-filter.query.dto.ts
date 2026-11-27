@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsDateString,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -9,9 +10,18 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  OPERATION_MODALITIES,
+  type OperationModality,
+} from '../../../bank-deposits/domain/operation-modality';
 
 /** Shared across every bank-deposits-report route (`GET /reports/bank-deposits`, `/summary`, `/export`) — each use case only reads the fields it actually needs. */
 export class BankDepositsReportFilterQueryDto {
+  /** Pago individual / Pago grupal; omitted = both. */
+  @IsOptional()
+  @IsIn(OPERATION_MODALITIES)
+  modality?: OperationModality;
+
   @IsOptional()
   @IsDateString()
   startDate?: string;

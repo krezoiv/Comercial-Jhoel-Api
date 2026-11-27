@@ -1,4 +1,9 @@
 import {
+  ListTypeOperationsOutput,
+  ListTypeOperationsUseCase,
+} from '../../application/use-cases/list-type-operations.use-case';
+import { ListTypeOperationsQueryDto } from '../dtos/list-type-operations.query.dto';
+import {
   Body,
   Controller,
   Get,
@@ -6,6 +11,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Query,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -56,6 +62,7 @@ const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 @Controller('bank-deposits')
 export class BankDepositsController {
   constructor(
+    private readonly listTypeOperationsUseCase: ListTypeOperationsUseCase,
     private readonly registerBankDepositOperationUseCase: RegisterBankDepositOperationUseCase,
     private readonly getBankDepositOperationByIdUseCase: GetBankDepositOperationByIdUseCase,
     private readonly voidBankDepositOperationUseCase: VoidBankDepositOperationUseCase,
@@ -123,6 +130,15 @@ export class BankDepositsController {
   }
 
   /** Tarjeta "Últimas transacciones" de Transaccionar — las 10 más recientes (fijo, sin parámetros). Misma política que el resto del controlador: cualquier cuenta autenticada, igual que la propia pantalla Transaccionar. Debe declararse antes de `:id`. */
+  /** "Operaciones de <tipo>" in Transaccionar: individual operations and payment groups of one type, with their modality. */
+  @Get('by-type/:transactionTypeId')
+  listByType(
+    @Param('transactionTypeId', ParseUUIDPipe) transactionTypeId: string,
+    @Query() query: ListTypeOperationsQueryDto,
+  ): Promise<ListTypeOperationsOutput> {
+    return this.listTypeOperationsUseCase.execute({ ...query, transactionTypeId });
+  }
+
   @Get('recent')
   recent(): Promise<BankDepositOperationSummaryResponseDto[]> {
     return this.listRecentBankDepositOperationsUseCase.execute();

@@ -1,0 +1,116 @@
+<section class="panel ops" aria-labelledby="type-ops-title">
+  <header class="ops__head">
+    <h2 class="ops__title" id="type-ops-title"><app-icon name="layers" [size]="18" /> Operaciones de {{ transactionTypeName }}</h2>
+    @if (list(); as l) {
+      <p class="ops__summary">
+        <span class="chip chip--individual">{{ l.summary.individualCount }} individual(es)</span>
+        <span class="chip chip--grupal">{{ l.summary.groupCount }} grupo(s)</span>
+        @if (l.summary.groupCount) {
+          <span>Reservado {{ formatCurrency(l.summary.groupReserved) }}</span>
+          <span>Pagado {{ formatCurrency(l.summary.groupPaid) }}</span>
+          <span>Pendiente {{ formatCurrency(l.summary.groupOutstanding) }}</span>
+        }
+      </p>
+    }
+  </header>
+
+  <div class="filters">
+    <div class="segmented" role="radiogroup" aria-label="Modalidad">
+      <button type="button" role="radio" [attr.aria-checked]="modality() === ''" [class.on]="modality() === ''" (click)="setModality('')">Todas</button>
+      <button type="button" role="radio" [attr.aria-checked]="modality() === 'INDIVIDUAL'" [class.on]="modality() === 'INDIVIDUAL'" (click)="setModality('INDIVIDUAL')">Individuales</button>
+      <button type="button" role="radio" [attr.aria-checked]="modality() === 'GRUPAL'" [class.on]="modality() === 'GRUPAL'" (click)="setModality('GRUPAL')">Grupales</button>
+    </div>
+    <div class="field">
+      <label for="ops-from">Desde</label>
+      <input id="ops-from" type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); applyFilters()" />
+    </div>
+    <div class="field">
+      <label for="ops-to">Hasta</label>
+      <input id="ops-to" type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); applyFilters()" />
+    </div>
+    <div class="field">
+      <label for="ops-status">Estado</label>
+      <select id="ops-status" [ngModel]="status()" (ngModelChange)="status.set($event); applyFilters()">
+        <option value="">Todos</option>
+        @for (s of statuses; track s) { <option [value]="s">{{ statusLabels[s] }}</option> }
+      </select>
+    </div>
+    @if (isAdmin()) {
+      <div class="field">
+        <label for="ops-user">Usuario</label>
+        <select id="ops-user" [ngModel]="userId()" (ngModelChange)="userId.set($event); applyFilters()">
+          <option value="">Todos</option>
+          @for (user of users(); track user.id) { <option [value]="user.id">{{ user.username }}</option> }
+        </select>
+      </div>
+    } @else {
+      <label class="field field--check">
+        <input type="checkbox" [ngModel]="onlyMine()" (ngModelChange)="onlyMine.set($event); applyFilters()" /> Solo mías
+      </label>
+    }
+    <div class="field field--search">
+      <label for="ops-search">Código de grupo o descripción</label>
+      <input id="ops-search" type="search" placeholder="Ej. PG-000025" [ngModel]="search()" (ngModelChange)="search.set($event)"
+        (keyup.enter)="applyFilters()" (blur)="applyFilters()" />
+    </div>
+  </div>
+
+  @if (list(); as l) {
+    <div class="scroll" tabindex="0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Modalidad</th>
+            <th scope="col">Operación</th>
+            <th scope="col" class="num" title="Transacciones">Trans.</th>
+            <th scope="col" class="num">Monto / autorizado</th>
+            <th scope="col" class="num">Pagado</th>
+            <th scope="col" class="num">Pendiente</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Usuario</th>
+            <th scope="col"><span class="sr-label">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of l.items; track entry.id) {
+            <tr [class.row--grupal]="entry.modality === 'GRUPAL'">
+              <td>{{ formatDateTime(entry.createdAt) }}</td>
+              <td><span [class]="'chip chip--' + (entry.modality === 'GRUPAL' ? 'grupal' : 'individual')">{{ modalityLabel[entry.modality] | uppercase }}</span></td>
+              <td class="desc">
+                @if (entry.group; as g) { <strong class="code">{{ g.code }}</strong> }
+                {{ entry.description || '—' }}
+                @if (entry.bankName) { <small>{{ entry.bankName }}</small> }
+              </td>
+              <td class="num">{{ entry.transactionCount }}</td>
+              <td class="num">{{ formatCurrency(entry.amount) }}</td>
+              <td class="num">{{ entry.group ? formatCurrency(entry.group.paidAmount) : '—' }}</td>
+              <td class="num">{{ entry.group ? formatCurrency(entry.group.outstandingAmount) : '—' }}</td>
+              <td><span [class]="'chip chip--' + statusTone(entry)">{{ statusText(entry) }}</span></td>
+              <td>{{ entry.username }}</td>
+              <td>
+                <button type="button" class="icon-btn" [attr.aria-label]="(entry.group ? 'Abrir grupo ' + entry.group.code : 'Ver operación')"
+                  [title]="entry.group ? 'Abrir grupo' : 'Ver detalle'" (click)="open(entry)">
+                  <app-icon [name]="entry.group ? 'layers' : 'eye'" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="10" class="empty">No hay operaciones con estos filtros.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Páginas">
+        <app-button variant="ghost" size="sm" [disabled]="page() === 1" (click)="goToPage(page() - 1)">Anterior</app-button>
+        <span>Página {{ page() }} de {{ totalPages() }}</span>
+        <app-button variant="ghost" size="sm" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">Siguiente</app-button>
+      </nav>
+    }
+  } @else {
+    <p class="empty">{{ loading() ? 'Cargando…' : 'No se pudieron cargar las operaciones.' }}</p>
+  }
+</section>
+
+<app-bank-deposit-detail-modal [open]="detailId() !== null" [operationId]="detailId()" (closed)="detailId.set(null)" />

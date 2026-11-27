@@ -1,5 +1,9 @@
 <div class="page">
-  <a routerLink="/dashboard/pagos-grupales" class="back"><app-icon name="chevron-left" [size]="16" /> Pagos grupales</a>
+  <!-- A group is a modality of its operation type: back to that type in Transaccionar. -->
+  <a routerLink="/dashboard/transaccionar" [queryParams]="detail() ? { tipo: detail()!.group.transactionTypeId } : {}" class="back">
+    <app-icon name="chevron-left" [size]="16" />
+    Transaccionar{{ detail() ? ' · ' + detail()!.group.transactionTypeName : '' }}
+  </a>
 
   @if (loading()) {
     <p class="empty">Cargando…</p>
@@ -10,7 +14,7 @@
   @if (detail(); as d) {
     <header class="panel head">
       <div class="head__main">
-        <p class="head__code">{{ d.group.code }} · {{ d.group.transactionTypeName }}</p>
+        <p class="head__code"><span class="chip chip--grupal">PAGO GRUPAL</span> {{ d.group.code }} · {{ d.group.transactionTypeName }}</p>
         <h1 class="head__title">{{ d.group.description }}</h1>
         <p class="head__meta">
           {{ formatDate(d.group.operationDate) }} · Responsable {{ d.group.createdByUsername }}

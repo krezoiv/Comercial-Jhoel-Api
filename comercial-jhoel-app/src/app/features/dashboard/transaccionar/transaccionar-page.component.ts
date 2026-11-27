@@ -55,7 +55,9 @@ import { ChangeConfirmModalComponent } from './components/change-confirm-modal/c
 import { BankPickerModalComponent, BankPickerSelection } from './components/bank-picker-modal/bank-picker-modal.component';
 import { RecentTransactionsCardComponent } from './components/recent-transactions-card/recent-transactions-card.component';
 import { PaymentGroupCreateFormComponent } from '../payment-groups/components/payment-group-create-form/payment-group-create-form.component';
-import { Router } from '@angular/router';
+import { TypeOperationsPanelComponent } from './components/type-operations-panel/type-operations-panel.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { paymentGroupRoute } from '../../../core/models';
 import type { PaymentGroupDetail } from '../../../core/models';
 
 type TransaccionarView = 'dashboard' | 'form';
@@ -114,6 +116,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     OperationCardsComponent,
     RecentTransactionsCardComponent,
     PaymentGroupCreateFormComponent,
+    TypeOperationsPanelComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -132,6 +135,7 @@ export class TransaccionarPageComponent {
 
   readonly draft = inject(BankDepositDraftStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   /** "Pago individual" (the usual form) or "Pago grupal" (types enabled in Sistema → Tipos de transacción). */
   readonly groupMode = signal(false);
@@ -382,6 +386,7 @@ export class TransaccionarPageComponent {
         if (current) {
           this.draft.syncBalanceEffect(current.balanceEffect ?? null);
         }
+        this.openTypeFromQuery(types);
       },
       error: () => {
         this.loadingTypes.set(false);
@@ -509,11 +514,27 @@ export class TransaccionarPageComponent {
     this.view.set('dashboard');
   }
 
+  /**
+   * `?tipo=<id>` (e.g. "Volver a Pago Varios" from a group's detail) opens that
+   * operation type, unless a different operation with data is in progress.
+   */
+  private openTypeFromQuery(types: TransactionType[]): void {
+    const typeId = this.route.snapshot.queryParamMap.get('tipo');
+    const type = typeId ? types.find((candidate) => candidate.id === typeId) : undefined;
+    if (!type) {
+      return;
+    }
+    if (this.draft.transactionTypeId() !== type.id && !this.draft.hasMeaningfulProgress()) {
+      this.selectType(type);
+    }
+    void this.router.navigate([], { queryParams: { tipo: null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
   /** The group was created (and, for a type that takes cash out, its money reserved): continue in its detail. */
   onGroupCreated(detail: PaymentGroupDetail): void {
     this.draft.reset();
     this.groupMode.set(false);
-    void this.router.navigate(['/dashboard/pagos-grupales', detail.group.id]);
+    void this.router.navigate(paymentGroupRoute(detail.group.id));
   }
 
   onBankChange(id: string): void {

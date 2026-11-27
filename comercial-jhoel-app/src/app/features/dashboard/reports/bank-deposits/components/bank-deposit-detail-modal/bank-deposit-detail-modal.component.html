@@ -16,6 +16,19 @@
           </p>
         }
         @if (!loading() && operation(); as op) {
+          @if (op.paymentGroup; as g) {
+            <div class="group-banner" role="note">
+              <app-icon name="layers" [size]="16" />
+              <div>
+                <strong>Esta transacción pertenece a un PAGO GRUPAL</strong>
+                <p>
+                  {{ g.code }} · {{ g.description }} · Transacción {{ g.itemNumber }} de {{ g.itemCount }} ·
+                  Estado del grupo: {{ groupStatusLabel[g.groupStatus] }}
+                </p>
+              </div>
+              <a [routerLink]="groupRoute(g.groupId)" (click)="onClose()">Abrir grupo</a>
+            </div>
+          }
           @if (op.isVoided) {
             <div class="void-banner">
               <app-icon name="x-circle" [size]="16" />

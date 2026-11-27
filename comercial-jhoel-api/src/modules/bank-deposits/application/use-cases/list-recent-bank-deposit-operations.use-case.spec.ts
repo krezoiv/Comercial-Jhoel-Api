@@ -49,6 +49,7 @@ describe('ListRecentBankDepositOperationsUseCase', () => {
   beforeEach(() => {
     repository = {
       findRecent: jest.fn(),
+      findPaymentGroupLinks: jest.fn().mockResolvedValue(new Map()),
     } as unknown as jest.Mocked<BankDepositRepository>;
     useCase = new ListRecentBankDepositOperationsUseCase(repository);
   });

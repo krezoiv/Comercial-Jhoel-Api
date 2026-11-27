@@ -1,3 +1,7 @@
+import type {
+  OperationModality,
+  OperationPaymentGroupLink,
+} from '../../domain/operation-modality';
 import { BankDepositOperation } from '../../domain/entities/bank-deposit-operation.entity';
 
 export interface BankDepositCashDetailOutput {
@@ -49,6 +53,9 @@ export interface BankDepositOperationOutput {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** INDIVIDUAL, or GRUPAL when it is a delivery / collection of a payment group (see `paymentGroup`). */
+  modality: OperationModality;
+  paymentGroup: OperationPaymentGroupLink | null;
   /** Solo en la respuesta de `POST /bank-deposits`: el movimiento de saldo que generó la operación (saldo anterior → posterior). */
   balanceMovement?: BankDepositBalanceMovementOutput | null;
   /** Solo en la respuesta de `POST /bank-deposits`: el movimiento del Kardex oficial de efectivo (Control de Efectivo). `currentBalance` incluye lo que la misma operación haya enviado a CxC/Activos. */
@@ -97,10 +104,15 @@ export interface BankDepositOperationSummaryOutput {
   voidedAt: Date | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** INDIVIDUAL, or GRUPAL when it is a delivery / collection of a payment group (see `paymentGroup`). */
+  modality: OperationModality;
+  paymentGroup: OperationPaymentGroupLink | null;
 }
 
+/** `link`: the payment group of the operation (null / omitted = INDIVIDUAL). */
 export function toBankDepositOperationOutput(
   operation: BankDepositOperation,
+  link: OperationPaymentGroupLink | null = null,
 ): BankDepositOperationOutput {
   return {
     id: operation.id,
@@ -142,11 +154,14 @@ export function toBankDepositOperationOutput(
     voidedBy: operation.voidedBy,
     voidedByUsername: operation.voidedByUsername,
     voidReason: operation.voidReason,
+    modality: link ? 'GRUPAL' : 'INDIVIDUAL',
+    paymentGroup: link,
   };
 }
 
 export function toBankDepositOperationSummaryOutput(
   operation: BankDepositOperation,
+  link: OperationPaymentGroupLink | null = null,
 ): BankDepositOperationSummaryOutput {
   return {
     id: operation.id,
@@ -170,5 +185,7 @@ export function toBankDepositOperationSummaryOutput(
     voidedAt: operation.voidedAt,
     voidedByUsername: operation.voidedByUsername,
     voidReason: operation.voidReason,
+    modality: link ? 'GRUPAL' : 'INDIVIDUAL',
+    paymentGroup: link,
   };
 }

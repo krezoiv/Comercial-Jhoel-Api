@@ -1,3 +1,4 @@
+import type { OperationModality } from '../../../bank-deposits/domain/operation-modality';
 import { Inject, Injectable } from '@nestjs/common';
 import { BANK_DEPOSIT_REPOSITORY } from '../../../bank-deposits/domain/repositories/bank-deposit.repository';
 import type { BankDepositRepository } from '../../../bank-deposits/domain/repositories/bank-deposit.repository';
@@ -18,6 +19,8 @@ import {
 } from '../../infrastructure/pdf/report-pdf.builder';
 
 export interface ExportBankDepositsReportPdfInput {
+  /** INDIVIDUAL / GRUPAL (Pagos grupales); omitted = both. */
+  modality?: OperationModality;
   startDate?: string;
   endDate?: string;
   transactionBankId?: string;
@@ -85,6 +88,7 @@ export class ExportBankDepositsReportPdfUseCase {
     }
 
     const filters = {
+      modality: input.modality,
       startDate: input.startDate,
       endDate: input.endDate,
       transactionBankId: input.transactionBankId,

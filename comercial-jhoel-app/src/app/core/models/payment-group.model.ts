@@ -238,3 +238,93 @@ export function groupFlowWords(direction: PaymentGroupCashDirection): {
       ? { paid: 'Entregado', confirm: 'Confirmar pago', cashVerb: 'Salida real de Caja' }
       : { paid: 'Pagado', confirm: 'Confirmar pago', cashVerb: 'Sin efecto en Caja' };
 }
+
+/** Pago individual vs Pago grupal: two modalities of the same operation type (Pago Varios, Préstamos Génesis). */
+export type OperationModality = 'INDIVIDUAL' | 'GRUPAL';
+
+export const OPERATION_MODALITY_LABEL: Record<OperationModality, string> = {
+  INDIVIDUAL: 'Individual',
+  GRUPAL: 'Grupal',
+};
+
+/** The group a GRUPAL operation belongs to. */
+export interface OperationPaymentGroupLink {
+  groupId: string;
+  code: string;
+  description: string;
+  groupStatus: PaymentGroupStatus;
+  itemId: string;
+  itemNumber: number;
+  itemCount: number;
+  itemStatus: PaymentGroupItemStatus;
+  expectedAmount: number;
+  paidAmount: number;
+}
+
+/** Status filter of "Operaciones de <tipo>" (individual operations and groups share one list). */
+export type TypeEntryStatus = 'VIGENTE' | 'ANULADA' | 'PENDIENTE' | 'EN_PROCESO' | 'PARCIAL' | 'COMPLETADO';
+
+export const TYPE_ENTRY_STATUS_LABEL: Record<TypeEntryStatus, string> = {
+  VIGENTE: 'Vigente (individual)',
+  ANULADA: 'Anulada / anulado',
+  PENDIENTE: 'Pendiente (grupo)',
+  EN_PROCESO: 'En proceso (grupo)',
+  PARCIAL: 'Parcial (grupo)',
+  COMPLETADO: 'Completado (grupo)',
+};
+
+/** One row of "Operaciones de <tipo>": an individual operation, or a whole payment group. */
+export interface TypeOperationEntry {
+  modality: OperationModality;
+  /** Operation id (INDIVIDUAL) or group id (GRUPAL). */
+  id: string;
+  createdAt: string;
+  operationDate: string;
+  description: string | null;
+  amount: number;
+  transactionCount: number;
+  bankName: string | null;
+  userId: string;
+  username: string;
+  /** VIGENTE / ANULADA, or the group status. */
+  status: string;
+  group: {
+    code: string;
+    cashDirection: PaymentGroupCashDirection;
+    itemCount: number;
+    authorizedAmount: number;
+    paidAmount: number;
+    outstandingAmount: number;
+    reservedAmount: number;
+  } | null;
+}
+
+export interface TypeOperationFilters {
+  modality?: OperationModality;
+  startDate?: string;
+  endDate?: string;
+  status?: TypeEntryStatus;
+  userId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface TypeOperationList {
+  items: TypeOperationEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  summary: {
+    individualCount: number;
+    groupCount: number;
+    groupReserved: number;
+    groupPaid: number;
+    groupOutstanding: number;
+  };
+}
+
+/** Route of a group's detail, inside Transaccionar (groups are a modality of the operation, not a module). */
+export function paymentGroupRoute(groupId: string): string[] {
+  return ['/dashboard/transaccionar/pago-grupal', groupId];
+}

@@ -33,7 +33,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     path: 'agentes-bancarios',
     children: [
       { label: 'Transaccionar', icon: 'bank', path: 'transaccionar' },
-      { label: 'Pagos Grupales', icon: 'layers', path: 'pagos-grupales' },
       { label: 'Control de Efectivo', icon: 'wallet', path: 'control-efectivo' },
       { label: 'Cuadre de Caja Guayacán', icon: 'wallet', path: 'caja-guayacan' },
       { label: 'Transferencias Bancarias', icon: 'arrow-left-right', path: 'transferencias-bancarias' },

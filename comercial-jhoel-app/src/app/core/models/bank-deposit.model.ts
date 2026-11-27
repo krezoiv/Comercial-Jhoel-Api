@@ -1,3 +1,4 @@
+import type { OperationModality, OperationPaymentGroupLink } from './payment-group.model';
 /** Fixed denominations offered by the cash-breakdown table — matches the ticket's own list, quetzales only. */
 export const BANK_DEPOSIT_CASH_DENOMINATIONS = [200, 100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01] as const;
 
@@ -55,6 +56,10 @@ export interface BankDepositOperation {
   voidedBy: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** Pago individual or Pago grupal (a delivery / collection of a payment group). Absent on old responses = INDIVIDUAL. */
+  modality?: OperationModality;
+  /** The group of a GRUPAL operation ("Transacción 6 de 10"); null for an individual one. */
+  paymentGroup?: OperationPaymentGroupLink | null;
   /** Solo en la respuesta de `POST /bank-deposits`: saldo anterior → posterior de la cuenta afectada. */
   balanceMovement?: {
     bankId: string;
@@ -102,6 +107,10 @@ export interface BankDepositOperationSummary {
   voidedAt: string | null;
   voidedByUsername: string | null;
   voidReason: string | null;
+  /** Pago individual or Pago grupal (a delivery / collection of a payment group). Absent on old responses = INDIVIDUAL. */
+  modality?: OperationModality;
+  /** The group of a GRUPAL operation ("Transacción 6 de 10"); null for an individual one. */
+  paymentGroup?: OperationPaymentGroupLink | null;
 }
 
 export interface BankDepositCashDetailInput {
@@ -206,6 +215,8 @@ export interface BankDepositYearlyStats {
 }
 
 export interface BankDepositsReportFilters {
+  /** INDIVIDUAL / GRUPAL; omitted = both. */
+  modality?: OperationModality;
   startDate?: string;
   endDate?: string;
   transactionBankId?: string;

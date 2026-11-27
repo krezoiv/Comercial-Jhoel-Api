@@ -19,6 +19,8 @@ export class GetBankDepositOperationByIdUseCase {
     if (!operation) {
       throw new BankDepositOperationNotFoundError(id);
     }
-    return toBankDepositOperationOutput(operation);
+    // A group delivery says so ("Esta transacción pertenece a un PAGO GRUPAL"); an individual one has no group.
+    const links = await this.bankDepositRepository.findPaymentGroupLinks([id]);
+    return toBankDepositOperationOutput(operation, links.get(id) ?? null);
   }
 }

@@ -1,3 +1,5 @@
+import { RouterLink } from '@angular/router';
+import { PAYMENT_GROUP_STATUS_LABEL, paymentGroupRoute } from '../../../../../../core/models';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -31,7 +33,7 @@ import { ButtonComponent, IconComponent } from '../../../../../../shared/ui';
 @Component({
   selector: 'app-bank-deposit-detail-modal',
   standalone: true,
-  imports: [DatePipe, ButtonComponent, IconComponent],
+  imports: [DatePipe, RouterLink, ButtonComponent, IconComponent],
   templateUrl: './bank-deposit-detail-modal.component.html',
   styleUrl: './bank-deposit-detail-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +47,9 @@ export class BankDepositDetailModalComponent implements OnChanges {
 
   @Output() closed = new EventEmitter<void>();
 
+  /** Pagos grupales: the operation of a group says so and links to its group. */
+  readonly groupStatusLabel = PAYMENT_GROUP_STATUS_LABEL;
+  readonly groupRoute = paymentGroupRoute;
   readonly operation = signal<BankDepositOperation | null>(null);
   readonly loading = signal(false);
 

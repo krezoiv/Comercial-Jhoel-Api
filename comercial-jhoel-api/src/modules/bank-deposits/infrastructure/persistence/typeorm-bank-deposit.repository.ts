@@ -39,6 +39,63 @@ import { portfolioRecordErrorFromMessage } from '../../../../shared/domain/portf
 import { paymentGroupErrorFromMessage } from '../../../payment-groups/domain/payment-group';
 import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
 import { BankDepositOperationMapper } from './bank-deposit-operation.mapper';
+import type {
+  OperationModality,
+  OperationPaymentGroupLink,
+  TypeOperationEntry,
+  TypeOperationFilters,
+  TypeOperationSummary,
+} from '../../domain/operation-modality';
+
+/** DATE columns come back as JS dates at local midnight: back to yyyy-MM-dd. */
+function toIsoDate(value: Date): string {
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${value.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * "Operaciones de <tipo>": the individual operations of a type (those that are
+ * not a group delivery) and its payment groups, as one filterable list. $1 type,
+ * $2 modality, $3/$4 dates, $5 status, $6 user, $7 search (description,
+ * beneficiary or group code).
+ */
+const TYPE_ENTRIES = `
+  WITH all_entries AS (
+    SELECT 'INDIVIDUAL'::text AS modality, o.id, o.created_at, o.operation_date,
+           COALESCE(NULLIF(btrim(o.description), ''), NULLIF(btrim(o.client_name), '')) AS description,
+           o.total_amount AS amount, o.transaction_count, COALESCE(tb.name, bk.name) AS bank_name,
+           o.user_id, u.username, CASE WHEN o.is_voided THEN 'ANULADA' ELSE 'VIGENTE' END AS status,
+           NULL::text AS code, NULL::text AS cash_direction,
+           NULL::numeric AS paid, NULL::numeric AS outstanding, NULL::numeric AS reserved
+    FROM bank_deposit_operations o
+    JOIN users u ON u.id = o.user_id
+    LEFT JOIN transaction_banks tb ON tb.id = o.transaction_bank_id
+    LEFT JOIN banks bk ON bk.id = o.bank_account_id
+    WHERE o.transaction_type_id = $1::uuid
+      AND NOT EXISTS (SELECT 1 FROM payment_group_deliveries d WHERE d.operation_id = o.id)
+    UNION ALL
+    SELECT 'GRUPAL', b.id, b.created_at, b.operation_date, b.description, b.authorized_amount, b.item_count,
+           COALESCE(tb.name, bk.name), b.created_by, u.username, b.display_status,
+           b.code, b.cash_direction, b.paid_amount, b.outstanding_amount,
+           CASE WHEN b.cash_direction = 'OUT' THEN b.remaining_amount ELSE 0 END
+    FROM payment_group_balances b
+    JOIN users u ON u.id = b.created_by
+    LEFT JOIN transaction_banks tb ON tb.id = b.transaction_bank_id
+    LEFT JOIN banks bk ON bk.id = b.bank_account_id
+    WHERE b.transaction_type_id = $1::uuid
+  ),
+  entries AS (
+    SELECT * FROM all_entries e
+    WHERE ($2::text IS NULL OR e.modality = $2::text)
+      AND ($3::date IS NULL OR e.operation_date >= $3::date)
+      AND ($4::date IS NULL OR e.operation_date <= $4::date)
+      AND ($5::text IS NULL OR e.status = $5::text OR ($5::text = 'ANULADA' AND e.status = 'ANULADO'))
+      AND ($6::uuid IS NULL OR e.user_id = $6::uuid)
+      AND ($7::text IS NULL OR search_normalize(COALESCE(e.description, '')) LIKE '%' || search_normalize($7::text) || '%'
+           OR e.code ILIKE '%' || $7::text || '%')
+  )
+`;
 
 @Injectable()
 export class TypeOrmBankDepositRepository implements BankDepositRepository {
@@ -144,6 +201,112 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       .limit(limit)
       .getMany();
     return orms.map((orm) => BankDepositOperationMapper.toDomain(orm));
+  }
+
+  async findPaymentGroupLinks(
+    operationIds: string[],
+  ): Promise<Map<string, OperationPaymentGroupLink>> {
+    const links = new Map<string, OperationPaymentGroupLink>();
+    if (operationIds.length === 0) {
+      return links;
+    }
+    const rows = await this.repository.manager.query<Record<string, unknown>[]>(
+      `SELECT d.operation_id, g.id AS group_id, g.code, g.description, g.display_status, g.item_count,
+              i.id AS item_id, i.item_number, i.status AS item_status, i.expected_amount, i.paid_amount
+       FROM payment_group_deliveries d
+       JOIN payment_group_balances g ON g.id = d.group_id
+       JOIN payment_group_item_balances i ON i.id = d.item_id
+       WHERE d.operation_id = ANY ($1::uuid[])`,
+      [operationIds],
+    );
+    for (const row of rows) {
+      links.set(String(row.operation_id), {
+        groupId: String(row.group_id),
+        code: String(row.code),
+        description: String(row.description),
+        groupStatus: String(row.display_status),
+        itemId: String(row.item_id),
+        itemNumber: Number(row.item_number),
+        itemCount: Number(row.item_count),
+        itemStatus: String(row.item_status),
+        expectedAmount: Number(row.expected_amount),
+        paidAmount: Number(row.paid_amount),
+      });
+    }
+    return links;
+  }
+
+  async findTypeEntries(filters: TypeOperationFilters): Promise<{
+    items: TypeOperationEntry[];
+    total: number;
+    summary: TypeOperationSummary;
+  }> {
+    const params = [
+      filters.transactionTypeId,
+      filters.modality ?? null,
+      filters.startDate ?? null,
+      filters.endDate ?? null,
+      filters.status ?? null,
+      filters.userId ?? null,
+      filters.search?.trim()
+        ? filters.search.trim().replace(/[%_\\]/g, (c) => `\\${c}`)
+        : null,
+    ];
+    const rows = await this.repository.manager.query<Record<string, unknown>[]>(
+      `${TYPE_ENTRIES} SELECT e.*, count(*) OVER () AS total_count FROM entries e
+       ORDER BY e.created_at DESC, e.id DESC LIMIT $8 OFFSET $9`,
+      [...params, filters.limit, (filters.page - 1) * filters.limit],
+    );
+    const [totals] = await this.repository.manager.query<Record<string, unknown>[]>(
+      `${TYPE_ENTRIES}
+       SELECT count(*) FILTER (WHERE modality = 'INDIVIDUAL') AS individual_count,
+              count(*) FILTER (WHERE modality = 'GRUPAL') AS group_count,
+              COALESCE(SUM(reserved), 0) AS group_reserved,
+              COALESCE(SUM(paid), 0) AS group_paid,
+              COALESCE(SUM(outstanding), 0) AS group_outstanding
+       FROM entries`,
+      params,
+    );
+    const num = (value: unknown) => Number(value ?? 0);
+    const items: TypeOperationEntry[] = rows.map((row) => ({
+      modality: row.modality as OperationModality,
+      id: String(row.id),
+      createdAt: row.created_at as Date,
+      operationDate:
+        row.operation_date instanceof Date
+          ? toIsoDate(row.operation_date)
+          : String(row.operation_date).slice(0, 10),
+      description: row.description === null ? null : String(row.description),
+      amount: num(row.amount),
+      transactionCount: num(row.transaction_count),
+      bankName: row.bank_name === null ? null : String(row.bank_name),
+      userId: String(row.user_id),
+      username: String(row.username),
+      status: String(row.status),
+      group:
+        row.modality === 'GRUPAL'
+          ? {
+              code: String(row.code),
+              cashDirection: row.cash_direction as 'IN' | 'OUT' | 'NONE',
+              itemCount: num(row.transaction_count),
+              authorizedAmount: num(row.amount),
+              paidAmount: num(row.paid),
+              outstandingAmount: num(row.outstanding),
+              reservedAmount: num(row.reserved),
+            }
+          : null,
+    }));
+    return {
+      items,
+      total: rows.length ? num(rows[0].total_count) : 0,
+      summary: {
+        individualCount: num(totals?.individual_count),
+        groupCount: num(totals?.group_count),
+        groupReserved: num(totals?.group_reserved),
+        groupPaid: num(totals?.group_paid),
+        groupOutstanding: num(totals?.group_outstanding),
+      },
+    };
   }
 
   async findById(
@@ -313,6 +476,7 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
   private applyFilters(
     qb: SelectQueryBuilder<BankDepositOperationOrmEntity>,
     filters: {
+      modality?: OperationModality;
       transactionBankId?: string;
       transactionTypeId?: string;
       userId?: string;
@@ -321,6 +485,16 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
       search?: string;
     },
   ): void {
+    // Pagos grupales: an operation is GRUPAL when it is a group delivery / collection (derived, never stored).
+    if (filters.modality === 'GRUPAL') {
+      qb.andWhere(
+        `${qb.alias}.id IN (SELECT pgd.operation_id FROM payment_group_deliveries pgd)`,
+      );
+    } else if (filters.modality === 'INDIVIDUAL') {
+      qb.andWhere(
+        `${qb.alias}.id NOT IN (SELECT pgd.operation_id FROM payment_group_deliveries pgd)`,
+      );
+    }
     if (filters.transactionBankId) {
       qb.andWhere('operation.transactionBankId = :transactionBankId', {
         transactionBankId: filters.transactionBankId,

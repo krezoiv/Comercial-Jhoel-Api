@@ -28,8 +28,14 @@ export class ListRecentBankDepositOperationsUseCase {
     const operations = await this.bankDepositRepository.findRecent(
       RECENT_BANK_DEPOSIT_OPERATIONS_LIMIT,
     );
+    const links = await this.bankDepositRepository.findPaymentGroupLinks(
+      operations.map((operation) => operation.id),
+    );
     return operations.map((operation) =>
-      toBankDepositOperationSummaryOutput(operation),
+      toBankDepositOperationSummaryOutput(
+        operation,
+        links.get(operation.id) ?? null,
+      ),
     );
   }
 }
