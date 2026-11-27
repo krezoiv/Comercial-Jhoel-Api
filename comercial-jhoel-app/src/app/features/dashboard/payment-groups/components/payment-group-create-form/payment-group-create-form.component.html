@@ -1,0 +1,123 @@
+<section class="panel create">
+  <header class="create__head">
+    <h2 class="create__title"><app-icon name="layers" [size]="18" /> Pago grupal · {{ transactionTypeName }}</h2>
+    <p class="create__lead">
+      @if (reserves()) {
+        Se reserva el monto autorizado y cada pago se confirma por separado. El efectivo físico solo baja cuando se confirma una
+        entrega real.
+      } @else {
+        Cada cobro se confirma por separado y entra a Caja al confirmarlo. Este tipo no reserva efectivo.
+      }
+    </p>
+  </header>
+
+  @if (cash(); as c) {
+    <dl class="cash">
+      <div><dt>Saldo físico de Caja</dt><dd class="money">{{ formatCurrency(c.balance) }}</dd></div>
+      <div><dt>Reservado por otros grupos</dt><dd class="money">{{ formatCurrency(c.reserved ?? 0) }}</dd></div>
+      <div><dt>Disponible para operar</dt><dd class="money">{{ formatCurrency(c.available ?? c.balance) }}</dd></div>
+      @if (reserves()) {
+        <div [class.negative]="(availableAfter() ?? 0) < 0">
+          <dt>Disponible después de reservar</dt><dd class="money">{{ formatCurrency(availableAfter() ?? 0) }}</dd>
+        </div>
+      }
+    </dl>
+  }
+
+  <div class="grid">
+    <div class="field field--wide">
+      <label for="group-description">Nombre o descripción del grupo *</label>
+      <input id="group-description" type="text" maxlength="200" placeholder="Ej. Pagos varios del día"
+        [ngModel]="description()" (ngModelChange)="description.set($event)" />
+    </div>
+
+    @if (!isGenesis) {
+      <div class="field">
+        <label for="group-agent">Banco agente *</label>
+        @if (needsAccount) {
+          <div class="bank">
+            <span>{{ selectedBankName || 'Sin seleccionar' }}</span>
+            <button type="button" class="link" (click)="changeBank.emit()">Cambiar banco</button>
+          </div>
+        } @else {
+          <select id="group-agent" [ngModel]="agentId()" (ngModelChange)="agentId.set($event)">
+            <option value="" disabled>Seleccionar banco agente</option>
+            @for (bank of agents(); track bank.id) {
+              <option [value]="bank.id">{{ bank.name }}</option>
+            }
+          </select>
+        }
+      </div>
+    }
+
+    <div class="field">
+      <label for="group-count">Cantidad de transacciones *</label>
+      <input id="group-count" type="number" min="1" [max]="maxItems" [ngModel]="count()" (ngModelChange)="onCountChange($event)" />
+    </div>
+
+    <div class="field">
+      <label for="group-authorized">{{ reserves() ? 'Monto total autorizado (se reserva) *' : 'Monto total esperado *' }}</label>
+      <div class="amount">
+        <span>Q</span>
+        <input id="group-authorized" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+          [ngModel]="authorized() || null" (ngModelChange)="authorized.set(+$event || 0)" />
+      </div>
+    </div>
+
+    <div class="field field--wide">
+      <label for="group-observations">Observaciones generales <span class="optional">(opcional)</span></label>
+      <input id="group-observations" type="text" maxlength="500" [ngModel]="observations()" (ngModelChange)="observations.set($event)" />
+    </div>
+  </div>
+
+  <div class="items__head">
+    <h3>Transacciones ({{ count() }})</h3>
+    <app-button variant="ghost" size="sm" [disabled]="!authorized()" (click)="splitEqually()">Repartir en partes iguales</app-button>
+  </div>
+  <div class="scroll">
+    <table class="table">
+      <thead>
+        <tr><th scope="col">No.</th><th scope="col">Beneficiario o referencia</th><th scope="col" class="num">Monto esperado</th></tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track $index) {
+          <tr>
+            <td>{{ $index + 1 }}</td>
+            <td>
+              <input class="cell-input" type="text" maxlength="150" [attr.aria-label]="'Referencia de la transacción ' + ($index + 1)"
+                [ngModel]="item.reference" (ngModelChange)="updateItem($index, { reference: $event })" />
+            </td>
+            <td class="num">
+              <input class="cell-input cell-input--amount" type="text" inputmode="decimal" appDecimalInput placeholder="0.00"
+                [attr.aria-label]="'Monto esperado de la transacción ' + ($index + 1)"
+                [ngModel]="item.expectedAmount || null" (ngModelChange)="updateItem($index, { expectedAmount: +$event || 0 })" />
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">Asignado / {{ reserves() ? 'autorizado' : 'esperado' }}</td>
+          <td class="num" [class.negative]="unassigned() < 0">
+            {{ formatCurrency(assigned()) }} / {{ formatCurrency(authorized()) }}
+            @if (unassigned() > 0) { <small>(sin asignar {{ formatCurrency(unassigned()) }})</small> }
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  @if (problems().length) {
+    <ul class="problems" aria-live="polite">
+      @for (problem of problems(); track problem) { <li>{{ problem }}</li> }
+    </ul>
+  }
+  @if (errorMessage()) {
+    <p class="error" role="alert">{{ errorMessage() }}</p>
+  }
+  <div class="actions">
+    <app-button variant="primary" [disabled]="problems().length > 0 || isSaving()" (click)="save()">
+      {{ isSaving() ? 'Creando…' : reserves() ? 'Crear grupo y reservar' : 'Crear grupo' }}
+    </app-button>
+  </div>
+</section>

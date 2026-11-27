@@ -142,3 +142,49 @@
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
+
+.field__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.method-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.method-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    border-color: var(--color-primary, #2563eb);
+    background: rgba(37, 99, 235, 0.08);
+    font-weight: 600;
+  }
+
+  &:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.cash-note {
+  font-size: var(--fs-xs);
+  color: var(--color-text-on-light-muted, #6b7280);
+  background: rgba(100, 116, 139, 0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.locked-value {
+  font-size: var(--fs-sm);
+  padding: var(--space-2) 0;
+}

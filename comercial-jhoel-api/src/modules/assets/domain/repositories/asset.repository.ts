@@ -1,5 +1,11 @@
 import { Asset, AssetMovementType } from '../entities/asset.entity';
 import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
+import type {
+  PortfolioPaymentMethod,
+  PortfolioRecordTrace,
+  PortfolioStatement,
+  PortfolioStatementMovement,
+} from '../../../../shared/domain/portfolio-record';
 
 export const ASSET_REPOSITORY = Symbol('ASSET_REPOSITORY');
 
@@ -46,6 +52,7 @@ export interface CreateAssetData {
   date: string;
   amount: number;
   description: string | null;
+  paymentMethod: PortfolioPaymentMethod;
   createdBy: string;
 }
 
@@ -54,6 +61,9 @@ export interface UpdateAssetData {
   date?: string;
   amount?: number;
   description?: string | null;
+  paymentMethod?: PortfolioPaymentMethod;
+  /** Mandatory (≥5) when amount or payment method change — enforced by the database. */
+  reason?: string | null;
   updatedBy: string;
 }
 
@@ -68,36 +78,20 @@ export interface RegisterAssetMovementData {
   /** Origen polimórfico — `null` para un movimiento registrado directo en Activos; `'BANK_DEPOSIT'` + id de la operación cuando lo genera Transaccionar. */
   referenceType?: string | null;
   referenceId?: string | null;
+  /** null/undefined = EFECTIVO. */
+  paymentMethod?: PortfolioPaymentMethod | null;
 }
 
-export interface StatementMovement {
-  id: string;
-  date: string;
-  movementType: AssetMovementType;
-  description: string | null;
-  amount: number;
-  /** The running balance immediately after this movement — computed fresh on every read, never stored (see the migration's own doc comment for why). */
-  balanceAfter: number;
-  createdByUsername: string;
-  createdAt: Date;
-}
+/** A statement row: voided rows included (balanceAfter null), each with its cash trace. */
+export type StatementMovement = PortfolioStatementMovement;
 
 export interface GetAssetStatementOptions {
-  /** Omit for "since the beginning" — `openingBalance` is then always 0. */
   dateFrom?: string;
   dateTo?: string;
+  includeVoided?: boolean;
 }
 
-export interface AssetStatement {
-  clientId: string;
-  clientName: string;
-  /** The signed running balance immediately before `dateFrom` — 0 if `dateFrom` is omitted, never assumed zero when real prior activity exists. */
-  openingBalance: number;
-  movements: StatementMovement[];
-  totalCargos: number;
-  totalAbonos: number;
-  closingBalance: number;
-}
+export type AssetStatement = PortfolioStatement;
 
 export interface AssetRepository {
   findAll(options: FindAssetsOptions): Promise<PaginatedResult<Asset>>;
@@ -107,7 +101,8 @@ export interface AssetRepository {
   findById(id: string, context?: TransactionContext): Promise<Asset | null>;
   create(data: CreateAssetData): Promise<Asset>;
   update(id: string, data: UpdateAssetData): Promise<Asset>;
-  deactivate(id: string): Promise<void>;
+  /** Voids with a reason (≥5): reverses its Caja effect, keeps the row and its history. */
+  deactivate(id: string, reason: string, userId: string): Promise<void>;
   /** Invokes the `register_asset_movement` Postgres function — validation, balance computation (for logging/return purposes only, never enforced here — see that function's own doc comment for why Activos allows a negative balance), and the insert all happen atomically, serialized per client via an advisory lock. */
   registerMovement(
     data: RegisterAssetMovementData,
@@ -115,6 +110,8 @@ export interface AssetRepository {
   ): Promise<Asset>;
   /** The client's current signed balance — a single bounded aggregate, never a full-history fetch. */
   getCurrentBalance(clientId: string): Promise<number>;
+  /** Payment method, Kardex movements and change history of one record (null when it does not exist). */
+  getTrace(id: string): Promise<PortfolioRecordTrace | null>;
   getStatement(
     clientId: string,
     options: GetAssetStatementOptions,

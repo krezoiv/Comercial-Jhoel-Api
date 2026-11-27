@@ -12,7 +12,7 @@
 
 .modal {
   width: 100%;
-  max-width: 56rem;
+  max-width: 72rem;
   max-height: 90vh;
   overflow-y: auto;
   background: var(--color-surface-light);
@@ -276,4 +276,111 @@
 .modal__actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.field__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.method-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.method-toggle__option,
+.voided-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.method-toggle__option {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    border-color: var(--color-primary, #2563eb);
+    font-weight: 600;
+  }
+}
+
+.voided-toggle {
+  padding-bottom: var(--space-2);
+}
+
+.row--voided {
+  color: var(--color-text-on-light-muted, #6b7280);
+
+  .concept,
+  .amount {
+    text-decoration: line-through;
+  }
+}
+
+.tag-voided {
+  margin-left: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-danger, #dc4444);
+}
+
+.row-note,
+.field__hint,
+.history,
+.history__cash,
+.history__kardex,
+.cash-cell {
+  font-size: var(--fs-xs);
+}
+
+.row-note {
+  display: block;
+}
+
+.link-button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--fs-xs);
+  color: var(--color-primary, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.modal__table .cash-cell {
+  min-width: 8rem;
+  white-space: normal;
+}
+
+.history-row td {
+  background: rgba(100, 116, 139, 0.06);
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.field__hint,
+.history__cash,
+.history__kardex {
+  color: var(--color-text-on-light-muted, #6b7280);
+}
+
+.history__kardex span {
+  margin-right: var(--space-2);
+}
+
+.filters-row,
+.actions-row {
+  flex-wrap: wrap;
 }

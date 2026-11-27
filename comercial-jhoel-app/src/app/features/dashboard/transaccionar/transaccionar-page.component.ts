@@ -54,6 +54,9 @@ import { CuadreResultCardComponent } from './components/cuadre-result-card/cuadr
 import { ChangeConfirmModalComponent } from './components/change-confirm-modal/change-confirm-modal.component';
 import { BankPickerModalComponent, BankPickerSelection } from './components/bank-picker-modal/bank-picker-modal.component';
 import { RecentTransactionsCardComponent } from './components/recent-transactions-card/recent-transactions-card.component';
+import { PaymentGroupCreateFormComponent } from '../payment-groups/components/payment-group-create-form/payment-group-create-form.component';
+import { Router } from '@angular/router';
+import type { PaymentGroupDetail } from '../../../core/models';
 
 type TransaccionarView = 'dashboard' | 'form';
 
@@ -110,6 +113,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     BankBalanceStripComponent,
     OperationCardsComponent,
     RecentTransactionsCardComponent,
+    PaymentGroupCreateFormComponent,
   ],
   templateUrl: './transaccionar-page.component.html',
   styleUrl: './transaccionar-page.component.scss',
@@ -127,6 +131,14 @@ export class TransaccionarPageComponent {
   private readonly cashSync = inject(GuayacanCashSyncService);
 
   readonly draft = inject(BankDepositDraftStore);
+  private readonly router = inject(Router);
+
+  /** "Pago individual" (the usual form) or "Pago grupal" (types enabled in Sistema → Tipos de transacción). */
+  readonly groupMode = signal(false);
+  readonly selectedType = computed(
+    () => this.transactionTypes().find((type) => type.id === this.draft.transactionTypeId()) ?? null,
+  );
+  readonly groupAllowed = computed(() => !!this.selectedType()?.allowsGroupPayment);
   readonly isAdmin = this.authService.isAdmin;
 
   readonly transactionBanks = signal<TransactionBank[]>([]);
@@ -425,6 +437,7 @@ export class TransaccionarPageComponent {
     if (this.bankPicker()) {
       return;
     }
+    this.groupMode.set(false);
     // Depósito / Retiro / Reintegro: primero se elige el banco (y con él la cuenta) en el modal.
     if (requiresBankAccount(type.balanceEffect)) {
       this.bankPicker.set({ effect: type.balanceEffect!, name: type.name, type });
@@ -492,7 +505,15 @@ export class TransaccionarPageComponent {
       }
     }
     this.draft.reset();
+    this.groupMode.set(false);
     this.view.set('dashboard');
+  }
+
+  /** The group was created (and, for a type that takes cash out, its money reserved): continue in its detail. */
+  onGroupCreated(detail: PaymentGroupDetail): void {
+    this.draft.reset();
+    this.groupMode.set(false);
+    void this.router.navigate(['/dashboard/pagos-grupales', detail.group.id]);
   }
 
   onBankChange(id: string): void {

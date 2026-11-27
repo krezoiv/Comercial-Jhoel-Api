@@ -13,6 +13,7 @@ export interface CreateTransactionTypeData {
   icon: string;
   balanceEffect: TransactionTypeBalanceEffect | null;
   cashEffect: TransactionTypeCashEffect;
+  allowsGroupPayment: boolean;
   createdBy: string;
 }
 
@@ -21,6 +22,7 @@ export interface UpdateTransactionTypeData {
   icon?: string;
   balanceEffect?: TransactionTypeBalanceEffect | null;
   cashEffect?: TransactionTypeCashEffect;
+  allowsGroupPayment?: boolean;
   updatedBy: string;
 }
 

@@ -46,6 +46,8 @@ export * from './dashboard-metrics.model';
 export * from './company-settings.model';
 export * from './alert.model';
 export * from './kardex.model';
+export * from './portfolio-trace.model';
+export * from './payment-group.model';
 export * from './presentation-type.model';
 export * from './unit-of-measure.model';
 export * from './ticket.model';

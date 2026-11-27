@@ -36,6 +36,7 @@ export interface CreateTransactionTypeInput {
   icon: string;
   balanceEffect?: string | null;
   cashEffect?: string | null;
+  allowsGroupPayment?: boolean;
   createdBy: string;
 }
 
@@ -64,6 +65,7 @@ export class CreateTransactionTypeUseCase {
         null) as TransactionTypeBalanceEffect | null,
       cashEffect: (input.cashEffect ??
         defaultCashEffect(input.balanceEffect)) as TransactionTypeCashEffect,
+      allowsGroupPayment: input.allowsGroupPayment ?? false,
       createdBy: input.createdBy,
     });
     return toTransactionTypeOutput(transactionType);

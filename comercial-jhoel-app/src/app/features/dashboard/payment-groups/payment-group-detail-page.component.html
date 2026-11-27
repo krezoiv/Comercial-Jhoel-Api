@@ -1,0 +1,174 @@
+<div class="page">
+  <a routerLink="/dashboard/pagos-grupales" class="back"><app-icon name="chevron-left" [size]="16" /> Pagos grupales</a>
+
+  @if (loading()) {
+    <p class="empty">Cargando…</p>
+  }
+  @if (failed(); as message) {
+    <p class="empty">{{ message }}</p>
+  }
+  @if (detail(); as d) {
+    <header class="panel head">
+      <div class="head__main">
+        <p class="head__code">{{ d.group.code }} · {{ d.group.transactionTypeName }}</p>
+        <h1 class="head__title">{{ d.group.description }}</h1>
+        <p class="head__meta">
+          {{ formatDate(d.group.operationDate) }} · Responsable {{ d.group.createdByUsername }}
+          @if (d.group.transactionBankName) { · {{ d.group.transactionBankName }} }
+          @if (d.group.observations) { · {{ d.group.observations }} }
+        </p>
+      </div>
+      <div class="head__side">
+        <span [class]="'chip chip--' + groupTone(d.group.status)">{{ statusLabel[d.group.status] }}</span>
+        <div class="head__actions">
+          <app-button variant="ghost" size="sm" (click)="history.set({ itemId: null, title: 'Historial del grupo ' + d.group.code })">
+            <app-icon name="clock" [size]="16" /> Historial
+          </app-button>
+          <app-button variant="ghost" size="sm" (click)="groupNote.set(!groupNote())"><app-icon name="message-square" [size]="16" /> Observación</app-button>
+          @if (isAdmin() && isOpen()) {
+            <app-button variant="primary" size="sm" (click)="groupModal.set('CLOSE')"><app-icon name="check-check" [size]="16" /> Cerrar grupo</app-button>
+            @if (d.group.paidAmount === 0) {
+              <app-button variant="danger" size="sm" (click)="groupModal.set('VOID')">Anular</app-button>
+            }
+          }
+        </div>
+      </div>
+      @if (groupNote()) {
+        <div class="head__note">
+          <label for="group-note">Observación del grupo</label>
+          <input #note id="group-note" type="text" maxlength="500" (keyup.enter)="addGroupNote(note.value)" />
+          <app-button size="sm" (click)="addGroupNote(note.value)">Guardar</app-button>
+        </div>
+      }
+      @if (d.group.closedAt) {
+        <p class="head__closed">
+          Cerrado {{ formatDateTime(d.group.closedAt) }} por {{ d.group.closedByUsername }} · {{ flow().paid }}
+          {{ formatCurrency(d.group.closingPaid ?? 0) }} · liberado al cerrar {{ formatCurrency(d.group.closingReleased ?? 0) }}
+          @if (d.group.closeNote) { · {{ d.group.closeNote }} }
+        </p>
+      }
+      @if (d.group.voidedAt) {
+        <p class="head__closed">Anulado {{ formatDateTime(d.group.voidedAt) }} por {{ d.group.voidedByUsername }} · {{ d.group.voidReason }}</p>
+      }
+    </header>
+
+    <section class="finance" aria-label="Panel financiero">
+      <div><span>Saldo físico actual de Caja</span><strong>{{ formatCurrency(d.cash.balance) }}</strong></div>
+      <div><span>{{ reserves() ? 'Reservado inicialmente' : 'Monto esperado' }}</span><strong>{{ formatCurrency(d.group.authorizedAmount) }}</strong></div>
+      <div class="finance--paid"><span>Total {{ flow().paid.toLowerCase() }}</span><strong>{{ formatCurrency(d.group.paidAmount) }}</strong></div>
+      <div><span>Pendiente de ejecutar</span><strong>{{ formatCurrency(d.group.outstandingAmount) }}</strong></div>
+      @if (reserves()) {
+        <div class="finance--reserved"><span>Todavía reservado</span><strong>{{ formatCurrency(d.group.reservedAmount) }}</strong></div>
+      }
+      <div><span>Total liberado</span><strong>{{ formatCurrency(d.group.releasedAmount) }}</strong></div>
+      <div class="finance--available"><span>Disponible para otras operaciones</span><strong>{{ formatCurrency(d.cash.available) }}</strong></div>
+    </section>
+    @if (!reserves()) {
+      <p class="note">
+        {{ d.group.cashDirection === 'IN' ? 'Este grupo cobra: cada cobro confirmado entra a Caja; no reserva efectivo.' : 'Este tipo no mueve el efectivo físico.' }}
+      </p>
+    }
+
+    <section class="panel">
+      <div class="scroll" tabindex="0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">No.</th>
+              <th scope="col">Beneficiario / referencia</th>
+              <th scope="col" class="num">Esperado</th>
+              <th scope="col" class="num">{{ flow().paid }}</th>
+              <th scope="col" class="num">Diferencia</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Detalle</th>
+              <th scope="col"><span class="sr-label">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of d.items; track item.id) {
+              <tr [class.row--voided]="item.status === 'ANULADO'">
+                <td>{{ item.itemNumber }}</td>
+                <td>{{ item.reference || '—' }}</td>
+                <td class="num">{{ formatCurrency(item.expectedAmount) }}</td>
+                <td class="num">{{ formatCurrency(item.paidAmount) }}</td>
+                <td class="num">{{ item.outstandingAmount ? formatCurrency(item.outstandingAmount) : '—' }}</td>
+                <td><span [class]="'chip chip--' + itemTone(item.status)">{{ itemStatusLabel[item.status] }}</span></td>
+                <td class="info">
+                  @for (op of item.operations; track op.operationId) {
+                    <span class="op" [class.op--voided]="op.isVoided">{{ op.movementNumber ?? 'Operación' }} · {{ formatCurrency(op.amount) }}</span>
+                  }
+                  @if (item.resolution) { <small>Resolución: {{ item.resolution }}{{ item.releasedAmount && item.status !== 'ANULADO' ? ' · liberado ' + formatCurrency(item.releasedAmount) : '' }}</small> }
+                  @if (item.voidReason) { <small>Anulada: {{ item.voidReason }}</small> }
+                </td>
+                <td>
+                  <div class="actions">
+                  @if (canPay(item)) {
+                    <button type="button" class="icon-btn icon-btn--ok" title="{{ flow().confirm }}" [attr.aria-label]="flow().confirm + ' #' + item.itemNumber" (click)="open('DELIVER', item)">
+                      <app-icon name="check-circle" [size]="16" />
+                    </button>
+                    <button type="button" class="icon-btn icon-btn--warn" title="Pago parcial" [attr.aria-label]="'Pago parcial #' + item.itemNumber" (click)="open('PARTIAL', item)">
+                      <app-icon name="minus" [size]="16" />
+                    </button>
+                  }
+                  @if (isOpen() && item.status === 'PENDIENTE') {
+                    <button type="button" class="icon-btn icon-btn--danger" title="Sin pago" [attr.aria-label]="'Sin pago #' + item.itemNumber" (click)="open('NO_PAYMENT', item)">
+                      <app-icon name="alert-circle" [size]="16" />
+                    </button>
+                  }
+                  @if (canResolve(item)) {
+                    <button type="button" class="icon-btn" title="Resolución" [attr.aria-label]="'Resolución #' + item.itemNumber" (click)="open('RESOLVE', item)">
+                      <app-icon name="file-check" [size]="16" />
+                    </button>
+                  }
+                  <button type="button" class="icon-btn" title="Observación" [attr.aria-label]="'Observación #' + item.itemNumber" (click)="open('NOTE', item)">
+                    <app-icon name="message-square" [size]="16" />
+                  </button>
+                  <button type="button" class="icon-btn" title="Historial" [attr.aria-label]="'Historial #' + item.itemNumber"
+                    (click)="history.set({ itemId: item.id, title: 'Historial · transacción #' + item.itemNumber })">
+                    <app-icon name="clock" [size]="16" />
+                  </button>
+                  @if (canEdit(item)) {
+                    <button type="button" class="icon-btn" title="Editar" [attr.aria-label]="'Editar #' + item.itemNumber" (click)="open('EDIT', item)">
+                      <app-icon name="edit-2" [size]="16" />
+                    </button>
+                  }
+                  @if (isAdmin() && isOpen() && item.status !== 'ANULADO') {
+                    <button type="button" class="icon-btn icon-btn--danger" title="Anular" [attr.aria-label]="'Anular #' + item.itemNumber" (click)="open('VOID', item)">
+                      <app-icon name="x-circle" [size]="16" />
+                    </button>
+                  }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <app-group-item-action-modal
+      [open]="action() !== null"
+      [action]="action()?.action ?? 'DELIVER'"
+      [group]="d.group"
+      [item]="action()?.item ?? null"
+      [cash]="d.cash"
+      [isAdmin]="isAdmin()"
+      (closed)="action.set(null)"
+      (saved)="onSaved($event)"
+    />
+    <app-group-history-modal
+      [open]="history() !== null"
+      [groupId]="d.group.id"
+      [itemId]="history()?.itemId ?? null"
+      [title]="history()?.title ?? ''"
+      (closed)="history.set(null)"
+    />
+    <app-group-close-modal
+      [open]="groupModal() !== null"
+      [mode]="groupModal() ?? 'CLOSE'"
+      [detail]="d"
+      (closed)="groupModal.set(null)"
+      (saved)="onSaved($event)"
+    />
+  }
+</div>

@@ -32,6 +32,8 @@ export interface TransactionType {
   balanceEffect: TransactionTypeBalanceEffect | null;
   /** Efecto sobre el EFECTIVO FÍSICO (Control de Efectivo) — independiente del efecto bancario. */
   cashEffect: TransactionTypeCashEffect;
+  /** Shows "Pago grupal" for this type in Transaccionar (Sistema → Tipos de transacción). */
+  allowsGroupPayment: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -43,6 +45,7 @@ export interface TransactionTypeInput {
   icon: string;
   balanceEffect?: TransactionTypeBalanceEffect | null;
   cashEffect?: TransactionTypeCashEffect;
+  allowsGroupPayment?: boolean;
 }
 
 /** Espejo de `TRANSACTION_TYPE_CASH_EFFECTS` del backend: entrada, salida o sin efecto sobre el efectivo físico. */

@@ -1,0 +1,38 @@
+@if (open) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="group-history-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="group-history-title"><app-icon name="clock" [size]="20" /> {{ title }}</h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+      @if (loading()) {
+        <p class="modal__hint">Cargando…</p>
+      } @else if (failed()) {
+        <p class="modal__error">No se pudo cargar el historial.</p>
+      } @else {
+        <ol class="timeline">
+          @for (event of events(); track event.id) {
+            <li>
+              <div class="timeline__head">
+                <strong>{{ eventLabel[event.eventType] }}</strong>
+                @if (event.itemNumber) { <span class="tag">#{{ event.itemNumber }}</span> }
+                @if (event.itemStatus) { <span class="tag">{{ itemStatusLabel[event.itemStatus] }}</span> }
+                @else if (event.groupStatus) { <span class="tag">{{ groupStatusLabel[event.groupStatus] }}</span> }
+                @if (event.amount !== null) { <span class="amount">{{ formatCurrency(event.amount) }}</span> }
+              </div>
+              @if (event.note) { <p class="timeline__note">{{ event.note }}</p> }
+              <small>{{ formatDateTime(event.createdAt) }} · {{ event.username }}</small>
+            </li>
+          } @empty {
+            <li class="modal__hint">Sin movimientos registrados.</li>
+          }
+        </ol>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" (click)="closed.emit()">Cerrar</app-button>
+      </div>
+    </div>
+  </div>
+}

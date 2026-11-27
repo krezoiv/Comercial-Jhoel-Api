@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsOptional,
@@ -33,4 +34,9 @@ export class UpdateTransactionTypeRequestDto {
   @IsOptional()
   @IsIn(TRANSACTION_TYPE_CASH_EFFECTS)
   cashEffect?: string;
+
+  /** Shows "Pago grupal" for this type in Transaccionar. */
+  @IsOptional()
+  @IsBoolean()
+  allowsGroupPayment?: boolean;
 }

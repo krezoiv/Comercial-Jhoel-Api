@@ -50,6 +50,16 @@
           <small class="field__hint">{{ selectedCashEffectHint }} Solo aplica a operaciones nuevas (Control de Efectivo).</small>
         </div>
 
+        <label class="field field--check">
+          <input type="checkbox" formControlName="allowsGroupPayment" />
+          <span>
+            Permite pago grupal
+            <small class="field__hint">
+              Muestra "Pago grupal" en Transaccionar. Si el tipo saca efectivo, el grupo reserva su monto; si lo recibe, solo da seguimiento a cada cobro.
+            </small>
+          </span>
+        </label>
+
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>
         }

@@ -47,6 +47,7 @@ export class TypeOrmTransactionTypeRepository implements TransactionTypeReposito
       icon: data.icon,
       balanceEffect: data.balanceEffect,
       cashEffect: data.cashEffect,
+      allowsGroupPayment: data.allowsGroupPayment,
       createdBy: data.createdBy,
     });
     try {

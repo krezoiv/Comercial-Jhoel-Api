@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../domain/repositories/account-receivable.repository';
 import type { AccountReceivableRepository } from '../../domain/repositories/account-receivable.repository';
 import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.repository';
@@ -17,6 +18,8 @@ export interface CreateAccountReceivableInput {
   date: string;
   amount: number;
   description?: string;
+  /** EFECTIVO (default) moves Caja; BANCO never does. */
+  paymentMethod?: PortfolioPaymentMethod;
   createdBy: string;
 }
 
@@ -47,6 +50,7 @@ export class CreateAccountReceivableUseCase {
       date: input.date,
       amount: input.amount,
       description,
+      paymentMethod: input.paymentMethod ?? 'EFECTIVO',
       createdBy: input.createdBy,
     });
 

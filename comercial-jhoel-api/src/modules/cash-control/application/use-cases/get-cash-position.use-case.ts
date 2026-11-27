@@ -27,6 +27,9 @@ export interface CashPositionOutput {
   balance: number;
   lastSequence: number;
   lastMovementAt: Date | null;
+  /** Pagos grupales: money reserved by open groups and what remains available (balance − reserved). */
+  reservedAmount: number;
+  availableAmount: number;
   hasInitialBalance: boolean;
   dayState: CashDayState;
   day: CashOperationalDayRow | null;
@@ -121,6 +124,8 @@ export class GetCashPositionUseCase {
       balance: balance.balance,
       lastSequence: balance.lastSequence,
       lastMovementAt: balance.lastMovementAt,
+      reservedAmount: balance.reserved,
+      availableAmount: balance.available,
       hasInitialBalance,
       dayState: !day ? 'SIN_APERTURA' : day.status,
       day,

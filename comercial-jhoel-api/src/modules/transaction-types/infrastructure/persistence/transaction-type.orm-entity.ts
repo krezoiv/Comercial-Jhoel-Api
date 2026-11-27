@@ -39,6 +39,10 @@ export class TransactionTypeOrmEntity {
   @Column({ name: 'cash_effect', type: 'varchar', length: 10, default: 'NONE' })
   cashEffect: string;
 
+  /** "Pago grupal" enabled for this type (migration 1760009400000). */
+  @Column({ name: 'allows_group_payment', default: false })
+  allowsGroupPayment: boolean;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

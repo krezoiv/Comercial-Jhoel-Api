@@ -1,3 +1,4 @@
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 import type { ChargePaymentStatus } from '../../domain/repositories/account-receivable-settlement.repository';
 import {
   AccountReceivable,
@@ -14,6 +15,7 @@ export interface AccountReceivableOutput {
   description: string | null;
   referenceType: string | null;
   referenceId: string | null;
+  paymentMethod: PortfolioPaymentMethod | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +46,7 @@ export function toAccountReceivableOutput(
     description: record.description,
     referenceType: record.referenceType,
     referenceId: record.referenceId,
+    paymentMethod: record.paymentMethod,
     isActive: record.isActive,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,

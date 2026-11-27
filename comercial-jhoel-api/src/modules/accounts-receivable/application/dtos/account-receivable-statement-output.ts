@@ -1,44 +1,13 @@
-import { AccountReceivableMovementType } from '../../domain/entities/account-receivable.entity';
-import {
-  AccountReceivableStatement,
-  StatementMovement,
-} from '../../domain/repositories/account-receivable.repository';
+import type {
+  PortfolioStatement,
+  PortfolioStatementMovement,
+} from '../../../../shared/domain/portfolio-record';
+import { AccountReceivableStatement } from '../../domain/repositories/account-receivable.repository';
 
-export interface StatementMovementOutput {
-  id: string;
-  date: string;
-  movementType: AccountReceivableMovementType;
-  description: string | null;
-  amount: number;
-  balanceAfter: number;
-  createdByUsername: string;
-  createdAt: Date;
-}
+/** A statement row with its cash trace; voided rows keep their place (balanceAfter null). */
+export type StatementMovementOutput = PortfolioStatementMovement;
 
-export interface AccountReceivableStatementOutput {
-  clientId: string;
-  clientName: string;
-  openingBalance: number;
-  movements: StatementMovementOutput[];
-  totalCargos: number;
-  totalAbonos: number;
-  closingBalance: number;
-}
-
-function toStatementMovementOutput(
-  movement: StatementMovement,
-): StatementMovementOutput {
-  return {
-    id: movement.id,
-    date: movement.date,
-    movementType: movement.movementType,
-    description: movement.description,
-    amount: movement.amount,
-    balanceAfter: movement.balanceAfter,
-    createdByUsername: movement.createdByUsername,
-    createdAt: movement.createdAt,
-  };
-}
+export type AccountReceivableStatementOutput = PortfolioStatement;
 
 export function toAccountReceivableStatementOutput(
   statement: AccountReceivableStatement,
@@ -47,9 +16,10 @@ export function toAccountReceivableStatementOutput(
     clientId: statement.clientId,
     clientName: statement.clientName,
     openingBalance: statement.openingBalance,
-    movements: statement.movements.map(toStatementMovementOutput),
+    movements: statement.movements.map((movement) => ({ ...movement })),
     totalCargos: statement.totalCargos,
     totalAbonos: statement.totalAbonos,
     closingBalance: statement.closingBalance,
+    voidedCount: statement.voidedCount,
   };
 }

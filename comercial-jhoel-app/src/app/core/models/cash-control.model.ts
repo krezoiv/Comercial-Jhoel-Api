@@ -104,6 +104,9 @@ export interface CashBalanceSnapshot {
   balance: number;
   lastSequence: number;
   lastMovementAt: string | null;
+  /** Money reserved by open Pagos grupales; available = balance − reserved. */
+  reserved?: number;
+  available?: number;
 }
 
 export interface CashMovementBucket {
@@ -252,6 +255,9 @@ export interface CashPosition {
   balance: number;
   lastSequence: number;
   lastMovementAt: string | null;
+  /** Pagos grupales: reserved by open groups, and what other operations can use (balance − reserved). */
+  reservedAmount?: number;
+  availableAmount?: number;
   hasInitialBalance: boolean;
   dayState: CashDayState;
   day: CashOperationalDay | null;

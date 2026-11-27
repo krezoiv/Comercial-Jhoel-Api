@@ -1,4 +1,5 @@
 import { KardexMovementType } from './kardex.model';
+import { PortfolioPaymentMethod } from './portfolio-trace.model';
 
 export interface Asset {
   id: string;
@@ -9,6 +10,10 @@ export interface Asset {
   amount: number;
   movementType: KardexMovementType;
   description: string | null;
+  /** EFECTIVO | BANCO; null = registered before the payment method existed (behaves as cash). */
+  paymentMethod: PortfolioPaymentMethod | null;
+  /** Origin of the row: 'BANK_DEPOSIT' (Transaccionar) or 'AR_PAYMENT' (Cartera collection). */
+  referenceType?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,6 +27,9 @@ export interface AssetInput {
   date: string;
   amount: number;
   description?: string;
+  paymentMethod?: PortfolioPaymentMethod;
+  /** Mandatory (≥5) when amount or payment method change: history + Caja reversal. */
+  reason?: string;
 }
 
 export interface AssetFilters {

@@ -14,6 +14,7 @@ export class TransactionTypeMapper {
       balanceEffect:
         (orm.balanceEffect as TransactionTypeBalanceEffect | null) ?? null,
       cashEffect: (orm.cashEffect as TransactionTypeCashEffect) ?? 'NONE',
+      allowsGroupPayment: orm.allowsGroupPayment ?? false,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

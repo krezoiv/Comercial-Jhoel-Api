@@ -249,25 +249,26 @@ export class AccountsReceivablePageComponent {
     this.deletingRecord.set(null);
   }
 
-  confirmDelete(): void {
+  /** Voids with the reason typed in the modal; the backend reverses its Caja effect when it had one. */
+  confirmDelete(reason: string): void {
     const record = this.deletingRecord();
     if (!record) {
       return;
     }
 
     this.isDeleting.set(true);
-    this.accountReceivableService.deleteAccountReceivable(record.id).subscribe({
+    this.accountReceivableService.deleteAccountReceivable(record.id, reason).subscribe({
       next: () => {
         this.isDeleting.set(false);
         this.isDeleteOpen.set(false);
         this.deletingRecord.set(null);
-        this.notificationService.success('La cuenta por cobrar se desactivó correctamente.');
+        this.notificationService.success('La cuenta por cobrar se anuló. Queda en el historial con su motivo.');
         this.fetchRecords();
         this.fetchActiveBalance();
       },
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);
-        this.notificationService.error(extractErrorMessage(error, 'No se pudo desactivar la cuenta por cobrar.'));
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo anular la cuenta por cobrar.'));
       },
     });
   }

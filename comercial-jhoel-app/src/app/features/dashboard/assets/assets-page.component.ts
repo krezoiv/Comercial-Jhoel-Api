@@ -225,25 +225,26 @@ export class AssetsPageComponent {
     this.deletingRecord.set(null);
   }
 
-  confirmDelete(): void {
+  /** Voids with the reason typed in the modal; the backend reverses its Caja effect when it had one. */
+  confirmDelete(reason: string): void {
     const record = this.deletingRecord();
     if (!record) {
       return;
     }
 
     this.isDeleting.set(true);
-    this.assetService.deleteAsset(record.id).subscribe({
+    this.assetService.deleteAsset(record.id, reason).subscribe({
       next: () => {
         this.isDeleting.set(false);
         this.isDeleteOpen.set(false);
         this.deletingRecord.set(null);
-        this.notificationService.success('El activo se desactivó correctamente.');
+        this.notificationService.success('El activo se anuló. Queda en el historial con su motivo.');
         this.fetchRecords();
         this.fetchActiveBalance();
       },
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);
-        this.notificationService.error(extractErrorMessage(error, 'No se pudo desactivar el activo.'));
+        this.notificationService.error(extractErrorMessage(error, 'No se pudo anular el activo.'));
       },
     });
   }

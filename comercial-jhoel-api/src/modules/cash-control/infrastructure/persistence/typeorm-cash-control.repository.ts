@@ -265,10 +265,15 @@ export class TypeOrmCashControlRepository implements CashControlRepository {
     const [row] = await this.dataSource.query<SqlRow[]>(`
       SELECT new_balance, sequence, created_at FROM cash_movements ORDER BY sequence DESC LIMIT 1
     `);
+    const [reservation] = await this.dataSource.query<SqlRow[]>(
+      `SELECT cash_reserved_total() AS reserved, cash_available() AS available`,
+    );
     return {
       balance: row ? num(row.new_balance) : 0,
       lastSequence: row ? num(row.sequence) : 0,
       lastMovementAt: row ? (row.created_at as Date) : null,
+      reserved: num(reservation?.reserved),
+      available: num(reservation?.available),
     };
   }
 

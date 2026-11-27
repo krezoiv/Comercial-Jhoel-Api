@@ -1,0 +1,110 @@
+// Shared look of Pagos grupales: status chips (pendiente amber, en proceso blue, pagado green,
+// parcial orange, sin pago red, anulado dark gray), money figures and data tables.
+@use 'breakpoints' as bp;
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--pending { color: #a16207; background: rgba(234, 179, 8, 0.16); }
+  &--process { color: #1d4ed8; background: rgba(37, 99, 235, 0.12); }
+  &--paid { color: #15803d; background: rgba(22, 163, 74, 0.14); }
+  &--partial { color: #c2410c; background: rgba(234, 88, 12, 0.14); }
+  &--unpaid { color: #b91c1c; background: rgba(220, 38, 38, 0.12); }
+  &--voided { color: #f1f5f9; background: #475569; }
+}
+
+.panel {
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+
+  @include bp.respond(sm) {
+    padding: var(--space-5);
+  }
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scroll {
+  // Positioned so visually-hidden (absolute) labels inside the table stay clipped here.
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+
+  th,
+  td {
+    padding: var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light);
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-text-on-light-muted);
+    background: var(--color-bg-light-muted);
+    white-space: nowrap;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--color-text-on-light-muted);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-light-muted);
+    color: var(--color-text-on-light);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--ok { color: #15803d; }
+  &--warn { color: #c2410c; }
+  &--danger { color: #b91c1c; }
+}
+
+.empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-on-light-subtle);
+  font-size: var(--fs-sm);
+}

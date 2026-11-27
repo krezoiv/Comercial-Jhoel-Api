@@ -8,6 +8,7 @@ export class AccountReceivableResponseDto {
   description: string | null;
   referenceType: string | null;
   referenceId: string | null;
+  paymentMethod: 'EFECTIVO' | 'BANCO' | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

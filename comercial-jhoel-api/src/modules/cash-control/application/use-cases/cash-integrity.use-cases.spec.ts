@@ -52,6 +52,7 @@ function repos() {
     ]),
     findPossibleDuplicates: jest.fn().mockResolvedValue([]),
     findSnapshotMismatches: jest.fn().mockResolvedValue([]),
+    findLinkedChargesOfVoidedOperations: jest.fn().mockResolvedValue([]),
     findCajaTimeline: jest.fn().mockResolvedValue({
       previous: null,
       counts: [

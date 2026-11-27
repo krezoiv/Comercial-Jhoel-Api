@@ -13,6 +13,7 @@ export interface GetAccountReceivableStatementInput {
   clientId: string;
   dateFrom?: string;
   dateTo?: string;
+  includeVoided?: boolean;
 }
 
 /** Backs the "Estado de Cuenta" view — saldo inicial del periodo, movimientos con saldo corrido, totales. Never iterates full history client-side; the repository derives everything with one bounded, window-function query. */
@@ -35,7 +36,11 @@ export class GetAccountReceivableStatementUseCase {
 
     const statement = await this.accountReceivableRepository.getStatement(
       input.clientId,
-      { dateFrom: input.dateFrom, dateTo: input.dateTo },
+      {
+        dateFrom: input.dateFrom,
+        dateTo: input.dateTo,
+        includeVoided: input.includeVoided,
+      },
     );
 
     return toAccountReceivableStatementOutput(statement);

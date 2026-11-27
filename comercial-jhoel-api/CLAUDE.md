@@ -1713,6 +1713,123 @@ saldos nuevos para él.
     sentidos, arqueos, estabilidad histórica, permisos, PDF/Excel y validaciones.
   - Down/up verificado en una copia.
 
+### Pagos grupales (migración `1760009400000`, `modules/payment-groups/`)
+
+Pedido del dueño (2026-11-26): grupos de Pago Varios y Préstamos Génesis. Se reserva el dinero, cada pago se confirma por
+separado y el grupo se cierra conciliado.
+
+- **Decisiones del dueño (AskUserQuestion)**:
+  - Qué tipos permiten grupo: `transaction_types.allows_group_payment`, una casilla en Sistema → Tipos de
+    transacción. No se adivinan nombres.
+  - Préstamos Génesis = **cobrar cuotas** (entra efectivo, no reserva). Pago Varios = sale efectivo y reserva.
+  - El sentido lo da el efecto en Caja del tipo, guardado en `payment_groups.cash_direction`.
+  - La reserva **bloquea** otras salidas.
+  - Crear, confirmar y documentar: cualquier usuario de Transaccionar. Liberar, anular y cerrar: administradores.
+- **Dinero**:
+  - Crear el grupo no escribe ningún movimiento.
+  - Reserva = autorizado − entregado − liberado, derivada de `payment_group_balances`. `cash_reserved_total()` la suma
+    para los grupos OUT abiertos y `cash_available()` = `cash_balance()` − reservas.
+  - Cada entrega o cobro es una operación real de Transaccionar (`register_bank_deposit_operation`, una transacción por
+    el monto real) ligada en `payment_group_deliveries`. Mueve Kardex, Estado de Cuenta, banco o línea Génesis, cuadre
+    y auditoría igual que una operación individual, sin doble descuento.
+  - La descripción de la operación lleva "Pago grupal PG-000001 · #n — grupo — referencia".
+- **Bloqueo de la reserva**:
+  - `apply_cash_movement` rechaza cualquier salida que deje la Caja por debajo de lo reservado (`CASH_RESERVED_FUNDS`,
+    409 global en `GlobalExceptionFilter`).
+  - Las correcciones (ANULACION, AJUSTE) nunca se bloquean.
+  - La entrega del grupo consume su propia reserva (`app.cash_reservation_consumer`).
+  - Sin reservas activas todo funciona igual que antes. El `down` restaura la función exacta.
+- **Estados derivados**:
+  - Transacción, desde `payment_group_item_balances`: PENDIENTE, PAGADO, PARCIAL, SIN_PAGO, ANULADO.
+  - Grupo (`display_status`): PENDIENTE, EN_PROCESO, PARCIAL (parcial o sin pago sin resolver), COMPLETADO (cerrado),
+    ANULADO.
+- **Funciones**: `create_payment_group`, `register_payment_group_delivery`, `mark_payment_group_item_no_payment`,
+  `add_payment_group_note`, `update_payment_group_item`, `resolve_payment_group_item` (liberar = authorize),
+  `void_payment_group_item`, `close_payment_group` y `void_payment_group`.
+  - Orden de bloqueo: banco agente → caja → grupo → transacción.
+  - Idempotencia por `clientRequestId`.
+  - `void_payment_group_item` sobre una transacción pagada exige que el dinero haya regresado
+    (`moneyReturned = true`) y anula sus operaciones con la reversa existente.
+  - Cerrar exige cero pendientes y una resolución por cada parcial o sin pago; libera lo no usado
+    (`closing_released`) y guarda la conciliación.
+- **Protección de datos**: el historial (`payment_group_events`) y las entregas son append-only. Grupos y transacciones
+  solo cambian con esas funciones (`app.payment_group_write`). Una operación del grupo no se anula directo en
+  Transaccionar (`PAYMENT_GROUP_OPERATION_LOCKED`).
+- **API** (`/payment-groups`): `GET /` (filtros, `summary`, `cash`), `GET /:id` (detalle con `cash` y `closeCheck`),
+  `GET /:id/history?itemId`, `POST /`, `POST /:id/items/:itemId/deliveries|no-payment|resolution|void`,
+  `PATCH /:id/items/:itemId`, `POST /:id/notes`, `POST /:id/close` y `POST /:id/void`.
+- `GET /cash-control/position` y `GET /cash-control/balance` traen `reservedAmount`/`availableAmount`
+  (`reserved`/`available`).
+- **Pruebas**:
+  - `sql/tests/payment-groups.test.sql` (82 casos).
+  - `sql/tests/payment-groups-concurrency.sh`.
+  - `payment-group.use-cases.spec.ts`.
+  - `test/payment-groups.e2e-spec.ts`.
+  - Down/up verificado en una copia.
+
+### Cuentas por Cobrar / Activos ↔ Caja: medio de pago, motivo e historial (migración `1760009300000`)
+
+Pedido del dueño (2026-11-26): "auditoría y corrección de inconsistencias financieras" de CxC, Activos, Caja y Estado de
+Cuenta.
+
+- **Causas raíz encontradas**:
+  1. Un registro solo movía Caja al editar o eliminar si ya tenía movimiento en el Kardex. Los anteriores a Control de
+     Efectivo nunca lo tuvieron (su efectivo está en el saldo inicial contado), así que "a veces sí, a veces no".
+  2. Cargos y abonos manuales siempre movían Caja: no existía "por banco".
+  3. Eliminar o editar no pedía motivo, y el estado de cuenta del cliente solo mostraba filas activas con su monto
+     actual: los cambios desaparecían.
+  4. Anular en Transaccionar una operación enviada a CxC/Activos dejaba su cargo y su efectivo.
+- **Una sola regla de efectivo**: `portfolio_row_cash_effect(table, tipo, monto, activo, medio, ref)`.
+  - CxC: ABONO entra, CARGO sale. Activos: CARGO entra, ABONO (devolución) sale; regla vigente, decisión del dueño.
+  - BANCO, anulado o cobro de Cartera por depósito = 0.
+  - La usan el trigger de inserción, el de actualización y la Auditoría (`SOURCES`).
+- **Columnas nuevas**:
+  - `payment_method`: EFECTIVO | BANCO.
+  - `cash_tracked`: TRUE para cada registro nuevo.
+  - En los registros existentes ambas quedan NULL, sin UPDATE histórico: NULL = efectivo, rastreado solo si ya tenía
+    movimiento.
+  - Un cobro de Cartera toma el medio de su operación (`portfolio_row_before_insert`).
+- **Reglas de todo cambio** (`portfolio_row_change_guard`, BEFORE UPDATE, cualquier vía):
+  - Lo anulado es historial: no se edita ni se reactiva.
+  - Monto, tipo, activo o medio exigen motivo ≥5 (`app.portfolio_change_reason`).
+  - Un cargo nacido en Transaccionar (`reference_type = 'BANK_DEPOSIT'`) solo cambia anulando la operación. Excepción:
+    anularlo directamente cuando la operación ya está anulada (regularización).
+  - En CxC un cambio nunca deja el saldo del cliente negativo (`AR_BALANCE_WOULD_BE_NEGATIVE`), porque los abonos
+    dependen del cargo.
+  - Los cargos con pagos de Cartera siguen con `AR_CHARGE_HAS_PAYMENTS`.
+- **Efecto e historial** (`portfolio_row_on_update`, AFTER UPDATE):
+  - Revierte los movimientos del registro (`reverse_cash_movements_for_reference`, con el motivo y `reversal_of_id`) y
+    aplica el efecto nuevo.
+  - Agrega la fila en `portfolio_record_changes`: antes → después, motivo, usuario, efecto antes/después y los
+    movimientos que produjo. Es inmutable.
+  - Reemplaza a `trg_cash_*_update`. `cash_on_portfolio_row` queda solo para INSERT.
+- **Cascada de Transaccionar** (`trg_portfolio_bank_deposit_void`): anular la operación anula su cargo en la misma
+  transacción. Si el cargo tiene pagos o abonos, se rechaza todo (`BANK_DEPOSIT_LINKED_CHARGE_HAS_PAYMENTS`).
+- **Rutas de escritura del API** (`shared/infrastructure/persistence/portfolio-record.sql.ts`):
+  - `update_portfolio_record` y `void_portfolio_record` toman los bloqueos caja → cliente → fila.
+  - Anular dos veces: `PORTFOLIO_RECORD_ALREADY_VOIDED`.
+  - `register_*_movement` ahora tiene 9 argumentos (`p_payment_method`, por defecto NULL = efectivo).
+- **Endpoints**:
+  - `DELETE /accounts-receivable/:id` y `DELETE /assets/:id`: body `{ reason }`, admin.
+  - `GET …/:id/trace`: medio, rastreo, efecto, movimientos del Kardex e historial.
+  - `paymentMethod` en crear, cargos y abonos; `paymentMethod` y `reason` en PATCH.
+  - El estado de cuenta del cliente incluye anulados (`balanceAfter` null, `trace` por fila); `?includeVoided=false` los
+    oculta.
+- **Auditoría**:
+  - Las reglas de CxC/Activos salen de la función única.
+  - Hallazgo nuevo `LINKED_CHARGE_ACTIVE`: operación anulada antes de la cascada con su cargo vigente.
+  - Los hallazgos por operación traen `expected`/`registered`; son la tabla "Conciliación por operación" del front,
+    con CSV.
+- **Estado de Cuenta de Efectivo**: cada fila trae `reason` y `reversalOfNumber` ("Reversa de MOV-000123").
+- **Pruebas**:
+  - `sql/tests/portfolio-cash-traceability.test.sql`: 92 casos.
+  - `portfolio-record.spec.ts` y `*-traceability.use-cases.spec.ts`.
+  - `test/portfolio-cash.e2e-spec.ts`: CxC, Activos, cascada, rechazo con pagos, regularización vista en la auditoría.
+  - `cash-control.test.sql` T14 ahora fija el motivo antes de desactivar.
+  - Down/up verificado en una copia.
+- **Pendiente**: `school-lists.test.sql` (T6) y `school-supply.test.sql` fallan también sin esta migración. Son
+  expectativas desactualizadas de fases anteriores de Listas Escolares.
+
 ### Auditoría de efectivo, arqueo de apertura y resolución de diferencias (migración `1760009200000`)
 
 Pedido del dueño (2026-11-21): "eliminar descuadres y detectar desviaciones de efectivo". Diagnóstico: ningún módulo

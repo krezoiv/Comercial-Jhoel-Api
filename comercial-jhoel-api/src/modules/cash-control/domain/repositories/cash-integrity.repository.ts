@@ -1,5 +1,6 @@
 import type {
   IntegrityClassification,
+  LinkedChargeOfVoidedOperation,
   SourceComparison,
   TimelineCount,
 } from '../cash-integrity';
@@ -123,6 +124,10 @@ export interface CashIntegrityRepository {
     minutes: number,
   ): Promise<PossibleDuplicate[]>;
   findSnapshotMismatches(scope: IntegrityScope): Promise<SnapshotMismatch[]>;
+  /** Active CxC / Activos cargos whose Transaccionar operation was voided inside the window. */
+  findLinkedChargesOfVoidedOperations(
+    scope: IntegrityScope,
+  ): Promise<LinkedChargeOfVoidedOperation[]>;
   /** Caja counts (arqueos, openings, cut counts) of the window, plus the last one before it. */
   findCajaTimeline(
     scope: IntegrityScope,

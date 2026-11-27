@@ -74,6 +74,17 @@
           </span>
         </div>
         <dl class="hero__facts">
+          @if (p.reservedAmount) {
+            <!-- Pagos grupales: reserved money is still physically in Caja but cannot be used by other outflows. -->
+            <div>
+              <dt>Reservado en pagos grupales</dt>
+              <dd><a routerLink="/dashboard/pagos-grupales">{{ formatCurrency(p.reservedAmount) }}</a></dd>
+            </div>
+            <div>
+              <dt>Disponible para operar</dt>
+              <dd>{{ formatCurrency(p.availableAmount ?? p.balance) }}</dd>
+            </div>
+          }
           <div>
             <dt>Efectivo en Bodega</dt>
             <dd>{{ formatCurrency(p.warehouseBalance) }}</dd>

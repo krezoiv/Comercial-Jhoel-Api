@@ -1,4 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import {
+  changesCashEffect,
+  requireChangeReason,
+} from '../../../../shared/domain/portfolio-record';
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 import { ACCOUNT_RECEIVABLE_REPOSITORY } from '../../domain/repositories/account-receivable.repository';
 import type { AccountReceivableRepository } from '../../domain/repositories/account-receivable.repository';
 import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.repository';
@@ -18,6 +23,9 @@ export interface UpdateAccountReceivableInput {
   date?: string;
   amount?: number;
   description?: string | null;
+  paymentMethod?: PortfolioPaymentMethod;
+  /** Mandatory (≥5) when amount or payment method change. */
+  reason?: string;
   updatedBy: string;
 }
 
@@ -39,6 +47,11 @@ export class UpdateAccountReceivableUseCase {
       throw new AccountReceivableNotFoundError();
     }
 
+    // The database enforces it too (portfolio_row_change_guard); checked here first for a clear 400.
+    const reason = changesCashEffect(record, input)
+      ? requireChangeReason(input.reason)
+      : input.reason?.trim() || null;
+
     if (input.clientId) {
       const client = await this.clientRepository.findById(input.clientId);
       if (!client) {
@@ -59,6 +72,8 @@ export class UpdateAccountReceivableUseCase {
       ...(input.date ? { date: input.date } : {}),
       ...(input.amount !== undefined ? { amount: input.amount } : {}),
       ...(description !== undefined ? { description } : {}),
+      ...(input.paymentMethod ? { paymentMethod: input.paymentMethod } : {}),
+      reason,
       updatedBy: input.updatedBy,
     });
 

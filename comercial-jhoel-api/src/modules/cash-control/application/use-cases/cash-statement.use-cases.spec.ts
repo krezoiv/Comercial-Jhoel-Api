@@ -63,6 +63,8 @@ function repository(): jest.Mocked<CashStatementRepository> {
           voidedAt: null,
           voidReason: null,
           reversalOfId: null,
+          reversalOfNumber: null,
+          reason: null,
           username: 'admin',
           cutPeriodNumber: null,
         },

@@ -61,6 +61,8 @@ export interface TransactionTypeProps {
   icon: string;
   balanceEffect: TransactionTypeBalanceEffect | null;
   cashEffect: TransactionTypeCashEffect;
+  /** Shows "Pago grupal" for this type in Transaccionar (migration 1760009400000). */
+  allowsGroupPayment: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -97,6 +99,10 @@ export class TransactionType {
   /** Effect on physical cash — see `TRANSACTION_TYPE_CASH_EFFECTS`. */
   get cashEffect(): TransactionTypeCashEffect {
     return this.props.cashEffect;
+  }
+
+  get allowsGroupPayment(): boolean {
+    return this.props.allowsGroupPayment;
   }
 
   get isActive(): boolean {

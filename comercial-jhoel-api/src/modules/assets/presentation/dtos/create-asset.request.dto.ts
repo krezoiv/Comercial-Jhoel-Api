@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import {
   IsDateString,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -8,6 +9,10 @@ import {
   MaxLength,
   NotEquals,
 } from 'class-validator';
+import {
+  PORTFOLIO_PAYMENT_METHODS,
+  type PortfolioPaymentMethod,
+} from '../../../../shared/domain/portfolio-record';
 
 export class CreateAssetRequestDto {
   @IsUUID()
@@ -37,4 +42,11 @@ export class CreateAssetRequestDto {
   @IsString()
   @MaxLength(500)
   description?: string;
+
+  /** EFECTIVO (default) moves Caja; BANCO never does. */
+  @IsOptional()
+  @IsIn(PORTFOLIO_PAYMENT_METHODS, {
+    message: 'Seleccione si fue en efectivo o por banco.',
+  })
+  paymentMethod?: PortfolioPaymentMethod;
 }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 import { ASSET_REPOSITORY } from '../../domain/repositories/asset.repository';
 import type { AssetRepository } from '../../domain/repositories/asset.repository';
 import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.repository';
@@ -14,6 +15,8 @@ export interface CreateAssetInput {
   date: string;
   amount: number;
   description?: string;
+  /** EFECTIVO (default) enters Caja; BANCO never does. */
+  paymentMethod?: PortfolioPaymentMethod;
   createdBy: string;
 }
 
@@ -43,6 +46,7 @@ export class CreateAssetUseCase {
       date: input.date,
       amount: input.amount,
       description,
+      paymentMethod: input.paymentMethod ?? 'EFECTIVO',
       createdBy: input.createdBy,
     });
 

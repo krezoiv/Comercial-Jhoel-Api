@@ -259,8 +259,11 @@ BEGIN
   PERFORM pg_temp.expect('T14 anular retiro bancario resta', cash_balance()::TEXT, (v_base - 2000)::NUMERIC(14,2)::TEXT);
   -- Desactivar un gasto por cobrar registrado devuelve su efectivo.
   v_base := cash_balance();
+  -- Since 1760009300000 a financial change requires its reason (portfolio_row_change_guard).
+  PERFORM set_config('app.portfolio_change_reason', 'Cargo registrado por error', true);
   UPDATE accounts_receivable SET is_active = false
   WHERE id = (SELECT reference_id FROM cash_movements WHERE movement_type = 'GASTO_POR_COBRAR' ORDER BY sequence DESC LIMIT 1);
+  PERFORM set_config('app.portfolio_change_reason', '', true);
   PERFORM pg_temp.expect('T14 desactivar gasto por cobrar suma', cash_balance()::TEXT, (v_base + 500)::NUMERIC(14,2)::TEXT);
 
   -- ===== 12. Consulta / continuidad del Kardex =====

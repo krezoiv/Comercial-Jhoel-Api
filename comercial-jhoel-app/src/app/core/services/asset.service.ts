@@ -12,6 +12,7 @@ import {
   KardexAccountService,
   KardexStatement,
   KardexStatementFilters,
+  PortfolioRecordTrace,
   PaginatedAssets,
   RegisterKardexMovementInput,
 } from '../models';
@@ -54,8 +55,16 @@ export class AssetService implements KardexAccountService {
   }
 
   /** Soft delete — the backend deactivates the record, it never deletes the row. */
-  deleteAsset(id: string): Observable<void> {
-    return this.http.delete<void>(`${BASE_URL}/${id}`);
+  /** Voids with a mandatory reason; the backend reverses its Caja effect (if any) and keeps the history. */
+  deleteAsset(id: string, reason: string): Observable<void> {
+    return this.http.delete<void>(`${BASE_URL}/${id}`, { body: { reason } });
+  }
+
+  /** Payment method, Kardex movements and change history of one record. */
+  getTrace(id: string): Observable<PortfolioRecordTrace> {
+    return this.http
+      .get<ApiSuccessResponse<PortfolioRecordTrace>>(`${BASE_URL}/${id}/trace`)
+      .pipe(map((response) => response.data));
   }
 
   /** "Registrar Cargo" — an independent Kardex movement, never a rewrite of a prior one. */

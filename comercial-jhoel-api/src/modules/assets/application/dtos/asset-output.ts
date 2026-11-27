@@ -1,4 +1,5 @@
 import { Asset, AssetMovementType } from '../../domain/entities/asset.entity';
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 
 export interface AssetOutput {
   id: string;
@@ -8,6 +9,7 @@ export interface AssetOutput {
   amount: number;
   movementType: AssetMovementType;
   description: string | null;
+  paymentMethod: PortfolioPaymentMethod | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +28,7 @@ export function toAssetOutput(asset: Asset): AssetOutput {
     amount: asset.amount,
     movementType: asset.movementType,
     description: asset.description,
+    paymentMethod: asset.paymentMethod,
     isActive: asset.isActive,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,

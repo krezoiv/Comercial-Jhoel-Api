@@ -1,6 +1,7 @@
 import {
   classifySource,
   differenceChanges,
+  linkedChargeFinding,
   relateFindings,
   summarize,
   type SourceComparison,
@@ -173,5 +174,47 @@ describe('Auditoría de efectivo — reglas', () => {
       summarize(relateFindings([resolved], () => undefined))
         .unresolvedDifferences,
     ).toBe(0);
+  });
+
+  it('reports expected vs registered per operation (reconciliation report)', () => {
+    const finding = classifySource(
+      source({
+        referenceType: 'ACCOUNT_RECEIVABLE',
+        label: 'Abono por cobrar de Q200.00 — Cliente A',
+        expectedNet: 0,
+        kardexNet: 200,
+        rule: 'Registro anulado: su efecto neto debe ser Q0.00',
+      }),
+    );
+    expect(finding).toMatchObject({
+      check: 'SOURCE_UNEXPECTED',
+      expected: 0,
+      registered: 200,
+      amount: 200,
+    });
+  });
+
+  it('flags a cargo left active by a Transaccionar operation voided before the cascade', () => {
+    const finding = linkedChargeFinding({
+      recordType: 'ACCOUNT_RECEIVABLE',
+      recordId: 'ar-1',
+      operationId: 'op-1',
+      operationLabel: 'Depósito de Q300.00 de Transaccionar',
+      clientName: 'Cliente B',
+      amount: 300,
+      kardexNet: -300,
+      voidedAt: new Date('2026-11-20T15:00:00Z'),
+      voidedBy: 'admin',
+      movementIds: ['m-1'],
+    });
+    expect(finding).toMatchObject({
+      key: 'LINKED_CHARGE_ACTIVE:ACCOUNT_RECEIVABLE:ar-1',
+      severity: 'ALTA',
+      classification: 'INCONSISTENCIA_HISTORICA',
+      expected: 0,
+      registered: -300,
+    });
+    expect(finding.detail).toContain('anule el cargo en Cuentas por Cobrar');
+    expect(finding.detail.toLowerCase()).not.toContain('fraude');
   });
 });

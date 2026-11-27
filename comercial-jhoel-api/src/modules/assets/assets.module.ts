@@ -14,6 +14,7 @@ import { RegisterAssetPaymentUseCase } from './application/use-cases/register-as
 import { GetAssetStatementUseCase } from './application/use-cases/get-asset-statement.use-case';
 import { GetAssetCurrentBalanceUseCase } from './application/use-cases/get-asset-current-balance.use-case';
 import { GetAssetActiveBalanceUseCase } from './application/use-cases/get-asset-active-balance.use-case';
+import { GetAssetTraceUseCase } from './application/use-cases/get-asset-trace.use-case';
 import { AssetsController } from './presentation/controllers/assets.controller';
 
 @Module({
@@ -34,6 +35,7 @@ import { AssetsController } from './presentation/controllers/assets.controller';
     GetAssetStatementUseCase,
     GetAssetCurrentBalanceUseCase,
     GetAssetActiveBalanceUseCase,
+    GetAssetTraceUseCase,
   ],
   // Exported for ReportsModule's Activos report: ASSET_REPOSITORY backs its own summary
   // use case, and ListAssetsUseCase is reused directly for the report's list endpoint —

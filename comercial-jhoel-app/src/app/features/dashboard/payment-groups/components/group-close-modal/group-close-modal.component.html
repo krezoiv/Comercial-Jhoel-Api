@@ -1,0 +1,58 @@
+@if (open && detail; as d) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="group-close-title">
+      <div class="modal__header">
+        <h2 class="modal__title" [class.modal__title--out]="mode === 'VOID'" id="group-close-title">
+          <app-icon [name]="mode === 'CLOSE' ? 'check-check' : 'x-circle'" [size]="20" />
+          {{ mode === 'CLOSE' ? 'Cerrar y conciliar' : 'Anular grupo' }} · {{ d.group.code }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <dl class="summary">
+        <div><dt>Monto autorizado</dt><dd>{{ formatCurrency(d.group.authorizedAmount) }}</dd></div>
+        <div><dt>Total {{ flow.paid.toLowerCase() }}</dt><dd>{{ formatCurrency(d.group.paidAmount) }}</dd></div>
+        <div><dt>Ya liberado</dt><dd>{{ formatCurrency(d.group.releasedAmount) }}</dd></div>
+        <div class="strong"><dt>{{ mode === 'CLOSE' ? 'No utilizado (se libera al cerrar)' : 'Se libera' }}</dt>
+          <dd>{{ formatCurrency(mode === 'CLOSE' ? d.closeCheck.releaseOnClose : d.group.authorizedAmount - d.group.releasedAmount) }}</dd></div>
+        <div><dt>Pagadas</dt><dd>{{ d.group.paidCount }}</dd></div>
+        <div><dt>Parciales</dt><dd>{{ d.group.partialCount }}</dd></div>
+        <div><dt>Sin pago</dt><dd>{{ d.group.noPaymentCount }}</dd></div>
+        <div><dt>Pendientes</dt><dd>{{ d.group.pendingCount }}</dd></div>
+        <div><dt>Diferencias sin justificar</dt><dd>{{ d.group.unresolvedCount }}</dd></div>
+        <div><dt>Anuladas</dt><dd>{{ d.group.voidedCount }}</dd></div>
+      </dl>
+
+      @if (mode === 'CLOSE') {
+        @if (!d.closeCheck.canClose) {
+          <p class="modal__error">
+            @if (d.closeCheck.pendingCount) { Hay {{ d.closeCheck.pendingCount }} transacción(es) pendiente(s). }
+            @if (d.closeCheck.unresolvedCount) { Hay {{ d.closeCheck.unresolvedCount }} parcial(es) o sin pago sin resolución documentada. }
+            Resuélvalas antes de cerrar.
+          </p>
+        } @else {
+          <p class="modal__hint">Los movimientos reales de Caja quedan intactos; el historial de cada transacción se conserva.</p>
+        }
+      } @else if (d.group.paidAmount > 0) {
+        <p class="modal__error">El grupo tiene pagos confirmados: ciérrelo o anule primero esas transacciones.</p>
+      }
+
+      <div class="field note">
+        <label for="group-close-text">{{ mode === 'CLOSE' ? 'Nota de cierre' : 'Motivo de la anulación *' }}</label>
+        <textarea id="group-close-text" rows="2" maxlength="500" [ngModel]="text()" (ngModelChange)="text.set($event)"></textarea>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button [variant]="mode === 'CLOSE' ? 'primary' : 'danger'" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : mode === 'CLOSE' ? 'Cerrar grupo' : 'Anular grupo' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

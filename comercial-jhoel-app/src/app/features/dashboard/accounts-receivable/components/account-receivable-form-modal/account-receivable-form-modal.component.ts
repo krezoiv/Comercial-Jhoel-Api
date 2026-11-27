@@ -12,7 +12,13 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { AccountReceivable, Client } from '../../../../../core/models';
+import {
+  AccountReceivable,
+  Client,
+  PortfolioPaymentMethod,
+  PortfolioRecordTrace,
+  cashEffectPhrase,
+} from '../../../../../core/models';
 import { AccountReceivableService } from '../../../../../core/services/account-receivable.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
@@ -56,7 +62,14 @@ export class AccountReceivableFormModalComponent implements OnChanges {
     date: [todayIsoDate(), Validators.required],
     amount: [0, [Validators.required, Validators.min(0.01)]],
     description: ['', Validators.maxLength(500)],
+    /** EFECTIVO moves Caja; BANCO never does. */
+    paymentMethod: ['EFECTIVO' as PortfolioPaymentMethod],
+    /** Mandatory (≥5) in edit mode when amount or payment method change. */
+    reason: ['', Validators.maxLength(255)],
   });
+
+  /** Backend trace of the record being edited (payment method, Kardex, lock). */
+  readonly trace = signal<PortfolioRecordTrace | null>(null);
 
   get isEditMode(): boolean {
     return this.record !== null;
@@ -76,7 +89,67 @@ export class AccountReceivableFormModalComponent implements OnChanges {
       date: this.record?.date ?? todayIsoDate(),
       amount: this.record?.amount ?? 0,
       description: this.record?.description ?? '',
+      paymentMethod: this.record?.paymentMethod ?? 'EFECTIVO',
+      reason: '',
     });
+    this.form.enable();
+    this.trace.set(null);
+    if (this.record) {
+      this.accountReceivableService.getTrace(this.record.id).subscribe({
+        next: (trace) => this.applyTrace(trace),
+        error: () => this.trace.set(null),
+      });
+    }
+  }
+
+  /** Shows the effective method and locks what only its origin operation can change. */
+  private applyTrace(trace: PortfolioRecordTrace): void {
+    this.trace.set(trace);
+    this.form.controls.paymentMethod.setValue(trace.paymentMethod, { emitEvent: false });
+    if (trace.lock) {
+      this.form.controls.amount.disable({ emitEvent: false });
+      this.form.controls.paymentMethod.disable({ emitEvent: false });
+      this.form.controls.clientId.disable({ emitEvent: false });
+    }
+  }
+
+  /** Edit mode: does the change alter the cash effect (amount or payment method)? Then a reason is mandatory. */
+  needsReason(): boolean {
+    if (!this.record) {
+      return false;
+    }
+    const { amount, paymentMethod } = this.form.getRawValue();
+    const currentMethod = this.trace()?.paymentMethod ?? this.record.paymentMethod ?? 'EFECTIVO';
+    return Math.round(amount * 100) !== Math.round(this.record.amount * 100) || paymentMethod !== currentMethod;
+  }
+
+  reasonMissing(): boolean {
+    return this.needsReason() && this.form.controls.reason.value.trim().length < 5;
+  }
+
+  /** What the save will do to Caja, in words (facts from the backend trace; never a recomputation). */
+  cashNote(): string | null {
+    const method = this.form.controls.paymentMethod.value;
+    if (!this.record) {
+      return method === 'BANCO' ? 'Banco / transferencia: no mueve Caja.' : 'Efectivo: el monto sale de Caja (gasto por cobrar).';
+    }
+    const trace = this.trace();
+    if (!trace) {
+      return null;
+    }
+    if (trace.lock === 'BANK_DEPOSIT') {
+      return 'Nació de una operación de Transaccionar: monto, cliente y medio solo cambian anulando esa operación. Puede corregir la fecha y la descripción.';
+    }
+    if (trace.lock === 'AR_PAYMENT') {
+      return 'Es el abono de un cobro de Cartera: para corregir su monto anule el cobro.';
+    }
+    if (!trace.cashTracked) {
+      return 'Registro anterior al Control de Efectivo: sus cambios no mueven Caja (su efectivo ya estaba en el saldo inicial).';
+    }
+    if (this.needsReason()) {
+      return `Caja registrará la reversa del movimiento vigente (${cashEffectPhrase(trace.kardexNet)}) y el nuevo efecto según el monto y el medio. Queda en el historial con el motivo.`;
+    }
+    return `En Caja hoy: ${cashEffectPhrase(trace.kardexNet)}. Cambiar fecha, cliente o descripción no mueve Caja.`;
   }
 
   onClientSelected(client: Client | null): void {
@@ -92,7 +165,7 @@ export class AccountReceivableFormModalComponent implements OnChanges {
   async submit(): Promise<void> {
     this.errorMessage.set(null);
 
-    if (this.form.invalid || this.isSubmitting()) {
+    if (this.form.invalid || this.isSubmitting() || this.reasonMissing()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -104,7 +177,7 @@ export class AccountReceivableFormModalComponent implements OnChanges {
       return;
     }
 
-    const { clientId, date, amount, description } = this.form.getRawValue();
+    const { clientId, date, amount, description, paymentMethod, reason } = this.form.getRawValue();
     this.isSubmitting.set(true);
 
     const input = {
@@ -112,6 +185,8 @@ export class AccountReceivableFormModalComponent implements OnChanges {
       date,
       amount,
       description: description.trim().replace(/\s+/g, ' ') || undefined,
+      paymentMethod,
+      reason: reason.trim().replace(/\s+/g, ' ') || undefined,
     };
 
     const request$ = this.isEditMode

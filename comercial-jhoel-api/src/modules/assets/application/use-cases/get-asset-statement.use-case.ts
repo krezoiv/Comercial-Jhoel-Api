@@ -13,6 +13,7 @@ export interface GetAssetStatementInput {
   clientId: string;
   dateFrom?: string;
   dateTo?: string;
+  includeVoided?: boolean;
 }
 
 /** Backs the "Estado de Cuenta" view — saldo inicial del periodo, movimientos con saldo corrido, totales. Never iterates full history client-side; the repository derives everything with one bounded, window-function query. */
@@ -31,10 +32,11 @@ export class GetAssetStatementUseCase {
       throw new ReferencedClientNotFoundError();
     }
 
-    const statement = await this.assetRepository.getStatement(
-      input.clientId,
-      { dateFrom: input.dateFrom, dateTo: input.dateTo },
-    );
+    const statement = await this.assetRepository.getStatement(input.clientId, {
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+      includeVoided: input.includeVoided,
+    });
 
     return toAssetStatementOutput(statement);
   }

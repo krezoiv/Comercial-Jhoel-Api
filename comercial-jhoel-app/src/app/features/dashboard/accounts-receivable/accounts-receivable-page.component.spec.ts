@@ -16,6 +16,7 @@ function record(id: string, clientId: string, pending: number): AccountReceivabl
     amount: pending,
     movementType: 'CARGO',
     description: null,
+    paymentMethod: 'EFECTIVO',
     isActive: true,
     createdAt: '',
     updatedAt: '',

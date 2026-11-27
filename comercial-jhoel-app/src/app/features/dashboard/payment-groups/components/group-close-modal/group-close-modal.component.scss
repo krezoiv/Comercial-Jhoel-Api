@@ -1,0 +1,35 @@
+@use '../../../guayacan-cash-box/guayacan-modal';
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: var(--fs-sm);
+  }
+
+  dt {
+    color: var(--color-text-on-light-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .strong {
+    grid-column: 1 / -1;
+    font-size: var(--fs-md);
+  }
+}
+
+.note {
+  margin-top: var(--space-4);
+}

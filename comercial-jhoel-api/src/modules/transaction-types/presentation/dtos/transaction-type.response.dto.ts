@@ -4,6 +4,7 @@ export class TransactionTypeResponseDto {
   icon: string;
   balanceEffect: string | null;
   cashEffect: string;
+  allowsGroupPayment: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

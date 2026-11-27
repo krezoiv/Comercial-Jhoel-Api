@@ -129,3 +129,71 @@ pérdida o fraude.
 
 **Al publicar en producción:** `npm run migration:run:prod` (migración `1760009200000`; solo agrega tablas y funciones
 nuevas).
+
+## Cuentas por Cobrar, Activos y Caja
+
+Qué mueve la Caja (una sola regla para todo el sistema):
+
+| Registro | Efectivo | Banco / transferencia |
+|---|---|---|
+| Cuenta por cobrar (cargo: el negocio entrega el dinero) | Sale de Caja | No mueve Caja |
+| Abono de cuenta por cobrar | Entra a Caja | No mueve Caja |
+| Activo (dinero del cliente que el negocio guarda) | Entra a Caja | No mueve Caja |
+| Devolución de activo | Sale de Caja | No mueve Caja |
+
+- **Corregir o eliminar.**
+  - Cambiar el monto o el medio, o eliminar, pide un **motivo**.
+  - Si el registro había movido Caja, el sistema registra la **reversa**, vinculada al movimiento original y con el
+    motivo, y después el movimiento corregido. Así queda visible en el Estado de Cuenta de Efectivo.
+  - Cambiar solo la fecha, el cliente o la descripción no mueve Caja, pero también queda en el historial.
+- **Nada se borra.**
+  - Un registro eliminado queda **anulado**: tachado en el estado de cuenta del cliente, con quién, cuándo y por qué.
+  - "Historial" muestra cada cambio (antes → después) y sus movimientos de Caja.
+- **Registros anteriores al Control de Efectivo.** Su efectivo ya estaba en el saldo inicial contado, así que
+  corregirlos o eliminarlos **no mueve Caja**. El sistema lo avisa antes de confirmar.
+- **Cargos que nacieron en Transaccionar** ("enviar a cuentas por cobrar/activos"):
+  - Se corrigen anulando la operación, y al hacerlo se anula también el cargo.
+  - Si ese cargo ya recibió pagos, primero se anulan los pagos.
+- **Revisión histórica.** En Control de Efectivo → Auditoría → **Rango**, con las fechas de inicio a hoy, la tabla
+  **"Conciliación por operación"** lista cada operación cuyo movimiento registrado no coincide con el esperado:
+  - Columnas: fecha, módulo, operación, esperado, registrado, diferencia y causa probable.
+  - Se puede bajar en CSV.
+  - Incluye las operaciones de Transaccionar anuladas antes de esta corrección que dejaron su cargo vigente; se
+    regularizan anulando ese cargo con su motivo.
+  - Nada se corrige solo.
+
+**Al publicar en producción:** `npm run migration:run:prod` (migración `1760009300000`). Agrega columnas, una tabla de
+historial, funciones y triggers. No modifica ni borra registros existentes.
+
+## Pagos grupales (Pago Varios y Préstamos Génesis)
+
+1. **Habilitar el tipo.** En Sistema → Tipos de transacción, marque "Permite pago grupal" en el tipo (por ejemplo Pago
+   Varios). En Transaccionar, ese tipo muestra **Pago individual / Pago grupal**.
+2. **Crear el grupo.** Indique descripción, cantidad de transacciones, monto total autorizado y el monto de cada
+   transacción (pueden ser distintos; su suma no supera lo autorizado).
+   - Si el tipo **saca** efectivo (Pago Varios), el monto autorizado queda **reservado**:
+     - el **saldo físico** de Caja no cambia;
+     - el **disponible para operar** baja;
+     - ninguna otra salida (retiros, salidas manuales, traslados a Bodega, cargos en efectivo) puede tomar ese dinero;
+     - no se puede reservar más que el disponible.
+   - Si el tipo **recibe** efectivo (Préstamos Génesis, cobro de cuotas), no se reserva nada.
+3. **Procesar cada transacción.** Desde Agentes Bancarios → Pagos Grupales, cada transacción se trabaja por separado:
+   - **Confirmar pago:** se entrega todo lo esperado.
+   - **Pago parcial:** se entrega una parte y el resto sigue reservado.
+   - **Sin pago:** se indica el motivo y no mueve Caja.
+   - **Observación** e **Historial.**
+   - Cada pago confirmado es una operación real de Transaccionar: baja Caja (o entra, si es cobro) solo por lo
+     entregado y aparece en el Kardex y en el Estado de Cuenta con el código del grupo y el número de transacción.
+4. **Cerrar (administrador).**
+   - No se puede cerrar con transacciones pendientes.
+   - Cada parcial o sin pago necesita su resolución escrita.
+   - Al cerrar se libera lo no utilizado al disponible; los movimientos reales y el historial quedan intactos.
+5. **Anular (administrador).**
+   - Una transacción sin pagos solo libera su reserva.
+   - Una ya pagada se anula únicamente si el dinero regresó físicamente: se registra la reversa. Si no regresó, se deja
+     una observación; nunca se registra una entrada ficticia.
+
+Control de Efectivo muestra "Reservado en pagos grupales" y "Disponible para operar" mientras haya grupos abiertos.
+
+**Al publicar en producción:** `npm run migration:run:prod` (migración `1760009400000`). Después active "Permite pago
+grupal" en los tipos que correspondan.

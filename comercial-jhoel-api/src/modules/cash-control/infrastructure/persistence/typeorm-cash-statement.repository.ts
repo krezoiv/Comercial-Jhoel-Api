@@ -75,6 +75,7 @@ const CAJA_ROWS = `
            ELSE NULLIF(btrim(m.reason), '')
          END AS beneficiary,
          COALESCE(wt.reference_number, ww.reference_number, 'MOV-' || lpad(m.sequence::text, 6, '0')) AS operation_number,
+         'MOV-' || lpad(om.sequence::text, 6, '0') AS reversal_of_number,
          COALESCE(m.bank_name, wt.voucher_reference, ww.voucher_reference) AS reference
   FROM cash_movements m
   JOIN users u ON u.id = m.created_by
@@ -98,6 +99,7 @@ const BODEGA_ROWS = `
          m.created_by, u.username, NULL::int AS cut_period_number,
          COALESCE(NULLIF(btrim(m.counterpart), ''), NULLIF(btrim(m.reason), '')) AS beneficiary,
          COALESCE(wt.reference_number, ww.reference_number, 'BOD-' || lpad(m.sequence::text, 6, '0')) AS operation_number,
+         'BOD-' || lpad(om.sequence::text, 6, '0') AS reversal_of_number,
          COALESCE(b.name, wt.voucher_reference, ww.voucher_reference) AS reference
   FROM warehouse_cash_movements m
   JOIN users u ON u.id = m.created_by
@@ -172,6 +174,8 @@ function toRow(row: SqlRow): CashStatementRow {
     voidedAt: date(row.voided_at),
     voidReason: str(row.void_reason),
     reversalOfId: str(row.reversal_of_id),
+    reversalOfNumber: str(row.reversal_of_number),
+    reason: str(row.reason),
     username: text(row.username),
     cutPeriodNumber: numOrNull(row.cut_period_number),
   };

@@ -1,20 +1,48 @@
 @if (open && record) {
   <div class="modal-backdrop">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="void-title" (click)="$event.stopPropagation()">
       <div class="modal__icon">
         <app-icon name="alert-triangle" [size]="24" />
       </div>
 
-      <h2 class="modal__title">¿Está seguro que desea desactivar este registro?</h2>
+      <h2 class="modal__title" id="void-title">¿Anular este registro?</h2>
       <p class="modal__description">
-        La cuenta por cobrar de <strong>{{ record.clientName }}</strong> se desactivará y dejará de aparecer en los
-        listados normales. No se elimina permanentemente: se conserva en el historial.
+        La cuenta por cobrar de <strong>{{ record.clientName }}</strong> por <strong>{{ formatCurrency(record.amount) }}</strong> dejará de contar en
+        el saldo. No se borra: queda en el historial y en el estado de cuenta, marcado como anulado.
       </p>
+
+      @if (cashNote(); as note) {
+        <p [class]="'cash-note' + (movesCash() ? ' cash-note--moves' : '')" aria-live="polite">
+          <app-icon name="alert-circle" [size]="16" /> {{ note }}
+        </p>
+        @if (trace()?.lock === 'BANK_DEPOSIT') {
+          <p class="cash-note cash-note--lock">
+            Nació de una operación de Transaccionar: se anula anulando esa operación (solo si ya está anulada se anula aquí).
+          </p>
+        }
+      } @else if (traceFailed()) {
+        <p class="cash-note">No se pudo consultar el efecto en Caja; el sistema lo aplicará igual al anular.</p>
+      }
+
+      <div class="field">
+        <label for="void-reason">Motivo de la anulación *</label>
+        <textarea
+          id="void-reason"
+          rows="2"
+          maxlength="255"
+          placeholder="Por qué se anula (queda en el historial y en la reversa de Caja)"
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+        @if (reason() && !canConfirm()) {
+          <span class="field__error">Mínimo 5 caracteres.</span>
+        }
+      </div>
 
       <div class="modal__actions">
         <app-button variant="ghost" [disabled]="isDeleting" (click)="cancelled.emit()">Cancelar</app-button>
-        <app-button variant="danger" [disabled]="isDeleting" (click)="confirmed.emit()">
-          {{ isDeleting ? 'Desactivando…' : 'Confirmar' }}
+        <app-button variant="danger" [disabled]="isDeleting || !canConfirm()" (click)="confirm()">
+          {{ isDeleting ? 'Anulando…' : 'Anular' }}
         </app-button>
       </div>
     </div>

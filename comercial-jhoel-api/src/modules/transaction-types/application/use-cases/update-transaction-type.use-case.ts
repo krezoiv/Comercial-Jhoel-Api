@@ -17,6 +17,7 @@ export interface UpdateTransactionTypeInput {
   icon?: string;
   balanceEffect?: string | null;
   cashEffect?: string | null;
+  allowsGroupPayment?: boolean;
   updatedBy: string;
 }
 
@@ -56,6 +57,9 @@ export class UpdateTransactionTypeUseCase {
         : {}),
       ...(input.cashEffect
         ? { cashEffect: input.cashEffect as TransactionTypeCashEffect }
+        : {}),
+      ...(input.allowsGroupPayment !== undefined
+        ? { allowsGroupPayment: input.allowsGroupPayment }
         : {}),
       updatedBy: input.updatedBy,
     });

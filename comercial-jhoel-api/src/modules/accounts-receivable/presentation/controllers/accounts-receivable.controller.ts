@@ -26,6 +26,9 @@ import { RegisterAccountReceivablePaymentUseCase } from '../../application/use-c
 import { GetAccountReceivableStatementUseCase } from '../../application/use-cases/get-account-receivable-statement.use-case';
 import { GetAccountReceivableCurrentBalanceUseCase } from '../../application/use-cases/get-account-receivable-current-balance.use-case';
 import { GetAccountReceivableActiveBalanceUseCase } from '../../application/use-cases/get-account-receivable-active-balance.use-case';
+import { GetAccountReceivableTraceUseCase } from '../../application/use-cases/get-account-receivable-trace.use-case';
+import { VoidPortfolioRecordRequestDto } from '../../../../shared/presentation/dtos/portfolio-record.request.dto';
+import type { PortfolioRecordTrace } from '../../../../shared/domain/portfolio-record';
 import { CreateAccountReceivableRequestDto } from '../dtos/create-account-receivable.request.dto';
 import { UpdateAccountReceivableRequestDto } from '../dtos/update-account-receivable.request.dto';
 import { ListAccountsReceivableQueryDto } from '../dtos/list-accounts-receivable.query.dto';
@@ -56,6 +59,7 @@ export class AccountsReceivableController {
     private readonly getAccountReceivableStatementUseCase: GetAccountReceivableStatementUseCase,
     private readonly getAccountReceivableCurrentBalanceUseCase: GetAccountReceivableCurrentBalanceUseCase,
     private readonly getAccountReceivableActiveBalanceUseCase: GetAccountReceivableActiveBalanceUseCase,
+    private readonly getAccountReceivableTraceUseCase: GetAccountReceivableTraceUseCase,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -110,8 +114,23 @@ export class AccountsReceivableController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.deactivateAccountReceivableUseCase.execute(id);
+  deactivate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidPortfolioRecordRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<void> {
+    return this.deactivateAccountReceivableUseCase.execute(id, {
+      reason: dto.reason,
+      userId,
+    });
+  }
+
+  /** Payment method, Kardex movements (original, reversals) and change history of one record. */
+  @Get(':id/trace')
+  getTrace(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PortfolioRecordTrace> {
+    return this.getAccountReceivableTraceUseCase.execute(id);
   }
 
   /** "Registrar Cargo" — admin-only, same policy as `create()`. */

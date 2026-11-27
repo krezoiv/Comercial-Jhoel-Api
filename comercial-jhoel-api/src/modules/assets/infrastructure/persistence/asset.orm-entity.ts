@@ -38,6 +38,16 @@ export class AssetOrmEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   description: string | null;
 
+  /** Written on insert only; later changes go through `update_portfolio_record` (reason + history). */
+  @Column({
+    name: 'payment_method',
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+    update: false,
+  })
+  paymentMethod: 'EFECTIVO' | 'BANCO' | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

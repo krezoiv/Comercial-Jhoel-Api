@@ -71,6 +71,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
+    // Pagos grupales (1760009400000): an outflow that would take money reserved for an open group is
+    // rejected by the single Kardex writer, whichever module asked for it.
+    if (
+      exception instanceof Error &&
+      exception.message.startsWith('CASH_RESERVED_FUNDS')
+    ) {
+      const available = Number(exception.message.split(':')[1] ?? 0);
+      return {
+        status: 409,
+        message: `Esa salida usaría efectivo reservado para pagos grupales. Disponible para operar: Q${available.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`,
+      };
+    }
+
     if (exception instanceof HttpException) {
       const body = exception.getResponse();
       const message =

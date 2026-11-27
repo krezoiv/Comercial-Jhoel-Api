@@ -11,10 +11,12 @@ import {
   INTEGRITY_STATUS_LABEL,
   IntegrityFinding,
   IntegrityTimelineCount,
+  INTEGRITY_MODULE_LABEL,
   formatCurrency,
 } from '../../../../../core/models';
 import { CashControlService } from '../../../../../core/services/cash-control.service';
 import { onCashChanged } from '../../../../../core/services/cash-control-sync.service';
+import { downloadBlob } from '../../../../../core/utils/download-blob';
 import { extractErrorMessage } from '../../../../../core/utils/extract-error-message';
 import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 import { formatDifference, formatGuatemalaDateTime, formatIsoDate, guatemalaToday } from '../../cash-control.util';
@@ -75,6 +77,13 @@ export class CashIntegrityPanelComponent implements OnChanges {
   readonly resolving = signal<IntegrityFinding | null>(null);
 
   readonly findings = computed(() => this.report()?.findings ?? []);
+  /**
+   * Reconciliation by operation: findings about one source operation, with the
+   * movement its rules expect vs the one its Kardex holds (all from the backend).
+   */
+  readonly reconciliation = computed(() =>
+    this.findings().filter((f) => f.expected !== undefined && f.expected !== null && f.reference),
+  );
   readonly byKey = computed(() => new Map(this.findings().map((f) => [f.key, f])));
   /** Movements of the findings related to the one being investigated (highlighted). */
   readonly flagged = computed(() => {
@@ -153,5 +162,31 @@ export class CashIntegrityPanelComponent implements OnChanges {
   onResolved(): void {
     this.resolving.set(null);
     this.load();
+  }
+
+  moduleLabel(finding: IntegrityFinding): string {
+    return INTEGRITY_MODULE_LABEL[finding.reference?.type ?? ''] ?? finding.reference?.type ?? '—';
+  }
+
+  /** CSV of the reconciliation table (the backend's figures, as shown). */
+  exportReconciliation(): void {
+    const cell = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const header = ['Fecha', 'Módulo', 'ID operación', 'Operación', 'Movimiento esperado', 'Movimiento registrado', 'Diferencia', 'Causa probable'];
+    const lines = this.reconciliation().map((f) =>
+      [
+        f.occurredAt ? this.formatDateTime(f.occurredAt) : '',
+        this.moduleLabel(f),
+        f.reference?.id ?? '',
+        f.reference?.label ?? '',
+        (f.expected ?? 0).toFixed(2),
+        (f.registered ?? 0).toFixed(2),
+        (f.amount ?? 0).toFixed(2),
+        `${f.title} (${this.classificationLabel[f.classification]})`,
+      ]
+        .map((value) => cell(String(value)))
+        .join(','),
+    );
+    const csv = '\uFEFF' + [header.map(cell).join(','), ...lines].join('\r\n');
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `conciliacion-caja-${this.today}.csv`);
   }
 }

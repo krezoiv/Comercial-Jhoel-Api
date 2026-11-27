@@ -32,6 +32,8 @@ const row = (over: Partial<CashStatementRow> = {}): CashStatementRow => ({
   voidedAt: null,
   voidReason: null,
   reversalOfId: null,
+  reversalOfNumber: null,
+  reason: null,
   username: 'admin',
   cutPeriodNumber: null,
   ...over,

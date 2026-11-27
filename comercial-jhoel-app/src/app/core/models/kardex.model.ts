@@ -1,5 +1,7 @@
 import { Observable } from 'rxjs';
 
+import { PortfolioPaymentMethod, PortfolioRecordTrace } from './portfolio-trace.model';
+
 export type KardexMovementType = 'CARGO' | 'ABONO';
 
 export interface KardexMovement {
@@ -8,9 +10,13 @@ export interface KardexMovement {
   movementType: KardexMovementType;
   description: string | null;
   amount: number;
-  balanceAfter: number;
+  /** Running balance of active rows; null for a voided row (it no longer counts). */
+  balanceAfter: number | null;
+  isActive: boolean;
   createdByUsername: string;
   createdAt: string;
+  /** Payment method, Kardex movements and change history (backend). */
+  trace: PortfolioRecordTrace;
 }
 
 export interface KardexStatement {
@@ -21,17 +27,22 @@ export interface KardexStatement {
   totalCargos: number;
   totalAbonos: number;
   closingBalance: number;
+  voidedCount: number;
 }
 
 export interface RegisterKardexMovementInput {
   date: string;
   amount: number;
   description?: string;
+  /** EFECTIVO (default) moves Caja; BANCO never does. */
+  paymentMethod?: PortfolioPaymentMethod;
 }
 
 export interface KardexStatementFilters {
   dateFrom?: string;
   dateTo?: string;
+  /** Voided rows are shown unless false. */
+  includeVoided?: boolean;
 }
 
 /** Backs the plain list screen's "Saldo total" tile — always scoped to active accounts only, independent of the list's own current filters. */

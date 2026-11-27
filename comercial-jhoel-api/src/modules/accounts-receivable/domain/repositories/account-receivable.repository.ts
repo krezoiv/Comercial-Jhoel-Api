@@ -3,6 +3,12 @@ import {
   AccountReceivableMovementType,
 } from '../entities/account-receivable.entity';
 import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
+import type {
+  PortfolioPaymentMethod,
+  PortfolioRecordTrace,
+  PortfolioStatement,
+  PortfolioStatementMovement,
+} from '../../../../shared/domain/portfolio-record';
 
 export const ACCOUNT_RECEIVABLE_REPOSITORY = Symbol(
   'ACCOUNT_RECEIVABLE_REPOSITORY',
@@ -51,6 +57,7 @@ export interface CreateAccountReceivableData {
   date: string;
   amount: number;
   description: string | null;
+  paymentMethod: PortfolioPaymentMethod;
   createdBy: string;
 }
 
@@ -59,6 +66,9 @@ export interface UpdateAccountReceivableData {
   date?: string;
   amount?: number;
   description?: string | null;
+  paymentMethod?: PortfolioPaymentMethod;
+  /** Mandatory (≥5) when amount or payment method change — enforced by the database. */
+  reason?: string | null;
   updatedBy: string;
 }
 
@@ -73,36 +83,20 @@ export interface RegisterAccountReceivableMovementData {
   /** Polymorphic origin tag — `null`/omitted for a movement registered directly through Cuentas por Cobrar (every existing caller). Set together (e.g. `'BANK_DEPOSIT'` + a `bank_deposit_operations.id`) when a movement was generated as a side effect of another module's write — see Transaccionar's "Enviar a cuentas por cobrar". */
   referenceType?: string | null;
   referenceId?: string | null;
+  /** null/undefined = EFECTIVO. */
+  paymentMethod?: PortfolioPaymentMethod | null;
 }
 
-export interface StatementMovement {
-  id: string;
-  date: string;
-  movementType: AccountReceivableMovementType;
-  description: string | null;
-  amount: number;
-  /** The running balance immediately after this movement — computed fresh on every read, never stored (see the migration's own doc comment for why). */
-  balanceAfter: number;
-  createdByUsername: string;
-  createdAt: Date;
-}
+/** A statement row: voided rows included (balanceAfter null), each with its cash trace. */
+export type StatementMovement = PortfolioStatementMovement;
 
 export interface GetAccountReceivableStatementOptions {
-  /** Omit for "since the beginning" — `openingBalance` is then always 0. */
   dateFrom?: string;
   dateTo?: string;
+  includeVoided?: boolean;
 }
 
-export interface AccountReceivableStatement {
-  clientId: string;
-  clientName: string;
-  /** The signed running balance immediately before `dateFrom` — 0 if `dateFrom` is omitted, never assumed zero when real prior activity exists. */
-  openingBalance: number;
-  movements: StatementMovement[];
-  totalCargos: number;
-  totalAbonos: number;
-  closingBalance: number;
-}
+export type AccountReceivableStatement = PortfolioStatement;
 
 export interface AccountReceivableRepository {
   findAll(
@@ -120,7 +114,8 @@ export interface AccountReceivableRepository {
     id: string,
     data: UpdateAccountReceivableData,
   ): Promise<AccountReceivable>;
-  deactivate(id: string): Promise<void>;
+  /** Voids with a reason (≥5): reverses its Caja effect, keeps the row and its history. */
+  deactivate(id: string, reason: string, userId: string): Promise<void>;
   /** Invokes the `register_account_receivable_movement` Postgres function — validation (including the `ABONO_EXCEEDS_BALANCE` rejection, unlike Activos), balance computation, and the insert all happen atomically, serialized per client via an advisory lock. `context`, when provided, is used instead of this repository's own connection — lets a caller (e.g. Transaccionar's deposit registration) wrap this call and another module's write in one shared DB transaction. Omitted by every caller that doesn't need that. */
   registerMovement(
     data: RegisterAccountReceivableMovementData,
@@ -128,6 +123,8 @@ export interface AccountReceivableRepository {
   ): Promise<AccountReceivable>;
   /** The client's current signed balance — a single bounded aggregate, never a full-history fetch. */
   getCurrentBalance(clientId: string): Promise<number>;
+  /** Payment method, Kardex movements and change history of one record (null when it does not exist). */
+  getTrace(id: string): Promise<PortfolioRecordTrace | null>;
   getStatement(
     clientId: string,
     options: GetAccountReceivableStatementOptions,

@@ -30,6 +30,9 @@ import { CreateAssetRequestDto } from '../dtos/create-asset.request.dto';
 import { UpdateAssetRequestDto } from '../dtos/update-asset.request.dto';
 import { ListAssetsQueryDto } from '../dtos/list-assets.query.dto';
 import { RegisterMovementRequestDto } from '../dtos/register-movement.request.dto';
+import { GetAssetTraceUseCase } from '../../application/use-cases/get-asset-trace.use-case';
+import { VoidPortfolioRecordRequestDto } from '../../../../shared/presentation/dtos/portfolio-record.request.dto';
+import type { PortfolioRecordTrace } from '../../../../shared/domain/portfolio-record';
 import { GetStatementQueryDto } from '../dtos/get-statement.query.dto';
 import {
   AssetResponseDto,
@@ -56,6 +59,7 @@ export class AssetsController {
     private readonly getAssetStatementUseCase: GetAssetStatementUseCase,
     private readonly getAssetCurrentBalanceUseCase: GetAssetCurrentBalanceUseCase,
     private readonly getAssetActiveBalanceUseCase: GetAssetActiveBalanceUseCase,
+    private readonly getAssetTraceUseCase: GetAssetTraceUseCase,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -102,8 +106,23 @@ export class AssetsController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.deactivateAssetUseCase.execute(id);
+  deactivate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VoidPortfolioRecordRequestDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<void> {
+    return this.deactivateAssetUseCase.execute(id, {
+      reason: dto.reason,
+      userId,
+    });
+  }
+
+  /** Payment method, Kardex movements (original, reversals) and change history of one record. */
+  @Get(':id/trace')
+  getTrace(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PortfolioRecordTrace> {
+    return this.getAssetTraceUseCase.execute(id);
   }
 
   /** "Registrar Cargo" — admin-only, same policy as `create()`. */

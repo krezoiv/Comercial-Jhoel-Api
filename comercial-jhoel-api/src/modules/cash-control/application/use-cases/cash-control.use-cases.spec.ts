@@ -111,6 +111,8 @@ function repositoryMock(): jest.Mocked<CashControlRepository> {
       balance: 155000,
       lastSequence: 7,
       lastMovementAt: null,
+      reserved: 0,
+      available: 155000,
     }),
     getDateSummary: jest.fn().mockResolvedValue({
       openingBalance: 150000,
@@ -686,6 +688,8 @@ describe('Control de Efectivo — acumulados por día bancario', () => {
       balance: 105000,
       lastSequence: 12,
       lastMovementAt: null,
+      reserved: 0,
+      available: 105000,
     });
     repository.getBankDaySummary.mockResolvedValue(bankDay());
 

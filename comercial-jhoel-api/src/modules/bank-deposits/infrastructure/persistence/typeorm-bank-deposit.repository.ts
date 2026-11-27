@@ -35,6 +35,8 @@ import { BankDepositOperationAlreadyVoidedError } from '../../domain/errors/bank
 import { InvalidBankAccountError } from '../../domain/errors/invalid-bank-account.error';
 import { InvalidBankDepositDescriptionError } from '../../domain/errors/invalid-bank-deposit-description.error';
 import { bankMovementErrorFromMessage } from '../../../banks/domain/errors/bank-movement.errors';
+import { portfolioRecordErrorFromMessage } from '../../../../shared/domain/portfolio-record';
+import { paymentGroupErrorFromMessage } from '../../../payment-groups/domain/payment-group';
 import { BankDepositOperationOrmEntity } from './bank-deposit-operation.orm-entity';
 import { BankDepositOperationMapper } from './bank-deposit-operation.mapper';
 
@@ -375,6 +377,17 @@ export class TypeOrmBankDepositRepository implements BankDepositRepository {
     const balanceError = bankMovementErrorFromMessage(message);
     if (balanceError) {
       return balanceError;
+    }
+
+    // Voiding also voids the cargo it sent to CxC/Activos (trg_portfolio_bank_deposit_void): its rule violations.
+    const portfolioError = portfolioRecordErrorFromMessage(message);
+    if (portfolioError) {
+      return portfolioError;
+    }
+
+    // An operation that is a Pago grupal delivery is voided from its group (trg_payment_group_operation_guard).
+    if (message.startsWith('PAYMENT_GROUP_OPERATION_LOCKED')) {
+      return paymentGroupErrorFromMessage(message) ?? error;
     }
 
     const [code, detail] = message.split(':');

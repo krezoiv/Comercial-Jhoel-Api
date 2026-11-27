@@ -55,6 +55,21 @@
             </div>
 
             <div class="field">
+              <span class="field__label" id="movement-method-label">Medio</span>
+              <div class="method-toggle" role="radiogroup" aria-labelledby="movement-method-label">
+                <label class="method-toggle__option">
+                  <input type="radio" formControlName="paymentMethod" value="EFECTIVO" /> Efectivo
+                </label>
+                <label class="method-toggle__option">
+                  <input type="radio" formControlName="paymentMethod" value="BANCO" /> Banco / transferencia
+                </label>
+              </div>
+              <span class="field__hint">
+                {{ form.controls.paymentMethod.value === 'BANCO' ? 'No mueve Caja.' : 'Mueve Caja: queda en el Kardex y en el Estado de Cuenta de Efectivo.' }}
+              </span>
+            </div>
+
+            <div class="field">
               <label for="movement-description">Descripción</label>
               <textarea id="movement-description" formControlName="description" rows="2" placeholder="Opcional"></textarea>
             </div>
@@ -90,6 +105,11 @@
           @if (dateFrom() || dateTo()) {
             <app-button variant="ghost" type="button" (click)="clearDateFilters()">Limpiar</app-button>
           }
+          <label class="voided-toggle">
+            <input type="checkbox" [checked]="showVoided()" (change)="onShowVoidedChange($any($event.target).checked)" />
+            Mostrar anulados
+            @if (statement()!.voidedCount) { ({{ statement()!.voidedCount }}) }
+          </label>
         </div>
 
         <div class="modal__table-wrapper">
@@ -101,6 +121,7 @@
                 <th class="align-right">Cargo</th>
                 <th class="align-right">Abono</th>
                 <th class="align-right">Saldo</th>
+                <th>Caja</th>
                 <th>Usuario</th>
               </tr>
             </thead>
@@ -108,20 +129,68 @@
               <tr class="modal__table-opening">
                 <td colspan="4">Saldo inicial del periodo</td>
                 <td class="align-right">{{ formatCurrency(statement()!.openingBalance) }}</td>
-                <td></td>
+                <td colspan="2"></td>
               </tr>
               @for (movement of statement()!.movements; track movement.id) {
-                <tr>
+                <tr [class.row--voided]="!movement.isActive">
                   <td>{{ movement.date | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ movement.description || '—' }}</td>
-                  <td class="align-right">{{ movement.movementType === 'CARGO' ? formatCurrency(movement.amount) : '—' }}</td>
-                  <td class="align-right">{{ movement.movementType === 'ABONO' ? formatCurrency(movement.amount) : '—' }}</td>
-                  <td class="align-right">{{ formatCurrency(movement.balanceAfter) }}</td>
+                  <td>
+                    <span class="concept">{{ movement.description || '—' }}</span>
+                    @if (!movement.isActive) {
+                      <span class="tag-voided">Anulado</span>
+                      <small class="row-note">
+                        {{ movement.trace.voided?.at | date: 'dd/MM/yyyy HH:mm' : '-0600' }}
+                        {{ movement.trace.voided?.byUsername ? '· ' + movement.trace.voided?.byUsername : '' }}
+                        — {{ movement.trace.voided?.reason || 'sin motivo registrado (anulado antes del historial)' }}
+                      </small>
+                    }
+                    @if (movement.trace.changes.length) {
+                      <button
+                        type="button"
+                        class="link-button"
+                        [attr.aria-expanded]="expanded() === movement.id"
+                        (click)="toggleHistory(movement.id)"
+                      >
+                        Historial ({{ movement.trace.changes.length }})
+                      </button>
+                    }
+                  </td>
+                  <td class="align-right amount">{{ movement.movementType === 'CARGO' ? formatCurrency(movement.amount) : '—' }}</td>
+                  <td class="align-right amount">{{ movement.movementType === 'ABONO' ? formatCurrency(movement.amount) : '—' }}</td>
+                  <td class="align-right">{{ movement.balanceAfter === null ? '—' : formatCurrency(movement.balanceAfter) }}</td>
+                  <td class="cash-cell">{{ cashLabel(movement) }}</td>
                   <td>{{ movement.createdByUsername }}</td>
                 </tr>
+                @if (expanded() === movement.id) {
+                  <tr class="history-row">
+                    <td colspan="7">
+                      <ul class="history">
+                        @for (change of movement.trace.changes; track change.id) {
+                          <li>
+                            <strong>{{ change.action === 'ANULADO' ? 'Anulado' : 'Modificado' }}</strong>
+                            · {{ change.changedAt | date: 'dd/MM/yyyy HH:mm' : '-0600' }} · {{ change.changedByUsername }}
+                            @if (change.reason) { — {{ change.reason }} }
+                            @for (line of changeLines(change); track line) {
+                              <div>{{ line }}</div>
+                            }
+                            <div class="history__cash">{{ changeCashText(change) }}</div>
+                          </li>
+                        }
+                      </ul>
+                      <p class="history__kardex">
+                        Movimientos de Caja:
+                        @for (cash of movement.trace.movements; track cash.id) {
+                          <span>{{ kardexLabel(cash) }}</span>
+                        } @empty {
+                          ninguno
+                        }
+                      </p>
+                    </td>
+                  </tr>
+                }
               } @empty {
                 <tr>
-                  <td colspan="6" class="modal__table-empty">No hay movimientos registrados en el periodo seleccionado.</td>
+                  <td colspan="7" class="modal__table-empty">No hay movimientos registrados en el periodo seleccionado.</td>
                 </tr>
               }
             </tbody>

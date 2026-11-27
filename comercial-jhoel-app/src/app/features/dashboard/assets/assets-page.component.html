@@ -56,7 +56,7 @@
   [open]="isDeleteOpen()"
   [record]="deletingRecord()"
   [isDeleting]="isDeleting()"
-  (confirmed)="confirmDelete()"
+  (confirmed)="confirmDelete($event)"
   (cancelled)="cancelDelete()"
 />
 

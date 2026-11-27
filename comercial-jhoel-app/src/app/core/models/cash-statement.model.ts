@@ -94,6 +94,10 @@ export interface CashStatementRow {
   voidedAt: string | null;
   voidReason: string | null;
   reversalOfId: string | null;
+  /** Number of the original movement when this row is its reversal ("MOV-000123"). */
+  reversalOfNumber: string | null;
+  /** Why it was registered (manual entries, adjustments, reversals of a CxC / Activos change). */
+  reason: string | null;
   username: string;
   cutPeriodNumber: number | null;
 }

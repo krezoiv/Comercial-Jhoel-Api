@@ -339,6 +339,7 @@ describe('queries', () => {
       description: null,
       referenceType: null,
       referenceId: null,
+      paymentMethod: null,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),

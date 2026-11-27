@@ -77,6 +77,8 @@ export class TransactionTypeFormModalComponent implements OnChanges {
     icon: [TRANSACTION_TYPE_ICONS[0] as string, Validators.required],
     balanceEffect: ['' as TransactionTypeBalanceEffect | ''],
     cashEffect: ['NONE' as TransactionTypeCashEffect, Validators.required],
+    /** Shows "Pago grupal" for this type in Transaccionar. */
+    allowsGroupPayment: [false],
   });
 
   get isEditMode(): boolean {
@@ -96,6 +98,7 @@ export class TransactionTypeFormModalComponent implements OnChanges {
       icon: this.transactionType?.icon ?? TRANSACTION_TYPE_ICONS[0],
       balanceEffect: this.transactionType?.balanceEffect ?? '',
       cashEffect: this.transactionType?.cashEffect ?? 'NONE',
+      allowsGroupPayment: this.transactionType?.allowsGroupPayment ?? false,
     });
   }
 
@@ -114,8 +117,8 @@ export class TransactionTypeFormModalComponent implements OnChanges {
       return;
     }
 
-    const { name, icon, balanceEffect, cashEffect } = this.form.getRawValue();
-    const input = { name, icon, balanceEffect: balanceEffect || null, cashEffect };
+    const { name, icon, balanceEffect, cashEffect, allowsGroupPayment } = this.form.getRawValue();
+    const input = { name, icon, balanceEffect: balanceEffect || null, cashEffect, allowsGroupPayment };
     this.isSubmitting.set(true);
 
     const request$ = this.isEditMode

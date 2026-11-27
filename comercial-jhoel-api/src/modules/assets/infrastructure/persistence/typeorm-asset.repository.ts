@@ -14,7 +14,6 @@ import {
   GetAssetStatementOptions,
   PaginatedResult,
   RegisterAssetMovementData,
-  StatementMovement,
   UpdateAssetData,
 } from '../../domain/repositories/asset.repository';
 import {
@@ -23,6 +22,14 @@ import {
 } from '../../domain/errors/invalid-movement.error';
 import { AssetOrmEntity } from './asset.orm-entity';
 import { AssetMapper } from './asset.mapper';
+import type { PortfolioRecordTrace } from '../../../../shared/domain/portfolio-record';
+import {
+  loadPortfolioStatement,
+  loadPortfolioTraces,
+  translatePortfolioWriteError,
+  updatePortfolioRecord,
+  voidPortfolioRecord,
+} from '../../../../shared/infrastructure/persistence/portfolio-record.sql';
 
 const SORT_COLUMN: Record<AssetSortField, string> = {
   date: 'record.date',
@@ -175,18 +182,32 @@ export class TypeOrmAssetRepository implements AssetRepository {
     return AssetMapper.toDomain(withRelations);
   }
 
+  /**
+   * Through `update_portfolio_record`: locks (caja → client → row), then one
+   * UPDATE whose triggers enforce the rules (reason for cash changes, voided
+   * rows are history, linked records follow their operation), reverse +
+   * re-apply the Kardex effect and append the history.
+   */
   async update(id: string, data: UpdateAssetData): Promise<Asset> {
     try {
-      await this.repository.update({ id }, data);
+      await updatePortfolioRecord(this.repository.manager, 'assets', id, {
+        clientId: data.clientId,
+        date: data.date,
+        amount: data.amount,
+        description: data.description,
+        paymentMethod: data.paymentMethod,
+        reason: data.reason,
+        userId: data.updatedBy,
+      });
     } catch (error) {
-      throw this.translateAmountCheckError(error);
+      throw this.translateWriteError(error);
     }
     const updated = await this.repository.findOneOrFail({ where: { id } });
     return AssetMapper.toDomain(updated);
   }
 
   /**
-   * `create()`/`update()` are this table's original, still-untouched admin
+   * `create()` is this table's original, still-untouched admin
    * CRUD (see the migration's own doc comment for why they were
    * deliberately left alone) — but a plain negative `amount` through them
    * now violates `CHK_assets_amount_positive` (re-added by
@@ -207,8 +228,38 @@ export class TypeOrmAssetRepository implements AssetRepository {
     return error;
   }
 
-  async deactivate(id: string): Promise<void> {
-    await this.repository.update({ id }, { isActive: false });
+  /** Soft void with reason through `void_portfolio_record` (idempotent: a second void is rejected, never re-reversed). */
+  async deactivate(id: string, reason: string, userId: string): Promise<void> {
+    try {
+      await voidPortfolioRecord(
+        this.repository.manager,
+        'assets',
+        id,
+        reason,
+        userId,
+      );
+    } catch (error) {
+      throw this.translateWriteError(error);
+    }
+  }
+
+  async getTrace(id: string): Promise<PortfolioRecordTrace | null> {
+    const traces = await loadPortfolioTraces(
+      this.repository.manager,
+      'assets',
+      [id],
+    );
+    return traces.get(id) ?? null;
+  }
+
+  /** Portfolio rule violations (`RAISE 'CODE:…'`) and the amount constraint, as domain errors. */
+  private translateWriteError(error: unknown): unknown {
+    const portfolio = translatePortfolioWriteError(error);
+    if (portfolio !== error) {
+      return portfolio;
+    }
+    const amount = this.translateAmountCheckError(error);
+    return amount !== error ? amount : this.translateMovementError(error);
   }
 
   /** Invokes `register_asset_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for why Activos allows a negative balance and why this is the atomic, concurrency-safe replacement for the old plain `create()` INSERT. */
@@ -220,7 +271,7 @@ export class TypeOrmAssetRepository implements AssetRepository {
     try {
       const rows = await this.getManager(context).query<
         { register_asset_movement: string }[]
-      >('SELECT register_asset_movement($1, $2, $3, $4, $5, $6, $7, $8)', [
+      >('SELECT register_asset_movement($1, $2, $3, $4, $5, $6, $7, $8, $9)', [
         data.clientId,
         data.movementType,
         data.amount,
@@ -229,10 +280,11 @@ export class TypeOrmAssetRepository implements AssetRepository {
         data.createdBy,
         data.referenceType ?? null,
         data.referenceId ?? null,
+        data.paymentMethod ?? null,
       ]);
       movementId = rows[0].register_asset_movement;
     } catch (error) {
-      throw this.translateMovementError(error);
+      throw this.translateWriteError(error);
     }
 
     const asset = await this.findById(movementId, context);
@@ -256,100 +308,21 @@ export class TypeOrmAssetRepository implements AssetRepository {
   }
 
   /**
-   * `openingBalance` is the signed sum of every active movement strictly
-   * before `dateFrom` (0 when `dateFrom` is omitted — the WHERE clause then
-   * matches no rows). `balanceAfter` per row is computed with a window
-   * function over `sequence` seeded with that opening balance — never
-   * stored, always derived fresh (see the migration's own doc comment for
-   * why), and never summed client-side.
+   * `openingBalance` = signed sum of the active rows before `dateFrom`;
+   * `balanceAfter` = window sum over `sequence` of ACTIVE rows (never stored).
+   * Voided rows stay in place with their reason and Kardex reversal (they no
+   * longer count) — see `loadPortfolioStatement`.
    */
   async getStatement(
     clientId: string,
     options: GetAssetStatementOptions,
   ): Promise<AssetStatement> {
-    const dateFrom = options.dateFrom ?? null;
-    const dateTo = options.dateTo ?? null;
-
-    const [header] = await this.repository.manager.query<
-      { clientName: string | null; openingBalance: string }[]
-    >(
-      `SELECT
-         (SELECT name FROM clients WHERE id = $1) AS "clientName",
-         COALESCE((
-           SELECT SUM(CASE WHEN movement_type = 'ABONO' THEN -amount ELSE amount END)
-           FROM assets
-           WHERE client_id = $1 AND is_active = true
-             AND $2::date IS NOT NULL AND date < $2::date
-         ), 0) AS "openingBalance"`,
-      [clientId, dateFrom],
-    );
-
-    const openingBalance = Number(header?.openingBalance ?? 0);
-
-    const rows = await this.repository.manager.query<
-      {
-        id: string;
-        date: string;
-        movementType: 'CARGO' | 'ABONO';
-        description: string | null;
-        amount: string;
-        createdAt: Date;
-        createdByUsername: string;
-        balanceAfter: string;
-      }[]
-    >(
-      `WITH movements AS (
-         SELECT
-           a.id, a.date, a.movement_type AS "movementType", a.description,
-           a.amount, a.sequence, a.created_at AS "createdAt",
-           u.username AS "createdByUsername"
-         FROM assets a
-         JOIN users u ON u.id = a.created_by
-         WHERE a.client_id = $1 AND a.is_active = true
-           AND ($2::date IS NULL OR a.date >= $2::date)
-           AND ($3::date IS NULL OR a.date <= $3::date)
-       )
-       SELECT
-         m.id, m.date, m."movementType", m.description, m.amount,
-         m."createdAt", m."createdByUsername",
-         $4::numeric + SUM(CASE WHEN m."movementType" = 'ABONO' THEN -m.amount ELSE m.amount END)
-           OVER (ORDER BY m.sequence) AS "balanceAfter"
-       FROM movements m
-       ORDER BY m.sequence`,
-      [clientId, dateFrom, dateTo, openingBalance],
-    );
-
-    const movements: StatementMovement[] = rows.map((row) => ({
-      id: row.id,
-      date: row.date,
-      movementType: row.movementType,
-      description: row.description,
-      amount: Number(row.amount),
-      balanceAfter: Number(row.balanceAfter),
-      createdByUsername: row.createdByUsername,
-      createdAt: row.createdAt,
-    }));
-
-    const totalCargos = movements
-      .filter((m) => m.movementType === 'CARGO')
-      .reduce((sum, m) => sum + m.amount, 0);
-    const totalAbonos = movements
-      .filter((m) => m.movementType === 'ABONO')
-      .reduce((sum, m) => sum + m.amount, 0);
-    const closingBalance =
-      movements.length > 0
-        ? movements[movements.length - 1].balanceAfter
-        : openingBalance;
-
-    return {
+    return loadPortfolioStatement(
+      this.repository.manager,
+      'assets',
       clientId,
-      clientName: header?.clientName ?? '',
-      openingBalance,
-      movements,
-      totalCargos,
-      totalAbonos,
-      closingBalance,
-    };
+      options,
+    );
   }
 
   /** `register_asset_movement` signals a business-rule failure via `RAISE EXCEPTION '<CODE>:<clientId>'` — same `'CODE:id'` convention as `translateSaleError`/`translatePurchaseError` elsewhere in this codebase. */

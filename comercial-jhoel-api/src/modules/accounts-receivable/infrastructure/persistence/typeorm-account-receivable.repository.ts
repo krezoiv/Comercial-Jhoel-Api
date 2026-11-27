@@ -13,7 +13,6 @@ import {
   GetAccountReceivableStatementOptions,
   PaginatedResult,
   RegisterAccountReceivableMovementData,
-  StatementMovement,
   UpdateAccountReceivableData,
 } from '../../domain/repositories/account-receivable.repository';
 import type { TransactionContext } from '../../../../shared/application/ports/transaction-manager.port';
@@ -25,6 +24,14 @@ import {
 import { AccountReceivableOrmEntity } from './account-receivable.orm-entity';
 import { settlementErrorFromMessage } from '../../domain/errors/account-receivable-settlement.errors';
 import { AccountReceivableMapper } from './account-receivable.mapper';
+import type { PortfolioRecordTrace } from '../../../../shared/domain/portfolio-record';
+import {
+  loadPortfolioStatement,
+  loadPortfolioTraces,
+  translatePortfolioWriteError,
+  updatePortfolioRecord,
+  voidPortfolioRecord,
+} from '../../../../shared/infrastructure/persistence/portfolio-record.sql';
 
 const SORT_COLUMN: Record<AccountReceivableSortField, string> = {
   date: 'record.date',
@@ -176,38 +183,76 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
     return AccountReceivableMapper.toDomain(withRelations);
   }
 
+  /**
+   * Through `update_portfolio_record`: locks (caja → client → row), then one
+   * UPDATE whose triggers enforce the rules (reason for cash changes, voided
+   * rows are history, linked cargos follow their operation, balance never
+   * negative), reverse + re-apply the Kardex effect and append the history.
+   */
   async update(
     id: string,
     data: UpdateAccountReceivableData,
   ): Promise<AccountReceivable> {
-    await this.guardPaymentRules(() => this.repository.update({ id }, data));
+    try {
+      await updatePortfolioRecord(
+        this.repository.manager,
+        'accounts_receivable',
+        id,
+        {
+          clientId: data.clientId,
+          date: data.date,
+          amount: data.amount,
+          description: data.description,
+          paymentMethod: data.paymentMethod,
+          reason: data.reason,
+          userId: data.updatedBy,
+        },
+      );
+    } catch (error) {
+      throw this.translateWriteError(error);
+    }
     const updated = await this.repository.findOneOrFail({ where: { id } });
     return AccountReceivableMapper.toDomain(updated);
   }
 
-  async deactivate(id: string): Promise<void> {
-    await this.guardPaymentRules(() =>
-      this.repository.update({ id }, { isActive: false }),
+  /** Soft void with reason through `void_portfolio_record` (idempotent: a second void is rejected, never re-reversed). */
+  async deactivate(id: string, reason: string, userId: string): Promise<void> {
+    try {
+      await voidPortfolioRecord(
+        this.repository.manager,
+        'accounts_receivable',
+        id,
+        reason,
+        userId,
+      );
+    } catch (error) {
+      throw this.translateWriteError(error);
+    }
+  }
+
+  async getTrace(id: string): Promise<PortfolioRecordTrace | null> {
+    const traces = await loadPortfolioTraces(
+      this.repository.manager,
+      'accounts_receivable',
+      [id],
     );
+    return traces.get(id) ?? null;
   }
 
   /**
-   * `trg_ar_payment_guard` rejects editing/deactivating the ABONO of a
-   * collection operation or a CARGO that already received payments — turned
-   * into its 409 domain error here instead of a raw 500.
+   * `trg_ar_payment_guard` (collection rows, charges with payments) and the
+   * portfolio guard/functions signal rule violations with `RAISE 'CODE:…'` —
+   * turned into their domain errors here instead of a raw 500.
    */
-  private async guardPaymentRules<T>(write: () => Promise<T>): Promise<T> {
-    try {
-      return await write();
-    } catch (error) {
-      if (error instanceof QueryFailedError) {
-        const mapped = settlementErrorFromMessage(error.message);
-        if (mapped) {
-          throw mapped;
-        }
+  private translateWriteError(error: unknown): unknown {
+    if (error instanceof QueryFailedError) {
+      const settlement = settlementErrorFromMessage(error.message);
+      if (settlement) {
+        return settlement;
       }
-      throw error;
     }
+    const portfolio = translatePortfolioWriteError(error);
+    return portfolio !== error ? portfolio : this.translateMovementError(error);
   }
 
   /** Invokes `register_account_receivable_movement` — see that function's own doc comment (migration `CreateFinancialKardexColumns`) for the `ABONO_EXCEEDS_BALANCE` rule this table enforces, unlike Activos. */
@@ -221,7 +266,7 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
       const rows = await manager.query<
         { register_account_receivable_movement: string }[]
       >(
-        'SELECT register_account_receivable_movement($1, $2, $3, $4, $5, $6, $7, $8)',
+        'SELECT register_account_receivable_movement($1, $2, $3, $4, $5, $6, $7, $8, $9)',
         [
           data.clientId,
           data.movementType,
@@ -231,11 +276,12 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
           data.createdBy,
           data.referenceType ?? null,
           data.referenceId ?? null,
+          data.paymentMethod ?? null,
         ],
       );
       movementId = rows[0].register_account_receivable_movement;
     } catch (error) {
-      throw this.translateMovementError(error);
+      throw this.translateWriteError(error);
     }
 
     const record = await this.findById(movementId, context);
@@ -259,100 +305,21 @@ export class TypeOrmAccountReceivableRepository implements AccountReceivableRepo
   }
 
   /**
-   * `openingBalance` is the signed sum of every active movement strictly
-   * before `dateFrom` (0 when `dateFrom` is omitted — the WHERE clause then
-   * matches no rows). `balanceAfter` per row is computed with a window
-   * function over `sequence` seeded with that opening balance — never
-   * stored, always derived fresh (see the migration's own doc comment for
-   * why), and never summed client-side.
+   * `openingBalance` = signed sum of the active rows before `dateFrom`;
+   * `balanceAfter` = window sum over `sequence` of ACTIVE rows (never stored).
+   * Voided rows stay in place with their reason and Kardex reversal (they no
+   * longer count) — see `loadPortfolioStatement`.
    */
   async getStatement(
     clientId: string,
     options: GetAccountReceivableStatementOptions,
   ): Promise<AccountReceivableStatement> {
-    const dateFrom = options.dateFrom ?? null;
-    const dateTo = options.dateTo ?? null;
-
-    const [header] = await this.repository.manager.query<
-      { clientName: string | null; openingBalance: string }[]
-    >(
-      `SELECT
-         (SELECT name FROM clients WHERE id = $1) AS "clientName",
-         COALESCE((
-           SELECT SUM(CASE WHEN movement_type = 'ABONO' THEN -amount ELSE amount END)
-           FROM accounts_receivable
-           WHERE client_id = $1 AND is_active = true
-             AND $2::date IS NOT NULL AND date < $2::date
-         ), 0) AS "openingBalance"`,
-      [clientId, dateFrom],
-    );
-
-    const openingBalance = Number(header?.openingBalance ?? 0);
-
-    const rows = await this.repository.manager.query<
-      {
-        id: string;
-        date: string;
-        movementType: 'CARGO' | 'ABONO';
-        description: string | null;
-        amount: string;
-        createdAt: Date;
-        createdByUsername: string;
-        balanceAfter: string;
-      }[]
-    >(
-      `WITH movements AS (
-         SELECT
-           a.id, a.date, a.movement_type AS "movementType", a.description,
-           a.amount, a.sequence, a.created_at AS "createdAt",
-           u.username AS "createdByUsername"
-         FROM accounts_receivable a
-         JOIN users u ON u.id = a.created_by
-         WHERE a.client_id = $1 AND a.is_active = true
-           AND ($2::date IS NULL OR a.date >= $2::date)
-           AND ($3::date IS NULL OR a.date <= $3::date)
-       )
-       SELECT
-         m.id, m.date, m."movementType", m.description, m.amount,
-         m."createdAt", m."createdByUsername",
-         $4::numeric + SUM(CASE WHEN m."movementType" = 'ABONO' THEN -m.amount ELSE m.amount END)
-           OVER (ORDER BY m.sequence) AS "balanceAfter"
-       FROM movements m
-       ORDER BY m.sequence`,
-      [clientId, dateFrom, dateTo, openingBalance],
-    );
-
-    const movements: StatementMovement[] = rows.map((row) => ({
-      id: row.id,
-      date: row.date,
-      movementType: row.movementType,
-      description: row.description,
-      amount: Number(row.amount),
-      balanceAfter: Number(row.balanceAfter),
-      createdByUsername: row.createdByUsername,
-      createdAt: row.createdAt,
-    }));
-
-    const totalCargos = movements
-      .filter((m) => m.movementType === 'CARGO')
-      .reduce((sum, m) => sum + m.amount, 0);
-    const totalAbonos = movements
-      .filter((m) => m.movementType === 'ABONO')
-      .reduce((sum, m) => sum + m.amount, 0);
-    const closingBalance =
-      movements.length > 0
-        ? movements[movements.length - 1].balanceAfter
-        : openingBalance;
-
-    return {
+    return loadPortfolioStatement(
+      this.repository.manager,
+      'accounts_receivable',
       clientId,
-      clientName: header?.clientName ?? '',
-      openingBalance,
-      movements,
-      totalCargos,
-      totalAbonos,
-      closingBalance,
-    };
+      options,
+    );
   }
 
   /** `register_account_receivable_movement` signals a business-rule failure via `RAISE EXCEPTION '<CODE>:<clientId>'` — same `'CODE:id'` convention as `translateSaleError`/`translatePurchaseError` elsewhere in this codebase. */

@@ -14,6 +14,7 @@ export class AccountReceivableMapper {
       description: orm.description,
       referenceType: orm.referenceType,
       referenceId: orm.referenceId,
+      paymentMethod: orm.paymentMethod ?? null,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

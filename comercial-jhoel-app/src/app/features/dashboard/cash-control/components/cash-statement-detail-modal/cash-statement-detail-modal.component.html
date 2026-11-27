@@ -46,7 +46,13 @@
           <div class="wide"><dt>Motivo de la anulación</dt><dd>{{ row.voidReason }}</dd></div>
         }
         @if (row.reversalOfId) {
-          <div class="wide"><dt>Relación</dt><dd>Reversa de un movimiento anterior: el original se conserva como anulado.</dd></div>
+          <div class="wide">
+            <dt>Relación</dt>
+            <dd>Reversa de {{ row.reversalOfNumber || 'un movimiento anterior' }}: el original se conserva como anulado.</dd>
+          </div>
+        }
+        @if (row.reason) {
+          <div class="wide"><dt>Motivo</dt><dd>{{ row.reason }}</dd></div>
         }
       </dl>
 

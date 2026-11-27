@@ -23,6 +23,12 @@ export interface VoidBankDepositOperationInput {
  * are never touched — a voided operation's own numbers stay whatever was
  * actually cuadrado at the moment it was (mistakenly) registered.
  *
+ * When the operation was sent to Cuentas por Cobrar / Activos, its linked
+ * cargo is voided in the same transaction (`trg_portfolio_bank_deposit_void`,
+ * migration 1760009300000) so its cash effect is reversed too; if that cargo
+ * already has payments the whole void is rejected
+ * (`BANK_DEPOSIT_LINKED_CHARGE_HAS_PAYMENTS`) — never half applied.
+ *
  * Admin-only (enforced at the controller via `@Roles`), same policy as
  * "Gestión de Días Cerrados"' reopen/cancel actions and Recargas' saldo-final
  * re-edit — correcting an already-registered financial record is a

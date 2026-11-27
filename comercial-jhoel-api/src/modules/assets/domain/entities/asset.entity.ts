@@ -1,3 +1,5 @@
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
+
 /**
  * "Activos" — a client-linked Kardex/ledger: every row is a `CARGO` (adds to
  * the balance) or `ABONO` (subtracts) movement, `amount` always a positive
@@ -29,6 +31,8 @@ export interface AssetProps {
   movementType: AssetMovementType;
   sequence: number;
   description: string | null;
+  /** EFECTIVO | BANCO; null = registered before 1760009300000 (behaves as EFECTIVO). */
+  paymentMethod: PortfolioPaymentMethod | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -75,6 +79,10 @@ export class Asset {
 
   get description(): string | null {
     return this.props.description;
+  }
+
+  get paymentMethod(): PortfolioPaymentMethod | null {
+    return this.props.paymentMethod;
   }
 
   get isActive(): boolean {

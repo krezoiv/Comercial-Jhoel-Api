@@ -57,7 +57,9 @@ export type IntegrityCheck =
   /** A count whose difference changed against the previous count. */
   | 'DIFFERENCE_CHANGE'
   /** The current bank day has no opening count. */
-  | 'OPENING_MISSING';
+  | 'OPENING_MISSING'
+  /** A CxC / Activos cargo still active although its Transaccionar operation is voided. */
+  | 'LINKED_CHARGE_ACTIVE';
 
 /** A Kardex sequence span (afterSequence, upToSequence] of one location: where to look. */
 export interface IntegrityWindow {
@@ -102,6 +104,13 @@ export interface IntegrityFinding {
   } | null;
   /** Other findings inside the same window (possible explanation, to verify). */
   relatedKeys: string[];
+  /**
+   * Operation-level reconciliation ("Movimiento esperado" vs "registrado"):
+   * the signed Caja effect its rules give it and the net its Kardex rows hold.
+   * Only for findings about one source operation; absent otherwise.
+   */
+  expected?: number | null;
+  registered?: number | null;
 }
 
 const cents = (value: number): number => Math.round(value * 100);
@@ -150,6 +159,8 @@ export function classifySource(
     username: s.username,
     movementIds: s.movementIds,
     reference: { type: s.referenceType, id: s.referenceId, label: s.label },
+    expected: s.expectedNet,
+    registered: s.kardexNet,
   };
   const key = (check: IntegrityCheck) =>
     `${check}:${s.referenceType}:${s.referenceId}`;
@@ -222,6 +233,60 @@ export function classifySource(
     classification: 'ERROR_REGISTRO',
     title: 'Monto distinto',
     detail: `${s.label}: el Kardex registró ${money(s.kardexNet)} y la operación indica ${money(s.expectedNet)} (diferencia ${money(s.kardexNet - s.expectedNet)}).`,
+  };
+}
+
+/** A CxC / Activos cargo still active although the Transaccionar operation it was born from is voided. */
+export interface LinkedChargeOfVoidedOperation {
+  recordType: 'ACCOUNT_RECEIVABLE' | 'ASSET';
+  recordId: string;
+  operationId: string;
+  operationLabel: string;
+  clientName: string | null;
+  amount: number;
+  /** Signed net its Kardex rows hold (what Caja still carries for it). */
+  kardexNet: number;
+  voidedAt: Date;
+  voidedBy: string | null;
+  movementIds: string[];
+}
+
+/**
+ * Before 1760009300000, voiding a Transaccionar operation left the cargo it sent
+ * to CxC / Activos active: Caja kept that cargo's movement without the
+ * operation that justified it. Since then the void cascades; older cases stay
+ * visible here until an admin voids the cargo with its reason.
+ */
+export function linkedChargeFinding(
+  row: LinkedChargeOfVoidedOperation,
+): Omit<IntegrityFinding, 'relatedKeys'> {
+  const module = row.recordType === 'ASSET' ? 'Activos' : 'Cuentas por Cobrar';
+  return {
+    key: `LINKED_CHARGE_ACTIVE:${row.recordType}:${row.recordId}`,
+    check: 'LINKED_CHARGE_ACTIVE',
+    severity: cents(row.kardexNet) === 0 ? 'BAJA' : 'ALTA',
+    classification: 'INCONSISTENCIA_HISTORICA',
+    title: 'Operación anulada con su cargo vigente',
+    detail:
+      `${row.operationLabel} se anuló, pero el cargo de ${money(row.amount)} que envió a ${module}` +
+      `${row.clientName ? ` (${row.clientName})` : ''} sigue vigente` +
+      (cents(row.kardexNet) === 0
+        ? '.'
+        : `: Caja conserva su movimiento de ${money(row.kardexNet)} sin la operación que lo respaldaba.`) +
+      ` Para regularizarlo, anule el cargo en ${module} indicando el motivo.`,
+    amount: row.kardexNet,
+    occurredAt: row.voidedAt,
+    username: row.voidedBy,
+    movementIds: row.movementIds,
+    reference: {
+      type: row.recordType,
+      id: row.recordId,
+      label: `Cargo de ${module} de ${money(row.amount)}`,
+    },
+    window: null,
+    count: null,
+    expected: 0,
+    registered: row.kardexNet,
   };
 }
 

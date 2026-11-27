@@ -144,4 +144,32 @@ describe('Auditoría de efectivo (Control de Efectivo)', () => {
     modal.reason.set('');
     expect([modal.difference(), modal.needsReason(), modal.canSave()]).toEqual([0, false, true]);
   });
+
+  it('lists the reconciliation by operation: expected vs registered movement and its probable cause', () => {
+    const linked: IntegrityFinding = {
+      ...change(),
+      key: 'LINKED_CHARGE_ACTIVE:ACCOUNT_RECEIVABLE:ar-1',
+      check: 'LINKED_CHARGE_ACTIVE',
+      classification: 'INCONSISTENCIA_HISTORICA',
+      title: 'Operación anulada con su cargo vigente',
+      amount: -300,
+      window: null,
+      count: null,
+      relatedKeys: [],
+      reference: { type: 'ACCOUNT_RECEIVABLE', id: 'ar-1', label: 'Cargo de Cuentas por Cobrar de Q300.00' },
+      expected: 0,
+      registered: -300,
+    };
+    (service.getIntegrity as jasmine.Spy).and.returnValue(of(report({ findings: [change(), linked] })));
+    const fixture = TestBed.createComponent(CashIntegrityPanelComponent);
+    fixture.componentRef.setInput('refreshKey', 1);
+    fixture.detectChanges();
+    const panel = fixture.componentInstance;
+    expect(panel.reconciliation().map((f) => f.key)).toEqual(['LINKED_CHARGE_ACTIVE:ACCOUNT_RECEIVABLE:ar-1']);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Conciliación por operación (1)');
+    expect(text).toContain('Cuentas por Cobrar');
+    expect(text).toContain('Cargo de Cuentas por Cobrar de Q300.00');
+    expect(text).toContain('Operación anulada con su cargo vigente');
+  });
 });

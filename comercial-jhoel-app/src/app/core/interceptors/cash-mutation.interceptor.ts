@@ -13,7 +13,7 @@ import { CashControlSyncService } from '../services/cash-control-sync.service';
  * its read-only `/preview` is excluded) and Control de Efectivo itself. The database triggers already
  * wrote the Kardex in the same transaction; this only notifies the screens.
  */
-const CASH_RESOURCES = /\/(bank-deposits|accounts-receivable|account-receivable-payments|assets|bank-transfers|cash-control)(\/|$|\?)/;
+const CASH_RESOURCES = /\/(bank-deposits|accounts-receivable|account-receivable-payments|assets|bank-transfers|cash-control|payment-groups)(\/|$|\?)/;
 /** POSTs that only read (no write, nothing to notify). */
 // Writes that never move cash: a preview, and the autosaved Arqueo de Caja draft
 // (broadcasting every autosave would make every open screen reload continuously).

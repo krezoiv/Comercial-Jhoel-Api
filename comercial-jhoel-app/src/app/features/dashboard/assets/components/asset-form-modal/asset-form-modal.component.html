@@ -11,13 +11,17 @@
       <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="field">
           <label>Nombre del Cliente</label>
-          <app-client-search-select
-            [selectedClientId]="form.controls.clientId.value || null"
-            [selectedClientName]="selectedClientName"
-            [clearable]="true"
-            placeholder="Buscar cliente…"
-            (selectionChange)="onClientSelected($event)"
-          />
+          @if (trace()?.lock) {
+            <p class="locked-value">{{ selectedClientName }}</p>
+          } @else {
+            <app-client-search-select
+              [selectedClientId]="form.controls.clientId.value || null"
+              [selectedClientName]="selectedClientName"
+              [clearable]="true"
+              placeholder="Buscar cliente…"
+              (selectionChange)="onClientSelected($event)"
+            />
+          }
           @if (form.controls.clientId.invalid && form.controls.clientId.touched) {
             <span class="field__error">Selecciona un cliente.</span>
           }
@@ -51,6 +55,21 @@
         </div>
 
         <div class="field">
+          <span class="field__label" id="asset-method-label">Medio</span>
+          <div class="method-toggle" role="radiogroup" aria-labelledby="asset-method-label">
+            <label class="method-toggle__option">
+              <input type="radio" formControlName="paymentMethod" value="EFECTIVO" /> Efectivo
+            </label>
+            <label class="method-toggle__option">
+              <input type="radio" formControlName="paymentMethod" value="BANCO" /> Banco / transferencia
+            </label>
+          </div>
+          @if (cashNote(); as note) {
+            <p class="cash-note" aria-live="polite">{{ note }}</p>
+          }
+        </div>
+
+        <div class="field">
           <label for="asset-description">Descripción</label>
           <textarea
             id="asset-description"
@@ -62,6 +81,16 @@
             <span class="field__error">La descripción no puede superar los 500 caracteres.</span>
           }
         </div>
+
+        @if (isEditMode) {
+          <div class="field">
+            <label for="asset-reason">Motivo del cambio{{ needsReason() ? ' *' : ' (opcional)' }}</label>
+            <input id="asset-reason" type="text" maxlength="255" formControlName="reason" placeholder="Queda en el historial y en la reversa de Caja" />
+            @if (reasonMissing() && form.controls.reason.touched) {
+              <span class="field__error">Cambiar el monto o el medio exige el motivo (mínimo 5 caracteres).</span>
+            }
+          </div>
+        }
 
         @if (errorMessage()) {
           <p class="modal__error">{{ errorMessage() }}</p>

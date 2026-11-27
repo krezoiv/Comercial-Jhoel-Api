@@ -4,6 +4,7 @@ import { DataSource, QueryFailedError } from 'typeorm';
 import type {
   IntegrityClassification,
   IntegrityResolution,
+  LinkedChargeOfVoidedOperation,
   SourceComparison,
   TimelineCount,
 } from '../../domain/cash-integrity';
@@ -69,12 +70,14 @@ const FIXED_DIRECTION: Record<string, 'IN' | 'OUT'> = {
  * Every source operation that must (or must not) move Caja, with the effect its
  * own rules give it — mirror of the Kardex triggers:
  * - Transaccionar: the type's `cash_effect` (Guayacán never; voided = 0).
- * - CxC: ABONO in, CARGO out (a bank-deposit collection never; inactive = 0).
- * - Activos: CARGO in, ABONO out (inactive = 0).
+ * - CxC / Activos: `portfolio_row_cash_effect` — the SAME function the triggers
+ *   use (CxC: ABONO in, CARGO out; Activos: CARGO in, ABONO out; BANCO, voided
+ *   and bank-deposit collections = 0).
  * - Bank withdrawal to caja (RETIRO_EFECTIVO): in (voided = 0).
  * - Caja → Bodega: out; Bodega → Caja: in (voided = 0).
  * `expects_row`: created after that kind of operation started reaching the
- * Kardex (older rows were never tracked — no backfill — so they are skipped).
+ * Kardex (older rows were never tracked — no backfill — so they are skipped);
+ * for CxC / Activos, `cash_tracked` says it (NULL = before 1760009300000).
  */
 const SOURCES = `
   WITH refs AS (
@@ -109,18 +112,21 @@ const SOURCES = `
     SELECT 'ACCOUNT_RECEIVABLE', r.id, r.created_at, u.username,
            CASE WHEN r.movement_type = 'ABONO' THEN 'Abono por cobrar' ELSE 'Gasto por cobrar' END
              || ' de Q' || to_char(r.amount, 'FM999,999,990.00') || COALESCE(' — ' || c.name, ''),
-           CASE WHEN NOT r.is_active OR bank_paid THEN 0
-                WHEN r.movement_type = 'ABONO' THEN r.amount ELSE -r.amount END,
-           r.created_at >= COALESCE((SELECT since FROM cutoff WHERE reference_type = 'ACCOUNT_RECEIVABLE'), 'infinity')
-             AND r.is_active AND NOT bank_paid,
+           r.effect,
+           COALESCE(r.cash_tracked,
+             r.created_at >= COALESCE((SELECT since FROM cutoff WHERE reference_type = 'ACCOUNT_RECEIVABLE'), 'infinity'))
+             AND r.effect <> 0,
            CASE WHEN bank_paid THEN 'Cobro por depósito bancario: no entra a Caja'
-                WHEN NOT r.is_active THEN 'Registro desactivado: su efecto neto debe ser Q0.00'
+                WHEN r.payment_method = 'BANCO' THEN 'Registrado por banco: no mueve Caja'
+                WHEN NOT r.is_active THEN 'Registro anulado: su efecto neto debe ser Q0.00'
                 WHEN r.movement_type = 'ABONO' THEN 'Un abono por cobrar entra a Caja'
                 ELSE 'Un gasto por cobrar sale de Caja' END
     FROM (
       SELECT r.*, (r.reference_type = 'AR_PAYMENT' AND EXISTS (
                SELECT 1 FROM account_receivable_payment_operations po
-               WHERE po.id = r.reference_id AND po.payment_method = 'DEPOSITO_BANCARIO')) AS bank_paid
+               WHERE po.id = r.reference_id AND po.payment_method = 'DEPOSITO_BANCARIO')) AS bank_paid,
+             portfolio_row_cash_effect('accounts_receivable', r.movement_type, r.amount, r.is_active,
+               r.payment_method, r.reference_type, r.reference_id) AS effect
       FROM accounts_receivable r
       WHERE ${IN_WINDOW('r.created_at')} OR ('ACCOUNT_RECEIVABLE', r.id) IN (SELECT reference_type, reference_id FROM refs)
     ) r
@@ -130,15 +136,22 @@ const SOURCES = `
     SELECT 'ASSET', a.id, a.created_at, u.username,
            CASE WHEN a.movement_type = 'ABONO' THEN 'Devolución de activo' ELSE 'Activo' END
              || ' de Q' || to_char(a.amount, 'FM999,999,990.00') || COALESCE(' — ' || c.name, ''),
-           CASE WHEN NOT a.is_active THEN 0 WHEN a.movement_type = 'ABONO' THEN -a.amount ELSE a.amount END,
-           a.created_at >= COALESCE((SELECT since FROM cutoff WHERE reference_type = 'ASSET'), 'infinity') AND a.is_active,
-           CASE WHEN NOT a.is_active THEN 'Registro desactivado: su efecto neto debe ser Q0.00'
+           a.effect,
+           COALESCE(a.cash_tracked,
+             a.created_at >= COALESCE((SELECT since FROM cutoff WHERE reference_type = 'ASSET'), 'infinity'))
+             AND a.effect <> 0,
+           CASE WHEN a.payment_method = 'BANCO' THEN 'Registrado por banco: no mueve Caja'
+                WHEN NOT a.is_active THEN 'Registro anulado: su efecto neto debe ser Q0.00'
                 WHEN a.movement_type = 'ABONO' THEN 'Una devolución de activo sale de Caja'
                 ELSE 'Un activo entra a Caja' END
-    FROM assets a
+    FROM (
+      SELECT a.*, portfolio_row_cash_effect('assets', a.movement_type, a.amount, a.is_active,
+               a.payment_method, a.reference_type, a.reference_id) AS effect
+      FROM assets a
+      WHERE ${IN_WINDOW('a.created_at')} OR ('ASSET', a.id) IN (SELECT reference_type, reference_id FROM refs)
+    ) a
     JOIN users u ON u.id = a.created_by
     LEFT JOIN clients c ON c.id = a.client_id
-    WHERE ${IN_WINDOW('a.created_at')} OR ('ASSET', a.id) IN (SELECT reference_type, reference_id FROM refs)
     UNION ALL
     SELECT 'BANK_MOVEMENT', bm.id, bm.created_at, u.username,
            'Retiro de efectivo en ' || b.name || ' de Q' || to_char(abs(bm.amount), 'FM999,999,990.00'),
@@ -437,6 +450,50 @@ export class TypeOrmCashIntegrityRepository implements CashIntegrityRepository {
       occurredAt: date(row.occurred_at),
       username: str(row.username),
       historical: row.historical === true,
+    }));
+  }
+
+  async findLinkedChargesOfVoidedOperations(
+    scope: IntegrityScope,
+  ): Promise<LinkedChargeOfVoidedOperation[]> {
+    const rows = await this.dataSource.query<SqlRow[]>(
+      `SELECT x.record_type, x.id, x.reference_id AS operation_id, x.amount, c.name AS client_name,
+              t.name || ' de Q' || to_char(o.total_amount, 'FM999,999,990.00') || ' de Transaccionar' AS operation_label,
+              o.voided_at, vu.username AS voided_by,
+              COALESCE(k.net, 0) AS kardex_net, COALESCE(k.ids, '{}') AS ids
+       FROM (
+         SELECT 'ACCOUNT_RECEIVABLE'::text AS record_type, id, client_id, amount, reference_id
+         FROM accounts_receivable WHERE reference_type = 'BANK_DEPOSIT' AND is_active
+         UNION ALL
+         SELECT 'ASSET', id, client_id, amount, reference_id
+         FROM assets WHERE reference_type = 'BANK_DEPOSIT' AND is_active
+       ) x
+       JOIN bank_deposit_operations o ON o.id = x.reference_id AND o.is_voided
+       JOIN transaction_types t ON t.id = o.transaction_type_id
+       LEFT JOIN clients c ON c.id = x.client_id
+       LEFT JOIN users vu ON vu.id = o.voided_by
+       LEFT JOIN LATERAL (
+         SELECT SUM(CASE m.direction WHEN 'IN' THEN m.amount WHEN 'OUT' THEN -m.amount ELSE 0 END) AS net,
+                array_agg(m.id::text ORDER BY m.sequence) AS ids
+         FROM cash_movements m WHERE m.reference_type = x.record_type AND m.reference_id = x.id
+       ) k ON TRUE
+       WHERE ${IN_WINDOW_ONLY('o.voided_at')}
+       ORDER BY o.voided_at`,
+      [scope.windowStart, scope.windowEnd],
+    );
+    return rows.map((row) => ({
+      recordType: text(
+        row.record_type,
+      ) as LinkedChargeOfVoidedOperation['recordType'],
+      recordId: text(row.id),
+      operationId: text(row.operation_id),
+      operationLabel: text(row.operation_label),
+      clientName: str(row.client_name),
+      amount: num(row.amount),
+      kardexNet: num(row.kardex_net),
+      voidedAt: date(row.voided_at)!,
+      voidedBy: str(row.voided_by),
+      movementIds: (row.ids as string[] | null) ?? [],
     }));
   }
 

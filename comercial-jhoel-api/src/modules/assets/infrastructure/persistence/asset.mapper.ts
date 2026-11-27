@@ -12,6 +12,7 @@ export class AssetMapper {
       movementType: orm.movementType,
       sequence: Number(orm.sequence),
       description: orm.description,
+      paymentMethod: orm.paymentMethod ?? null,
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

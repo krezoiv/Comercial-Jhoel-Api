@@ -53,7 +53,20 @@ export interface IntegrityFinding {
     resolution: IntegrityResolution | null;
   } | null;
   relatedKeys: string[];
+  /** Operation-level reconciliation: signed Caja effect its rules give it vs the net its Kardex rows hold. */
+  expected?: number | null;
+  registered?: number | null;
 }
+
+/** Module of origin of a reconciled operation (`finding.reference.type`). */
+export const INTEGRITY_MODULE_LABEL: Record<string, string> = {
+  BANK_DEPOSIT: 'Transaccionar',
+  ACCOUNT_RECEIVABLE: 'Cuentas por Cobrar',
+  ASSET: 'Activos',
+  BANK_MOVEMENT: 'Bancos (retiro a Caja)',
+  WAREHOUSE_TRANSFER: 'Bodega (traslado)',
+  WAREHOUSE_WITHDRAWAL: 'Bodega (retiro)',
+};
 
 export interface IntegrityTimelineCount {
   source: IntegrityCountSource;

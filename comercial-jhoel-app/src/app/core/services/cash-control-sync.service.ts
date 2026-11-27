@@ -52,7 +52,8 @@ export class CashControlSyncService {
 export function onCashChanged(callback: () => void, pollMs: number = CASH_POLL_INTERVAL_MS): void {
   const sync = inject(CashControlSyncService);
   const service = inject(CashControlService);
-  let lastSequence: number | null = null;
+  // Kardex sequence + open reservations (Pagos grupales): a new group of another user changes the available cash too.
+  let lastSequence: string | null = null;
 
   const subscription = sync.changed$.subscribe(() => {
     lastSequence = null;
@@ -70,8 +71,9 @@ export function onCashChanged(callback: () => void, pollMs: number = CASH_POLL_I
         if (!snapshot) {
           return;
         }
-        const changed = lastSequence !== null && snapshot.lastSequence !== lastSequence;
-        lastSequence = snapshot.lastSequence;
+        const signature = `${snapshot.lastSequence}|${snapshot.reserved ?? 0}`;
+        const changed = lastSequence !== null && signature !== lastSequence;
+        lastSequence = signature;
         if (changed) {
           callback();
         }

@@ -14,6 +14,7 @@ import { RegisterAccountReceivablePaymentUseCase } from './application/use-cases
 import { GetAccountReceivableStatementUseCase } from './application/use-cases/get-account-receivable-statement.use-case';
 import { GetAccountReceivableCurrentBalanceUseCase } from './application/use-cases/get-account-receivable-current-balance.use-case';
 import { GetAccountReceivableActiveBalanceUseCase } from './application/use-cases/get-account-receivable-active-balance.use-case';
+import { GetAccountReceivableTraceUseCase } from './application/use-cases/get-account-receivable-trace.use-case';
 import { AccountsReceivableController } from './presentation/controllers/accounts-receivable.controller';
 import { AccountReceivablePaymentsController } from './presentation/controllers/account-receivable-payments.controller';
 import { ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY } from './domain/repositories/account-receivable-settlement.repository';
@@ -52,6 +53,7 @@ import {
     GetAccountReceivableStatementUseCase,
     GetAccountReceivableCurrentBalanceUseCase,
     GetAccountReceivableActiveBalanceUseCase,
+    GetAccountReceivableTraceUseCase,
     {
       provide: ACCOUNT_RECEIVABLE_SETTLEMENT_REPOSITORY,
       useClass: TypeOrmAccountReceivableSettlementRepository,

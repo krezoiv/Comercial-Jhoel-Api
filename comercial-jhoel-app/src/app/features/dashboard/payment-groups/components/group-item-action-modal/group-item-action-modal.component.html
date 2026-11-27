@@ -1,0 +1,120 @@
+@if (open && item && group) {
+  <div class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="item-action-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="item-action-title">
+          <app-icon [name]="action === 'VOID' ? 'x-circle' : action === 'NOTE' ? 'message-square' : 'check-circle'" [size]="20" />
+          {{ title }} · #{{ item.itemNumber }}
+        </h2>
+        <button type="button" class="modal__close" aria-label="Cerrar" [disabled]="isSaving()" (click)="closed.emit()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <dl class="facts">
+        <div><dt>Transacción</dt><dd>#{{ item.itemNumber }}{{ item.reference ? ' · ' + item.reference : '' }}</dd></div>
+        <div><dt>Monto esperado</dt><dd class="money">{{ formatCurrency(item.expectedAmount) }}</dd></div>
+        <div><dt>{{ flow.paid }}</dt><dd class="money">{{ formatCurrency(item.paidAmount) }}</dd></div>
+        <div><dt>Estado actual</dt><dd>{{ statusLabel[item.status] }}</dd></div>
+      </dl>
+
+      @if (action === 'DELIVER' || action === 'PARTIAL') {
+        <div class="field">
+          <label for="item-amount">{{ group.cashDirection === 'IN' ? 'Monto recibido' : 'Monto que se entrega' }} *</label>
+          <input id="item-amount" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+            [ngModel]="amount() || null" (ngModelChange)="amount.set(+$event || 0)" />
+          @if (amount() > remaining()) {
+            <span class="field__error">No puede superar lo que falta: {{ formatCurrency(remaining()) }}.</span>
+          }
+        </div>
+
+        <div class="preview">
+          <div><span class="preview__label">Diferencia pendiente</span><strong class="money">{{ formatCurrency(difference()) }}</strong></div>
+          <div><span class="preview__label">Estado resultante</span><strong>{{ statusLabel[resultStatus()] }}</strong></div>
+          <div><span class="preview__label">Saldo físico de Caja antes</span><strong class="money">{{ formatCurrency(cash?.balance ?? 0) }}</strong></div>
+          <div>
+            <span class="preview__label">{{ flow.cashVerb }}</span>
+            <strong [class]="group.cashDirection === 'IN' ? 'preview__in money' : group.cashDirection === 'OUT' ? 'preview__out money' : 'money'">
+              {{ group.cashDirection === 'IN' ? '+' : group.cashDirection === 'OUT' ? '−' : '' }}{{ formatCurrency(amount()) }}
+            </strong>
+          </div>
+          <div><span class="preview__label">Saldo físico proyectado</span><strong class="money">{{ formatCurrency(projected()) }}</strong></div>
+        </div>
+        <p class="modal__hint">
+          El saldo proyectado solo es definitivo cuando el sistema confirma la operación. Se registra una operación real de
+          Transaccionar por {{ formatCurrency(amount()) }}, ligada a esta transacción.
+        </p>
+      }
+
+      @if (action === 'EDIT') {
+        <div class="modal__grid">
+          <div class="field">
+            <label for="item-expected">Monto esperado *</label>
+            <input id="item-expected" type="text" inputmode="decimal" appDecimalInput thousands
+              [ngModel]="amount() || null" (ngModelChange)="amount.set(+$event || 0)" />
+          </div>
+          <div class="field">
+            <label for="item-reference">Beneficiario o referencia</label>
+            <input id="item-reference" type="text" maxlength="150" [ngModel]="reference()" (ngModelChange)="reference.set($event)" />
+          </div>
+        </div>
+      }
+
+      @if (action === 'RESOLVE') {
+        <p class="modal__hint">
+          Queda pendiente: {{ formatCurrency(releasable()) }}. Documente qué pasó con la diferencia.
+          @if (group.cashDirection === 'OUT') {
+            Si no se liberara ahora, el monto se libera al cerrar el grupo.
+          }
+        </p>
+      }
+
+      @if (action === 'VOID') {
+        @if (needsMoneyReturned()) {
+          <label class="breakdown__toggle check">
+            <input type="checkbox" [ngModel]="moneyReturned()" (ngModelChange)="moneyReturned.set($event)" />
+            <span>
+              {{ group.cashDirection === 'IN' ? 'El dinero se devolvió al cliente' : 'El dinero regresó físicamente a Caja' }}
+              ({{ formatCurrency(item.paidAmount) }}): se registra la reversa de sus operaciones.
+            </span>
+          </label>
+          <p class="modal__hint">Si el dinero no regresó, no anule: deje una observación (nunca se registra una entrada ficticia).</p>
+        } @else {
+          <p class="modal__hint">No tiene pagos: anularla libera su reserva de {{ formatCurrency(item.expectedAmount) }}, sin movimiento de Caja.</p>
+        }
+      }
+
+      <div class="field note">
+        <label for="item-text">
+          @switch (action) {
+            @case ('NO_PAYMENT') { Motivo de la falta de pago * }
+            @case ('RESOLVE') { Resolución * }
+            @case ('VOID') { Motivo de la anulación * }
+            @case ('NOTE') { Observación * }
+            @default { Observación <span class="field__optional">(opcional)</span> }
+          }
+        </label>
+        <textarea id="item-text" rows="2" maxlength="500"
+          [placeholder]="action === 'PARTIAL' ? 'Ej. Faltan ' + formatCurrency(difference()) + ' por entregar' : ''"
+          [ngModel]="text()" (ngModelChange)="text.set($event)"></textarea>
+      </div>
+
+      @if (action === 'RESOLVE' && isAdmin && group.cashDirection === 'OUT') {
+        <label class="breakdown__toggle check">
+          <input type="checkbox" [ngModel]="release()" (ngModelChange)="release.set($event)" />
+          <span>Liberar ahora {{ formatCurrency(releasable()) }} al efectivo disponible (autorización de administrador).</span>
+        </label>
+      }
+
+      @if (errorMessage()) {
+        <p class="modal__error" role="alert">{{ errorMessage() }}</p>
+      }
+      <div class="modal__actions">
+        <app-button variant="ghost" [disabled]="isSaving()" (click)="closed.emit()">Cancelar</app-button>
+        <app-button [variant]="action === 'VOID' ? 'danger' : 'primary'" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? 'Guardando…' : action === 'DELIVER' ? flow.confirm : title }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

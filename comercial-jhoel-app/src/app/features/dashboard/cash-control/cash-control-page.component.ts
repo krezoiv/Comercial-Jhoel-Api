@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 
 import {
@@ -76,6 +76,7 @@ const EMPTY_FILTERS = { dateFrom: '', dateTo: '', movementType: '', direction: '
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     ButtonComponent,
     CardComponent,
     IconComponent,

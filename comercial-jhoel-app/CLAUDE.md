@@ -1713,6 +1713,43 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
     el saldo vivo (`warehouseBalance` de la página), no contra el de un período pasado.
   - Modelos en `core/models/cash-statement.model.ts`.
   - Pruebas: `cash-statement-panel.component.spec.ts`.
+- **Pagos grupales** (backend `1760009400000`, 2026-11-26), en `features/dashboard/payment-groups/`:
+  - Transaccionar muestra el selector "Pago individual / Pago grupal" si el tipo tiene `allowsGroupPayment`.
+    - El modo grupal usa `payment-group-create-form`: descripción, cantidad, autorizado, monto y referencia por
+      transacción, "Repartir en partes iguales" y una vista previa del disponible.
+    - Al crear navega al detalle.
+  - Rutas `/dashboard/pagos-grupales` (lista con 8 tarjetas, filtros y tabla) y `/:id` (encabezado, panel financiero y
+    acciones por fila).
+  - Modales:
+    - `group-item-action-modal`: confirmar, parcial, sin pago, observación, resolución, anular y editar. Muestra Caja
+      antes, la salida o entrada real y el saldo proyectado (vista previa, no oficial).
+    - `group-history-modal`.
+    - `group-close-modal`: cerrar o anular.
+  - Todo número sale del backend. Las entradas de inputs se reflejan en señales porque los `computed` no siguen los
+    `@Input`.
+  - Control de Efectivo muestra "Reservado en pagos grupales" y "Disponible para operar" cuando hay reserva.
+  - `onCashChanged` compara secuencia + reservado. El interceptor incluye `payment-groups`.
+  - Sistema → Tipos de transacción tiene la casilla "Permite pago grupal".
+  - Pruebas: `payment-groups/payment-groups.spec.ts`.
+  - Gotcha: un `.sr-label` (absolute) dentro de una tabla con scroll necesita `.scroll { position: relative }` o
+    desborda la página.
+- **Cuentas por Cobrar / Activos ↔ Caja** (backend `1760009300000`, 2026-11-26):
+  - Formularios de crear/editar (`*-form-modal`) y "Registrar Cargo/Abono" (`shared/ui/account-statement-modal`):
+    - Selector "Medio": Efectivo / Banco o transferencia. Banco no mueve Caja.
+    - Al editar se carga `GET …/:id/trace`. Si cambia el monto o el medio, el motivo es obligatorio.
+    - Una nota dice qué hará Caja, con datos del backend.
+    - Un cargo nacido en Transaccionar o un abono de Cartera bloquea monto, cliente y medio.
+  - Eliminar (`delete-confirm-modal`, CxC y Activos): pide el motivo y dice si Caja registra la reversa, con
+    `voidCashNote` de `core/models/portfolio-trace.model.ts`.
+  - Estado de cuenta del cliente:
+    - Columna "Caja".
+    - Anulados tachados con quién, cuándo y por qué; checkbox "Mostrar anulados" que llama a `includeVoided=false`.
+    - "Historial (n)": antes → después y los movimientos MOV- del Kardex.
+    - Modal de 72rem; `.modal__table .cash-cell` envuelve el texto.
+  - Auditoría: tabla "Conciliación por operación" (`reconciliation()`, CSV).
+  - Detalle del Estado de Cuenta de Efectivo: "Reversa de MOV-…" y "Motivo".
+  - Ningún cálculo de reglas en Angular.
+  - Pruebas: `account-statement-modal.component.spec.ts` y `accounts-receivable/components/portfolio-traceability.spec.ts`.
 - **Auditoría y arqueo de apertura** (backend `1760009200000`, 2026-11-21):
   - Pestaña "Auditoría" (`?tab=auditoria`, `canCustody`): `CashIntegrityPanelComponent`.
     - Estado OK / Revisar / Alerta, apertura del día y línea de tiempo de arqueos con la columna "Cambio" (dónde empezó

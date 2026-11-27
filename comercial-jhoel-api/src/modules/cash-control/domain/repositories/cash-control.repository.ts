@@ -90,6 +90,10 @@ export interface CashBalanceSnapshot {
   balance: number;
   lastSequence: number;
   lastMovementAt: Date | null;
+  /** Money of open Pagos grupales still reserved (migration 1760009400000). */
+  reserved: number;
+  /** balance − reserved: what other operations can take out of Caja. */
+  available: number;
 }
 
 export interface CashMovementBucket {

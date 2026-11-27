@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { PortfolioPaymentMethod } from '../../../../shared/domain/portfolio-record';
 import { ASSET_REPOSITORY } from '../../domain/repositories/asset.repository';
 import type { AssetRepository } from '../../domain/repositories/asset.repository';
 import { CLIENT_REPOSITORY } from '../../../clients/domain/repositories/client.repository';
@@ -19,6 +20,8 @@ export interface RegisterAssetChargeInput {
   /** Origen polimórfico — lo omite el endpoint "Registrar Cargo"; Transaccionar lo manda junto con `referenceId`. */
   referenceType?: string;
   referenceId?: string;
+  /** EFECTIVO (default) enters Caja; BANCO never does. */
+  paymentMethod?: PortfolioPaymentMethod;
   /** Presente cuando el cargo debe confirmarse o revertirse junto con otra escritura (`TransactionManager.runInTransaction`). */
   context?: TransactionContext;
 }
@@ -54,6 +57,7 @@ export class RegisterAssetChargeUseCase {
         createdBy: input.createdBy,
         referenceType: input.referenceType ?? null,
         referenceId: input.referenceId ?? null,
+        paymentMethod: input.paymentMethod ?? null,
       },
       input.context,
     );

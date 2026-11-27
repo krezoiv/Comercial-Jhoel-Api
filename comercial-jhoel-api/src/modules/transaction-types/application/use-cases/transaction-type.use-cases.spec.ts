@@ -18,6 +18,7 @@ function buildTransactionType(
     icon: overrides.icon ?? 'arrow-down-circle',
     balanceEffect: null,
     cashEffect: 'NONE',
+    allowsGroupPayment: false,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -68,6 +69,7 @@ describe('CreateTransactionTypeUseCase', () => {
       icon: 'file-check',
       balanceEffect: null,
       cashEffect: 'NONE',
+      allowsGroupPayment: false,
       createdBy: 'user-1',
     });
   });

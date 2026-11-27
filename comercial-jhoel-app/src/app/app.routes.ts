@@ -443,6 +443,22 @@ export const routes: Routes = [
         title: 'Transaccionar — Sistema',
       },
       {
+        path: 'pagos-grupales',
+        loadComponent: () =>
+          import('./features/dashboard/payment-groups/payment-groups-page.component').then(
+            (m) => m.PaymentGroupsPageComponent
+          ),
+        title: 'Pagos grupales — Sistema',
+      },
+      {
+        path: 'pagos-grupales/:id',
+        loadComponent: () =>
+          import('./features/dashboard/payment-groups/payment-group-detail-page.component').then(
+            (m) => m.PaymentGroupDetailPageComponent
+          ),
+        title: 'Pago grupal — Sistema',
+      },
+      {
         path: 'control-efectivo',
         loadComponent: () =>
           import('./features/dashboard/cash-control/cash-control-page.component').then(

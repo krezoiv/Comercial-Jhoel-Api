@@ -61,6 +61,32 @@
       [subtitle]="formSubtitle()"
     />
 
+    @if (groupAllowed()) {
+      <div class="mode-toggle" role="radiogroup" aria-label="Modalidad de pago">
+        <button type="button" role="radio" [attr.aria-checked]="!groupMode()" [class.mode-toggle__on]="!groupMode()" (click)="groupMode.set(false)">
+          <app-icon name="user" [size]="16" /> Pago individual
+        </button>
+        <button type="button" role="radio" [attr.aria-checked]="groupMode()" [class.mode-toggle__on]="groupMode()" (click)="groupMode.set(true)">
+          <app-icon name="layers" [size]="16" /> Pago grupal
+        </button>
+      </div>
+    }
+
+    @if (groupMode() && groupAllowed()) {
+      <app-payment-group-create-form
+        [transactionTypeId]="draft.transactionTypeId()"
+        [transactionTypeName]="draft.transactionTypeName()"
+        [cashEffect]="selectedType()?.cashEffect ?? 'NONE'"
+        [isGenesis]="draft.isGenesisType()"
+        [needsAccount]="draft.needsBankAccount()"
+        [transactionBankId]="draft.transactionBankId()"
+        [bankAccountId]="draft.bankAccountId()"
+        [selectedBankName]="selectedBankName()"
+        [transactionBanks]="transactionBanks()"
+        (changeBank)="openBankPicker()"
+        (created)="onGroupCreated($event)"
+      />
+    } @else {
     <section class="transaccionar__card">
       <div class="transaccionar__row">
         @if (draft.needsBankAccount()) {
@@ -355,6 +381,7 @@
         Confirmar y Guardar
       </app-button>
     </section>
+    }
   </div>
 
   <app-bank-deposit-save-confirm-modal

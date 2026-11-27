@@ -6,6 +6,7 @@ export class AssetResponseDto {
   amount: number;
   movementType: 'CARGO' | 'ABONO';
   description: string | null;
+  paymentMethod: 'EFECTIVO' | 'BANCO' | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

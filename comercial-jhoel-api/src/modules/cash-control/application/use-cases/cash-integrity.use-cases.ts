@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   INTEGRITY_CLASSIFICATIONS,
   classifySource,
+  linkedChargeFinding,
   differenceChanges,
   relateFindings,
   sortFindings,
@@ -141,6 +142,7 @@ export class GetCashIntegrityUseCase {
       caja,
       bodega,
       opening,
+      linkedCharges,
     ] = await Promise.all([
       this.repository.findChainBreaks(scope),
       this.repository.findSignViolations(scope),
@@ -152,6 +154,7 @@ export class GetCashIntegrityUseCase {
       period.dayOpeningId
         ? this.repository.getOpeningStatus(period.dayOpeningId)
         : Promise.resolve(null),
+      this.repository.findLinkedChargesOfVoidedOperations(scope),
     ]);
 
     const findings: Array<Omit<IntegrityFinding, 'relatedKeys'>> = [];
@@ -273,6 +276,10 @@ export class GetCashIntegrityUseCase {
         window: null,
         count: null,
       });
+    }
+
+    for (const row of linkedCharges) {
+      findings.push(linkedChargeFinding(row));
     }
 
     findings.push(...differenceChanges('CAJA', caja.previous, caja.counts));

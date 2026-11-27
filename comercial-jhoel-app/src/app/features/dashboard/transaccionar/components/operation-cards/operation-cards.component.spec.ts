@@ -4,7 +4,7 @@ import { TransactionType } from '../../../../../core/models';
 import { OperationCardsComponent } from './operation-cards.component';
 
 function type(id: string, name: string, balanceEffect: TransactionType['balanceEffect']): TransactionType {
-  return { id, name, icon: 'wallet', balanceEffect, cashEffect: 'NONE', isActive: true, createdAt: '', updatedAt: '' };
+  return { id, name, icon: 'wallet', balanceEffect, cashEffect: 'NONE', allowsGroupPayment: false, isActive: true, createdAt: '', updatedAt: '' };
 }
 
 describe('OperationCardsComponent — operaciones financieras', () => {

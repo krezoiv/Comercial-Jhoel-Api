@@ -299,3 +299,16 @@
   font-size: var(--fs-sm);
   color: var(--color-text-on-light-subtle);
 }
+
+.block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.reconciliation td small {
+  display: block;
+  color: var(--color-text-on-light-muted, #6b7280);
+}

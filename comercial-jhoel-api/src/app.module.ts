@@ -53,6 +53,7 @@ import { SalesRegisterModule } from './modules/sales-register/sales-register.mod
 import { SalesCashBoxModule } from './modules/sales-cash-box/sales-cash-box.module';
 import { GuayacanCashBoxModule } from './modules/guayacan-cash-box/guayacan-cash-box.module';
 import { CashControlModule } from './modules/cash-control/cash-control.module';
+import { PaymentGroupsModule } from './modules/payment-groups/payment-groups.module';
 import { FinancialDayReviewModule } from './modules/financial-day-review/financial-day-review.module';
 
 @Module({
@@ -126,6 +127,7 @@ import { FinancialDayReviewModule } from './modules/financial-day-review/financi
     SalesCashBoxModule,
     GuayacanCashBoxModule,
     CashControlModule,
+    PaymentGroupsModule,
     FinancialDayReviewModule,
   ],
   providers: [

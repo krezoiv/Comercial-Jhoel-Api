@@ -121,6 +121,45 @@
       }
     </section>
 
+    <section class="block" aria-labelledby="reconciliation-title">
+      <div class="block__head">
+        <h3 class="block__title" id="reconciliation-title">
+          <app-icon name="layers" [size]="16" /> Conciliación por operación ({{ reconciliation().length }})
+        </h3>
+        @if (reconciliation().length) {
+          <app-button variant="ghost" (click)="exportReconciliation()"><app-icon name="download" [size]="16" /> CSV</app-button>
+        }
+      </div>
+      @if (reconciliation().length) {
+        <div class="scroll" tabindex="0">
+          <table class="timeline reconciliation">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th><th scope="col">Módulo</th><th scope="col">Operación</th>
+                <th scope="col" class="num">Esperado</th><th scope="col" class="num">Registrado</th>
+                <th scope="col" class="num">Diferencia</th><th scope="col">Causa probable</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of reconciliation(); track f.key) {
+                <tr>
+                  <td>{{ f.occurredAt ? formatDateTime(f.occurredAt) : '—' }}</td>
+                  <td>{{ moduleLabel(f) }}</td>
+                  <td>{{ f.reference?.label }}</td>
+                  <td class="num">{{ formatCurrency(f.expected ?? 0) }}</td>
+                  <td class="num">{{ formatCurrency(f.registered ?? 0) }}</td>
+                  <td class="num" [class.short]="(f.amount ?? 0) < 0" [class.over]="(f.amount ?? 0) > 0">{{ formatDifference(f.amount ?? 0) }}</td>
+                  <td>{{ f.title }} <small>{{ classificationLabel[f.classification] }}</small></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">Cada operación del período movió Caja exactamente como indican sus reglas.</p>
+      }
+    </section>
+
     <section class="block" aria-labelledby="findings-title">
       <h3 class="block__title" id="findings-title"><app-icon name="alert-circle" [size]="16" /> Hallazgos ({{ findings().length }})</h3>
       @for (f of findings(); track f.key) {
