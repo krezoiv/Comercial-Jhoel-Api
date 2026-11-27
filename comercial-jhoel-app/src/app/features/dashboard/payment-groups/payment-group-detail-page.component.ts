@@ -79,6 +79,8 @@ export class PaymentGroupDetailPageComponent implements OnInit {
   readonly isOpen = computed(() => this.detail()?.group.lifecycle === 'ABIERTO');
   readonly flow = computed(() => groupFlowWords(this.detail()?.group.cashDirection ?? 'OUT'));
   readonly reserves = computed(() => this.detail()?.group.cashDirection === 'OUT');
+  /** Cuotas registered before 1760009600000 may carry credit number / client: show those columns only then. */
+  readonly hasLegacyCuotaData = computed(() => !!this.detail()?.items.some((item) => item.creditNumber || item.reference));
   /** A pending Génesis group is corrected by whoever registered it or by an admin. */
   readonly canCorrect = computed(() => {
     const detail = this.detail();

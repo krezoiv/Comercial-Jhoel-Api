@@ -1746,8 +1746,12 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
   - Sistema → Tipos de transacción tiene la casilla "Permite pago grupal".
   - **Génesis con aprobación** (backend `1760009500000`):
     - Transaccionar usa `components/genesis-group-form` para tipos Génesis en lugar de `payment-group-create-form`.
-    - El formulario pide nombre, monto total y cantidad de cuotas, y la tabla de cuotas (No., crédito, cliente, monto,
-      observación) con agregar y quitar. Enter en la observación de la última fila agrega otra.
+    - El formulario pide nombre, monto total y cantidad de cuotas, y la tabla de cuotas con agregar y quitar.
+    - Cada cuota es No. + monto + casilla "Observación": el campo aparece (con foco) solo al marcarla, y desmarcarla borra
+      el texto (backend `1760009600000`).
+    - Enter en el monto o la observación de la última fila agrega otra cuota.
+    - En teléfono la tabla cabe sin desplazamiento lateral; los encabezados largos se parten.
+    - El detalle muestra "Número de crédito"/"Cliente" solo si alguna cuota anterior los tiene.
     - Si la tabla está vacía, la cantidad prepara esas filas.
     - Muestra registradas/declaradas, suma y diferencia ("Información correcta" en verde); no guarda con diferencias.
     - Se guarda pendiente de aprobación.

@@ -50,14 +50,14 @@ export class PaymentGroupItemRequestDto {
   @Min(0.01, { message: AMOUNT_MESSAGE })
   expectedAmount: number;
 
-  /** Beneficiary or reference of the transaction; for a Génesis cuota, the client's name (required there). */
+  /** Beneficiary or reference of the transaction (optional). */
   @Transform(trim)
   @IsOptional()
   @IsString()
   @MaxLength(150)
   reference?: string;
 
-  /** Génesis cuota: loan (crédito) number (required there). */
+  /** Loan (crédito) number (optional; Génesis no longer captures it). */
   @Transform(trim)
   @IsOptional()
   @IsString()

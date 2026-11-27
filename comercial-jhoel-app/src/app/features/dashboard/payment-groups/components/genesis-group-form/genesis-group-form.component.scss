@@ -129,14 +129,25 @@
   }
 }
 
+// Phone first: amount and observation fit 390 px without sideways scrolling.
 .cuotas {
   th,
   td {
-    padding: var(--space-2);
+    padding: var(--space-1);
+
+    @include bp.respond(sm) {
+      padding: var(--space-2);
+    }
+  }
+
+  // Long headers ("Monto de la cuota") wrap instead of widening the column.
+  th,
+  th.num {
+    white-space: normal;
   }
 
   .n {
-    width: 2.5rem;
+    width: 2rem;
     text-align: center;
     color: var(--color-text-on-light-subtle);
   }
@@ -152,14 +163,37 @@
   font: inherit;
   font-size: var(--fs-sm);
 
-  &--client {
+  &--amount {
+    min-width: 5rem;
+    text-align: right;
+
+    @include bp.respond(sm) {
+      min-width: 7rem;
+    }
+  }
+}
+
+// Observation: a checkbox; its field appears only when it is checked.
+.obs {
+  min-width: 8rem;
+
+  @include bp.respond(sm) {
     min-width: 12rem;
   }
 
-  &--amount {
-    min-width: 6.5rem;
-    text-align: right;
+  .cell {
+    margin-top: var(--space-2);
   }
+}
+
+.obs__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .row--incomplete td:first-child {

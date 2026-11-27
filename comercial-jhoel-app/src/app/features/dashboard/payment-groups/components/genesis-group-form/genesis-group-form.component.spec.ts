@@ -14,9 +14,8 @@ import { GenesisGroupFormComponent } from './genesis-group-form.component';
 /** EL GOLFO: 10 cuotas of Q850.00 and one of Q784.00 = Q9,284.00. */
 const golfoRows = () =>
   Array.from({ length: 11 }, (_, i) => ({
-    creditNumber: ` CR-${1001 + i} `,
-    client: `Cliente ${i + 1}`,
     amount: i === 10 ? 784 : 850,
+    hasObservation: i === 2,
     observation: i === 2 ? ' Pagó con billetes de Q100 ' : '',
   }));
 
@@ -26,9 +25,9 @@ const cuota = (n: number, over: Partial<PaymentGroupItem> = {}): PaymentGroupIte
     itemNumber: n,
     expectedAmount: n === 11 ? 784 : 850,
     paidAmount: 0,
-    reference: `Cliente ${n}`,
-    creditNumber: `CR-${1000 + n}`,
-    observation: null,
+    reference: null,
+    creditNumber: null,
+    observation: n === 3 ? 'Pagó con billetes de Q100' : null,
     status: 'PENDIENTE',
     operations: [],
     ...over,
@@ -66,7 +65,6 @@ const golfo = (over: Partial<PaymentGroup> = {}, pending = true): PaymentGroupDe
     cuotasTotal: 9284,
     declaredTotal: 9284,
     difference: 0,
-    incompleteCuotas: [],
   },
 });
 
@@ -101,8 +99,8 @@ describe('Pago grupal Génesis: registro simplificado y aprobación', () => {
     fixture.detectChanges();
     const form = fixture.componentInstance;
     const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
-    // No administrative header of the physical receipt.
-    expect(text()).not.toMatch(/Sucursal|Presidente|Secretario|Tesorero|Promotor/);
+    // No administrative header of the physical receipt, no credit number or client per cuota.
+    expect(text()).not.toMatch(/Sucursal|Presidente|Secretario|Tesorero|Promotor|crédito|cliente/i);
 
     form.name.set('EL GOLFO');
     form.total.set(9284);
@@ -116,7 +114,7 @@ describe('Pago grupal Génesis: registro simplificado y aprobación', () => {
     expect(create).not.toHaveBeenCalled();
 
     form.addRow();
-    form.updateRow(10, { creditNumber: 'CR-1011', client: 'Cliente 11', amount: 800 });
+    form.updateRow(10, { amount: 800 });
     expect(form.problems().some((p) => p.includes('no coincide con el monto total'))).toBeTrue();
     form.updateRow(10, { amount: 784 });
     fixture.detectChanges();
@@ -129,27 +127,36 @@ describe('Pago grupal Génesis: registro simplificado y aprobación', () => {
     const body = create.calls.mostRecent().args[0];
     expect(body).toEqual(jasmine.objectContaining({ description: 'EL GOLFO', authorizedAmount: 9284, declaredCount: 11 }));
     expect(body.items.length).toBe(11);
-    expect(body.items[2]).toEqual({
-      creditNumber: 'CR-1003',
-      reference: 'Cliente 3',
-      expectedAmount: 850,
-      observation: 'Pagó con billetes de Q100',
-    });
+    expect(body.items[2]).toEqual({ expectedAmount: 850, observation: 'Pagó con billetes de Q100' });
+    expect(body.items[0]).toEqual({ expectedAmount: 850, observation: undefined });
     expect(saved).toHaveBeenCalled();
   });
 
-  it('rows can be removed; an incomplete row blocks saving', () => {
+  it('the observation appears only when its checkbox is on; a cuota without amount blocks saving', () => {
     const fixture = TestBed.createComponent(GenesisGroupFormComponent);
     fixture.detectChanges();
     const form = fixture.componentInstance;
+    const element = fixture.nativeElement as HTMLElement;
     form.name.set('EL GOLFO');
     form.total.set(1700);
     form.onDeclaredCount(2);
+    fixture.detectChanges();
+    expect(element.querySelector('[aria-label="Observación de la cuota 1"]')).toBeNull();
+    const checkbox = element.querySelector('[aria-label="Agregar observación a la cuota 1"]') as HTMLInputElement;
+    checkbox.click();
+    fixture.detectChanges();
+    expect(element.querySelector('[aria-label="Observación de la cuota 1"]')).not.toBeNull();
+    form.updateRow(0, { observation: 'Pagó tarde' });
+    form.toggleObservation(0, false);
+    fixture.detectChanges();
+    expect(element.querySelector('[aria-label="Observación de la cuota 1"]')).toBeNull();
+    expect(form.rows()[0].observation).toBe('');
+
     form.rows.set(golfoRows().slice(0, 3));
     form.removeRow(2);
-    form.updateRow(1, { client: '' });
+    form.updateRow(1, { amount: 0 });
     expect(form.incomplete()).toEqual([2]);
-    expect(form.problems().some((p) => p.includes('#2'))).toBeTrue();
+    expect(form.problems().some((p) => p.includes('Indique el monto de la(s) cuota(s) #2'))).toBeTrue();
   });
 
   it('corrects a pending group with its rows and the reason', async () => {
@@ -160,14 +167,21 @@ describe('Pago grupal Génesis: registro simplificado y aprobación', () => {
     const form = fixture.componentInstance;
     expect(form.rows().length).toBe(11);
     expect(form.declaredCount()).toBe(11);
-    form.note.set('Cliente mal escrito');
-    form.updateRow(0, { client: 'Cliente Uno' });
+    // The stored observation of cuota 3 comes back with its checkbox on.
+    expect(form.rows()[2]).toEqual({ amount: 850, hasObservation: true, observation: 'Pagó con billetes de Q100' });
+    expect(form.rows()[0].hasObservation).toBeFalse();
+    form.note.set('Monto mal escrito');
+    form.updateRow(0, { amount: 800 });
+    form.updateRow(1, { amount: 900 });
     await form.save();
     expect(update).toHaveBeenCalledWith(
       'g-25',
-      jasmine.objectContaining({ declaredCount: 11, authorizedAmount: 9284, note: 'Cliente mal escrito' }),
+      jasmine.objectContaining({ declaredCount: 11, authorizedAmount: 9284, note: 'Monto mal escrito' }),
     );
-    expect(update.calls.mostRecent().args[1].items[0].reference).toBe('Cliente Uno');
+    expect(update.calls.mostRecent().args[1].items.slice(0, 2)).toEqual([
+      { expectedAmount: 800, observation: undefined },
+      { expectedAmount: 900, observation: undefined },
+    ]);
   });
 
   it('detail: an admin approves what was reviewed; no per-cuota actions while pending', async () => {

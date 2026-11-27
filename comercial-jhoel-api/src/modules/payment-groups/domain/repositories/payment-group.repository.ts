@@ -20,7 +20,7 @@ export interface PaymentGroupFilters {
   limit: number;
 }
 
-/** One row: a transaction (Pago Varios) or a cuota (Génesis: credit number + client + observation). */
+/** One row: a transaction (Pago Varios) or a cuota (Génesis: amount + optional observation). */
 export interface PaymentGroupItemData {
   expectedAmount: number;
   reference: string | null;

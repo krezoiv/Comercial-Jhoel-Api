@@ -11,7 +11,8 @@ import { DomainError } from '../../../shared/domain/domain-error';
  * Génesis groups (migration `1760009500000-PaymentGroupApproval`) are saved
  * PENDIENTE DE APROBACIÓN without moving anything and an admin approves them as
  * a whole: approval books every cuota (one real operation each) atomically and
- * closes the group. Their cuotas carry credit number, client and observation.
+ * closes the group. A cuota is its amount plus an optional observation
+ * (1760009600000); credit number and client remain only on older rows.
  *
  * Every amount and status here is computed by the database
  * (`payment_group_item_balances`, `payment_group_balances`,
@@ -112,9 +113,9 @@ export interface PaymentGroupItemRow {
   paidAmount: number;
   outstandingAmount: number;
   releasedAmount: number;
-  /** Beneficiary — for a Génesis cuota, the client's name. */
+  /** Beneficiary (Pago Varios); on older Génesis cuotas, the client's name. */
   reference: string | null;
-  /** Génesis cuota: loan (crédito) number. */
+  /** Loan (crédito) number of older Génesis cuotas; no longer captured. */
   creditNumber: string | null;
   /** Observation written on the row. */
   observation: string | null;
@@ -177,15 +178,13 @@ export interface PaymentGroupApprovalCheck {
   required: boolean;
   /** Saved and waiting for an admin. */
   pending: boolean;
-  /** Pending and consistent: cuotas add up to the declared total and every row is complete. */
+  /** Pending and consistent: there are cuotas and they add up to the declared total. */
   canApprove: boolean;
   cuotaCount: number;
   cuotasTotal: number;
   declaredTotal: number;
   /** declaredTotal − cuotasTotal (0 = information correct). */
   difference: number;
-  /** Numbers of the cuotas without credit number or client name. */
-  incompleteCuotas: number[];
 }
 
 export interface PaymentGroupDetail {
@@ -242,27 +241,16 @@ export function approvalCheckOf(
   items: PaymentGroupItemRow[],
 ): PaymentGroupApprovalCheck {
   const active = items.filter((item) => item.status !== 'ANULADO');
-  const incompleteCuotas = active
-    .filter(
-      (item) =>
-        !item.creditNumber?.trim() || (item.reference?.trim().length ?? 0) < 2,
-    )
-    .map((item) => item.itemNumber);
   const difference = roundMoney(group.authorizedAmount - group.assignedAmount);
   const pending = group.requiresApproval && group.lifecycle === 'ABIERTO';
   return {
     required: group.requiresApproval,
     pending,
-    canApprove:
-      pending &&
-      active.length > 0 &&
-      difference === 0 &&
-      incompleteCuotas.length === 0,
+    canApprove: pending && active.length > 0 && difference === 0,
     cuotaCount: active.length,
     cuotasTotal: group.assignedAmount,
     declaredTotal: group.authorizedAmount,
     difference,
-    incompleteCuotas,
   };
 }
 

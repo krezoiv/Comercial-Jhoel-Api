@@ -24,22 +24,22 @@ import { ButtonComponent, IconComponent } from '../../../../../shared/ui';
 
 export const MAX_CUOTAS = 200;
 
-/** One cuota of the receipt: correlativo (its position), credit number, client, amount and observation. */
+/** One cuota: correlativo (its position), amount and — only when the checkbox is on — an observation. */
 export interface CuotaRow {
-  creditNumber: string;
-  client: string;
   amount: number;
+  hasObservation: boolean;
   observation: string;
 }
 
-const blankRow = (): CuotaRow => ({ creditNumber: '', client: '', amount: 0, observation: '' });
-const isBlank = (row: CuotaRow): boolean => !row.creditNumber.trim() && !row.client.trim() && !row.amount && !row.observation.trim();
+const blankRow = (): CuotaRow => ({ amount: 0, hasObservation: false, observation: '' });
+const isBlank = (row: CuotaRow): boolean => !row.amount && !row.hasObservation;
 const cents = (value: number): number => Math.round((Number(value) || 0) * 100);
 
 /**
  * Pago grupal de Fundación Génesis: only the group's name, its total and the
- * number of cuotas, then one row per cuota (credit number, client, amount,
- * observation). The physical receipt's administrative header is not captured.
+ * number of cuotas, then one row per cuota: its amount and, only when its
+ * "Observación" checkbox is on, an observation (owner request). The physical
+ * receipt's administrative header, credit number and client are not captured.
  * Count, sum and difference are checked live and saving is blocked until they
  * match; the backend re-validates everything. Saving leaves the group
  * PENDIENTE DE APROBACIÓN: nothing is booked until an admin approves it.
@@ -65,7 +65,7 @@ export class GenesisGroupFormComponent implements OnChanges {
   private readonly service = inject(PaymentGroupService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly notifications = inject(NotificationService);
-  private readonly creditInputs = viewChildren<ElementRef<HTMLInputElement>>('credit');
+  private readonly amountInputs = viewChildren<ElementRef<HTMLInputElement>>('amount');
 
   readonly formatCurrency = formatCurrency;
   readonly maxCuotas = MAX_CUOTAS;
@@ -83,9 +83,10 @@ export class GenesisGroupFormComponent implements OnChanges {
   readonly cuotasTotal = computed(() => this.rows().reduce((sum, row) => sum + cents(row.amount), 0) / 100);
   /** Declared total − sum of the cuotas (0 = information correct). */
   readonly difference = computed(() => (cents(this.total()) - cents(this.cuotasTotal())) / 100);
+  /** Cuotas without an amount (the only required field of a row). */
   readonly incomplete = computed(() =>
     this.rows()
-      .map((row, index) => (row.creditNumber.trim() && row.client.trim().length >= 2 && cents(row.amount) > 0 ? 0 : index + 1))
+      .map((row, index) => (cents(row.amount) > 0 ? 0 : index + 1))
       .filter((n) => n > 0),
   );
   readonly problems = computed<string[]>(() => {
@@ -103,7 +104,7 @@ export class GenesisGroupFormComponent implements OnChanges {
       problems.push(`Se declararon ${declared} cuota(s) y hay ${this.registered()} registrada(s).`);
     }
     if (this.incomplete().length) {
-      problems.push(`Complete número de crédito, cliente y monto en la(s) cuota(s) #${this.incomplete().join(', #')}.`);
+      problems.push(`Indique el monto de la(s) cuota(s) #${this.incomplete().join(', #')}.`);
     }
     if (cents(this.total()) > 0 && this.difference() !== 0) {
       problems.push(
@@ -125,9 +126,8 @@ export class GenesisGroupFormComponent implements OnChanges {
     this.declaredCount.set(items.length);
     this.rows.set(
       items.map((item) => ({
-        creditNumber: item.creditNumber ?? '',
-        client: item.reference ?? '',
         amount: item.expectedAmount,
+        hasObservation: !!item.observation,
         observation: item.observation ?? '',
       })),
     );
@@ -151,16 +151,24 @@ export class GenesisGroupFormComponent implements OnChanges {
       return;
     }
     this.rows.update((rows) => [...rows, blankRow()]);
-    // Focus the new row's first cell once it is rendered.
-    setTimeout(() => this.creditInputs().at(-1)?.nativeElement.focus());
+    // Focus the new row's amount once it is rendered.
+    setTimeout(() => this.amountInputs().at(-1)?.nativeElement.focus());
+  }
+
+  /** The observation field appears only while its checkbox is on; turning it off discards the text. */
+  toggleObservation(index: number, on: boolean): void {
+    this.updateRow(index, on ? { hasObservation: true } : { hasObservation: false, observation: '' });
+    if (on) {
+      setTimeout(() => document.getElementById(`gg-obs-${index}`)?.focus());
+    }
   }
 
   removeRow(index: number): void {
     this.rows.update((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : [blankRow()]));
   }
 
-  /** Enter on the last row's observation adds the next cuota. */
-  onObservationEnter(index: number): void {
+  /** Enter on the last row (amount or observation) adds the next cuota. */
+  onRowEnter(index: number): void {
     if (index === this.rows().length - 1) {
       this.addRow();
     }
@@ -168,10 +176,8 @@ export class GenesisGroupFormComponent implements OnChanges {
 
   private items(): PaymentGroupItemInput[] {
     return this.rows().map((row) => ({
-      creditNumber: row.creditNumber.trim(),
-      reference: row.client.trim(),
       expectedAmount: row.amount,
-      observation: row.observation.trim() || undefined,
+      observation: (row.hasObservation && row.observation.trim()) || undefined,
     }));
   }
 

@@ -1,5 +1,6 @@
--- Pagos grupales de Fundación Génesis con aprobación (migración 1760009500000-PaymentGroupApproval):
--- registro con cuotas (crédito, cliente, monto, observación), validaciones de cantidad y suma, nada se mueve
+-- Pagos grupales de Fundación Génesis con aprobación (migraciones 1760009500000-PaymentGroupApproval y
+-- 1760009600000-PaymentGroupCuotaAmountOnly): registro con cuotas (monto y observación opcional), validaciones de
+-- cantidad y suma, nada se mueve
 -- mientras está pendiente, corrección con historial, aprobación atómica e idempotente, rechazo.
 -- Todo corre dentro de una transacción que SIEMPRE termina en ROLLBACK: no deja ningún dato.
 --
@@ -44,8 +45,6 @@ $$;
 CREATE FUNCTION pg_temp.golfo(p_extra JSONB DEFAULT '[]'::jsonb) RETURNS JSONB LANGUAGE sql AS $$
   SELECT jsonb_agg(jsonb_build_object(
            'expectedAmount', CASE WHEN g = 11 THEN 784 ELSE 850 END,
-           'creditNumber', 'CR-' || (1000 + g),
-           'reference', 'Cliente ' || g,
            'observation', CASE WHEN g = 3 THEN 'Pagó con billetes de Q100' END) ORDER BY g)
          || p_extra
   FROM generate_series(1, 11) g
@@ -98,18 +97,18 @@ BEGIN
   END IF;
 
   -- ===== A. Registro y validaciones ===========================================================
-  PERFORM pg_temp.expect('A1 cuota sin número de crédito',
+  PERFORM pg_temp.expect('A1 una cuota solo necesita su monto (sin crédito ni cliente)',
+    pg_temp.err(format('SELECT create_payment_group(%L, %L, NULL, NULL, 850, %L, NULL, %L, %L)', v_type, 'SOLO MONTO',
+      '[{"expectedAmount": 850}]', v_cashier, 'K:A1')), 'OK');
+  PERFORM pg_temp.expect('A2 una cuota sin monto se rechaza',
     pg_temp.err(format('SELECT create_payment_group(%L, %L, NULL, NULL, 850, %L, NULL, %L, %L)', v_type, 'EL GOLFO',
-      '[{"expectedAmount": 850, "reference": "Cliente 1"}]', v_cashier, 'K:A1')), 'PAYMENT_GROUP_CUOTA_INCOMPLETE');
-  PERFORM pg_temp.expect('A2 cuota sin nombre del cliente',
-    pg_temp.err(format('SELECT create_payment_group(%L, %L, NULL, NULL, 850, %L, NULL, %L, %L)', v_type, 'EL GOLFO',
-      '[{"expectedAmount": 850, "creditNumber": "CR-1"}]', v_cashier, 'K:A2')), 'PAYMENT_GROUP_CUOTA_INCOMPLETE');
+      '[{"observation": "Sin monto"}]', v_cashier, 'K:A2')), 'PAYMENT_GROUP_INVALID_AMOUNT');
   PERFORM pg_temp.expect('A3 la suma de cuotas debe ser igual al monto total',
     pg_temp.err(format('SELECT create_payment_group(%L, %L, NULL, NULL, 9300, %L, NULL, %L, %L)', v_type, 'EL GOLFO',
       pg_temp.golfo(), v_cashier, 'K:A3')), 'PAYMENT_GROUP_TOTAL_MISMATCH');
-  PERFORM pg_temp.expect('A4 número de crédito demasiado largo',
+  PERFORM pg_temp.expect('A4 observación demasiado larga',
     pg_temp.err(format('SELECT create_payment_group(%L, %L, NULL, NULL, 850, %L, NULL, %L, %L)', v_type, 'EL GOLFO',
-      jsonb_build_array(jsonb_build_object('expectedAmount', 850, 'creditNumber', repeat('9', 41), 'reference', 'Cliente')),
+      jsonb_build_array(jsonb_build_object('expectedAmount', 850, 'observation', repeat('x', 256))),
       v_cashier, 'K:A4')), 'PAYMENT_GROUP_TEXT_TOO_LONG');
 
   v_cash0 := cash_balance();
@@ -120,9 +119,11 @@ BEGIN
   PERFORM pg_temp.expect('A5 grupo creado PENDIENTE DE APROBACIÓN con código interno',
     (SELECT display_status || '/' || requires_approval || '/' || (code ~ '^PG-[0-9]{6}$') || '/' || description || '/' || item_count
      FROM payment_group_balances WHERE id = v_group), 'PENDIENTE_APROBACION/true/true/EL GOLFO/11');
-  PERFORM pg_temp.expect('A6 cada cuota guarda correlativo, crédito, cliente, monto y observación',
-    (SELECT item_number || '|' || credit_number || '|' || reference || '|' || expected_amount || '|' || observation
-     FROM payment_group_items WHERE group_id = v_group AND item_number = 3), '3|CR-1003|Cliente 3|850.00|Pagó con billetes de Q100');
+  PERFORM pg_temp.expect('A6 cada cuota guarda correlativo, monto y su observación (solo si la tiene)',
+    (SELECT item_number || '|' || expected_amount || '|' || observation || '|' || (credit_number IS NULL AND reference IS NULL)
+     FROM payment_group_items WHERE group_id = v_group AND item_number = 3) || '/'
+      || (SELECT (observation IS NULL)::TEXT FROM payment_group_items WHERE group_id = v_group AND item_number = 4),
+    '3|850.00|Pagó con billetes de Q100|true/true');
   PERFORM pg_temp.expect('A7 guardar no mueve Caja, la línea Génesis ni crea operaciones',
     pg_temp.money(cash_balance() - v_cash0) || '/' || pg_temp.money(pg_temp.genesis_balance() - v_genesis0) || '/'
       || (pg_temp.operations(v_type) = v_ops0) || '/' || ((SELECT count(*) FROM cash_movements) - v_moves0),
@@ -162,11 +163,11 @@ BEGIN
     'CASH_CUSTODY_FORBIDDEN');
   PERFORM pg_temp.expect('C2 corrección con suma distinta se rechaza',
     pg_temp.err(format('SELECT update_pending_payment_group(%L, %L, 9284, %L, NULL, %L)', v_group, 'EL GOLFO',
-      pg_temp.golfo('[{"expectedAmount": 16, "creditNumber": "CR-1012", "reference": "Cliente 12"}]'), v_cashier)),
+      pg_temp.golfo('[{"expectedAmount": 16}]'), v_cashier)),
     'PAYMENT_GROUP_TOTAL_MISMATCH');
   v_events := (SELECT count(*) FROM payment_group_events WHERE group_id = v_group);
   PERFORM update_pending_payment_group(v_group, 'EL GOLFO (Masagua)', 9300,
-    pg_temp.golfo('[{"expectedAmount": 16, "creditNumber": "CR-1012", "reference": "Cliente 12", "observation": "Agregada"}]'),
+    pg_temp.golfo('[{"expectedAmount": 16, "observation": "Agregada"}]'),
     'Faltaba una cuota', v_cashier);
   PERFORM pg_temp.expect('C3 el creador agrega una cuota y corrige nombre y total',
     (SELECT description || '/' || pg_temp.money(authorized_amount) || '/' || item_count || '/' || pg_temp.money(assigned_amount)
@@ -220,9 +221,10 @@ BEGIN
     pg_temp.money(pg_temp.genesis_balance() - v_genesis0), '9284.00');
   PERFORM pg_temp.expect('D9 todas las cuotas PAGADO',
     (SELECT string_agg(DISTINCT status, ',') FROM payment_group_item_balances WHERE group_id = v_group), 'PAGADO');
-  PERFORM pg_temp.expect('D10 cada operación lleva crédito y cliente',
-    (SELECT o.description LIKE '%Crédito CR-1003%' AND o.client_name = 'Cliente 3'
+  PERFORM pg_temp.expect('D10 cada operación identifica su grupo y su número de cuota',
+    (SELECT o.description = 'Pago grupal ' || g.code || ' #3 — EL GOLFO' AND o.client_name = g.code || ' #3'
      FROM payment_group_deliveries d JOIN bank_deposit_operations o ON o.id = d.operation_id
+     JOIN payment_groups g ON g.id = d.group_id
      WHERE d.item_id = pg_temp.item(v_group, 3))::TEXT, 'true');
   PERFORM pg_temp.expect('D11 Kardex: un movimiento por cuota',
     (SELECT count(*) FROM cash_movements m JOIN payment_group_deliveries d ON d.operation_id = m.reference_id
@@ -254,7 +256,7 @@ BEGIN
   -- ===== E. Rechazo (anular un grupo pendiente) ===============================================
   v_cash0 := cash_balance();
   v_reject := create_payment_group(v_type, 'GRUPO RECHAZADO', NULL, NULL, 500,
-    '[{"expectedAmount": 500, "creditNumber": "CR-9", "reference": "Cliente R"}]', NULL, v_cashier, 'K:REJ');
+    '[{"expectedAmount": 500}]', NULL, v_cashier, 'K:REJ');
   PERFORM pg_temp.expect('E1 un cajero no rechaza',
     pg_temp.err(format('SELECT void_payment_group(%L, %L, %L)', v_reject, 'No corresponde', v_cashier)), 'CASH_CUSTODY_FORBIDDEN');
   PERFORM void_payment_group(v_reject, 'Boleta duplicada', v_admin);
@@ -269,7 +271,7 @@ BEGIN
   v_max := (SELECT max_balance FROM banks WHERE special_account = 'GENESIS' AND is_active ORDER BY created_at LIMIT 1);
   UPDATE banks SET max_balance = pg_temp.genesis_balance() + 1000 WHERE special_account = 'GENESIS' AND is_active;
   v_small := create_payment_group(v_type, 'GRUPO SIN CUPO', NULL, NULL, 1800,
-    '[{"expectedAmount": 600, "creditNumber": "A1", "reference": "Ana"}, {"expectedAmount": 600, "creditNumber": "A2", "reference": "Beto"}, {"expectedAmount": 600, "creditNumber": "A3", "reference": "Ceci"}]',
+    '[{"expectedAmount": 600}, {"expectedAmount": 600}, {"expectedAmount": 600}]',
     NULL, v_cashier, 'K:SMALL');
   v_cash0 := cash_balance();
   v_ops0 := pg_temp.operations(v_type);

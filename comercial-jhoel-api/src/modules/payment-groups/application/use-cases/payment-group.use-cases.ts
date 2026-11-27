@@ -39,7 +39,7 @@ function requireAdmin(
   }
 }
 
-/** One row of the request: a transaction, or a Génesis cuota (credit number, client, observation). */
+/** One row of the request: a transaction (amount + beneficiary), or a Génesis cuota (amount + optional observation). */
 export interface PaymentGroupItemInput {
   expectedAmount: number;
   reference?: string | null;

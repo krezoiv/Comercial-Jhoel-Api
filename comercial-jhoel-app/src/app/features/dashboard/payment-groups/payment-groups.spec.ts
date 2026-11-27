@@ -83,7 +83,6 @@ const detail = (): PaymentGroupDetail => ({
     cuotasTotal: 1500,
     declaredTotal: 5000,
     difference: 3500,
-    incompleteCuotas: [],
   },
 });
 

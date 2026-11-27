@@ -10,7 +10,8 @@ import { todayIsoDate } from '../src/modules/recharges/application/utils/today-i
 
 /**
  * Pagos grupales de Fundación Génesis con aprobación (migration
- * 1760009500000), HTTP end-to-end with the owner's example: EL GOLFO, 11
+ * 1760009500000, cuota = amount + optional observation since 1760009600000),
+ * HTTP end-to-end with the owner's example: EL GOLFO, 11
  * cuotas, Q9,284.00. Registering validates count and sum and moves nothing;
  * the creator (or an admin) corrects it while pending; only an admin approves,
  * which books every cuota (Caja, Génesis line, transaction count, Kardex) at
@@ -43,8 +44,6 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
   /** EL GOLFO: 10 cuotas of Q850.00 and one of Q784.00 = Q9,284.00. */
   const golfo = (extra: Body[] = []) => [
     ...Array.from({ length: 11 }, (_, i) => ({
-      creditNumber: `CR-${1001 + i}`,
-      reference: `Cliente ${i + 1}`,
       expectedAmount: i === 10 ? 784 : 850,
       ...(i === 2 ? { observation: 'Pagó con billetes de Q100' } : {}),
     })),
@@ -183,13 +182,13 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
       items: golfo(),
     }).expect(400);
     expect(message(sumMismatch)).toContain('Q9,284.00');
-    const incomplete = await create({
+    // A cuota is only its amount: without one it is rejected.
+    await create({
       description: 'EL GOLFO',
       authorizedAmount: 850,
       declaredCount: 1,
-      items: [{ expectedAmount: 850, reference: 'Cliente 1' }],
+      items: [{ observation: 'Sin monto' }],
     }).expect(400);
-    expect(message(incomplete)).toContain('número de crédito');
 
     // Saving: pending approval, internal code, nothing moves.
     const before = await position();
@@ -221,11 +220,12 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
     });
     expect(detail.items[2]).toMatchObject({
       itemNumber: 3,
-      creditNumber: 'CR-1003',
-      reference: 'Cliente 3',
+      creditNumber: null,
+      reference: null,
       expectedAmount: 850,
       observation: 'Pagó con billetes de Q100',
     });
+    expect(detail.items[3].observation).toBeNull();
     expect((await position()).balance).toBe(before.balance);
     expect(await genesisBalance()).toBe(genesisBefore);
     expect((await genesisSummary()).transactionCount).toBe(
@@ -261,13 +261,7 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
           .put(`/api/payment-groups/${groupId}`)
           .send(
             correction(
-              golfo([
-                {
-                  creditNumber: 'CR-1012',
-                  reference: 'Cliente 12',
-                  expectedAmount: 16,
-                },
-              ]),
+              golfo([{ expectedAmount: 16 }]),
               9300,
               'Faltaba una cuota',
             ),
@@ -361,17 +355,19 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
       summaryAfter.transactionCount,
     );
 
-    // Each cuota is a real operation that knows its group, credit and client.
+    // Each cuota is a real operation that knows its group and its number.
     const operationId = String(detail.items[2].operations[0].operationId);
     const operation = data(
       await admin(api().get(`/api/bank-deposits/${operationId}`)).expect(200),
     );
     expect(operation).toMatchObject({
       modality: 'GRUPAL',
-      clientName: 'Cliente 3',
+      clientName: `${String(detail.group.code)} #3`,
       paymentGroup: { itemNumber: 3, itemCount: 11, groupStatus: 'APROBADO' },
     });
-    expect(String(operation.description)).toContain('Crédito CR-1003');
+    expect(String(operation.description)).toBe(
+      `Pago grupal ${String(detail.group.code)} #3 — EL GOLFO`,
+    );
     const kardex = await dataSource.query<{ count: string }[]>(
       `SELECT count(*) FROM cash_movements m JOIN payment_group_deliveries d ON d.operation_id = m.reference_id
        WHERE m.reference_type = 'BANK_DEPOSIT' AND d.group_id = $1`,
@@ -394,9 +390,7 @@ describe('Pagos grupales Génesis con aprobación (e2e)', () => {
         description: 'GRUPO DUPLICADO',
         authorizedAmount: 500,
         declaredCount: 1,
-        items: [
-          { creditNumber: 'CR-9', reference: 'Cliente R', expectedAmount: 500 },
-        ],
+        items: [{ expectedAmount: 500 }],
       }).expect(201),
     );
     const voided = data(

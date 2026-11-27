@@ -208,7 +208,8 @@ GRUPAL; se anula desde el grupo, no desde el reporte. Las operaciones registrada
 1. **Registrar.** En Transaccionar → Pago Préstamos Génesis → Pago grupal:
    - Escriba el nombre del grupo, el monto total y la cantidad de cuotas. El encabezado administrativo de la boleta
      (sucursal, presidente, secretario, tesorero, promotor, código impreso) no se captura.
-   - Luego registre cada cuota: número de crédito, nombre del cliente, monto y observación (opcional).
+   - Luego registre el monto de cada cuota. Si una cuota necesita observación, marque su casilla "Observación" y
+     escríbala. No se piden número de crédito ni nombre del cliente.
    - El sistema muestra las cuotas registradas, la suma y la diferencia. No deja guardar si la cantidad o la suma no
      coinciden.
    - El grupo recibe su código interno (PG-…) y queda **PENDIENTE DE APROBACIÓN**: no cambia Caja ni el saldo de
@@ -229,5 +230,6 @@ GRUPAL; se anula desde el grupo, no desde el reporte. Las operaciones registrada
 
 Mientras un grupo espera aprobación, el efectivo recibido todavía no está en el Kardex: apruébelo antes del corte.
 
-**Al publicar en producción:** `npm run migration:run:prod` (migraciones `1760009400000` y `1760009500000`). Después active "Permite pago
+**Al publicar en producción:** `npm run migration:run:prod` (migraciones `1760009400000`, `1760009500000` y
+`1760009600000`). Después active "Permite pago
 grupal" en los tipos que correspondan.

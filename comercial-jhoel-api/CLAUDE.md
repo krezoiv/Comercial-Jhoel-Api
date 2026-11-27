@@ -1821,6 +1821,16 @@ separado y el grupo se cierra conciliado.
     - Caso 4 de `payment-groups-concurrency.sh` (dos aprobaciones a la vez = una).
     - `payment-group-approval.use-cases.spec.ts`.
     - `test/payment-group-approval.e2e-spec.ts` (EL GOLFO, 11 cuotas, Q9,284.00).
+- **Cuota = monto + observación opcional** (migración `1760009600000-PaymentGroupCuotaAmountOnly`, pedido del dueño
+  2026-11-27).
+  - `payment_group_check_items` y `approve_payment_group` (mismas firmas) ya no exigen número de crédito ni cliente.
+    Siguen la cantidad declarada, la suma exacta, el estado pendiente y la aprobación atómica e idempotente.
+  - Las columnas `credit_number`/`reference` se conservan: las filas anteriores no cambian y Pago Varios sigue usando
+    `reference`.
+  - Sin cliente, la operación de cada cuota lleva `client_name` = `PG-… #n` y la descripción
+    `Pago grupal PG-… #n — <grupo>`.
+  - `approvalCheck` ya no trae `incompleteCuotas`.
+  - `down` restaura exactamente las dos funciones de 1760009500000 (verificado).
 
 ### Cuentas por Cobrar / Activos ↔ Caja: medio de pago, motivo e historial (migración `1760009300000`)
 

@@ -44,8 +44,8 @@ const cuota = (n: number, over: Partial<PaymentGroupItemRow> = {}) =>
     id: `i-${n}`,
     itemNumber: n,
     expectedAmount: n === 11 ? 784 : 850,
-    reference: `Cliente ${n}`,
-    creditNumber: `CR-${1000 + n}`,
+    reference: null,
+    creditNumber: null,
     observation: null,
     status: 'PENDIENTE',
     ...over,
@@ -83,9 +83,8 @@ function repository(current = golfo()): jest.Mocked<PaymentGroupRepository> {
 const rows = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
     expectedAmount: 100,
-    creditNumber: ` CR-${i + 1} `,
-    reference: ` Cliente   ${i + 1} `,
-    observation: '',
+    // A cuota is its amount and, only when needed, an observation.
+    observation: i === 0 ? '  Pagó   en efectivo ' : '',
   }));
 
 describe('Pagos grupales Génesis — registro, corrección y aprobación', () => {
@@ -122,12 +121,20 @@ describe('Pagos grupales Génesis — registro, corrección y aprobación', () =
       },
       CREATOR,
     );
-    expect(repo.create.mock.calls[0][0].items[0]).toEqual({
-      expectedAmount: 100,
-      creditNumber: 'CR-1',
-      reference: 'Cliente 1',
-      observation: null,
-    });
+    expect(repo.create.mock.calls[0][0].items.slice(0, 2)).toEqual([
+      {
+        expectedAmount: 100,
+        creditNumber: null,
+        reference: null,
+        observation: 'Pagó en efectivo',
+      },
+      {
+        expectedAmount: 100,
+        creditNumber: null,
+        reference: null,
+        observation: null,
+      },
+    ]);
   });
 
   it('only the creator or an admin corrects a pending group', async () => {
@@ -214,16 +221,14 @@ describe('Pagos grupales Génesis — registro, corrección y aprobación', () =
       cuotasTotal: 9284,
       declaredTotal: 9284,
       difference: 0,
-      incompleteCuotas: [],
     });
-    const items = cuotas();
-    items[4] = cuota(5, { creditNumber: null });
+    // Cuotas without credit number or client are complete (amount only).
+    expect(approvalCheckOf(golfo(), cuotas()).canApprove).toBe(true);
     expect(
-      approvalCheckOf(golfo({ assignedAmount: 9300 }), items),
+      approvalCheckOf(golfo({ assignedAmount: 9300 }), cuotas()),
     ).toMatchObject({
       canApprove: false,
       difference: -16,
-      incompleteCuotas: [5],
     });
     expect(
       approvalCheckOf(

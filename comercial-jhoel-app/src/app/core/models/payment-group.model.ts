@@ -5,7 +5,7 @@
  *
  * Génesis groups (backend 1760009500000) are saved PENDIENTE DE APROBACIÓN
  * without moving anything; an admin approves them as a whole, which books
- * every cuota. Their rows carry credit number, client and observation.
+ * every cuota. A cuota is its amount plus an optional observation (1760009600000).
  */
 export type PaymentGroupCashDirection = 'IN' | 'OUT' | 'NONE';
 export type PaymentGroupLifecycle = 'ABIERTO' | 'CERRADO' | 'ANULADO';
@@ -93,9 +93,9 @@ export interface PaymentGroupItem {
   paidAmount: number;
   outstandingAmount: number;
   releasedAmount: number;
-  /** Beneficiary — for a Génesis cuota, the client's name. */
+  /** Beneficiary (Pago Varios); on older Génesis cuotas, the client's name. */
   reference: string | null;
-  /** Génesis cuota: loan (crédito) number. */
+  /** Loan (crédito) number of older Génesis cuotas; no longer captured. */
   creditNumber: string | null;
   observation: string | null;
   status: PaymentGroupItemStatus;
@@ -156,7 +156,6 @@ export interface PaymentGroupApprovalCheck {
   declaredTotal: number;
   /** declaredTotal − cuotasTotal (0 = information correct). */
   difference: number;
-  incompleteCuotas: number[];
 }
 
 export interface PaymentGroupDetail {

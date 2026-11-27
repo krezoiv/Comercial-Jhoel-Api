@@ -86,8 +86,7 @@
           @if (d.approvalCheck.pending) {
             <div class="approval__state">
               @if (d.approvalCheck.canApprove) { <app-icon name="check-circle" [size]="16" /> Información correcta }
-              @else { <app-icon name="alert-circle" [size]="16" /> Corrija antes de aprobar
-                @if (d.approvalCheck.incompleteCuotas.length) { · cuota(s) incompleta(s) #{{ d.approvalCheck.incompleteCuotas.join(', #') }} } }
+              @else { <app-icon name="alert-circle" [size]="16" /> Corrija antes de aprobar }
             </div>
           }
         </dl>
@@ -120,8 +119,10 @@
             <thead>
               <tr>
                 <th scope="col">No.</th>
-                <th scope="col">Número de crédito</th>
-                <th scope="col">Cliente</th>
+                @if (hasLegacyCuotaData()) {
+                  <th scope="col">Número de crédito</th>
+                  <th scope="col">Cliente</th>
+                }
                 <th scope="col" class="num">Monto</th>
                 <th scope="col">Observación</th>
                 <th scope="col">Estado</th>
@@ -133,8 +134,10 @@
               @for (item of d.items; track item.id) {
                 <tr [class.row--voided]="item.status === 'ANULADO'">
                   <td>{{ item.itemNumber }}</td>
-                  <td>{{ item.creditNumber || '—' }}</td>
-                  <td>{{ item.reference || '—' }}</td>
+                  @if (hasLegacyCuotaData()) {
+                    <td>{{ item.creditNumber || '—' }}</td>
+                    <td>{{ item.reference || '—' }}</td>
+                  }
                   <td class="num">{{ formatCurrency(item.expectedAmount) }}</td>
                   <td class="info">{{ item.observation || '—' }}</td>
                   <td><span [class]="'chip chip--' + itemTone(item.status)">{{ itemStatusLabel[item.status] }}</span></td>

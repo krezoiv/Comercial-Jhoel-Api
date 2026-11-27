@@ -5,7 +5,7 @@
       @if (group; as g) { Corregir {{ g.group.code }} } @else { Pago grupal · {{ transactionTypeName }} }
     </h2>
     <p class="gform__lead">
-      Nombre, monto total y cantidad de cuotas; luego cada cuota. Se guarda <strong>pendiente de aprobación</strong>: no
+      Nombre, monto total y cantidad de cuotas; luego el monto de cada cuota (observación solo si la necesita). Se guarda <strong>pendiente de aprobación</strong>: no
       modifica Caja ni el saldo de Fundación Génesis hasta que un administrador lo apruebe.
     </p>
   </header>
@@ -48,8 +48,6 @@
       <thead>
         <tr>
           <th scope="col" class="n">No.</th>
-          <th scope="col">Número de crédito *</th>
-          <th scope="col">Nombre del cliente *</th>
           <th scope="col" class="num">Monto de la cuota *</th>
           <th scope="col">Observación</th>
           <th scope="col"><span class="sr-label">Quitar</span></th>
@@ -57,16 +55,25 @@
       </thead>
       <tbody>
         @for (row of rows(); track $index; let i = $index) {
-          <tr [class.row--incomplete]="incomplete().includes(i + 1) && !!(row.creditNumber || row.client || row.amount)">
+          <tr [class.row--incomplete]="incomplete().includes(i + 1) && row.hasObservation">
             <td class="n">{{ i + 1 }}</td>
-            <td><input #credit class="cell" type="text" maxlength="40" [attr.aria-label]="'Número de crédito de la cuota ' + (i + 1)"
-              [ngModel]="row.creditNumber" (ngModelChange)="updateRow(i, { creditNumber: $event })" /></td>
-            <td><input class="cell cell--client" type="text" maxlength="150" [attr.aria-label]="'Nombre del cliente de la cuota ' + (i + 1)"
-              [ngModel]="row.client" (ngModelChange)="updateRow(i, { client: $event })" /></td>
-            <td class="num"><input class="cell cell--amount" type="text" inputmode="decimal" appDecimalInput placeholder="0.00"
-              [attr.aria-label]="'Monto de la cuota ' + (i + 1)" [ngModel]="row.amount || null" (ngModelChange)="updateRow(i, { amount: +$event || 0 })" /></td>
-            <td><input class="cell" type="text" maxlength="255" [attr.aria-label]="'Observación de la cuota ' + (i + 1)"
-              [ngModel]="row.observation" (ngModelChange)="updateRow(i, { observation: $event })" (keydown.enter)="onObservationEnter(i)" /></td>
+            <td class="num">
+              <input #amount class="cell cell--amount" type="text" inputmode="decimal" appDecimalInput placeholder="0.00"
+                [attr.aria-label]="'Monto de la cuota ' + (i + 1)" [ngModel]="row.amount || null"
+                (ngModelChange)="updateRow(i, { amount: +$event || 0 })" (keydown.enter)="onRowEnter(i)" />
+            </td>
+            <td class="obs">
+              <label class="obs__toggle">
+                <input type="checkbox" [checked]="row.hasObservation" (change)="toggleObservation(i, $any($event.target).checked)"
+                  [attr.aria-label]="'Agregar observación a la cuota ' + (i + 1)" />
+                Observación
+              </label>
+              @if (row.hasObservation) {
+                <input [id]="'gg-obs-' + i" class="cell" type="text" maxlength="255" placeholder="Escriba la observación"
+                  [attr.aria-label]="'Observación de la cuota ' + (i + 1)" [ngModel]="row.observation"
+                  (ngModelChange)="updateRow(i, { observation: $event })" (keydown.enter)="onRowEnter(i)" />
+              }
+            </td>
             <td>
               <button type="button" class="icon-btn icon-btn--danger" [attr.aria-label]="'Quitar la cuota ' + (i + 1)" title="Quitar cuota"
                 (click)="removeRow(i)"><app-icon name="trash-2" [size]="15" /></button>
