@@ -20,13 +20,21 @@ export interface PaymentGroupFilters {
   limit: number;
 }
 
+/** One row: a transaction (Pago Varios) or a cuota (Génesis: credit number + client + observation). */
+export interface PaymentGroupItemData {
+  expectedAmount: number;
+  reference: string | null;
+  creditNumber: string | null;
+  observation: string | null;
+}
+
 export interface CreatePaymentGroupData {
   transactionTypeId: string;
   description: string;
   transactionBankId: string | null;
   bankAccountId: string | null;
   authorizedAmount: number;
-  items: { expectedAmount: number; reference: string | null }[];
+  items: PaymentGroupItemData[];
   observations: string | null;
   userId: string;
   idempotencyKey: string;
@@ -90,4 +98,23 @@ export interface PaymentGroupRepository {
   ): Promise<void>;
   close(groupId: string, note: string | null, userId: string): Promise<void>;
   voidGroup(groupId: string, reason: string, userId: string): Promise<void>;
+  /** Replaces name, total and cuotas of a group pending approval (history keeps before/after). */
+  updatePending(
+    groupId: string,
+    data: {
+      description: string;
+      authorizedAmount: number;
+      items: PaymentGroupItemData[];
+      note: string | null;
+    },
+    userId: string,
+  ): Promise<void>;
+  /** Books every cuota at once and closes the group; idempotent. */
+  approve(
+    groupId: string,
+    expectedAmount: number,
+    expectedCount: number,
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<void>;
 }

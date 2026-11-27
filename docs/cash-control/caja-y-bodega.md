@@ -203,5 +203,31 @@ Una operación que salió de un grupo lo indica en su detalle ("Esta transacció
 código y el número de transacción) y lleva al grupo. En Reportes → Transacciones la columna Modalidad la marca como
 GRUPAL; se anula desde el grupo, no desde el reporte. Las operaciones registradas antes siguen siendo individuales.
 
-**Al publicar en producción:** `npm run migration:run:prod` (migración `1760009400000`). Después active "Permite pago
+### Préstamos Génesis: registro simplificado y aprobación
+
+1. **Registrar.** En Transaccionar → Pago Préstamos Génesis → Pago grupal:
+   - Escriba el nombre del grupo, el monto total y la cantidad de cuotas. El encabezado administrativo de la boleta
+     (sucursal, presidente, secretario, tesorero, promotor, código impreso) no se captura.
+   - Luego registre cada cuota: número de crédito, nombre del cliente, monto y observación (opcional).
+   - El sistema muestra las cuotas registradas, la suma y la diferencia. No deja guardar si la cantidad o la suma no
+     coinciden.
+   - El grupo recibe su código interno (PG-…) y queda **PENDIENTE DE APROBACIÓN**: no cambia Caja ni el saldo de
+     Fundación Génesis.
+2. **Corregir.** Mientras está pendiente, quien lo registró o un administrador puede corregir nombre, monto, cantidad y
+   cuotas. Cada corrección queda en el historial (antes y después).
+3. **Aprobar (administrador).** Al aprobar se contabilizan **todas** las cuotas a la vez, cada una como una operación de
+   Préstamos Génesis:
+   - entra el efectivo a Caja;
+   - se actualiza el saldo de Génesis con las reglas de siempre;
+   - suben las transacciones según las cuotas reales;
+   - aparecen en Kardex y Estado de Cuenta;
+   - se registran el usuario y la fecha de aprobación.
+
+   La aprobación es todo o nada y no se contabiliza dos veces (un doble clic o dos administradores a la vez no duplican).
+   Ya aprobado, el grupo no se corrige.
+4. **Rechazar.** Un administrador puede anular un grupo pendiente con su motivo; no mueve nada.
+
+Mientras un grupo espera aprobación, el efectivo recibido todavía no está en el Kardex: apruébelo antes del corte.
+
+**Al publicar en producción:** `npm run migration:run:prod` (migraciones `1760009400000` y `1760009500000`). Después active "Permite pago
 grupal" en los tipos que correspondan.

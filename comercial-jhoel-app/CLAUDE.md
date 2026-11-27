@@ -1744,7 +1744,21 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
   - Control de Efectivo muestra "Reservado en pagos grupales" y "Disponible para operar" cuando hay reserva.
   - `onCashChanged` compara secuencia + reservado. El interceptor incluye `payment-groups`.
   - Sistema → Tipos de transacción tiene la casilla "Permite pago grupal".
-  - Pruebas: `payment-groups/payment-groups.spec.ts` y `type-operations-panel.component.spec.ts`.
+  - **Génesis con aprobación** (backend `1760009500000`):
+    - Transaccionar usa `components/genesis-group-form` para tipos Génesis en lugar de `payment-group-create-form`.
+    - El formulario pide nombre, monto total y cantidad de cuotas, y la tabla de cuotas (No., crédito, cliente, monto,
+      observación) con agregar y quitar. Enter en la observación de la última fila agrega otra.
+    - Si la tabla está vacía, la cantidad prepara esas filas.
+    - Muestra registradas/declaradas, suma y diferencia ("Información correcta" en verde); no guarda con diferencias.
+    - Se guarda pendiente de aprobación.
+    - En el detalle, `requiresApproval` cambia todo:
+      - panel de aprobación (pendiente, con la consistencia del backend `approvalCheck`, o aprobado con fecha y usuario);
+      - "Corregir" (creador o admin) muestra el mismo formulario con `[group]`;
+      - "Aprobar" (admin) envía `expectedAmount`/`expectedCount` y un `clientRequestId`;
+      - tabla de cuotas sin acciones por cuota; no hay "Cerrar grupo".
+    - El historial muestra antes → después de cada corrección.
+  - Pruebas: `payment-groups/payment-groups.spec.ts`, `type-operations-panel.component.spec.ts` y
+    `genesis-group-form.component.spec.ts`.
   - Gotcha: un `.sr-label` (absolute) dentro de una tabla con scroll necesita `.scroll { position: relative }` o
     desborda la página.
 - **Cuentas por Cobrar / Activos ↔ Caja** (backend `1760009300000`, 2026-11-26):

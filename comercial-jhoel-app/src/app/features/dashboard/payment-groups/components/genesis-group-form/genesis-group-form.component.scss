@@ -1,0 +1,197 @@
+@use '../../payment-groups';
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.gform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gform__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+}
+
+.gform__lead {
+  margin-top: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--color-text-on-light-muted);
+}
+
+.gform__head {
+  display: grid;
+  gap: var(--space-4);
+
+  @include bp.respond(sm) {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+
+  label {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--color-text-on-light-muted);
+  }
+
+  input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-light-muted);
+    font: inherit;
+  }
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--color-text-on-light-subtle);
+}
+
+.amount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light-muted);
+
+  input {
+    border: 0;
+    padding-left: 0;
+    background: transparent;
+  }
+}
+
+// Count · sum · difference: amber until everything matches, then green.
+.check {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid #d97706;
+  background: rgba(234, 179, 8, 0.1);
+
+  @include bp.respond(md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  small {
+    font-size: var(--fs-xs);
+    color: var(--color-text-on-light-subtle);
+  }
+
+  strong {
+    color: var(--color-text-on-light);
+  }
+
+  .bad {
+    color: #b91c1c;
+  }
+
+  &__state {
+    flex-direction: row !important;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 600;
+    color: #a16207;
+  }
+
+  &--ok {
+    border-left-color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+
+    .check__state {
+      color: #15803d;
+    }
+  }
+}
+
+.cuotas {
+  th,
+  td {
+    padding: var(--space-2);
+  }
+
+  .n {
+    width: 2.5rem;
+    text-align: center;
+    color: var(--color-text-on-light-subtle);
+  }
+}
+
+.cell {
+  width: 100%;
+  min-width: 7rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-light);
+  font: inherit;
+  font-size: var(--fs-sm);
+
+  &--client {
+    min-width: 12rem;
+  }
+
+  &--amount {
+    min-width: 6.5rem;
+    text-align: right;
+  }
+}
+
+.row--incomplete td:first-child {
+  box-shadow: inset 3px 0 0 #d97706;
+}
+
+.sr-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.problems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-5);
+  font-size: var(--fs-sm);
+  color: #a16207;
+  list-style: disc;
+}
+
+.error {
+  font-size: var(--fs-sm);
+  color: #b91c1c;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

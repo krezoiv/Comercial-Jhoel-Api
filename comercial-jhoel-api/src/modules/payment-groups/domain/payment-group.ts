@@ -8,6 +8,11 @@ import { DomainError } from '../../../shared/domain/domain-error';
  * Estado de Cuenta and bank balances move exactly as an individual one), and
  * the group is closed releasing what was not used.
  *
+ * Génesis groups (migration `1760009500000-PaymentGroupApproval`) are saved
+ * PENDIENTE DE APROBACIÓN without moving anything and an admin approves them as
+ * a whole: approval books every cuota (one real operation each) atomically and
+ * closes the group. Their cuotas carry credit number, client and observation.
+ *
  * Every amount and status here is computed by the database
  * (`payment_group_item_balances`, `payment_group_balances`,
  * `cash_reserved_total()`); this module only carries them.
@@ -15,8 +20,16 @@ import { DomainError } from '../../../shared/domain/domain-error';
 export type PaymentGroupCashDirection = 'IN' | 'OUT' | 'NONE';
 export type PaymentGroupLifecycle = 'ABIERTO' | 'CERRADO' | 'ANULADO';
 export type PaymentGroupStatus =
-  'PENDIENTE' | 'EN_PROCESO' | 'PARCIAL' | 'COMPLETADO' | 'ANULADO';
+  | 'PENDIENTE_APROBACION'
+  | 'APROBADO'
+  | 'PENDIENTE'
+  | 'EN_PROCESO'
+  | 'PARCIAL'
+  | 'COMPLETADO'
+  | 'ANULADO';
 export const PAYMENT_GROUP_STATUSES: readonly PaymentGroupStatus[] = [
+  'PENDIENTE_APROBACION',
+  'APROBADO',
   'PENDIENTE',
   'EN_PROCESO',
   'PARCIAL',
@@ -34,7 +47,9 @@ export type PaymentGroupEventType =
   | 'RESOLUCION'
   | 'ANULACION'
   | 'CIERRE'
-  | 'ANULACION_GRUPO';
+  | 'ANULACION_GRUPO'
+  | 'EDITADO'
+  | 'APROBACION';
 
 export const MAX_PAYMENT_GROUP_ITEMS = 200;
 
@@ -55,6 +70,11 @@ export interface PaymentGroupSummaryRow {
   observations: string | null;
   lifecycle: PaymentGroupLifecycle;
   status: PaymentGroupStatus;
+  /** Génesis group: saved pending approval and booked as a whole when an admin approves it. */
+  requiresApproval: boolean;
+  /** Approval date / admin (the group's close, for an approval group). */
+  approvedAt: Date | null;
+  approvedByUsername: string | null;
   itemCount: number;
   paidCount: number;
   partialCount: number;
@@ -92,7 +112,12 @@ export interface PaymentGroupItemRow {
   paidAmount: number;
   outstandingAmount: number;
   releasedAmount: number;
+  /** Beneficiary — for a Génesis cuota, the client's name. */
   reference: string | null;
+  /** Génesis cuota: loan (crédito) number. */
+  creditNumber: string | null;
+  /** Observation written on the row. */
+  observation: string | null;
   status: PaymentGroupItemStatus;
   deliveryCount: number;
   lastPaidAt: Date | null;
@@ -123,6 +148,8 @@ export interface PaymentGroupEventRow {
   amount: number | null;
   note: string | null;
   operationId: string | null;
+  /** EDITADO: the group before and after the correction (`{ before, after }`). */
+  details: Record<string, unknown> | null;
   username: string;
   createdAt: Date;
 }
@@ -145,11 +172,28 @@ export interface PaymentGroupCloseCheck {
   releaseOnClose: number;
 }
 
+/** Consistency of a Génesis group before approval (the database re-checks it under its lock). */
+export interface PaymentGroupApprovalCheck {
+  required: boolean;
+  /** Saved and waiting for an admin. */
+  pending: boolean;
+  /** Pending and consistent: cuotas add up to the declared total and every row is complete. */
+  canApprove: boolean;
+  cuotaCount: number;
+  cuotasTotal: number;
+  declaredTotal: number;
+  /** declaredTotal − cuotasTotal (0 = information correct). */
+  difference: number;
+  /** Numbers of the cuotas without credit number or client name. */
+  incompleteCuotas: number[];
+}
+
 export interface PaymentGroupDetail {
   group: PaymentGroupSummaryRow;
   items: PaymentGroupItemRow[];
   cash: CashReservationSnapshot;
   closeCheck: PaymentGroupCloseCheck;
+  approvalCheck: PaymentGroupApprovalCheck;
 }
 
 export interface PaymentGroupTotals {
@@ -178,13 +222,47 @@ export function closeCheckOf(
         )
       : 0;
   return {
+    // An approval group is closed by its approval, never by hand.
     canClose:
+      !group.requiresApproval &&
       group.lifecycle === 'ABIERTO' &&
       group.pendingCount === 0 &&
       group.unresolvedCount === 0,
     pendingCount: group.pendingCount,
     unresolvedCount: group.unresolvedCount,
     releaseOnClose,
+  };
+}
+
+const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
+/** Approval readiness of a group, from its database figures and rows. */
+export function approvalCheckOf(
+  group: PaymentGroupSummaryRow,
+  items: PaymentGroupItemRow[],
+): PaymentGroupApprovalCheck {
+  const active = items.filter((item) => item.status !== 'ANULADO');
+  const incompleteCuotas = active
+    .filter(
+      (item) =>
+        !item.creditNumber?.trim() || (item.reference?.trim().length ?? 0) < 2,
+    )
+    .map((item) => item.itemNumber);
+  const difference = roundMoney(group.authorizedAmount - group.assignedAmount);
+  const pending = group.requiresApproval && group.lifecycle === 'ABIERTO';
+  return {
+    required: group.requiresApproval,
+    pending,
+    canApprove:
+      pending &&
+      active.length > 0 &&
+      difference === 0 &&
+      incompleteCuotas.length === 0,
+    cuotaCount: active.length,
+    cuotasTotal: group.assignedAmount,
+    declaredTotal: group.authorizedAmount,
+    difference,
+    incompleteCuotas,
   };
 }
 
@@ -340,12 +418,64 @@ const MESSAGES: Record<
   },
   CASH_CUSTODY_FORBIDDEN: {
     message:
-      'Solo un administrador puede liberar, anular o cerrar un pago grupal.',
+      'Solo un administrador puede liberar, anular, cerrar o aprobar un pago grupal.',
     status: 403,
   },
   CASH_INSUFFICIENT_BALANCE: {
     message: 'No hay efectivo suficiente en Caja para esa entrega.',
     status: 409,
+  },
+  PAYMENT_GROUP_PENDING_APPROVAL: {
+    message:
+      'El grupo está pendiente de aprobación: solo se puede corregir, aprobar o anular completo.',
+    status: 409,
+  },
+  PAYMENT_GROUP_NOT_EDITABLE: {
+    message:
+      'Solo un grupo de Préstamos Génesis pendiente de aprobación se corrige completo.',
+    status: 409,
+  },
+  PAYMENT_GROUP_NOT_APPROVABLE: {
+    message:
+      'Este grupo no requiere aprobación: sus pagos se confirman uno por uno.',
+    status: 409,
+  },
+  PAYMENT_GROUP_CHANGED: {
+    message:
+      'El grupo cambió mientras lo revisaba: vuelva a cargarlo y revíselo antes de aprobar.',
+    status: 409,
+  },
+  PAYMENT_GROUP_TOTAL_MISMATCH: {
+    message: (detail) =>
+      `La suma de las cuotas (${money(detail)}) no coincide con el monto total del grupo. Corrija las cuotas o el monto total.`,
+  },
+  PAYMENT_GROUP_COUNT_MISMATCH: {
+    message: (detail) => {
+      const [registered, declared] = detail.split('/');
+      return `Hay ${registered} cuota(s) registrada(s) y se declararon ${declared}. Corrija la cantidad o las cuotas.`;
+    },
+  },
+  PAYMENT_GROUP_CUOTA_INCOMPLETE: {
+    message: (detail) =>
+      `La cuota #${detail} necesita número de crédito y nombre del cliente.`,
+  },
+  PAYMENT_GROUP_TEXT_TOO_LONG: {
+    message:
+      'Un dato de la cuota es demasiado largo (crédito 40, cliente 150, observación 255 caracteres).',
+  },
+  PAYMENT_GROUP_DRAFT_ITEM_NOTE: {
+    message:
+      'Mientras el grupo espera aprobación, la observación de una cuota se escribe al corregir el grupo.',
+    status: 409,
+  },
+  PAYMENT_GROUP_EDIT_FORBIDDEN: {
+    message:
+      'Solo quien registró el grupo o un administrador puede corregirlo.',
+    status: 403,
+  },
+  PAYMENT_GROUP_APPROVE_FORBIDDEN: {
+    message: 'Solo un administrador puede aprobar un pago grupal.',
+    status: 403,
   },
   PAYMENT_GROUP_DAY_NOT_OPEN: {
     message: (detail) =>

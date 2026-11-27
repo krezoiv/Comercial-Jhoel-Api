@@ -32,10 +32,19 @@ export interface OperationPaymentGroupLink {
 
 /** Status filter of the per-type list: individual operations and groups share one list. */
 export type TypeEntryStatus =
-  'VIGENTE' | 'ANULADA' | 'PENDIENTE' | 'EN_PROCESO' | 'PARCIAL' | 'COMPLETADO';
+  | 'VIGENTE'
+  | 'ANULADA'
+  | 'PENDIENTE_APROBACION'
+  | 'APROBADO'
+  | 'PENDIENTE'
+  | 'EN_PROCESO'
+  | 'PARCIAL'
+  | 'COMPLETADO';
 export const TYPE_ENTRY_STATUSES: readonly TypeEntryStatus[] = [
   'VIGENTE',
   'ANULADA',
+  'PENDIENTE_APROBACION',
+  'APROBADO',
   'PENDIENTE',
   'EN_PROCESO',
   'PARCIAL',

@@ -55,6 +55,7 @@ import { ChangeConfirmModalComponent } from './components/change-confirm-modal/c
 import { BankPickerModalComponent, BankPickerSelection } from './components/bank-picker-modal/bank-picker-modal.component';
 import { RecentTransactionsCardComponent } from './components/recent-transactions-card/recent-transactions-card.component';
 import { PaymentGroupCreateFormComponent } from '../payment-groups/components/payment-group-create-form/payment-group-create-form.component';
+import { GenesisGroupFormComponent } from '../payment-groups/components/genesis-group-form/genesis-group-form.component';
 import { TypeOperationsPanelComponent } from './components/type-operations-panel/type-operations-panel.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { paymentGroupRoute } from '../../../core/models';
@@ -116,6 +117,7 @@ const INSUFFICIENT_MESSAGES: Record<string, string> = {
     OperationCardsComponent,
     RecentTransactionsCardComponent,
     PaymentGroupCreateFormComponent,
+    GenesisGroupFormComponent,
     TypeOperationsPanelComponent,
   ],
   templateUrl: './transaccionar-page.component.html',

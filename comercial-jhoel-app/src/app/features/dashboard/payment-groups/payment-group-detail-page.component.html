@@ -29,11 +29,19 @@
             <app-icon name="clock" [size]="16" /> Historial
           </app-button>
           <app-button variant="ghost" size="sm" (click)="groupNote.set(!groupNote())"><app-icon name="message-square" [size]="16" /> Observación</app-button>
-          @if (isAdmin() && isOpen()) {
+          @if (canCorrect() && !editing()) {
+            <app-button variant="ghost" size="sm" (click)="editing.set(true)"><app-icon name="edit-2" [size]="16" /> Corregir</app-button>
+          }
+          @if (isAdmin() && d.approvalCheck.pending) {
+            <app-button variant="primary" size="sm" [disabled]="!d.approvalCheck.canApprove || approving() || editing()" (click)="approve()">
+              <app-icon name="check-check" [size]="16" /> {{ approving() ? 'Aprobando…' : 'Aprobar' }}
+            </app-button>
+          }
+          @if (isAdmin() && isOpen() && !d.group.requiresApproval) {
             <app-button variant="primary" size="sm" (click)="groupModal.set('CLOSE')"><app-icon name="check-check" [size]="16" /> Cerrar grupo</app-button>
-            @if (d.group.paidAmount === 0) {
-              <app-button variant="danger" size="sm" (click)="groupModal.set('VOID')">Anular</app-button>
-            }
+          }
+          @if (isAdmin() && isOpen() && d.group.paidAmount === 0) {
+            <app-button variant="danger" size="sm" (click)="groupModal.set('VOID')">Anular</app-button>
           }
         </div>
       </div>
@@ -44,7 +52,7 @@
           <app-button size="sm" (click)="addGroupNote(note.value)">Guardar</app-button>
         </div>
       }
-      @if (d.group.closedAt) {
+      @if (d.group.closedAt && !d.group.requiresApproval) {
         <p class="head__closed">
           Cerrado {{ formatDateTime(d.group.closedAt) }} por {{ d.group.closedByUsername }} · {{ flow().paid }}
           {{ formatCurrency(d.group.closingPaid ?? 0) }} · liberado al cerrar {{ formatCurrency(d.group.closingReleased ?? 0) }}
@@ -56,6 +64,35 @@
       }
     </header>
 
+    @if (d.group.requiresApproval) {
+      <!-- Génesis group: consistency before approval, or what the approval booked. -->
+      <section class="approval" [class.approval--done]="d.group.approvedAt" [class.approval--warn]="d.approvalCheck.pending && !d.approvalCheck.canApprove" aria-label="Aprobación">
+        <p class="approval__title">
+          @if (d.group.approvedAt) {
+            <app-icon name="check-circle" [size]="18" /> Aprobado {{ formatDateTime(d.group.approvedAt) }} por {{ d.group.approvedByUsername }}:
+            {{ d.approvalCheck.cuotaCount }} cuota(s) contabilizadas por {{ formatCurrency(d.group.paidAmount) }}.
+          } @else if (d.approvalCheck.pending) {
+            <app-icon name="clock" [size]="18" /> Pendiente de aprobación: no modifica Caja ni el saldo de Fundación Génesis hasta que un
+            administrador lo apruebe.
+          } @else {
+            <app-icon name="x-circle" [size]="18" /> Grupo anulado: no se contabilizó ninguna cuota.
+          }
+        </p>
+        <dl class="approval__figures">
+          <div><dt>Monto total declarado</dt><dd class="money">{{ formatCurrency(d.approvalCheck.declaredTotal) }}</dd></div>
+          <div><dt>Cuotas registradas</dt><dd>{{ d.approvalCheck.cuotaCount }}</dd></div>
+          <div><dt>Suma de cuotas</dt><dd class="money">{{ formatCurrency(d.approvalCheck.cuotasTotal) }}</dd></div>
+          <div><dt>Diferencia</dt><dd class="money">{{ formatCurrency(d.approvalCheck.difference) }}</dd></div>
+          @if (d.approvalCheck.pending) {
+            <div class="approval__state">
+              @if (d.approvalCheck.canApprove) { <app-icon name="check-circle" [size]="16" /> Información correcta }
+              @else { <app-icon name="alert-circle" [size]="16" /> Corrija antes de aprobar
+                @if (d.approvalCheck.incompleteCuotas.length) { · cuota(s) incompleta(s) #{{ d.approvalCheck.incompleteCuotas.join(', #') }} } }
+            </div>
+          }
+        </dl>
+      </section>
+    } @else {
     <section class="finance" aria-label="Panel financiero">
       <div><span>Saldo físico actual de Caja</span><strong>{{ formatCurrency(d.cash.balance) }}</strong></div>
       <div><span>{{ reserves() ? 'Reservado inicialmente' : 'Monto esperado' }}</span><strong>{{ formatCurrency(d.group.authorizedAmount) }}</strong></div>
@@ -72,7 +109,55 @@
         {{ d.group.cashDirection === 'IN' ? 'Este grupo cobra: cada cobro confirmado entra a Caja; no reserva efectivo.' : 'Este tipo no mueve el efectivo físico.' }}
       </p>
     }
+    }
 
+    @if (editing()) {
+      <app-genesis-group-form [group]="d" [transactionTypeName]="d.group.transactionTypeName" (saved)="onCorrected($event)" (cancelled)="editing.set(false)" />
+    } @else if (d.group.requiresApproval) {
+      <section class="panel">
+        <div class="scroll" tabindex="0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">No.</th>
+                <th scope="col">Número de crédito</th>
+                <th scope="col">Cliente</th>
+                <th scope="col" class="num">Monto</th>
+                <th scope="col">Observación</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Operación</th>
+                <th scope="col"><span class="sr-label">Historial</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of d.items; track item.id) {
+                <tr [class.row--voided]="item.status === 'ANULADO'">
+                  <td>{{ item.itemNumber }}</td>
+                  <td>{{ item.creditNumber || '—' }}</td>
+                  <td>{{ item.reference || '—' }}</td>
+                  <td class="num">{{ formatCurrency(item.expectedAmount) }}</td>
+                  <td class="info">{{ item.observation || '—' }}</td>
+                  <td><span [class]="'chip chip--' + itemTone(item.status)">{{ itemStatusLabel[item.status] }}</span></td>
+                  <td class="info">
+                    @for (op of item.operations; track op.operationId) {
+                      <span class="op" [class.op--voided]="op.isVoided">{{ op.movementNumber ?? 'Operación' }} · {{ formatCurrency(op.amount) }}</span>
+                    } @empty { — }
+                  </td>
+                  <td>
+                    @if (!d.approvalCheck.pending) {
+                      <button type="button" class="icon-btn" title="Historial" [attr.aria-label]="'Historial cuota #' + item.itemNumber"
+                        (click)="history.set({ itemId: item.id, title: 'Historial · cuota #' + item.itemNumber })">
+                        <app-icon name="clock" [size]="16" />
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    } @else {
     <section class="panel">
       <div class="scroll" tabindex="0">
         <table class="table">
@@ -149,6 +234,7 @@
         </table>
       </div>
     </section>
+    }
 
     <app-group-item-action-modal
       [open]="action() !== null"

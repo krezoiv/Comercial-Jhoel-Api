@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { CurrentUser } from '../../../../shared/decorators/current-user.decorato
 import type { RequestUser } from '../../../../shared/decorators/current-user.decorator';
 import {
   AddPaymentGroupNoteUseCase,
+  ApprovePaymentGroupUseCase,
   ClosePaymentGroupUseCase,
   CreatePaymentGroupUseCase,
   GetPaymentGroupHistoryUseCase,
@@ -27,6 +29,7 @@ import {
   RegisterPaymentGroupDeliveryUseCase,
   ResolvePaymentGroupItemUseCase,
   UpdatePaymentGroupItemUseCase,
+  UpdatePendingPaymentGroupUseCase,
   VoidPaymentGroupItemUseCase,
   VoidPaymentGroupUseCase,
 } from '../../application/use-cases/payment-group.use-cases';
@@ -35,6 +38,7 @@ import type {
   PaymentGroupEventRow,
 } from '../../domain/payment-group';
 import {
+  ApprovePaymentGroupRequestDto,
   ClosePaymentGroupRequestDto,
   CreatePaymentGroupRequestDto,
   ListPaymentGroupsQueryDto,
@@ -43,6 +47,7 @@ import {
   RegisterDeliveryRequestDto,
   ResolveItemRequestDto,
   UpdatePaymentGroupItemRequestDto,
+  UpdatePendingPaymentGroupRequestDto,
   VoidItemRequestDto,
   VoidPaymentGroupRequestDto,
 } from '../dtos/payment-group.request.dto';
@@ -55,7 +60,9 @@ const actor = (user: RequestUser): PaymentGroupActor => ({
 /**
  * Pagos grupales. Any authenticated Transaccionar user creates groups,
  * confirms payments and documents them; releasing, voiding and closing are
- * admin-only (checked in the use cases and again in the database).
+ * admin-only (checked in the use cases and again in the database). A Génesis
+ * group is corrected while pending by its creator or an admin, and approved
+ * (booked as a whole) only by an admin.
  */
 @UseGuards(JwtAuthGuard)
 @Controller('payment-groups')
@@ -73,6 +80,8 @@ export class PaymentGroupsController {
     private readonly voidItem: VoidPaymentGroupItemUseCase,
     private readonly close: ClosePaymentGroupUseCase,
     private readonly voidGroup: VoidPaymentGroupUseCase,
+    private readonly updatePending: UpdatePendingPaymentGroupUseCase,
+    private readonly approve: ApprovePaymentGroupUseCase,
   ) {}
 
   @Get()
@@ -103,6 +112,27 @@ export class PaymentGroupsController {
     @CurrentUser() user: RequestUser,
   ): Promise<PaymentGroupDetail> {
     return this.create.execute(dto, actor(user));
+  }
+
+  /** Corrects a Génesis group pending approval (creator or admin). */
+  @Put(':id')
+  updatePendingGroup(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePendingPaymentGroupRequestDto,
+    @CurrentUser() user: RequestUser,
+  ): Promise<PaymentGroupDetail> {
+    return this.updatePending.execute(id, dto, actor(user));
+  }
+
+  /** Approves a Génesis group (admin): books every cuota at once; idempotent. */
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  approveGroup(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ApprovePaymentGroupRequestDto,
+    @CurrentUser() user: RequestUser,
+  ): Promise<PaymentGroupDetail> {
+    return this.approve.execute(id, dto, actor(user));
   }
 
   @Post(':id/items/:itemId/deliveries')

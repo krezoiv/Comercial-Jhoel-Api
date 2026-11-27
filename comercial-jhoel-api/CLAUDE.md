@@ -1784,6 +1784,43 @@ separado y el grupo se cierra conciliado.
     - Devuelve `summary` (individuales, grupos, reservado, pagado y pendiente).
   - Pruebas: `operation-modality.use-cases.spec.ts` y `test/operation-modality.e2e-spec.ts` (Pago Varios y Génesis en
     ambas modalidades, listados, filtros, banner, reporte, reserva sin doble salida, Kardex y Estado de Cuenta).
+- **Génesis con aprobación** (migración `1760009500000-PaymentGroupApproval`, 2026-11-27). Decisiones del dueño: aprobar el
+  grupo completo, solo administradores aprueban, corregible mientras está pendiente.
+  - **Encabezado de la boleta:** nunca se capturó (sucursal, presidente, secretario, tesorero, promotor, código impreso).
+    No se agrega nada para eso.
+  - **Datos:**
+    - `payment_groups.requires_approval` (tipos Génesis).
+    - Cuota = `item_number` (correlativo) + `credit_number` + `reference` (cliente, también `client_name` de la operación)
+      + `expected_amount` + `observation`.
+    - La cantidad declarada no se guarda: se valida contra las filas (`declaredCount`, `PAYMENT_GROUP_COUNT_MISMATCH`).
+    - La fecha y el usuario de la aprobación son `closed_at`/`closed_by` del grupo (aprobar = cerrar).
+  - **Guardar:** `create_payment_group` (misma firma) exige crédito y cliente y que la suma = total
+    (`payment_group_check_items`, `PAYMENT_GROUP_TOTAL_MISMATCH`, `PAYMENT_GROUP_CUOTA_INCOMPLETE`). Queda
+    `PENDIENTE_APROBACION` y no mueve nada.
+  - **Mientras está pendiente:**
+    - `payment_group_lock` rechaza toda acción por cuota (`PAYMENT_GROUP_PENDING_APPROVAL`), salvo con
+      `app.payment_group_draft_ok`, que activan solo corregir, aprobar y anular el grupo completo.
+    - Las observaciones por cuota van en la fila (`PAYMENT_GROUP_DRAFT_ITEM_NOTE`).
+  - **Corregir** (`PUT /payment-groups/:id`, `update_pending_payment_group`): el creador o un admin.
+    - Reemplaza nombre, total y cuotas. Son filas borrador: el guard permite borrarlas solo con
+      `app.payment_group_draft_delete` y sin entregas.
+    - Deja un evento `EDITADO` con `details {before, after}`.
+  - **Aprobar** (`POST /payment-groups/:id/approve`, `approve_payment_group`; admin, día abierto):
+    - Recibe `expectedAmount`/`expectedCount` (lo revisado; `PAYMENT_GROUP_CHANGED` si cambió).
+    - Registra una entrega por cuota con `register_payment_group_delivery`, que es una operación real de Transaccionar: Caja,
+      línea Génesis, Kardex, Estado de Cuenta y +1 transacción cada una.
+    - Cierra el grupo (`display_status` `APROBADO`) en UNA transacción.
+    - Idempotente: un grupo aprobado devuelve sin hacer nada; las claves de entrega son `<clave>:<n>`.
+    - Lo aprobado es final; una operación del grupo sigue sin anularse desde Transaccionar.
+  - `created_at` de `payment_group_events`/`payment_group_deliveries` usa `clock_timestamp()`, para que el historial conserve
+    el orden dentro de una transacción.
+  - La descripción de la operación incluye "Crédito …".
+  - `down` restaura exactamente las 6 funciones y las 2 vistas anteriores (verificado en copias).
+  - **Pruebas:**
+    - `sql/tests/payment-group-approval.test.sql` (48 casos, incluye todo o nada).
+    - Caso 4 de `payment-groups-concurrency.sh` (dos aprobaciones a la vez = una).
+    - `payment-group-approval.use-cases.spec.ts`.
+    - `test/payment-group-approval.e2e-spec.ts` (EL GOLFO, 11 cuotas, Q9,284.00).
 
 ### Cuentas por Cobrar / Activos ↔ Caja: medio de pago, motivo e historial (migración `1760009300000`)
 

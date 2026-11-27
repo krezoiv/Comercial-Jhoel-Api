@@ -73,6 +73,14 @@
     }
 
     @if (groupMode() && groupAllowed()) {
+      @if (draft.isGenesisType()) {
+        <!-- Préstamos Génesis: name, total, count and the cuotas; saved pending approval. -->
+        <app-genesis-group-form
+          [transactionTypeId]="draft.transactionTypeId()"
+          [transactionTypeName]="draft.transactionTypeName()"
+          (saved)="onGroupCreated($event)"
+        />
+      } @else {
       <app-payment-group-create-form
         [transactionTypeId]="draft.transactionTypeId()"
         [transactionTypeName]="draft.transactionTypeName()"
@@ -86,6 +94,7 @@
         (changeBank)="openBankPicker()"
         (created)="onGroupCreated($event)"
       />
+      }
     } @else {
     <section class="transaccionar__card">
       <div class="transaccionar__row">

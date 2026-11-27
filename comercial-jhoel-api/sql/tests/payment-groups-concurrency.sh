@@ -5,7 +5,10 @@
 #      una sola entrega, una sola salida de Caja;
 #   2. dos grupos intentan reservar el mismo dinero: solo uno se crea;
 #   3. una salida manual compite con una entrega por el dinero reservado: la
-#      entrega pasa, la salida se rechaza y la Caja nunca toma lo reservado.
+#      entrega pasa, la salida se rechaza y la Caja nunca toma lo reservado;
+#   4. (migración 1760009500000) dos administradores aprueban el MISMO grupo de
+#      Préstamos Génesis a la vez, con solicitudes distintas: las cuotas se
+#      contabilizan una sola vez.
 #
 # Necesita datos confirmados en varias sesiones, así que NUNCA corre sobre la
 # base real: clona la base (pg_dump → base temporal), prueba ahí y elimina
@@ -92,6 +95,35 @@ CONSISTENT=$(q "SELECT (cash_available() = cash_balance() - cash_reserved_total(
 echo "3. entrega $D3 (esperado 1) · salida de Q400 aplicada $OUT_ROWS (esperado 0) · reservado $RESERVED_BEFORE → $RESERVED_AFTER · consistente: $CONSISTENT"
 [[ "$D3" == "1" && "$OUT_ROWS" == "0" && "$CONSISTENT" == "true" ]] || { echo "FALLÓ concurrencia: salida contra reserva"; exit 1; }
 
+# 4. Aprobación doble de un grupo Génesis (3 cuotas, Q900).
+GENESIS_TYPE=$(q "SELECT id FROM transaction_types WHERE balance_effect = 'PAGO_GENESIS' AND is_active ORDER BY created_at LIMIT 1")
+if [[ -n "$GENESIS_TYPE" ]]; then
+  q "UPDATE transaction_types SET allows_group_payment = true WHERE id = '$GENESIS_TYPE'" >/dev/null
+  q "SELECT adjust_bank_balance(id, 0, CURRENT_DATE, '$ADMIN_ID', 'Base concurrencia', NULL) FROM banks WHERE special_account = 'GENESIS' AND is_active AND final_balance <> 0" >/dev/null
+  GROUP4=$(q "SELECT create_payment_group('$GENESIS_TYPE', 'EL GOLFO concurrencia', NULL, NULL, 900, '[{\"expectedAmount\": 300, \"creditNumber\": \"C1\", \"reference\": \"Ana\"}, {\"expectedAmount\": 300, \"creditNumber\": \"C2\", \"reference\": \"Beto\"}, {\"expectedAmount\": 300, \"creditNumber\": \"C3\", \"reference\": \"Ceci\"}]'::jsonb, NULL, '$ADMIN_ID', 'CONC:PG:G4')")
+  CASH4=$(q "SELECT cash_balance()::numeric(14,2)")
+  approve_sql() {
+    cat <<SQL
+BEGIN;
+SELECT approve_payment_group('$GROUP4', 900, 3, '$ADMIN_ID', 'CONC:PG:A:$1');
+SELECT pg_sleep($2);
+COMMIT;
+SQL
+  }
+  (approve_sql X 2 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+  sleep 0.5
+  (approve_sql Y 0 | "${PSQL[@]}" -d "$TEST_DB" >/dev/null 2>&1 || true) &
+  wait
+  OPS4=$(q "SELECT count(*) FROM payment_group_deliveries WHERE group_id = '$GROUP4'")
+  APPROVALS=$(q "SELECT count(*) FROM payment_group_events WHERE group_id = '$GROUP4' AND event_type = 'APROBACION'")
+  STATUS4=$(q "SELECT display_status FROM payment_group_balances WHERE id = '$GROUP4'")
+  CASH4_AFTER=$(q "SELECT (cash_balance() - $CASH4)::numeric(14,2)")
+  echo "4. cuotas contabilizadas $OPS4 (esperado 3) · aprobaciones $APPROVALS (esperado 1) · $STATUS4 · Caja +$CASH4_AFTER (esperado +900.00)"
+  [[ "$OPS4" == "3" && "$APPROVALS" == "1" && "$STATUS4" == "APROBADO" && "$CASH4_AFTER" == "900.00" ]] || { echo "FALLÓ concurrencia: aprobación doble"; exit 1; }
+else
+  echo "4. SKIP (sin tipo Pago Préstamos Génesis)"
+fi
+
 BROKEN=$(q "SELECT count(*) FROM (SELECT previous_balance, lag(new_balance) OVER (ORDER BY sequence) AS prior FROM cash_movements) k WHERE prior IS NOT NULL AND prior <> previous_balance")
 [[ "$BROKEN" == "0" ]] || { echo "FALLÓ cadena del Kardex"; exit 1; }
-echo "OK  concurrencia pagos grupales: una entrega por transacción, sin doble reserva, la reserva no se toca"
+echo "OK  concurrencia pagos grupales: una entrega por transacción, sin doble reserva, la reserva no se toca, una sola aprobación"

@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsDateString,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -49,12 +50,26 @@ export class PaymentGroupItemRequestDto {
   @Min(0.01, { message: AMOUNT_MESSAGE })
   expectedAmount: number;
 
-  /** Beneficiary or reference of the transaction (optional). */
+  /** Beneficiary or reference of the transaction; for a Génesis cuota, the client's name (required there). */
   @Transform(trim)
   @IsOptional()
   @IsString()
   @MaxLength(150)
   reference?: string;
+
+  /** Génesis cuota: loan (crédito) number (required there). */
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  creditNumber?: string;
+
+  /** Observation of the row (optional). */
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  observation?: string;
 }
 
 export class CreatePaymentGroupRequestDto {
@@ -79,6 +94,13 @@ export class CreatePaymentGroupRequestDto {
   @IsNumber(AMOUNT)
   @Min(0.01, { message: AMOUNT_MESSAGE })
   authorizedAmount: number;
+
+  /** Declared number of cuotas / transactions: must equal the rows sent. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAYMENT_GROUP_ITEMS)
+  declaredCount?: number;
 
   @IsArray()
   @ArrayMinSize(1, { message: 'Agregue al menos una transacción.' })
@@ -194,4 +216,53 @@ export class VoidPaymentGroupRequestDto {
   @MinLength(5, { message: 'Indique el motivo (mínimo 5 caracteres).' })
   @MaxLength(255)
   reason: string;
+}
+
+/** Correction of a Génesis group pending approval: the whole group as it should be. */
+export class UpdatePendingPaymentGroupRequestDto {
+  @Transform(trim)
+  @IsString()
+  @MinLength(3, { message: 'Escriba el nombre del grupo.' })
+  @MaxLength(200)
+  description: string;
+
+  @IsNumber(AMOUNT)
+  @Min(0.01, { message: AMOUNT_MESSAGE })
+  authorizedAmount: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAYMENT_GROUP_ITEMS)
+  declaredCount: number;
+
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Agregue al menos una cuota.' })
+  @ArrayMaxSize(MAX_PAYMENT_GROUP_ITEMS)
+  @ValidateNested({ each: true })
+  @Type(() => PaymentGroupItemRequestDto)
+  items: PaymentGroupItemRequestDto[];
+
+  /** Why it was corrected (optional, kept in the history). */
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
+}
+
+export class ApprovePaymentGroupRequestDto {
+  /** Total the admin reviewed. */
+  @IsNumber(AMOUNT)
+  @Min(0.01, { message: AMOUNT_MESSAGE })
+  expectedAmount: number;
+
+  /** Number of cuotas the admin reviewed. */
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAYMENT_GROUP_ITEMS)
+  expectedCount: number;
+
+  /** One per approval click: a retry never books twice. */
+  @IsUUID()
+  clientRequestId: string;
 }

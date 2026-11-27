@@ -23,6 +23,14 @@
                 @if (event.amount !== null) { <span class="amount">{{ formatCurrency(event.amount) }}</span> }
               </div>
               @if (event.note) { <p class="timeline__note">{{ event.note }}</p> }
+              @if (event.details?.before; as before) {
+                @if (event.details?.after; as after) {
+                  <p class="timeline__note">
+                    Antes: {{ before.items.length }} cuota(s) · {{ formatCurrency(before.total) }} → Después: {{ after.items.length }} cuota(s) ·
+                    {{ formatCurrency(after.total) }}
+                  </p>
+                }
+              }
               <small>{{ formatDateTime(event.createdAt) }} · {{ event.username }}</small>
             </li>
           } @empty {

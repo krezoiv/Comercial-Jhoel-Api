@@ -1,0 +1,108 @@
+<section class="panel gform">
+  <header>
+    <h2 class="gform__title">
+      <app-icon name="layers" [size]="18" />
+      @if (group; as g) { Corregir {{ g.group.code }} } @else { Pago grupal · {{ transactionTypeName }} }
+    </h2>
+    <p class="gform__lead">
+      Nombre, monto total y cantidad de cuotas; luego cada cuota. Se guarda <strong>pendiente de aprobación</strong>: no
+      modifica Caja ni el saldo de Fundación Génesis hasta que un administrador lo apruebe.
+    </p>
+  </header>
+
+  <div class="gform__head">
+    <div class="field field--name">
+      <label for="gg-name">Nombre del grupo *</label>
+      <input id="gg-name" type="text" maxlength="200" placeholder="Ej. EL GOLFO" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    </div>
+    <div class="field">
+      <label for="gg-total">Monto total del pago grupal *</label>
+      <div class="amount">
+        <span>Q</span>
+        <input id="gg-total" type="text" inputmode="decimal" appDecimalInput thousands placeholder="0.00"
+          [ngModel]="total() || null" (ngModelChange)="total.set(+$event || 0)" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="gg-count">Cantidad de cuotas *</label>
+      <input id="gg-count" type="number" min="1" [max]="maxCuotas" placeholder="0"
+        [ngModel]="declaredCount()" (ngModelChange)="onDeclaredCount($event)" />
+    </div>
+  </div>
+
+  <div class="check" [class.check--ok]="problems().length === 0" aria-live="polite">
+    <span><small>Cuotas registradas</small><strong>{{ registered() }} de {{ declaredCount() ?? '—' }}</strong></span>
+    <span><small>Suma de cuotas</small><strong class="money">{{ formatCurrency(cuotasTotal()) }}</strong></span>
+    <span><small>Diferencia</small><strong class="money" [class.bad]="difference() !== 0">{{ formatCurrency(difference()) }}</strong></span>
+    <span class="check__state">
+      @if (problems().length === 0) {
+        <app-icon name="check-circle" [size]="16" /> Información correcta
+      } @else {
+        <app-icon name="alert-circle" [size]="16" /> Revise los datos
+      }
+    </span>
+  </div>
+
+  <div class="scroll">
+    <table class="table cuotas">
+      <thead>
+        <tr>
+          <th scope="col" class="n">No.</th>
+          <th scope="col">Número de crédito *</th>
+          <th scope="col">Nombre del cliente *</th>
+          <th scope="col" class="num">Monto de la cuota *</th>
+          <th scope="col">Observación</th>
+          <th scope="col"><span class="sr-label">Quitar</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track $index; let i = $index) {
+          <tr [class.row--incomplete]="incomplete().includes(i + 1) && !!(row.creditNumber || row.client || row.amount)">
+            <td class="n">{{ i + 1 }}</td>
+            <td><input #credit class="cell" type="text" maxlength="40" [attr.aria-label]="'Número de crédito de la cuota ' + (i + 1)"
+              [ngModel]="row.creditNumber" (ngModelChange)="updateRow(i, { creditNumber: $event })" /></td>
+            <td><input class="cell cell--client" type="text" maxlength="150" [attr.aria-label]="'Nombre del cliente de la cuota ' + (i + 1)"
+              [ngModel]="row.client" (ngModelChange)="updateRow(i, { client: $event })" /></td>
+            <td class="num"><input class="cell cell--amount" type="text" inputmode="decimal" appDecimalInput placeholder="0.00"
+              [attr.aria-label]="'Monto de la cuota ' + (i + 1)" [ngModel]="row.amount || null" (ngModelChange)="updateRow(i, { amount: +$event || 0 })" /></td>
+            <td><input class="cell" type="text" maxlength="255" [attr.aria-label]="'Observación de la cuota ' + (i + 1)"
+              [ngModel]="row.observation" (ngModelChange)="updateRow(i, { observation: $event })" (keydown.enter)="onObservationEnter(i)" /></td>
+            <td>
+              <button type="button" class="icon-btn icon-btn--danger" [attr.aria-label]="'Quitar la cuota ' + (i + 1)" title="Quitar cuota"
+                (click)="removeRow(i)"><app-icon name="trash-2" [size]="15" /></button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <app-button variant="ghost" size="sm" [disabled]="rows().length >= maxCuotas" (click)="addRow()">
+      <app-icon name="plus" [size]="15" /> Agregar cuota
+    </app-button>
+  </div>
+
+  @if (editing()) {
+    <div class="field">
+      <label for="gg-note">Motivo de la corrección <span class="optional">(opcional)</span></label>
+      <input id="gg-note" type="text" maxlength="300" [ngModel]="note()" (ngModelChange)="note.set($event)" />
+    </div>
+  }
+
+  @if (problems().length) {
+    <ul class="problems">
+      @for (problem of problems(); track problem) { <li>{{ problem }}</li> }
+    </ul>
+  }
+  @if (errorMessage()) {
+    <p class="error" role="alert">{{ errorMessage() }}</p>
+  }
+  <div class="actions">
+    @if (editing()) {
+      <app-button variant="ghost" [disabled]="isSaving()" (click)="cancelled.emit()">Cancelar</app-button>
+    }
+    <app-button variant="primary" [disabled]="problems().length > 0 || isSaving()" (click)="save()">
+      {{ isSaving() ? 'Guardando…' : editing() ? 'Guardar corrección' : 'Guardar y enviar a aprobación' }}
+    </app-button>
+  </div>
+</section>

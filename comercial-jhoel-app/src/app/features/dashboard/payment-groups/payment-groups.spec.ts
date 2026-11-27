@@ -51,6 +51,8 @@ const item = (over: Partial<PaymentGroupItem> = {}): PaymentGroupItem => ({
   outstandingAmount: 500,
   releasedAmount: 0,
   reference: 'Juan Pérez',
+  creditNumber: null,
+  observation: null,
   status: 'PENDIENTE',
   deliveryCount: 0,
   lastPaidAt: null,
@@ -73,6 +75,16 @@ const detail = (): PaymentGroupDetail => ({
   ],
   cash: { balance: 10000, reserved: 4200, available: 5800 },
   closeCheck: { canClose: false, pendingCount: 1, unresolvedCount: 1, releaseOnClose: 4200 },
+  approvalCheck: {
+    required: false,
+    pending: false,
+    canApprove: false,
+    cuotaCount: 3,
+    cuotasTotal: 1500,
+    declaredTotal: 5000,
+    difference: 3500,
+    incompleteCuotas: [],
+  },
 });
 
 describe('Pagos grupales (pantallas)', () => {

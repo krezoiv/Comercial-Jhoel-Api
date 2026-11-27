@@ -312,15 +312,18 @@ BEGIN
       PERFORM adjust_bank_balance((SELECT id FROM banks WHERE special_account = 'GENESIS' AND is_active LIMIT 1),
         0, CURRENT_DATE, v_admin, 'Base de prueba', NULL);
     END IF;
+    -- Since 1760009500000 a Génesis group is approved as a whole (sql/tests/payment-group-approval.test.sql).
     v_in_group := create_payment_group(v_genesis_type, 'Grupo solidario Las Flores', pg_temp.agent(), NULL, 900,
-      pg_temp.items(3, 300), NULL, v_cashier, 'K:IN');
+      (SELECT jsonb_agg(e || jsonb_build_object('creditNumber', 'CR-' || n)) FROM jsonb_array_elements(pg_temp.items(3, 300)) WITH ORDINALITY AS t(e, n)),
+      NULL, v_cashier, 'K:IN');
     PERFORM pg_temp.expect('IN cobrar no reserva', pg_temp.money(cash_reserved_total() - v_reserved0), '0.00');
     PERFORM pg_temp.expect('IN sin banco agente (línea Génesis)',
       (SELECT (transaction_bank_id IS NULL AND cash_direction = 'IN')::TEXT FROM payment_groups WHERE id = v_in_group), 'true');
     v_base := cash_balance();
-    PERFORM pg_temp.expect('IN cuota parcial', pg_temp.pay(v_in_group, 1, 200, 'K:IN-1'), 'OK');
-    PERFORM pg_temp.expect('IN entra a Caja', pg_temp.money(cash_balance() - v_base), '200.00');
-    PERFORM pg_temp.expect('IN parcial', pg_temp.status(v_in_group, 1), 'PARCIAL');
+    PERFORM pg_temp.expect('IN queda pendiente de aprobación',
+      (SELECT display_status FROM payment_group_balances WHERE id = v_in_group), 'PENDIENTE_APROBACION');
+    PERFORM pg_temp.expect('IN no se cobra cuota por cuota', pg_temp.pay(v_in_group, 1, 200, 'K:IN-1'), 'PAYMENT_GROUP_PENDING_APPROVAL');
+    PERFORM pg_temp.expect('IN pendiente no entra a Caja', pg_temp.money(cash_balance() - v_base), '0.00');
   ELSE
     RAISE NOTICE 'SKIP IN (sin tipo Pago Préstamos Génesis o línea Génesis)';
   END IF;

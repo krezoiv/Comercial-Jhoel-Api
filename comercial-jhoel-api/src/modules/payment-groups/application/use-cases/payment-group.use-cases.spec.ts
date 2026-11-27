@@ -63,6 +63,8 @@ function repository(): jest.Mocked<PaymentGroupRepository> {
     voidItem: jest.fn(),
     close: jest.fn(),
     voidGroup: jest.fn(),
+    updatePending: jest.fn(),
+    approve: jest.fn(),
   };
 }
 
@@ -96,7 +98,14 @@ describe('Pagos grupales — casos de uso', () => {
       expect.objectContaining({
         idempotencyKey: 'PG:req-1',
         userId: 'u-cashier',
-        items: [{ expectedAmount: 500, reference: 'Juan' }],
+        items: [
+          {
+            expectedAmount: 500,
+            reference: 'Juan',
+            creditNumber: null,
+            observation: null,
+          },
+        ],
       }),
     );
     expect(detail.cash).toEqual({

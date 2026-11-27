@@ -9,11 +9,15 @@ import {
   PaymentGroupStatus,
   PaymentGroupSummaryRow,
   PaymentGroupTotals,
+  approvalCheckOf,
   closeCheckOf,
   paymentGroupError,
 } from '../../domain/payment-group';
 import { PAYMENT_GROUP_REPOSITORY } from '../../domain/repositories/payment-group.repository';
-import type { PaymentGroupRepository } from '../../domain/repositories/payment-group.repository';
+import type {
+  PaymentGroupItemData,
+  PaymentGroupRepository,
+} from '../../domain/repositories/payment-group.repository';
 
 /** Who acts: release, void and close are admin-only (owner decision); the rest is open to Transaccionar users. */
 export interface PaymentGroupActor {
@@ -23,9 +27,48 @@ export interface PaymentGroupActor {
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
-function requireAdmin(actor: PaymentGroupActor): void {
-  if (!ADMIN_ROLES.includes(actor.role)) {
-    throw paymentGroupError('PAYMENT_GROUP_FORBIDDEN');
+const isAdmin = (actor: PaymentGroupActor): boolean =>
+  ADMIN_ROLES.includes(actor.role);
+
+function requireAdmin(
+  actor: PaymentGroupActor,
+  code = 'PAYMENT_GROUP_FORBIDDEN',
+): void {
+  if (!isAdmin(actor)) {
+    throw paymentGroupError(code);
+  }
+}
+
+/** One row of the request: a transaction, or a Génesis cuota (credit number, client, observation). */
+export interface PaymentGroupItemInput {
+  expectedAmount: number;
+  reference?: string | null;
+  creditNumber?: string | null;
+  observation?: string | null;
+}
+
+const cleanText = (value: string | null | undefined): string | null =>
+  value?.trim().replace(/\s+/g, ' ') || null;
+
+function itemData(items: PaymentGroupItemInput[]): PaymentGroupItemData[] {
+  return items.map((item) => ({
+    expectedAmount: item.expectedAmount,
+    reference: cleanText(item.reference),
+    creditNumber: cleanText(item.creditNumber),
+    observation: cleanText(item.observation),
+  }));
+}
+
+/** The declared number of cuotas must be exactly the rows sent (checked again by the database for the total). */
+function requireDeclaredCount(
+  items: PaymentGroupItemInput[],
+  declaredCount: number | undefined,
+): void {
+  if (declaredCount !== undefined && declaredCount !== items.length) {
+    throw paymentGroupError(
+      'PAYMENT_GROUP_COUNT_MISMATCH',
+      `${items.length}/${declaredCount}`,
+    );
   }
 }
 
@@ -53,7 +96,13 @@ async function loadDetail(
   if (!group) {
     throw paymentGroupError('PAYMENT_GROUP_NOT_FOUND');
   }
-  return { group, items, cash, closeCheck: closeCheckOf(group) };
+  return {
+    group,
+    items,
+    cash,
+    closeCheck: closeCheckOf(group),
+    approvalCheck: approvalCheckOf(group, items),
+  };
 }
 
 /** Money only moves on an open business day (same Agentes Bancarios cycle as Transaccionar). */
@@ -148,7 +197,9 @@ export interface CreatePaymentGroupInput {
   transactionBankId?: string | null;
   bankAccountId?: string | null;
   authorizedAmount: number;
-  items: { expectedAmount: number; reference?: string | null }[];
+  /** Declared number of cuotas / transactions: must equal the rows sent. */
+  declaredCount?: number;
+  items: PaymentGroupItemInput[];
   observations?: string | null;
   clientRequestId: string;
 }
@@ -156,8 +207,10 @@ export interface CreatePaymentGroupInput {
 /**
  * Creates the group and its N transactions. For a type that takes cash out
  * the authorized amount is RESERVED (no cash movement; the available cash for
- * other operations drops). The database re-validates everything under the
- * Caja lock — including that the reservation fits the available cash.
+ * other operations drops). A Génesis group is saved PENDIENTE DE APROBACIÓN:
+ * nothing moves until an admin approves it, and its cuotas must add up to the
+ * declared total exactly. The database re-validates everything under the Caja
+ * lock — including that the reservation fits the available cash.
  */
 @Injectable()
 export class CreatePaymentGroupUseCase {
@@ -172,6 +225,7 @@ export class CreatePaymentGroupUseCase {
     input: CreatePaymentGroupInput,
     actor: PaymentGroupActor,
   ): Promise<PaymentGroupDetail> {
+    requireDeclaredCount(input.items, input.declaredCount);
     await requireOpenDay(this.days);
     const id = await this.repository.create({
       transactionTypeId: input.transactionTypeId,
@@ -179,10 +233,7 @@ export class CreatePaymentGroupUseCase {
       transactionBankId: input.transactionBankId ?? null,
       bankAccountId: input.bankAccountId ?? null,
       authorizedAmount: input.authorizedAmount,
-      items: input.items.map((item) => ({
-        expectedAmount: item.expectedAmount,
-        reference: item.reference?.trim() || null,
-      })),
+      items: itemData(input.items),
       observations: input.observations?.trim() || null,
       userId: actor.userId,
       idempotencyKey: `PG:${input.clientRequestId}`,
@@ -410,6 +461,96 @@ export class VoidPaymentGroupUseCase {
   }
 }
 
+export interface UpdatePendingPaymentGroupInput {
+  description: string;
+  authorizedAmount: number;
+  declaredCount: number;
+  items: PaymentGroupItemInput[];
+  note?: string | null;
+}
+
+/**
+ * Corrects a Génesis group still pending approval: name, total and the whole
+ * cuota list (add, edit, remove). Only its creator or an admin; nothing was
+ * booked yet, and the history keeps the group before and after.
+ */
+@Injectable()
+export class UpdatePendingPaymentGroupUseCase {
+  constructor(
+    @Inject(PAYMENT_GROUP_REPOSITORY)
+    private readonly repository: PaymentGroupRepository,
+  ) {}
+
+  async execute(
+    groupId: string,
+    input: UpdatePendingPaymentGroupInput,
+    actor: PaymentGroupActor,
+  ): Promise<PaymentGroupDetail> {
+    const group = await this.repository.findGroup(groupId);
+    if (!group) {
+      throw paymentGroupError('PAYMENT_GROUP_NOT_FOUND');
+    }
+    if (!group.requiresApproval) {
+      throw paymentGroupError('PAYMENT_GROUP_NOT_EDITABLE');
+    }
+    if (group.createdBy !== actor.userId && !isAdmin(actor)) {
+      throw paymentGroupError('PAYMENT_GROUP_EDIT_FORBIDDEN');
+    }
+    requireDeclaredCount(input.items, input.declaredCount);
+    await this.repository.updatePending(
+      groupId,
+      {
+        description: input.description,
+        authorizedAmount: input.authorizedAmount,
+        items: itemData(input.items),
+        note: noteText(input.note, 0),
+      },
+      actor.userId,
+    );
+    return loadDetail(this.repository, groupId);
+  }
+}
+
+export interface ApprovePaymentGroupInput {
+  /** Total and number of cuotas the admin reviewed: approval fails if the group changed meanwhile. */
+  expectedAmount: number;
+  expectedCount: number;
+  clientRequestId: string;
+}
+
+/**
+ * Approves a Génesis group (admin): books every cuota as its own real
+ * operation — Caja, Génesis line, Kardex, Estado de Cuenta and transaction
+ * count move exactly as individual payments — and closes the group, all in one
+ * database transaction. Idempotent: an approved group is never booked twice.
+ */
+@Injectable()
+export class ApprovePaymentGroupUseCase {
+  constructor(
+    @Inject(PAYMENT_GROUP_REPOSITORY)
+    private readonly repository: PaymentGroupRepository,
+    @Inject(DAY_OPENING_REPOSITORY)
+    private readonly days: DayOpeningRepository,
+  ) {}
+
+  async execute(
+    groupId: string,
+    input: ApprovePaymentGroupInput,
+    actor: PaymentGroupActor,
+  ): Promise<PaymentGroupDetail> {
+    requireAdmin(actor, 'PAYMENT_GROUP_APPROVE_FORBIDDEN');
+    await requireOpenDay(this.days);
+    await this.repository.approve(
+      groupId,
+      input.expectedAmount,
+      input.expectedCount,
+      actor.userId,
+      `PGA:${input.clientRequestId}`,
+    );
+    return loadDetail(this.repository, groupId);
+  }
+}
+
 export const PAYMENT_GROUP_USE_CASES = [
   ListPaymentGroupsUseCase,
   GetPaymentGroupUseCase,
@@ -423,4 +564,6 @@ export const PAYMENT_GROUP_USE_CASES = [
   VoidPaymentGroupItemUseCase,
   ClosePaymentGroupUseCase,
   VoidPaymentGroupUseCase,
+  UpdatePendingPaymentGroupUseCase,
+  ApprovePaymentGroupUseCase,
 ];

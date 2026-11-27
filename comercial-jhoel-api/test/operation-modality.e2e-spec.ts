@@ -75,6 +75,8 @@ describe('Modalidad de operación: individual / grupal (e2e)', () => {
             items: amounts.map((expectedAmount, i) => ({
               expectedAmount,
               reference: `Persona ${i + 1}`,
+              // Génesis cuotas carry their credit number (1760009500000).
+              creditNumber: `CR-${i + 1}`,
             })),
             clientRequestId: randomUUID(),
           }),
@@ -357,8 +359,9 @@ describe('Modalidad de operación: individual / grupal (e2e)', () => {
       await register(genesisTypeId, 400, 'Cuota individual', false),
     );
     expect(individual.modality).toBe('INDIVIDUAL');
-    // 4: a group of 3 collections reserves nothing; each collection enters Caja.
-    let group = await createGroup(
+    // 4: a group of 3 collections reserves nothing; it waits for approval
+    // (1760009500000) and the approval books its 3 cuotas, which enter Caja.
+    const group = await createGroup(
       genesisTypeId,
       'Grupo solidario Las Flores',
       [300, 300, 300],
@@ -367,19 +370,30 @@ describe('Modalidad de operación: individual / grupal (e2e)', () => {
     expect(group.group).toMatchObject({
       cashDirection: 'IN',
       reservedAmount: 0,
+      status: 'PENDIENTE_APROBACION',
     });
-    group = await deliver(group, 1, 300);
+    expect((await position()).balance - before.balance).toBe(400);
+    await admin(
+      api()
+        .post(`/api/payment-groups/${group.group.id}/approve`)
+        .send({
+          expectedAmount: 900,
+          expectedCount: 3,
+          clientRequestId: randomUUID(),
+        }),
+    ).expect(200);
     const after = await position();
-    expect(after.balance - before.balance).toBe(700);
+    expect(after.balance - before.balance).toBe(1300);
     expect(after.reservedAmount).toBe(before.reservedAmount);
     const list = await typeList(genesisTypeId);
     expect(list.items.slice(0, 2).map((e: Body) => e.modality)).toEqual([
       'GRUPAL',
       'INDIVIDUAL',
     ]);
+    expect(list.items[0]).toMatchObject({ status: 'APROBADO' });
     expect(list.items[0].group).toMatchObject({
       cashDirection: 'IN',
-      paidAmount: 300,
+      paidAmount: 900,
       reservedAmount: 0,
     });
   });

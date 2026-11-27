@@ -14,6 +14,7 @@ import {
 import type {
   CreatePaymentGroupData,
   PaymentGroupFilters,
+  PaymentGroupItemData,
   PaymentGroupRepository,
 } from '../../domain/repositories/payment-group.repository';
 
@@ -90,6 +91,16 @@ function toGroup(row: Row): PaymentGroupSummaryRow {
     observations: str(row.observations),
     lifecycle: text(row.status) as PaymentGroupSummaryRow['lifecycle'],
     status: text(row.display_status) as PaymentGroupSummaryRow['status'],
+    requiresApproval: row.requires_approval === true,
+    // Approving closes the group: its close is the approval.
+    approvedAt:
+      row.requires_approval === true && text(row.status) === 'CERRADO'
+        ? date(row.closed_at)
+        : null,
+    approvedByUsername:
+      row.requires_approval === true && text(row.status) === 'CERRADO'
+        ? str(row.closed_username)
+        : null,
     itemCount: num(row.item_count),
     paidCount: num(row.paid_count),
     partialCount: num(row.partial_count),
@@ -209,6 +220,8 @@ export class TypeOrmPaymentGroupRepository implements PaymentGroupRepository {
       outstandingAmount: num(row.outstanding_amount),
       releasedAmount: num(row.released_amount),
       reference: str(row.reference),
+      creditNumber: str(row.credit_number),
+      observation: str(row.observation),
       status: text(row.status) as PaymentGroupItemRow['status'],
       deliveryCount: num(row.delivery_count),
       lastPaidAt: date(row.last_paid_at),
@@ -254,6 +267,10 @@ export class TypeOrmPaymentGroupRepository implements PaymentGroupRepository {
       amount: numOrNull(row.amount),
       note: str(row.note),
       operationId: str(row.operation_id),
+      details:
+        row.details && typeof row.details === 'object'
+          ? (row.details as Record<string, unknown>)
+          : null,
       username: text(row.username),
       createdAt: date(row.created_at)!,
     }));
@@ -390,6 +407,45 @@ export class TypeOrmPaymentGroupRepository implements PaymentGroupRepository {
       groupId,
       reason,
       userId,
+    ]);
+  }
+
+  async updatePending(
+    groupId: string,
+    data: {
+      description: string;
+      authorizedAmount: number;
+      items: PaymentGroupItemData[];
+      note: string | null;
+    },
+    userId: string,
+  ) {
+    await this.write(
+      'SELECT update_pending_payment_group($1, $2, $3, $4, $5, $6) AS v',
+      [
+        groupId,
+        data.description,
+        data.authorizedAmount,
+        JSON.stringify(data.items),
+        data.note,
+        userId,
+      ],
+    );
+  }
+
+  async approve(
+    groupId: string,
+    expectedAmount: number,
+    expectedCount: number,
+    userId: string,
+    idempotencyKey: string,
+  ) {
+    await this.write('SELECT approve_payment_group($1, $2, $3, $4, $5) AS v', [
+      groupId,
+      expectedAmount,
+      expectedCount,
+      userId,
+      idempotencyKey,
     ]);
   }
 

@@ -5,11 +5,13 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiSuccessResponse,
+  ApprovePaymentGroupInput,
   CreatePaymentGroupInput,
   PaymentGroupDetail,
   PaymentGroupEvent,
   PaymentGroupFilters,
   PaymentGroupList,
+  UpdatePendingPaymentGroupInput,
 } from '../models';
 
 const BASE_URL = `${environment.apiUrl}/payment-groups`;
@@ -81,6 +83,16 @@ export class PaymentGroupService {
 
   voidGroup(id: string, reason: string): Observable<PaymentGroupDetail> {
     return this.write(`${id}/void`, { reason });
+  }
+
+  /** Corrects a Génesis group pending approval (its creator or an admin). */
+  updatePending(id: string, input: UpdatePendingPaymentGroupInput): Observable<PaymentGroupDetail> {
+    return this.http.put<ApiSuccessResponse<PaymentGroupDetail>>(`${BASE_URL}/${id}`, input).pipe(map((r) => r.data));
+  }
+
+  /** Approves a Génesis group (admin): every cuota is booked at once; idempotent by `clientRequestId`. */
+  approve(id: string, input: ApprovePaymentGroupInput): Observable<PaymentGroupDetail> {
+    return this.write(`${id}/approve`, input);
   }
 
   private write(path: string, body: object): Observable<PaymentGroupDetail> {

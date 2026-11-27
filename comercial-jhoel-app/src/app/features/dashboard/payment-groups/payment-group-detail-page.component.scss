@@ -164,3 +164,44 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+// Génesis approval panel: amber pending (red when something must be fixed), green approved.
+.approval {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid #d97706;
+  background: rgba(234, 179, 8, 0.1);
+
+  &--warn { border-left-color: #dc2626; background: rgba(220, 38, 38, 0.07); }
+  &--done { border-left-color: #16a34a; background: rgba(22, 163, 74, 0.1); }
+}
+
+.approval__title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--color-text-on-light);
+}
+
+.approval__figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include bp.respond(md) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+  dt { font-size: var(--fs-xs); color: var(--color-text-on-light-subtle); }
+  dd { margin: 0; font-weight: 700; }
+}
+
+.approval__state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
