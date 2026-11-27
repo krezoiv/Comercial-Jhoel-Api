@@ -1766,6 +1766,24 @@ separado y el grupo se cierra conciliado.
   - `payment-group.use-cases.spec.ts`.
   - `test/payment-groups.e2e-spec.ts`.
   - Down/up verificado en una copia.
+- **Modalidad dentro de Pago Varios / Préstamos Génesis** (2026-11-27, sin migración): el pago grupal no es un módulo
+  aparte, es la modalidad de una operación de esos tipos.
+  - **Derivada, nunca guardada**: una operación es `GRUPAL` si su id está en `payment_group_deliveries`; si no,
+    `INDIVIDUAL`. Las operaciones históricas quedan individuales sin tocar datos y nada se duplica
+    (`bank-deposits/domain/operation-modality.ts`).
+  - `GET /bank-deposits/:id`, `GET /bank-deposits/recent` y `GET /reports/bank-deposits` agregan `modality` y
+    `paymentGroup` (grupo, código, descripción, estado, "transacción n de N", esperado y pagado), vía
+    `BankDepositRepository.findPaymentGroupLinks(ids)`.
+  - Filtro `modality` (`INDIVIDUAL`/`GRUPAL`) en `applyFilters`, así que aplica a la lista, al resumen y al PDF de
+    `/reports/bank-deposits` (el PDF lo muestra en sus filtros).
+  - `GET /bank-deposits/by-type/:transactionTypeId` (`ListTypeOperationsUseCase`, declarado antes de `recent` y `:id`):
+    - Une operaciones individuales del tipo y grupos del tipo (CTE `TYPE_ENTRIES`). Un grupo es una fila; sus
+      entregas no se listan como pagos sueltos.
+    - Filtros: `modality`, `startDate`/`endDate`, `status` (`VIGENTE`, `ANULADA`, o el estado del grupo), `userId` y
+      `search` (descripción sin acentos o código `PG-`). Se pagina con `page`/`limit` (1–100).
+    - Devuelve `summary` (individuales, grupos, reservado, pagado y pendiente).
+  - Pruebas: `operation-modality.use-cases.spec.ts` y `test/operation-modality.e2e-spec.ts` (Pago Varios y Génesis en
+    ambas modalidades, listados, filtros, banner, reporte, reserva sin doble salida, Kardex y Estado de Cuenta).
 
 ### Cuentas por Cobrar / Activos ↔ Caja: medio de pago, motivo e historial (migración `1760009300000`)
 

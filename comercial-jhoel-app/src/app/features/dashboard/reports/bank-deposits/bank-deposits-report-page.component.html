@@ -86,6 +86,15 @@
       </div>
 
       <div class="field">
+        <label for="bdreport-modality">Modalidad</label>
+        <select id="bdreport-modality" [ngModel]="draftModality()" (ngModelChange)="draftModality.set($event)">
+          <option value="">Todas</option>
+          <option value="INDIVIDUAL">Individuales</option>
+          <option value="GRUPAL">Grupales</option>
+        </select>
+      </div>
+
+      <div class="field">
         <label for="bdreport-user">Usuario</label>
         <select id="bdreport-user" [ngModel]="draftUserId()" (ngModelChange)="draftUserId.set($event)">
           <option value="">Todos los usuarios</option>
@@ -113,6 +122,7 @@
           <th>Fecha y Hora</th>
           <th>Banco Agente</th>
           <th>Tipo</th>
+          <th>Modalidad</th>
           <th>Descripción / Beneficiario</th>
           <th>Cliente</th>
           <th class="align-right">Monto Total</th>
@@ -129,6 +139,14 @@
               <td>{{ row.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
               <td>{{ row.transactionBankName }}</td>
               <td>{{ row.transactionTypeName }}</td>
+              <td>
+                @if (row.paymentGroup; as g) {
+                  <span class="modality modality--grupal">GRUPAL</span>
+                  <small class="modality__group">{{ g.code }} · {{ g.itemNumber }} de {{ g.itemCount }}</small>
+                } @else {
+                  <span class="modality modality--individual">INDIVIDUAL</span>
+                }
+              </td>
               <td class="report-table__description" [class.report-table__description--empty]="!row.description">
                 {{ row.description || noDescriptionLabel }}
               </td>
@@ -156,8 +174,8 @@
                 <button
                   type="button"
                   class="action-btn action-btn--danger"
-                  title="Anular transacción"
-                  [disabled]="row.isVoided"
+                  [title]="row.paymentGroup ? 'Es parte de un pago grupal: se anula desde el grupo' : 'Anular transacción'"
+                  [disabled]="row.isVoided || !!row.paymentGroup"
                   (click)="openVoidModal(row.id)"
                 >
                   <app-icon name="x-circle" [size]="16" />

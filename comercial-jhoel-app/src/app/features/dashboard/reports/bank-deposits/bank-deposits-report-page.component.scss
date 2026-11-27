@@ -259,3 +259,23 @@ app-report-summary {
   color: var(--color-text-on-light-subtle);
   font-style: italic;
 }
+
+// Pago individual / Pago grupal (owner request): individual blue-gray, grupal purple.
+.modality {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+
+  &--individual { color: #334155; background: rgba(71, 85, 105, 0.12); }
+  &--grupal { color: #6d28d9; background: rgba(124, 58, 237, 0.14); }
+}
+
+.modality__group {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: #6d28d9;
+  white-space: nowrap;
+}

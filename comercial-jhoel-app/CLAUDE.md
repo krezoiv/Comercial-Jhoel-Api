@@ -42,7 +42,8 @@ esbuild + Vite under the hood; there is no separate Vite config file to maintain
   `primary`/`secondary`/`outline`/`ghost`/`danger` — `outline` and its dark border/text are for **dark**
   backgrounds only, e.g. the login page; use `ghost` for a secondary action on a light/white surface like
   a dashboard card or modal, or you'll ship unreadable light-on-light text), `CardComponent`,
-  `BadgeComponent` (tones `brand`/`gold`/`success`/`danger`/`neutral-dark`/`neutral-light`),
+  `BadgeComponent` (tones `brand`/`gold`/`success`/`danger`/`neutral-dark`/`neutral-light`; never wraps unless given the
+  `wrap` attribute — Transaccionar's cuadre indicator uses it so long messages don't overflow a phone),
   `IconComponent` (renders inline SVGs from a name→markup registry in `icon-registry.ts` — add new icons
   there, never inline raw `<svg>` in a feature template), `SectionComponent` (standard `<section>` shell:
   background tone, vertical spacing, container width, anchor id), `SectionHeadingComponent`,
@@ -1718,8 +1719,21 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
     - El modo grupal usa `payment-group-create-form`: descripción, cantidad, autorizado, monto y referencia por
       transacción, "Repartir en partes iguales" y una vista previa del disponible.
     - Al crear navega al detalle.
-  - Rutas `/dashboard/pagos-grupales` (lista con 8 tarjetas, filtros y tabla) y `/:id` (encabezado, panel financiero y
-    acciones por fila).
+  - **No es un módulo aparte** (2026-11-27): ya no hay entrada en el menú ni lista propia. El detalle vive en
+    `/dashboard/transaccionar/pago-grupal/:id` (`paymentGroupRoute()`), y "Volver" regresa a Transaccionar con
+    `?tipo=<id>`, que abre ese tipo (`openTypeFromQuery`; no pisa otra operación con datos).
+  - `transaccionar/components/type-operations-panel` ("Operaciones de <tipo>", debajo del formulario cuando el tipo
+    permite pago grupal):
+    - Lista individuales y grupos con su MODALIDAD (individual gris azulado, grupal morado).
+    - Muestra código, transacciones, autorizado, pagado, pendiente y estado.
+    - Filtros: Todas/Individuales/Grupales, fechas, estado, usuario (admin) o "Solo mías", y búsqueda por código o
+      descripción.
+    - Un grupo navega a su detalle; una individual abre `bank-deposit-detail-modal`.
+  - `bank-deposit-detail-modal` muestra el aviso "Esta transacción pertenece a un PAGO GRUPAL" (código, transacción n
+    de N, estado del grupo) con el enlace "Abrir grupo".
+  - Reporte de Transacciones:
+    - Filtro y columna Modalidad (código y "n de N").
+    - Una operación de grupo no se anula desde ahí: se anula desde el grupo.
   - Modales:
     - `group-item-action-modal`: confirmar, parcial, sin pago, observación, resolución, anular y editar. Muestra Caja
       antes, la salida o entrada real y el saldo proyectado (vista previa, no oficial).
@@ -1730,7 +1744,7 @@ Bajo "Agentes Bancarios" (junto a Transaccionar) y "Cajas y Cierres → Historia
   - Control de Efectivo muestra "Reservado en pagos grupales" y "Disponible para operar" cuando hay reserva.
   - `onCashChanged` compara secuencia + reservado. El interceptor incluye `payment-groups`.
   - Sistema → Tipos de transacción tiene la casilla "Permite pago grupal".
-  - Pruebas: `payment-groups/payment-groups.spec.ts`.
+  - Pruebas: `payment-groups/payment-groups.spec.ts` y `type-operations-panel.component.spec.ts`.
   - Gotcha: un `.sr-label` (absolute) dentro de una tabla con scroll necesita `.scroll { position: relative }` o
     desborda la página.
 - **Cuentas por Cobrar / Activos ↔ Caja** (backend `1760009300000`, 2026-11-26):

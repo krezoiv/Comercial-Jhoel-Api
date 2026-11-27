@@ -12,6 +12,8 @@ import {
   User,
   formatCurrency,
   formatQuantity,
+  OPERATION_MODALITY_LABEL,
+  OperationModality,
 } from '../../../../core/models';
 import { BankDepositService } from '../../../../core/services/bank-deposit.service';
 import { GuayacanCashSyncService } from '../../../../core/services/guayacan-cash-sync.service';
@@ -36,6 +38,8 @@ interface FilterFieldsState {
   transactionTypeId: string;
   userId: string;
   search: string;
+  /** Pago individual / Pago grupal ('' = both). */
+  modality: OperationModality | '';
 }
 
 /** Shown for operations registered before "Descripción / Beneficiario" existed — never invented. */
@@ -70,6 +74,7 @@ function defaultFilterFields(): FilterFieldsState {
     transactionTypeId: '',
     userId: '',
     search: '',
+    modality: '',
   };
 }
 
@@ -121,6 +126,7 @@ export class BankDepositsReportPageComponent {
   readonly draftTransactionTypeId = signal('');
   readonly draftUserId = signal('');
   readonly draftSearch = signal('');
+  readonly draftModality = signal<OperationModality | ''>('');
 
   readonly startDate = signal(firstDayOfMonthIsoDate());
   readonly endDate = signal(todayIsoDate());
@@ -128,6 +134,8 @@ export class BankDepositsReportPageComponent {
   readonly transactionTypeId = signal('');
   readonly userId = signal('');
   readonly search = signal('');
+  readonly modality = signal<OperationModality | ''>('');
+  readonly modalityLabel = OPERATION_MODALITY_LABEL;
 
   readonly noDescriptionLabel = NO_DESCRIPTION_LABEL;
 
@@ -153,6 +161,7 @@ export class BankDepositsReportPageComponent {
       this.transactionTypeId() !== defaults.transactionTypeId ||
       this.userId() !== defaults.userId ||
       this.search() !== defaults.search ||
+      this.modality() !== defaults.modality ||
       this.startDate() !== defaults.startDate ||
       this.endDate() !== defaults.endDate
     );
@@ -213,6 +222,7 @@ export class BankDepositsReportPageComponent {
     this.transactionTypeId.set(this.draftTransactionTypeId());
     this.userId.set(this.draftUserId());
     this.search.set(this.draftSearch().trim());
+    this.modality.set(this.draftModality());
 
     this.page.set(1);
     this.fetchAll();
@@ -235,6 +245,7 @@ export class BankDepositsReportPageComponent {
     this.draftTransactionTypeId.set(defaults.transactionTypeId);
     this.draftUserId.set(defaults.userId);
     this.draftSearch.set(defaults.search);
+    this.draftModality.set(defaults.modality);
 
     this.startDate.set(defaults.startDate);
     this.endDate.set(defaults.endDate);
@@ -242,6 +253,7 @@ export class BankDepositsReportPageComponent {
     this.transactionTypeId.set(defaults.transactionTypeId);
     this.userId.set(defaults.userId);
     this.search.set(defaults.search);
+    this.modality.set(defaults.modality);
 
     this.page.set(1);
     this.fetchAll();
@@ -319,6 +331,7 @@ export class BankDepositsReportPageComponent {
       transactionTypeId: this.transactionTypeId() || undefined,
       userId: this.userId() || undefined,
       search: this.search() || undefined,
+      modality: this.modality() || undefined,
       page: this.page(),
       limit: this.LIMIT,
     };

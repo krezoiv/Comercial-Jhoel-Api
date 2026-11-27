@@ -179,6 +179,16 @@ export class ExportBankDepositsReportPdfUseCase {
       lines.push({ label: 'Tipo de transacción', value: type?.name ?? '—' });
     }
 
+    if (input.modality) {
+      lines.push({
+        label: 'Modalidad',
+        value:
+          input.modality === 'GRUPAL'
+            ? 'Pagos grupales'
+            : 'Pagos individuales',
+      });
+    }
+
     if (input.search?.trim()) {
       lines.push({ label: 'Búsqueda', value: input.search.trim() });
     }

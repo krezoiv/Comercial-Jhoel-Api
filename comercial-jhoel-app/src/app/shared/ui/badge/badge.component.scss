@@ -11,6 +11,12 @@
   white-space: nowrap;
 }
 
+.badge--wrap {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.35;
+}
+
 .badge--brand {
   background: var(--gradient-brand-soft);
   color: var(--color-accent-cyan);

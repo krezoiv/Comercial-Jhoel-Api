@@ -177,7 +177,11 @@ historial, funciones y triggers. No modifica ni borra registros existentes.
      - ninguna otra salida (retiros, salidas manuales, traslados a Bodega, cargos en efectivo) puede tomar ese dinero;
      - no se puede reservar más que el disponible.
    - Si el tipo **recibe** efectivo (Préstamos Génesis, cobro de cuotas), no se reserva nada.
-3. **Procesar cada transacción.** Desde Agentes Bancarios → Pagos Grupales, cada transacción se trabaja por separado:
+3. **Procesar cada transacción.** En Transaccionar, abra el tipo (Pago Varios o Préstamos Génesis). La sección
+   **Operaciones de <tipo>** lista las operaciones individuales y los grupos, con la columna **Modalidad**.
+   - Filtre por Todas, Individuales o Grupales, y por fechas, estado, usuario o código del grupo.
+
+   Abra el grupo con su botón. Cada transacción se trabaja por separado:
    - **Confirmar pago:** se entrega todo lo esperado.
    - **Pago parcial:** se entrega una parte y el resto sigue reservado.
    - **Sin pago:** se indica el motivo y no mueve Caja.
@@ -194,6 +198,10 @@ historial, funciones y triggers. No modifica ni borra registros existentes.
      una observación; nunca se registra una entrada ficticia.
 
 Control de Efectivo muestra "Reservado en pagos grupales" y "Disponible para operar" mientras haya grupos abiertos.
+
+Una operación que salió de un grupo lo indica en su detalle ("Esta transacción pertenece a un PAGO GRUPAL", con el
+código y el número de transacción) y lleva al grupo. En Reportes → Transacciones la columna Modalidad la marca como
+GRUPAL; se anula desde el grupo, no desde el reporte. Las operaciones registradas antes siguen siendo individuales.
 
 **Al publicar en producción:** `npm run migration:run:prod` (migración `1760009400000`). Después active "Permite pago
 grupal" en los tipos que correspondan.
